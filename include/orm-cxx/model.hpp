@@ -4,6 +4,9 @@
 #include <boost/pfr/core_name.hpp>
 #include <string_view>
 
+#include "model/name.hpp"
+#include "model/columns.hpp"
+
 namespace orm
 {
 /**
@@ -18,59 +21,29 @@ template <typename T>
 class Model
 {
 private:
-    /**
-     * @brief Returns the number of columns in the model.
-     *
-     * This function is a consteval function, which means it is evaluated at compile-time.
-     *
-     * @return The number of columns in the model.
-     */
-    consteval static auto columnCount() -> std::size_t
-    {
-        std::size_t count = 0;
+    inline constexpr static std::array<std::string_view, model::columnCount<T>()> columnNames = model::setColumnNames<T>();
 
-        count = boost::pfr::tuple_size_v<T>;
-
-        return count;
-    }
-
-    /**
-     * @brief Sets the column names in the model.
-     *
-     * This function is evaluated at compile-time and populates the columnNames array.
-     *
-     * @return An array of column names in the model.
-     */
-    constexpr static auto setColumnNames() -> std::array<std::string_view, columnCount()>
-    {
-        if constexpr (columnCount() == 0)
-        {
-            return std::array<std::string_view, 0>{};
-        }
-        else
-        {
-            auto names = boost::pfr::names_as_array<T>();
-
-            return names;
-        }
-    }
-
-    /**
-     * @brief An array of column names in the model.
-     *
-     * This array is populated with column names at compile-time.
-     */
-    inline static std::array<std::string_view, columnCount()> columnNames = setColumnNames();
+    inline constexpr static std::string_view tableName = model::tableName<T>();
 
 public:
     /**
-     * @brief Returns a reference to the array of column names in the model.
-     *
-     * @return A reference to the array of column names.
+     * @brief Get the column names for the model.
+     * 
+     * @return A reference to an array of column names.
      */
-    const static std::array<std::string_view, columnCount()>& getColumnNames()
+    const static std::array<std::string_view, model::columnCount<T>()>& getColumnNames()
     {
         return columnNames;
+    }
+    
+    /**
+     * @brief Get the table name for the model.
+     * 
+     * @return The table name as a string view.
+     */
+    const static std::string_view getTableName()
+    {
+        return tableName;
     }
 };
 }
