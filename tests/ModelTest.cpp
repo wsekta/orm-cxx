@@ -2,8 +2,8 @@
 
 #include <gtest/gtest.h>
 
-namespace
-{
+#include "faker-cxx/Number.h"
+
 struct ZeroFieldStruct
 {
     /* zero */
@@ -11,9 +11,8 @@ struct ZeroFieldStruct
 
 struct OneFieldStruct
 {
-    int field1;
+    int field1 = faker::Number::integer(100);
 };
-}
 
 TEST(ModelTest, ZeroFieldStruct_shouldHaveZeroColumn)
 {
@@ -22,10 +21,10 @@ TEST(ModelTest, ZeroFieldStruct_shouldHaveZeroColumn)
     EXPECT_EQ(model.getColumnNames().size(), 0);
 }
 
-// TODO: fix this test
-// TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
-// {
-//     orm::Model<OneFieldStruct> model;
+TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
+{
+    orm::Model<OneFieldStruct> model;
 
-//     EXPECT_EQ(model.getColumnNames().size(), 1);
-// }
+    EXPECT_EQ(model.getColumnNames().size(), 1);
+    EXPECT_EQ(model.getColumnNames()[0], "field1");
+}

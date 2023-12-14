@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <boost/pfr/core_name.hpp>
 #include <string_view>
 
 namespace orm
@@ -28,7 +29,23 @@ private:
     {
         std::size_t count = 0;
 
+        count = boost::pfr::tuple_size_v<T>;
+
         return count;
+    }
+
+    constexpr static auto setColumnNames() -> std::array<std::string_view, columnCount()>
+    {
+        if constexpr (columnCount() == 0)
+        {
+            return std::array<std::string_view, 0>{};
+        }
+        else
+        {
+            auto names = boost::pfr::names_as_array<T>();
+
+            return names;
+        }
     }
 
     /**
@@ -36,7 +53,7 @@ private:
      *
      * This array is populated with column names at compile-time.
      */
-    inline static std::array<std::string_view, columnCount()> columnNames = {};
+    inline static std::array<std::string_view, columnCount()> columnNames = setColumnNames();
 
 public:
     /**

@@ -53,7 +53,9 @@ https://wsekta.github.io/orm-cxx/
 
 ## Dependencies
 
-- GTest (```BUILD_CONFIG_CXX_TESTS=OFF``` CMake flag to disable)
+- [GTest](https://github.com/google/googletest) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
+- [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
+- [Boost.PFR](https://github.com/boostorg/pfr)
 
 ## ✨ Contributing
 
