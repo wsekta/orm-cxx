@@ -41,7 +41,7 @@ public:
      * 
      * @return The table name as a string view.
      */
-    const static std::string_view getTableName()
+    static std::string_view getTableName()
     {
         return tableName;
     }

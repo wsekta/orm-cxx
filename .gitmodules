@@ -7,3 +7,6 @@
 [submodule "externals/pfr"]
 	path = externals/pfr
 	url = https://github.com/boostorg/pfr.git
+[submodule "externals/reflect-cpp"]
+	path = externals/reflect-cpp
+	url = https://github.com/getml/reflect-cpp.git

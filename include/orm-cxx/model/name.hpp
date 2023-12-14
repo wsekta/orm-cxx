@@ -33,7 +33,7 @@ template <class T>
 consteval auto get_type_name() {
   constexpr auto name = get_type_name_str_view<T>();
   const auto to_str_lit = [&]<auto... Ns>(std::index_sequence<Ns...>) {
-    return std::string_view{name[Ns] , sizeof...(Ns) + 1};
+    return std::string_view{name[0] , sizeof...(Ns) + 1};
   };
   return to_str_lit(std::make_index_sequence<name.size()>{});
 }
