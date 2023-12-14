@@ -25,7 +25,7 @@ private:
      *
      * @return The number of columns in the model.
      */
-    consteval static std::size_t columnCount()
+    consteval static auto columnCount() -> std::size_t
     {
         std::size_t count = 0;
 
@@ -34,6 +34,13 @@ private:
         return count;
     }
 
+    /**
+     * @brief Sets the column names in the model.
+     *
+     * This function is evaluated at compile-time and populates the columnNames array.
+     *
+     * @return An array of column names in the model.
+     */
     constexpr static auto setColumnNames() -> std::array<std::string_view, columnCount()>
     {
         if constexpr (columnCount() == 0)
