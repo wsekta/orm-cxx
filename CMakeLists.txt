@@ -34,7 +34,7 @@ if (BUILD_CONFIG_CXX_TESTS)
     add_subdirectory(externals/googletest)
 
     set(UT_SOURCES
-        src/DummyTest.cpp
+        tests/ModelTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

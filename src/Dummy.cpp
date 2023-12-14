@@ -1,4 +1,4 @@
-#include "orm-cxx/Dummy.hpp"
+#include "orm-cxx/orm.hpp"
 
 void dummy()
 {
