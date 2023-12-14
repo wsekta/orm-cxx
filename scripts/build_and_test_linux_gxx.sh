@@ -9,3 +9,5 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug \
          -GNinja
 
 cmake --build .
+
+ctest -C Debug --output-on-failure
