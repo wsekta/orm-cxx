@@ -1,6 +1,6 @@
 var annotated_dup =
 [
-    [ "orm", "namespaceorm.html", [
+    [ "orm", null, [
       [ "Model", "classorm_1_1Model.html", null ]
     ] ]
 ];

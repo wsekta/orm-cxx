@@ -103,9 +103,12 @@ $(document).ready(function(){initNavTree('classorm_1_1Model.html',''); initResiz
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:af212113e7782b3020f7d42a56c1e9951" id="r_af212113e7782b3020f7d42a56c1e9951"><td class="memItemLeft" align="right" valign="top">static const std::array&lt; std::string_view, columnCount()&gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#af212113e7782b3020f7d42a56c1e9951">getColumnNames</a> ()</td></tr>
-<tr class="memdesc:af212113e7782b3020f7d42a56c1e9951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the array of column names in the model.  <br /></td></tr>
-<tr class="separator:af212113e7782b3020f7d42a56c1e9951"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:add17789e95193ed105ff75dacdf67ca4" id="r_add17789e95193ed105ff75dacdf67ca4"><td class="memItemLeft" align="right" valign="top">static const std::array&lt; std::string_view, model::columnCount&lt; T &gt;()&gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#add17789e95193ed105ff75dacdf67ca4">getColumnNames</a> ()</td></tr>
+<tr class="memdesc:add17789e95193ed105ff75dacdf67ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the column names for the model.  <br /></td></tr>
+<tr class="separator:add17789e95193ed105ff75dacdf67ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a358bad624914f9ceab1021839bd93cc0" id="r_a358bad624914f9ceab1021839bd93cc0"><td class="memItemLeft" align="right" valign="top">static const std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#a358bad624914f9ceab1021839bd93cc0">getTableName</a> ()</td></tr>
+<tr class="memdesc:a358bad624914f9ceab1021839bd93cc0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the table name for the model.  <br /></td></tr>
+<tr class="separator:a358bad624914f9ceab1021839bd93cc0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
@@ -118,8 +121,8 @@ class orm::Model&lt; T &gt;</div><p>A template class representing a model in the
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="af212113e7782b3020f7d42a56c1e9951" name="af212113e7782b3020f7d42a56c1e9951"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af212113e7782b3020f7d42a56c1e9951">&#9670;&#160;</a></span>getColumnNames()</h2>
+<a id="add17789e95193ed105ff75dacdf67ca4" name="add17789e95193ed105ff75dacdf67ca4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#add17789e95193ed105ff75dacdf67ca4">&#9670;&#160;</a></span>getColumnNames()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -130,7 +133,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static const std::array&lt; std::string_view, columnCount()&gt; &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getColumnNames </td>
+          <td class="memname">static const std::array&lt; std::string_view, model::columnCount&lt; T &gt;()&gt; &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getColumnNames </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -143,8 +146,38 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Returns a reference to the array of column names in the model. </p>
-<dl class="section return"><dt>Returns</dt><dd>A reference to the array of column names. </dd></dl>
+<p>Get the column names for the model. </p>
+<dl class="section return"><dt>Returns</dt><dd>A reference to an array of column names. </dd></dl>
+
+</div>
+</div>
+<a id="a358bad624914f9ceab1021839bd93cc0" name="a358bad624914f9ceab1021839bd93cc0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a358bad624914f9ceab1021839bd93cc0">&#9670;&#160;</a></span>getTableName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static const std::string_view <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getTableName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the table name for the model. </p>
+<dl class="section return"><dt>Returns</dt><dd>The table name as a string view. </dd></dl>
 
 </div>
 </div>
@@ -156,7 +189,7 @@ template&lt;typename T &gt; </div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="namespaceorm.html">orm</a></li><li class="navelem"><a class="el" href="classorm_1_1Model.html">Model</a></li>
+    <li class="navelem"><b>orm</b></li><li class="navelem"><a class="el" href="classorm_1_1Model.html">Model</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.8 </li>
   </ul>
 </div>
