@@ -14,10 +14,7 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 ## Usage
 
-```cpp
-
-//🚧🚧🚧 work in progress 🚧🚧🚧
-```
+🚧🚧🚧 work in progress 🚧🚧🚧
 
 ## 📖 Documentation
 
