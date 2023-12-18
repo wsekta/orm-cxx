@@ -1,9 +1,5 @@
 #pragma once
 
-#include <array>
-#include <boost/pfr/core_name.hpp>
-#include <string_view>
-
 #include "model/name.hpp"
 #include "model/columns.hpp"
 
@@ -20,20 +16,15 @@ namespace orm
 template <typename T>
 class Model
 {
-private:
-    inline constexpr static std::array<std::string_view, model::columnCount<T>()> columnNames = model::setColumnNames<T>();
-
-    inline constexpr static std::string_view tableName = model::tableName<T>();
-
 public:
     /**
      * @brief Get the column names for the model.
      * 
      * @return A reference to an array of column names.
      */
-    const static std::array<std::string_view, model::columnCount<T>()>& getColumnNames()
+    static std::vector<std::string> getColumnNames()
     {
-        return columnNames;
+        return model::setColumnNames<T>();
     }
     
     /**
@@ -41,9 +32,9 @@ public:
      * 
      * @return The table name as a string view.
      */
-    static std::string_view getTableName()
+    static std::string getTableName()
     {
-        return tableName;
+        return model::tableName<T>();
     }
 };
 }

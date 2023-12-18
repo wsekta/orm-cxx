@@ -52,7 +52,7 @@ https://wsekta.github.io/orm-cxx/
 
 - [GTest](https://github.com/google/googletest) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
 - [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
-- [Boost.PFR](https://github.com/boostorg/pfr)
+- [reflect-cpp](https://github.com/wsekta/reflect-cpp)
 
 ## ✨ Contributing
 

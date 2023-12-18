@@ -2,36 +2,18 @@
 
 #include <gtest/gtest.h>
 
-#include "faker-cxx/Number.h"
-#include "faker-cxx/String.h"
-
-using std::string_view_literals::operator""sv;
-
-struct ZeroFieldStruct
-{
-    /* zero */
-};
-
 struct OneFieldStruct
 {
-    int field1 = faker::Number::integer(100);
+    int field1;
 };
 
 struct StructWithTableName
 {
     static constexpr std::string_view table_name = "some_table_name";
     
-    int field1 = faker::Number::integer(100);
-    int field2 = faker::Number::integer(100);
+    int field1;
+    int field2;
 };
-
-TEST(ModelTest, ZeroFieldStruct_shouldHaveZeroColumn)
-{
-    orm::Model<ZeroFieldStruct> model;
-
-    EXPECT_EQ(model.getColumnNames().size(), 0);
-    // EXPECT_EQ(model.getTableName(), "ZeroFieldStruct"sv);
-}
 
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {

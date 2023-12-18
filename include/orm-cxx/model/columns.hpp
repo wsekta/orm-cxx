@@ -1,32 +1,11 @@
 #pragma once
 
-#include <array>
-#include <boost/pfr/core_name.hpp>
-#include <string_view>
+#include <rfl.hpp>
 
 #include "name.hpp"
 
 namespace orm::model
 {
-/**
- * @brief Get the number of columns in a model.
- *
- * @tparam T The type of the model.
- * @return The number of columns in the model.
- */
-template <typename T>
-constexpr static auto columnCount() -> std::size_t
-{
-    if constexpr (boost::pfr::tuple_size_v<T> == 0)
-    {
-        return 0;
-    }
-    else
-    {
-        return boost::pfr::tuple_size_v<T>;
-    }
-}
-
 /**
  * @brief Set the column names for a model.
  *
@@ -34,17 +13,17 @@ constexpr static auto columnCount() -> std::size_t
  * @return An array of column names.
  */
 template <typename T>
-constexpr static auto setColumnNames() -> std::array<std::string_view, columnCount<T>()>
+auto setColumnNames() -> std::vector<std::string>
 {
-    std::array<std::string_view, columnCount<T>()> columnNames{};
+    auto fields = rfl::fields<T>();
 
-    if constexpr (columnCount<T>() == 0)
+    std::vector<std::string> columnNames;
+
+    for (const auto& field : fields)
     {
-        return columnNames;
+        columnNames.push_back(field.name());
     }
-    else
-    {
-        return boost::pfr::names_as_array<T>();
-    }
+
+    return columnNames;
 }
 }

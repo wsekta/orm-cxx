@@ -25,15 +25,11 @@ set(SOURCES
 
 add_library(${LIBRARY_NAME} ${SOURCES})
 
-add_subdirectory(externals/pfr)
-add_subdirectory(externals/reflect-cpp)
-
-target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::pfr reflectcpp_static)
-
 target_include_directories(
     ${LIBRARY_NAME}
     INTERFACE "${CMAKE_CURRENT_LIST_DIR}/include"
-    PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
+    PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include" 
+    PUBLIC externals/reflect-cpp/include)
 
 if (BUILD_ORM_CXX_TESTS)
     set(BUILD_FAKER_TESTS OFF)
@@ -42,6 +38,7 @@ if (BUILD_ORM_CXX_TESTS)
 
     set(UT_SOURCES
         tests/ModelTest.cpp
+        tests/QueryTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
