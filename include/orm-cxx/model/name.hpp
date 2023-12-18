@@ -26,7 +26,7 @@ auto tableName() -> std::string
 
     std::string del = " ";
     
-    int iter = typeName.find(del);
+    auto iter = typeName.find(del);
 
     if(iter != std::string::npos)
     {

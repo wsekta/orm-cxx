@@ -16,7 +16,7 @@ else ()
     # "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat -Werror"
     # )
     set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat -Werror"
+    "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat"
     )
 endif ()
 
@@ -53,8 +53,7 @@ if (BUILD_ORM_CXX_TESTS)
 
     add_executable(${LIBRARY_NAME}-UT ${UT_SOURCES})
 
-    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main
-        orm-cxx faker-cxx)
+    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
 
     target_include_directories(
         ${LIBRARY_NAME}-UT
