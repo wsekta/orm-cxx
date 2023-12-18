@@ -99,44 +99,35 @@ $(document).ready(function(){initNavTree('model_8hpp_source.html',''); initResiz
 <div class="contents">
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
-<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;array&gt;</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;boost/pfr/core_name.hpp&gt;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span> </div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &quot;model/name.hpp&quot;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &quot;model/columns.hpp&quot;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span> </div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="keyword">namespace </span>orm</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>{</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="foldopen" id="foldopen00021" data-start="{" data-end="};">
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html">   21</a></span><span class="keyword">class </span><a class="code hl_class" href="classorm_1_1Model.html">Model</a></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>    <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keyword">static</span> std::array&lt;std::string_view, model::columnCount&lt;T&gt;()&gt; columnNames = model::setColumnNames&lt;T&gt;();</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    <span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keyword">static</span> std::string_view tableName = model::tableName&lt;T&gt;();</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="keyword">public</span>:</div>
-<div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#add17789e95193ed105ff75dacdf67ca4">   34</a></span>    <span class="keyword">const</span> <span class="keyword">static</span> std::array&lt;std::string_view, model::columnCount&lt;T&gt;()&gt;&amp; <a class="code hl_function" href="classorm_1_1Model.html#add17789e95193ed105ff75dacdf67ca4">getColumnNames</a>()</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    {</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        <span class="keywordflow">return</span> columnNames;</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>    }</div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;model/name.hpp&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;model/columns.hpp&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span>orm</div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span>{</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00017" data-start="{" data-end="};">
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html">   17</a></span><span class="keyword">class </span><a class="code hl_class" href="classorm_1_1Model.html">Model</a></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">public</span>:</div>
+<div class="foldopen" id="foldopen00025" data-start="{" data-end="}">
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">   25</a></span>    <span class="keyword">static</span> std::vector&lt;std::string&gt; <a class="code hl_function" href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">getColumnNames</a>()</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keywordflow">return</span> model::setColumnNames&lt;T&gt;();</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    }</div>
 </div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    </div>
-<div class="foldopen" id="foldopen00044" data-start="{" data-end="}">
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#ad8ceaa58bf6502dac3ba1326d6660d16">   44</a></span>    <span class="keyword">static</span> std::string_view <a class="code hl_function" href="classorm_1_1Model.html#ad8ceaa58bf6502dac3ba1326d6660d16">getTableName</a>()</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    {</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>        <span class="keywordflow">return</span> tableName;</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    }</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>    </div>
+<div class="foldopen" id="foldopen00035" data-start="{" data-end="}">
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">   35</a></span>    <span class="keyword">static</span> std::string <a class="code hl_function" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">getTableName</a>()</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    {</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keywordflow">return</span> model::tableName&lt;T&gt;();</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    }</div>
 </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>};</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>};</div>
 </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
-<div class="ttc" id="aclassorm_1_1Model_html"><div class="ttname"><a href="classorm_1_1Model.html">orm::Model</a></div><div class="ttdoc">A template class representing a model in the ORM framework.</div><div class="ttdef"><b>Definition</b> model.hpp:22</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_ad8ceaa58bf6502dac3ba1326d6660d16"><div class="ttname"><a href="classorm_1_1Model.html#ad8ceaa58bf6502dac3ba1326d6660d16">orm::Model::getTableName</a></div><div class="ttdeci">static std::string_view getTableName()</div><div class="ttdoc">Get the table name for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:44</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_add17789e95193ed105ff75dacdf67ca4"><div class="ttname"><a href="classorm_1_1Model.html#add17789e95193ed105ff75dacdf67ca4">orm::Model::getColumnNames</a></div><div class="ttdeci">static const std::array&lt; std::string_view, model::columnCount&lt; T &gt;()&gt; &amp; getColumnNames()</div><div class="ttdoc">Get the column names for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:34</div></div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>}</div>
+<div class="ttc" id="aclassorm_1_1Model_html"><div class="ttname"><a href="classorm_1_1Model.html">orm::Model</a></div><div class="ttdoc">A template class representing a model in the ORM framework.</div><div class="ttdef"><b>Definition</b> model.hpp:18</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_a13d083ea1e477b50e5bbf300298defe9"><div class="ttname"><a href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">orm::Model::getColumnNames</a></div><div class="ttdeci">static std::vector&lt; std::string &gt; getColumnNames()</div><div class="ttdoc">Get the column names for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:25</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_a224164ab3ec52859db88e68f5b220e0e"><div class="ttname"><a href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">orm::Model::getTableName</a></div><div class="ttdeci">static std::string getTableName()</div><div class="ttdoc">Get the table name for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:35</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -103,12 +103,12 @@ $(document).ready(function(){initNavTree('classorm_1_1Model.html',''); initResiz
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:add17789e95193ed105ff75dacdf67ca4" id="r_add17789e95193ed105ff75dacdf67ca4"><td class="memItemLeft" align="right" valign="top">static const std::array&lt; std::string_view, model::columnCount&lt; T &gt;()&gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#add17789e95193ed105ff75dacdf67ca4">getColumnNames</a> ()</td></tr>
-<tr class="memdesc:add17789e95193ed105ff75dacdf67ca4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the column names for the model.  <br /></td></tr>
-<tr class="separator:add17789e95193ed105ff75dacdf67ca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad8ceaa58bf6502dac3ba1326d6660d16" id="r_ad8ceaa58bf6502dac3ba1326d6660d16"><td class="memItemLeft" align="right" valign="top">static std::string_view&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#ad8ceaa58bf6502dac3ba1326d6660d16">getTableName</a> ()</td></tr>
-<tr class="memdesc:ad8ceaa58bf6502dac3ba1326d6660d16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the table name for the model.  <br /></td></tr>
-<tr class="separator:ad8ceaa58bf6502dac3ba1326d6660d16"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13d083ea1e477b50e5bbf300298defe9" id="r_a13d083ea1e477b50e5bbf300298defe9"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">getColumnNames</a> ()</td></tr>
+<tr class="memdesc:a13d083ea1e477b50e5bbf300298defe9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the column names for the model.  <br /></td></tr>
+<tr class="separator:a13d083ea1e477b50e5bbf300298defe9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a224164ab3ec52859db88e68f5b220e0e" id="r_a224164ab3ec52859db88e68f5b220e0e"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">getTableName</a> ()</td></tr>
+<tr class="memdesc:a224164ab3ec52859db88e68f5b220e0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the table name for the model.  <br /></td></tr>
+<tr class="separator:a224164ab3ec52859db88e68f5b220e0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
@@ -121,8 +121,8 @@ class orm::Model&lt; T &gt;</div><p>A template class representing a model in the
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="add17789e95193ed105ff75dacdf67ca4" name="add17789e95193ed105ff75dacdf67ca4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#add17789e95193ed105ff75dacdf67ca4">&#9670;&#160;</a></span>getColumnNames()</h2>
+<a id="a13d083ea1e477b50e5bbf300298defe9" name="a13d083ea1e477b50e5bbf300298defe9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a13d083ea1e477b50e5bbf300298defe9">&#9670;&#160;</a></span>getColumnNames()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -133,7 +133,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static const std::array&lt; std::string_view, model::columnCount&lt; T &gt;()&gt; &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getColumnNames </td>
+          <td class="memname">static std::vector&lt; std::string &gt; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getColumnNames </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -151,8 +151,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ad8ceaa58bf6502dac3ba1326d6660d16" name="ad8ceaa58bf6502dac3ba1326d6660d16"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad8ceaa58bf6502dac3ba1326d6660d16">&#9670;&#160;</a></span>getTableName()</h2>
+<a id="a224164ab3ec52859db88e68f5b220e0e" name="a224164ab3ec52859db88e68f5b220e0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a224164ab3ec52859db88e68f5b220e0e">&#9670;&#160;</a></span>getTableName()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -163,7 +163,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static std::string_view <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getTableName </td>
+          <td class="memname">static std::string <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getTableName </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
