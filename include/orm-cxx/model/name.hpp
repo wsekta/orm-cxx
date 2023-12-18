@@ -1,10 +1,10 @@
 #pragma once
 
-#include "rfl.hpp"
-#include <string>
 #include <source_location>
 #include <string>
 #include <utility>
+
+#include "rfl.hpp"
 
 namespace orm::model
 {
@@ -17,18 +17,18 @@ namespace orm::model
 template <typename T>
 auto tableName() -> std::string
 {
-    if constexpr (requires(T t) { t.table_name;})
+    if constexpr (requires(T t) { t.table_name; })
     {
         return std::string(T::table_name);
     }
 
     auto typeName = rfl::type_name_t<T>().str();
-
-    std::string del = " ";
     
+    std::string del = " ";
+
     auto iter = typeName.find(del);
 
-    if(iter != std::string::npos)
+    if (iter != std::string::npos)
     {
         return typeName.substr(iter + del.size());
     }

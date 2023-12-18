@@ -1,7 +1,7 @@
 #pragma once
 
-#include "model/name.hpp"
 #include "model/columns.hpp"
+#include "model/name.hpp"
 
 namespace orm
 {
@@ -19,17 +19,17 @@ class Model
 public:
     /**
      * @brief Get the column names for the model.
-     * 
+     *
      * @return A reference to an array of column names.
      */
     static std::vector<std::string> getColumnNames()
     {
         return model::setColumnNames<T>();
     }
-    
+
     /**
      * @brief Get the table name for the model.
-     * 
+     *
      * @return The table name as a string view.
      */
     static std::string getTableName()

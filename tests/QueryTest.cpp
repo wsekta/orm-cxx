@@ -8,7 +8,7 @@ struct Model
     int field2;
 };
 
-namespace 
+namespace
 {
 std::string simpleQueryString = "SELECT * FROM Model;";
 auto limit = 10;
@@ -16,14 +16,13 @@ std::string queryWithLimitString = "SELECT * FROM Model LIMIT 10;";
 auto offset = 5;
 std::string queryWithOffsetString = "SELECT * FROM Model OFFSET 5;";
 std::string queryWithOffsetAndLimitString = "SELECT * FROM Model OFFSET 5 LIMIT 10;";
-} 
+}
 
 class QueryTest : public ::testing::Test
 {
 public:
     orm::Query<Model> query;
 };
-
 
 TEST_F(QueryTest, shouldCreateSimpleQuery)
 {

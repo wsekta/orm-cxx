@@ -1,3 +1,4 @@
 #pragma once
 
-#include<orm-cxx/model.hpp>
+#include "model.hpp"
+#include "query.hpp"

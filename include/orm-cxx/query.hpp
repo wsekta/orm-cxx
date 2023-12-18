@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <optional>
+#include <string>
 
 #include "model.hpp"
 
@@ -40,12 +40,12 @@ public:
         Model<T> model;
         std::string query = "SELECT * FROM "s.append(model.getTableName());
 
-        if(queryOffset.has_value())
+        if (queryOffset.has_value())
         {
             query.append(" OFFSET "s.append(std::to_string(queryOffset.value())));
         }
 
-        if(queryLimit.has_value())
+        if (queryLimit.has_value())
         {
             query.append(" LIMIT "s.append(std::to_string(queryLimit.value())));
         }

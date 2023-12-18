@@ -10,7 +10,7 @@ struct OneFieldStruct
 struct StructWithTableName
 {
     static constexpr std::string_view table_name = "some_table_name";
-    
+
     int field1;
     int field2;
 };
