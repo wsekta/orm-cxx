@@ -19,21 +19,21 @@ template <typename T>
 class Query
 {
 public:
-    inline Query& offset(std::size_t offset)
+    inline auto offset(std::size_t offset)
     {
         queryOffset = offset;
 
         return *this;
     }
 
-    inline Query& limit(std::size_t limit)
+    inline auto limit(std::size_t limit)
     {
         queryLimit = limit;
 
         return *this;
     }
 
-    inline std::string buildQuery() const
+    inline auto buildQuery() -> std::string const
     {
         using namespace std::string_literals;
 

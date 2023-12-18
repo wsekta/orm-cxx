@@ -7,3 +7,6 @@
 [submodule "externals/reflect-cpp"]
 	path = externals/reflect-cpp
 	url = https://github.com/getml/reflect-cpp.git
+[submodule "externals/qtl"]
+	path = externals/qtl
+	url = https://github.com/znone/qtl.git

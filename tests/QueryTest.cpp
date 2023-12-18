@@ -1,6 +1,9 @@
 #include "orm-cxx/query.hpp"
 
+#include <format>
 #include <gtest/gtest.h>
+
+using namespace std::string_literals;
 
 struct Model
 {
@@ -10,12 +13,12 @@ struct Model
 
 namespace
 {
-std::string simpleQueryString = "SELECT * FROM Model;";
-auto limit = 10;
-std::string queryWithLimitString = "SELECT * FROM Model LIMIT 10;";
-auto offset = 5;
-std::string queryWithOffsetString = "SELECT * FROM Model OFFSET 5;";
-std::string queryWithOffsetAndLimitString = "SELECT * FROM Model OFFSET 5 LIMIT 10;";
+auto simpleQueryString = "SELECT * FROM Model;"s;
+auto limit = 10u;
+auto queryWithLimitString = std::format("SELECT * FROM Model LIMIT {};", limit);
+auto offset = 5u;
+auto queryWithOffsetString = std::format("SELECT * FROM Model OFFSET {};", offset);
+auto queryWithOffsetAndLimitString = std::format("SELECT * FROM Model OFFSET {} LIMIT {};", offset, limit);
 }
 
 class QueryTest : public ::testing::Test

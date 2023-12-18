@@ -16,23 +16,23 @@ else ()
     # "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat -Werror"
     # )
     set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat"
+            "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat"
     )
 endif ()
 
 set(LIBRARY_NAME ${PROJECT_NAME})
 
 set(SOURCES
-    src/Dummy.cpp
+        src/Dummy.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
 
 target_include_directories(
-    ${LIBRARY_NAME}
-    INTERFACE "${CMAKE_CURRENT_LIST_DIR}/include"
-    PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include" 
-    PUBLIC externals/reflect-cpp/include)
+        ${LIBRARY_NAME}
+        INTERFACE "${CMAKE_CURRENT_LIST_DIR}/include"
+        PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include"
+        PUBLIC externals/reflect-cpp/include externals/qtl/include)
 
 if (BUILD_ORM_CXX_TESTS)
     set(BUILD_FAKER_TESTS OFF)
@@ -40,14 +40,14 @@ if (BUILD_ORM_CXX_TESTS)
     add_subdirectory(externals/googletest)
 
     set(UT_SOURCES
-        tests/ModelTest.cpp
-        tests/QueryTest.cpp
+            tests/ModelTest.cpp
+            tests/QueryTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
-        "${CMAKE_SOURCE_DIR}/externals/googletest/googletest/include")
+            "${CMAKE_SOURCE_DIR}/externals/googletest/googletest/include")
     set(GMOCK_INCLUDE_DIR
-        "${CMAKE_SOURCE_DIR}/externals/googletest/googlemock/include")
+            "${CMAKE_SOURCE_DIR}/externals/googletest/googlemock/include")
 
     enable_testing()
 
@@ -56,12 +56,12 @@ if (BUILD_ORM_CXX_TESTS)
     target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
 
     target_include_directories(
-        ${LIBRARY_NAME}-UT
-        PRIVATE ${FMT_INCLUDE_DIR} ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR}
-        ${CMAKE_CURRENT_LIST_DIR})
+            ${LIBRARY_NAME}-UT
+            PRIVATE ${FMT_INCLUDE_DIR} ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR}
+            ${CMAKE_CURRENT_LIST_DIR})
 
     add_test(
-        NAME ${LIBRARY_NAME}-UT
-        COMMAND ${LIBRARY_NAME}-UT
-        WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+            NAME ${LIBRARY_NAME}-UT
+            COMMAND ${LIBRARY_NAME}-UT
+            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 endif ()
