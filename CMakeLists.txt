@@ -28,7 +28,7 @@ add_library(${LIBRARY_NAME} ${SOURCES})
 add_subdirectory(externals/pfr)
 add_subdirectory(externals/reflect-cpp)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::pfr reflect-cpp)
+target_link_libraries(${LIBRARY_NAME} PUBLIC Boost::pfr reflectcpp_static)
 
 target_include_directories(
     ${LIBRARY_NAME}
