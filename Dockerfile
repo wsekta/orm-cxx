@@ -5,6 +5,7 @@ RUN apt install -y cmake ninja-build g++-13 libstdc++-13-dev
 
 COPY include/ orm-cxx/include/
 COPY src/ orm-cxx/src/
+COPY tests/ orm-cxx/tests/
 COPY externals/ orm-cxx/externals/
 COPY CMakeLists.txt orm-cxx/CMakeLists.txt
 COPY scripts/ orm-cxx/scripts/
