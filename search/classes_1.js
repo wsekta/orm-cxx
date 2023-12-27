@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['query_0',['Query',['../classorm_1_1Query.html',1,'orm']]]
+  ['model_0',['Model',['../classorm_1_1Model.html',1,'orm']]]
 ];
