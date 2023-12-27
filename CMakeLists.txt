@@ -23,8 +23,11 @@ endif ()
 set(LIBRARY_NAME ${PROJECT_NAME})
 
 set(SOURCES
-        src/Dummy.cpp
+        src/database.cpp
 )
+
+set(SOCI_TESTS OFF)
+add_subdirectory(externals/soci)
 
 add_library(${LIBRARY_NAME} ${SOURCES})
 
