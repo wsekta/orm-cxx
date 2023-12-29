@@ -20,14 +20,26 @@ else ()
     )
 endif ()
 
+set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "Static Build" FORCE)
+set(SOCI_SHARED OFF CACHE INTERNAL "SOCI Shared" FORCE)
+set(SOCI_STATIC ON CACHE INTERNAL "SOCI Static" FORCE)
+set(SOCI_TESTS OFF CACHE INTERNAL "SOCI Tests" FORCE)
+set(WITH_BOOST OFF CACHE INTERNAL "SOCI use Boost" FORCE)
+set(SOCI_EMPTY ON CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_DB2 OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_FIREBIRD OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_MYSQL OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_ODBC OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_ORACLE OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_POSTGRESQL OFF CACHE INTERNAL "SOCI Backend" FORCE)
+set(WITH_SQLITE3 OFF CACHE INTERNAL "SOCI Backend" FORCE)
+add_subdirectory(externals/soci)
+
 set(LIBRARY_NAME ${PROJECT_NAME})
 
 set(SOURCES
         src/database.cpp
 )
-
-set(SOCI_TESTS OFF)
-add_subdirectory(externals/soci)
 
 add_library(${LIBRARY_NAME} ${SOURCES})
 
@@ -35,7 +47,9 @@ target_include_directories(
         ${LIBRARY_NAME}
         INTERFACE "${CMAKE_CURRENT_LIST_DIR}/include"
         PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include"
-        PUBLIC externals/reflect-cpp/include externals/qtl/include)
+        PUBLIC externals/reflect-cpp/include)
+
+target_link_libraries(${LIBRARY_NAME} PUBLIC soci_core_static soci_empty_static)
 
 if (BUILD_ORM_CXX_TESTS)
     set(BUILD_FAKER_TESTS OFF)
@@ -45,6 +59,7 @@ if (BUILD_ORM_CXX_TESTS)
     set(UT_SOURCES
             tests/ModelTest.cpp
             tests/QueryTest.cpp
+            tests/DatabaseTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
