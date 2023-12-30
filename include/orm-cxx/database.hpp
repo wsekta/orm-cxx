@@ -1,8 +1,9 @@
 #pragma once
 
 #include "model.hpp"
-#include "query.hpp"
 #include "model/Binding.hpp"
+#include "query.hpp"
+#include "soci/soci.h"
 
 namespace orm
 {
@@ -14,9 +15,9 @@ public:
     void connect(const std::string& connectionString);
 
     template <typename T>
-    auto executeQuery(Query<T>& query) -> std::vector<T>
+    auto executeQuery(Query<T>& query) -> Model<T>
     {
-        std::vector<T> result;
+        Model<T> result;
 
         sql << query.buildQuery(), soci::into(result);
 
