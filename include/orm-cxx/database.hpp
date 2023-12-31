@@ -15,11 +15,16 @@ public:
     void connect(const std::string& connectionString);
 
     template <typename T>
-    auto executeQuery(Query<T>& query) -> Model<T>
+    auto executeQuery(Query<T>& query) -> std::vector<T>
     {
-        Model<T> result;
+        std::vector<T> result;
 
-        sql << query.buildQuery(), soci::into(result);
+        soci::rowset<Model<T>> preparedRowSet = (sql.prepare << query.buildQuery());
+
+        for (auto& model : preparedRowSet)
+        {
+            result.push_back(std::move(model.getObject()));
+        }
 
         return result;
     }

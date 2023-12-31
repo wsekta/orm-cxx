@@ -1,7 +1,8 @@
 FROM ubuntu:23.10
 
-RUN apt update -y
-RUN apt install -y cmake ninja-build g++-13 libstdc++-13-dev
+RUN apt -y update
+RUN apt -y upgrade
+RUN apt install -y cmake ninja-build g++-13 libstdc++-13-dev sqlite3 libsqlite3-dev
 
 COPY include/ orm-cxx/include/
 COPY src/ orm-cxx/src/

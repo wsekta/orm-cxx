@@ -11,7 +11,7 @@ struct type_conversion<orm::Model<T>>
 {
     typedef values base_type;
 
-    static void from_base(values const& /*v*/, indicator /* ind */, orm::Model<T>& /*model*/)
+    static void from_base(values const& /*value*/, indicator /*ind*/, orm::Model<T>& /*model*/)
     {
         // TODO: Implement this
     }

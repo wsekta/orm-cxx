@@ -36,5 +36,13 @@ public:
     {
         return model::tableName<T>();
     }
+
+    inline T& getObject()
+    {
+        return object;
+    }
+
+private:
+    T object;
 };
 }

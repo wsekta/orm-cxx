@@ -19,6 +19,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Choco help
+        uses: crazy-max/ghaction-chocolatey@v3
+        with:
+          args: install sqlite
+
       - run: cmake -E make_directory build
 
       - working-directory: build/

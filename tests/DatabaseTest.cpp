@@ -7,6 +7,7 @@
 
 namespace
 {
+const std::string connectionString = "sqlite3://:memory:";
 }
 
 struct SomeDataModel
@@ -24,11 +25,13 @@ public:
 
 TEST_F(DatabaseTest, shouldConnectToDatabase)
 {
-    EXPECT_THROW(database.connect("empty://"), std::exception);
+    database.connect(connectionString);
 }
 
 TEST_F(DatabaseTest, shouldExecuteQuery)
 {
+    database.connect(connectionString);
+
     auto queryString = query.buildQuery();
 
     EXPECT_THROW(database.executeQuery(query), std::exception);
