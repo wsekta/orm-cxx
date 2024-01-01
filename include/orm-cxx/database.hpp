@@ -29,6 +29,27 @@ public:
         return result;
     }
 
+    template <typename T>
+    auto createTable() -> void
+    {
+        Model<T> model;
+        std::string query = "CREATE TABLE IF NOT EXISTS " + model.getTableName() + " (";
+
+        auto columnNames = model.getColumnNames();
+
+        for (auto& columnName : columnNames)
+        {
+            query += columnName + " " + /*model::getBinding<T>(columnName)*/ "int" + ", ";
+        }
+
+        query.pop_back();
+        query.pop_back();
+
+        query += ");";
+
+        sql << query;
+    }
+
 private:
     soci::session sql;
 };

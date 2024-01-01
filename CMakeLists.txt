@@ -12,11 +12,8 @@ option(BUILD_ORM_CXX_TESTS DEFAULT ON)
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20 /permissive- /bigobj")
 else ()
-    # set(CMAKE_CXX_FLAGS
-    # "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat -Werror"
-    # )
     set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat"
+            "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat" # -Werror
     )
 endif ()
 
@@ -33,6 +30,7 @@ set(WITH_ODBC OFF CACHE INTERNAL "SOCI Backend" FORCE)
 set(WITH_ORACLE OFF CACHE INTERNAL "SOCI Backend" FORCE)
 set(WITH_POSTGRESQL OFF CACHE INTERNAL "SOCI Backend" FORCE)
 set(WITH_SQLITE3 ON CACHE INTERNAL "SOCI Backend" FORCE)
+set(SOCI_SQLITE3_TEST_CONNSTR ":memory:")
 add_subdirectory(externals/soci)
 
 set(LIBRARY_NAME ${PROJECT_NAME})
@@ -49,7 +47,7 @@ target_include_directories(
         PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include"
         PUBLIC externals/reflect-cpp/include)
 
-target_link_libraries(${LIBRARY_NAME} PUBLIC soci_core soci_sqlite3 sqlite3)
+target_link_libraries(${LIBRARY_NAME} PUBLIC soci_core soci_sqlite3)
 
 if (BUILD_ORM_CXX_TESTS)
     set(BUILD_FAKER_TESTS OFF)
@@ -71,7 +69,7 @@ if (BUILD_ORM_CXX_TESTS)
 
     add_executable(${LIBRARY_NAME}-UT ${UT_SOURCES})
 
-    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
+    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx soci_sqlite3)
 
     target_include_directories(
             ${LIBRARY_NAME}-UT

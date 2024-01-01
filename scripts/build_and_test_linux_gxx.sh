@@ -8,6 +8,6 @@ cmake .. -DCMAKE_BUILD_TYPE=Debug \
          -DCMAKE_CXX_COMPILER=/usr/bin/g++-13 \
          -GNinja
 
-cmake --build .
+cmake --build . --config Debug
 
 ctest -C Debug --output-on-failure

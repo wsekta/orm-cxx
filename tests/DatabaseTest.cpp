@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 
 #include "orm-cxx/query.hpp"
+#include "soci/sqlite3/soci-sqlite3.h"
 
 namespace
 {
@@ -35,4 +36,11 @@ TEST_F(DatabaseTest, shouldExecuteQuery)
     auto queryString = query.buildQuery();
 
     EXPECT_THROW(database.executeQuery(query), std::exception);
+}
+
+TEST_F(DatabaseTest, shouldCreateTable)
+{
+    database.connect(connectionString);
+
+    database.createTable<SomeDataModel>();
 }
