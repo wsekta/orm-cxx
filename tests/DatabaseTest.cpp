@@ -44,3 +44,12 @@ TEST_F(DatabaseTest, shouldCreateTable)
 
     database.createTable<SomeDataModel>();
 }
+
+TEST_F(DatabaseTest, shouldDeleteTable)
+{
+    database.connect(connectionString);
+
+    database.createTable<SomeDataModel>();
+
+    database.deleteTable<SomeDataModel>();
+}

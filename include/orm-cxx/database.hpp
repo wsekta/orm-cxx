@@ -33,6 +33,7 @@ public:
     auto createTable() -> void
     {
         Model<T> model;
+
         std::string query = "CREATE TABLE IF NOT EXISTS " + model.getTableName() + " (";
 
         auto columnNames = model.getColumnNames();
@@ -46,6 +47,16 @@ public:
         query.pop_back();
 
         query += ");";
+
+        sql << query;
+    }
+
+    template <typename T>
+    auto deleteTable() -> void
+    {
+        Model<T> model;
+
+        std::string query = "DROP TABLE IF EXISTS " + model.getTableName() + ";";
 
         sql << query;
     }
