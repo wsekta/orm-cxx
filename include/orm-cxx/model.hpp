@@ -37,6 +37,11 @@ public:
         return model::tableName<T>();
     }
 
+    /**
+     * @brief Get the temporary object of the model.
+     *
+     * @return Reference to the temporary object.
+     */
     inline T& getObject()
     {
         return object;

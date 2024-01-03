@@ -30,6 +30,12 @@ public:
     }
 
     template <typename T>
+    auto insertObjects(const std::vector<T>& objects) -> void
+    {
+        // TODO: Implement
+    }
+
+    template <typename T>
     auto createTable() -> void
     {
         Model<T> model;

@@ -38,6 +38,13 @@ TEST_F(DatabaseTest, shouldExecuteQuery)
     EXPECT_THROW(database.executeQuery(query), std::exception);
 }
 
+TEST_F(DatabaseTest, shouldInsertObjects)
+{
+    database.connect(connectionString);
+
+    database.insertObjects(std::vector<SomeDataModel>{});
+}
+
 TEST_F(DatabaseTest, shouldCreateTable)
 {
     database.connect(connectionString);
