@@ -14,7 +14,7 @@ const std::string connectionString = "sqlite3://:memory:";
 struct SomeDataModel
 {
     int field1;
-    int field2;
+    std::string field2;
 };
 
 class DatabaseTest : public ::testing::Test
@@ -27,6 +27,8 @@ public:
 TEST_F(DatabaseTest, shouldConnectToDatabase)
 {
     database.connect(connectionString);
+
+    EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Sqlite);
 }
 
 TEST_F(DatabaseTest, shouldExecuteQuery)

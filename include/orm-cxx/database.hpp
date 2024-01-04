@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "database/BackendType.hpp"
+#include "database/TypeTranslatorFactory.hpp"
 #include "model.hpp"
 #include "model/Binding.hpp"
 #include "query.hpp"
@@ -12,9 +14,9 @@ namespace orm
 class Database
 {
 public:
-    Database() : sql() {}
+    Database();
 
-    void connect(const std::string& connectionString);
+    auto connect(const std::string& connectionString) -> void;
 
     template <typename T>
     auto executeQuery(Query<T>& query) -> std::vector<T>
@@ -59,7 +61,9 @@ public:
 
         for (auto& column : columns)
         {
-            query += column.name + " " + column.type + ", ";
+            auto sqlType = typeTranslatorFactory.getTranslator(backendType)->toSqlType(column.type);
+
+            query += column.name + " " + sqlType + ", ";
         }
 
         query.pop_back();
@@ -68,8 +72,6 @@ public:
         query += ");";
 
         sql << query;
-
-        std::cout << query << std::endl;
     }
 
     template <typename T>
@@ -82,7 +84,11 @@ public:
         sql << query;
     }
 
+    auto getBackendType() -> db::BackendType;
+
 private:
     soci::session sql;
+    db::BackendType backendType;
+    db::TypeTranslatorFactory typeTranslatorFactory;
 };
 }

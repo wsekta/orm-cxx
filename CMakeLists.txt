@@ -37,6 +37,8 @@ set(LIBRARY_NAME ${PROJECT_NAME})
 
 set(SOURCES
         src/database.cpp
+        src/database/sqlite/SqliteTypeTranslator.cpp
+        src/database/TypeTranslatorFactory.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -58,6 +60,8 @@ if (BUILD_ORM_CXX_TESTS)
             tests/ModelTest.cpp
             tests/QueryTest.cpp
             tests/DatabaseTest.cpp
+
+            src/database/sqlite/SqliteTypeTranslatorTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
