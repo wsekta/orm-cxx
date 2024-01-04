@@ -47,7 +47,32 @@ public:
     {
         Model<T> model;
 
-        // TODO: Implement
+        std::string query = "INSERT INTO " + model.getTableName() + " (";
+
+        auto columns = model.getColumnsInfo();
+
+        for (auto& column : columns)
+        {
+            query += column.name + ", ";
+        }
+
+        query.pop_back();
+        query.pop_back();
+
+        query += ") VALUES (";
+
+        for (auto& column : columns)
+        {
+            query += ":" + column.name + ", ";
+        }
+
+        query.pop_back();
+        query.pop_back();
+
+        query += ");";
+
+        model.getObject() = std::move(object);
+        sql << query, soci::use(model);
     }
 
     template <typename T>

@@ -31,15 +31,6 @@ TEST_F(DatabaseTest, shouldConnectToDatabase)
     EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Sqlite);
 }
 
-TEST_F(DatabaseTest, shouldExecuteQuery)
-{
-    database.connect(connectionString);
-
-    auto queryString = query.buildQuery();
-
-    EXPECT_THROW(database.executeQuery(query), std::exception);
-}
-
 TEST_F(DatabaseTest, shouldInsertObjects)
 {
     database.connect(connectionString);
@@ -61,4 +52,22 @@ TEST_F(DatabaseTest, shouldDeleteTable)
     database.createTable<SomeDataModel>();
 
     database.deleteTable<SomeDataModel>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteQueryWhenTableIsEmpty_returnEmptyVector)
+{
+    database.connect(connectionString);
+    database.createTable<SomeDataModel>();
+    database.insertObjects(std::vector<SomeDataModel>{});
+
+    EXPECT_EQ(database.executeQuery(query).size(), 0);
+}
+
+TEST_F(DatabaseTest, shouldExecuteQuery)
+{
+    database.connect(connectionString);
+    database.createTable<SomeDataModel>();
+    database.insertObjects(std::vector<SomeDataModel>{{1, "test"}});
+
+    EXPECT_EQ(database.executeQuery(query).size(), 1);
 }
