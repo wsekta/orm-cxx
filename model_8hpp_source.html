@@ -101,8 +101,8 @@ $(function(){initNavTree('model_8hpp_source.html',''); initResizable(); });
 <div class="contents">
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
-<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;model/columns.hpp&quot;</span></div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;model/name.hpp&quot;</span></div>
+<div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &quot;model/ColumnInfo.hpp&quot;</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;model/TableInfo.hpp&quot;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
 <div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">namespace </span>orm</div>
 <div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span>{</div>
@@ -112,35 +112,35 @@ $(function(){initNavTree('model_8hpp_source.html',''); initResizable(); });
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">public</span>:</div>
 <div class="foldopen" id="foldopen00025" data-start="{" data-end="}">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">   25</a></span>    <span class="keyword">static</span> std::vector&lt;std::string&gt; <a class="code hl_function" href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">getColumnNames</a>()</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">   25</a></span>    <span class="keyword">static</span> std::string <a class="code hl_function" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">getTableName</a>()</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>    {</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keywordflow">return</span> model::setColumnNames&lt;T&gt;();</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        <span class="keywordflow">return</span> model::getTableName&lt;T&gt;();</div>
 <div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>    }</div>
 </div>
 <div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
 <div class="foldopen" id="foldopen00035" data-start="{" data-end="}">
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">   35</a></span>    <span class="keyword">static</span> std::string <a class="code hl_function" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">getTableName</a>()</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#ae14d8edb8bf8be19e8455387d0003c5d">   35</a></span>    <span class="keyword">static</span> std::vector&lt;model::ColumnInfo&gt; <a class="code hl_function" href="classorm_1_1Model.html#ae14d8edb8bf8be19e8455387d0003c5d">getColumnsInfo</a>()</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    {</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keywordflow">return</span> model::tableName&lt;T&gt;();</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keywordflow">return</span> model::getColumnsInfo&lt;T&gt;();</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    }</div>
 </div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
 <div class="foldopen" id="foldopen00045" data-start="{" data-end="}">
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#ad30e884045d5fd23ed0e75aa69fe0507">   45</a></span>    <span class="keyword">inline</span> T&amp; <a class="code hl_function" href="classorm_1_1Model.html#ad30e884045d5fd23ed0e75aa69fe0507">getObject</a>()</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#ad30e884045d5fd23ed0e75aa69fe0507">   45</a></span>    <span class="keyword">inline</span> <a class="code hl_function" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">T</a>&amp; <a class="code hl_function" href="classorm_1_1Model.html#ad30e884045d5fd23ed0e75aa69fe0507">getObject</a>()</div>
 <div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    {</div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        <span class="keywordflow">return</span> object;</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    }</div>
 </div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    T object;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    <a class="code hl_function" href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">T</a> object;</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>};</div>
 </div>
 <div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>}</div>
 <div class="ttc" id="aclassorm_1_1Model_html"><div class="ttname"><a href="classorm_1_1Model.html">orm::Model</a></div><div class="ttdoc">A template class representing a model in the ORM framework.</div><div class="ttdef"><b>Definition</b> model.hpp:18</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_a13d083ea1e477b50e5bbf300298defe9"><div class="ttname"><a href="classorm_1_1Model.html#a13d083ea1e477b50e5bbf300298defe9">orm::Model::getColumnNames</a></div><div class="ttdeci">static std::vector&lt; std::string &gt; getColumnNames()</div><div class="ttdoc">Get the column names for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:25</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_a224164ab3ec52859db88e68f5b220e0e"><div class="ttname"><a href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">orm::Model::getTableName</a></div><div class="ttdeci">static std::string getTableName()</div><div class="ttdoc">Get the table name for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:35</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_a224164ab3ec52859db88e68f5b220e0e"><div class="ttname"><a href="classorm_1_1Model.html#a224164ab3ec52859db88e68f5b220e0e">orm::Model::getTableName</a></div><div class="ttdeci">static std::string getTableName()</div><div class="ttdoc">Get the table name for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:25</div></div>
 <div class="ttc" id="aclassorm_1_1Model_html_ad30e884045d5fd23ed0e75aa69fe0507"><div class="ttname"><a href="classorm_1_1Model.html#ad30e884045d5fd23ed0e75aa69fe0507">orm::Model::getObject</a></div><div class="ttdeci">T &amp; getObject()</div><div class="ttdoc">Get the temporary object of the model.</div><div class="ttdef"><b>Definition</b> model.hpp:45</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_ae14d8edb8bf8be19e8455387d0003c5d"><div class="ttname"><a href="classorm_1_1Model.html#ae14d8edb8bf8be19e8455387d0003c5d">orm::Model::getColumnsInfo</a></div><div class="ttdeci">static std::vector&lt; model::ColumnInfo &gt; getColumnsInfo()</div><div class="ttdoc">Get the columns info for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:35</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
