@@ -19,16 +19,17 @@ TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
     orm::Model<OneFieldStruct> model;
 
-    EXPECT_EQ(model.getColumnNames().size(), 1);
-    EXPECT_EQ(model.getColumnNames()[0], "field1");
+    EXPECT_EQ(model.getColumnsInfo().size(), 1);
+    EXPECT_EQ(model.getColumnsInfo()[0].name, "field1");
+    EXPECT_EQ(model.getColumnsInfo()[0].type, "int");
 }
 
 TEST(ModelTest, StructWithTableName_shouldHaveTwoColumns)
 {
     orm::Model<StructWithTableName> model;
 
-    EXPECT_EQ(model.getColumnNames().size(), 2);
-    EXPECT_EQ(model.getColumnNames()[0], "field1");
-    EXPECT_EQ(model.getColumnNames()[1], "field2");
+    EXPECT_EQ(model.getColumnsInfo().size(), 2);
+    EXPECT_EQ(model.getColumnsInfo()[0].name, "field1");
+    EXPECT_EQ(model.getColumnsInfo()[1].name, "field2");
     EXPECT_EQ(model.getTableName(), StructWithTableName::table_name);
 }

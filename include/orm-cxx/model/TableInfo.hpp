@@ -15,7 +15,7 @@ namespace orm::model
  * @return The table name as a string view.
  */
 template <typename T>
-auto tableName() -> std::string
+auto getTableName() -> std::string
 {
     if constexpr (requires(T t) { t.table_name; })
     {
@@ -23,7 +23,7 @@ auto tableName() -> std::string
     }
 
     auto typeName = rfl::type_name_t<T>().str();
-    
+
     std::string del = " ";
 
     auto iter = typeName.find(del);

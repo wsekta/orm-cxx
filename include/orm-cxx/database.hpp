@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 #include "model.hpp"
 #include "model/Binding.hpp"
 #include "query.hpp"
@@ -32,6 +34,17 @@ public:
     template <typename T>
     auto insertObjects(const std::vector<T>& objects) -> void
     {
+        for (const auto& object : objects)
+        {
+            insertObject(object);
+        }
+    }
+
+    template <typename T>
+    auto insertObject(T object) -> void
+    {
+        Model<T> model;
+
         // TODO: Implement
     }
 
@@ -42,11 +55,11 @@ public:
 
         std::string query = "CREATE TABLE IF NOT EXISTS " + model.getTableName() + " (";
 
-        auto columnNames = model.getColumnNames();
+        auto columns = model.getColumnsInfo();
 
-        for (auto& columnName : columnNames)
+        for (auto& column : columns)
         {
-            query += columnName + " " + /*model::getBinding<T>(columnName)*/ "int" + ", ";
+            query += column.name + " " + column.type + ", ";
         }
 
         query.pop_back();
@@ -55,6 +68,8 @@ public:
         query += ");";
 
         sql << query;
+
+        std::cout << query << std::endl;
     }
 
     template <typename T>
