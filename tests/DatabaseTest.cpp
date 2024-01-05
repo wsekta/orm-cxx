@@ -18,10 +18,11 @@ struct SomeDataModel
     std::string field2;
 };
 
-auto generateSomeDataModel() -> SomeDataModel
+struct ModelWithOptional
 {
-    return {faker::Number::integer(512), faker::Lorem::word()};
-}
+    std::optional<int> field1;
+    std::optional<std::string> field2;
+};
 
 auto generateSomeDataModels(int count) -> std::vector<SomeDataModel>
 {
@@ -29,7 +30,7 @@ auto generateSomeDataModels(int count) -> std::vector<SomeDataModel>
 
     for (int i = 0; i < count; i++)
     {
-        result.push_back(generateSomeDataModel());
+        result.push_back({faker::Number::integer(512), faker::Lorem::word()});
     }
 
     return result;
@@ -88,4 +89,19 @@ TEST_F(DatabaseTest, shouldExecuteQuery)
     database.insertObjects(generateSomeDataModels(modelCount));
 
     EXPECT_EQ(database.executeQuery(query).size(), modelCount);
+
+    database.deleteTable<SomeDataModel>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertWithOptional)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithOptional>();
+
+    database.insertObjects(std::vector<ModelWithOptional>{{1, "test"}, {std::nullopt, std::nullopt}});
+
+    orm::Query<ModelWithOptional> queryForOptional;
+    EXPECT_EQ(database.executeQuery(queryForOptional).size(), 2);
+
+    database.deleteTable<ModelWithOptional>();
 }

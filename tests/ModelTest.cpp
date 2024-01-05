@@ -15,6 +15,12 @@ struct StructWithTableName
     int field2;
 };
 
+struct StructWithOptional
+{
+    std::optional<int> field1;
+    std::optional<std::string> field2;
+};
+
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
     orm::Model<OneFieldStruct> model;
@@ -33,4 +39,16 @@ TEST(ModelTest, StructWithTableName_shouldHaveTwoColumns)
     EXPECT_EQ(model.getColumnsInfo()[0].name, "field1");
     EXPECT_EQ(model.getColumnsInfo()[1].name, "field2");
     EXPECT_EQ(model.getTableName(), StructWithTableName::table_name);
+}
+
+TEST(ModelTest, StructWithOptional_shouldHaveTwoColumns)
+{
+    orm::Model<StructWithOptional> model;
+
+    EXPECT_EQ(model.getColumnsInfo().size(), 2);
+    EXPECT_EQ(model.getColumnsInfo()[0].name, "field1");
+    EXPECT_EQ(model.getColumnsInfo()[0].type, "int");
+    EXPECT_EQ(model.getColumnsInfo()[0].isNotNull, false);
+    EXPECT_EQ(model.getColumnsInfo()[1].name, "field2");
+    EXPECT_EQ(model.getColumnsInfo()[1].isNotNull, false);
 }

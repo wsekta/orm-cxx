@@ -39,16 +39,14 @@ private:
         }
         else
         {
-            // TODO: Implement this for optional
-            if constexpr (requires(Column t) { t.has_value(); })
+            if constexpr (requires(Column t) {
+                              t.has_value();
+                              t.value();
+                          })
             {
                 if (column->has_value())
                 {
                     v.set(columnInfo.name, column->value());
-                }
-                else
-                {
-                    v.set(columnInfo.name, nullptr, i_null);
                 }
             }
             else
