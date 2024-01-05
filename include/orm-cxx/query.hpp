@@ -19,6 +19,12 @@ template <typename T>
 class Query
 {
 public:
+    
+    /**
+     * @brief Sets the OFFSET clause for the query.
+     * @param offset The number of rows to skip.
+     * @return A reference to the QueryBuilder object.
+     */
     inline auto offset(std::size_t offset)
     {
         queryOffset = offset;
@@ -26,6 +32,11 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Sets the LIMIT clause for the query.
+     * @param limit The maximum number of rows to return.
+     * @return A reference to the QueryBuilder object.
+     */
     inline auto limit(std::size_t limit)
     {
         queryLimit = limit;
@@ -33,6 +44,10 @@ public:
         return *this;
     }
 
+    /**
+     * @brief Builds the SQL SELECT query string.
+     * @return The constructed query string.
+     */
     inline auto buildQuery() -> std::string const
     {
         using namespace std::string_literals;
@@ -54,7 +69,7 @@ public:
     }
 
 private:
-    std::optional<std::size_t> queryOffset = std::nullopt;
-    std::optional<std::size_t> queryLimit = std::nullopt;
+    std::optional<std::size_t> queryOffset = std::nullopt; /**< The optional OFFSET value for the query. */
+    std::optional<std::size_t> queryLimit = std::nullopt; /**< The optional LIMIT value for the query. */
 };
 }
