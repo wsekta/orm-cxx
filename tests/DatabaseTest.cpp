@@ -1,14 +1,15 @@
 #include "orm-cxx/database.hpp"
 
-#include <format>
 #include <gtest/gtest.h>
 
+#include "faker-cxx/Lorem.h"
+#include "faker-cxx/Number.h"
 #include "orm-cxx/query.hpp"
-#include "soci/sqlite3/soci-sqlite3.h"
 
 namespace
 {
 const std::string connectionString = "sqlite3://:memory:";
+int modelCount = 10;
 }
 
 struct SomeDataModel
@@ -16,6 +17,23 @@ struct SomeDataModel
     int field1;
     std::string field2;
 };
+
+auto generateSomeDataModel() -> SomeDataModel
+{
+    return {faker::Number::integer(512), faker::Lorem::word()};
+}
+
+auto generateSomeDataModels(int count) -> std::vector<SomeDataModel>
+{
+    std::vector<SomeDataModel> result;
+
+    for (int i = 0; i < count; i++)
+    {
+        result.push_back(generateSomeDataModel());
+    }
+
+    return result;
+}
 
 class DatabaseTest : public ::testing::Test
 {
@@ -67,7 +85,7 @@ TEST_F(DatabaseTest, shouldExecuteQuery)
 {
     database.connect(connectionString);
     database.createTable<SomeDataModel>();
-    database.insertObjects(std::vector<SomeDataModel>{{1, "test"}});
+    database.insertObjects(generateSomeDataModels(modelCount));
 
-    EXPECT_EQ(database.executeQuery(query).size(), 1);
+    EXPECT_EQ(database.executeQuery(query).size(), modelCount);
 }
