@@ -11,13 +11,33 @@
 
 namespace orm
 {
+/**
+ * @brief A class representing a database in the ORM framework.
+ *
+ * This class provides functionality for connecting to a database and executing queries.
+ */
 class Database
 {
 public:
+    /**
+     * @brief Constructs a new Database object.
+     */
     Database();
 
+    /**
+     * @brief Connects to a database.
+     *
+     * @param connectionString The connection string for the database.
+     */
     auto connect(const std::string& connectionString) -> void;
 
+    /**
+     * @brief Executes a query and returns the result.
+     *
+     * @tparam T The type of the query.
+     * @param query The query to execute.
+     * @return The result of the query.
+     */
     template <typename T>
     auto executeQuery(Query<T>& query) -> std::vector<T>
     {
@@ -33,6 +53,12 @@ public:
         return result;
     }
 
+    /**
+     * @brief Executes a insert query for multiple objects.
+     * 
+     * @tparam T The type of the query.
+     * @param query The query to execute.
+     */
     template <typename T>
     auto insertObjects(const std::vector<T>& objects) -> void
     {
@@ -42,6 +68,12 @@ public:
         }
     }
 
+    /**
+     * @brief Executes a insert query for a single object.
+     * 
+     * @tparam T The type of the query.
+     * @param query The query to execute.
+     */
     template <typename T>
     auto insertObject(T object) -> void
     {
@@ -75,6 +107,11 @@ public:
         sql << query, soci::use(model);
     }
 
+    /**
+     * @brief Execute a create table query for a model.
+     * 
+     * @tparam T The type of the model.
+     */
     template <typename T>
     auto createTable() -> void
     {
@@ -104,6 +141,11 @@ public:
         sql << query;
     }
 
+    /**
+     * @brief Execute a delete table query for a model.
+     * 
+     * @tparam T The type of the model.
+     */
     template <typename T>
     auto deleteTable() -> void
     {
@@ -114,6 +156,11 @@ public:
         sql << query;
     }
 
+    /**
+     * @brief Get the backend type of the database.
+     * 
+     * @return The backend type of the database.
+     */
     auto getBackendType() -> db::BackendType;
 
 private:
