@@ -97,36 +97,293 @@ $(function(){initNavTree('classorm_1_1Database.html',''); initResizable(); });
   <div class="headertitle"><div class="title">orm::Database Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>A class representing a database in the ORM framework.  
+ <a href="#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="database_8hpp_source.html">database.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a86f01ed300b1a8a7a74bedbf61e45fa2" id="r_a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memItemLeft" align="right" valign="top"><a id="a86f01ed300b1a8a7a74bedbf61e45fa2" name="a86f01ed300b1a8a7a74bedbf61e45fa2"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (const std::string &amp;connectionString) -&gt; void</td></tr>
+<tr class="memitem:a0cf947c50ac4c47b8478d66ec49a104b" id="r_a0cf947c50ac4c47b8478d66ec49a104b"><td class="memItemLeft" align="right" valign="top"><a id="a0cf947c50ac4c47b8478d66ec49a104b" name="a0cf947c50ac4c47b8478d66ec49a104b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Database</b> ()</td></tr>
+<tr class="memdesc:a0cf947c50ac4c47b8478d66ec49a104b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="A class representing a database in the ORM framework.">Database</a> object. <br /></td></tr>
+<tr class="separator:a0cf947c50ac4c47b8478d66ec49a104b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86f01ed300b1a8a7a74bedbf61e45fa2" id="r_a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a> (const std::string &amp;connectionString) -&gt; void</td></tr>
+<tr class="memdesc:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
 <tr class="separator:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af41f748692dc98235217513b453af02d" id="r_af41f748692dc98235217513b453af02d"><td class="memTemplParams" colspan="2"><a id="af41f748692dc98235217513b453af02d" name="af41f748692dc98235217513b453af02d"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:af41f748692dc98235217513b453af02d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>executeQuery</b> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
+<tr class="memitem:af41f748692dc98235217513b453af02d" id="r_af41f748692dc98235217513b453af02d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:af41f748692dc98235217513b453af02d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#af41f748692dc98235217513b453af02d">executeQuery</a> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
+<tr class="memdesc:af41f748692dc98235217513b453af02d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a query and returns the result.  <br /></td></tr>
 <tr class="separator:af41f748692dc98235217513b453af02d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a473affe96af0c7a8075b123ec59c8853" id="r_a473affe96af0c7a8075b123ec59c8853"><td class="memTemplParams" colspan="2"><a id="a473affe96af0c7a8075b123ec59c8853" name="a473affe96af0c7a8075b123ec59c8853"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a473affe96af0c7a8075b123ec59c8853"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>insertObjects</b> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
+<tr class="memitem:a473affe96af0c7a8075b123ec59c8853" id="r_a473affe96af0c7a8075b123ec59c8853"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a473affe96af0c7a8075b123ec59c8853"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a473affe96af0c7a8075b123ec59c8853">insertObjects</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
+<tr class="memdesc:a473affe96af0c7a8075b123ec59c8853"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for multiple objects.  <br /></td></tr>
 <tr class="separator:a473affe96af0c7a8075b123ec59c8853"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fd1496475387db8af973fe51ceb7d78" id="r_a7fd1496475387db8af973fe51ceb7d78"><td class="memTemplParams" colspan="2"><a id="a7fd1496475387db8af973fe51ceb7d78" name="a7fd1496475387db8af973fe51ceb7d78"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a7fd1496475387db8af973fe51ceb7d78"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>insertObject</b> (T object) -&gt; void</td></tr>
+<tr class="memitem:a7fd1496475387db8af973fe51ceb7d78" id="r_a7fd1496475387db8af973fe51ceb7d78"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a7fd1496475387db8af973fe51ceb7d78"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a7fd1496475387db8af973fe51ceb7d78">insertObject</a> (T object) -&gt; void</td></tr>
+<tr class="memdesc:a7fd1496475387db8af973fe51ceb7d78"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for a single object.  <br /></td></tr>
 <tr class="separator:a7fd1496475387db8af973fe51ceb7d78"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d" id="r_a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memTemplParams" colspan="2"><a id="a5dc553baa29a3ec7fd46b81e412ffa5d" name="a5dc553baa29a3ec7fd46b81e412ffa5d"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>createTable</b> () -&gt; void</td></tr>
+<tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d" id="r_a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a> () -&gt; void</td></tr>
+<tr class="memdesc:a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a create table query for a model.  <br /></td></tr>
 <tr class="separator:a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc8f4be2035069fa45881dfb498f2604" id="r_adc8f4be2035069fa45881dfb498f2604"><td class="memTemplParams" colspan="2"><a id="adc8f4be2035069fa45881dfb498f2604" name="adc8f4be2035069fa45881dfb498f2604"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:adc8f4be2035069fa45881dfb498f2604"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>deleteTable</b> () -&gt; void</td></tr>
+<tr class="memitem:adc8f4be2035069fa45881dfb498f2604" id="r_adc8f4be2035069fa45881dfb498f2604"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:adc8f4be2035069fa45881dfb498f2604"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="#adc8f4be2035069fa45881dfb498f2604">deleteTable</a> () -&gt; void</td></tr>
+<tr class="memdesc:adc8f4be2035069fa45881dfb498f2604"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a delete table query for a model.  <br /></td></tr>
 <tr class="separator:adc8f4be2035069fa45881dfb498f2604"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af5bf41d4644f6d3e8835bfbad5cb07a0" id="r_af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="memItemLeft" align="right" valign="top"><a id="af5bf41d4644f6d3e8835bfbad5cb07a0" name="af5bf41d4644f6d3e8835bfbad5cb07a0"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>getBackendType</b> () -&gt; db::BackendType</td></tr>
+<tr class="memitem:af5bf41d4644f6d3e8835bfbad5cb07a0" id="r_af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af5bf41d4644f6d3e8835bfbad5cb07a0">getBackendType</a> () -&gt; db::BackendType</td></tr>
+<tr class="memdesc:af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
 <tr class="separator:af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>A class representing a database in the ORM framework. </p>
+<p>This class provides functionality for connecting to a database and executing queries. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a86f01ed300b1a8a7a74bedbf61e45fa2" name="a86f01ed300b1a8a7a74bedbf61e45fa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86f01ed300b1a8a7a74bedbf61e45fa2">&#9670;&#160;</a></span>connect()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::connect </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span></td><td>)</td>
+          <td> -&gt;  void</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connects to a database. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">connectionString</td><td>The connection string for the database. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a5dc553baa29a3ec7fd46b81e412ffa5d" name="a5dc553baa29a3ec7fd46b81e412ffa5d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5dc553baa29a3ec7fd46b81e412ffa5d">&#9670;&#160;</a></span>createTable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::createTable </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
+          <td> -&gt; void
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Execute a create table query for a model. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the model. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="adc8f4be2035069fa45881dfb498f2604" name="adc8f4be2035069fa45881dfb498f2604"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adc8f4be2035069fa45881dfb498f2604">&#9670;&#160;</a></span>deleteTable()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::deleteTable </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
+          <td> -&gt; void
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Execute a delete table query for a model. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the model. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af41f748692dc98235217513b453af02d" name="af41f748692dc98235217513b453af02d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af41f748692dc98235217513b453af02d">&#9670;&#160;</a></span>executeQuery()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::executeQuery </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>query</em></span></td><td>)</td>
+          <td> -&gt; std::vector&lt;T&gt;
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes a query and returns the result. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the query. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The result of the query. </dd></dl>
+
+</div>
+</div>
+<a id="af5bf41d4644f6d3e8835bfbad5cb07a0" name="af5bf41d4644f6d3e8835bfbad5cb07a0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af5bf41d4644f6d3e8835bfbad5cb07a0">&#9670;&#160;</a></span>getBackendType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::getBackendType </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
+          <td> -&gt;  db::BackendType</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the backend type of the database. </p>
+<dl class="section return"><dt>Returns</dt><dd>The backend type of the database. </dd></dl>
+
+</div>
+</div>
+<a id="a7fd1496475387db8af973fe51ceb7d78" name="a7fd1496475387db8af973fe51ceb7d78"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7fd1496475387db8af973fe51ceb7d78">&#9670;&#160;</a></span>insertObject()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::insertObject </td>
+          <td>(</td>
+          <td class="paramtype">T</td>          <td class="paramname"><span class="paramname"><em>object</em></span></td><td>)</td>
+          <td> -&gt; void
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes a insert query for a single object. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the query. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a473affe96af0c7a8075b123ec59c8853" name="a473affe96af0c7a8075b123ec59c8853"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a473affe96af0c7a8075b123ec59c8853">&#9670;&#160;</a></span>insertObjects()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::insertObjects </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; T &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>objects</em></span></td><td>)</td>
+          <td> -&gt; void
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes a insert query for multiple objects. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the query. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/orm-cxx/<a class="el" href="database_8hpp_source.html">database.hpp</a></li>
 </ul>

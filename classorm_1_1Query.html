@@ -105,14 +105,14 @@ $(function(){initNavTree('classorm_1_1Query.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a3ca1c1020f82fbfe09b01dca8e73739f" id="r_a3ca1c1020f82fbfe09b01dca8e73739f"><td class="memItemLeft" align="right" valign="top"><a id="a3ca1c1020f82fbfe09b01dca8e73739f" name="a3ca1c1020f82fbfe09b01dca8e73739f"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>offset</b> (std::size_t offset)</td></tr>
+<tr class="memitem:a3ca1c1020f82fbfe09b01dca8e73739f" id="r_a3ca1c1020f82fbfe09b01dca8e73739f"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a> (std::size_t offset)</td></tr>
+<tr class="memdesc:a3ca1c1020f82fbfe09b01dca8e73739f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OFFSET clause for the query.  <br /></td></tr>
 <tr class="separator:a3ca1c1020f82fbfe09b01dca8e73739f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8cd9666afaab1ab92763b717520c9aef" id="r_a8cd9666afaab1ab92763b717520c9aef"><td class="memItemLeft" align="right" valign="top"><a id="a8cd9666afaab1ab92763b717520c9aef" name="a8cd9666afaab1ab92763b717520c9aef"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>limit</b> (std::size_t limit)</td></tr>
+<tr class="memitem:a8cd9666afaab1ab92763b717520c9aef" id="r_a8cd9666afaab1ab92763b717520c9aef"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8cd9666afaab1ab92763b717520c9aef">limit</a> (std::size_t limit)</td></tr>
+<tr class="memdesc:a8cd9666afaab1ab92763b717520c9aef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LIMIT clause for the query.  <br /></td></tr>
 <tr class="separator:a8cd9666afaab1ab92763b717520c9aef"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0734f8276645a20545a4a523f24a138e" id="r_a0734f8276645a20545a4a523f24a138e"><td class="memItemLeft" align="right" valign="top"><a id="a0734f8276645a20545a4a523f24a138e" name="a0734f8276645a20545a4a523f24a138e"></a>
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>buildQuery</b> () -&gt; std::string const</td></tr>
+<tr class="memitem:a0734f8276645a20545a4a523f24a138e" id="r_a0734f8276645a20545a4a523f24a138e"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0734f8276645a20545a4a523f24a138e">buildQuery</a> () -&gt; std::string const</td></tr>
+<tr class="memdesc:a0734f8276645a20545a4a523f24a138e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds the SQL SELECT query string.  <br /></td></tr>
 <tr class="separator:a0734f8276645a20545a4a523f24a138e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -125,7 +125,111 @@ class orm::Query&lt; T &gt;</div><p>A template class representing a query in the
   </table>
   </dd>
 </dl>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="a0734f8276645a20545a4a523f24a138e" name="a0734f8276645a20545a4a523f24a138e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0734f8276645a20545a4a523f24a138e">&#9670;&#160;</a></span>buildQuery()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::buildQuery </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
+          <td> -&gt; std::string const
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Builds the SQL SELECT query string. </p>
+<dl class="section return"><dt>Returns</dt><dd>The constructed query string. </dd></dl>
+
+</div>
+</div>
+<a id="a8cd9666afaab1ab92763b717520c9aef" name="a8cd9666afaab1ab92763b717520c9aef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8cd9666afaab1ab92763b717520c9aef">&#9670;&#160;</a></span>limit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::limit </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>limit</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the LIMIT clause for the query. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">limit</td><td>The maximum number of rows to return. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the QueryBuilder object. </dd></dl>
+
+</div>
+</div>
+<a id="a3ca1c1020f82fbfe09b01dca8e73739f" name="a3ca1c1020f82fbfe09b01dca8e73739f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3ca1c1020f82fbfe09b01dca8e73739f">&#9670;&#160;</a></span>offset()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::offset </td>
+          <td>(</td>
+          <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>offset</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Sets the OFFSET clause for the query. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">offset</td><td>The number of rows to skip. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the QueryBuilder object. </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>include/orm-cxx/<a class="el" href="query_8hpp_source.html">query.hpp</a></li>
 </ul>
 </div><!-- contents -->
