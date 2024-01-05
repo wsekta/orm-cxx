@@ -42,12 +42,12 @@ public:
      *
      * @return Reference to the temporary object.
      */
-    inline T& getObject()
+    inline T& getObject() const
     {
         return object;
     }
 
 private:
-    T object;
+    mutable T object;
 };
 }

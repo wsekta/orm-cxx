@@ -4,17 +4,22 @@
 
 #include "soci/empty/soci-empty.h"
 
+namespace
+{
+const std::regex sqliteRegex("sqlite3\\:\\/\\/.*");
+}
+
 namespace orm
 {
 Database::Database() : sql(), backendType(db::BackendType::Empty), typeTranslatorFactory() {}
 
 auto Database::connect(const std::string& connectionString) -> void
 {
-    const std::regex sqliteRegex("sqlite3\\:\\/\\/.*");
     if (std::regex_match(connectionString, sqliteRegex))
     {
         backendType = db::BackendType::Sqlite;
     }
+
     sql.open(connectionString);
 }
 

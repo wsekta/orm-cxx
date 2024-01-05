@@ -22,6 +22,7 @@ TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
     EXPECT_EQ(model.getColumnsInfo().size(), 1);
     EXPECT_EQ(model.getColumnsInfo()[0].name, "field1");
     EXPECT_EQ(model.getColumnsInfo()[0].type, "int");
+    EXPECT_EQ(model.getColumnsInfo()[0].isNotNull, true);
 }
 
 TEST(ModelTest, StructWithTableName_shouldHaveTwoColumns)

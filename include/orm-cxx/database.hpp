@@ -88,6 +88,11 @@ public:
         {
             auto sqlType = typeTranslatorFactory.getTranslator(backendType)->toSqlType(column.type);
 
+            if (column.isNotNull)
+            {
+                sqlType += " NOT NULL";
+            }
+
             query += column.name + " " + sqlType + ", ";
         }
 

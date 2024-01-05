@@ -1,8 +1,14 @@
 #pragma once
 
+#include <regex>
 #include <rfl.hpp>
 #include <string>
 #include <vector>
+
+namespace
+{
+const std::regex optionalRegex("std\\:\\:optional\\<(.*)\\>");
+}
 
 namespace orm::model
 {
@@ -29,7 +35,17 @@ auto getColumnsInfo() -> std::vector<ColumnInfo>
         ColumnInfo columnInfo;
 
         columnInfo.name = field.name();
-        columnInfo.type = field.type();
+
+        if (std::regex_match(field.type(), optionalRegex))
+        {
+            columnInfo.type = std::regex_replace(field.type(), optionalRegex, "$1");
+            columnInfo.isNotNull = false;
+        }
+        else
+        {
+            columnInfo.type = field.type();
+            columnInfo.isNotNull = true;
+        }
 
         columnsInfo.push_back(columnInfo);
     }

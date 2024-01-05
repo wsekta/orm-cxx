@@ -36,7 +36,7 @@ add_subdirectory(externals/soci)
 set(LIBRARY_NAME ${PROJECT_NAME})
 
 set(SOURCES
-        src/database.cpp
+        src/Database.cpp
         src/database/sqlite/SqliteTypeTranslator.cpp
         src/database/TypeTranslatorFactory.cpp
 )
