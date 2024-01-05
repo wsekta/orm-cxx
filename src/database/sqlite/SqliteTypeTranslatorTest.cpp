@@ -19,3 +19,8 @@ TEST_F(SqliteTypeTranslatorTest, shouldTranslateString)
 {
     EXPECT_EQ(translator.toSqlType("std::basic_string<char>"), "TEXT");
 }
+
+TEST_F(SqliteTypeTranslatorTest, shouldTranslateGxxString)
+{
+    EXPECT_EQ(translator.toSqlType("std::__cxx11::basic_string<char>"), "TEXT");
+}
