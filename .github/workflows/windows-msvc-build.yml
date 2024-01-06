@@ -19,10 +19,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Setup anew (or from cache) vcpkg (and does not build any package)
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgDirectory: '${{ github.workspace }}/externals/reflect-cpp/vcpkg'
+      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/bootstrap-vcpkg.bat \
+          && ${{ github.workspace }}/externals/reflect-cpp/vcpkg/vcpkg.exe install
 
       - run: cmake -E make_directory build
 
