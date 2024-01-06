@@ -19,8 +19,9 @@ jobs:
         with:
           submodules: recursive
 
-      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/bootstrap-vcpkg.bat \
-          && ${{ github.workspace }}/externals/reflect-cpp/vcpkg/vcpkg.exe install
+      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/bootstrap-vcpkg.bat
+      
+      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/vcpkg.exe install
 
       - run: cmake -E make_directory build
 
