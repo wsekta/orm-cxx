@@ -24,7 +24,6 @@ jobs:
         with:
           vcpkgDirectory: '${{ github.workspace }}/externals/reflect-cpp/vcpkg'
           runVcpkgInstall: true
-          vcpkgJsonGlob: '**/vcpkg.json'
 
       - run: cmake -E make_directory build
 
