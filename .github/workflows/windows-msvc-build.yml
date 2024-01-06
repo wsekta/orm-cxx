@@ -23,7 +23,6 @@ jobs:
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgDirectory: '${{ github.workspace }}/externals/reflect-cpp/vcpkg'
-          runVcpkgInstall: true
 
       - run: cmake -E make_directory build
 
