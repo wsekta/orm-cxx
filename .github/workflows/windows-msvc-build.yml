@@ -25,6 +25,8 @@ jobs:
 
       - run: cmake -E make_directory build
 
+      - uses: seanmiddleditch/gha-setup-ninja@master
+
       - working-directory: build/
         run: cmake .. -GNinja -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
