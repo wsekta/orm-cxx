@@ -7,7 +7,7 @@
 
 namespace
 {
-const std::regex optionalRegex("std\\:\\:optional\\<(.*)\\>");
+const std::regex optionalRegex("(class )?std\\:\\:optional\\<(.*)\\>");
 }
 
 namespace orm::model
@@ -38,7 +38,7 @@ auto getColumnsInfo() -> std::vector<ColumnInfo>
 
         if (std::regex_match(field.type(), optionalRegex))
         {
-            columnInfo.type = std::regex_replace(field.type(), optionalRegex, "$1");
+            columnInfo.type = std::regex_replace(field.type(), optionalRegex, "$2");
             columnInfo.isNotNull = false;
         }
         else

@@ -19,15 +19,17 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Choco help
-        uses: crazy-max/ghaction-chocolatey@v3
+      - name: Setup anew (or from cache) vcpkg (and does not build any package)
+        uses: lukka/run-vcpkg@v11
         with:
-          args: install sqlite
+          vcpkgDirectory: '${{ github.workspace }}/externals/reflect-cpp/vcpkg'
+          runVcpkgInstall: true
+          vcpkgJsonGlob: '**/vcpkg.json'
 
       - run: cmake -E make_directory build
 
       - working-directory: build/
-        run: cmake .. -G "Visual Studio 17 2022"
+        run: cmake .. -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
       - working-directory: build/
         run: cmake --build .

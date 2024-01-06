@@ -73,15 +73,22 @@ if (BUILD_ORM_CXX_TESTS)
 
     add_executable(${LIBRARY_NAME}-UT ${UT_SOURCES})
 
-    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx soci_sqlite3)
+    target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
 
     target_include_directories(
             ${LIBRARY_NAME}-UT
             PRIVATE ${FMT_INCLUDE_DIR} ${GTEST_INCLUDE_DIR} ${GMOCK_INCLUDE_DIR}
             ${CMAKE_CURRENT_LIST_DIR})
 
-    add_test(
-            NAME ${LIBRARY_NAME}-UT
-            COMMAND ${LIBRARY_NAME}-UT
-            WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    if (MSVC)
+        add_test(
+                NAME ${LIBRARY_NAME}-UT
+                COMMAND ${LIBRARY_NAME}-UT
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/build/bin)
+    else ()
+        add_test(
+                NAME ${LIBRARY_NAME}-UT
+                COMMAND ${LIBRARY_NAME}-UT
+                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
+    endif()
 endif ()

@@ -33,3 +33,5 @@
 
 *build*/
 .idea/
+.vscode/
+vcpkg_installed/

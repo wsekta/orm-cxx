@@ -1,0 +1,8 @@
+{
+    "name": "orm-cxx",
+    "dependencies": [
+      {
+        "name": "sqlite3"
+      }
+    ]
+  }

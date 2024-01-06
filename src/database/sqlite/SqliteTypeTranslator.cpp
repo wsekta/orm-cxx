@@ -5,7 +5,7 @@
 
 namespace
 {
-const std::regex stringRegex{R"(std.*::basic_string<.*>)"};
+const std::regex stringRegex{R"((class )?std.*::basic_string<.*>\W?)"};
 }
 
 namespace orm::db::sqlite
