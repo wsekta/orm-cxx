@@ -20,13 +20,13 @@ jobs:
           submodules: recursive
 
       - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/bootstrap-vcpkg.bat
-      
+
       - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/vcpkg.exe install
 
       - run: cmake -E make_directory build
 
       - working-directory: build/
-        run: cmake .. -G "Visual Studio 17 2022" -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake"
+        run: cmake .. -GNinja -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake"
 
       - working-directory: build/
         run: cmake --build .
