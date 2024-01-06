@@ -25,13 +25,12 @@ jobs:
 
       - run: cmake -E make_directory build
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1.1
+      - uses: seanmiddleditch/gha-setup-vsdevenv@master
 
       - uses: seanmiddleditch/gha-setup-ninja@master
 
       - working-directory: build/
-        run: cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_COMPILER=cl -DCMAKE_C_COMPILER=cl
+        run: cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
 
       - working-directory: build/
         run: cmake --build .
