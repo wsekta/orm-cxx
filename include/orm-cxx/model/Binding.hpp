@@ -12,24 +12,50 @@ struct type_conversion<orm::Model<T>>
 {
     typedef values base_type;
 
-    static void from_base(values const& /*value*/, indicator /*ind*/, orm::Model<T>& /*model*/)
+    static void from_base(const values& v, indicator ind, orm::Model<T>& model)
     {
-        // TODO: Implement this
+        if (ind == i_null)
+        {
+            return;
+        }
+
+        auto columns = model.getColumnsInfo();
+        auto& modelAsTuple = model.getObject();
+        auto view = rfl::to_view(modelAsTuple);
+
+        getObjectFromValues(view.values(), columns, v);
     }
 
     static void to_base(const orm::Model<T>& model, values& v, indicator& ind)
     {
         auto columns = model.getColumnsInfo();
-        auto& object = model.getObject();
-        auto view = rfl::to_view(object);
+        auto& modelAsTuple = model.getObject();
+        auto view = rfl::to_view(modelAsTuple);
 
-        setColumnTupleGetSize(view.values(), columns, v);
+        setObjectToValues(view.values(), columns, v);
+
+        ind = i_ok;
     }
 
 private:
-    template <typename Column>
-    static void setColumn(std::size_t i, const Column* column, std::vector<orm::model::ColumnInfo>& columnsInfo,
-                          values& v)
+    // setting model to values
+    template <typename ModelAsTuple, std::size_t TupleSize = std::tuple_size_v<ModelAsTuple>>
+    static void setObjectToValues(const ModelAsTuple& modelAsTuple,
+                                  const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
+    {
+        setObjectFoldIteration(modelAsTuple, std::make_index_sequence<TupleSize>{}, columnsInfo, v);
+    }
+
+    template <typename ModelAsTuple, std::size_t... Is>
+    static void setObjectFoldIteration(const ModelAsTuple& modelAsTuple, std::index_sequence<Is...>,
+                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
+    {
+        (setObjectFieldToValues(Is, std::get<Is>(modelAsTuple), columnsInfo, v), ...);
+    }
+
+    template <typename ModelField>
+    static void setObjectFieldToValues(std::size_t i, const ModelField* column,
+                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
     {
         auto& columnInfo = columnsInfo[i];
 
@@ -39,7 +65,7 @@ private:
         }
         else
         {
-            if constexpr (requires(Column t) {
+            if constexpr (requires(ModelField t) {
                               t.has_value();
                               t.value();
                           })
@@ -56,18 +82,25 @@ private:
         }
     };
 
-    template <typename TupleColumns, std::size_t... Is>
-    static void setColumnTupleManual(const TupleColumns& tp, std::index_sequence<Is...>,
-                                     std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
+    // getting model from values
+    template <typename ModelAsTuple, std::size_t TupleSize = std::tuple_size_v<ModelAsTuple>>
+    static void getObjectFromValues(ModelAsTuple& modelAsTuple, const std::vector<orm::model::ColumnInfo>& columnsInfo,
+                                    const values& v)
     {
-        (setColumn(Is, std::get<Is>(tp), columnsInfo, v), ...);
+        getObjectFoldIteration(modelAsTuple, std::make_index_sequence<TupleSize>{}, columnsInfo, v);
     }
 
-    template <typename TupleColumns, std::size_t TupSize = std::tuple_size_v<TupleColumns>>
-    static void setColumnTupleGetSize(const TupleColumns& tp, std::vector<orm::model::ColumnInfo>& columnsInfo,
-                                      values& v)
+    template <typename ModelAsTuple, std::size_t... Is>
+    static void getObjectFoldIteration(ModelAsTuple& modelAsTuple, std::index_sequence<Is...>,
+                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
     {
-        setColumnTupleManual(tp, std::make_index_sequence<TupSize>{}, columnsInfo, v);
+        (getObjectFieldFromValues(Is, std::get<Is>(modelAsTuple), columnsInfo, v), ...);
     }
+
+    template <typename ModelField>
+    static void getObjectFieldFromValues(std::size_t i, ModelField* column,
+                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v){
+        // TODO: implement
+    };
 };
 }
