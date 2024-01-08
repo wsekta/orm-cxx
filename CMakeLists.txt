@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED YES)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BUILD_ORM_CXX_TESTS DEFAULT ON)
+option(BUILD_ORM_CXX_EXAMPLE DEFAULT ON)
 
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20 /permissive- /bigobj")
@@ -91,4 +92,8 @@ if (BUILD_ORM_CXX_TESTS)
                 COMMAND ${LIBRARY_NAME}-UT
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     endif()
+endif ()
+
+if (BUILD_ORM_CXX_EXAMPLE)
+    add_subdirectory(examples)
 endif ()
