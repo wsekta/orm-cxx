@@ -74,6 +74,10 @@ private:
                 {
                     v.set(columnInfo.name, column->value());
                 }
+                else
+                {
+                    v.set(columnInfo.name, decltype(column->value()){}, soci::i_null);
+                }
             }
             else
             {
@@ -99,8 +103,35 @@ private:
 
     template <typename ModelField>
     static void getObjectFieldFromValues(std::size_t i, ModelField* column,
-                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v){
-        // TODO: implement
-    };
+                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
+    {
+        auto& columnInfo = columnsInfo[i];
+
+        if (columnInfo.isNotNull)
+        {
+            *column = v.get<ModelField>(columnInfo.name);
+        }
+        else
+        {
+            if constexpr (requires(ModelField t) {
+                    t.has_value();
+                    t.value();
+                })
+            {
+                if (v.get_indicator(columnInfo.name) == i_null)
+                {
+                    *column = std::nullopt;
+                }
+                else
+                {
+                    *column = v.get<ModelField>(columnInfo.name);
+                }
+                }
+            else
+            {
+                //throw std::runtime_error(R"(Not optional "NotNull" column)");
+            }
+        }
+    }
 };
 }

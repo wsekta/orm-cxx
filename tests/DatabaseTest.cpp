@@ -24,13 +24,14 @@ struct ModelWithOptional
     std::optional<std::string> field2;
 };
 
-auto generateSomeDataModels(int count) -> std::vector<SomeDataModel>
+template <typename T>
+auto generateSomeDataModels(int count) -> std::vector<T>
 {
-    std::vector<SomeDataModel> result;
+    std::vector<T> result;
 
     for (int i = 0; i < count; i++)
     {
-        result.push_back({faker::Number::integer(512), faker::Lorem::word()});
+        result.emplace_back(faker::Number::integer(512), faker::Lorem::word());
     }
 
     return result;
@@ -82,26 +83,63 @@ TEST_F(DatabaseTest, shouldExecuteQueryWhenTableIsEmpty_returnEmptyVector)
     EXPECT_EQ(database.executeQuery(query).size(), 0);
 }
 
-TEST_F(DatabaseTest, shouldExecuteQuery)
+TEST_F(DatabaseTest, shouldExecuteInsertQuery)
 {
     database.connect(connectionString);
     database.createTable<SomeDataModel>();
-    database.insertObjects(generateSomeDataModels(modelCount));
+    database.insertObjects(generateSomeDataModels<SomeDataModel>(modelCount));
 
     EXPECT_EQ(database.executeQuery(query).size(), modelCount);
 
     database.deleteTable<SomeDataModel>();
 }
 
-TEST_F(DatabaseTest, shouldExecuteInsertWithOptional)
+TEST_F(DatabaseTest, shouldExecuteInsertQueryWithOptional)
 {
     database.connect(connectionString);
     database.createTable<ModelWithOptional>();
 
-    database.insertObjects(std::vector<ModelWithOptional>{{1, "test"}, {std::nullopt, std::nullopt}});
+    database.insertObjects(generateSomeDataModels<ModelWithOptional>(modelCount));
 
     orm::Query<ModelWithOptional> queryForOptional;
-    EXPECT_EQ(database.executeQuery(queryForOptional).size(), 2);
+    EXPECT_EQ(database.executeQuery(queryForOptional).size(), modelCount);
+
+    database.deleteTable<ModelWithOptional>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<SomeDataModel>();
+    auto models = generateSomeDataModels<SomeDataModel>(modelCount);
+    database.insertObjects(models);
+    auto returnedModels = database.executeQuery(query);
+
+    for (int i = 0; i < modelCount; i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+    }
+
+    database.deleteTable<SomeDataModel>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithOptional>();
+    auto models = generateSomeDataModels<ModelWithOptional>(modelCount);
+    models[0].field1 = std::nullopt;
+    models[0].field2 = std::nullopt;
+    database.insertObjects(models);
+    orm::Query<ModelWithOptional> queryForOptional;
+    auto returnedModels = database.executeQuery(queryForOptional);
+
+    for (int i = 0; i < models.size(); i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+    }
 
     database.deleteTable<ModelWithOptional>();
 }
