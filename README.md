@@ -64,6 +64,7 @@ https://wsekta.github.io/orm-cxx/
 
     ```cmake
     set(BUILD_CONFIG_CXX_TESTS OFF)
+    set(BUILD_ORM_CXX_EXAMPLE OFF)
     
     add_subdirectory(externals/orm-cxx)
     
@@ -87,6 +88,6 @@ https://wsekta.github.io/orm-cxx/
 
 ## ✨ Contributing
 
-Feel free to join Config C++ development! 🚀
+Feel free to join ORM C++ development! 🚀
 
 Please check [CONTRIBUTING](https://github.com/wsekta/orm-cxx/blob/main/CONTRIBUTING.md) guide.
