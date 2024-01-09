@@ -16,7 +16,7 @@ auto SqliteTypeTranslator::toSqlType(const std::string& type) const -> std::stri
     {
         return "INTEGER";
     }
-    else if (type == "float")
+    else if (type == "double")
     {
         return "REAL";
     }
@@ -42,7 +42,7 @@ auto SqliteTypeTranslator::toCppType(const std::string& type) const -> std::stri
     }
     else if (type == "REAL")
     {
-        return "float";
+        return "double";
     }
     else if (type == "BLOB")
     {

@@ -114,9 +114,9 @@ private:
         else
         {
             if constexpr (requires(ModelField t) {
-                    t.has_value();
-                    t.value();
-                })
+                              t.has_value();
+                              t.value();
+                          })
             {
                 if (v.get_indicator(columnInfo.name) == i_null)
                 {
@@ -126,10 +126,10 @@ private:
                 {
                     *column = v.get<ModelField>(columnInfo.name);
                 }
-                }
+            }
             else
             {
-                //throw std::runtime_error(R"(Not optional "NotNull" column)");
+                throw std::runtime_error(R"(Try to read null value from database to not optional field)");
             }
         }
     }

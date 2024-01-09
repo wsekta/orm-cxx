@@ -55,7 +55,7 @@ public:
 
     /**
      * @brief Executes a insert query for multiple objects.
-     * 
+     *
      * @tparam T The type of the query.
      * @param query The query to execute.
      */
@@ -70,7 +70,7 @@ public:
 
     /**
      * @brief Executes a insert query for a single object.
-     * 
+     *
      * @tparam T The type of the query.
      * @param query The query to execute.
      */
@@ -109,7 +109,7 @@ public:
 
     /**
      * @brief Execute a create table query for a model.
-     * 
+     *
      * @tparam T The type of the model.
      */
     template <typename T>
@@ -143,7 +143,7 @@ public:
 
     /**
      * @brief Execute a delete table query for a model.
-     * 
+     *
      * @tparam T The type of the model.
      */
     template <typename T>
@@ -158,7 +158,7 @@ public:
 
     /**
      * @brief Get the backend type of the database.
-     * 
+     *
      * @return The backend type of the database.
      */
     auto getBackendType() -> db::BackendType;

@@ -15,30 +15,30 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 ## Usage
 
 ```c++
-#include "orm-cxx/orm.hpp"
-
 #include <optional>
+
+#include "orm-cxx/orm.hpp"
 
 struct ObjectModel
 {
-  std::optional<int> filed1;
-  std::string field2; //not null
+    std::optional<int> filed1;
+    std::string field2; // not null
 };
 
 int main()
 {
-    //connect with standard connection string
+    // connect with standard connection string
     orm::Database database;
     database.connect("sqlite3://test.db");
 
-    //create table in database
+    // create table in database
     database.createTable<ObjectModel>();
 
-    //create objects and insert them into table
-    std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt,"text"}};
+    // create objects and insert them into table
+    std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
     database.insertObjects(objects);
 
-    //query objects from database
+    // query objects from database
     orm::Query<ObjectModel> query;
     auto queriedObjects = database.executeQuery(query);
 
@@ -54,24 +54,24 @@ https://wsekta.github.io/orm-cxx/
 
 1. Add config to git submodules (execute in project root):
 
-    ```
-    mkdir externals
-    cd externals
-    git submodule add https://github.com/wsekta/orm-cxx.git
-    ```
+ ```bash
+ mkdir externals
+ cd externals
+ git submodule add https://github.com/wsekta/orm-cxx.git
+ ```
 
 2. Link with library:
 
-    ```cmake
-    set(BUILD_CONFIG_CXX_TESTS OFF)
-    set(BUILD_ORM_CXX_EXAMPLE OFF)
-    
-    add_subdirectory(externals/orm-cxx)
-    
-    add_executable(main Main.cpp)
-    
-    target_link_libraries(main orm-cxx)
-    ```
+ ```cmake
+ set(BUILD_CONFIG_CXX_TESTS OFF)
+set(BUILD_ORM_CXX_EXAMPLE OFF)
+
+add_subdirectory(externals/orm-cxx)
+
+add_executable(main Main.cpp)
+
+target_link_libraries(main orm-cxx)
+ ```
 
 ## Compiler support
 

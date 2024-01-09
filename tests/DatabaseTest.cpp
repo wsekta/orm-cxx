@@ -16,12 +16,14 @@ struct SomeDataModel
 {
     int field1;
     std::string field2;
+    double field3;
 };
 
 struct ModelWithOptional
 {
     std::optional<int> field1;
     std::optional<std::string> field2;
+    std::optional<double> field3;
 };
 
 template <typename T>
@@ -29,9 +31,9 @@ auto generateSomeDataModels(int count) -> std::vector<T>
 {
     std::vector<T> result;
 
-    for (int i = 0; i < count; i++)
+    for (std::size_t i = 0; i < count; i++)
     {
-        result.emplace_back(faker::Number::integer(512), faker::Lorem::word());
+        result.emplace_back(faker::Number::integer(512), faker::Lorem::word(), faker::Number::decimal(-1.0, 1.0));
     }
 
     return result;
@@ -115,7 +117,7 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSame)
     database.insertObjects(models);
     auto returnedModels = database.executeQuery(query);
 
-    for (int i = 0; i < modelCount; i++)
+    for (std::size_t i = 0; i < modelCount; i++)
     {
         EXPECT_EQ(models[i].field1, returnedModels[i].field1);
         EXPECT_EQ(models[i].field2, returnedModels[i].field2);
@@ -135,7 +137,7 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesSh
     orm::Query<ModelWithOptional> queryForOptional;
     auto returnedModels = database.executeQuery(queryForOptional);
 
-    for (int i = 0; i < models.size(); i++)
+    for (std::size_t i = 0; i < models.size(); i++)
     {
         EXPECT_EQ(models[i].field1, returnedModels[i].field1);
         EXPECT_EQ(models[i].field2, returnedModels[i].field2);

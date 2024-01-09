@@ -19,7 +19,6 @@ template <typename T>
 class Query
 {
 public:
-    
     /**
      * @brief Sets the OFFSET clause for the query.
      * @param offset The number of rows to skip.
@@ -70,6 +69,6 @@ public:
 
 private:
     std::optional<std::size_t> queryOffset = std::nullopt; /**< The optional OFFSET value for the query. */
-    std::optional<std::size_t> queryLimit = std::nullopt; /**< The optional LIMIT value for the query. */
+    std::optional<std::size_t> queryLimit = std::nullopt;  /**< The optional LIMIT value for the query. */
 };
 }
