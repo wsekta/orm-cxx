@@ -33,6 +33,15 @@ struct ModelWithId
     std::string field2;
 };
 
+struct ModelWithOverwrittenId
+{
+    int id;
+    int field1;
+    std::string field2;
+
+    inline static const std::vector<std::string> id_columns = {"field1", "field2"};
+};
+
 template <typename T>
 auto generateSomeDataModels(int count) -> std::vector<T>
 {
@@ -159,4 +168,12 @@ TEST_F(DatabaseTest, shouldCreateTableWithIdColumn)
     database.createTable<ModelWithId>();
 
     database.deleteTable<ModelWithId>();
+}
+
+TEST_F(DatabaseTest, shouldCreateTableWithOverwrittenIdColumn)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithOverwrittenId>();
+
+    database.deleteTable<ModelWithOverwrittenId>();
 }

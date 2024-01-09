@@ -21,9 +21,20 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 struct ObjectModel
 {
+    // INTEGER - if field is optional it will not be marked as NOT NULL
     std::optional<int> field1;
-    std::string field2; // not null
+
+    // TEXT NOT NULL
+    std::string field2;
+
+    // defining id_columns is optional
     inline static const std::vector<std::string> id_columns = {"field1", "field2"};
+
+    // other way to define id column - will be over writen by using id_columns
+    // int id;
+
+    // defining table_name is optional
+    inline static const std::string table_name = "object_model";
 };
 
 int main()
