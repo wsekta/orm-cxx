@@ -115,11 +115,11 @@ public:
     template <typename T>
     auto createTable() -> void
     {
-        Model<T> model;
+        auto modelInfo = Model<T>::getModelInfo();
 
-        std::string query = "CREATE TABLE IF NOT EXISTS " + model.getModelInfo().tableName + " (";
+        std::string query = "CREATE TABLE IF NOT EXISTS " + modelInfo.tableName + " (";
 
-        auto columns = model.getModelInfo().columnsInfo;
+        auto& columns = modelInfo.columnsInfo;
 
         for (auto& column : columns)
         {
@@ -133,8 +133,25 @@ public:
             query += column.name + " " + sqlType + ", ";
         }
 
-        query.pop_back();
-        query.pop_back();
+        if (modelInfo.idColumnsNames.empty())
+        {
+            query.pop_back();
+            query.pop_back();
+        }
+        else
+        {
+            query += "PRIMARY KEY (";
+
+            for (auto& idColumn : modelInfo.idColumnsNames)
+            {
+                query += idColumn + ", ";
+            }
+
+            query.pop_back();
+            query.pop_back();
+
+            query += ")";
+        }
 
         query += ");";
 

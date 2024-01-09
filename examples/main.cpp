@@ -4,8 +4,9 @@
 
 struct ObjectModel
 {
-    std::optional<int> filed1;
+    std::optional<int> field1;
     std::string field2; // not null
+    inline static const std::vector<std::string> id_columns = {"field1", "field2"};
 };
 
 int main()
@@ -13,6 +14,9 @@ int main()
     // connect with standard connection string
     orm::Database database;
     database.connect("sqlite3://test.db");
+
+    // drop table if exists
+    database.deleteTable<ObjectModel>();
 
     // create table in database
     database.createTable<ObjectModel>();

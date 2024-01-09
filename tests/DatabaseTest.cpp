@@ -26,6 +26,13 @@ struct ModelWithOptional
     std::optional<double> field3;
 };
 
+struct ModelWithId
+{
+    int id;
+    int field1;
+    std::string field2;
+};
+
 template <typename T>
 auto generateSomeDataModels(int count) -> std::vector<T>
 {
@@ -144,4 +151,12 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesSh
     }
 
     database.deleteTable<ModelWithOptional>();
+}
+
+TEST_F(DatabaseTest, shouldCreateTableWithIdColumn)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithId>();
+
+    database.deleteTable<ModelWithId>();
 }

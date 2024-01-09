@@ -17,7 +17,7 @@ namespace orm::model
 template <typename T>
 auto getTableName() -> std::string
 {
-    if constexpr (requires(T t) { t.table_name; })
+    if constexpr (requires { T::table_name; })
     {
         return std::string(T::table_name);
     }

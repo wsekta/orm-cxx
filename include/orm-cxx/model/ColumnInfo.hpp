@@ -3,6 +3,7 @@
 #include <regex>
 #include <rfl.hpp>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace
@@ -24,15 +25,15 @@ struct ColumnInfo
 };
 
 template <typename T>
-auto getColumnsInfo() -> std::vector<ColumnInfo>
+auto getColumnsInfo(const std::unordered_set<std::string>& ids = {}) -> std::vector<ColumnInfo>
 {
     auto fields = rfl::fields<T>();
 
-    std::vector<ColumnInfo> columnsInfo;
+    std::vector<ColumnInfo> columnsInfo{};
 
     for (const auto& field : fields)
     {
-        ColumnInfo columnInfo;
+        ColumnInfo columnInfo{};
 
         columnInfo.name = field.name();
 
@@ -45,6 +46,11 @@ auto getColumnsInfo() -> std::vector<ColumnInfo>
         {
             columnInfo.type = field.type();
             columnInfo.isNotNull = true;
+        }
+
+        if (ids.contains(field.name()))
+        {
+            columnInfo.isPrimaryKey = true;
         }
 
         columnsInfo.push_back(columnInfo);
