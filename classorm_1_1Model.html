@@ -106,21 +106,18 @@ $(function(){initNavTree('classorm_1_1Model.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a577d30c6646c56e34c219795a97dd746" id="r_a577d30c6646c56e34c219795a97dd746"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a577d30c6646c56e34c219795a97dd746">getObject</a> () <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">const</a></td></tr>
+<tr class="memitem:a577d30c6646c56e34c219795a97dd746" id="r_a577d30c6646c56e34c219795a97dd746"><td class="memItemLeft" align="right" valign="top">T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a577d30c6646c56e34c219795a97dd746">getObject</a> () const</td></tr>
 <tr class="memdesc:a577d30c6646c56e34c219795a97dd746"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the temporary object of the model.  <br /></td></tr>
 <tr class="separator:a577d30c6646c56e34c219795a97dd746"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a224164ab3ec52859db88e68f5b220e0e" id="r_a224164ab3ec52859db88e68f5b220e0e"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">getTableName</a> ()</td></tr>
-<tr class="memdesc:a224164ab3ec52859db88e68f5b220e0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the table name for the model.  <br /></td></tr>
-<tr class="separator:a224164ab3ec52859db88e68f5b220e0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae14d8edb8bf8be19e8455387d0003c5d" id="r_ae14d8edb8bf8be19e8455387d0003c5d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">static</a> std::vector&lt; model::ColumnInfo &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ae14d8edb8bf8be19e8455387d0003c5d">getColumnsInfo</a> ()</td></tr>
-<tr class="memdesc:ae14d8edb8bf8be19e8455387d0003c5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the columns info for the model.  <br /></td></tr>
-<tr class="separator:ae14d8edb8bf8be19e8455387d0003c5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0738b46984022add43e8eb2b93186f1d" id="r_a0738b46984022add43e8eb2b93186f1d"><td class="memItemLeft" align="right" valign="top">static model::ModelInfo &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0738b46984022add43e8eb2b93186f1d">getModelInfo</a> ()</td></tr>
+<tr class="memdesc:a0738b46984022add43e8eb2b93186f1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the model info for the model.  <br /></td></tr>
+<tr class="separator:a0738b46984022add43e8eb2b93186f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a> <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a>&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
 class orm::Model&lt; T &gt;</div><p>A template class representing a model in the ORM framework. </p>
 <p>This class provides functionality for defining and accessing columns in a model. It is a base class that can be inherited by specific model classes.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
@@ -130,19 +127,19 @@ class orm::Model&lt; T &gt;</div><p>A template class representing a model in the
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ae14d8edb8bf8be19e8455387d0003c5d" name="ae14d8edb8bf8be19e8455387d0003c5d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae14d8edb8bf8be19e8455387d0003c5d">&#9670;&#160;</a></span>getColumnsInfo()</h2>
+<a id="a0738b46984022add43e8eb2b93186f1d" name="a0738b46984022add43e8eb2b93186f1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0738b46984022add43e8eb2b93186f1d">&#9670;&#160;</a></span>getModelInfo()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a> <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">static</a> std::vector&lt; model::ColumnInfo &gt; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &gt;::getColumnsInfo </td>
+          <td class="memname">static model::ModelInfo &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getModelInfo </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"></span></td><td>)</td>
           <td></td>
@@ -155,8 +152,8 @@ template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a>
 </table>
 </div><div class="memdoc">
 
-<p>Get the columns info for the model. </p>
-<dl class="section return"><dt>Returns</dt><dd>A reference to an array of column info. </dd></dl>
+<p>Get the model info for the model. </p>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the model info. </dd></dl>
 
 </div>
 </div>
@@ -166,13 +163,13 @@ template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a> <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &gt; </div>
+template&lt;typename T &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname"><a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; <a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">T</a> &gt;::getObject </td>
+          <td class="memname">T &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getObject </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"></span></td><td>)</td>
           <td> const</td>
@@ -187,36 +184,6 @@ template&lt;<a class="el" href="#a224164ab3ec52859db88e68f5b220e0e">typename</a>
 
 <p>Get the temporary object of the model. </p>
 <dl class="section return"><dt>Returns</dt><dd>Reference to the temporary object. </dd></dl>
-
-</div>
-</div>
-<a id="a224164ab3ec52859db88e68f5b220e0e" name="a224164ab3ec52859db88e68f5b220e0e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a224164ab3ec52859db88e68f5b220e0e">&#9670;&#160;</a></span>getTableName()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">static std::string <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getTableName </td>
-          <td>(</td>
-          <td class="paramname"><span class="paramname"></span></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the table name for the model. </p>
-<dl class="section return"><dt>Returns</dt><dd>The table name as a string view. </dd></dl>
 
 </div>
 </div>
