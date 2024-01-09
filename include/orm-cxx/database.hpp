@@ -79,9 +79,9 @@ public:
     {
         Model<T> model;
 
-        std::string query = "INSERT INTO " + model.getTableName() + " (";
+        std::string query = "INSERT INTO " + model.getModelInfo().tableName + " (";
 
-        auto columns = model.getColumnsInfo();
+        auto columns = model.getModelInfo().columnsInfo;
 
         for (auto& column : columns)
         {
@@ -117,9 +117,9 @@ public:
     {
         Model<T> model;
 
-        std::string query = "CREATE TABLE IF NOT EXISTS " + model.getTableName() + " (";
+        std::string query = "CREATE TABLE IF NOT EXISTS " + model.getModelInfo().tableName + " (";
 
-        auto columns = model.getColumnsInfo();
+        auto columns = model.getModelInfo().columnsInfo;
 
         for (auto& column : columns)
         {
@@ -151,7 +151,7 @@ public:
     {
         Model<T> model;
 
-        std::string query = "DROP TABLE IF EXISTS " + model.getTableName() + ";";
+        std::string query = "DROP TABLE IF EXISTS " + model.getModelInfo().tableName + ";";
 
         sql << query;
     }

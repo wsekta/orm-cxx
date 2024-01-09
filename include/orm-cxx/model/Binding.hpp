@@ -19,7 +19,7 @@ struct type_conversion<orm::Model<T>>
             return;
         }
 
-        auto columns = model.getColumnsInfo();
+        auto columns = model.getModelInfo().columnsInfo;
         auto& modelAsTuple = model.getObject();
         auto view = rfl::to_view(modelAsTuple);
 
@@ -28,7 +28,7 @@ struct type_conversion<orm::Model<T>>
 
     static void to_base(const orm::Model<T>& model, values& v, indicator& ind)
     {
-        auto columns = model.getColumnsInfo();
+        auto columns = model.getModelInfo().columnsInfo;
         auto& modelAsTuple = model.getObject();
         auto view = rfl::to_view(modelAsTuple);
 

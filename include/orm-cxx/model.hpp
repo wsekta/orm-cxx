@@ -1,7 +1,6 @@
 #pragma once
 
-#include "model/ColumnInfo.hpp"
-#include "model/TableInfo.hpp"
+#include "model/ModelInfo.hpp"
 
 namespace orm
 {
@@ -18,23 +17,18 @@ class Model
 {
 public:
     /**
-     * @brief Get the table name for the model.
+     * @brief Get the model info for the model.
      *
-     * @return The table name as a string view.
+     * @return A reference to the model info.
      */
-    static std::string getTableName()
+    static model::ModelInfo& getModelInfo()
     {
-        return model::getTableName<T>();
-    }
+        if (not modelInfo.has_value())
+        {
+            modelInfo = model::generateModelInfo<T>();
+        }
 
-    /**
-     * @brief Get the columns info for the model.
-     *
-     * @return A reference to an array of column info.
-     */
-    static std::vector<model::ColumnInfo> getColumnsInfo()
-    {
-        return model::getColumnsInfo<T>();
+        return modelInfo.value();
     }
 
     /**
@@ -49,5 +43,7 @@ public:
 
 private:
     mutable T object;
+
+    inline static std::optional<model::ModelInfo> modelInfo = std::nullopt;
 };
 }

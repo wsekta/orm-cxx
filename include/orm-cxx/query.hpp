@@ -52,7 +52,7 @@ public:
         using namespace std::string_literals;
 
         Model<T> model;
-        std::string query = "SELECT * FROM "s.append(model.getTableName());
+        std::string query = "SELECT * FROM "s.append(model.getModelInfo().tableName);
 
         if (queryOffset.has_value())
         {
