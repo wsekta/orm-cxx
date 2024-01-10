@@ -44,7 +44,7 @@ TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 1);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, "int");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, orm::model::ColumnType::Int);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isNotNull, true);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
 }
@@ -66,7 +66,7 @@ TEST(ModelTest, StructWithOptional_shouldHaveTwoColumns)
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, "int");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, orm::model::ColumnType::Int);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isNotNull, false);
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field2");
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isNotNull, false);

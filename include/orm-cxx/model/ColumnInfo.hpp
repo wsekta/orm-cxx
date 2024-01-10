@@ -6,18 +6,14 @@
 #include <unordered_set>
 #include <vector>
 
-namespace
-{
-const std::regex optionalRegex("(class )?std\\:\\:optional\\<(.*)\\>");
-}
+#include "ColumnType.hpp"
 
 namespace orm::model
 {
 struct ColumnInfo
 {
     std::string name;
-    std::string type;
-    std::string defaultValue;
+    ColumnType type;
     bool isPrimaryKey;
     bool isForeignKey;
     bool isUnique;
@@ -37,16 +33,9 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids = {}) -> std::vec
 
         columnInfo.name = field.name();
 
-        if (std::regex_match(field.type(), optionalRegex))
-        {
-            columnInfo.type = std::regex_replace(field.type(), optionalRegex, "$2");
-            columnInfo.isNotNull = false;
-        }
-        else
-        {
-            columnInfo.type = field.type();
-            columnInfo.isNotNull = true;
-        }
+        auto [type, isNotNull] = toColumnType(field.type());
+        columnInfo.type = type;
+        columnInfo.isNotNull = isNotNull;
 
         if (ids.contains(field.name()))
         {

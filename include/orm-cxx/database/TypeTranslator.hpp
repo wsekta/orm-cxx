@@ -2,6 +2,8 @@
 
 #include <string>
 
+#include "orm-cxx/model/ColumnType.hpp"
+
 namespace orm::db
 {
 class TypeTranslator
@@ -9,8 +11,6 @@ class TypeTranslator
 public:
     virtual ~TypeTranslator() = default;
 
-    virtual auto toSqlType(const std::string& type) const -> std::string = 0;
-
-    virtual auto toCppType(const std::string& type) const -> std::string = 0;
+    virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
 };
 }
