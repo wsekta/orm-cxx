@@ -61,7 +61,14 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            v.set(columnInfo.name, *column);
+            if constexpr(std::is_same<ModelField, float>::value)
+            {
+                v.set(columnInfo.name, static_cast<double>(*column));
+            }
+            else
+            {
+                v.set(columnInfo.name, *column);
+            }
         }
         else
         {
@@ -72,7 +79,14 @@ private:
             {
                 if (column->has_value())
                 {
-                    v.set(columnInfo.name, column->value());
+                    if constexpr(std::is_same<ModelField, float>::value)
+                    {
+                        v.set(columnInfo.name, static_cast<double>(column->value()));
+                    }
+                    else
+                    {
+                        v.set(columnInfo.name, column->value());
+                    }
                 }
                 else
                 {
@@ -109,7 +123,14 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            *column = v.get<ModelField>(columnInfo.name);
+            if constexpr(std::is_same<ModelField, float>::value)
+            {
+                *column = static_cast<float>(v.get<double>(columnInfo.name));
+            }
+            else
+            {
+                *column = v.get<ModelField>(columnInfo.name);
+            }
         }
         else
         {
@@ -124,7 +145,14 @@ private:
                 }
                 else
                 {
-                    *column = v.get<ModelField>(columnInfo.name);
+                    if constexpr(std::is_same<ModelField, float>::value)
+                    {
+                        *column = static_cast<float>(v.get<double>(columnInfo.name));
+                    }
+                    else
+                    {
+                        *column = v.get<ModelField>(columnInfo.name);
+                    }
                 }
             }
             else

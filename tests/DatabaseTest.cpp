@@ -26,6 +26,13 @@ struct ModelWithOptional
     std::optional<double> field3;
 };
 
+struct ModelWithFloat
+{
+    int field1;
+    std::string field2;
+    float field3;
+};
+
 struct ModelWithId
 {
     int id;
@@ -41,6 +48,7 @@ struct ModelWithOverwrittenId
 
     inline static const std::vector<std::string> id_columns = {"field1", "field2"};
 };
+
 
 template <typename T>
 auto generateSomeDataModels(int count) -> std::vector<T>
@@ -160,6 +168,25 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesSh
     }
 
     database.deleteTable<ModelWithOptional>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithFloat>();
+    auto models = std::vector<ModelWithFloat>{{1, "test", 1.0f}, {2, "test2", 2.0f}};
+    database.insertObjects(models);
+    orm::Query<ModelWithFloat> queryForFloat;
+    auto returnedModels = database.executeQuery(queryForFloat);
+
+    for (std::size_t i = 0; i < models.size(); i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+        EXPECT_EQ(models[i].field3, returnedModels[i].field3);
+    }
+
+    database.deleteTable<ModelWithFloat>();
 }
 
 TEST_F(DatabaseTest, shouldCreateTableWithIdColumn)
