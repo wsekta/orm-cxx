@@ -8,6 +8,7 @@ on:
 
 env:
   BUILD_TYPE: Debug
+  GTEST_OUTPUT: xml:report.xml
 
 jobs:
   build:
@@ -47,3 +48,9 @@ jobs:
       - name: Run tests
         working-directory: ${{github.workspace}}/build/
         run: ctest -C ${{env.BUILD_TYPE}} --output-on-failure
+      
+      - uses: actions/upload-artifact@v3
+        if: success() || failure()
+        with:
+          name: test-results
+          path: '${{github.workspace}}/build/report.xml'
