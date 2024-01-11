@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "ColumnType.hpp"
+#include "NameMapping.hpp"
 
 namespace orm::model
 {
@@ -31,13 +32,13 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids = {}) -> std::vec
     {
         ColumnInfo columnInfo{};
 
-        columnInfo.name = field.name();
+        columnInfo.name = getColumnName<T>(field.name());
 
         auto [type, isNotNull] = toColumnType(field.type());
         columnInfo.type = type;
         columnInfo.isNotNull = isNotNull;
 
-        if (ids.contains(field.name()))
+        if (ids.contains(columnInfo.name))
         {
             columnInfo.isPrimaryKey = true;
         }

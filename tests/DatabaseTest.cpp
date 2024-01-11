@@ -49,6 +49,15 @@ struct ModelWithOverwrittenId
     inline static const std::vector<std::string> id_columns = {"field1", "field2"};
 };
 
+struct ModelWithIdAndNamesMapping
+{
+    int id;
+    int field1;
+    std::string field2;
+
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
+};
 
 template <typename T>
 auto generateSomeDataModels(int count) -> std::vector<T>
@@ -203,4 +212,22 @@ TEST_F(DatabaseTest, shouldCreateTableWithOverwrittenIdColumn)
     database.createTable<ModelWithOverwrittenId>();
 
     database.deleteTable<ModelWithOverwrittenId>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithIdAndNamesMapping>();
+    auto models = std::vector<ModelWithIdAndNamesMapping>{{1, 1, "test"}, {2, 2, "test2"}};
+    database.insertObjects(models);
+    orm::Query<ModelWithIdAndNamesMapping> queryForNamesMapping;
+    auto returnedModels = database.executeQuery(queryForNamesMapping);
+
+    for (std::size_t i = 0; i < models.size(); i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+    }
+
+    database.deleteTable<ModelWithIdAndNamesMapping>();
 }

@@ -38,6 +38,25 @@ struct StructWithIdColumns
     int field2;
 };
 
+struct StructWithNamesMapping
+{
+    int field1;
+    int field2;
+
+    inline static const std::map<std::string, std::string> columns_names = {{"field1", "some_field1_name"},
+                                                                            {"field2", "some_field2_name"}};
+};
+
+struct StructWithIdAndNamesMapping
+{
+    int id;
+    int field1;
+    int field2;
+
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
+};
+
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
     orm::Model<OneFieldStruct> model;
@@ -102,4 +121,28 @@ TEST(ModelTest, StructWithIdColumns_shouldHaveTwoIdColumns)
     EXPECT_EQ(model.getModelInfo().columnsInfo[3].isPrimaryKey, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id1"));
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id2"));
+}
+
+TEST(ModelTest, StructWithNamesMapping_shouldHaveTwoColumnsWithNamesFromMapping)
+{
+    orm::Model<StructWithNamesMapping> model;
+
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "some_field1_name");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "some_field2_name");
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
+}
+
+TEST(ModelTest, StructWithIdAndNamesMapping_shouldHaveTwoColumnsWithNamesFromMappingAndOneIdColumn)
+{
+    orm::Model<StructWithIdAndNamesMapping> model;
+
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "some_id_name");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "some_field1_name");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "some_field2_name");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].isPrimaryKey, false);
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("some_id_name"));
 }
