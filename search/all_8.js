@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['offset_0',['offset',['../classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f',1,'orm::Query']]]
+  ['limit_0',['limit',['../classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef',1,'orm::Query']]]
 ];

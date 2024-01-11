@@ -25,6 +25,15 @@
 var NAVTREE =
 [
   [ "ORM C++", "index.html", [
+    [ "Database", "md_docs_2database.html", null ],
+    [ "Model", "md_docs_2model.html", [
+      [ "Create simple model", "md_docs_2model.html#autotoc_md2", null ],
+      [ "Fields types", "md_docs_2model.html#autotoc_md3", null ],
+      [ "Table name", "md_docs_2model.html#autotoc_md4", null ],
+      [ "Mapping fields' names", "md_docs_2model.html#autotoc_md5", null ],
+      [ "Primary key", "md_docs_2model.html#autotoc_md6", null ]
+    ] ],
+    [ "Query", "md_docs_2query.html", null ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],

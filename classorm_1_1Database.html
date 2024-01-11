@@ -19,6 +19,8 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
+<link href="doxygen-awesome-sidebar-only.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -194,7 +196,7 @@ template&lt;typename T &gt; </div>
 <p>Execute a create table query for a model. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>The type of the model. </td></tr>
+    <tr><td class="paramname">T</td><td>The type of the model which table to will be created. </td></tr>
   </table>
   </dd>
 </dl>
@@ -230,7 +232,7 @@ template&lt;typename T &gt; </div>
 <p>Execute a delete table query for a model. </p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
-    <tr><td class="paramname">T</td><td>The type of the model. </td></tr>
+    <tr><td class="paramname">T</td><td>The type of the model which table to will be deleted. </td></tr>
   </table>
   </dd>
 </dl>
@@ -272,11 +274,11 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+    <tr><td class="paramname">query</td><td>The query of type T to execute. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>The result of the query. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>The vector of objects of type T returned by the query. </dd></dl>
 
 </div>
 </div>
@@ -335,7 +337,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+    <tr><td class="paramname">object</td><td>The object of type T to insert. </td></tr>
   </table>
   </dd>
 </dl>
@@ -377,7 +379,7 @@ template&lt;typename T &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">query</td><td>The query to execute. </td></tr>
+    <tr><td class="paramname">objects</td><td>The vector of objects of type T to insert. </td></tr>
   </table>
   </dd>
 </dl>

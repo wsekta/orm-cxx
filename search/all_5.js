@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['insertobject_0',['insertObject',['../classorm_1_1Database.html#a7fd1496475387db8af973fe51ceb7d78',1,'orm::Database']]],
-  ['insertobjects_1',['insertObjects',['../classorm_1_1Database.html#a473affe96af0c7a8075b123ec59c8853',1,'orm::Database']]]
+  ['getbackendtype_0',['getBackendType',['../classorm_1_1Database.html#af5bf41d4644f6d3e8835bfbad5cb07a0',1,'orm::Database']]],
+  ['getmodelinfo_1',['getModelInfo',['../classorm_1_1Model.html#a0738b46984022add43e8eb2b93186f1d',1,'orm::Model']]],
+  ['getobject_2',['getObject',['../classorm_1_1Model.html#a577d30c6646c56e34c219795a97dd746',1,'orm::Model']]]
 ];

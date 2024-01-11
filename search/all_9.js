@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['query_0',['Query',['../classorm_1_1Query.html',1,'orm']]]
+  ['mapping_20fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md5',1,'']]],
+  ['model_1',['Model',['../md_docs_2model.html#autotoc_md2',1,'Create simple model'],['../classorm_1_1Model.html',1,'orm::Model&lt; T &gt;'],['../md_docs_2model.html',1,'Model']]]
 ];
