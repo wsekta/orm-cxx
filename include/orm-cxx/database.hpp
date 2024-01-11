@@ -35,8 +35,8 @@ public:
      * @brief Executes a query and returns the result.
      *
      * @tparam T The type of the query.
-     * @param query The query to execute.
-     * @return The result of the query.
+     * @param query The query of type T to execute.
+     * @return The vector of objects of type T returned by the query.
      */
     template <typename T>
     auto executeQuery(Query<T>& query) -> std::vector<T>
@@ -57,7 +57,7 @@ public:
      * @brief Executes a insert query for multiple objects.
      *
      * @tparam T The type of the query.
-     * @param query The query to execute.
+     * @param objects The vector of objects of type T to insert.
      */
     template <typename T>
     auto insertObjects(const std::vector<T>& objects) -> void
@@ -72,7 +72,7 @@ public:
      * @brief Executes a insert query for a single object.
      *
      * @tparam T The type of the query.
-     * @param query The query to execute.
+     * @param object The object of type T to insert.
      */
     template <typename T>
     auto insertObject(T object) -> void
@@ -110,7 +110,7 @@ public:
     /**
      * @brief Execute a create table query for a model.
      *
-     * @tparam T The type of the model.
+     * @tparam T The type of the model which table to will be created.
      */
     template <typename T>
     auto createTable() -> void
@@ -161,7 +161,7 @@ public:
     /**
      * @brief Execute a delete table query for a model.
      *
-     * @tparam T The type of the model.
+     * @tparam T The type of the model which table to will be deleted.
      */
     template <typename T>
     auto deleteTable() -> void

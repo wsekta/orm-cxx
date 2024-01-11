@@ -68,7 +68,9 @@ int main()
 
 ## 📖 Documentation
 
-https://wsekta.github.io/orm-cxx/
+## [Markdown](docs/main.md)
+
+## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
 ## Consuming library with CMake (CMake 3.22 or newer)
 
