@@ -1,4 +1,4 @@
-name: 'Test Report'
+name: 'test-report'
 on:
   workflow_run:
     workflows: [ 'clang++' ]
