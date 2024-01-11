@@ -38,8 +38,8 @@ struct ObjectModel
 
     // defining columns_names is optional, adding it will overwrite default columns names
     // not all columns have to be defined, others will get default names
-    inline static const std::map<std::string, std::string> columns_names = {{"field1", "some_field1_name"},
-                                                                            {"field2", "some_field2_name"}};
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}};                                                                            {"field2", "some_field2_name"}};
 };
 
 int main()
