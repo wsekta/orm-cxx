@@ -6,6 +6,11 @@ on:
       - 'main'
   pull_request:
 
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
 env:
   BUILD_TYPE: Debug
 
