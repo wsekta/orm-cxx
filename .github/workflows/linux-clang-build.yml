@@ -53,19 +53,10 @@ jobs:
         working-directory: ${{github.workspace}}/build/
         run: ./orm-cxx-UT --gtest_output=xml:report.xml
 
-      - uses: actions/upload-artifact@v3
+      - name: Test Report
+        uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
-          name: test-results
+          name: GTest
           path: '${{github.workspace}}/build/report.xml'
-
-  report:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: dorny/test-reporter@v1
-        with:
-          artifact: test-results
-          name: test report
-          path: '*.xml'
           reporter: java-junit
