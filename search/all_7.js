@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['key_0',['Primary key',['../md_docs_2model.html#autotoc_md11',1,'']]]
+  ['model_0',['Model',['../classorm_1_1Model.html',1,'orm']]]
 ];
