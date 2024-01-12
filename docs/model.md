@@ -10,7 +10,7 @@
 
 Simple model is a struct with supoorted types of fields. For example:
 
-```c++
+```cpp
 struct User {
     int id;
     std::string name;
@@ -34,7 +34,7 @@ Supported types of fields:
 
 To override table name use `table_name` static field:
 
-```c++
+```cpp
 struct User {
     static constexpr const char* table_name = "users";
     int id;
@@ -53,7 +53,7 @@ e.g. `std::map` or `std::unordered_map`).
 Not all fields have to be mapped, those that are not mapped will be named the same as fields' names.
 For example:
 
-```c++
+```cpp
 struct User {
     static constexpr std::map<const char*, const char*> columns_names = {
         {"id", "user_id"},
@@ -76,7 +76,7 @@ struct User {
 
 The default primary key is `id` field:
 
-```c++
+```cpp
 struct User {
     int id;
     std::string name;
@@ -90,7 +90,7 @@ struct User {
 If you want to change primary key use `id_columns` static field with iterable type containing fields' names as std::
 string (e.g. `std::vector<std::string>` or `std::array<std::string>`):
 
-```c++
+```cpp
 struct User {
     static constexpr std::array<std::string, 2> id_columns = {"id", "name"};
     int id;
@@ -104,7 +104,7 @@ struct User {
 
 You can also create model without primary key, just do not add `id` field:
 
-```c++
+```cpp
 struct User {
     std::string name;
     std::string email;
@@ -116,7 +116,7 @@ struct User {
 
 or use `id_columns` static field with empty iterable:
 
-```c++
+```cpp
 struct User {
     static constexpr std::array<std::string, 0> id_columns = {};
     std::string name;
