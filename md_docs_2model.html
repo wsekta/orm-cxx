@@ -96,14 +96,14 @@ $(function(){initNavTree('md_docs_2model.html',''); initResizable(); });
   <div class="headertitle"><div class="title">Model</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md1"></a></p><ol type="1">
+<div class="textblock"><p><a class="anchor" id="autotoc_md6"></a></p><ol type="1">
 <li>Create simple model</li>
 <li>Fields types</li>
 <li>Table name</li>
 <li>Mapping fields' names</li>
 <li>Primary key</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md2"></a>
+<h1><a class="anchor" id="autotoc_md7"></a>
 Create simple model</h1>
 <p>Simple model is a struct with supoorted types of fields. For example:</p>
 <div class="fragment"><div class="line"> ++</div>
@@ -115,7 +115,7 @@ Create simple model</h1>
 <div class="line">    std::string created_at;</div>
 <div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md3"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md8"></a>
 Fields types</h1>
 <p>Supported types of fields:</p>
 <ul>
@@ -124,7 +124,7 @@ Fields types</h1>
 <li>double</li>
 <li>std::string</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md4"></a>
+<h1><a class="anchor" id="autotoc_md9"></a>
 Table name</h1>
 <p>To override table name use <code>table_name</code> static field:</p>
 <div class="fragment"><div class="line"> ++</div>
@@ -137,7 +137,7 @@ Table name</h1>
 <div class="line">    std::string created_at;</div>
 <div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md10"></a>
 Mapping fields' names</h1>
 <p>If you want to map fields' names to database columns' names use 'columns_names' static field with dictionary type ( e.g. <code>std::map</code> or <code>std::unordered_map</code>). Not all fields have to be mapped, those that are not mapped will be named the same as fields' names. For example:</p>
 <div class="fragment"><div class="line"> ++</div>
@@ -157,7 +157,7 @@ Mapping fields' names</h1>
 <div class="line">    std::string created_at;</div>
 <div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md11"></a>
 Primary key</h1>
 <p>The default primary key is <code>id</code> field:</p>
 <div class="fragment"><div class="line"> ++</div>
