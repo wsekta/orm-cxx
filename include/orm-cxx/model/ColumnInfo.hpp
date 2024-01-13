@@ -21,8 +21,11 @@ struct ColumnInfo
     bool isNotNull;
 };
 
+using ForeignIdsInfo = std::unordered_map<std::string, std::unordered_map<std::string, ColumnInfo>>;
+
 template <typename T>
-auto getColumnsInfo(const std::unordered_set<std::string>& ids = {}) -> std::vector<ColumnInfo>
+auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIdsInfo& foreignIdsInfo)
+    -> std::vector<ColumnInfo>
 {
     auto fields = rfl::fields<T>();
 
@@ -36,6 +39,12 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids = {}) -> std::vec
 
         auto [type, isNotNull] = toColumnType(field.type());
         columnInfo.type = type;
+        if (type == ColumnType::Unknown and foreignIdsInfo.contains(field.name()))
+        {
+            columnInfo.isForeignModel = true;
+            columnInfo.type = ColumnType::OneToMany;
+        }
+
         columnInfo.isNotNull = isNotNull;
 
         if (ids.contains(columnInfo.name))

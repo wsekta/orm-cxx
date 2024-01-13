@@ -63,6 +63,12 @@ struct StructWithOtherStructWithId
     StructWithId field1;
 };
 
+struct StructWithOptionalOtherStructWithId
+{
+    int id;
+    std::optional<StructWithId> field1;
+};
+
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
     orm::Model<OneFieldStruct> model;
@@ -153,15 +159,35 @@ TEST(ModelTest, StructWithIdAndNamesMapping_shouldHaveTwoColumnsWithNamesFromMap
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("some_id_name"));
 }
 
-TEST(ModelTest, StructWithOtherStructWithId_shouldHaveOneIdColumn)
+TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
 {
     orm::Model<StructWithOtherStructWithId> model;
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isForeignModel, false);
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field1");
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isForeignModel, true);
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].contains("id"));
+}
+
+TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
+{
+    orm::Model<StructWithOptionalOtherStructWithId> model;
+
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isForeignModel, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field1");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isForeignModel, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isNotNull, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
     EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
     EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].size(), 1);

@@ -22,8 +22,8 @@ auto generateModelInfo() -> ModelInfo
 
     modelInfo.idColumnsNames = getPrimaryIdColumnsNames<T>();
     modelInfo.tableName = getTableName<T>();
-    modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames);
     modelInfo.foreignIdsInfo = getForeignIdsInfo<T>();
+    modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames, modelInfo.foreignIdsInfo);
 
     return modelInfo;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <rfl.hpp>
 #include <string>
 #include <unordered_map>
@@ -47,7 +48,7 @@ static auto getForeignIdsFromField(std::size_t i, ModelField* /*field*/, Foreign
 
         auto fieldIdsInfo = getPrimaryIdColumnsNames<ModelField>();
 
-        auto fieldColumnsInfo = getColumnsInfo<ModelField>(fieldIdsInfo);
+        auto fieldColumnsInfo = getColumnsInfo<ModelField>(fieldIdsInfo, {});
 
         for (const auto& columnInfo : fieldColumnsInfo)
         {
@@ -57,5 +58,13 @@ static auto getForeignIdsFromField(std::size_t i, ModelField* /*field*/, Foreign
             }
         }
     }
+}
+
+template <typename T, typename ModelField>
+static auto getForeignIdsFromField(std::size_t i, std::optional<ModelField>* /*field*/, ForeignIdsInfo& foreignIdsInfo)
+    -> void
+{
+    ModelField modelField{};
+    getForeignIdsFromField<T>(i, &modelField, foreignIdsInfo);
 }
 }
