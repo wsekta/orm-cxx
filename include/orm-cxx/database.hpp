@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "database/BackendType.hpp"
-#include "database/TypeTranslatorFactory.hpp"
+#include "database/CommandGeneratorFactory.hpp"
 #include "model.hpp"
 #include "model/Binding.hpp"
 #include "query.hpp"
@@ -77,34 +77,13 @@ public:
     template <typename T>
     auto insertObject(T object) -> void
     {
-        Model<T> model;
+        static Model<T> model;
 
-        std::string query = "INSERT INTO " + model.getModelInfo().tableName + " (";
-
-        auto columns = model.getModelInfo().columnsInfo;
-
-        for (auto& column : columns)
-        {
-            query += column.name + ", ";
-        }
-
-        query.pop_back();
-        query.pop_back();
-
-        query += ") VALUES (";
-
-        for (auto& column : columns)
-        {
-            query += ":" + column.name + ", ";
-        }
-
-        query.pop_back();
-        query.pop_back();
-
-        query += ");";
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->insert(model.getModelInfo());
 
         model.getObject() = std::move(object);
-        sql << query, soci::use(model);
+
+        sql << command, soci::use(model);
     }
 
     /**
@@ -115,61 +94,11 @@ public:
     template <typename T>
     auto createTable() -> void
     {
-        auto modelInfo = Model<T>::getModelInfo();
+        static auto modelInfo = Model<T>::getModelInfo();
 
-        std::string query = "CREATE TABLE IF NOT EXISTS " + modelInfo.tableName + " (\n";
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->createTable(modelInfo);
 
-        auto& columns = modelInfo.columnsInfo;
-
-        for (auto& column : columns)
-        {
-            if (column.isForeignModel)
-            {
-                query += addColumnsForForeignIds(modelInfo.foreignIdsInfo, column);
-
-                continue;
-            }
-
-            auto sqlType = typeTranslatorFactory.getTranslator(backendType)->toSqlType(column.type);
-
-            if (column.isNotNull)
-            {
-                sqlType += " NOT NULL";
-            }
-
-            query += "\t" + column.name + " " + sqlType + ",\n";
-        }
-
-        if (modelInfo.idColumnsNames.empty())
-        {
-            query.pop_back();
-            query.pop_back();
-        }
-        else
-        {
-            query += "\tPRIMARY KEY (";
-
-            for (auto& idColumn : modelInfo.idColumnsNames)
-            {
-                query += idColumn + ", ";
-            }
-
-            query.pop_back();
-            query.pop_back();
-
-            query += ")";
-        }
-
-        if (not modelInfo.foreignIdsInfo.empty())
-        {
-            query += ",\n" + addForeignIds(modelInfo.foreignIdsInfo);
-        }
-
-        query += "\n);";
-
-        std::cout << query << std::endl;
-
-        sql << query;
+        sql << command;
     }
 
     /**
@@ -180,11 +109,11 @@ public:
     template <typename T>
     auto deleteTable() -> void
     {
-        Model<T> model;
+        static Model<T> model;
 
-        std::string query = "DROP TABLE IF EXISTS " + model.getModelInfo().tableName + ";";
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->dropTable(model.getModelInfo());
 
-        sql << query;
+        sql << command;
     }
 
     /**
@@ -197,24 +126,6 @@ public:
 private:
     soci::session sql;
     db::BackendType backendType;
-    db::TypeTranslatorFactory typeTranslatorFactory;
-
-    /**
-     * @brief Add columns for foreign ids to a query.
-     *
-     * @param query The query to add the columns to.
-     * @param foreignIdsInfo The foreign ids info for the model.
-     * @param columnInfo The column info for the model.
-     */
-    auto addColumnsForForeignIds(const model::ForeignIdsInfo& foreignIdsInfo, const model::ColumnInfo& columnInfo)
-        -> std::string;
-
-    /**
-     * @brief Add foreign ids to a model.
-     *
-     * @param foreignIdsInfo The foreign ids info for the model.
-     * @return
-     */
-    auto addForeignIds(const model::ForeignIdsInfo& foreignIdsInfo) -> std::string;
+    db::CommandGeneratorFactory commandGeneratorFactory;
 };
 }

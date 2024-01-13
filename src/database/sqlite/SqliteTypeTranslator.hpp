@@ -8,7 +8,5 @@ class SqliteTypeTranslator : public TypeTranslator
 {
 public:
     auto toSqlType(model::ColumnType type) const -> std::string override;
-
-private:
 };
 }

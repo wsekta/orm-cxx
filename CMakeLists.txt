@@ -39,8 +39,9 @@ set(LIBRARY_NAME ${PROJECT_NAME})
 set(SOURCES
         src/Database.cpp
         src/database/sqlite/SqliteTypeTranslator.cpp
-        src/database/TypeTranslatorFactory.cpp
         src/model/ColumnType.cpp
+        src/database/sqlite/SqliteCommandGenerator.cpp
+        src/database/CommandGeneratorFactory.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -65,6 +66,7 @@ if (BUILD_ORM_CXX_TESTS)
 
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
             src/model/ColumnTypeTest.cpp
+            src/database/sqlite/SqliteCommandGeneratorTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
@@ -93,7 +95,7 @@ if (BUILD_ORM_CXX_TESTS)
                 NAME ${LIBRARY_NAME}-UT
                 COMMAND ${LIBRARY_NAME}-UT
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
-    endif()
+    endif ()
 endif ()
 
 if (BUILD_ORM_CXX_EXAMPLE)
