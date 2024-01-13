@@ -25,6 +25,26 @@
 var NAVTREE =
 [
   [ "ORM C++", "index.html", [
+    [ "Database", "md_docs_2database.html", [
+      [ "Connect", "md_docs_2database.html#autotoc_md1", null ],
+      [ "Create table", "md_docs_2database.html#autotoc_md2", null ],
+      [ "Delete table", "md_docs_2database.html#autotoc_md3", null ],
+      [ "Insert objects", "md_docs_2database.html#autotoc_md4", null ],
+      [ "Query objects", "md_docs_2database.html#autotoc_md5", null ]
+    ] ],
+    [ "Model", "md_docs_2model.html", [
+      [ "Create simple model", "md_docs_2model.html#autotoc_md7", null ],
+      [ "Fields types", "md_docs_2model.html#autotoc_md8", null ],
+      [ "Table name", "md_docs_2model.html#autotoc_md9", null ],
+      [ "Mapping fields' names", "md_docs_2model.html#autotoc_md10", null ],
+      [ "Primary key", "md_docs_2model.html#autotoc_md11", null ]
+    ] ],
+    [ "Query", "md_docs_2query.html", [
+      [ "Build query", "md_docs_2query.html#autotoc_md13", null ],
+      [ "Limit query", "md_docs_2query.html#autotoc_md14", null ],
+      [ "Offset query", "md_docs_2query.html#autotoc_md15", null ],
+      [ "Build query", "md_docs_2query.html#autotoc_md16", null ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],
