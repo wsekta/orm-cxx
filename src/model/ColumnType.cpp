@@ -46,11 +46,10 @@ std::pair<ColumnType, bool> toColumnType(const std::string& type)
     {
         columnType = ColumnType::String;
     }
-    //TODO: handle uuid, date, etc. types
+    // TODO: handle uuid, date, etc. types
     else
     {
-        //TODO: handle model type, then throw error if not handled properly
-        throw std::runtime_error("Unknown type: " + typeString);
+        columnType = ColumnType::Unknown;
     }
 
     return {columnType, isNotNull};

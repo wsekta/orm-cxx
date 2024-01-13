@@ -8,12 +8,12 @@
 namespace orm::model
 {
 template <typename T>
-auto getIdColumnsNames() -> std::unordered_set<std::string>
+auto getPrimaryIdColumnsNames() -> std::unordered_set<std::string>
 {
     if constexpr (requires { T::id_columns; })
     {
         std::unordered_set<std::string> ids{};
-        
+
         for (const auto& id : T::id_columns)
         {
             ids.insert(getColumnName<T>(id));
@@ -29,5 +29,18 @@ auto getIdColumnsNames() -> std::unordered_set<std::string>
     {
         return {};
     }
+}
+
+template <typename T>
+constexpr auto checkIfIsModelWithId() -> bool
+{
+    auto ids = getPrimaryIdColumnsNames<T>();
+
+    if (ids.empty())
+    {
+        return false;
+    }
+
+    return true;
 }
 }

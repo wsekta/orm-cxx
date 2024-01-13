@@ -16,7 +16,7 @@ struct ColumnInfo
     std::string name;
     ColumnType type;
     bool isPrimaryKey;
-    bool isForeignKey;
+    bool isForeignModel;
     bool isUnique;
     bool isNotNull;
 };

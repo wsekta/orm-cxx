@@ -9,13 +9,16 @@ namespace
 std::string intType{"int"};
 std::string floatType{"float"};
 std::string doubleType{"double"};
-std::string stringTypeVisualStudioStyle{"class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >"};
+std::string stringTypeVisualStudioStyle{
+    "class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >"};
 std::string stringTypeClangStyle{"std::basic_string<char, std::char_traits<char>, std::allocator<char>>"};
 std::string stringTypeGxxStyle{"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"};
 std::string optionalIntTypeVisualStudioStyle{"class std::optional<int>"};
 std::string optionalIntTypeClangStyle{"std::optional<int>"};
-std::string optionalStringTypeVisualStudioStyle{"class std::optional<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > >"};
-std::string optionalStringTypeClangStyle{"std::optional<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>"};
+std::string optionalStringTypeVisualStudioStyle{
+    "class std::optional<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > >"};
+std::string optionalStringTypeClangStyle{
+    "std::optional<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>"};
 }
 
 TEST(ColumnTypeTests, shouldTranslateInt)
@@ -88,7 +91,9 @@ TEST(ColumnTypeTests, shouldTranslateOptionalStringClangStyle)
     EXPECT_FALSE(isNotNull);
 }
 
-TEST(ColumnTypeTests, shouldThrowOnUnknownType)
+TEST(ColumnTypeTests, shouldTranslateUnknownType)
 {
-    EXPECT_THROW(toColumnType("unknown"), std::runtime_error);
+    auto [columnType, isNotNull] = toColumnType("unknown");
+    EXPECT_EQ(columnType, ColumnType::Unknown);
+    EXPECT_TRUE(isNotNull);
 }

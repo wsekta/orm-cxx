@@ -12,7 +12,9 @@ enum class ColumnType
     Double,
     String,
     Uuid,
+    Unknown,
+    OneToMany,
 };
 
-std::pair<ColumnType, bool> toColumnType(const std::string& type);
+auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>;
 }
