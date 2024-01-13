@@ -117,12 +117,19 @@ public:
     {
         auto modelInfo = Model<T>::getModelInfo();
 
-        std::string query = "CREATE TABLE IF NOT EXISTS " + modelInfo.tableName + " (";
+        std::string query = "CREATE TABLE IF NOT EXISTS " + modelInfo.tableName + " (\n";
 
         auto& columns = modelInfo.columnsInfo;
 
         for (auto& column : columns)
         {
+            if (column.isForeignModel)
+            {
+                query += addColumnsForForeignIds(modelInfo.foreignIdsInfo, column);
+
+                continue;
+            }
+
             auto sqlType = typeTranslatorFactory.getTranslator(backendType)->toSqlType(column.type);
 
             if (column.isNotNull)
@@ -130,7 +137,7 @@ public:
                 sqlType += " NOT NULL";
             }
 
-            query += column.name + " " + sqlType + ", ";
+            query += "\t" + column.name + " " + sqlType + ",\n";
         }
 
         if (modelInfo.idColumnsNames.empty())
@@ -140,7 +147,7 @@ public:
         }
         else
         {
-            query += "PRIMARY KEY (";
+            query += "\tPRIMARY KEY (";
 
             for (auto& idColumn : modelInfo.idColumnsNames)
             {
@@ -153,7 +160,14 @@ public:
             query += ")";
         }
 
-        query += ");";
+        if (not modelInfo.foreignIdsInfo.empty())
+        {
+            query += ",\n" + addForeignIds(modelInfo.foreignIdsInfo);
+        }
+
+        query += "\n);";
+
+        std::cout << query << std::endl;
 
         sql << query;
     }
@@ -184,5 +198,23 @@ private:
     soci::session sql;
     db::BackendType backendType;
     db::TypeTranslatorFactory typeTranslatorFactory;
+
+    /**
+     * @brief Add columns for foreign ids to a query.
+     *
+     * @param query The query to add the columns to.
+     * @param foreignIdsInfo The foreign ids info for the model.
+     * @param columnInfo The column info for the model.
+     */
+    auto addColumnsForForeignIds(const model::ForeignIdsInfo& foreignIdsInfo, const model::ColumnInfo& columnInfo)
+        -> std::string;
+
+    /**
+     * @brief Add foreign ids to a model.
+     *
+     * @param foreignIdsInfo The foreign ids info for the model.
+     * @return
+     */
+    auto addForeignIds(const model::ForeignIdsInfo& foreignIdsInfo) -> std::string;
 };
 }

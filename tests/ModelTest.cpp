@@ -172,8 +172,9 @@ TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsIn
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isForeignModel, true);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
     EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].idFields.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].idFields.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].tableName, "StructWithId");
 }
 
 TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
@@ -190,6 +191,7 @@ TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledFore
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isNotNull, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
     EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].idFields.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].idFields.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].tableName, "StructWithId");
 }

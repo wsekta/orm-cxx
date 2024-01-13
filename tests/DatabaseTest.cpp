@@ -59,6 +59,14 @@ struct ModelWithIdAndNamesMapping
         {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
 };
 
+struct ModelRelatedToOtherModel
+{
+    int id;
+    int field1;
+    std::string field2;
+    ModelWithId field3;
+};
+
 template <typename T>
 auto generateSomeDataModels(int count) -> std::vector<T>
 {
@@ -230,4 +238,14 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valu
     }
 
     database.deleteTable<ModelWithIdAndNamesMapping>();
+}
+
+TEST_F(DatabaseTest, shouldCreateTableWithRelatedModel)
+{
+    database.connect(connectionString);
+    database.createTable<ModelWithId>();
+    database.createTable<ModelRelatedToOtherModel>();
+
+    database.deleteTable<ModelWithId>();
+    database.deleteTable<ModelRelatedToOtherModel>();
 }

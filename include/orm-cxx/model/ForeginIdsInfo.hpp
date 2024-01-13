@@ -6,12 +6,12 @@
 #include <unordered_map>
 
 #include "ColumnInfo.hpp"
+#include "ForeginIdsInfoType.hpp"
 #include "IdInfo.hpp"
+#include "TableInfo.hpp"
 
 namespace orm::model
 {
-using ForeignIdsInfo = std::unordered_map<std::string, std::unordered_map<std::string, ColumnInfo>>;
-
 template <typename T>
 auto getForeignIdsInfo() -> ForeignIdsInfo
 {
@@ -54,7 +54,8 @@ static auto getForeignIdsFromField(std::size_t i, ModelField* /*field*/, Foreign
         {
             if (columnInfo.isPrimaryKey)
             {
-                foreignIdsInfo[name][columnInfo.name] = columnInfo;
+                foreignIdsInfo[name].tableName = getTableName<ModelField>();
+                foreignIdsInfo[name].idFields[columnInfo.name] = columnInfo;
             }
         }
     }

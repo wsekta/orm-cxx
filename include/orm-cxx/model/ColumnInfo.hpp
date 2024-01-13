@@ -6,23 +6,13 @@
 #include <unordered_set>
 #include <vector>
 
+#include "ColumnInfoType.hpp"
 #include "ColumnType.hpp"
+#include "ForeginIdsInfoType.hpp"
 #include "NameMapping.hpp"
 
 namespace orm::model
 {
-struct ColumnInfo
-{
-    std::string name;
-    ColumnType type;
-    bool isPrimaryKey;
-    bool isForeignModel;
-    bool isUnique;
-    bool isNotNull;
-};
-
-using ForeignIdsInfo = std::unordered_map<std::string, std::unordered_map<std::string, ColumnInfo>>;
-
 template <typename T>
 auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIdsInfo& foreignIdsInfo)
     -> std::vector<ColumnInfo>
