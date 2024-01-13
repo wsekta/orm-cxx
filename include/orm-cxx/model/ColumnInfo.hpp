@@ -28,7 +28,9 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIds
         columnInfo.name = getColumnName<T>(field.name());
 
         auto [type, isNotNull] = toColumnType(field.type());
+        
         columnInfo.type = type;
+
         if (type == ColumnType::Unknown and foreignIdsInfo.contains(field.name()))
         {
             columnInfo.isForeignModel = true;

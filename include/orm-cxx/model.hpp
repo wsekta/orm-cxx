@@ -21,9 +21,9 @@ public:
      *
      * @return A reference to the model info.
      */
-    static model::ModelInfo& getModelInfo()
+    static model::ModelInfo& getModelInfo(bool force = false)
     {
-        if (not modelInfo.has_value())
+        if (not modelInfo.has_value() or force)
         {
             modelInfo = model::generateModelInfo<T>();
         }

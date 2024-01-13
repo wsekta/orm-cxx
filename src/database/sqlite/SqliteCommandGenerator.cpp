@@ -98,7 +98,7 @@ auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ForeignIdsInfo
 
     for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIdsInfo.at(fieldName).idFields)
     {
-        command.append(std::format("{}_{} {}{},\n", fieldName, foreignIdName,
+        command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignIdName,
                                    typeTranslator.toSqlType(foreignIColumnInfo.type), isNullable));
     }
 
@@ -111,7 +111,7 @@ auto SqliteCommandGenerator::addForeignIds(const model::ForeignIdsInfo& foreignI
 
     for (const auto& [fieldName, foreignIds] : foreignIdsInfo)
     {
-        std::string foreignKeyCommand{"FOREIGN KEY("};
+        std::string foreignKeyCommand{"\tFOREIGN KEY ("};
         for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIds.idFields)
         {
             foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignIdName));
@@ -119,7 +119,7 @@ auto SqliteCommandGenerator::addForeignIds(const model::ForeignIdsInfo& foreignI
 
         removeLastComma(foreignKeyCommand);
 
-        foreignKeyCommand.append(std::format(") REFERENCES {}(", foreignIds.tableName));
+        foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignIds.tableName));
 
         for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIds.idFields)
         {
