@@ -16,10 +16,58 @@ database.connect("sqlite3://test.db");
 ```
 
 ## Create table
-🚧🚧🚧 TODO 🚧🚧🚧
+
+To create table in database use `createTable` method and pass model as template argument:
+
+```cpp
+struct ObjectModel
+{
+    int id;
+    std::string name;
+    std::string email;
+    std::string password;
+    std::string created_at;
+    std::string updated_at;
+};
+
+database.createTable<ObjectModel>();
+```
+
 ## Delete table
-🚧🚧🚧 TODO 🚧🚧🚧
+
+To delete table from database use `deleteTable` method and pass model as template argument:
+
+```cpp
+database.deleteTable<ObjectModel>();
+```
+
 ## Insert objects
-🚧🚧🚧 TODO 🚧🚧🚧
+
+To insert objects into database use `insertObjects` method and pass vector of objects as argument:
+
+```cpp
+std::vector<ObjectModel> objects{
+    {1, "name", "email", "password", "created_at", "updated_at"}, 
+    {2, "name2", "email2", "password2", "created_at2", "updated_at2"}
+};
+
+database.insertObjects(objects);
+```
+
+You can also insert single object:
+
+```cpp
+ObjectModel object{1, "name", "email", "password", "created_at", "updated_at"};
+
+database.insertObject(object);
+```
+
 ## Query objects
-🚧🚧🚧 TODO 🚧🚧🚧
+
+To query objects from database use `executeQuery` method and pass [query](query.md) as argument:
+
+```cpp
+orm::Query<ObjectModel> query;
+
+auto queriedObjects = database.executeQuery(query);
+```
