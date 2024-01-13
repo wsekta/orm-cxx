@@ -34,13 +34,17 @@ auto getPrimaryIdColumnsNames() -> std::unordered_set<std::string>
 template <typename T>
 constexpr auto checkIfIsModelWithId() -> bool
 {
-    auto ids = getPrimaryIdColumnsNames<T>();
-
-    if (ids.empty())
+    if constexpr (requires { T::id_columns; })
+    {
+        return true;
+    }
+    else if constexpr (requires(T t) { t.id; })
+    {
+        return true;
+    }
+    else
     {
         return false;
     }
-
-    return true;
 }
 }

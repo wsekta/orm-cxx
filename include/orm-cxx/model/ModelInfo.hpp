@@ -12,7 +12,7 @@ struct ModelInfo
     std::string tableName;
     std::vector<ColumnInfo> columnsInfo;
     std::unordered_set<std::string> idColumnsNames;
-    std::unordered_map<std::string, std::unordered_map<std::string, ColumnType>> foreignIdsInfo;
+    ForeignIdsInfo foreignIdsInfo;
 };
 
 template <typename T>
