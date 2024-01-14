@@ -1,14 +1,22 @@
 #pragma once
 
 #include <optional>
-#include <rfl.hpp>
 #include <string>
 #include <unordered_map>
 
 #include "ColumnInfo.hpp"
 #include "ForeginIdsInfoType.hpp"
 #include "IdInfo.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "TableInfo.hpp"
+
+DISABLE_WARNING_PUSH
+
+DISABLE_EXTERNAL_WARNINGS
+
+#include <rfl.hpp>
+
+DISABLE_WARNING_POP
 
 namespace orm::model
 {

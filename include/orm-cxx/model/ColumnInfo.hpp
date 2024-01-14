@@ -1,7 +1,6 @@
 #pragma once
 
 #include <regex>
-#include <rfl.hpp>
 #include <string>
 #include <unordered_set>
 #include <vector>
@@ -10,6 +9,15 @@
 #include "ColumnType.hpp"
 #include "ForeginIdsInfoType.hpp"
 #include "NameMapping.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
+
+DISABLE_WARNING_PUSH
+
+DISABLE_EXTERNAL_WARNINGS
+
+#include <rfl.hpp>
+
+DISABLE_WARNING_POP
 
 namespace orm::model
 {
@@ -28,7 +36,7 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIds
         columnInfo.name = getColumnName<T>(field.name());
 
         auto [type, isNotNull] = toColumnType(field.type());
-        
+
         columnInfo.type = type;
 
         if (type == ColumnType::Unknown and foreignIdsInfo.contains(field.name()))

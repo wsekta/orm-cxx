@@ -10,14 +10,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 option(BUILD_ORM_CXX_TESTS DEFAULT ON)
 option(BUILD_ORM_CXX_EXAMPLE DEFAULT ON)
 
-if (MSVC)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /std:c++20 /permissive- /bigobj")
-else ()
-    set(CMAKE_CXX_FLAGS
-            "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wconversion -Wformat" # -Werror
-    )
-endif ()
-
 set(BUILD_SHARED_LIBS OFF CACHE INTERNAL "Static Build" FORCE)
 set(SOCI_SHARED ON CACHE INTERNAL "SOCI Shared" FORCE)
 set(SOCI_STATIC OFF CACHE INTERNAL "SOCI Static" FORCE)
@@ -54,6 +46,24 @@ target_include_directories(
         PUBLIC externals/reflect-cpp/include)
 
 target_link_libraries(${LIBRARY_NAME} PUBLIC soci_core soci_sqlite3)
+
+file(GLOB_RECURSE EXTERNALS_DIR "externals/*.c" "externals/*.h" "externals/*.cpp" "externals/*.hpp")
+
+if (MSVC)
+    set_source_files_properties(
+            ${EXTERNALS_DIR}
+            PROPERTIES
+            COMPILE_FLAGS "/IGNORE"
+    )
+    set_target_properties(${LIBRARY_NAME} PROPERTIES COMPILE_FLAGS " /std:c++20 /permissive- /W4 /WX /bigobj")
+else ()
+    set_source_files_properties(
+            ${EXTERNALS_DIR}
+            PROPERTIES
+            COMPILE_FLAGS "-Wno-everything"
+    )
+    set_target_properties(${LIBRARY_NAME} PROPERTIES COMPILE_FLAGS " -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wformat -Werror")
+endif ()
 
 if (BUILD_ORM_CXX_TESTS)
     set(BUILD_FAKER_TESTS OFF)

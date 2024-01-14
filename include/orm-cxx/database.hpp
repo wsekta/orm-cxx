@@ -6,8 +6,16 @@
 #include "database/CommandGeneratorFactory.hpp"
 #include "model.hpp"
 #include "model/Binding.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "query.hpp"
+
+DISABLE_WARNING_PUSH
+
+DISABLE_EXTERNAL_WARNINGS
+
 #include "soci/soci.h"
+
+DISABLE_WARNING_POP
 
 namespace orm
 {

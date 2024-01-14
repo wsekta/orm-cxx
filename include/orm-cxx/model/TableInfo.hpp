@@ -1,11 +1,19 @@
 #pragma once
 
-#include <rfl.hpp>
 #include <source_location>
 #include <string>
 #include <utility>
 
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "orm-cxx/utils/StringUtils.hpp"
+
+DISABLE_WARNING_PUSH
+
+DISABLE_EXTERNAL_WARNINGS
+
+#include <rfl.hpp>
+
+DISABLE_WARNING_POP
 
 namespace orm::model
 {

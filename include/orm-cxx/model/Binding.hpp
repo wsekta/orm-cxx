@@ -1,9 +1,17 @@
 #pragma once
 
 #include "orm-cxx/model.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
+
+DISABLE_WARNING_PUSH
+
+DISABLE_EXTERNAL_WARNINGS
+
 #include "rfl/to_view.hpp"
 #include "soci/type-conversion.h"
 #include "soci/values.h"
+
+DISABLE_WARNING_POP
 
 namespace soci
 {
@@ -61,7 +69,7 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            if constexpr(std::is_same<ModelField, float>::value)
+            if constexpr (std::is_same<ModelField, float>::value)
             {
                 v.set(columnInfo.name, static_cast<double>(*column));
             }
@@ -79,7 +87,7 @@ private:
             {
                 if (column->has_value())
                 {
-                    if constexpr(std::is_same<ModelField, float>::value)
+                    if constexpr (std::is_same<ModelField, float>::value)
                     {
                         v.set(columnInfo.name, static_cast<double>(column->value()));
                     }
@@ -98,7 +106,7 @@ private:
                 throw std::runtime_error(R"(Not optional "NotNull" column)");
             }
         }
-    };
+    }
 
     // getting model from values
     template <typename ModelAsTuple, std::size_t TupleSize = std::tuple_size_v<ModelAsTuple>>
@@ -123,7 +131,7 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            if constexpr(std::is_same<ModelField, float>::value)
+            if constexpr (std::is_same<ModelField, float>::value)
             {
                 *column = static_cast<float>(v.get<double>(columnInfo.name));
             }
@@ -145,7 +153,7 @@ private:
                 }
                 else
                 {
-                    if constexpr(std::is_same<ModelField, float>::value)
+                    if constexpr (std::is_same<ModelField, float>::value)
                     {
                         *column = static_cast<float>(v.get<double>(columnInfo.name));
                     }
