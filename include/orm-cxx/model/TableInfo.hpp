@@ -30,13 +30,15 @@ auto getTableName() -> std::string
     {
         return std::string(T::table_name);
     }
+    else
+    {
+        auto typeName = rfl::type_name_t<T>().str();
 
-    auto typeName = rfl::type_name_t<T>().str();
+        utils::replaceAll(typeName, "::", "_");
+        utils::replaceAll(typeName, "class ", "");
+        utils::replaceAll(typeName, "struct ", "");
 
-    utils::replaceAll(typeName, "::", "_");
-    utils::replaceAll(typeName, "class ", "");
-    utils::replaceAll(typeName, "struct ", "");
-
-    return typeName;
+        return typeName;
+    }
 }
 }

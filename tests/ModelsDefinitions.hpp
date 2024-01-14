@@ -40,6 +40,15 @@ struct ModelWithFloat
     float field3;
 };
 
+struct ModelWithOptionalFloat
+{
+    inline static const std::string table_name{"models_ModelWithFloat"};
+
+    std::optional<int> field1;
+    std::optional<std::string> field2;
+    std::optional<float> field3;
+};
+
 struct ModelWithId
 {
     int id;

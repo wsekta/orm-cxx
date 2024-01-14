@@ -152,6 +152,25 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesShoul
     database.deleteTable<models::ModelWithFloat>();
 }
 
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptionalFloat_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<models::ModelWithOptionalFloat>();
+    auto models = std::vector<models::ModelWithOptionalFloat>{{1, "test", 1.0f}, {2, "test2", 2.0f}};
+    database.insertObjects(models);
+    orm::Query<models::ModelWithOptionalFloat> queryForOptionalFloat;
+    auto returnedModels = database.executeQuery(queryForOptionalFloat);
+
+    for (std::size_t i = 0; i < models.size(); i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+        EXPECT_EQ(models[i].field3, returnedModels[i].field3);
+    }
+
+    database.deleteTable<models::ModelWithOptionalFloat>();
+}
+
 TEST_F(DatabaseTest, shouldCreateTableWithIdColumn)
 {
     database.connect(connectionString);
@@ -194,4 +213,16 @@ TEST_F(DatabaseTest, shouldCreateTableWithRelatedModel)
 
     database.deleteTable<models::ModelWithId>();
     database.deleteTable<models::ModelRelatedToOtherModel>();
+}
+
+TEST_F(DatabaseTest, shouldThrowWhileReadingNullValueToNotNullableField)
+{
+    database.connect(connectionString);
+    database.createTable<models::ModelWithOptionalFloat>();
+    auto models = std::vector<models::ModelWithOptionalFloat>{{std::nullopt, "test", 1.0f}, {2, "test2", 2.0f}};
+    database.insertObjects(models);
+    orm::Query<models::ModelWithFloat> queryForOptionalFloat;
+    EXPECT_THROW(database.executeQuery(queryForOptionalFloat), std::runtime_error);
+
+    database.deleteTable<models::ModelWithOptionalFloat>();
 }

@@ -64,14 +64,8 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            if constexpr (std::is_same<ModelField, float>::value)
-            {
-                v.set(columnInfo.name, static_cast<double>(*column));
-            }
-            else
-            {
-                v.set(columnInfo.name, *column);
-            }
+
+            v.set(columnInfo.name, *column);
         }
         else
         {
@@ -82,24 +76,40 @@ private:
             {
                 if (column->has_value())
                 {
-                    if constexpr (std::is_same<ModelField, float>::value)
-                    {
-                        v.set(columnInfo.name, static_cast<double>(column->value()));
-                    }
-                    else
-                    {
-                        v.set(columnInfo.name, column->value());
-                    }
+
+                    v.set(columnInfo.name, column->value());
                 }
                 else
                 {
+
                     v.set(columnInfo.name, decltype(column->value()){}, soci::i_null);
                 }
             }
-            else
-            {
-                throw std::runtime_error(R"(Not optional "NotNull" column)");
-            }
+        }
+    }
+
+    template <>
+    static void setObjectFieldToValues(std::size_t i, const float* column,
+                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
+    {
+        auto& columnInfo = columnsInfo[i];
+
+        v.set(columnInfo.name, static_cast<double>(*column));
+    }
+
+    template <>
+    static void setObjectFieldToValues(std::size_t i, const std::optional<float>* column,
+                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
+    {
+        auto& columnInfo = columnsInfo[i];
+
+        if (column->has_value())
+        {
+            v.set(columnInfo.name, static_cast<double>(column->value()));
+        }
+        else
+        {
+            v.set(columnInfo.name, double{}, soci::i_null);
         }
     }
 
@@ -126,14 +136,7 @@ private:
 
         if (columnInfo.isNotNull)
         {
-            if constexpr (std::is_same<ModelField, float>::value)
-            {
-                *column = static_cast<float>(v.get<double>(columnInfo.name));
-            }
-            else
-            {
-                *column = v.get<ModelField>(columnInfo.name);
-            }
+            *column = v.get<ModelField>(columnInfo.name);
         }
         else
         {
@@ -148,20 +151,34 @@ private:
                 }
                 else
                 {
-                    if constexpr (std::is_same<ModelField, float>::value)
-                    {
-                        *column = static_cast<float>(v.get<double>(columnInfo.name));
-                    }
-                    else
-                    {
-                        *column = v.get<ModelField>(columnInfo.name);
-                    }
+                    *column = v.get<ModelField>(columnInfo.name);
                 }
             }
-            else
-            {
-                throw std::runtime_error(R"(Try to read null value from database to not optional field)");
-            }
+        }
+    }
+
+    template <>
+    static void getObjectFieldFromValues(std::size_t i, float* column,
+                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
+    {
+        auto& columnInfo = columnsInfo[i];
+
+        *column = static_cast<float>(v.get<double>(columnInfo.name));
+    }
+
+    template <>
+    static void getObjectFieldFromValues(std::size_t i, std::optional<float>* column,
+                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
+    {
+        auto& columnInfo = columnsInfo[i];
+
+        if (v.get_indicator(columnInfo.name) == i_null)
+        {
+            *column = std::nullopt;
+        }
+        else
+        {
+            *column = static_cast<float>(v.get<double>(columnInfo.name));
         }
     }
 };
