@@ -64,13 +64,13 @@
 # target_code_coverage(theExe EXCLUDE non_covered.cpp test/*) # As an executable target, the reports will exclude the non-covered.cpp file, and any files in a test/ folder.
 # ~~~
 #
-# Example 3: Target added to the 'ccov' and 'faker-ccov-all' targets
+# Example 3: Target added to the 'ccov' and 'orm-cxx-ccov-all' targets
 #
 # ~~~
-# add_code_coverage_all_targets(EXCLUDE test/*) # Adds the 'faker-ccov-all' target set and sets it to exclude all files in test/ folders.
+# add_code_coverage_all_targets(EXCLUDE test/*) # Adds the 'orm-cxx-ccov-all' target set and sets it to exclude all files in test/ folders.
 #
 # add_executable(theExe main.cpp non_covered.cpp)
-# target_code_coverage(theExe AUTO ALL EXCLUDE non_covered.cpp test/*) # As an executable target, adds to the 'ccov' and faker-ccov-all' targets, and the reports will exclude the non-covered.cpp file, and any files in a test/ folder.
+# target_code_coverage(theExe AUTO ALL EXCLUDE non_covered.cpp test/*) # As an executable target, adds to the 'ccov' and orm-cxx-ccov-all' targets, and the reports will exclude the non-covered.cpp file, and any files in a test/ folder.
 # ~~~
 
 # Options
@@ -136,14 +136,14 @@ if (CODE_COVERAGE AND NOT CODE_COVERAGE_ADDED)
         # Targets
         if (${CMAKE_VERSION} VERSION_LESS "3.17.0")
             add_custom_target(
-                    faker-ccov-clean
+                    orm-cxx-ccov-clean
                     COMMAND ${CMAKE_COMMAND} -E remove -f
                     ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list
                     COMMAND ${CMAKE_COMMAND} -E remove -f
                     ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/profraw.list)
         else ()
             add_custom_target(
-                    faker-ccov-clean
+                    orm-cxx-ccov-clean
                     COMMAND ${CMAKE_COMMAND} -E rm -f
                     ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list
                     COMMAND ${CMAKE_COMMAND} -E rm -f
@@ -153,7 +153,7 @@ if (CODE_COVERAGE AND NOT CODE_COVERAGE_ADDED)
         # Used to get the shared object file list before doing the main all-
         # processing
         add_custom_target(
-                faker-ccov-libs
+                orm-cxx-ccov-libs
                 COMMAND ;
                 COMMENT "libs ready for coverage report.")
 
@@ -185,7 +185,7 @@ if (CODE_COVERAGE AND NOT CODE_COVERAGE_ADDED)
 
         # Targets
         add_custom_target(
-                faker-ccov-clean COMMAND ${LCOV_PATH} --directory
+                orm-cxx-ccov-clean COMMAND ${LCOV_PATH} --directory
                 ${CMAKE_BINARY_DIR} --zerocounters)
 
     else ()
@@ -200,7 +200,7 @@ endif ()
 # GCOV/LCOV:
 # ccov : Generates HTML code coverage report for every target added with 'AUTO' parameter.
 # ccov-${TARGET_NAME} : Generates HTML code coverage report for the associated named target.
-# faker-ccov-all : Generates HTML code coverage report, merging every target added with 'ALL' parameter into a single detailed report.
+# orm-cxx-ccov-all : Generates HTML code coverage report, merging every target added with 'ALL' parameter into a single detailed report.
 #
 # LLVM-COV:
 # ccov : Generates HTML code coverage report for every target added with 'AUTO' parameter.
@@ -209,9 +209,9 @@ endif ()
 # ccov-report-${TARGET_NAME} : Prints to command line summary per-file coverage information.
 # ccov-export-${TARGET_NAME} : Exports the coverage report to a JSON file.
 # ccov-show-${TARGET_NAME} : Prints to command line detailed per-line coverage information.
-# faker-ccov-all : Generates HTML code coverage report, merging every target added with 'ALL' parameter into a single detailed report.
-# faker-ccov-all-report : Prints summary per-file coverage information for every target added with ALL' parameter to the command line.
-# faker-ccov-all-export : Exports the coverage report to a JSON file.
+# orm-cxx-ccov-all : Generates HTML code coverage report, merging every target added with 'ALL' parameter into a single detailed report.
+# orm-cxx-ccov-all-report : Prints summary per-file coverage information for every target added with ALL' parameter to the command line.
+# orm-cxx-ccov-all-export : Exports the coverage report to a JSON file.
 #
 # Required:
 # TARGET_NAME - Name of the target to generate code coverage for.
@@ -220,7 +220,7 @@ endif ()
 # INTERFACE - Sets the visibility for added compile options to targets to INTERFACE instead of the default of PRIVATE.
 # PLAIN - Do not set any target visibility (backward compatibility with old cmake projects)
 # AUTO - Adds the target to the 'ccov' target so that it can be run in a batch with others easily. Effective on executable targets.
-# ALL - Adds the target to the 'faker-ccov-all' and 'faker-ccov-all-report' targets, which merge several executable targets coverage data to a single report. Effective on executable targets.
+# ALL - Adds the target to the 'orm-cxx-ccov-all' and 'orm-cxx-ccov-all-report' targets, which merge several executable targets coverage data to a single report. Effective on executable targets.
 # EXTERNAL - For GCC's lcov, allows the profiling of 'external' files from the processing directory
 # COVERAGE_TARGET_NAME - For executables ONLY, changes the outgoing target name so instead of `ccov-${TARGET_NAME}` it becomes `ccov-${COVERAGE_TARGET_NAME}`.
 # EXCLUDE <PATTERNS> - Excludes files of the patterns provided from coverage. Note that GCC/lcov excludes by glob pattern, and clang/LLVM excludes via regex! **These do not copy to the 'all' targets.**
@@ -294,7 +294,7 @@ function(target_code_coverage TARGET_NAME)
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list
                         DEPENDS ${TARGET_NAME})
 
-                if (NOT TARGET faker-ccov-libs)
+                if (NOT TARGET orm-cxx-ccov-libs)
                     message(
                             FATAL_ERROR
                             "Calling target_code_coverage with 'ALL' must be after a call to 'add_code_coverage_all_targets'."
@@ -302,7 +302,7 @@ function(target_code_coverage TARGET_NAME)
                 endif ()
 
                 add_dependencies(
-                        faker-ccov-libs
+                        orm-cxx-ccov-libs
                         ccov-run-${target_code_coverage_COVERAGE_TARGET_NAME})
             endif ()
         endif ()
@@ -345,7 +345,7 @@ function(target_code_coverage TARGET_NAME)
                         "${CMAKE_CURRENT_BINARY_DIR}/${target_code_coverage_COVERAGE_TARGET_NAME}.profraw"
                         >> ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/profraw.list
                         JOB_POOL ccov_serial_pool
-                        DEPENDS faker-ccov-libs ${TARGET_NAME})
+                        DEPENDS orm-cxx-ccov-libs ${TARGET_NAME})
 
                 # Merge the generated profile data so llvm-cov can process it
                 add_custom_target(
@@ -532,7 +532,7 @@ function(target_code_coverage TARGET_NAME)
 
             # ALL
             if (target_code_coverage_ALL)
-                if (NOT TARGET faker-ccov-all-processing)
+                if (NOT TARGET orm-cxx-ccov-all-processing)
                     message(
                             FATAL_ERROR
                             "Calling target_code_coverage with 'ALL' must be after a call to 'add_code_coverage_all_targets'."
@@ -540,7 +540,7 @@ function(target_code_coverage TARGET_NAME)
                 endif ()
 
                 add_dependencies(
-                        faker-ccov-all-processing
+                        orm-cxx-ccov-all-processing
                         ccov-run-${target_code_coverage_COVERAGE_TARGET_NAME})
             endif ()
         endif ()
@@ -567,10 +567,10 @@ function(add_code_coverage)
     endif ()
 endfunction()
 
-# Adds the 'faker-ccov-all' type targets that calls all targets added via
+# Adds the 'orm-cxx-ccov-all' type targets that calls all targets added via
 # `target_code_coverage` with the `ALL` parameter, but merges all the coverage
 # data from them into a single large report  instead of the numerous smaller
-# reports. Also adds the faker-ccov-all-capture Generates an all-merged.info
+# reports. Also adds the orm-cxx-ccov-all-capture Generates an all-merged.info
 # file, for use with coverage dashboards (e.g. codecov.io, coveralls).
 # ~~~
 # Optional:
@@ -589,7 +589,7 @@ function(add_code_coverage_all_targets)
             # Merge the profile data for all of the run executables
             if (WIN32)
                 add_custom_target(
-                        faker-ccov-all-processing
+                        orm-cxx-ccov-all-processing
                         COMMAND
                         powershell -Command $$FILELIST = Get-Content
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/profraw.list\;
@@ -598,7 +598,7 @@ function(add_code_coverage_all_targets)
                         -sparse $$FILELIST)
             else ()
                 add_custom_target(
-                        faker-ccov-all-processing
+                        orm-cxx-ccov-all-processing
                         COMMAND
                         ${LLVM_PROFDATA_PATH} merge -o
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
@@ -617,30 +617,30 @@ function(add_code_coverage_all_targets)
             # Print summary of the code coverage information to the command line
             if (WIN32)
                 add_custom_target(
-                        faker-ccov-all-report
+                        orm-cxx-ccov-all-report
                         COMMAND
                         powershell -Command $$FILELIST = Get-Content
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list\;
                         llvm-cov.exe report $$FILELIST
                         -instr-profile=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
                         ${EXCLUDE_REGEX}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             else ()
                 add_custom_target(
-                        faker-ccov-all-report
+                        orm-cxx-ccov-all-report
                         COMMAND
                         ${LLVM_COV_PATH} report `cat
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list`
                         -instr-profile=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
                         ${EXCLUDE_REGEX}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             endif ()
 
             # Export coverage information so continuous integration tools (e.g.
             # Jenkins) can consume it
             if (WIN32)
                 add_custom_target(
-                        faker-ccov-all-export
+                        orm-cxx-ccov-all-export
                         COMMAND
                         powershell -Command $$FILELIST = Get-Content
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list\;
@@ -648,23 +648,23 @@ function(add_code_coverage_all_targets)
                         -instr-profile=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
                         -format="text" ${EXCLUDE_REGEX} >
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/coverage.json
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             else ()
                 add_custom_target(
-                        faker-ccov-all-export
+                        orm-cxx-ccov-all-export
                         COMMAND
                         ${LLVM_COV_PATH} export `cat
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list`
                         -instr-profile=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata
                         -format="text" ${EXCLUDE_REGEX} >
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/coverage.json
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             endif ()
 
             # Generate HTML output of all added targets for perusal
             if (WIN32)
                 add_custom_target(
-                        faker-ccov-all
+                        orm-cxx-ccov-all
                         COMMAND
                         powershell -Command $$FILELIST = Get-Content
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list\;
@@ -673,10 +673,10 @@ function(add_code_coverage_all_targets)
                         -show-line-counts-or-regions
                         -output-dir=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged
                         -format="html" ${EXCLUDE_REGEX}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             else ()
                 add_custom_target(
-                        faker-ccov-all
+                        orm-cxx-ccov-all
                         COMMAND
                         ${LLVM_COV_PATH} show `cat
                         ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/binaries.list`
@@ -684,7 +684,7 @@ function(add_code_coverage_all_targets)
                         -show-line-counts-or-regions
                         -output-dir=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged
                         -format="html" ${EXCLUDE_REGEX}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             endif ()
 
         elseif (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID
@@ -693,7 +693,7 @@ function(add_code_coverage_all_targets)
                     "${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.info")
 
             # Nothing required for gcov
-            add_custom_target(faker-ccov-all-processing COMMAND ;)
+            add_custom_target(orm-cxx-ccov-all-processing COMMAND ;)
 
             # Exclusion regex string creation
             set(EXCLUDE_REGEX)
@@ -712,35 +712,35 @@ function(add_code_coverage_all_targets)
             # Capture coverage data
             if (${CMAKE_VERSION} VERSION_LESS "3.17.0")
                 add_custom_target(
-                        faker-ccov-all-capture
+                        orm-cxx-ccov-all-capture
                         COMMAND ${CMAKE_COMMAND} -E remove -f ${COVERAGE_INFO}
                         COMMAND ${LCOV_PATH} --directory ${CMAKE_BINARY_DIR}
                         --capture --output-file ${COVERAGE_INFO}
                         COMMAND ${EXCLUDE_COMMAND}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             else ()
                 add_custom_target(
-                        faker-ccov-all-capture
+                        orm-cxx-ccov-all-capture
                         COMMAND ${CMAKE_COMMAND} -E rm -f ${COVERAGE_INFO}
                         COMMAND ${LCOV_PATH} --directory ${CMAKE_BINARY_DIR}
                         --capture --output-file ${COVERAGE_INFO}
                         COMMAND ${EXCLUDE_COMMAND}
-                        DEPENDS faker-ccov-all-processing)
+                        DEPENDS orm-cxx-ccov-all-processing)
             endif ()
 
             # Generates HTML output of all targets for perusal
             add_custom_target(
-                    faker-ccov-all
+                    orm-cxx-ccov-all
                     COMMAND
                     ${GENHTML_PATH} -o
                     ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged
                     ${COVERAGE_INFO} -p ${CMAKE_SOURCE_DIR}
-                    DEPENDS faker-ccov-all-capture)
+                    DEPENDS orm-cxx-ccov-all-capture)
 
         endif ()
 
         add_custom_command(
-                TARGET faker-ccov-all
+                TARGET orm-cxx-ccov-all
                 POST_BUILD
                 COMMAND ;
                 COMMENT
