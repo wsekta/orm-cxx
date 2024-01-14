@@ -2,76 +2,11 @@
 
 #include <gtest/gtest.h>
 
-struct OneFieldStruct
-{
-    int field1;
-};
-
-struct StructWithTableName
-{
-    static constexpr std::string_view table_name = "some_table_name";
-
-    int field1;
-    int field2;
-};
-
-struct StructWithOptional
-{
-    std::optional<int> field1;
-    std::optional<std::string> field2;
-};
-
-struct StructWithId
-{
-    int id;
-    int field1;
-    int field2;
-};
-
-struct StructWithIdColumns
-{
-    inline static const std::vector<std::string> id_columns = {"id1", "id2"};
-
-    int id1;
-    int id2;
-    int field1;
-    int field2;
-};
-
-struct StructWithNamesMapping
-{
-    int field1;
-    int field2;
-
-    inline static const std::map<std::string, std::string> columns_names = {{"field1", "some_field1_name"},
-                                                                            {"field2", "some_field2_name"}};
-};
-
-struct StructWithIdAndNamesMapping
-{
-    int id;
-    int field1;
-    int field2;
-
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
-};
-
-struct StructWithOtherStructWithId
-{
-    int id;
-    StructWithId field1;
-};
-
-struct StructWithOptionalOtherStructWithId
-{
-    int id;
-    std::optional<StructWithId> field1;
-};
+#include "ModelsDefinitions.hpp"
 
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
-    orm::Model<OneFieldStruct> model;
+    orm::Model<models::ModelWithOneField> model;
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 1);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
@@ -82,31 +17,32 @@ TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 
 TEST(ModelTest, StructWithTableName_shouldHaveTwoColumns)
 {
-    orm::Model<StructWithTableName> model;
+    orm::Model<models::ModelWithTableName> model;
 
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 1);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field2");
-    EXPECT_EQ(model.getModelInfo().tableName, StructWithTableName::table_name);
+    EXPECT_EQ(model.getModelInfo().tableName, models::ModelWithTableName::table_name);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
 }
 
 TEST(ModelTest, StructWithOptional_shouldHaveTwoColumns)
 {
-    orm::Model<StructWithOptional> model;
+    orm::Model<models::ModelWithOptional> model;
 
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, orm::model::ColumnType::Int);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isNotNull, false);
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field2");
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isNotNull, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "field3");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].isNotNull, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
 }
 
 TEST(ModelTest, StructWithId_shouldHaveOneIdColumn)
 {
-    orm::Model<StructWithId> model;
+    orm::Model<models::ModelWithId> model;
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
@@ -120,78 +56,66 @@ TEST(ModelTest, StructWithId_shouldHaveOneIdColumn)
 
 TEST(ModelTest, StructWithIdColumns_shouldHaveTwoIdColumns)
 {
-    orm::Model<StructWithIdColumns> model;
+    orm::Model<models::ModelWithOverwrittenId> model;
 
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 4);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "id2");
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field1");
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, true);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[2].isPrimaryKey, false);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[3].name, "field2");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isPrimaryKey, false);
-    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id1"));
-    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id2"));
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "field2");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[2].isPrimaryKey, true);
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("field1"));
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("field2"));
 }
 
 TEST(ModelTest, StructWithNamesMapping_shouldHaveTwoColumnsWithNamesFromMapping)
 {
-    orm::Model<StructWithNamesMapping> model;
-
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "some_field1_name");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "some_field2_name");
-    EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
-}
-
-TEST(ModelTest, StructWithIdAndNamesMapping_shouldHaveTwoColumnsWithNamesFromMappingAndOneIdColumn)
-{
-    orm::Model<StructWithIdAndNamesMapping> model;
+    orm::Model<models::ModelWithIdAndNamesMapping> model;
 
     EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "some_id_name");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "some_field1_name");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
     EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "some_field2_name");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[2].isPrimaryKey, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("some_id_name"));
 }
 
 TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
 {
-    orm::Model<StructWithOtherStructWithId> model;
+    orm::Model<models::ModelRelatedToOtherModel> model;
+    orm::Model<models::ModelWithId> relatedModel;
 
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 4);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isForeignModel, false);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isForeignModel, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].name, "field3");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isForeignModel, true);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].idFields.size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].idFields.contains("id"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].tableName, "StructWithId");
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field3"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].idFields.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field3"].idFields.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
 }
 
 TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
 {
-    orm::Model<StructWithOptionalOtherStructWithId> model;
+    orm::Model<models::ModelOptionallyRelatedToOtherModel> model;
+    orm::Model<models::ModelWithId> relatedModel;
 
-    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 2);
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 4);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isPrimaryKey, true);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isForeignModel, false);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "field1");
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isPrimaryKey, false);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isForeignModel, true);
-    EXPECT_EQ(model.getModelInfo().columnsInfo[1].isNotNull, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].name, "field3");
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isPrimaryKey, false);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isForeignModel, true);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[3].isNotNull, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field1"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].idFields.size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field1"].idFields.contains("id"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field1"].tableName, "StructWithId");
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field3"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].idFields.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field3"].idFields.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
 }

@@ -1,10 +1,11 @@
 #pragma once
 
+#include <rfl.hpp>
 #include <source_location>
 #include <string>
 #include <utility>
 
-#include "rfl.hpp"
+#include "orm-cxx/utils/StringUtils.hpp"
 
 namespace orm::model
 {
@@ -24,14 +25,9 @@ auto getTableName() -> std::string
 
     auto typeName = rfl::type_name_t<T>().str();
 
-    std::string del = " ";
-
-    auto iter = typeName.find(del);
-
-    if (iter != std::string::npos)
-    {
-        return typeName.substr(iter + del.size());
-    }
+    utils::replaceAll(typeName, "::", "_");
+    utils::replaceAll(typeName, "class ", "");
+    utils::replaceAll(typeName, "struct ", "");
 
     return typeName;
 }

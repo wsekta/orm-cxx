@@ -42,6 +42,7 @@ set(SOURCES
         src/model/ColumnType.cpp
         src/database/sqlite/SqliteCommandGenerator.cpp
         src/database/CommandGeneratorFactory.cpp
+        src/utils/StringUtils.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -67,6 +68,7 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
             src/model/ColumnTypeTest.cpp
             src/database/sqlite/SqliteCommandGeneratorTest.cpp
+            src/utils/StringUtilsTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
