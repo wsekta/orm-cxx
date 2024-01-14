@@ -79,6 +79,8 @@ if (BUILD_ORM_CXX_TESTS)
             src/model/ColumnTypeTest.cpp
             src/database/sqlite/SqliteCommandGeneratorTest.cpp
             src/utils/StringUtilsTest.cpp
+            tests/Model/IdInfoTest.cpp
+            tests/Model/TableInfoTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
@@ -114,7 +116,7 @@ if (BUILD_ORM_CXX_TESTS)
                 COMMAND ${LIBRARY_NAME}-UT
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     endif ()
-    
+
     target_code_coverage(${LIBRARY_NAME}-UT ALL)
 endif ()
 

@@ -16,10 +16,6 @@ public:
     virtual auto insert(const model::ModelInfo& modelInfo) const -> std::string = 0;
 
 protected:
-    inline auto removeLastComma(std::string& command) const -> void
-    {
-        command.pop_back();
-        command.pop_back();
-    }
+    auto removeLastComma(std::string& command) const -> void;
 };
 }

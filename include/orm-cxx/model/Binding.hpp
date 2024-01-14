@@ -20,13 +20,8 @@ struct type_conversion<orm::Model<T>>
 {
     typedef values base_type;
 
-    static void from_base(const values& v, indicator ind, orm::Model<T>& model)
+    static void from_base(const values& v, indicator /*ind*/, orm::Model<T>& model)
     {
-        if (ind == i_null)
-        {
-            return;
-        }
-
         auto columns = model.getModelInfo().columnsInfo;
         auto& modelAsTuple = model.getObject();
         auto view = rfl::to_view(modelAsTuple);
