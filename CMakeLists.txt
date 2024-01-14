@@ -88,6 +88,12 @@ if (BUILD_ORM_CXX_TESTS)
 
     enable_testing()
 
+    set(target_code_coverage_ALL 1)
+
+    include("cmake/cmake-coverage.cmake")
+
+    add_code_coverage_all_targets()
+
     add_executable(${LIBRARY_NAME}-UT ${UT_SOURCES})
 
     target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
@@ -108,6 +114,8 @@ if (BUILD_ORM_CXX_TESTS)
                 COMMAND ${LIBRARY_NAME}-UT
                 WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
     endif ()
+    
+    target_code_coverage(${LIBRARY_NAME}-UT ALL)
 endif ()
 
 if (BUILD_ORM_CXX_EXAMPLE)

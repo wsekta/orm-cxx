@@ -44,6 +44,7 @@ jobs:
           cmake -B ${{github.workspace}}/build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
             -DCMAKE_CXX_COMPILER=/usr/bin/clang++-16 \
+            -DCODE_COVERAGE:BOOL=ON \
             -GNinja
 
       - name: Build
@@ -60,3 +61,8 @@ jobs:
           name: GTest
           path: '${{github.workspace}}/build/report.xml'
           reporter: java-junit
+
+      - name: Codecov
+        uses: codecov/codecov-action@v3.1.4
+        with:
+          token: ${{ secrets.CODECOVTOKEN }}
