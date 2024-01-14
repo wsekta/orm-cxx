@@ -156,7 +156,7 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptionalFloat_val
 {
     database.connect(connectionString);
     database.createTable<models::ModelWithOptionalFloat>();
-    auto models = std::vector<models::ModelWithOptionalFloat>{{1, "test", 1.0f}, {2, "test2", 2.0f}};
+    auto models = std::vector<models::ModelWithOptionalFloat>{{1, "test", std::nullopt}, {2, "test2", 2.0f}};
     database.insertObjects(models);
     orm::Query<models::ModelWithOptionalFloat> queryForOptionalFloat;
     auto returnedModels = database.executeQuery(queryForOptionalFloat);

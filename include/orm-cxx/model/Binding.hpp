@@ -88,7 +88,6 @@ private:
         }
     }
 
-    template <>
     static void setObjectFieldToValues(std::size_t i, const float* column,
                                        const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
     {
@@ -97,7 +96,6 @@ private:
         v.set(columnInfo.name, static_cast<double>(*column));
     }
 
-    template <>
     static void setObjectFieldToValues(std::size_t i, const std::optional<float>* column,
                                        const std::vector<orm::model::ColumnInfo>& columnsInfo, values& v)
     {
@@ -157,7 +155,6 @@ private:
         }
     }
 
-    template <>
     static void getObjectFieldFromValues(std::size_t i, float* column,
                                          const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
     {
@@ -166,7 +163,6 @@ private:
         *column = static_cast<float>(v.get<double>(columnInfo.name));
     }
 
-    template <>
     static void getObjectFieldFromValues(std::size_t i, std::optional<float>* column,
                                          const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
     {
