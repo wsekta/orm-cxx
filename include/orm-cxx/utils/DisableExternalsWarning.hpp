@@ -15,8 +15,11 @@
     #define DISABLE_WARNING_POP DO_PRAGMA(GCC diagnostic pop)
     #define DISABLE_WARNING(warningName) DO_PRAGMA(GCC diagnostic ignored #warningName)
 
-    #define DISABLE_EXTERNAL_WARNINGS DISABLE_WARNING(-Wunused-parameter) DISABLE_WARNING(-Wunused-function) DISABLE_WARNING(-Wundefined-inline) DISABLE_WARNING(-Wignored-qualifiers)
-
+    #if defined(__clang__)
+        #define DISABLE_EXTERNAL_WARNINGS DISABLE_WARNING(-Wunused-parameter) DISABLE_WARNING(-Wunused-function) DISABLE_WARNING(-Wignored-qualifiers) DISABLE_WARNING(-Wshadow) DISABLE_WARNING(-Wundefined-inline)
+    #else
+        #define DISABLE_EXTERNAL_WARNINGS DISABLE_WARNING(-Wunused-parameter) DISABLE_WARNING(-Wunused-function) DISABLE_WARNING(-Wignored-qualifiers) DISABLE_WARNING(-Wshadow)
+    #endif
 #else
     #define DISABLE_WARNING_PUSH
     #define DISABLE_WARNING_POP
