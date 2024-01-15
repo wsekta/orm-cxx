@@ -33,7 +33,6 @@ auto getForeignIdsInfo() -> ForeignIdsInfo
     return foreignIdsInfo;
 }
 
-// getting model from values
 template <typename T, typename ModelAsTuple, std::size_t TupleSize = std::tuple_size_v<ModelAsTuple>>
 static auto getForeignIdsFromModel(ModelAsTuple& modelAsTuple, ForeignIdsInfo& foreignIdsInfo) -> void
 {
@@ -73,7 +72,6 @@ template <typename T, typename ModelField>
 static auto getForeignIdsFromField(std::size_t i, std::optional<ModelField>* /*field*/, ForeignIdsInfo& foreignIdsInfo)
     -> void
 {
-    ModelField modelField{};
-    getForeignIdsFromField<T>(i, &modelField, foreignIdsInfo);
+    getForeignIdsFromField<T>(i, static_cast<ModelField*>(nullptr), foreignIdsInfo);
 }
 }
