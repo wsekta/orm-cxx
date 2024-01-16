@@ -7,7 +7,6 @@
 
 #include "ColumnInfoType.hpp"
 #include "ColumnType.hpp"
-#include "ForeginIdsInfoType.hpp"
 #include "NameMapping.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
@@ -22,7 +21,7 @@ DISABLE_WARNING_POP
 namespace orm::model
 {
 template <typename T>
-auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIdsInfo& foreignIdsInfo)
+auto getColumnsInfo(const std::unordered_set<std::string>& ids)
     -> std::vector<ColumnInfo>
 {
     auto fields = rfl::fields<T>();
@@ -38,12 +37,6 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids, const ForeignIds
         auto [type, isNotNull] = toColumnType(field.type());
 
         columnInfo.type = type;
-
-        if (type == ColumnType::Unknown and foreignIdsInfo.contains(field.name()))
-        {
-            columnInfo.isForeignModel = true;
-            columnInfo.type = ColumnType::OneToMany;
-        }
 
         columnInfo.isNotNull = isNotNull;
 

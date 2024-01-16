@@ -94,10 +94,10 @@ TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsIn
     EXPECT_EQ(model.getModelInfo().columnsInfo[3].isPrimaryKey, false);
     EXPECT_EQ(model.getModelInfo().columnsInfo[3].isForeignModel, true);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field3"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].idFields.size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field3"].idFields.contains("id"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
+    EXPECT_TRUE(model.getModelInfo().foreignModelsInfo.contains("field3"));
+    EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
 }
 
 TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)
@@ -114,8 +114,8 @@ TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledFore
     EXPECT_EQ(model.getModelInfo().columnsInfo[3].isForeignModel, true);
     EXPECT_EQ(model.getModelInfo().columnsInfo[3].isNotNull, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo.contains("field3"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].idFields.size(), 1);
-    EXPECT_TRUE(model.getModelInfo().foreignIdsInfo["field3"].idFields.contains("id"));
-    EXPECT_EQ(model.getModelInfo().foreignIdsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
+    EXPECT_TRUE(model.getModelInfo().foreignModelsInfo.contains("field3"));
+    EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.size(), 1);
+    EXPECT_TRUE(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.contains("id"));
+    EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
 }

@@ -15,9 +15,9 @@ public:
 private:
     SqliteTypeTranslator typeTranslator;
 
-    auto addColumnsForForeignIds(const model::ForeignIdsInfo& foreignIdsInfo, const model::ColumnInfo& columnInfo) const
-        -> std::string;
-
-    auto addForeignIds(const model::ForeignIdsInfo& foreignIdsInfo) const -> std::string;
+    auto addColumnsForForeignIds(const model::ModelInfo& modelInfo, 
+                                                         const model::ColumnInfo& columnInfo) const
+                                                         -> std::string;
+    auto addForeignIds(const model::ModelInfo& modelInfo) const -> std::string;
 };
 }

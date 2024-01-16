@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ColumnInfo.hpp"
-#include "ForeginIdsInfo.hpp"
 #include "IdInfo.hpp"
 #include "TableInfo.hpp"
 
@@ -12,7 +11,6 @@ struct ModelInfo
     std::string tableName;
     std::vector<ColumnInfo> columnsInfo;
     std::unordered_set<std::string> idColumnsNames;
-    ForeignIdsInfo foreignIdsInfo;
     std::unordered_map<std::string, ModelInfo> foreignModelsInfo;
 };
 
@@ -23,8 +21,7 @@ auto generateModelInfo() -> ModelInfo
 
     modelInfo.idColumnsNames = getPrimaryIdColumnsNames<T>();
     modelInfo.tableName = getTableName<T>();
-    modelInfo.foreignIdsInfo = getForeignIdsInfo<T>();
-    modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames, modelInfo.foreignIdsInfo);
+    modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames);
 
     T model{};
     auto values = rfl::to_view(model).values();
@@ -55,6 +52,10 @@ static auto getForeignModelInfoFromField(std::size_t i, ModelField*, ModelInfo& 
     if constexpr (checkIfIsModelWithId<ModelField>())
     {
         auto name = rfl::fields<T>()[i].name();
+
+        modelInfo.columnsInfo[i].isForeignModel = true;
+        
+        modelInfo.columnsInfo[i].type = ColumnType::OneToMany;
 
         modelInfo.foreignModelsInfo[name] = generateModelInfo<ModelField>();
     }

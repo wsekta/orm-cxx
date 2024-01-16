@@ -14,7 +14,7 @@ auto SqliteCommandGenerator::createTable(const model::ModelInfo& modelInfo) cons
     {
         if (column.isForeignModel)
         {
-            command.append(addColumnsForForeignIds(modelInfo.foreignIdsInfo, column));
+            command.append(addColumnsForForeignIds(modelInfo.foreignModelsInfo.at(column.name), column));
 
             continue;
         }
@@ -41,9 +41,9 @@ auto SqliteCommandGenerator::createTable(const model::ModelInfo& modelInfo) cons
         command.append(")");
     }
 
-    if (not modelInfo.foreignIdsInfo.empty())
+    if (not modelInfo.foreignModelsInfo.empty())
     {
-        command.append(std::format(",\n{}", addForeignIds(modelInfo.foreignIdsInfo)));
+        command.append(std::format(",\n{}", addForeignIds(modelInfo)));
     }
 
     command.append("\n);");
@@ -83,45 +83,46 @@ auto SqliteCommandGenerator::insert(const model::ModelInfo& modelInfo) const -> 
     return command;
 }
 
-auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ForeignIdsInfo& foreignIdsInfo,
+auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& modelInfo, 
                                                      const model::ColumnInfo& columnInfo) const -> std::string
 {
-    if (not foreignIdsInfo.contains(columnInfo.name))
-    {
-        throw std::runtime_error("No foreign ids info for column " + columnInfo.name);
-    }
-
     std::string command{};
 
     const auto& fieldName = columnInfo.name;
     const auto isNullable = columnInfo.isNotNull ? " NOT NULL" : "";
 
-    for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIdsInfo.at(fieldName).idFields)
+    for (const auto& foreignColumnInfo : modelInfo.columnsInfo)
     {
-        command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignIdName,
-                                   typeTranslator.toSqlType(foreignIColumnInfo.type), isNullable));
+        if (foreignColumnInfo.isPrimaryKey)
+        {
+            command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignColumnInfo.name,
+                                    typeTranslator.toSqlType(foreignColumnInfo.type), isNullable));
+        }
     }
 
     return command;
 }
 
-auto SqliteCommandGenerator::addForeignIds(const model::ForeignIdsInfo& foreignIdsInfo) const -> std::string
+auto SqliteCommandGenerator::addForeignIds(const model::ModelInfo& modelInfo) const -> std::string
 {
     std::string command{};
 
-    for (const auto& [fieldName, foreignIds] : foreignIdsInfo)
+    for (const auto& [fieldName, foreignModelInfo] : modelInfo.foreignModelsInfo)
     {
         std::string foreignKeyCommand{"\tFOREIGN KEY ("};
-        for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIds.idFields)
+        for (const auto& foreignCoulmnInfo : foreignModelInfo.columnsInfo)
         {
-            foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignIdName));
+            if (foreignCoulmnInfo.isPrimaryKey)
+            {
+                foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignCoulmnInfo.name));
+            }
         }
 
         removeLastComma(foreignKeyCommand);
 
-        foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignIds.tableName));
+        foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignModelInfo.tableName));
 
-        for (const auto& [foreignIdName, foreignIColumnInfo] : foreignIds.idFields)
+        for (const auto& foreignIdName : foreignModelInfo.idColumnsNames)
         {
             foreignKeyCommand.append(std::format("{}, ", foreignIdName));
         }
