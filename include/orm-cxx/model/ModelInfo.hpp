@@ -59,7 +59,7 @@ struct get_t
 };
 
 template <typename T, std::size_t Is, typename ModelAsTuple>
-static auto getForeignModelInfoFoldIterationStep(ModelAsTuple* modelAsTuple,
+static auto getForeignModelInfoFoldIterationStep(ModelAsTuple*,
                                              ModelInfo& modelInfo) -> void
 {
     using field_t = std::decay_t<std::invoke_result_t<get_t<Is>, ModelAsTuple>>;
