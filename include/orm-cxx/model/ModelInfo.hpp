@@ -14,13 +14,6 @@ struct ModelInfo
     std::unordered_map<std::string, ModelInfo> foreignModelsInfo;
 };
 
-struct to_view_t{
-    auto operator()(const auto t) const -> decltype(auto)
-    {
-        return rfl::to_view(t).values();
-    }
-};
-
 template <typename T>
 auto generateModelInfo() -> ModelInfo
 {
@@ -30,7 +23,10 @@ auto generateModelInfo() -> ModelInfo
     modelInfo.tableName = getTableName<T>();
     modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames);
 
-    using model_tuple_t = std::decay_t<std::invoke_result_t<to_view_t, T>>;
+    using model_tuple_t = std::decay_t<
+        std::invoke_result_t<
+            decltype([](auto t){return rfl::to_view(t).values();}), 
+            T>>;
     getForeignModelInfoFromModel<T>(static_cast<model_tuple_t*>(nullptr), modelInfo);
 
     return modelInfo;
@@ -49,20 +45,14 @@ static auto getForeignModelInfoFoldIteration(ModelAsTuple* modelAsTuple, std::in
     (getForeignModelInfoFoldIterationStep<T, Is>(modelAsTuple, modelInfo), ...);
 }
 
-template <std::size_t Is>
-struct get_t
-{
-    auto operator()(auto t) const -> decltype(auto)
-    {
-        return *std::get<Is>(t);
-    }
-};
-
 template <typename T, std::size_t Is, typename ModelAsTuple>
 static auto getForeignModelInfoFoldIterationStep(ModelAsTuple*,
                                              ModelInfo& modelInfo) -> void
 {
-    using field_t = std::decay_t<std::invoke_result_t<get_t<Is>, ModelAsTuple>>;
+    using field_t = std::decay_t<
+        std::invoke_result_t<
+            decltype([](auto t){return *std::get<Is>(t);}), 
+            ModelAsTuple>>;
     getForeignModelInfoFromField<T>(Is, static_cast<field_t*>(nullptr), modelInfo);
 }
 
