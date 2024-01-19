@@ -42,3 +42,10 @@ TEST_F(QueryTest, shouldCreateQueryWithOffsetAndLimit)
 {
     EXPECT_EQ(query.offset(offset).limit(limit).buildQuery(), queryWithOffsetAndLimitString);
 }
+
+TEST_F(QueryTest, twoQueriesForDifferentModelsShouldBeDifferent)
+{
+    orm::Query<models::ModelWithFloat> query2;
+
+    EXPECT_NE(query.buildQuery(), query2.buildQuery());
+}

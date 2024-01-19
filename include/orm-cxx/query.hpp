@@ -4,6 +4,7 @@
 #include <string>
 
 #include "model.hpp"
+#include "query/QueryData.hpp"
 
 namespace orm
 {
@@ -20,13 +21,18 @@ class Query
 {
 public:
     /**
+     * @brief Constructs a Query object.
+     */
+    Query() : data{.modelInfo = Model<T>().getModelInfo()} {}
+
+    /**
      * @brief Sets the OFFSET clause for the query.
      * @param offset The number of rows to skip.
      * @return A reference to the QueryBuilder object.
      */
     inline auto offset(std::size_t offset)
     {
-        queryOffset = offset;
+        data.offset = offset;
 
         return *this;
     }
@@ -38,7 +44,7 @@ public:
      */
     inline auto limit(std::size_t limit)
     {
-        queryLimit = limit;
+        data.limit = limit;
 
         return *this;
     }
@@ -52,23 +58,42 @@ public:
         using namespace std::string_literals;
 
         Model<T> model;
-        std::string query = "SELECT * FROM "s.append(model.getModelInfo().tableName);
 
-        if (queryOffset.has_value())
+        auto modelInfo = model.getModelInfo();
+
+        std::string query = "SELECT * FROM ";
+
+        query.append(modelInfo.tableName);
+
+        if (data.offset.has_value())
         {
-            query.append(" OFFSET "s.append(std::to_string(queryOffset.value())));
+            query.append(" OFFSET "s.append(std::to_string(data.offset.value())));
         }
 
-        if (queryLimit.has_value())
+        if (data.limit.has_value())
         {
-            query.append(" LIMIT "s.append(std::to_string(queryLimit.value())));
+            query.append(" LIMIT "s.append(std::to_string(data.limit.value())));
         }
 
         return query.append(";");
     }
 
+    template <typename U>
+    auto operator==(const Query<U>& rhs) -> bool
+    {
+        return data == rhs.getData();
+    }
+
 private:
-    std::optional<std::size_t> queryOffset = std::nullopt; /**< The optional OFFSET value for the query. */
-    std::optional<std::size_t> queryLimit = std::nullopt;  /**< The optional LIMIT value for the query. */
+    /**
+     * @brief Gets the query data.
+     * @return The query data.
+     */
+    inline auto getData() const -> const query::QueryData&
+    {
+        return data;
+    }
+
+    query::QueryData data; /**< The query data. */
 };
 }
