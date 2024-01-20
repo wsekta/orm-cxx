@@ -134,8 +134,24 @@ public:
      */
     auto getBackendType() -> db::BackendType;
 
+    /**
+     * @brief Starts a transaction.
+     */
+    auto beginTransaction() -> void;
+
+    /**
+     * @brief Commits a transaction.
+     */
+    auto commitTransaction() -> void;
+
+    /**
+     * @brief Rollbacks a transaction.
+     */
+    auto rollbackTransaction() -> void;
+
 private:
     soci::session sql;
+    std::unique_ptr<soci::transaction> transaction;
     db::BackendType backendType;
     db::CommandGeneratorFactory commandGeneratorFactory;
 };

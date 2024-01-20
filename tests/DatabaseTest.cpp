@@ -113,6 +113,48 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSame)
     database.deleteTable<models::SomeDataModel>();
 }
 
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithTransactionCommited_valuesShouldBeSame)
+{
+    database.connect(connectionString);
+    database.createTable<models::SomeDataModel>();
+    auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+
+    database.beginTransaction();
+
+    database.insert(models);
+
+    database.commitTransaction();
+
+    auto returnedModels = database.select(query);
+
+    for (std::size_t i = 0; i < modelCount; i++)
+    {
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+    }
+
+    database.deleteTable<models::SomeDataModel>();
+}
+
+TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithTransactionRollbacked_returnEmptyVector)
+{
+    database.connect(connectionString);
+    database.createTable<models::SomeDataModel>();
+    auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+
+    database.beginTransaction();
+
+    database.insert(models);
+
+    database.rollbackTransaction();
+
+    auto returnedModels = database.select(query);
+
+    EXPECT_EQ(returnedModels.size(), 0);
+
+    database.deleteTable<models::SomeDataModel>();
+}
+
 TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesShouldBeSame)
 {
     database.connect(connectionString);

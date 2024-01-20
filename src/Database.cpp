@@ -28,4 +28,21 @@ auto Database::getBackendType() -> db::BackendType
 {
     return backendType;
 }
+
+auto Database::beginTransaction() -> void
+{
+    transaction = std::make_unique<soci::transaction>(sql);
+}
+
+auto Database::commitTransaction() -> void
+{
+    transaction->commit();
+    transaction.reset();
+}
+
+auto Database::rollbackTransaction() -> void
+{
+    transaction->rollback();
+    transaction.reset();
+}
 }

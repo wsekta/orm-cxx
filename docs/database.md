@@ -5,6 +5,7 @@
 3. [Delete table](#delete-table)
 4. [Insert objects](#insert-objects)
 5. [Query objects](#select-objects)
+6. [Transactions](#transactions)
 
 ## Connect
 
@@ -67,7 +68,29 @@ database.insert(object);
 To select objects from database use `select` method and pass [select](select.md) as argument:
 
 ```cpp
-orm::Query<ObjectModel> select;
+orm::Query<ObjectModel> query;
 
-auto queriedObjects = database.query(select);
+auto queriedObjects = database.select(query);
+```
+
+## Transactions
+
+To use transaction use database's `transactionBegin` method followed by `transactionCommit` or `transactionRollback`:
+
+```cpp
+database.transactionBegin();
+
+database.insert(objects);
+
+database.transactionCommit();
+```
+
+or:
+
+```cpp
+database.transactionBegin();
+
+database.insert(objects);
+
+database.transactionRollback();
 ```
