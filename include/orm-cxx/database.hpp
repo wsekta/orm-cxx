@@ -40,15 +40,14 @@ public:
     auto connect(const std::string& connectionString) -> void;
 
     /**
-     * @brief Executes a query and returns the result.
+     * @brief Executes a select query and returns the result.
      *
-     * @tparam T The type of the query.
-     * @param query The query of type T to execute. If not provided, a default constructed query for all columns will be
-     * used.
-     * @return The vector of objects of type T returned by the query.
+     * @tparam T The type of the query model.
+     * @param query The select query of type T to execute.
+     * @return The vector of objects of type T returned by the select query.
      */
     template <typename T>
-    auto query(Query<T>& query) -> std::vector<T>
+    auto select(Query<T>& query) -> std::vector<T>
     {
         std::vector<T> result;
 

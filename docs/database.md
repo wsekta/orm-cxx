@@ -4,7 +4,7 @@
 2. [Create table](#create-table)
 3. [Delete table](#delete-table)
 4. [Insert objects](#insert-objects)
-5. [Query objects](#query-objects)
+5. [Query objects](#select-objects)
 
 ## Connect
 
@@ -64,10 +64,10 @@ database.insert(object);
 
 ## Query objects
 
-To query objects from database use `query` method and pass [query](query.md) as argument:
+To select objects from database use `select` method and pass [select](select.md) as argument:
 
 ```cpp
-orm::Query<ObjectModel> query;
+orm::Query<ObjectModel> select;
 
-auto queriedObjects = database.query(query);
+auto queriedObjects = database.query(select);
 ```

@@ -10,10 +10,9 @@ namespace orm
 {
 class Database;
 /**
- * @brief A template class representing a query in the ORM framework.
+ * @brief A template class representing a select query in the ORM framework.
  *
- * This class provides functionality for defining and accessing columns in a query.
- * It is a base class that can be inherited by specific query classes.
+ * This class provides functionality for building a select query.
  *
  * @tparam T The type of the query.
  */
@@ -27,7 +26,7 @@ public:
     Query() : data{.modelInfo = Model<T>().getModelInfo()} {}
 
     /**
-     * @brief Sets the OFFSET clause for the query.
+     * @brief Sets the OFFSET clause for the select query.
      * @param offset The number of rows to skip.
      * @return A reference to the QueryBuilder object.
      */
@@ -39,7 +38,7 @@ public:
     }
 
     /**
-     * @brief Sets the LIMIT clause for the query.
+     * @brief Sets the LIMIT clause for the select query.
      * @param limit The maximum number of rows to return.
      * @return A reference to the QueryBuilder object.
      */
@@ -51,8 +50,8 @@ public:
     }
 
     /**
-     * @brief Builds the SQL SELECT query string.
-     * @return The constructed query string.
+     * @brief Builds the select query string.
+     * @return The constructed select query string.
      */
     inline auto buildQuery() -> std::string const
     {

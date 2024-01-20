@@ -1,13 +1,13 @@
 # Query
 
-1. [Build query](#build-query)
-2. [Limit query](#limit-query)
-3. [Offset query](#offset-query)
-4. [Build query](#build-query)
+1. [Build select](#build-select)
+2. [Limit select](#limit-select)
+3. [Offset select](#offset-select)
+4. [Build select](#build-select)
 
-## Build query
+## Build select
 
-To build query use `orm::Query` class. For example:
+To build select use `orm::Query` class. For example:
 
 ```cpp
 struct ObjectModel
@@ -20,36 +20,36 @@ struct ObjectModel
     std::string updated_at;
 };
 
-orm::Query<ObjectModel> query;
+orm::Query<ObjectModel> select;
 ```
 
 it is builder class so you can chain methods:
 
 ```cpp
-orm::Query<ObjectModel> query;
-query.limit(10).offset(10);
+orm::Query<ObjectModel> select;
+select.limit(10).offset(10);
 ```
 
-## Limit query
+## Limit select
 
-To limit query use `limit` method:
+To limit select use `limit` method:
 
 ```cpp
-query.limit(10);
+select.limit(10);
 ```
 
-## Offset query
+## Offset select
 
-To offset query use `offset` method:
+To offset select use `offset` method:
 
 ```cpp
-query.offset(10);
+select.offset(10);
 ```
 
-## Build query
+## Build select
 
-To build query use `buildQuery` method, it will return string with query:
+To build select use `buildQuery` method, it will return string with select:
 
 ```cpp
-auto queryString = query.buildQuery();
+auto queryString = select.buildQuery();
 ```

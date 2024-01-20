@@ -41,12 +41,12 @@ int main()
     std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
     database.insert(objects);
 
-    // define query with builder pattern
+    // define select query with builder pattern
     orm::Query<ObjectModel> query;
     query.limit(10).offset(5);
 
     // execute query
-    auto queriedObjects = database.query(query);
+    auto queriedObjects = database.select(query);
 
     return 0;
 }
