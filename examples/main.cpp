@@ -39,11 +39,14 @@ int main()
 
     // create objects and insert them into table
     std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
-    database.insertObjects(objects);
+    database.insert(objects);
 
-    // query objects from database
+    // define query with builder pattern
     orm::Query<ObjectModel> query;
-    auto queriedObjects = database.executeQuery(query);
+    query.limit(10).offset(5);
+
+    // execute query
+    auto queriedObjects = database.query(query);
 
     return 0;
 }

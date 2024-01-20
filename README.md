@@ -15,7 +15,7 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 ## Usage
 
-```c++
+```cpp
 #include <optional>
 
 #include "orm-cxx/orm.hpp"
@@ -39,8 +39,8 @@ struct ObjectModel
 
     // defining columns_names is optional, adding it will overwrite default columns names
     // not all columns have to be defined, others will get default names
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}};                                                                            {"field2", "some_field2_name"}};
+    inline static const std::map<std::string, std::string> columns_names = {{"field1", "some_field1_name"},
+                                                                            {"field2", "some_field2_name"}};
 };
 
 int main()
@@ -57,11 +57,14 @@ int main()
 
     // create objects and insert them into table
     std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
-    database.insertObjects(objects);
+    database.insert(objects);
 
-    // query objects from database
+    // define query with builder pattern
     orm::Query<ObjectModel> query;
-    auto queriedObjects = database.executeQuery(query);
+    query.limit(10).offset(5);
+
+    // execute query
+    auto queriedObjects = database.query(query);
 
     return 0;
 }

@@ -43,7 +43,7 @@ database.deleteTable<ObjectModel>();
 
 ## Insert objects
 
-To insert objects into database use `insertObjects` method and pass vector of objects as argument:
+To insert objects into database use `insert` method and pass vector of objects as argument:
 
 ```cpp
 std::vector<ObjectModel> objects{
@@ -51,7 +51,7 @@ std::vector<ObjectModel> objects{
     {2, "name2", "email2", "password2", "created_at2", "updated_at2"}
 };
 
-database.insertObjects(objects);
+database.insert(objects);
 ```
 
 You can also insert single object:
@@ -59,15 +59,15 @@ You can also insert single object:
 ```cpp
 ObjectModel object{1, "name", "email", "password", "created_at", "updated_at"};
 
-database.insertObject(object);
+database.insert(object);
 ```
 
 ## Query objects
 
-To query objects from database use `executeQuery` method and pass [query](query.md) as argument:
+To query objects from database use `query` method and pass [query](query.md) as argument:
 
 ```cpp
 orm::Query<ObjectModel> query;
 
-auto queriedObjects = database.executeQuery(query);
+auto queriedObjects = database.query(query);
 ```

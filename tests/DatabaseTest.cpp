@@ -44,7 +44,7 @@ TEST_F(DatabaseTest, shouldInsertObjects)
 {
     database.connect(connectionString);
 
-    database.insertObjects(std::vector<models::SomeDataModel>{});
+    database.insert(std::vector<models::SomeDataModel>{});
 }
 
 TEST_F(DatabaseTest, shouldCreateTable)
@@ -67,18 +67,18 @@ TEST_F(DatabaseTest, shouldExecuteQueryWhenTableIsEmpty_returnEmptyVector)
 {
     database.connect(connectionString);
     database.createTable<models::SomeDataModel>();
-    database.insertObjects(std::vector<models::SomeDataModel>{});
+    database.insert(std::vector<models::SomeDataModel>{});
 
-    EXPECT_EQ(database.executeQuery(query).size(), 0);
+    EXPECT_EQ(database.query(query).size(), 0);
 }
 
 TEST_F(DatabaseTest, shouldExecuteInsertQuery)
 {
     database.connect(connectionString);
     database.createTable<models::SomeDataModel>();
-    database.insertObjects(generateSomeDataModels<models::SomeDataModel>(modelCount));
+    database.insert(generateSomeDataModels<models::SomeDataModel>(modelCount));
 
-    EXPECT_EQ(database.executeQuery(query).size(), modelCount);
+    EXPECT_EQ(database.query(query).size(), modelCount);
 
     database.deleteTable<models::SomeDataModel>();
 }
@@ -88,10 +88,10 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryWithOptional)
     database.connect(connectionString);
     database.createTable<models::ModelWithOptional>();
 
-    database.insertObjects(generateSomeDataModels<models::ModelWithOptional>(modelCount));
+    database.insert(generateSomeDataModels<models::ModelWithOptional>(modelCount));
 
     orm::Query<models::ModelWithOptional> queryForOptional;
-    EXPECT_EQ(database.executeQuery(queryForOptional).size(), modelCount);
+    EXPECT_EQ(database.query(queryForOptional).size(), modelCount);
 
     database.deleteTable<models::ModelWithOptional>();
 }
@@ -101,8 +101,8 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSame)
     database.connect(connectionString);
     database.createTable<models::SomeDataModel>();
     auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
-    database.insertObjects(models);
-    auto returnedModels = database.executeQuery(query);
+    database.insert(models);
+    auto returnedModels = database.query(query);
 
     for (std::size_t i = 0; i < modelCount; i++)
     {
@@ -120,9 +120,9 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesSh
     auto models = generateSomeDataModels<models::ModelWithOptional>(modelCount);
     models[0].field1 = std::nullopt;
     models[0].field2 = std::nullopt;
-    database.insertObjects(models);
+    database.insert(models);
     orm::Query<models::ModelWithOptional> queryForOptional;
-    auto returnedModels = database.executeQuery(queryForOptional);
+    auto returnedModels = database.query(queryForOptional);
 
     for (std::size_t i = 0; i < models.size(); i++)
     {
@@ -138,9 +138,9 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesShoul
     database.connect(connectionString);
     database.createTable<models::ModelWithFloat>();
     auto models = std::vector<models::ModelWithFloat>{{1, "test", 1.0f}, {2, "test2", 2.0f}};
-    database.insertObjects(models);
+    database.insert(models);
     orm::Query<models::ModelWithFloat> queryForFloat;
-    auto returnedModels = database.executeQuery(queryForFloat);
+    auto returnedModels = database.query(queryForFloat);
 
     for (std::size_t i = 0; i < models.size(); i++)
     {
@@ -157,9 +157,9 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithOptionalFloat_val
     database.connect(connectionString);
     database.createTable<models::ModelWithOptionalFloat>();
     auto models = std::vector<models::ModelWithOptionalFloat>{{1, "test", std::nullopt}, {2, "test2", 2.0f}};
-    database.insertObjects(models);
+    database.insert(models);
     orm::Query<models::ModelWithOptionalFloat> queryForOptionalFloat;
-    auto returnedModels = database.executeQuery(queryForOptionalFloat);
+    auto returnedModels = database.query(queryForOptionalFloat);
 
     for (std::size_t i = 0; i < models.size(); i++)
     {
@@ -192,9 +192,9 @@ TEST_F(DatabaseTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valu
     database.connect(connectionString);
     database.createTable<models::ModelWithIdAndNamesMapping>();
     auto models = std::vector<models::ModelWithIdAndNamesMapping>{{1, 1, "test"}, {2, 2, "test2"}};
-    database.insertObjects(models);
+    database.insert(models);
     orm::Query<models::ModelWithIdAndNamesMapping> queryForNamesMapping;
-    auto returnedModels = database.executeQuery(queryForNamesMapping);
+    auto returnedModels = database.query(queryForNamesMapping);
 
     for (std::size_t i = 0; i < models.size(); i++)
     {
@@ -220,9 +220,9 @@ TEST_F(DatabaseTest, shouldThrowWhileReadingNullValueToNotNullableField)
     database.connect(connectionString);
     database.createTable<models::ModelWithOptionalFloat>();
     auto models = std::vector<models::ModelWithOptionalFloat>{{std::nullopt, "test", 1.0f}, {2, "test2", 2.0f}};
-    database.insertObjects(models);
+    database.insert(models);
     orm::Query<models::ModelWithFloat> queryForOptionalFloat;
-    EXPECT_THROW(database.executeQuery(queryForOptionalFloat), std::runtime_error);
+    EXPECT_THROW(database.query(queryForOptionalFloat), std::runtime_error);
 
     database.deleteTable<models::ModelWithOptionalFloat>();
 }

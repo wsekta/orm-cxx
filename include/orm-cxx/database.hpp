@@ -43,11 +43,12 @@ public:
      * @brief Executes a query and returns the result.
      *
      * @tparam T The type of the query.
-     * @param query The query of type T to execute.
+     * @param query The query of type T to execute. If not provided, a default constructed query for all columns will be
+     * used.
      * @return The vector of objects of type T returned by the query.
      */
     template <typename T>
-    auto executeQuery(Query<T>& query) -> std::vector<T>
+    auto query(Query<T>& query) -> std::vector<T>
     {
         std::vector<T> result;
 
@@ -68,11 +69,11 @@ public:
      * @param objects The vector of objects of type T to insert.
      */
     template <typename T>
-    auto insertObjects(const std::vector<T>& objects) -> void
+    auto insert(const std::vector<T>& objects) -> void
     {
         for (const auto& object : objects)
         {
-            insertObject(object);
+            insert(object);
         }
     }
 
@@ -83,11 +84,12 @@ public:
      * @param object The object of type T to insert.
      */
     template <typename T>
-    auto insertObject(T object) -> void
+    auto insert(T object) -> void
     {
-        static Model<T> model;
+        static auto command =
+            commandGeneratorFactory.getCommandGenerator(backendType)->insert(Model<T>::getModelInfo());
 
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->insert(model.getModelInfo());
+        Model<T> model;
 
         model.getObject() = std::move(object);
 

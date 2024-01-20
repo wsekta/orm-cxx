@@ -8,6 +8,7 @@
 
 namespace orm
 {
+class Database;
 /**
  * @brief A template class representing a query in the ORM framework.
  *
@@ -85,6 +86,11 @@ public:
     }
 
 private:
+    /**
+     * @brief Database class is a friend class of Query for access to the query data.
+     */
+    friend class orm::Database;
+
     /**
      * @brief Gets the query data.
      * @return The query data.
