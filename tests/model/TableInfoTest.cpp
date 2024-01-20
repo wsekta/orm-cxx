@@ -8,7 +8,7 @@ struct LocalModel
 {
     int id;
     std::string field1;
-    double field2;
+    [[maybe_unused]] double field2;
 };
 
 TEST(TableInfoTest, shouldGetTableName)

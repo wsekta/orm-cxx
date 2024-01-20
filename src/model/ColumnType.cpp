@@ -4,13 +4,13 @@
 
 namespace
 {
-const std::regex optionalRegex("(class )?std\\:\\:optional\\<(.*)\\>");
+const std::regex optionalRegex(R"((class )?std\:\:optional\<(.*)\>)");
 const std::regex stringRegex{R"((class )?std.*::basic_string<.*>\W?)"};
 }
 
 namespace orm::model
 {
-std::pair<ColumnType, bool> toColumnType(const std::string& type)
+auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
 {
     bool isNotNull{};
     std::string typeString{};
@@ -54,4 +54,4 @@ std::pair<ColumnType, bool> toColumnType(const std::string& type)
 
     return {columnType, isNotNull};
 }
-}
+} // namespace orm::model

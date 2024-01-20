@@ -1,18 +1,17 @@
 #include "orm-cxx/database.hpp"
 
-#include <format>
 #include <regex>
 
 #include "soci/empty/soci-empty.h"
 
 namespace
 {
-const std::regex sqliteRegex("sqlite3\\:\\/\\/.*");
+const std::regex sqliteRegex(R"(sqlite3\:\/\/.*)");
 }
 
 namespace orm
 {
-Database::Database() : sql(), backendType(db::BackendType::Empty), commandGeneratorFactory{} {}
+Database::Database() : backendType{db::BackendType::Empty} {}
 
 auto Database::connect(const std::string& connectionString) -> void
 {
@@ -22,6 +21,13 @@ auto Database::connect(const std::string& connectionString) -> void
     }
 
     sql.open(connectionString);
+}
+
+auto Database::disconnect() -> void
+{
+    backendType = db::BackendType::Empty;
+
+    sql.close();
 }
 
 auto Database::getBackendType() -> db::BackendType
@@ -45,4 +51,4 @@ auto Database::rollbackTransaction() -> void
     transaction->rollback();
     transaction.reset();
 }
-}
+} // namespace orm

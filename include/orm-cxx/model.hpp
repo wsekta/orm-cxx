@@ -21,7 +21,7 @@ public:
      *
      * @return A reference to the model info.
      */
-    static model::ModelInfo& getModelInfo(bool force = false)
+    static auto getModelInfo(bool force = false) -> model::ModelInfo&
     {
         if (not modelInfo.has_value() or force)
         {
@@ -36,7 +36,7 @@ public:
      *
      * @return Reference to the temporary object.
      */
-    inline T& getObject() const
+    inline auto getObject() const -> T&
     {
         return object;
     }
@@ -46,4 +46,4 @@ private:
 
     inline static std::optional<model::ModelInfo> modelInfo = std::nullopt;
 };
-}
+} // namespace orm

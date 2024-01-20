@@ -40,6 +40,11 @@ public:
     auto connect(const std::string& connectionString) -> void;
 
     /**
+     * @brief Disconnects from the database.
+     */
+    auto disconnect() -> void;
+
+    /**
      * @brief Executes a select query and returns the result.
      *
      * @tparam T The type of the query model.
@@ -155,4 +160,4 @@ private:
     db::BackendType backendType;
     db::CommandGeneratorFactory commandGeneratorFactory;
 };
-}
+} // namespace orm

@@ -8,9 +8,9 @@ auto SqliteCommandGenerator::createTable(const model::ModelInfo& modelInfo) cons
 {
     std::string command = std::format("CREATE TABLE IF NOT EXISTS {} (\n", modelInfo.tableName);
 
-    auto& columns = modelInfo.columnsInfo;
+    const auto& columns = modelInfo.columnsInfo;
 
-    for (auto& column : columns)
+    for (const auto& column : columns)
     {
         if (column.isForeignModel)
         {
@@ -31,7 +31,7 @@ auto SqliteCommandGenerator::createTable(const model::ModelInfo& modelInfo) cons
     {
         command.append("\tPRIMARY KEY (");
 
-        for (auto& idColumn : modelInfo.idColumnsNames)
+        for (const auto& idColumn : modelInfo.idColumnsNames)
         {
             command.append(std::format("{}, ", idColumn));
         }
@@ -89,7 +89,7 @@ auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& mod
     std::string command{};
 
     const auto& fieldName = columnInfo.name;
-    const auto isNullable = columnInfo.isNotNull ? " NOT NULL" : "";
+    const auto* const isNullable = columnInfo.isNotNull ? " NOT NULL" : "";
 
     for (const auto& foreignColumnInfo : modelInfo.columnsInfo)
     {
@@ -103,18 +103,18 @@ auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& mod
     return command;
 }
 
-auto SqliteCommandGenerator::addForeignIds(const model::ModelInfo& modelInfo) const -> std::string
+auto SqliteCommandGenerator::addForeignIds(const model::ModelInfo& modelInfo) -> std::string
 {
     std::string command{};
 
     for (const auto& [fieldName, foreignModelInfo] : modelInfo.foreignModelsInfo)
     {
         std::string foreignKeyCommand{"\tFOREIGN KEY ("};
-        for (const auto& foreignCoulmnInfo : foreignModelInfo.columnsInfo)
+        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
         {
-            if (foreignCoulmnInfo.isPrimaryKey)
+            if (foreignColumnInfo.isPrimaryKey)
             {
-                foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignCoulmnInfo.name));
+                foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignColumnInfo.name));
             }
         }
 
@@ -162,4 +162,4 @@ auto SqliteCommandGenerator::select(const query::QueryData& queryData) const -> 
 
     return command;
 }
-}
+} // namespace orm::db::sqlite

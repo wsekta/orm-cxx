@@ -15,9 +15,9 @@ auto CommandGeneratorFactory::getCommandGenerator(BackendType backendType) const
     return commandGenerators.at(backendType);
 }
 
-auto CommandGenerator::removeLastComma(std::string& command) const -> void
+auto CommandGenerator::removeLastComma(std::string& command) -> void
 {
     command.pop_back();
     command.pop_back();
 }
-}
+} // namespace orm::db

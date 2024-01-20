@@ -2,7 +2,7 @@
 
 namespace orm::utils
 {
-auto replaceAll(std::string& s, std::string const& toReplace, std::string const& replaceWith) -> void
+auto replaceAll(std::string& text, const std::string& toReplace, const std::string& replaceWith) -> void
 {
     if (toReplace.empty())
     {
@@ -11,10 +11,10 @@ auto replaceAll(std::string& s, std::string const& toReplace, std::string const&
 
     size_t start_pos = 0;
 
-    while ((start_pos = s.find(toReplace, start_pos)) != std::string::npos)
+    while ((start_pos = text.find(toReplace, start_pos)) != std::string::npos)
     {
-        s.replace(start_pos, toReplace.length(), replaceWith);
+        text.replace(start_pos, toReplace.length(), replaceWith);
         start_pos += replaceWith.length();
     }
 }
-}
+} // namespace orm::utils

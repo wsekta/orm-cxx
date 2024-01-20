@@ -34,4 +34,4 @@ auto getColumnName(const std::string& name) -> const std::string&
 
     return name;
 }
-}
+} // namespace orm::model

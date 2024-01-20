@@ -12,7 +12,7 @@ struct ColumnInfo
     ColumnType type;
     bool isPrimaryKey;
     bool isForeignModel;
-    bool isUnique;
+    [[maybe_unused]] bool isUnique;
     bool isNotNull;
 };
-}
+} // namespace orm::model

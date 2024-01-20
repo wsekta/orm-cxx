@@ -12,12 +12,12 @@ class CommandGenerator
 public:
     virtual ~CommandGenerator() = default;
 
-    virtual auto createTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    virtual auto dropTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    virtual auto insert(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    virtual auto select(const query::QueryData& queryData) const -> std::string = 0;
+    [[nodiscard]] virtual auto createTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
+    [[nodiscard]] virtual auto dropTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
+    [[nodiscard]] virtual auto insert(const model::ModelInfo& modelInfo) const -> std::string = 0;
+    [[nodiscard]] virtual auto select(const query::QueryData& queryData) const -> std::string = 0;
 
 protected:
-    auto removeLastComma(std::string& command) const -> void;
+    static auto removeLastComma(std::string& command) -> void;
 };
-}
+} // namespace orm::db

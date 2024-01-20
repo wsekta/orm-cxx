@@ -47,4 +47,4 @@ constexpr auto checkIfIsModelWithId() -> bool
         return false;
     }
 }
-}
+} // namespace orm::model

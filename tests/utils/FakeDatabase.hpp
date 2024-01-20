@@ -13,4 +13,4 @@ public:
         return query.getData();
     }
 };
-}
+} // namespace orm

@@ -18,9 +18,9 @@ namespace soci
 template <typename T>
 struct type_conversion<orm::Model<T>>
 {
-    typedef values base_type;
+    using base_type = values;
 
-    static void from_base(const values& v, indicator /*ind*/, orm::Model<T>& model)
+    [[maybe_unused]] static void from_base(const values& v, indicator /*ind*/, orm::Model<T>& model)
     {
         auto columns = model.getModelInfo().columnsInfo;
         auto& modelAsTuple = model.getObject();
@@ -29,7 +29,7 @@ struct type_conversion<orm::Model<T>>
         getObjectFromValues(view.values(), columns, v);
     }
 
-    static void to_base(const orm::Model<T>& model, values& v, indicator& ind)
+    [[maybe_unused]] static void to_base(const orm::Model<T>& model, values& v, indicator& ind)
     {
         auto columns = model.getModelInfo().columnsInfo;
         auto& modelAsTuple = model.getObject();
@@ -178,4 +178,4 @@ private:
         }
     }
 };
-}
+} // namespace soci

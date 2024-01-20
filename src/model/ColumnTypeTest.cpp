@@ -6,20 +6,20 @@ using namespace orm::model;
 
 namespace
 {
-std::string intType{"int"};
-std::string floatType{"float"};
-std::string doubleType{"double"};
-std::string stringTypeVisualStudioStyle{
+const std::string intType{"int"};
+const std::string floatType{"float"};
+const std::string doubleType{"double"};
+const std::string stringTypeVisualStudioStyle{
     "class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >"};
-std::string stringTypeClangStyle{"std::basic_string<char, std::char_traits<char>, std::allocator<char>>"};
-std::string stringTypeGxxStyle{"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"};
-std::string optionalIntTypeVisualStudioStyle{"class std::optional<int>"};
-std::string optionalIntTypeClangStyle{"std::optional<int>"};
-std::string optionalStringTypeVisualStudioStyle{
+const std::string stringTypeClangStyle{"std::basic_string<char, std::char_traits<char>, std::allocator<char>>"};
+const std::string stringTypeGxxStyle{"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"};
+const std::string optionalIntTypeVisualStudioStyle{"class std::optional<int>"};
+const std::string optionalIntTypeClangStyle{"std::optional<int>"};
+const std::string optionalStringTypeVisualStudioStyle{
     "class std::optional<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > >"};
-std::string optionalStringTypeClangStyle{
+const std::string optionalStringTypeClangStyle{
     "std::optional<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>"};
-}
+} // namespace
 
 TEST(ColumnTypeTests, shouldTranslateInt)
 {

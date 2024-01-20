@@ -7,24 +7,23 @@ using namespace std::string_literals;
 
 TEST(StringUtilsTest, shouldReplaceAll)
 {
-    auto s = "abcabc"s;
-    auto toReplace = "a"s;
-    auto replaceWith = "d"s;
-    auto expected = "dbcdbc"s;
+    auto text = "text text"s;
+    auto toReplace = "x"s;
+    auto replaceWith = "s"s;
+    auto expected = "test test"s;
 
-    replaceAll(s, toReplace, replaceWith);
+    replaceAll(text, toReplace, replaceWith);
 
-    EXPECT_EQ(s, expected);
+    EXPECT_EQ(text, expected);
 }
 
 TEST(StringUtilsTest, shouldNotReplaceAll)
 {
-    auto s = "abcabc"s;
-    auto toReplace = "d"s;
-    auto replaceWith = "d"s;
-    auto expected = "abcabc"s;
+    auto text = "text text"s;
+    auto toReplace = "s"s;
+    auto replaceWith = "s"s;
+    auto expected = "text text"s;
+    replaceAll(text, toReplace, replaceWith);
 
-    replaceAll(s, toReplace, replaceWith);
-
-    EXPECT_EQ(s, expected);
+    EXPECT_EQ(text, expected);
 }

@@ -9,21 +9,21 @@ namespace models
 {
 struct ModelWithOneField
 {
-    int field1;
+    [[maybe_unused]] int field1;
 };
 
 struct ModelWithTableName
 {
     inline static const std::string table_name = "some_table_name";
 
-    int field1;
+    [[maybe_unused]] int field1;
 };
 
 struct SomeDataModel
 {
     int field1;
     std::string field2;
-    double field3;
+    [[maybe_unused]] double field3;
 };
 
 struct ModelWithOptional
@@ -37,7 +37,7 @@ struct ModelWithFloat
 {
     int field1;
     std::string field2;
-    float field3;
+    [[maybe_unused]] float field3;
 };
 
 struct ModelWithOptionalFloat
@@ -52,14 +52,14 @@ struct ModelWithOptionalFloat
 struct ModelWithId
 {
     int id;
-    int field1;
+    [[maybe_unused]] int field1;
     std::string field2;
 };
 
 struct ModelWithOverwrittenId
 {
     int id;
-    int field1;
+    [[maybe_unused]] int field1;
     std::string field2;
 
     inline static const std::vector<std::string> id_columns = {"field1", "field2"};
@@ -78,7 +78,7 @@ struct ModelWithIdAndNamesMapping
 struct ModelRelatedToOtherModel
 {
     int id;
-    int field1;
+    [[maybe_unused]] int field1;
     std::string field2;
     ModelWithId field3;
 };
@@ -86,8 +86,8 @@ struct ModelRelatedToOtherModel
 struct ModelOptionallyRelatedToOtherModel
 {
     int id;
-    int field1;
+    [[maybe_unused]] int field1;
     std::string field2;
     std::optional<ModelWithId> field3;
 };
-}
+} // namespace models

@@ -50,3 +50,4 @@ IncludeCategories:
     Priority: 5
   - Regex: '".+"'
     Priority: 10
+InsertNewlineAtEOF: true

@@ -41,4 +41,4 @@ auto getTableName() -> std::string
         return typeName;
     }
 }
-}
+} // namespace orm::model

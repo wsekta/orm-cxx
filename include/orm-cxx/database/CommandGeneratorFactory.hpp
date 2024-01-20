@@ -15,4 +15,4 @@ public:
 private:
     std::unordered_map<BackendType, std::unique_ptr<CommandGenerator>> commandGenerators;
 };
-}
+} // namespace orm::db

@@ -11,13 +11,13 @@
 namespace
 {
 const std::string sqliteConnectionString = "sqlite3://:memory:";
-std::size_t modelCount = 10;
+const std::size_t modelCount = 10;
 
 auto connectionStrings = ::testing::Values(sqliteConnectionString);
 }
 
 template <typename T>
-auto generateSomeDataModels(int count) -> std::vector<T>
+auto generateSomeDataModels(std::size_t count) -> std::vector<T>
 {
     std::vector<T> result;
 
@@ -32,7 +32,6 @@ auto generateSomeDataModels(int count) -> std::vector<T>
 class DatabaseTest : public ::testing::TestWithParam<std::string>
 {
 public:
-    orm::Query<models::SomeDataModel> query;
     orm::Database database;
 
     auto SetUp() -> void override
@@ -46,6 +45,8 @@ public:
         {
             tearDownFunction();
         }
+
+        database.disconnect();
     }
 
     template <typename T>

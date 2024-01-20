@@ -7,6 +7,6 @@ namespace orm::db::sqlite
 class SqliteTypeTranslator : public TypeTranslator
 {
 public:
-    auto toSqlType(model::ColumnType type) const -> std::string override;
+    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
 };
 }

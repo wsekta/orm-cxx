@@ -8,6 +8,7 @@ TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
 {
     createTable<models::SomeDataModel>();
     auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    orm::Query<models::SomeDataModel> query;
 
     database.beginTransaction();
 
@@ -28,6 +29,7 @@ TEST_P(TransactionsTest, insertInRolledBackTransaction_shouldNotInsertObjects)
 {
     createTable<models::SomeDataModel>();
     auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    orm::Query<models::SomeDataModel> query;
 
     database.beginTransaction();
 

@@ -11,6 +11,6 @@ class TypeTranslator
 public:
     virtual ~TypeTranslator() = default;
 
-    virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
+    [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
 };
-}
+} // namespace orm::db

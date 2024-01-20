@@ -21,8 +21,7 @@ DISABLE_WARNING_POP
 namespace orm::model
 {
 template <typename T>
-auto getColumnsInfo(const std::unordered_set<std::string>& ids)
-    -> std::vector<ColumnInfo>
+auto getColumnsInfo(const std::unordered_set<std::string>& ids) -> std::vector<ColumnInfo>
 {
     auto fields = rfl::fields<T>();
 
@@ -50,4 +49,4 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids)
 
     return columnsInfo;
 }
-}
+} // namespace orm::model

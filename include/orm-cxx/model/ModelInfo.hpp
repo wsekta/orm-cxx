@@ -75,4 +75,4 @@ inline auto getForeignModelInfoFoldIterationStep(ModelInfo& modelInfo) -> void
     using field_t = std::decay_t<std::invoke_result_t<decltype([](auto t) { return *std::get<Is>(t); }), ModelAsTuple>>;
     GetForeignModelInfoFromField<T, field_t>::get(Is, modelInfo);
 }
-}
+} // namespace orm::model

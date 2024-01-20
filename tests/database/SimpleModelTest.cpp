@@ -7,6 +7,8 @@ class SimpleModelTest : public DatabaseTest
 TEST_P(SimpleModelTest, shouldExecuteQueryWhenTableIsEmpty_returnEmptyVector)
 {
     createTable<models::SomeDataModel>();
+    orm::Query<models::SomeDataModel> query;
+
     database.insert(std::vector<models::SomeDataModel>{});
 
     EXPECT_EQ(database.select(query).size(), 0);
@@ -15,6 +17,8 @@ TEST_P(SimpleModelTest, shouldExecuteQueryWhenTableIsEmpty_returnEmptyVector)
 TEST_P(SimpleModelTest, shouldExecuteInsertQuery)
 {
     createTable<models::SomeDataModel>();
+    orm::Query<models::SomeDataModel> query;
+
     database.insert(generateSomeDataModels<models::SomeDataModel>(modelCount));
 
     EXPECT_EQ(database.select(query).size(), modelCount);
@@ -34,6 +38,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSam
 {
     createTable<models::SomeDataModel>();
     auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    orm::Query<models::SomeDataModel> query;
 
     database.insert(models);
 

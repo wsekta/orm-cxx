@@ -59,11 +59,11 @@ private:
      * @brief Gets the query data.
      * @return The query data.
      */
-    inline auto getData() const -> const query::QueryData&
+    [[nodiscard]] inline auto getData() const -> const query::QueryData&
     {
         return data;
     }
 
     query::QueryData data; /**< The query data. */
 };
-}
+} // namespace orm

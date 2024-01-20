@@ -5,5 +5,5 @@
 
 namespace orm::utils
 {
-auto replaceAll(std::string& s, std::string const& toReplace, std::string const& replaceWith) -> void;
+auto replaceAll(std::string& text, const std::string& toReplace, const std::string& replaceWith) -> void;
 }
