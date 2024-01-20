@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['connect_0',['connect',['../classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2',1,'orm::Database']]],
-  ['createtable_1',['createTable',['../classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d',1,'orm::Database']]]
+  ['database_0',['Database',['../classorm_1_1Database.html#a0cf947c50ac4c47b8478d66ec49a104b',1,'orm::Database']]],
+  ['deletetable_1',['deleteTable',['../classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604',1,'orm::Database']]]
 ];
