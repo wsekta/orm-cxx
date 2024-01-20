@@ -7,5 +7,5 @@ var classorm_1_1Database =
     [ "getBackendType", "classorm_1_1Database.html#af5bf41d4644f6d3e8835bfbad5cb07a0", null ],
     [ "insert", "classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2", null ],
     [ "insert", "classorm_1_1Database.html#acbc75aba074b7474bc0c2ee6445a1c0e", null ],
-    [ "query", "classorm_1_1Database.html#a6cd8cc7a2307b9c320b8042a939bbb01", null ]
+    [ "select", "classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7", null ]
 ];

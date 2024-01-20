@@ -101,7 +101,7 @@ $(function(){initNavTree('classorm_1_1Query.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 
-<p>A template class representing a query in the ORM framework.  
+<p>A template class representing a select query in the ORM framework.  
  <a href="#details">More...</a></p>
 
 <p><code>#include &lt;<a class="el" href="query_8hpp_source.html">query.hpp</a>&gt;</code></p>
@@ -110,16 +110,16 @@ $(function(){initNavTree('classorm_1_1Query.html',''); initResizable(); });
 Public Member Functions</h2></td></tr>
 <tr class="memitem:abde0572a94dd2d8cfb471bf85c470f9b" id="r_abde0572a94dd2d8cfb471bf85c470f9b"><td class="memItemLeft" align="right" valign="top"><a id="abde0572a94dd2d8cfb471bf85c470f9b" name="abde0572a94dd2d8cfb471bf85c470f9b"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Query</b> ()</td></tr>
-<tr class="memdesc:abde0572a94dd2d8cfb471bf85c470f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classorm_1_1Query.html" title="A template class representing a query in the ORM framework.">Query</a> object. <br /></td></tr>
+<tr class="memdesc:abde0572a94dd2d8cfb471bf85c470f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> object. <br /></td></tr>
 <tr class="separator:abde0572a94dd2d8cfb471bf85c470f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ca1c1020f82fbfe09b01dca8e73739f" id="r_a3ca1c1020f82fbfe09b01dca8e73739f"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a> (std::size_t offset)</td></tr>
-<tr class="memdesc:a3ca1c1020f82fbfe09b01dca8e73739f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OFFSET clause for the query.  <br /></td></tr>
+<tr class="memdesc:a3ca1c1020f82fbfe09b01dca8e73739f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OFFSET clause for the select query.  <br /></td></tr>
 <tr class="separator:a3ca1c1020f82fbfe09b01dca8e73739f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8cd9666afaab1ab92763b717520c9aef" id="r_a8cd9666afaab1ab92763b717520c9aef"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8cd9666afaab1ab92763b717520c9aef">limit</a> (std::size_t limit)</td></tr>
-<tr class="memdesc:a8cd9666afaab1ab92763b717520c9aef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LIMIT clause for the query.  <br /></td></tr>
+<tr class="memdesc:a8cd9666afaab1ab92763b717520c9aef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LIMIT clause for the select query.  <br /></td></tr>
 <tr class="separator:a8cd9666afaab1ab92763b717520c9aef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0734f8276645a20545a4a523f24a138e" id="r_a0734f8276645a20545a4a523f24a138e"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0734f8276645a20545a4a523f24a138e">buildQuery</a> () -&gt; std::string const</td></tr>
-<tr class="memdesc:a0734f8276645a20545a4a523f24a138e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds the SQL SELECT query string.  <br /></td></tr>
+<tr class="memdesc:a0734f8276645a20545a4a523f24a138e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Builds the select query string.  <br /></td></tr>
 <tr class="separator:a0734f8276645a20545a4a523f24a138e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a482f81e95f35b0a3fa2f5f5dc99ff616" id="r_a482f81e95f35b0a3fa2f5f5dc99ff616"><td class="memTemplParams" colspan="2"><a id="a482f81e95f35b0a3fa2f5f5dc99ff616" name="a482f81e95f35b0a3fa2f5f5dc99ff616"></a>
 template&lt;typename U &gt; </td></tr>
@@ -130,13 +130,13 @@ template&lt;typename U &gt; </td></tr>
 Friends</h2></td></tr>
 <tr class="memitem:a2899a70f009c4e51d27af81f1acea47d" id="r_a2899a70f009c4e51d27af81f1acea47d"><td class="memItemLeft" align="right" valign="top"><a id="a2899a70f009c4e51d27af81f1acea47d" name="a2899a70f009c4e51d27af81f1acea47d"></a>
 class&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2899a70f009c4e51d27af81f1acea47d">orm::Database</a></td></tr>
-<tr class="memdesc:a2899a70f009c4e51d27af81f1acea47d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classorm_1_1Database.html" title="A class representing a database in the ORM framework.">Database</a> class is a friend class of <a class="el" href="classorm_1_1Query.html" title="A template class representing a query in the ORM framework.">Query</a> for access to the query data. <br /></td></tr>
+<tr class="memdesc:a2899a70f009c4e51d27af81f1acea47d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classorm_1_1Database.html" title="A class representing a database in the ORM framework.">Database</a> class is a friend class of <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> for access to the query data. <br /></td></tr>
 <tr class="separator:a2899a70f009c4e51d27af81f1acea47d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
-class orm::Query&lt; T &gt;</div><p>A template class representing a query in the ORM framework. </p>
-<p>This class provides functionality for defining and accessing columns in a query. It is a base class that can be inherited by specific query classes.</p>
+class orm::Query&lt; T &gt;</div><p>A template class representing a select query in the ORM framework. </p>
+<p>This class provides functionality for building a select query.</p>
 <dl class="tparams"><dt>Template Parameters</dt><dd>
   <table class="tparams">
     <tr><td class="paramname">T</td><td>The type of the query. </td></tr>
@@ -170,8 +170,8 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Builds the SQL SELECT query string. </p>
-<dl class="section return"><dt>Returns</dt><dd>The constructed query string. </dd></dl>
+<p>Builds the select query string. </p>
+<dl class="section return"><dt>Returns</dt><dd>The constructed select query string. </dd></dl>
 
 </div>
 </div>
@@ -200,7 +200,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the LIMIT clause for the query. </p>
+<p>Sets the LIMIT clause for the select query. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">limit</td><td>The maximum number of rows to return. </td></tr>
@@ -236,7 +236,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Sets the OFFSET clause for the query. </p>
+<p>Sets the OFFSET clause for the select query. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">offset</td><td>The number of rows to skip. </td></tr>

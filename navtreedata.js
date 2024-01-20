@@ -40,10 +40,10 @@ var NAVTREE =
       [ "Primary key", "md_docs_2model.html#autotoc_md11", null ]
     ] ],
     [ "Query", "md_docs_2query.html", [
-      [ "Build query", "md_docs_2query.html#autotoc_md13", null ],
-      [ "Limit query", "md_docs_2query.html#autotoc_md14", null ],
-      [ "Offset query", "md_docs_2query.html#autotoc_md15", null ],
-      [ "Build query", "md_docs_2query.html#autotoc_md16", null ]
+      [ "Build select", "md_docs_2query.html#autotoc_md13", null ],
+      [ "Limit select", "md_docs_2query.html#autotoc_md14", null ],
+      [ "Offset select", "md_docs_2query.html#autotoc_md15", null ],
+      [ "Build select", "md_docs_2query.html#autotoc_md16", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
