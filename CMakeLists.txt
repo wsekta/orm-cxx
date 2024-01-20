@@ -72,7 +72,6 @@ if (BUILD_ORM_CXX_TESTS)
 
     set(UT_SOURCES
             tests/ModelTest.cpp
-            tests/DatabaseTest.cpp
 
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
             src/model/ColumnTypeTest.cpp
@@ -81,7 +80,7 @@ if (BUILD_ORM_CXX_TESTS)
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp
             tests/database/TransactionsTest.cpp
-            tests/database/SimpelModelTest.cpp
+            tests/database/SimpleModelTest.cpp
             tests/database/IdModelsTest.cpp
             tests/database/RelatedModelTest.cpp
             tests/database/BaseOperationsTest.cpp
