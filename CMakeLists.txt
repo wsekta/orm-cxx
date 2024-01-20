@@ -80,6 +80,11 @@ if (BUILD_ORM_CXX_TESTS)
             src/utils/StringUtilsTest.cpp
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp
+            tests/database/TransactionsTest.cpp
+            tests/database/SimpelModelTest.cpp
+            tests/database/IdModelsTest.cpp
+            tests/database/RelatedModelTest.cpp
+            tests/database/BaseOperationsTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR
