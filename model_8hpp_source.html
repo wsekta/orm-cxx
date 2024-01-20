@@ -113,7 +113,7 @@ $(function(){initNavTree('model_8hpp_source.html',''); initResizable(); });
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>{</div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="keyword">public</span>:</div>
 <div class="foldopen" id="foldopen00024" data-start="{" data-end="}">
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">   24</a></span>    <span class="keyword">static</span> model::ModelInfo&amp; <a class="code hl_function" href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">getModelInfo</a>(<span class="keywordtype">bool</span> force = <span class="keyword">false</span>)</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a5ca625ab1bf6b9fb81d6391407332537">   24</a></span>    <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Model.html#a5ca625ab1bf6b9fb81d6391407332537">getModelInfo</a>(<span class="keywordtype">bool</span> force = <span class="keyword">false</span>) -&gt; model::ModelInfo&amp;</div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>    {</div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>        <span class="keywordflow">if</span> (not modelInfo.has_value() or force)</div>
 <div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>        {</div>
@@ -125,8 +125,8 @@ $(function(){initNavTree('model_8hpp_source.html',''); initResizable(); });
 </div>
 <div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
 <div class="foldopen" id="foldopen00039" data-start="{" data-end="}">
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a577d30c6646c56e34c219795a97dd746">   39</a></span>    <span class="keyword">inline</span> T&amp; <a class="code hl_function" href="classorm_1_1Model.html#a577d30c6646c56e34c219795a97dd746">getObject</a>()<span class="keyword"> const</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="keyword">    </span>{</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="classorm_1_1Model.html#a9be678af5334f8c79598fb2377f633fa">   39</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Model.html#a9be678af5334f8c79598fb2377f633fa">getObject</a>() const -&gt; T&amp;</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    {</div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>        <span class="keywordflow">return</span> object;</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>    }</div>
 </div>
@@ -137,10 +137,10 @@ $(function(){initNavTree('model_8hpp_source.html',''); initResizable(); });
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    <span class="keyword">inline</span> <span class="keyword">static</span> std::optional&lt;model::ModelInfo&gt; modelInfo = std::nullopt;</div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>};</div>
 </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>}</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>} <span class="comment">// namespace orm</span></div>
 <div class="ttc" id="aclassorm_1_1Model_html"><div class="ttname"><a href="classorm_1_1Model.html">orm::Model</a></div><div class="ttdoc">A template class representing a model in the ORM framework.</div><div class="ttdef"><b>Definition</b> model.hpp:17</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_a577d30c6646c56e34c219795a97dd746"><div class="ttname"><a href="classorm_1_1Model.html#a577d30c6646c56e34c219795a97dd746">orm::Model::getObject</a></div><div class="ttdeci">T &amp; getObject() const</div><div class="ttdoc">Get the temporary object of the model.</div><div class="ttdef"><b>Definition</b> model.hpp:39</div></div>
-<div class="ttc" id="aclassorm_1_1Model_html_ac92945fd8263593c4d0fed37210dd88f"><div class="ttname"><a href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">orm::Model::getModelInfo</a></div><div class="ttdeci">static model::ModelInfo &amp; getModelInfo(bool force=false)</div><div class="ttdoc">Get the model info for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:24</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_a5ca625ab1bf6b9fb81d6391407332537"><div class="ttname"><a href="classorm_1_1Model.html#a5ca625ab1bf6b9fb81d6391407332537">orm::Model::getModelInfo</a></div><div class="ttdeci">static auto getModelInfo(bool force=false) -&gt; model::ModelInfo &amp;</div><div class="ttdoc">Get the model info for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:24</div></div>
+<div class="ttc" id="aclassorm_1_1Model_html_a9be678af5334f8c79598fb2377f633fa"><div class="ttname"><a href="classorm_1_1Model.html#a9be678af5334f8c79598fb2377f633fa">orm::Model::getObject</a></div><div class="ttdeci">auto getObject() const -&gt; T &amp;</div><div class="ttdoc">Get the temporary object of the model.</div><div class="ttdef"><b>Definition</b> model.hpp:39</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

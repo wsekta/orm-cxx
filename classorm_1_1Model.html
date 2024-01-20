@@ -108,15 +108,15 @@ $(function(){initNavTree('classorm_1_1Model.html',''); initResizable(); });
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a577d30c6646c56e34c219795a97dd746" id="r_a577d30c6646c56e34c219795a97dd746"><td class="memItemLeft" align="right" valign="top">T &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a577d30c6646c56e34c219795a97dd746">getObject</a> () const</td></tr>
-<tr class="memdesc:a577d30c6646c56e34c219795a97dd746"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the temporary object of the model.  <br /></td></tr>
-<tr class="separator:a577d30c6646c56e34c219795a97dd746"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9be678af5334f8c79598fb2377f633fa" id="r_a9be678af5334f8c79598fb2377f633fa"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a9be678af5334f8c79598fb2377f633fa">getObject</a> () const -&gt; T &amp;</td></tr>
+<tr class="memdesc:a9be678af5334f8c79598fb2377f633fa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the temporary object of the model.  <br /></td></tr>
+<tr class="separator:a9be678af5334f8c79598fb2377f633fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:ac92945fd8263593c4d0fed37210dd88f" id="r_ac92945fd8263593c4d0fed37210dd88f"><td class="memItemLeft" align="right" valign="top">static model::ModelInfo &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ac92945fd8263593c4d0fed37210dd88f">getModelInfo</a> (bool force=false)</td></tr>
-<tr class="memdesc:ac92945fd8263593c4d0fed37210dd88f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the model info for the model.  <br /></td></tr>
-<tr class="separator:ac92945fd8263593c4d0fed37210dd88f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5ca625ab1bf6b9fb81d6391407332537" id="r_a5ca625ab1bf6b9fb81d6391407332537"><td class="memItemLeft" align="right" valign="top">static auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a5ca625ab1bf6b9fb81d6391407332537">getModelInfo</a> (bool force=false) -&gt; model::ModelInfo &amp;</td></tr>
+<tr class="memdesc:a5ca625ab1bf6b9fb81d6391407332537"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the model info for the model.  <br /></td></tr>
+<tr class="separator:a5ca625ab1bf6b9fb81d6391407332537"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
@@ -129,8 +129,8 @@ class orm::Model&lt; T &gt;</div><p>A template class representing a model in the
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="ac92945fd8263593c4d0fed37210dd88f" name="ac92945fd8263593c4d0fed37210dd88f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac92945fd8263593c4d0fed37210dd88f">&#9670;&#160;</a></span>getModelInfo()</h2>
+<a id="a5ca625ab1bf6b9fb81d6391407332537" name="a5ca625ab1bf6b9fb81d6391407332537"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5ca625ab1bf6b9fb81d6391407332537">&#9670;&#160;</a></span>getModelInfo()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -141,10 +141,11 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static model::ModelInfo &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getModelInfo </td>
+          <td class="memname">static auto <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getModelInfo </td>
           <td>(</td>
           <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>force</em><span class="paramdefsep"> = </span><span class="paramdefval">false</span></span></td><td>)</td>
-          <td></td>
+          <td> -&gt; model::ModelInfo&amp;
+    </td>
         </tr>
       </table>
   </td>
@@ -159,8 +160,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a577d30c6646c56e34c219795a97dd746" name="a577d30c6646c56e34c219795a97dd746"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a577d30c6646c56e34c219795a97dd746">&#9670;&#160;</a></span>getObject()</h2>
+<a id="a9be678af5334f8c79598fb2377f633fa" name="a9be678af5334f8c79598fb2377f633fa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9be678af5334f8c79598fb2377f633fa">&#9670;&#160;</a></span>getObject()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -171,10 +172,11 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">T &amp; <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getObject </td>
+          <td class="memname">auto <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getObject </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"></span></td><td>)</td>
-          <td> const</td>
+          <td> const -&gt; T&amp;
+    </td>
         </tr>
       </table>
   </td>
