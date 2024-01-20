@@ -78,8 +78,8 @@ if (BUILD_ORM_CXX_TESTS)
             src/model/ColumnTypeTest.cpp
             src/database/sqlite/SqliteCommandGeneratorTest.cpp
             src/utils/StringUtilsTest.cpp
-            tests/Model/IdInfoTest.cpp
-            tests/Model/TableInfoTest.cpp
+            tests/model/IdInfoTest.cpp
+            tests/model/TableInfoTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

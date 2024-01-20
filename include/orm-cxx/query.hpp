@@ -30,7 +30,7 @@ public:
      * @param offset The number of rows to skip.
      * @return A reference to the QueryBuilder object.
      */
-    inline auto offset(std::size_t offset)
+    inline auto offset(std::size_t offset) -> Query<T>&
     {
         data.offset = offset;
 
@@ -42,7 +42,7 @@ public:
      * @param limit The maximum number of rows to return.
      * @return A reference to the QueryBuilder object.
      */
-    inline auto limit(std::size_t limit)
+    inline auto limit(std::size_t limit) -> Query<T>&
     {
         data.limit = limit;
 

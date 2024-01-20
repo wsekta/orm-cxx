@@ -5,6 +5,7 @@
 #include "orm-cxx/model.hpp"
 #include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/utils/FakeDatabase.hpp"
 
 using namespace orm::db::sqlite;
 
@@ -39,6 +40,8 @@ const std::string selectSql = "SELECT * FROM models_ModelWithFloat;";
 const std::string selectSqlWithLimit = "SELECT * FROM models_ModelWithFloat LIMIT 10;";
 
 const std::string selectSqlWithOffset = "SELECT * FROM models_ModelWithFloat OFFSET 10;";
+
+const std::string selectSqlWithLimitAndOffset = "SELECT * FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
 }
 
 class SqliteCommandGeneratorTest : public ::testing::Test
@@ -81,21 +84,40 @@ TEST_F(SqliteCommandGeneratorTest, createTableWithReferringToSimpleModel)
 
 TEST_F(SqliteCommandGeneratorTest, select)
 {
-    orm::query::QueryData queryData{.modelInfo = model.getModelInfo()};
+    orm::Query<models::ModelWithFloat> query;
 
-    EXPECT_EQ(generator.select(queryData), selectSql);
+    EXPECT_EQ(generator.select(orm::Database::getQueryData(query)), selectSql);
 }
 
 TEST_F(SqliteCommandGeneratorTest, selectWithLimit)
 {
-    orm::query::QueryData queryData{.modelInfo = model.getModelInfo(), .limit = 10};
+    orm::Query<models::ModelWithFloat> query;
 
-    EXPECT_EQ(generator.select(queryData), selectSqlWithLimit);
+    query.limit(10);
+
+    EXPECT_EQ(generator.select(orm::Database::getQueryData(query)), selectSqlWithLimit);
 }
 
 TEST_F(SqliteCommandGeneratorTest, selectWithOffset)
 {
-    orm::query::QueryData queryData{.modelInfo = model.getModelInfo(), .offset = 10};
+    orm::Query<models::ModelWithFloat> query;
 
-    EXPECT_EQ(generator.select(queryData), selectSqlWithOffset);
+    query.offset(10);
+
+    EXPECT_EQ(generator.select(orm::Database::getQueryData(query)), selectSqlWithOffset);
+}
+
+TEST_F(SqliteCommandGeneratorTest, selectWithLimitAndOffset)
+{
+    orm::Query<models::ModelWithFloat> query;
+
+    query.limit(10).offset(10);
+
+    EXPECT_EQ(generator.select(orm::Database::getQueryData(query)), selectSqlWithLimitAndOffset);
+
+    orm::Query<models::ModelWithFloat> query2;
+
+    query2.offset(10).limit(10);
+
+    EXPECT_EQ(generator.select(orm::Database::getQueryData(query2)), selectSqlWithLimitAndOffset);
 }
