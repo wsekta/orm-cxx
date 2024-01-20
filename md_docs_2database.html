@@ -102,6 +102,7 @@ $(function(){initNavTree('md_docs_2database.html',''); initResizable(); });
 <li>Delete table</li>
 <li>Insert objects</li>
 <li>Query objects</li>
+<li>Transactions</li>
 </ol>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Connect</h1>
@@ -147,10 +148,25 @@ Insert objects</h1>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
 Query objects</h1>
 <p>To select objects from database use <code>select</code> method and pass select as argument:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;ObjectModel&gt;</a> select;</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;ObjectModel&gt;</a> query;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> queriedObjects = database.query(select);</div>
+<div class="line"><span class="keyword">auto</span> queriedObjects = database.<a class="code hl_function" href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">select</a>(query);</div>
+<div class="ttc" id="aclassorm_1_1Database_html_aae29e5eab83e887cac4f2a230670fdc7"><div class="ttname"><a href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">orm::Database::select</a></div><div class="ttdeci">auto select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a select query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:50</div></div>
 <div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:21</div></div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+Transactions</h1>
+<p>To use transaction use database's <code>transactionBegin</code> method followed by <code>transactionCommit</code> or <code>transactionRollback</code>:</p>
+<div class="fragment"><div class="line">database.transactionBegin();</div>
+<div class="line"> </div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
+<div class="line"> </div>
+<div class="line">database.transactionCommit();</div>
+</div><!-- fragment --><p>or:</p>
+<div class="fragment"><div class="line">database.transactionBegin();</div>
+<div class="line"> </div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
+<div class="line"> </div>
+<div class="line">database.transactionRollback();</div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
