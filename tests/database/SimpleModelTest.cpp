@@ -84,6 +84,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloatAndOption
 {
     createTable<models::ModelWithOptionalFloat>();
     auto models = generateSomeDataModels<models::ModelWithOptionalFloat>(modelCount);
+    models[0].field3 = std::nullopt;
 
     database.insert(models);
 
