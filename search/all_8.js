@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['limit_0',['limit',['../classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef',1,'orm::Query']]],
-  ['limit_20query_1',['Limit query',['../md_docs_2query.html#autotoc_md14',1,'']]]
+  ['mapping_20fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md10',1,'']]],
+  ['model_1',['Model',['../md_docs_2model.html#autotoc_md7',1,'Create simple model'],['../classorm_1_1Model.html',1,'orm::Model&lt; T &gt;'],['../md_docs_2model.html',1,'Model']]]
 ];

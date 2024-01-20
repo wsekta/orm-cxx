@@ -111,81 +111,85 @@ $(function(){initNavTree('query_8hpp_source.html',''); initResizable(); });
 <div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
 <div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">namespace </span>orm</div>
 <div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>{</div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="foldopen" id="foldopen00020" data-start="{" data-end="};">
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html">   20</a></span><span class="keyword">class </span><a class="code hl_class" href="classorm_1_1Query.html">Query</a></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span>{</div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">   26</a></span>    <a class="code hl_function" href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>() : data{.modelInfo = <a class="code hl_class" href="classorm_1_1Model.html">Model</a>&lt;T&gt;().getModelInfo()} {}</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span> </div>
-<div class="foldopen" id="foldopen00033" data-start="{" data-end="}">
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">   33</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>(std::size_t <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>)</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>    {</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        data.offset = <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>;</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    }</div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">class </span>Database;</div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00021" data-start="{" data-end="};">
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html">   21</a></span><span class="keyword">class </span><a class="code hl_class" href="classorm_1_1Query.html">Query</a></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span>{</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">   27</a></span>    <a class="code hl_function" href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>() : data{.modelInfo = <a class="code hl_class" href="classorm_1_1Model.html">Model</a>&lt;T&gt;().getModelInfo()} {}</div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span> </div>
+<div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">   34</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>(std::size_t <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>)</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        data.offset = <a class="code hl_function" href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">offset</a>;</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    }</div>
 </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
-<div class="foldopen" id="foldopen00045" data-start="{" data-end="}">
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">   45</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>(std::size_t <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>)</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    {</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>        data.limit = <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>;</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    }</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
+<div class="foldopen" id="foldopen00046" data-start="{" data-end="}">
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">   46</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>(std::size_t <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>)</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>    {</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>        data.limit = <a class="code hl_function" href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">limit</a>;</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keywordflow">return</span> *<span class="keyword">this</span>;</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>    }</div>
 </div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
-<div class="foldopen" id="foldopen00056" data-start="{" data-end="}">
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">   56</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">buildQuery</a>() -&gt; std::string <span class="keyword">const</span></div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    {</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keyword">using namespace </span>std::string_literals;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span> </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>        <a class="code hl_class" href="classorm_1_1Model.html">Model&lt;T&gt;</a> model;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keyword">auto</span> modelInfo = model.<a class="code hl_function" href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">getModelInfo</a>();</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>        std::string query = <span class="stringliteral">&quot;SELECT * FROM &quot;</span>;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span> </div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        query.append(modelInfo.tableName);</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span> </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>        <span class="keywordflow">if</span> (data.offset.has_value())</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        {</div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>            query.append(<span class="stringliteral">&quot; OFFSET &quot;</span>s.append(std::to_string(data.offset.value())));</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>        }</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span> </div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>        <span class="keywordflow">if</span> (data.limit.has_value())</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        {</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>            query.append(<span class="stringliteral">&quot; LIMIT &quot;</span>s.append(std::to_string(data.limit.value())));</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>        }</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>        <span class="keywordflow">return</span> query.append(<span class="stringliteral">&quot;;&quot;</span>);</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    }</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span> </div>
+<div class="foldopen" id="foldopen00057" data-start="{" data-end="}">
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">   57</a></span>    <span class="keyword">inline</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">buildQuery</a>() -&gt; std::string <span class="keyword">const</span></div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>    {</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        <span class="keyword">using namespace </span>std::string_literals;</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        <a class="code hl_class" href="classorm_1_1Model.html">Model&lt;T&gt;</a> model;</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>        <span class="keyword">auto</span> modelInfo = model.<a class="code hl_function" href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">getModelInfo</a>();</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>        std::string query = <span class="stringliteral">&quot;SELECT * FROM &quot;</span>;</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>        query.append(modelInfo.tableName);</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>        <span class="keywordflow">if</span> (data.offset.has_value())</div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>        {</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>            query.append(<span class="stringliteral">&quot; OFFSET &quot;</span>s.append(std::to_string(data.offset.value())));</div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>        }</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>        <span class="keywordflow">if</span> (data.limit.has_value())</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>        {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>            query.append(<span class="stringliteral">&quot; LIMIT &quot;</span>s.append(std::to_string(data.limit.value())));</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>        }</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span> </div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>        <span class="keywordflow">return</span> query.append(<span class="stringliteral">&quot;;&quot;</span>);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    }</div>
 </div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span> </div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keyword">auto</span> operator==(<span class="keyword">const</span> <a class="code hl_class" href="classorm_1_1Query.html">Query&lt;U&gt;</a>&amp; rhs) -&gt; <span class="keywordtype">bool</span></div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    {</div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>        <span class="keywordflow">return</span> data == rhs.getData();</div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    }</div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>    <span class="keyword">inline</span> <span class="keyword">auto</span> getData() const -&gt; const query::QueryData&amp;</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>    {</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>        <span class="keywordflow">return</span> data;</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    }</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span> </div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    query::QueryData data; </div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>};</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>    <span class="keyword">template</span> &lt;<span class="keyword">typename</span> U&gt;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <span class="keyword">auto</span> operator==(<span class="keyword">const</span> <a class="code hl_class" href="classorm_1_1Query.html">Query&lt;U&gt;</a>&amp; rhs) -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>    {</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>        <span class="keywordflow">return</span> data == rhs.getData();</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>    }</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classorm_1_1Query.html#a2899a70f009c4e51d27af81f1acea47d">   92</a></span>    <span class="keyword">friend</span> <span class="keyword">class </span><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>    <span class="keyword">inline</span> <span class="keyword">auto</span> getData() const -&gt; const query::QueryData&amp;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    {</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>        <span class="keywordflow">return</span> data;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>    }</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span> </div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    query::QueryData data; </div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>};</div>
 </div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>}</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>}</div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:28</div></div>
 <div class="ttc" id="aclassorm_1_1Model_html"><div class="ttname"><a href="classorm_1_1Model.html">orm::Model</a></div><div class="ttdoc">A template class representing a model in the ORM framework.</div><div class="ttdef"><b>Definition</b> model.hpp:17</div></div>
 <div class="ttc" id="aclassorm_1_1Model_html_ac92945fd8263593c4d0fed37210dd88f"><div class="ttname"><a href="classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f">orm::Model::getModelInfo</a></div><div class="ttdeci">static model::ModelInfo &amp; getModelInfo(bool force=false)</div><div class="ttdoc">Get the model info for the model.</div><div class="ttdef"><b>Definition</b> model.hpp:24</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:21</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_a0734f8276645a20545a4a523f24a138e"><div class="ttname"><a href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">orm::Query::buildQuery</a></div><div class="ttdeci">auto buildQuery() -&gt; std::string const</div><div class="ttdoc">Builds the SQL SELECT query string.</div><div class="ttdef"><b>Definition</b> query.hpp:56</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_a3ca1c1020f82fbfe09b01dca8e73739f"><div class="ttname"><a href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">orm::Query::offset</a></div><div class="ttdeci">auto offset(std::size_t offset)</div><div class="ttdoc">Sets the OFFSET clause for the query.</div><div class="ttdef"><b>Definition</b> query.hpp:33</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_a8cd9666afaab1ab92763b717520c9aef"><div class="ttname"><a href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">orm::Query::limit</a></div><div class="ttdeci">auto limit(std::size_t limit)</div><div class="ttdoc">Sets the LIMIT clause for the query.</div><div class="ttdef"><b>Definition</b> query.hpp:45</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_abde0572a94dd2d8cfb471bf85c470f9b"><div class="ttname"><a href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">orm::Query::Query</a></div><div class="ttdeci">Query()</div><div class="ttdoc">Constructs a Query object.</div><div class="ttdef"><b>Definition</b> query.hpp:26</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:22</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_a0734f8276645a20545a4a523f24a138e"><div class="ttname"><a href="classorm_1_1Query.html#a0734f8276645a20545a4a523f24a138e">orm::Query::buildQuery</a></div><div class="ttdeci">auto buildQuery() -&gt; std::string const</div><div class="ttdoc">Builds the SQL SELECT query string.</div><div class="ttdef"><b>Definition</b> query.hpp:57</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_a3ca1c1020f82fbfe09b01dca8e73739f"><div class="ttname"><a href="classorm_1_1Query.html#a3ca1c1020f82fbfe09b01dca8e73739f">orm::Query::offset</a></div><div class="ttdeci">auto offset(std::size_t offset)</div><div class="ttdoc">Sets the OFFSET clause for the query.</div><div class="ttdef"><b>Definition</b> query.hpp:34</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_a8cd9666afaab1ab92763b717520c9aef"><div class="ttname"><a href="classorm_1_1Query.html#a8cd9666afaab1ab92763b717520c9aef">orm::Query::limit</a></div><div class="ttdeci">auto limit(std::size_t limit)</div><div class="ttdoc">Sets the LIMIT clause for the query.</div><div class="ttdef"><b>Definition</b> query.hpp:46</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_abde0572a94dd2d8cfb471bf85c470f9b"><div class="ttname"><a href="classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b">orm::Query::Query</a></div><div class="ttdeci">Query()</div><div class="ttdoc">Constructs a Query object.</div><div class="ttdef"><b>Definition</b> query.hpp:27</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

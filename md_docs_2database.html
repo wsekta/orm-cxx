@@ -124,35 +124,34 @@ Create table</h1>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a>&lt;ObjectModel&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a5dc553baa29a3ec7fd46b81e412ffa5d"><div class="ttname"><a href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">orm::Database::createTable</a></div><div class="ttdeci">auto createTable() -&gt; void</div><div class="ttdoc">Execute a create table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:103</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a5dc553baa29a3ec7fd46b81e412ffa5d"><div class="ttname"><a href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">orm::Database::createTable</a></div><div class="ttdeci">auto createTable() -&gt; void</div><div class="ttdoc">Execute a create table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:105</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md3"></a>
 Delete table</h1>
 <p>To delete table from database use <code>deleteTable</code> method and pass model as template argument:</p>
 <div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;ObjectModel&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_adc8f4be2035069fa45881dfb498f2604"><div class="ttname"><a href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">orm::Database::deleteTable</a></div><div class="ttdeci">auto deleteTable() -&gt; void</div><div class="ttdoc">Execute a delete table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:118</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_adc8f4be2035069fa45881dfb498f2604"><div class="ttname"><a href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">orm::Database::deleteTable</a></div><div class="ttdeci">auto deleteTable() -&gt; void</div><div class="ttdoc">Execute a delete table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:120</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md4"></a>
 Insert objects</h1>
-<p>To insert objects into database use <code>insertObjects</code> method and pass vector of objects as argument:</p>
+<p>To insert objects into database use <code>insert</code> method and pass vector of objects as argument:</p>
 <div class="fragment"><div class="line">std::vector&lt;ObjectModel&gt; objects{</div>
 <div class="line">    {1, <span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;email&quot;</span>, <span class="stringliteral">&quot;password&quot;</span>, <span class="stringliteral">&quot;created_at&quot;</span>, <span class="stringliteral">&quot;updated_at&quot;</span>}, </div>
 <div class="line">    {2, <span class="stringliteral">&quot;name2&quot;</span>, <span class="stringliteral">&quot;email2&quot;</span>, <span class="stringliteral">&quot;password2&quot;</span>, <span class="stringliteral">&quot;created_at2&quot;</span>, <span class="stringliteral">&quot;updated_at2&quot;</span>}</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a473affe96af0c7a8075b123ec59c8853">insertObjects</a>(objects);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a473affe96af0c7a8075b123ec59c8853"><div class="ttname"><a href="classorm_1_1Database.html#a473affe96af0c7a8075b123ec59c8853">orm::Database::insertObjects</a></div><div class="ttdeci">auto insertObjects(const std::vector&lt; T &gt; &amp;objects) -&gt; void</div><div class="ttdoc">Executes a insert query for multiple objects.</div><div class="ttdef"><b>Definition</b> database.hpp:71</div></div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
+<div class="ttc" id="aclassorm_1_1Database_html_acaaa43ce08ccb8b9b686d45a5d8e10e2"><div class="ttname"><a href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">orm::Database::insert</a></div><div class="ttdeci">auto insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void</div><div class="ttdoc">Executes a insert query for multiple objects.</div><div class="ttdef"><b>Definition</b> database.hpp:72</div></div>
 </div><!-- fragment --><p>You can also insert single object:</p>
 <div class="fragment"><div class="line">ObjectModel <span class="keywordtype">object</span>{1, <span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;email&quot;</span>, <span class="stringliteral">&quot;password&quot;</span>, <span class="stringliteral">&quot;created_at&quot;</span>, <span class="stringliteral">&quot;updated_at&quot;</span>};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a7fd1496475387db8af973fe51ceb7d78">insertObject</a>(<span class="keywordtype">object</span>);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a7fd1496475387db8af973fe51ceb7d78"><div class="ttname"><a href="classorm_1_1Database.html#a7fd1496475387db8af973fe51ceb7d78">orm::Database::insertObject</a></div><div class="ttdeci">auto insertObject(T object) -&gt; void</div><div class="ttdoc">Executes a insert query for a single object.</div><div class="ttdef"><b>Definition</b> database.hpp:86</div></div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(<span class="keywordtype">object</span>);</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md5"></a>
 Query objects</h1>
-<p>To query objects from database use <code>executeQuery</code> method and pass <a class="el" href="md_docs_2query.html">query</a> as argument:</p>
+<p>To query objects from database use <code>query</code> method and pass <a class="el" href="md_docs_2query.html">query</a> as argument:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;ObjectModel&gt;</a> query;</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> queriedObjects = database.<a class="code hl_function" href="classorm_1_1Database.html#af41f748692dc98235217513b453af02d">executeQuery</a>(query);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_af41f748692dc98235217513b453af02d"><div class="ttname"><a href="classorm_1_1Database.html#af41f748692dc98235217513b453af02d">orm::Database::executeQuery</a></div><div class="ttdeci">auto executeQuery(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:50</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:21</div></div>
+<div class="line"><span class="keyword">auto</span> queriedObjects = database.<a class="code hl_function" href="classorm_1_1Database.html#a6cd8cc7a2307b9c320b8042a939bbb01">query</a>(query);</div>
+<div class="ttc" id="aclassorm_1_1Database_html_a6cd8cc7a2307b9c320b8042a939bbb01"><div class="ttname"><a href="classorm_1_1Database.html#a6cd8cc7a2307b9c320b8042a939bbb01">orm::Database::query</a></div><div class="ttdeci">auto query(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:51</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:22</div></div>
 </div><!-- fragment --> </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

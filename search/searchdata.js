@@ -1,9 +1,10 @@
 var indexSectionsWithContent =
 {
-  0: "bcdefgiklmnopqst",
+  0: "bcdfgiklmnopqst",
   1: "dmq",
-  2: "bcdegiloq",
-  3: "cdmoq"
+  2: "bcdgiloq",
+  3: "o",
+  4: "cdmoq"
 };
 
 var indexSectionNames =
@@ -11,7 +12,8 @@ var indexSectionNames =
   0: "all",
   1: "classes",
   2: "functions",
-  3: "pages"
+  3: "related",
+  4: "pages"
 };
 
 var indexSectionLabels =
@@ -19,6 +21,7 @@ var indexSectionLabels =
   0: "All",
   1: "Classes",
   2: "Functions",
-  3: "Pages"
+  3: "Friends",
+  4: "Pages"
 };
 

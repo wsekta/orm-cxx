@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['getbackendtype_0',['getBackendType',['../classorm_1_1Database.html#af5bf41d4644f6d3e8835bfbad5cb07a0',1,'orm::Database']]],
-  ['getmodelinfo_1',['getModelInfo',['../classorm_1_1Model.html#ac92945fd8263593c4d0fed37210dd88f',1,'orm::Model']]],
-  ['getobject_2',['getObject',['../classorm_1_1Model.html#a577d30c6646c56e34c219795a97dd746',1,'orm::Model']]]
+  ['insert_0',['insert',['../classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2',1,'orm::Database::insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1Database.html#acbc75aba074b7474bc0c2ee6445a1c0e',1,'orm::Database::insert(T object) -&gt; void']]],
+  ['insert_20objects_1',['Insert objects',['../md_docs_2database.html#autotoc_md4',1,'']]]
 ];

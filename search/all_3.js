@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['executequery_0',['executeQuery',['../classorm_1_1Database.html#af41f748692dc98235217513b453af02d',1,'orm::Database']]]
+  ['fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md10',1,'']]],
+  ['fields_20types_1',['Fields types',['../md_docs_2model.html#autotoc_md8',1,'']]]
 ];
