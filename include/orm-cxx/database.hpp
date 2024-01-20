@@ -51,7 +51,9 @@ public:
     {
         std::vector<T> result;
 
-        soci::rowset<Model<T>> preparedRowSet = (sql.prepare << query.buildQuery());
+        auto command = commandGeneratorFactory.getCommandGenerator(backendType)->select(query.getData());
+
+        soci::rowset<Model<T>> preparedRowSet = (sql.prepare << command);
 
         for (auto& model : preparedRowSet)
         {

@@ -49,41 +49,6 @@ public:
         return *this;
     }
 
-    /**
-     * @brief Builds the select query string.
-     * @return The constructed select query string.
-     */
-    inline auto buildQuery() -> std::string const
-    {
-        using namespace std::string_literals;
-
-        Model<T> model;
-
-        auto modelInfo = model.getModelInfo();
-
-        std::string query = "SELECT * FROM ";
-
-        query.append(modelInfo.tableName);
-
-        if (data.offset.has_value())
-        {
-            query.append(" OFFSET "s.append(std::to_string(data.offset.value())));
-        }
-
-        if (data.limit.has_value())
-        {
-            query.append(" LIMIT "s.append(std::to_string(data.limit.value())));
-        }
-
-        return query.append(";");
-    }
-
-    template <typename U>
-    auto operator==(const Query<U>& rhs) -> bool
-    {
-        return data == rhs.getData();
-    }
-
 private:
     /**
      * @brief Database class is a friend class of Query for access to the query data.

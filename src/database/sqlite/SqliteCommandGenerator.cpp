@@ -83,7 +83,7 @@ auto SqliteCommandGenerator::insert(const model::ModelInfo& modelInfo) const -> 
     return command;
 }
 
-auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& modelInfo, 
+auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& modelInfo,
                                                      const model::ColumnInfo& columnInfo) const -> std::string
 {
     std::string command{};
@@ -96,7 +96,7 @@ auto SqliteCommandGenerator::addColumnsForForeignIds(const model::ModelInfo& mod
         if (foreignColumnInfo.isPrimaryKey)
         {
             command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignColumnInfo.name,
-                                    typeTranslator.toSqlType(foreignColumnInfo.type), isNullable));
+                                       typeTranslator.toSqlType(foreignColumnInfo.type), isNullable));
         }
     }
 
@@ -138,6 +138,27 @@ auto SqliteCommandGenerator::addForeignIds(const model::ModelInfo& modelInfo) co
     {
         removeLastComma(command);
     }
+
+    return command;
+}
+
+auto SqliteCommandGenerator::select(const query::QueryData& queryData) const -> std::string
+{
+    using namespace std::string_literals;
+
+    std::string command = "SELECT * FROM "s.append(queryData.modelInfo.tableName);
+
+    if (queryData.offset.has_value())
+    {
+        command.append(" OFFSET "s.append(std::to_string(queryData.offset.value())));
+    }
+
+    if (queryData.limit.has_value())
+    {
+        command.append(" LIMIT "s.append(std::to_string(queryData.limit.value())));
+    }
+
+    command.append(";");
 
     return command;
 }

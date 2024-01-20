@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "orm-cxx/model.hpp"
+#include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
 
 using namespace orm::db::sqlite;
@@ -32,6 +33,12 @@ const std::string createTableSqlWithReferringToSimpleModel = "CREATE TABLE IF NO
                                                              "\tFOREIGN KEY (field3_id) REFERENCES "
                                                              "models_ModelWithId (id)\n"
                                                              ");";
+
+const std::string selectSql = "SELECT * FROM models_ModelWithFloat;";
+
+const std::string selectSqlWithLimit = "SELECT * FROM models_ModelWithFloat LIMIT 10;";
+
+const std::string selectSqlWithOffset = "SELECT * FROM models_ModelWithFloat OFFSET 10;";
 }
 
 class SqliteCommandGeneratorTest : public ::testing::Test
@@ -70,4 +77,25 @@ TEST_F(SqliteCommandGeneratorTest, createTableWithReferringToSimpleModel)
 
     EXPECT_EQ(generator.createTable(modelWithReferringToSimpleModel.getModelInfo()),
               createTableSqlWithReferringToSimpleModel);
+}
+
+TEST_F(SqliteCommandGeneratorTest, select)
+{
+    orm::query::QueryData queryData{.modelInfo = model.getModelInfo()};
+
+    EXPECT_EQ(generator.select(queryData), selectSql);
+}
+
+TEST_F(SqliteCommandGeneratorTest, selectWithLimit)
+{
+    orm::query::QueryData queryData{.modelInfo = model.getModelInfo(), .limit = 10};
+
+    EXPECT_EQ(generator.select(queryData), selectSqlWithLimit);
+}
+
+TEST_F(SqliteCommandGeneratorTest, selectWithOffset)
+{
+    orm::query::QueryData queryData{.modelInfo = model.getModelInfo(), .offset = 10};
+
+    EXPECT_EQ(generator.select(queryData), selectSqlWithOffset);
 }

@@ -72,7 +72,6 @@ if (BUILD_ORM_CXX_TESTS)
 
     set(UT_SOURCES
             tests/ModelTest.cpp
-            tests/QueryTest.cpp
             tests/DatabaseTest.cpp
 
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
