@@ -1,6 +1,5 @@
 # TODO:
 
-* Command generator should use strategy pattern to reuse code for different databases
 * Add queries to model related to other models in relation OneToOne
 * Add where clause to queries
 * Add internal notation for where clause with support for:
