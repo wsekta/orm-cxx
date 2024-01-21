@@ -53,7 +53,7 @@ struct GetForeignModelInfoFromField
 
             modelInfo.columnsInfo[i].isForeignModel = true;
 
-            modelInfo.columnsInfo[i].type = ColumnType::OneToMany;
+            modelInfo.columnsInfo[i].type = ColumnType::OneToOne;
 
             modelInfo.foreignModelsInfo[name] = generateModelInfo<ModelField>();
         }

@@ -13,7 +13,7 @@ enum class ColumnType : char
     String,
     Uuid [[maybe_unused]],
     Unknown,
-    OneToMany,
+    OneToOne,
 };
 
 auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>;
