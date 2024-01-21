@@ -20,16 +20,21 @@ auto replaceAll(std::string& text, const std::string& toReplace, const std::stri
 
 auto removeLastComma(std::string& text) -> void
 {
+    if (text.empty()) [[unlikely]]
+    {
+        return;
+    }
+
     std::size_t pos = text.size() - 1;
 
-    while ((pos != 0) and text[pos] != ',')
+    while ((pos > 0) and text[pos] != ',')
     {
         --pos;
     }
 
     if (text[pos] == ',')
     {
-        text = text.substr(0, pos);
+        text.resize(pos);
     }
 }
 } // namespace orm::utils
