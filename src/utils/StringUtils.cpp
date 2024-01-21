@@ -20,10 +20,11 @@ auto replaceAll(std::string& text, const std::string& toReplace, const std::stri
 
 auto removeLastComma(std::string& text) -> void
 {
-    std::size_t pos = text.size();
+    std::size_t pos = text.size() - 1;
 
-    while (--pos and text[pos] != ',')
+    while ((pos != 0) and text[pos] != ',')
     {
+        --pos;
     }
 
     if (text[pos] == ',')
