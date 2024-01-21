@@ -38,6 +38,7 @@ set(SOURCES
         src/database/defaults/DefaultCreateTableCommand.cpp
         src/database/defaults/DefaultDropTableCommand.cpp
         src/database/defaults/DefaultInsertCommand.cpp
+        src/database/defaults/DefaultSelectCommand.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -90,6 +91,7 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultCreateTableCommandTest.cpp
             src/database/defaults/DefaultDropTableCommandTest.cpp
             src/database/defaults/DefaultInsertCommandTest.cpp
+            src/database/defaults/DefaultSelectCommandTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

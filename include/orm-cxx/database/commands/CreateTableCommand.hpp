@@ -1,6 +1,6 @@
 #pragma once
 
-#include "orm-cxx/query/QueryData.hpp"
+#include "orm-cxx/model/ModelInfo.hpp"
 
 namespace orm::db::commands
 {
