@@ -2,7 +2,7 @@
 
 namespace orm::db
 {
-enum class BackendType : char
+enum class BackendType
 {
     Sqlite,
     Postgres [[maybe_unused]],

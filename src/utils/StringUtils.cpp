@@ -17,4 +17,18 @@ auto replaceAll(std::string& text, const std::string& toReplace, const std::stri
         start_pos += replaceWith.length();
     }
 }
+
+auto removeLastComma(std::string& text) -> void
+{
+    std::size_t pos = text.size();
+
+    while (--pos and text[pos] != ',')
+    {
+    }
+
+    if (text[pos] == ',')
+    {
+        text = text.substr(0, pos);
+    }
+}
 } // namespace orm::utils

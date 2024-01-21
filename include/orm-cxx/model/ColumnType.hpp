@@ -4,7 +4,7 @@
 
 namespace orm::model
 {
-enum class ColumnType : char
+enum class ColumnType
 {
     Char,
     Int,

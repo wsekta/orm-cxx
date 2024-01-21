@@ -35,6 +35,7 @@ set(SOURCES
         src/database/sqlite/SqliteCommandGenerator.cpp
         src/database/CommandGeneratorFactory.cpp
         src/utils/StringUtils.cpp
+        src/database/defaults/DefaultCreateTableCommand.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -84,6 +85,7 @@ if (BUILD_ORM_CXX_TESTS)
             tests/database/IdModelsTest.cpp
             tests/database/RelatedModelTest.cpp
             tests/database/BaseOperationsTest.cpp
+            src/database/defaults/DefaultCreateTableCommandTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

@@ -27,3 +27,43 @@ TEST(StringUtilsTest, shouldNotReplaceAll)
 
     EXPECT_EQ(text, expected);
 }
+
+TEST(StringUtilsTest, shouldRemoveLastComma)
+{
+    auto text = "text text,"s;
+    auto expected = "text text"s;
+
+    removeLastComma(text);
+
+    EXPECT_EQ(text, expected);
+}
+
+TEST(StringUtilsTest, shouldNotRemoveLastComma)
+{
+    auto text = "text text"s;
+    auto expected = "text text"s;
+
+    removeLastComma(text);
+
+    EXPECT_EQ(text, expected);
+}
+
+TEST(StringUtilsTest, shouldNotRemoveLastCommaFromEmptyString)
+{
+    auto text = ""s;
+    auto expected = ""s;
+
+    removeLastComma(text);
+
+    EXPECT_EQ(text, expected);
+}
+
+TEST(StringUtilsTest, shouldRemoveCommanIfFollowedBySpace)
+{
+    auto text = "text text, "s;
+    auto expected = "text text"s;
+
+    removeLastComma(text);
+
+    EXPECT_EQ(text, expected);
+}
