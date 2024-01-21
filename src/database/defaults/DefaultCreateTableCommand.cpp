@@ -6,8 +6,8 @@
 
 namespace orm::db::commands
 {
-DefaultCreateTableCommand::DefaultCreateTableCommand(std::shared_ptr<TypeTranslator> typeTranslator)
-    : typeTranslator(std::move(typeTranslator))
+DefaultCreateTableCommand::DefaultCreateTableCommand(std::shared_ptr<TypeTranslator> typeTranslatorInit)
+    : typeTranslator(std::move(typeTranslatorInit))
 {
 }
 

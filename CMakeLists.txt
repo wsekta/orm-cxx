@@ -36,6 +36,7 @@ set(SOURCES
         src/database/CommandGeneratorFactory.cpp
         src/utils/StringUtils.cpp
         src/database/defaults/DefaultCreateTableCommand.cpp
+        src/database/defaults/DefaultDropTableCommand.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -86,6 +87,7 @@ if (BUILD_ORM_CXX_TESTS)
             tests/database/RelatedModelTest.cpp
             tests/database/BaseOperationsTest.cpp
             src/database/defaults/DefaultCreateTableCommandTest.cpp
+            src/database/defaults/DefaultDropTableCommandTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

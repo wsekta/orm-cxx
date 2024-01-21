@@ -13,7 +13,7 @@ const std::string createTableSql = "CREATE TABLE IF NOT EXISTS models_ModelWithF
                                    "\tfield2 TEXT NOT NULL,\n"
                                    "\tfield3 REAL NOT NULL\n"
                                    ");";
-}
+} // namespace
 
 class DefaultCreateTableCommandTest : public ::testing::Test
 {
