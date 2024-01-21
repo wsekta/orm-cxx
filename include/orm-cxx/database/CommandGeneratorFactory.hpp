@@ -10,9 +10,9 @@ class CommandGeneratorFactory
 public:
     CommandGeneratorFactory();
 
-    auto getCommandGenerator(BackendType backendType) const -> const std::unique_ptr<CommandGenerator>&;
+    auto getCommandGenerator(BackendType backendType) const -> const CommandGenerator&;
 
 private:
-    std::unordered_map<BackendType, std::unique_ptr<CommandGenerator>> commandGenerators;
+    std::unordered_map<BackendType, CommandGenerator> commandGenerators;
 };
 } // namespace orm::db

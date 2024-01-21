@@ -56,7 +56,7 @@ public:
     {
         std::vector<T> result;
 
-        auto command = commandGeneratorFactory.getCommandGenerator(backendType)->select(query.getData());
+        auto command = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
 
         soci::rowset<Model<T>> preparedRowSet = (sql.prepare << command);
 
@@ -92,8 +92,7 @@ public:
     template <typename T>
     auto insert(T object) -> void
     {
-        static auto command =
-            commandGeneratorFactory.getCommandGenerator(backendType)->insert(Model<T>::getModelInfo());
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).insert(Model<T>::getModelInfo());
 
         Model<T> model;
 
@@ -112,7 +111,7 @@ public:
     {
         static auto modelInfo = Model<T>::getModelInfo();
 
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->createTable(modelInfo);
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).createTable(modelInfo);
 
         sql << command;
     }
@@ -127,7 +126,7 @@ public:
     {
         static Model<T> model;
 
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType)->dropTable(model.getModelInfo());
+        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).dropTable(model.getModelInfo());
 
         sql << command;
     }

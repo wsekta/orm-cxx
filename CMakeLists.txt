@@ -32,13 +32,13 @@ set(SOURCES
         src/Database.cpp
         src/database/sqlite/SqliteTypeTranslator.cpp
         src/model/ColumnType.cpp
-        src/database/sqlite/SqliteCommandGenerator.cpp
         src/database/CommandGeneratorFactory.cpp
         src/utils/StringUtils.cpp
         src/database/defaults/DefaultCreateTableCommand.cpp
         src/database/defaults/DefaultDropTableCommand.cpp
         src/database/defaults/DefaultInsertCommand.cpp
         src/database/defaults/DefaultSelectCommand.cpp
+        src/database/CommandGenerator.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -79,7 +79,6 @@ if (BUILD_ORM_CXX_TESTS)
 
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
             src/model/ColumnTypeTest.cpp
-            src/database/sqlite/SqliteCommandGeneratorTest.cpp
             src/utils/StringUtilsTest.cpp
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp

@@ -61,12 +61,18 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
 auto DefaultCreateTableCommand::addColumnsForForeignIds(const model::ModelInfo& modelInfo,
                                                         const model::ColumnInfo& columnInfo) const -> std::string
 {
-    std::string command;
+    std::string command{};
 
-    for (const auto& idColumn : modelInfo.idColumnsNames)
+    const auto& fieldName = columnInfo.name;
+    const auto* const isNullable = columnInfo.isNotNull ? " NOT NULL" : "";
+
+    for (const auto& foreignColumnInfo : modelInfo.columnsInfo)
     {
-        command.append(std::format("\t{} {}{},\n", idColumn, typeTranslator->toSqlType(columnInfo.type),
-                                   columnInfo.isNotNull ? " NOT NULL" : ""));
+        if (foreignColumnInfo.isPrimaryKey)
+        {
+            command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignColumnInfo.name,
+                                       typeTranslator->toSqlType(foreignColumnInfo.type), isNullable));
+        }
     }
 
     return command;
@@ -74,18 +80,39 @@ auto DefaultCreateTableCommand::addColumnsForForeignIds(const model::ModelInfo& 
 
 auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo) -> std::string
 {
-    std::string command;
+    std::string command{};
 
-    for (const auto& [_, foreignModelInfo] : modelInfo.foreignModelsInfo)
+    for (const auto& [fieldName, foreignModelInfo] : modelInfo.foreignModelsInfo)
     {
-        for (const auto& idColumn : foreignModelInfo.idColumnsNames)
+        std::string foreignKeyCommand{"\tFOREIGN KEY ("};
+        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
         {
-            command.append(
-                std::format("\tFOREIGN KEY ({}) REFERENCES {}({}),\n", idColumn, foreignModelInfo.tableName, idColumn));
+            if (foreignColumnInfo.isPrimaryKey)
+            {
+                foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignColumnInfo.name));
+            }
         }
+
+        utils::removeLastComma(foreignKeyCommand);
+
+        foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignModelInfo.tableName));
+
+        for (const auto& foreignIdName : foreignModelInfo.idColumnsNames)
+        {
+            foreignKeyCommand.append(std::format("{}, ", foreignIdName));
+        }
+
+        utils::removeLastComma(foreignKeyCommand);
+
+        foreignKeyCommand.append("),\n");
+
+        command.append(foreignKeyCommand);
     }
 
-    utils::removeLastComma(command);
+    if (not command.empty())
+    {
+        utils::removeLastComma(command);
+    }
 
     return command;
 }

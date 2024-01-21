@@ -2,6 +2,10 @@
 
 #include <string>
 
+#include "commands/CreateTableCommand.hpp"
+#include "commands/DropTableCommand.hpp"
+#include "commands/InsertCommand.hpp"
+#include "commands/SelectCommand.hpp"
 #include "orm-cxx/model/ModelInfo.hpp"
 #include "orm-cxx/query/QueryData.hpp"
 
@@ -10,14 +14,20 @@ namespace orm::db
 class CommandGenerator
 {
 public:
-    virtual ~CommandGenerator() = default;
+    CommandGenerator(std::unique_ptr<commands::CreateTableCommand> createTableCommand,
+                     std::unique_ptr<commands::DropTableCommand> dropTableCommand,
+                     std::unique_ptr<commands::InsertCommand> insertCommand,
+                     std::unique_ptr<commands::SelectCommand> selectCommand);
 
-    [[nodiscard]] virtual auto createTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    [[nodiscard]] virtual auto dropTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    [[nodiscard]] virtual auto insert(const model::ModelInfo& modelInfo) const -> std::string = 0;
-    [[nodiscard]] virtual auto select(const query::QueryData& queryData) const -> std::string = 0;
+    [[nodiscard]] auto createTable(const model::ModelInfo& modelInfo) const -> std::string;
+    [[nodiscard]] auto dropTable(const model::ModelInfo& modelInfo) const -> std::string;
+    [[nodiscard]] auto insert(const model::ModelInfo& modelInfo) const -> std::string;
+    [[nodiscard]] auto select(const query::QueryData& queryData) const -> std::string;
 
-protected:
-    static auto removeLastComma(std::string& command) -> void;
+private:
+    std::unique_ptr<commands::CreateTableCommand> createTableCommand;
+    std::unique_ptr<commands::DropTableCommand> dropTableCommand;
+    std::unique_ptr<commands::InsertCommand> insertCommand;
+    std::unique_ptr<commands::SelectCommand> selectCommand;
 };
 } // namespace orm::db
