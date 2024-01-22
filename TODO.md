@@ -1,5 +1,7 @@
 # TODO:
 
+* Refactor binding struct `soci::type_conversion`
+* Add database payload struct to remove object instance from `orm::Model`
 * Add queries to model related to other models in relation OneToOne
 * Add where clause to queries
 * Add internal notation for where clause with support for:
@@ -8,6 +10,7 @@
     * Logical operators (AND, OR, NOT)
     * String operators (LIKE, ILIKE, etc)
 * Add support for models with relations OneToMany and ManyToMany
+* Refactor CMake files
 * Add support for other databases and drivers:
     * PostgreSQL
     * MySQL
@@ -18,5 +21,6 @@
 
 # Far future:
 
+* add to vcpkg and conan package managers
 * Replace reflect-cpp with own reflection library, due to warnings and errors generated in reflect-cpp
 * Move as much as possible to compile time
