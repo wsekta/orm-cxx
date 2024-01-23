@@ -1,7 +1,6 @@
 # TODO:
 
 * Refactor binding struct `soci::type_conversion`
-* Add database payload struct to remove object instance from `orm::Model`
 * Add queries to model related to other models in relation OneToOne
 * Add where clause to queries
 * Add internal notation for where clause with support for:
@@ -21,6 +20,6 @@
 
 # Far future:
 
-* add to vcpkg and conan package managers
+* Add to vcpkg and conan package managers
 * Replace reflect-cpp with own reflection library, due to warnings and errors generated in reflect-cpp
 * Move as much as possible to compile time

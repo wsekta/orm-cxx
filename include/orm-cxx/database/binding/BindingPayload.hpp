@@ -1,5 +1,6 @@
 #pragma once
 
+#include "BindingInfo.hpp"
 #include "orm-cxx/model.hpp"
 
 namespace orm::db::binding
@@ -8,6 +9,8 @@ template <typename T>
 struct BindingPayload
 {
     mutable T value;
+
+    [[maybe_unused]] static BindingInfo bindingInfo;
 
     auto getModelInfo() const -> const model::ModelInfo&
     {
