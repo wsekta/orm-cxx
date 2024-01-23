@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BindingPayload.hpp"
+#include "GetObjectFromValues.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
@@ -25,11 +26,10 @@ struct type_conversion<BindingPayload<T>>
 
     [[maybe_unused]] static void from_base(const values& v, indicator /*ind*/, BindingPayload<T>& model)
     {
-        auto columns = model.getModelInfo().columnsInfo;
         auto& modelValue = model.value;
-        auto view = rfl::to_view(modelValue);
+        auto modelAsTuple = rfl::to_view(modelValue).values();
 
-        getObjectFromValues(view.values(), columns, v);
+        orm::db::binding::getObjectFromValues(modelAsTuple, model, v);
     }
 
     [[maybe_unused]] static void to_base(const BindingPayload<T>& model, values& v, indicator& ind)
@@ -111,73 +111,6 @@ private:
         else
         {
             v.set(columnInfo.name, double{}, soci::i_null);
-        }
-    }
-
-    // getting model from values
-    template <typename ModelAsTuple, std::size_t TupleSize = std::tuple_size_v<ModelAsTuple>>
-    static void getObjectFromValues(ModelAsTuple& modelAsTuple, const std::vector<orm::model::ColumnInfo>& columnsInfo,
-                                    const values& v)
-    {
-        getObjectFoldIteration(modelAsTuple, std::make_index_sequence<TupleSize>{}, columnsInfo, v);
-    }
-
-    template <typename ModelAsTuple, std::size_t... Is>
-    static void getObjectFoldIteration(ModelAsTuple& modelAsTuple, std::index_sequence<Is...>,
-                                       const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
-    {
-        (getObjectFieldFromValues(Is, std::get<Is>(modelAsTuple), columnsInfo, v), ...);
-    }
-
-    template <typename ModelField>
-    static void getObjectFieldFromValues(std::size_t i, ModelField* column,
-                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
-    {
-        auto& columnInfo = columnsInfo[i];
-
-        if (columnInfo.isNotNull)
-        {
-            *column = v.get<ModelField>(columnInfo.name);
-        }
-        else
-        {
-            if constexpr (requires(ModelField t) {
-                              t.has_value();
-                              t.value();
-                          })
-            {
-                if (v.get_indicator(columnInfo.name) == i_null)
-                {
-                    *column = std::nullopt;
-                }
-                else
-                {
-                    *column = v.get<ModelField>(columnInfo.name);
-                }
-            }
-        }
-    }
-
-    static void getObjectFieldFromValues(std::size_t i, float* column,
-                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
-    {
-        auto& columnInfo = columnsInfo[i];
-
-        *column = static_cast<float>(v.get<double>(columnInfo.name));
-    }
-
-    static void getObjectFieldFromValues(std::size_t i, std::optional<float>* column,
-                                         const std::vector<orm::model::ColumnInfo>& columnsInfo, const values& v)
-    {
-        auto& columnInfo = columnsInfo[i];
-
-        if (v.get_indicator(columnInfo.name) == i_null)
-        {
-            *column = std::nullopt;
-        }
-        else
-        {
-            *column = static_cast<float>(v.get<double>(columnInfo.name));
         }
     }
 };

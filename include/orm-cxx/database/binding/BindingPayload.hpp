@@ -10,7 +10,7 @@ struct BindingPayload
 {
     mutable T value;
 
-    [[maybe_unused]] static BindingInfo bindingInfo;
+    [[maybe_unused]] inline static BindingInfo bindingInfo = {};
 
     auto getModelInfo() const -> const model::ModelInfo&
     {
