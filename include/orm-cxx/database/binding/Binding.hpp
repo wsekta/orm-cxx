@@ -1,6 +1,6 @@
 #pragma once
 
-#include "orm-cxx/model.hpp"
+#include "BindingPayload.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
@@ -16,24 +16,27 @@ DISABLE_WARNING_POP
 namespace soci
 {
 template <typename T>
-struct type_conversion<orm::Model<T>>
+using BindingPayload = orm::db::binding::BindingPayload<T>;
+
+template <typename T>
+struct type_conversion<BindingPayload<T>>
 {
     using base_type = values;
 
-    [[maybe_unused]] static void from_base(const values& v, indicator /*ind*/, orm::Model<T>& model)
+    [[maybe_unused]] static void from_base(const values& v, indicator /*ind*/, BindingPayload<T>& model)
     {
         auto columns = model.getModelInfo().columnsInfo;
-        auto& modelAsTuple = model.getObject();
-        auto view = rfl::to_view(modelAsTuple);
+        auto& modelValue = model.value;
+        auto view = rfl::to_view(modelValue);
 
         getObjectFromValues(view.values(), columns, v);
     }
 
-    [[maybe_unused]] static void to_base(const orm::Model<T>& model, values& v, indicator& ind)
+    [[maybe_unused]] static void to_base(const BindingPayload<T>& model, values& v, indicator& ind)
     {
         auto columns = model.getModelInfo().columnsInfo;
-        auto& modelAsTuple = model.getObject();
-        auto view = rfl::to_view(modelAsTuple);
+        auto& modelValue = model.value;
+        auto view = rfl::to_view(modelValue);
 
         setObjectToValues(view.values(), columns, v);
 

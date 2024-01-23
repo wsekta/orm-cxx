@@ -3,9 +3,8 @@
 #include <iostream>
 
 #include "database/BackendType.hpp"
+#include "database/binding/Binding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
-#include "model.hpp"
-#include "model/Binding.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "query.hpp"
 
@@ -27,6 +26,8 @@ namespace orm
 class Database
 {
 public:
+    template <typename T>
+    using Payload = db::binding::BindingPayload<T>;
     /**
      * @brief Constructs a new Database object.
      */
@@ -58,11 +59,11 @@ public:
 
         auto command = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
 
-        soci::rowset<Model<T>> preparedRowSet = (sql.prepare << command);
+        soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << command);
 
-        for (auto& model : preparedRowSet)
+        for (auto& payload : preparedRowSet)
         {
-            result.push_back(std::move(model.getObject()));
+            result.push_back(std::move(payload.value));
         }
 
         return result;
@@ -94,11 +95,11 @@ public:
     {
         static auto command = commandGeneratorFactory.getCommandGenerator(backendType).insert(Model<T>::getModelInfo());
 
-        Model<T> model;
+        Payload<T> payload;
 
-        model.getObject() = std::move(object);
+        payload.value = std::move(object);
 
-        sql << command, soci::use(model);
+        sql << command, soci::use(payload);
     }
 
     /**

@@ -31,19 +31,7 @@ public:
         return modelInfo.value();
     }
 
-    /**
-     * @brief Get the temporary object of the model.
-     *
-     * @return Reference to the temporary object.
-     */
-    inline auto getObject() const -> T&
-    {
-        return object;
-    }
-
 private:
-    mutable T object;
-
     inline static std::optional<model::ModelInfo> modelInfo = std::nullopt;
 };
 } // namespace orm
