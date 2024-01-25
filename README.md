@@ -5,7 +5,6 @@
 [![C++](https://img.shields.io/badge/C++20-grey.svg?style=flat&logo=c%2B%2B&logoColor=blue)](https://en.cppreference.com/w/cpp/20)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wsekta/orm-cxx/graphs/commit-activity)
-[![codecov](https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9)](https://codecov.io/github/wsekta/orm-cxx)
 [![Generic badge](https://img.shields.io/badge/gcc-13+-blue.svg)](https://gcc.gnu.org/)
 [![Generic badge](https://img.shields.io/badge/clang-16+-blue.svg)](https://clang.llvm.org/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
@@ -14,6 +13,7 @@
 [![clang++](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml?select=branch%3Amain)
 [![g++](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml?select=branch%3Amain)
 [![msvc](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml?select=branch%3Amain)
+[![codecov](https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9)](https://codecov.io/github/wsekta/orm-cxx)
 </div>
 
 ## 🎯 Goal
