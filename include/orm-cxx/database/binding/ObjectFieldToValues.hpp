@@ -1,4 +1,8 @@
+#include <format>
+
 #include "BindingPayload.hpp"
+#include "ForeignFieldToValue.hpp"
+#include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
@@ -18,7 +22,21 @@ struct ObjectFieldToValues
         if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
         {
             // values.set(columnInfo.name, column->id);
-            std::cout << "set TODO!" << std::endl;
+            auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
+            auto foreignModelAsTuple = rfl::to_view(*column).values();
+            auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+
+            auto setForeignFieldToValue =
+                [&foreignModel, &values, &foreignFieldName](auto index, auto foreignModelColumn)
+            {
+                if (foreignModel.columnsInfo[index].isPrimaryKey)
+                {
+                    values.set(std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name),
+                               *foreignModelColumn);
+                }
+            };
+
+            orm::utils::constexpr_for_tuple(foreignModelAsTuple, setForeignFieldToValue);
         }
         else
         {
