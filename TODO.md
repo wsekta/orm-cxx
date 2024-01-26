@@ -1,6 +1,5 @@
 # TODO:
 
-* Refactor binding struct `soci::type_conversion`
 * Add queries to model related to other models in relation OneToOne
 * Add where clause to queries
 * Add internal notation for where clause with support for:

@@ -20,8 +20,8 @@ auto getObjectFoldIteration(ModelAsTuple& modelAsTuple, std::index_sequence<Is..
 }
 
 template <std::size_t Is, typename T, typename ModelAsTuple>
-inline auto getObjectFoldIterationStep(ModelAsTuple& modelAsTuple, const BindingPayload<T>& bindingPayload,
-                                       const soci::values& values) -> void
+auto getObjectFoldIterationStep(ModelAsTuple& modelAsTuple, const BindingPayload<T>& bindingPayload,
+                                const soci::values& values) -> void
 {
     using field_t = std::decay_t<std::invoke_result_t<decltype([](auto t) { return *std::get<Is>(t); }), ModelAsTuple>>;
     ObjectFieldFromValues<field_t>::get(std::get<Is>(modelAsTuple), bindingPayload.getModelInfo().columnsInfo.at(Is),
