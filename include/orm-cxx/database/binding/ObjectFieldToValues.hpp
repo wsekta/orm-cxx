@@ -12,9 +12,17 @@ template <typename ModelField>
 struct ObjectFieldToValues
 {
     static auto set(const ModelField* column, const orm::model::ColumnInfo& columnInfo,
-                    soci::values& values) -> void
+                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
     {
-        values.set(columnInfo.name, *column);
+        if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
+        {
+            // values.set(columnInfo.name, column->id);
+            std::cout << "set TODO!" << std::endl;
+        }
+        else
+        {
+            values.set(columnInfo.name, *column);
+        }
     }
 };
 
@@ -22,7 +30,7 @@ template <typename ModelField>
 struct ObjectFieldToValues<std::optional<ModelField>>
 {
     static auto set(const std::optional<ModelField>* column, const orm::model::ColumnInfo& columnInfo,
-                    soci::values& values) -> void
+                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
     {
         if (column->has_value())
         {
@@ -38,7 +46,8 @@ struct ObjectFieldToValues<std::optional<ModelField>>
 template <>
 struct ObjectFieldToValues<float>
 {
-    static auto set(const float* column, const orm::model::ColumnInfo& columnInfo, soci::values& values) -> void
+    static auto set(const float* column, const orm::model::ColumnInfo& columnInfo, 
+                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
     {
         values.set(columnInfo.name, static_cast<double>(*column));
     }
@@ -48,7 +57,7 @@ template <>
 struct ObjectFieldToValues<std::optional<float>>
 {
     static auto set(const std::optional<float>* column, const orm::model::ColumnInfo& columnInfo,
-                    soci::values& values) -> void
+                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
     {
         if (column->has_value())
         {

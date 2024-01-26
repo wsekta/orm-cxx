@@ -30,6 +30,7 @@ auto setObjectFoldIterationStep(const ModelAsTuple& modelAsTuple, const BindingP
     using field_t = std::decay_t<std::invoke_result_t<decltype([](auto t) { return *std::get<Is>(t); }), ModelAsTuple>>;
     ObjectFieldToValues<field_t>::set(std::get<Is>(modelAsTuple), 
                                       bindingPayload.getModelInfo().columnsInfo.at(Is),
+                                      bindingPayload.bindingInfo,
                                       values);
 }
 } // namespace orm::db::binding

@@ -14,6 +14,22 @@ TEST_P(IdModelsTest, shouldCreateTableWithOverwrittenIdColumn)
     EXPECT_NO_THROW(createTable<models::ModelWithOverwrittenId>());
 }
 
+TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithId_valuesShouldBeSame)
+{
+    createTable<models::ModelWithId>();
+    auto models = std::vector<models::ModelWithId>{{1, 1, ""}, {2, 2, ""}};
+    database.insert(models);
+    orm::Query<models::ModelWithId> queryForIdModel;
+    auto returnedModels = database.select(queryForIdModel);
+
+    for (std::size_t i = 0; i < models.size(); i++)
+    {
+        EXPECT_EQ(models[i].id, returnedModels[i].id);
+        EXPECT_EQ(models[i].field1, returnedModels[i].field1);
+        EXPECT_EQ(models[i].field2, returnedModels[i].field2);
+    }
+}
+
 TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valuesShouldBeSame)
 {
     createTable<models::ModelWithIdAndNamesMapping>();
@@ -24,6 +40,7 @@ TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valu
 
     for (std::size_t i = 0; i < models.size(); i++)
     {
+        EXPECT_EQ(models[i].id, returnedModels[i].id);
         EXPECT_EQ(models[i].field1, returnedModels[i].field1);
         EXPECT_EQ(models[i].field2, returnedModels[i].field2);
     }

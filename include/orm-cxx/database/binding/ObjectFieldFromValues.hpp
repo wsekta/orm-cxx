@@ -16,6 +16,14 @@ struct ObjectFieldFromValues
     {
         *column = values.get<ModelField>(columnInfo.name);
     }
+
+    static auto get(std::optional<ModelField>* column, const orm::model::ColumnInfo& columnInfo,
+                    const BindingInfo /*bindingInfo*/, const soci::values& values) -> void 
+                    requires requires { orm::model::checkIfIsModelWithId<ModelField>() == true; }
+    {
+        std::cout << "get TODO!" << std::endl;
+        // *column = values.get<ModelField>(columnInfo.name);
+    }
 };
 
 template <typename ModelField>
@@ -61,4 +69,15 @@ struct ObjectFieldFromValues<std::optional<float>>
         }
     }
 };
+
+// template <typename ForeginModelField> 
+//     requires requires { orm::model::checkIfIsModelWithId<ForeginModelField>() == true; }
+// struct ObjectFieldFromValues<ForeginModelField>
+// {
+//     static auto get(ForeginModelField* column, const orm::model::ColumnInfo& columnInfo, const BindingInfo /*bindingInfo*/,
+//                     const soci::values& values) -> void
+//     {
+//         //todo
+//     }
+// };
 } // namespace orm::db::binding
