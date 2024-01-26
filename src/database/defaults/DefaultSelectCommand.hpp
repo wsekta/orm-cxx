@@ -14,7 +14,7 @@ private:
     static auto getSelectFields(const model::ModelInfo& modelInfo) -> std::string;
     static auto getForeignModelSelectFields(const std::string& foreginModelFieldName,
                                             const model::ModelInfo& foreignModelInfo) -> std::string;
-    static auto getJoins(const model::ModelInfo& modelInfo) -> std::string;
+    static auto getJoins(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string;
     static auto getOffset(const std::optional<std::size_t>& offset) -> std::string;
     static auto getLimit(const std::optional<std::size_t>& limit) -> std::string;
 };

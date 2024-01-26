@@ -95,7 +95,7 @@ public:
     {
         static auto command = commandGeneratorFactory.getCommandGenerator(backendType).insert(Model<T>::getModelInfo());
 
-        Payload<T> payload;
+        const Payload<T> payload;
 
         payload.value = std::move(object);
 

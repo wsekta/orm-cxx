@@ -1,7 +1,6 @@
 #include <format>
 
 #include "BindingPayload.hpp"
-#include "ForeignFieldToValue.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
@@ -21,16 +20,19 @@ struct ObjectFieldToValues
     {
         if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
         {
-            // values.set(columnInfo.name, column->id);
             auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
-            auto foreignModelAsTuple = rfl::to_view(*column).values();
+            const auto foreignModelAsTuple = rfl::to_view(*column).values();
             auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
 
             auto setForeignFieldToValue =
-                [&foreignModel, &values, &foreignFieldName](auto index, auto foreignModelColumn)
+                [&foreignModel, &values, &foreignFieldName](auto index, const auto foreignModelColumn)
             {
                 if (foreignModel.columnsInfo[index].isPrimaryKey)
                 {
+                    //                    std::cout << std::format("{}_{} == {}", foreignFieldName,
+                    //                    foreignModel.columnsInfo[index].name,
+                    //                                             *foreignModelColumn)
+                    //                              << std::endl;
                     values.set(std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name),
                                *foreignModelColumn);
                 }

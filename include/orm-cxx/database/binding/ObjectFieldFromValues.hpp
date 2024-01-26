@@ -1,4 +1,7 @@
+#include <format>
+
 #include "BindingPayload.hpp"
+#include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
@@ -17,8 +20,26 @@ struct ObjectFieldFromValues
     {
         if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
         {
-            // values.set(columnInfo.name, column->id);
-            std::cout << "get TODO!" << std::endl;
+            auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
+            auto foreignModelAsTuple = rfl::to_view(column).values();
+            auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+            //            foreignFieldName = std::format("{}.{}", model.getModelInfo().tableName, foreignFieldName);
+
+            auto getForeignFieldFromValue =
+                [&foreignModel, &values, &foreignFieldName](auto index, auto foreignModelColumn)
+            {
+                if (foreignModel.columnsInfo[index].isPrimaryKey)
+                {
+                    std::cout << std::format("{}_{} == {}", foreignFieldName, foreignModel.columnsInfo[index].name,
+                                             values.get<std::decay_t<decltype(*foreignModelColumn)>>(std::format(
+                                                 "{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name)))
+                              << std::endl;
+                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(
+                        std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name));
+                }
+            };
+
+            orm::utils::constexpr_for_tuple(foreignModelAsTuple, getForeignFieldFromValue);
         }
         else
         {

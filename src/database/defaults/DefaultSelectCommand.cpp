@@ -10,12 +10,9 @@ namespace orm::db::commands
 {
 auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> std::string
 {
-    return std::format("SELECT {0:} FROM {1:}{2:}{3:}{4:};", 
-                        getSelectFields(queryData.modelInfo), 
-                        queryData.modelInfo.tableName, 
-                        getJoins(queryData.modelInfo),
-                        getOffset(queryData.offset),
-                        getLimit(queryData.limit));
+    return std::format("SELECT {0:} FROM {1:}{2:}{3:}{4:};", getSelectFields(queryData.modelInfo),
+                       queryData.modelInfo.tableName, getJoins(queryData.shouldJoin, queryData.modelInfo),
+                       getOffset(queryData.offset), getLimit(queryData.limit));
 }
 
 auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& modelInfo) -> std::string
@@ -24,14 +21,14 @@ auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& modelInfo) ->
 
     for (const auto& columnInfo : modelInfo.columnsInfo)
     {
-        if(columnInfo.isForeignModel)
+        if (columnInfo.isForeignModel)
         {
-            selectFields += getForeignModelSelectFields(columnInfo.name, 
-                                            modelInfo.foreignModelsInfo.at(columnInfo.name));
+            selectFields += getForeignModelSelectFields(std::format("{}.{}", modelInfo.tableName, columnInfo.name),
+                                                        modelInfo.foreignModelsInfo.at(columnInfo.name));
         }
         else
         {
-            selectFields += std::format("{}, ", columnInfo.name);
+            selectFields += std::format("{}.{}, ", modelInfo.tableName, columnInfo.name);
         }
     }
 
@@ -40,34 +37,40 @@ auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& modelInfo) ->
     return selectFields;
 }
 
-auto DefaultSelectCommand::getForeignModelSelectFields(const std::string& foreginModelFieldName,
-                                                        const model::ModelInfo& foreignModelInfo) -> std::string
+auto DefaultSelectCommand::getForeignModelSelectFields(const std::string& foreignModelFieldName,
+                                                       const model::ModelInfo& foreignModelInfo) -> std::string
 {
     std::string selectFields;
 
     for (const auto& columnInfo : foreignModelInfo.columnsInfo)
     {
-        selectFields += std::format("{}.{}, ", foreginModelFieldName, columnInfo.name);
+        if (columnInfo.isPrimaryKey)
+        {
+            selectFields += std::format("{}_{}, ", foreignModelFieldName, columnInfo.name);
+        }
     }
 
     return selectFields;
 }
 
-auto DefaultSelectCommand::getJoins(const model::ModelInfo& modelInfo) -> std::string
+auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string
 {
+    if (not shouldJoin)
+    {
+        return {};
+    }
+
     std::string joins;
 
     for (const auto& [foreginModelFieldName, foreignModelInfo] : modelInfo.foreignModelsInfo)
     {
-        joins += std::format(" LEFT JOIN {0:} AS {1:} ON {1:}.{2:} = {3:}.{4:}_{2:} ", 
-                            foreignModelInfo.tableName, 
-                            foreginModelFieldName, 
-                            *foreignModelInfo.idColumnsNames.begin(), //todo: fix this for multiple id columns
-                            modelInfo.tableName, 
-                            foreginModelFieldName);
+        joins += std::format(" LEFT JOIN {0:} AS {1:} ON {1:}.{2:} = {3:}.{4:}_{2:} ", foreignModelInfo.tableName,
+                             foreginModelFieldName,
+                             *foreignModelInfo.idColumnsNames.begin(), // todo: fix this for multiple id columns
+                             modelInfo.tableName, foreginModelFieldName);
     }
-    
-    if(not joins.empty())
+
+    if (not joins.empty())
     {
         joins.pop_back();
     }

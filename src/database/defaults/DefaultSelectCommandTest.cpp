@@ -8,16 +8,23 @@
 
 namespace
 {
-const std::string selectSql = "SELECT field1, field2, field3 FROM models_ModelWithFloat;";
+const std::string selectSql = "SELECT models_ModelWithFloat.field1, models_ModelWithFloat.field2, "
+                              "models_ModelWithFloat.field3 FROM models_ModelWithFloat;";
 
-const std::string selectSqlWithLimit = "SELECT field1, field2, field3 FROM models_ModelWithFloat LIMIT 10;";
+const std::string selectSqlWithLimit = "SELECT models_ModelWithFloat.field1, models_ModelWithFloat.field2, "
+                                       "models_ModelWithFloat.field3 FROM models_ModelWithFloat LIMIT 10;";
 
-const std::string selectSqlWithOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10;";
+const std::string selectSqlWithOffset = "SELECT models_ModelWithFloat.field1, models_ModelWithFloat.field2, "
+                                        "models_ModelWithFloat.field3 FROM models_ModelWithFloat OFFSET 10;";
 
-const std::string selectSqlWithLimitAndOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
+const std::string selectSqlWithLimitAndOffset =
+    "SELECT models_ModelWithFloat.field1, models_ModelWithFloat.field2, "
+    "models_ModelWithFloat.field3 FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
 
 const std::string selectSqlWithModelRelatedToOtherModel =
-    "SELECT id, field1, field2, field3.id, field3.field1, field3.field2 FROM models_ModelRelatedToOtherModel LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id;";
+    "SELECT models_ModelRelatedToOtherModel.id, models_ModelRelatedToOtherModel.field1, "
+    "models_ModelRelatedToOtherModel.field2, models_ModelRelatedToOtherModel.field3_id"
+    " FROM models_ModelRelatedToOtherModel;";
 }
 
 class DefaultSelectCommandTest : public ::testing::Test
