@@ -34,8 +34,7 @@ struct type_conversion<BindingPayload<T>>
         auto getObjectFromValues = [&model, &values](auto index, auto modelAsTuple)
         {
             using field_t = std::decay_t<decltype(*modelAsTuple)>;
-            orm::db::binding::ObjectFieldFromValues<field_t>::get(
-                modelAsTuple, model.getModelInfo().columnsInfo.at(index), model.bindingInfo, values);
+            orm::db::binding::ObjectFieldFromValues<field_t>::get(modelAsTuple, model, index, values);
         };
 
         orm::utils::constexpr_for_tuple(modelAsTuple, getObjectFromValues);
@@ -49,8 +48,7 @@ struct type_conversion<BindingPayload<T>>
         auto setObjectToValues = [&model, &values](auto index, auto modelAsTuple)
         {
             using field_t = std::decay_t<decltype(*modelAsTuple)>;
-            orm::db::binding::ObjectFieldToValues<field_t>::set(
-                modelAsTuple, model.getModelInfo().columnsInfo.at(index), model.bindingInfo, values);
+            orm::db::binding::ObjectFieldToValues<field_t>::set(modelAsTuple, model, index, values);
         };
 
         orm::utils::constexpr_for_tuple(modelAsTuple, setObjectToValues);

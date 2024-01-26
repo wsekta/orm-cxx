@@ -1,5 +1,5 @@
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "BindingPayload.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
 DISABLE_EXTERNAL_WARNINGS
@@ -11,8 +11,9 @@ namespace orm::db::binding
 template <typename ModelField>
 struct ObjectFieldToValues
 {
-    static auto set(const ModelField* column, const orm::model::ColumnInfo& columnInfo,
-                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
+    template <typename T>
+    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
     {
         if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
         {
@@ -21,7 +22,7 @@ struct ObjectFieldToValues
         }
         else
         {
-            values.set(columnInfo.name, *column);
+            values.set(model.getModelInfo().columnsInfo[columnIndex].name, *column);
         }
     }
 };
@@ -29,16 +30,17 @@ struct ObjectFieldToValues
 template <typename ModelField>
 struct ObjectFieldToValues<std::optional<ModelField>>
 {
-    static auto set(const std::optional<ModelField>* column, const orm::model::ColumnInfo& columnInfo,
-                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
+    template <typename T>
+    static auto set(const std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
     {
         if (column->has_value())
         {
-            values.set(columnInfo.name, column->value());
+            values.set(model.getModelInfo().columnsInfo[columnIndex].name, column->value());
         }
         else
         {
-            values.set(columnInfo.name, decltype(column->value()){}, soci::i_null);
+            values.set(model.getModelInfo().columnsInfo[columnIndex].name, decltype(column->value()){}, soci::i_null);
         }
     }
 };
@@ -46,26 +48,28 @@ struct ObjectFieldToValues<std::optional<ModelField>>
 template <>
 struct ObjectFieldToValues<float>
 {
-    static auto set(const float* column, const orm::model::ColumnInfo& columnInfo, 
-                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
+    template <typename T>
+    static auto set(const float* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
+        -> void
     {
-        values.set(columnInfo.name, static_cast<double>(*column));
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<double>(*column));
     }
 };
 
 template <>
 struct ObjectFieldToValues<std::optional<float>>
 {
-    static auto set(const std::optional<float>* column, const orm::model::ColumnInfo& columnInfo,
-                    const BindingInfo /*bindingInfo*/, soci::values& values) -> void
+    template <typename T>
+    static auto set(const std::optional<float>* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
     {
         if (column->has_value())
         {
-            values.set(columnInfo.name, static_cast<double>(column->value()));
+            values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<double>(column->value()));
         }
         else
         {
-            values.set(columnInfo.name, double{}, soci::i_null);
+            values.set(model.getModelInfo().columnsInfo[columnIndex].name, double{}, soci::i_null);
         }
     }
 };
