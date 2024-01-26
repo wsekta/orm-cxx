@@ -8,28 +8,75 @@ namespace orm::db::commands
 {
 auto DefaultInsertCommand::insert(const model::ModelInfo& modelInfo) const -> std::string
 {
-    std::string command = std::format("INSERT INTO {} (", modelInfo.tableName);
+    auto fieldsNames = getFieldsNames(modelInfo);
 
-    auto columns = modelInfo.columnsInfo;
+    return std::format("INSERT INTO {0:} ({1:}) VALUES ({2:});", 
+                        modelInfo.tableName, 
+                        getInsertFields(fieldsNames),
+                        getInsertValues(fieldsNames));
+}
 
-    for (auto& column : columns)
+auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& fieldNames) -> std::string
+{
+    std::string insertFields;
+
+    for (const auto& fieldName : fieldNames)
     {
-        command.append(std::format("{}, ", column.name));
+        insertFields += std::format("{}, ", fieldName);
     }
 
-    utils::removeLastComma(command);
+    utils::removeLastComma(insertFields);
 
-    command.append(") VALUES (");
+    return insertFields;
+}
 
-    for (auto& column : columns)
+auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& fieldNames) -> std::string
+{
+    std::string insertValues;
+
+    for (const auto& fieldName : fieldNames)
     {
-        command.append(std::format(":{}, ", column.name));
+        insertValues += std::format(":{}, ", fieldName);
     }
 
-    utils::removeLastComma(command);
+    utils::removeLastComma(insertValues);
 
-    command.append(");");
+    return insertValues;
+}
 
-    return command;
+auto DefaultInsertCommand::getFieldsNames(const model::ModelInfo& modelInfo) -> std::vector<std::string>
+{
+    std::vector<std::string> fieldsNames;
+
+    for (const auto& columnInfo : modelInfo.columnsInfo)
+    {
+        if(columnInfo.isForeignModel)
+        {
+            const auto& foreignModelInfo = modelInfo.foreignModelsInfo.at(columnInfo.name);
+
+            const auto foreignModelIdsNames = getForeginModelIdsNames(columnInfo.name, foreignModelInfo);
+
+            fieldsNames.insert(fieldsNames.end(), foreignModelIdsNames.begin(), foreignModelIdsNames.end());
+        }
+        else
+        {
+            fieldsNames.push_back(columnInfo.name);
+        }
+    }
+
+    return fieldsNames;
+}
+
+auto DefaultInsertCommand::getForeginModelIdsNames(const std::string& foreginModelFieldName, 
+                                                   const model::ModelInfo& modelInfo) -> std::vector<std::string>
+{
+    std::vector<std::string> foreignModelIdsNames;
+
+    for (const auto& idColumnName : modelInfo.idColumnsNames)
+    {
+        foreignModelIdsNames.push_back(std::format("{}_{}", foreginModelFieldName, idColumnName));
+    }
+
+    return foreignModelIdsNames;
 }
 } // namespace orm::db::commands
