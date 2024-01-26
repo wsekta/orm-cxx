@@ -10,4 +10,4 @@ namespace orm::db::binding
 struct BindingInfo
 {
 };
-}
+} // namespace orm::db::binding

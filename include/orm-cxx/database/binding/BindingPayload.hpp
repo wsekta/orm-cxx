@@ -19,4 +19,4 @@ struct BindingPayload
         return modelInfo;
     }
 };
-}
+} // namespace orm::db::binding
