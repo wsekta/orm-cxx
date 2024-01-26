@@ -15,6 +15,9 @@ const std::string selectSqlWithLimit = "SELECT field1, field2, field3 FROM model
 const std::string selectSqlWithOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10;";
 
 const std::string selectSqlWithLimitAndOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
+
+const std::string selectSqlWithModelRelatedToOtherModel =
+    "SELECT id, field1, field2, field3.id, field3.field1, field3.field2 FROM models_ModelRelatedToOtherModel LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id;";
 }
 
 class DefaultSelectCommandTest : public ::testing::Test
@@ -63,4 +66,11 @@ TEST_F(DefaultSelectCommandTest, selectWithLimitAndOffset)
     query2.offset(10).limit(10);
 
     EXPECT_EQ(command.select(orm::Database::getQueryData(query2)), selectSqlWithLimitAndOffset);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModel)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)), selectSqlWithModelRelatedToOtherModel);
 }
