@@ -1,5 +1,5 @@
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "BindingPayload.hpp"
+#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 
 DISABLE_WARNING_PUSH
 DISABLE_EXTERNAL_WARNINGS
@@ -14,15 +14,15 @@ struct ObjectFieldFromValues
     static auto get(ModelField* column, const orm::model::ColumnInfo& columnInfo, const BindingInfo /*bindingInfo*/,
                     const soci::values& values) -> void
     {
-        *column = values.get<ModelField>(columnInfo.name);
-    }
-
-    static auto get(std::optional<ModelField>* column, const orm::model::ColumnInfo& columnInfo,
-                    const BindingInfo /*bindingInfo*/, const soci::values& values) -> void 
-                    requires requires { orm::model::checkIfIsModelWithId<ModelField>() == true; }
-    {
-        std::cout << "get TODO!" << std::endl;
-        // *column = values.get<ModelField>(columnInfo.name);
+        if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
+        {
+            // values.set(columnInfo.name, column->id);
+            std::cout << "get TODO!" << std::endl;
+        }
+        else
+        {
+            *column = values.get<ModelField>(columnInfo.name);
+        }
     }
 };
 
@@ -69,15 +69,4 @@ struct ObjectFieldFromValues<std::optional<float>>
         }
     }
 };
-
-// template <typename ForeginModelField> 
-//     requires requires { orm::model::checkIfIsModelWithId<ForeginModelField>() == true; }
-// struct ObjectFieldFromValues<ForeginModelField>
-// {
-//     static auto get(ForeginModelField* column, const orm::model::ColumnInfo& columnInfo, const BindingInfo /*bindingInfo*/,
-//                     const soci::values& values) -> void
-//     {
-//         //todo
-//     }
-// };
 } // namespace orm::db::binding
