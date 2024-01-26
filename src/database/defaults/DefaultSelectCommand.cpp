@@ -2,6 +2,10 @@
 
 #include <format>
 
+#include "orm-cxx/utils/StringUtils.hpp"
+
+using orm::utils::removeLastComma;
+
 namespace orm::db::commands
 {
 auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> std::string
@@ -13,9 +17,18 @@ auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> st
                         getLimit(queryData.limit));
 }
 
-auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& /*modelInfo*/) -> std::string
+auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& modelInfo) -> std::string
 {
-    return "*";
+    std::string selectFields;
+
+    for (const auto& columnInfo : modelInfo.columnsInfo)
+    {
+        selectFields += columnInfo.name + ", ";
+    }
+
+    removeLastComma(selectFields);
+
+    return selectFields;
 }
 
 auto DefaultSelectCommand::getOffset(const std::optional<std::size_t>& offset) -> std::string

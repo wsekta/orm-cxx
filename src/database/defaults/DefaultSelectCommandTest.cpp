@@ -8,13 +8,13 @@
 
 namespace
 {
-const std::string selectSql = "SELECT * FROM models_ModelWithFloat;";
+const std::string selectSql = "SELECT field1, field2, field3 FROM models_ModelWithFloat;";
 
-const std::string selectSqlWithLimit = "SELECT * FROM models_ModelWithFloat LIMIT 10;";
+const std::string selectSqlWithLimit = "SELECT field1, field2, field3 FROM models_ModelWithFloat LIMIT 10;";
 
-const std::string selectSqlWithOffset = "SELECT * FROM models_ModelWithFloat OFFSET 10;";
+const std::string selectSqlWithOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10;";
 
-const std::string selectSqlWithLimitAndOffset = "SELECT * FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
+const std::string selectSqlWithLimitAndOffset = "SELECT field1, field2, field3 FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
 }
 
 class DefaultSelectCommandTest : public ::testing::Test
