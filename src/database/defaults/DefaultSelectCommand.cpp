@@ -1,25 +1,40 @@
 #include "DefaultSelectCommand.hpp"
 
+#include <format>
+
 namespace orm::db::commands
 {
 auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> std::string
 {
-    using namespace std::string_literals;
+    return std::format("SELECT {} FROM {}{}{};", 
+                        getSelectFields(queryData.modelInfo), 
+                        queryData.modelInfo.tableName, 
+                        getOffset(queryData.offset),
+                        getLimit(queryData.limit));
+}
 
-    std::string command = "SELECT * FROM "s.append(queryData.modelInfo.tableName);
+auto DefaultSelectCommand::getSelectFields(const model::ModelInfo& /*modelInfo*/) -> std::string
+{
+    return "*";
+}
 
-    if (queryData.offset.has_value())
+auto DefaultSelectCommand::getOffset(const std::optional<std::size_t>& offset) -> std::string
+{
+    if (offset.has_value())
     {
-        command.append(" OFFSET "s.append(std::to_string(queryData.offset.value())));
+        return std::format(" OFFSET {}", offset.value());
     }
 
-    if (queryData.limit.has_value())
+    return {};
+}
+
+auto DefaultSelectCommand::getLimit(const std::optional<std::size_t>& limit) -> std::string
+{
+    if (limit.has_value())
     {
-        command.append(" LIMIT "s.append(std::to_string(queryData.limit.value())));
+        return std::format(" LIMIT {}", limit.value());
     }
 
-    command.append(";");
-
-    return command;
+    return {};
 }
-}
+} // namespace orm::db::commands
