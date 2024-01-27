@@ -26,16 +26,18 @@ struct ObjectFieldFromValues
             //            foreignFieldName = std::format("{}.{}", model.getModelInfo().tableName, foreignFieldName);
 
             auto getForeignFieldFromValue =
-                [&foreignModel, &values, &foreignFieldName](auto index, auto foreignModelColumn)
+                [&foreignModel, &values, &foreignFieldName, &model](auto index, auto foreignModelColumn)
             {
-                if (foreignModel.columnsInfo[index].isPrimaryKey)
+                if (model.bindingInfo.joinedValues)
                 {
-                    std::cout << std::format("{}_{} == {}", foreignFieldName, foreignModel.columnsInfo[index].name,
-                                             values.get<std::decay_t<decltype(*foreignModelColumn)>>(std::format(
-                                                 "{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name)))
-                              << std::endl;
-                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(
-                        std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name));
+                    auto fieldName = std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name);
+                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
+                }
+                else if (foreignModel.columnsInfo[index].isPrimaryKey)
+                {
+                    auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
+                                                 foreignModel.columnsInfo[index].name);
+                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
                 }
             };
 
@@ -43,7 +45,9 @@ struct ObjectFieldFromValues
         }
         else
         {
-            *column = values.get<ModelField>(model.getModelInfo().columnsInfo[columnIndex].name);
+            auto fieldName = std::format("{}_{}", model.getModelInfo().tableName,
+                                         model.getModelInfo().columnsInfo[columnIndex].name);
+            *column = values.get<ModelField>(fieldName);
         }
     }
 };
@@ -55,13 +59,16 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
     static auto get(std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
-        if (values.get_indicator(model.getModelInfo().columnsInfo[columnIndex].name) == soci::i_null)
+
+        auto fieldName =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        if (values.get_indicator(fieldName) == soci::i_null)
         {
             *column = std::nullopt;
         }
         else
         {
-            *column = values.get<ModelField>(model.getModelInfo().columnsInfo[columnIndex].name);
+            *column = values.get<ModelField>(fieldName);
         }
     }
 };
@@ -73,7 +80,9 @@ struct ObjectFieldFromValues<float>
     static auto get(float* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
         -> void
     {
-        *column = static_cast<float>(values.get<double>(model.getModelInfo().columnsInfo[columnIndex].name));
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<float>(values.get<double>(fieldNames));
     }
 };
 
@@ -84,13 +93,16 @@ struct ObjectFieldFromValues<std::optional<float>>
     static auto get(std::optional<float>* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
-        if (values.get_indicator(model.getModelInfo().columnsInfo[columnIndex].name) == soci::i_null)
+
+        auto fieldName =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        if (values.get_indicator(fieldName) == soci::i_null)
         {
             *column = std::nullopt;
         }
         else
         {
-            *column = static_cast<float>(values.get<double>(model.getModelInfo().columnsInfo[columnIndex].name));
+            *column = static_cast<float>(values.get<double>(fieldName));
         }
     }
 };

@@ -18,6 +18,8 @@ TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
 
     auto returnedModels = database.select(query);
 
+    EXPECT_EQ(returnedModels.size(), modelCount);
+
     for (std::size_t i = 0; i < modelCount; i++)
     {
         EXPECT_EQ(models[i].field1, returnedModels[i].field1);

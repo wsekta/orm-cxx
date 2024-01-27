@@ -9,5 +9,6 @@ namespace orm::db::binding
  */
 struct BindingInfo
 {
+    bool joinedValues = false;
 };
 } // namespace orm::db::binding

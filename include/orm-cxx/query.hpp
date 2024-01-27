@@ -49,6 +49,13 @@ public:
         return *this;
     }
 
+    inline auto joinRelated() -> Query<T>&
+    {
+        data.shouldJoin = true;
+
+        return *this;
+    }
+
 private:
     /**
      * @brief Database class is a friend class of Query for access to the query data.

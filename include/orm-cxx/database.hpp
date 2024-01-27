@@ -59,6 +59,8 @@ public:
 
         auto command = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
 
+        Payload<T>::bindingInfo.joinedValues = query.getData().shouldJoin;
+
         soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << command);
 
         for (auto& payload : preparedRowSet)
