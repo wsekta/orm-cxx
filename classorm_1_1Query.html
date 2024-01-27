@@ -118,6 +118,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a73f6efaddec024eed6b8dcd1e71dd4d4" id="r_a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a73f6efaddec024eed6b8dcd1e71dd4d4">limit</a> (std::size_t limit) -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LIMIT clause for the select query.  <br /></td></tr>
 <tr class="separator:a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7a1cc60776eeb29212199765e4eaaba" id="r_ab7a1cc60776eeb29212199765e4eaaba"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ab7a1cc60776eeb29212199765e4eaaba">disableJoining</a> () -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memdesc:ab7a1cc60776eeb29212199765e4eaaba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disables joining for the select query.  <br /></td></tr>
+<tr class="separator:ab7a1cc60776eeb29212199765e4eaaba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
@@ -137,6 +140,38 @@ class orm::Query&lt; T &gt;</div><p>A template class representing a select query
   </dd>
 </dl>
 </div><h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab7a1cc60776eeb29212199765e4eaaba" name="ab7a1cc60776eeb29212199765e4eaaba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7a1cc60776eeb29212199765e4eaaba">&#9670;&#160;</a></span>disableJoining()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::disableJoining </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"></span></td><td>)</td>
+          <td> -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt;T&gt;&amp;
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Disables joining for the select query. </p>
+<dl class="section note"><dt>Note</dt><dd>Only ids fields will be set in related models. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A reference to the QueryBuilder object. </dd></dl>
+
+</div>
+</div>
 <a id="a73f6efaddec024eed6b8dcd1e71dd4d4" name="a73f6efaddec024eed6b8dcd1e71dd4d4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a73f6efaddec024eed6b8dcd1e71dd4d4">&#9670;&#160;</a></span>limit()</h2>
 
