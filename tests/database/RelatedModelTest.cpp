@@ -22,6 +22,7 @@ TEST_P(RelatedModelTest,
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
+    queryForRelatedModel.disableJoining();
     auto returnedModels = database.select(queryForRelatedModel);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -42,7 +43,6 @@ TEST_P(RelatedModelTest, shouldExecuteInsertQueryAndSelectQueryWithRelatedModel_
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
-    queryForRelatedModel.joinRelated();
     auto returnedModels = database.select(queryForRelatedModel);
 
     for (std::size_t i = 0; i < models.size(); i++)

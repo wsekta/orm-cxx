@@ -96,14 +96,14 @@ TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoinin
 {
     orm::Query<models::ModelRelatedToOtherModel> query;
 
+    query.disableJoining();
+
     EXPECT_EQ(command.select(orm::Database::getQueryData(query)), selectSqlWithModelRelatedToOtherModelWithoutJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithJoining)
 {
     orm::Query<models::ModelRelatedToOtherModel> query;
-
-    query.joinRelated();
 
     EXPECT_EQ(command.select(orm::Database::getQueryData(query)), selectSqlWithModelRelatedToOtherModelWithJoining);
 }

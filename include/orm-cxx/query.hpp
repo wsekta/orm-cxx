@@ -49,9 +49,14 @@ public:
         return *this;
     }
 
-    inline auto joinRelated() -> Query<T>&
+    /**
+     * @brief Disables joining for the select query.
+     * @note Only ids fields will be set in related models.
+     * @return A reference to the QueryBuilder object.
+     */
+    inline auto disableJoining() -> Query<T>&
     {
-        data.shouldJoin = true;
+        data.shouldJoin = false;
 
         return *this;
     }
