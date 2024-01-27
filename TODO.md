@@ -1,6 +1,5 @@
 # TODO:
 
-* Add queries to model related to other models in relation OneToOne
 * Add where clause to queries
 * Add internal notation for where clause with support for:
     * Column/field name checking
