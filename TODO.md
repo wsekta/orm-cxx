@@ -15,6 +15,20 @@
     * ODBC
     * Firebird
     * DB2
+* Add update command
+* Add support for other types:
+    * char (int8_t)
+    * unsigned char (uint8_t)
+    * short (int16_t)
+    * unsigned short (uint16_t)
+    * long (int32_t)
+    * unsigned long (uint32_t)
+    * long long (int64_t)
+    * unsigned long long (uint64_t)
+    * std::tm
+    * boost::uuids::uuid
+    * boost::optional
+* Add .clang-tidy and .cmake-format
 
 # Far future:
 

@@ -20,7 +20,16 @@
 
 The goal of the ORM C++ is to provide a decent Object-Relational Mapping library for C++ community.
 
-## Usage
+🆕 Base on native reflection from modern C++(C++20)<br>
+✅ 100% test coverage with unit tests and integration tests<br>
+🗂️ Support for multiple databases<br>
+⚙️ Support for multiple compilers<br>
+☠️ No macros (currently few 😕)<br>
+🚀 As low as possible runtime overhead<br>
+👶 Easy to use<br>
+📉 As few dependencies as possible<br>
+
+## ⚙️ Usage
 
 ```cpp
 #include <optional>
@@ -83,7 +92,7 @@ int main()
 
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
-## Consuming library with CMake (CMake 3.22 or newer)
+## 📝 Consuming library with CMake (CMake 3.22 or newer)
 
 1. Add config to git submodules (execute in project root):
 
@@ -106,13 +115,13 @@ add_executable(main Main.cpp)
 target_link_libraries(main orm-cxx)
  ```
 
-## Compiler support
+## ⚒️ Compiler support
 
 - [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 143 or newer.
 - [GCC➚](https://gcc.gnu.org/) version 13 or newer.
 - [Clang➚](https://clang.llvm.org/) version 16 or newer.
 
-## Dependencies
+## 📦 Dependencies
 
 - [GTest](https://github.com/google/googletest) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
 - [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
