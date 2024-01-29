@@ -28,6 +28,7 @@ class Database
 public:
     template <typename T>
     using Payload = db::binding::BindingPayload<T>;
+    
     /**
      * @brief Constructs a new Database object.
      */

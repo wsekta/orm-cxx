@@ -6,8 +6,15 @@ namespace orm::model
 {
 enum class ColumnType
 {
+    Bool,
     Char,
+    UnsignedChar,
+    Short,
+    UnsignedShort,
     Int,
+    UnsignedInt,
+    LongLong,
+    UnsignedLongLong,
     Float,
     Double,
     String,
