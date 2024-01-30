@@ -43,7 +43,7 @@ auto SqliteTypeTranslator::toSqlType(model::ColumnType type) const -> std::strin
         return "TEXT";
 
     default:
-        throw std::runtime_error("Unsupported type by sqlite " + std::to_string(static_cast<int>(type)));
+        throw std::runtime_error("Unsupported type by sqlite " + orm::model::toString(type));
     }
 }
 } // namespace orm::db::sqlite

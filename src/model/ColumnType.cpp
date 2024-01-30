@@ -1,12 +1,32 @@
 #include "orm-cxx/model/ColumnType.hpp"
 
 #include <regex>
+#include <unordered_map>
+#include <iostream>
 
 namespace
 {
 const std::regex optionalRegex(R"((class )?std\:\:optional\<(.*)\>)");
 const std::regex stringRegex{R"((class )?std.*::basic_string<.*>\W?)"};
-}
+
+const std::unordered_map<orm::model::ColumnType, std::string> typeToStringMaping{
+    {orm::model::ColumnType::Bool, "bool"},
+    {orm::model::ColumnType::Char, "char"},
+    {orm::model::ColumnType::UnsignedChar, "unsigned char"},
+    {orm::model::ColumnType::Short, "short"},
+    {orm::model::ColumnType::UnsignedShort, "unsigned short"},
+    {orm::model::ColumnType::Int, "int"},
+    {orm::model::ColumnType::UnsignedInt, "unsigned int"},
+    {orm::model::ColumnType::LongLong, "long long"},
+    {orm::model::ColumnType::UnsignedLongLong, "unsigned long long"},
+    {orm::model::ColumnType::Float, "float"},
+    {orm::model::ColumnType::Double, "double"},
+    {orm::model::ColumnType::String, "std::string"},
+    {orm::model::ColumnType::Uuid, "uuid"},
+    {orm::model::ColumnType::Unknown, "unknown"},
+    {orm::model::ColumnType::OneToOne, "one to one"},
+};
+} // namespace
 
 namespace orm::model
 {
@@ -77,9 +97,15 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     // TODO: handle uuid, date, etc. types
     else
     {
+        std::cerr << "Wnknown type: " << type << std::endl;
         columnType = ColumnType::Unknown;
     }
 
     return {columnType, isNotNull};
+}
+
+auto toString(ColumnType type) -> std::string
+{
+    return typeToStringMaping.at(type);
 }
 } // namespace orm::model

@@ -24,4 +24,5 @@ enum class ColumnType
 };
 
 auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>;
+auto toString(ColumnType type) -> std::string;
 } // namespace orm::model
