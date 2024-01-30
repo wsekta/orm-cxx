@@ -47,24 +47,6 @@ struct ObjectFieldToValues
     }
 };
 
-template <typename ModelField>
-struct ObjectFieldToValues<std::optional<ModelField>>
-{
-    template <typename T>
-    static auto set(const std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    soci::values& values) -> void
-    {
-        if (column->has_value())
-        {
-            values.set(model.getModelInfo().columnsInfo[columnIndex].name, column->value());
-        }
-        else
-        {
-            values.set(model.getModelInfo().columnsInfo[columnIndex].name, decltype(column->value()){}, soci::i_null);
-        }
-    }
-};
-
 template <>
 struct ObjectFieldToValues<float>
 {
@@ -76,20 +58,16 @@ struct ObjectFieldToValues<float>
     }
 };
 
-template <>
-struct ObjectFieldToValues<std::optional<float>>
+template <typename ModelField>
+struct ObjectFieldToValues<std::optional<ModelField>>
 {
     template <typename T>
-    static auto set(const std::optional<float>* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    static auto set(const std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
         if (column->has_value())
         {
-            values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<double>(column->value()));
-        }
-        else
-        {
-            values.set(model.getModelInfo().columnsInfo[columnIndex].name, double{}, soci::i_null);
+            ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values);
         }
     }
 };

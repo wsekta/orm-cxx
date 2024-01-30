@@ -68,7 +68,7 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
         }
         else
         {
-            *column = values.get<ModelField>(fieldName);
+            ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
         }
     }
 };
@@ -83,27 +83,6 @@ struct ObjectFieldFromValues<float>
         auto fieldNames =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
         *column = static_cast<float>(values.get<double>(fieldNames));
-    }
-};
-
-template <>
-struct ObjectFieldFromValues<std::optional<float>>
-{
-    template <typename T>
-    static auto get(std::optional<float>* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
-    {
-
-        auto fieldName =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        if (values.get_indicator(fieldName) == soci::i_null)
-        {
-            *column = std::nullopt;
-        }
-        else
-        {
-            *column = static_cast<float>(values.get<double>(fieldName));
-        }
     }
 };
 } // namespace orm::db::binding
