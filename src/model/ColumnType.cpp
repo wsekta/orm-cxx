@@ -62,11 +62,13 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     {
         columnType = ColumnType::UnsignedShort;
     }
-    else if (typeString == "long long" or typeString == "__int64")
+    else if (typeString == "long long" or typeString == "long long int" or typeString == "__int64")
     {
         columnType = ColumnType::LongLong;
     }
-    else if (typeString == "unsigned long long" or typeString == "unsigned __int64")
+    else if (typeString == "unsigned long long"
+            or typeString == "long long unsigned int"
+            or typeString == "unsigned __int64")
     {
         columnType = ColumnType::UnsignedLongLong;
     }
