@@ -6,6 +6,15 @@ using namespace orm::model;
 
 namespace
 {
+const std::string charType{"char"};
+const std::string unsignedCharType{"unsigned char"};
+const std::string shortType{"short"};
+const std::string unsignedShortType{"unsigned short"};
+const std::string longType{"long"};
+const std::string unsignedLongType{"unsigned long"};
+const std::string longLongType{"long long"};
+const std::string unsignedLongLongType{"unsigned long long"};
+const std::string boolType{"bool"};
 const std::string intType{"int"};
 const std::string floatType{"float"};
 const std::string doubleType{"double"};
@@ -97,3 +106,67 @@ TEST(ColumnTypeTests, shouldTranslateUnknownType)
     EXPECT_EQ(columnType, ColumnType::Unknown);
     EXPECT_TRUE(isNotNull);
 }
+
+TEST(ColumnTypeTests, shouldTranslateChar)
+{
+    auto [columnType, isNotNull] = toColumnType(charType);
+    EXPECT_EQ(columnType, ColumnType::Char);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateUnsignedChar)
+{
+    auto [columnType, isNotNull] = toColumnType(unsignedCharType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedChar);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateShort)
+{
+    auto [columnType, isNotNull] = toColumnType(shortType);
+    EXPECT_EQ(columnType, ColumnType::Short);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateUnsignedShort)
+{
+    auto [columnType, isNotNull] = toColumnType(unsignedShortType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedShort);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateLongLong)
+{
+    auto [columnType, isNotNull] = toColumnType(longLongType);
+    EXPECT_EQ(columnType, ColumnType::LongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateLong)
+{
+    auto [columnType, isNotNull] = toColumnType(longType);
+    EXPECT_EQ(columnType, ColumnType::Int);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateUnsignedLong)
+{
+    auto [columnType, isNotNull] = toColumnType(unsignedLongType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedInt);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateUnsignedLongLong)
+{
+    auto [columnType, isNotNull] = toColumnType(unsignedLongLongType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateBool)
+{
+    auto [columnType, isNotNull] = toColumnType(boolType);
+    EXPECT_EQ(columnType, ColumnType::Bool);
+    EXPECT_TRUE(isNotNull);
+}
+

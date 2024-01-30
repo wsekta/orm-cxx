@@ -30,9 +30,37 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     {
         columnType = ColumnType::Char;
     }
-    else if (typeString == "int")
+    else if (typeString == "unsigned char")
+    {
+        columnType = ColumnType::UnsignedChar;
+    }
+    else if (typeString == "short")
+    {
+        columnType = ColumnType::Short;
+    }
+    else if (typeString == "unsigned short")
+    {
+        columnType = ColumnType::UnsignedShort;
+    }
+    else if (typeString == "long long" or typeString == "__int64")
+    {
+        columnType = ColumnType::LongLong;
+    }
+    else if (typeString == "unsigned long long" or typeString == "unsigned __int64")
+    {
+        columnType = ColumnType::UnsignedLongLong;
+    }
+    else if (typeString == "bool")
+    {
+       columnType = ColumnType::Bool;
+    }
+    else if (typeString == "int" or typeString == "long")
     {
         columnType = ColumnType::Int;
+    }
+    else if (typeString == "unsigned int" or typeString == "unsigned long")
+    {
+        columnType = ColumnType::UnsignedInt;
     }
     else if (typeString == "float")
     {

@@ -112,4 +112,44 @@ TEST_P(SimpleModelTest, shouldThrowWhileReadingNullValueToNotNullableField)
     EXPECT_THROW(database.select(queryForOptionalFloat), std::runtime_error);
 }
 
+TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllBasicTypes)
+{
+    createTable<models::ModelWithAllBasicTypes>();
+    models::ModelWithAllBasicTypes model{1,
+                                        //true,
+                                        //  '2',
+                                        //  3,
+                                        //  4,
+                                        //  5,
+                                         6,
+                                        //  7,
+                                        //  8,
+                                        //  9,
+                                         10,
+                                         11,
+                                         12.0f,
+                                         13.0,
+                                         "14"};
+
+    database.insert(model);
+
+    orm::Query<models::ModelWithAllBasicTypes> queryForOptional;
+    auto returnedModels = database.select(queryForOptional);
+
+    //EXPECT_EQ(model.field1, returnedModels[0].field1);
+    // EXPECT_EQ(model.field2, returnedModels[0].field2);
+    // EXPECT_EQ(model.field3, returnedModels[0].field3);
+    // EXPECT_EQ(model.field4, returnedModels[0].field4);
+    // EXPECT_EQ(model.field5, returnedModels[0].field5);
+    EXPECT_EQ(model.field6, returnedModels[0].field6);
+    // EXPECT_EQ(model.field7, returnedModels[0].field7);
+    // EXPECT_EQ(model.field8, returnedModels[0].field8);
+    // EXPECT_EQ(model.field9, returnedModels[0].field9);
+    EXPECT_EQ(model.field10, returnedModels[0].field10);
+    EXPECT_EQ(model.field11, returnedModels[0].field11);
+    EXPECT_EQ(model.field12, returnedModels[0].field12);
+    EXPECT_EQ(model.field13, returnedModels[0].field13);
+    EXPECT_EQ(model.field14, returnedModels[0].field14);
+}
+
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, SimpleModelTest, connectionStrings);

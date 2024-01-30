@@ -90,4 +90,25 @@ struct ModelOptionallyRelatedToOtherModel
     std::string field2;
     std::optional<ModelWithId> field3;
 };
+
+struct ModelWithAllBasicTypes
+{
+    inline static const std::string table_name = "all_types";
+
+    int id;
+   // bool field1;
+    // char field2;
+    // unsigned char field3;
+    // short field4;
+    // unsigned short field5;
+    int field6;
+    // unsigned int field7;
+    // long field8;
+    // unsigned long field9;
+    long long field10;
+    unsigned long long field11;
+    float field12;
+    double field13;
+    std::string field14;
+};
 } // namespace models
