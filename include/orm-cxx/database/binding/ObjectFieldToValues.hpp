@@ -113,6 +113,39 @@ struct ObjectFieldToValues<unsigned short>
     }
 };
 
+template <>
+struct ObjectFieldToValues<unsigned int>
+{
+    template <typename T>
+    static auto set(const unsigned int* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<unsigned long long>(*column));
+    }
+};
+
+template <>
+struct ObjectFieldToValues<long>
+{
+    template <typename T>
+    static auto set(const long* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
+        -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
+    }
+};
+
+template <>
+struct ObjectFieldToValues<unsigned long>
+{
+    template <typename T>
+    static auto set(const unsigned long* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<unsigned long long>(*column));
+    }
+};
+
 template <typename ModelField>
 struct ObjectFieldToValues<std::optional<ModelField>>
 {

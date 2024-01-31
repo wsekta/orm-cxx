@@ -17,8 +17,6 @@
     * DB2
 * Add update command
 * Add support for other types:
-    * long (int32_t)
-    * unsigned long (uint32_t)
     * std::tm
     * boost::uuids::uuid
     * boost::optional

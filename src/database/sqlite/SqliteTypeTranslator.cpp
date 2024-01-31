@@ -26,12 +26,12 @@ auto SqliteTypeTranslator::toSqlType(model::ColumnType type) const -> std::strin
         return "SMALLINT";
 
     case model::ColumnType::Int:
-    case model::ColumnType::UnsignedInt:
         return "INTEGER";
 
     case model::ColumnType::LongLong:
         return "BIGINT";
 
+    case model::ColumnType::UnsignedInt:
     case model::ColumnType::UnsignedLongLong:
         return "UNSIGNED BIG INT";
 

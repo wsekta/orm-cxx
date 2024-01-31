@@ -102,9 +102,9 @@ struct ModelWithAllBasicTypes
     short field4;
     unsigned short field5;
     int field6;
-    // unsigned int field7;
-    // long field8;
-    // unsigned long field9;
+    unsigned int field7;
+    long field8;
+    unsigned long field9;
     long long field10;
     unsigned long long field11;
     float field12;

@@ -115,11 +115,7 @@ TEST_P(SimpleModelTest, shouldThrowWhileReadingNullValueToNotNullableField)
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllBasicTypes)
 {
     createTable<models::ModelWithAllBasicTypes>();
-    models::ModelWithAllBasicTypes model{1, true, '2', 3, 4, 5, 6,
-                                         //  7,
-                                         //  8,
-                                         //  9,
-                                         10, 11, 12.0f, 13.0, "14"};
+    models::ModelWithAllBasicTypes model{1, true, '2', 3, 4, 5, 6, 7, 8, 9, 10, 11, 12.0f, 13.0, "14"};
 
     database.insert(model);
 
@@ -132,9 +128,9 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllBa
     EXPECT_EQ(model.field4, returnedModels[0].field4);
     EXPECT_EQ(model.field5, returnedModels[0].field5);
     EXPECT_EQ(model.field6, returnedModels[0].field6);
-    // EXPECT_EQ(model.field7, returnedModels[0].field7);
-    // EXPECT_EQ(model.field8, returnedModels[0].field8);
-    // EXPECT_EQ(model.field9, returnedModels[0].field9);
+    EXPECT_EQ(model.field7, returnedModels[0].field7);
+    EXPECT_EQ(model.field8, returnedModels[0].field8);
+    EXPECT_EQ(model.field9, returnedModels[0].field9);
     EXPECT_EQ(model.field10, returnedModels[0].field10);
     EXPECT_EQ(model.field11, returnedModels[0].field11);
     EXPECT_EQ(model.field12, returnedModels[0].field12);
