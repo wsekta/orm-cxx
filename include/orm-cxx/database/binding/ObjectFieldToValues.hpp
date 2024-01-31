@@ -70,6 +70,17 @@ struct ObjectFieldToValues<bool>
 };
 
 template <>
+struct ObjectFieldToValues<int8_t>
+{
+    template <typename T>
+    static auto set(const int8_t* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
+        -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
+    }
+};
+
+template <>
 struct ObjectFieldToValues<char>
 {
     template <typename T>

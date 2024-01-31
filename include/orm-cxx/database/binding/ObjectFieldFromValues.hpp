@@ -100,6 +100,19 @@ struct ObjectFieldFromValues<bool>
 };
 
 template <>
+struct ObjectFieldFromValues<int8_t>
+{
+    template <typename T>
+    static auto get(int8_t* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
+        -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<int8_t>(values.get<int>(fieldNames));
+    }
+};
+
+template <>
 struct ObjectFieldFromValues<char>
 {
     template <typename T>

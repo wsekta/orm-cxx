@@ -46,7 +46,7 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
         isNotNull = true;
     }
 
-    if (typeString == "char")
+    if (typeString == "char" or typeString == "signed char")
     {
         columnType = ColumnType::Char;
     }

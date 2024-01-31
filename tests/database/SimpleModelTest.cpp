@@ -138,4 +138,25 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllBa
     EXPECT_EQ(model.field14, returnedModels[0].field14);
 }
 
+TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllInts)
+{
+    createTable<models::ModelWithAllInts>();
+    models::ModelWithAllInts model{1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+    database.insert(model);
+
+    orm::Query<models::ModelWithAllInts> queryForOptional;
+    auto returnedModels = database.select(queryForOptional);
+
+    EXPECT_EQ(model.field1, returnedModels[0].field1);
+    EXPECT_EQ(model.field2, returnedModels[0].field2);
+    EXPECT_EQ(model.field3, returnedModels[0].field3);
+    EXPECT_EQ(model.field4, returnedModels[0].field4);
+    EXPECT_EQ(model.field5, returnedModels[0].field5);
+    EXPECT_EQ(model.field6, returnedModels[0].field6);
+    EXPECT_EQ(model.field7, returnedModels[0].field7);
+    EXPECT_EQ(model.field8, returnedModels[0].field8);
+    EXPECT_EQ(model.field9, returnedModels[0].field9);
+}
+
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, SimpleModelTest, connectionStrings);

@@ -111,4 +111,19 @@ struct ModelWithAllBasicTypes
     double field13;
     std::string field14;
 };
+
+struct ModelWithAllInts
+{
+    inline static const std::string table_name = "all_ints";
+
+    int8_t field1;
+    uint8_t field2;
+    int16_t field3;
+    uint16_t field4;
+    int32_t field5;
+    uint32_t field6;
+    int64_t field7;
+    uint64_t field8;
+    size_t field9;
+};
 } // namespace models
