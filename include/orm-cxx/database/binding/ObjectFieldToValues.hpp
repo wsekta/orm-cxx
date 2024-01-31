@@ -58,6 +58,28 @@ struct ObjectFieldToValues<float>
     }
 };
 
+template <>
+struct ObjectFieldToValues<char>
+{
+    template <typename T>
+    static auto set(const char* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
+        -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
+    }
+};
+
+template <>
+struct ObjectFieldToValues<unsigned char>
+{
+    template <typename T>
+    static auto set(const unsigned char* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
+    {
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
+    }
+};
+
 template <typename ModelField>
 struct ObjectFieldToValues<std::optional<ModelField>>
 {

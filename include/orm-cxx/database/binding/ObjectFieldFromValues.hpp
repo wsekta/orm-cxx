@@ -85,4 +85,30 @@ struct ObjectFieldFromValues<float>
         *column = static_cast<float>(values.get<double>(fieldNames));
     }
 };
+
+template <>
+struct ObjectFieldFromValues<char>
+{
+    template <typename T>
+    static auto get(char* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
+        -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<char>(values.get<int>(fieldNames));
+    }
+};
+
+template <>
+struct ObjectFieldFromValues<unsigned char>
+{
+    template <typename T>
+    static auto get(unsigned char* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    const soci::values& values) -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<unsigned char>(values.get<int>(fieldNames));
+    }
+};
 } // namespace orm::db::binding

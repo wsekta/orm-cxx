@@ -96,9 +96,9 @@ struct ModelWithAllBasicTypes
     inline static const std::string table_name = "all_types";
 
     int id;
-   // bool field1;
-    // char field2;
-    // unsigned char field3;
+    //    bool field1;
+    char field2;
+    unsigned char field3;
     // short field4;
     // unsigned short field5;
     int field6;
