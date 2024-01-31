@@ -87,6 +87,19 @@ struct ObjectFieldFromValues<float>
 };
 
 template <>
+struct ObjectFieldFromValues<bool>
+{
+    template <typename T>
+    static auto get(bool* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
+        -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<bool>(values.get<int>(fieldNames));
+    }
+};
+
+template <>
 struct ObjectFieldFromValues<char>
 {
     template <typename T>
@@ -109,6 +122,32 @@ struct ObjectFieldFromValues<unsigned char>
         auto fieldNames =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
         *column = static_cast<unsigned char>(values.get<int>(fieldNames));
+    }
+};
+
+template <>
+struct ObjectFieldFromValues<short>
+{
+    template <typename T>
+    static auto get(short* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
+        -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<short>(values.get<int>(fieldNames));
+    }
+};
+
+template <>
+struct ObjectFieldFromValues<unsigned short>
+{
+    template <typename T>
+    static auto get(unsigned short* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    const soci::values& values) -> void
+    {
+        auto fieldNames =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = static_cast<unsigned short>(values.get<int>(fieldNames));
     }
 };
 } // namespace orm::db::binding

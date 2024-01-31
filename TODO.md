@@ -17,9 +17,6 @@
     * DB2
 * Add update command
 * Add support for other types:
-    * bool
-    * short (int16_t)
-    * unsigned short (uint16_t)
     * long (int32_t)
     * unsigned long (uint32_t)
     * std::tm

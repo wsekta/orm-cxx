@@ -1,8 +1,8 @@
 #include "orm-cxx/model/ColumnType.hpp"
 
+#include <iostream>
 #include <regex>
 #include <unordered_map>
-#include <iostream>
 
 namespace
 {
@@ -54,11 +54,11 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     {
         columnType = ColumnType::UnsignedChar;
     }
-    else if (typeString == "short")
+    else if (typeString == "short" or typeString == "short int")
     {
         columnType = ColumnType::Short;
     }
-    else if (typeString == "unsigned short")
+    else if (typeString == "unsigned short" or typeString == "short unsigned int")
     {
         columnType = ColumnType::UnsignedShort;
     }
@@ -66,15 +66,14 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     {
         columnType = ColumnType::LongLong;
     }
-    else if (typeString == "unsigned long long"
-            or typeString == "long long unsigned int"
-            or typeString == "unsigned __int64")
+    else if (typeString == "unsigned long long" or typeString == "long long unsigned int" or
+             typeString == "unsigned __int64")
     {
         columnType = ColumnType::UnsignedLongLong;
     }
     else if (typeString == "bool")
     {
-       columnType = ColumnType::Bool;
+        columnType = ColumnType::Bool;
     }
     else if (typeString == "int" or typeString == "long")
     {
