@@ -2,11 +2,10 @@
 
 #include <gtest/gtest.h>
 
-#include "faker-cxx/Lorem.h"
-#include "faker-cxx/Number.h"
 #include "orm-cxx/database.hpp"
 #include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/utils/GenerateModels.hpp"
 
 namespace
 {
@@ -14,20 +13,9 @@ const std::string sqliteConnectionString = "sqlite3://:memory:";
 const std::size_t modelCount = 10;
 
 auto connectionStrings = ::testing::Values(sqliteConnectionString);
-}
+} // namespace
 
-template <typename T>
-auto generateSomeDataModels(std::size_t count) -> std::vector<T>
-{
-    std::vector<T> result;
-
-    for (std::size_t i = 0; i < count; i++)
-    {
-        result.emplace_back(faker::Number::integer(512), faker::Lorem::word(), faker::Number::decimal(-1.0, 1.0));
-    }
-
-    return result;
-}
+using orm::generateSomeDataModels;
 
 class DatabaseTest : public ::testing::TestWithParam<std::string>
 {
