@@ -67,5 +67,7 @@ TEST_F(SqliteTypeTranslatorTest, shouldTranslateUnsignedLongLong)
 
 TEST_F(SqliteTypeTranslatorTest, shouldThrowOnUnsupportedType)
 {
-    EXPECT_THROW(translator.toSqlType(orm::model::ColumnType::Uuid), std::runtime_error);
+    auto exceptionCallback = [this] { std::ignore = translator.toSqlType(orm::model::ColumnType::Uuid); };
+
+    EXPECT_THROW(exceptionCallback(), std::runtime_error);
 }
