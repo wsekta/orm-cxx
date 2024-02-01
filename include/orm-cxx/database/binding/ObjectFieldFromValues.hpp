@@ -9,43 +9,49 @@
 namespace orm::db::binding
 {
 template <typename ModelField>
-struct ObjectFieldFromValues
+struct ObjectFieldFromValues;
+
+template <SociDefaultSupported ModelField>
+struct ObjectFieldFromValues<ModelField>
 {
     template <typename T>
     static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
-        if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
-        {
-            auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
-            auto foreignModelAsTuple = rfl::to_view(column).values();
-            auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
-            //            foreignFieldName = std::format("{}.{}", model.getModelInfo().tableName, foreignFieldName);
+        auto fieldName =
+            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+        *column = values.get<ModelField>(fieldName);
+    }
+};
 
-            auto getForeignFieldFromValue =
-                [&foreignModel, &values, &foreignFieldName, &model](auto index, auto foreignModelColumn)
+template <ModelWithId ModelField>
+struct ObjectFieldFromValues<ModelField>
+{
+    template <typename T>
+    static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    const soci::values& values) -> void
+    {
+        auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
+        auto foreignModelAsTuple = rfl::to_view(column).values();
+        auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+
+        auto getForeignFieldFromValue =
+            [&foreignModel, &values, &foreignFieldName, &model](auto index, auto foreignModelColumn)
+        {
+            if (model.bindingInfo.joinedValues)
             {
-                if (model.bindingInfo.joinedValues)
-                {
-                    auto fieldName = std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name);
-                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
-                }
-                else if (foreignModel.columnsInfo[index].isPrimaryKey)
-                {
-                    auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
-                                                 foreignModel.columnsInfo[index].name);
-                    *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
-                }
-            };
+                auto fieldName = std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name);
+                *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
+            }
+            else if (foreignModel.columnsInfo[index].isPrimaryKey)
+            {
+                auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
+                                             foreignModel.columnsInfo[index].name);
+                *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
+            }
+        };
 
-            orm::utils::constexpr_for_tuple(foreignModelAsTuple, getForeignFieldFromValue);
-        }
-        else
-        {
-            auto fieldName = std::format("{}_{}", model.getModelInfo().tableName,
-                                         model.getModelInfo().columnsInfo[columnIndex].name);
-            *column = values.get<ModelField>(fieldName);
-        }
+        orm::utils::constexpr_for_tuple(foreignModelAsTuple, getForeignFieldFromValue);
     }
 };
 

@@ -17,5 +17,8 @@ template <typename ModelField>
 concept SociConvertableToDouble = IsOneOfTypes<ModelField, float>;
 
 template <typename ModelField>
-concept SociDefaultSupported = IsOneOfTypes<ModelField, int, unsigned long long, double, std::string>;
+concept SociDefaultSupported = IsOneOfTypes<ModelField, int, long long, unsigned long long, double, std::string>;
+
+template <typename ModelField>
+concept ModelWithId = orm::model::checkIfIsModelWithId<ModelField>();
 } // namespace orm::db::binding

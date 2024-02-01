@@ -9,38 +9,41 @@
 namespace orm::db::binding
 {
 template <typename ModelField>
-struct ObjectFieldToValues
+struct ObjectFieldToValues;
+
+template <SociDefaultSupported ModelField>
+struct ObjectFieldToValues<ModelField>
 {
     template <typename T>
     static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
-        if constexpr (orm::model::checkIfIsModelWithId<ModelField>() == true)
-        {
-            auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
-            const auto foreignModelAsTuple = rfl::to_view(*column).values();
-            auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, *column);
+    }
+};
 
-            auto setForeignFieldToValue =
-                [&foreignModel, &values, &foreignFieldName](auto index, const auto foreignModelColumn)
+template <ModelWithId ModelField>
+struct ObjectFieldToValues<ModelField>
+{
+    template <typename T>
+    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+                    soci::values& values) -> void
+    {
+        auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
+        const auto foreignModelAsTuple = rfl::to_view(*column).values();
+        auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+
+        auto setForeignFieldToValue =
+            [&foreignModel, &values, &foreignFieldName](auto index, const auto foreignModelColumn)
+        {
+            if (foreignModel.columnsInfo[index].isPrimaryKey)
             {
-                if (foreignModel.columnsInfo[index].isPrimaryKey)
-                {
-                    //                    std::cout << std::format("{}_{} == {}", foreignFieldName,
-                    //                    foreignModel.columnsInfo[index].name,
-                    //                                             *foreignModelColumn)
-                    //                              << std::endl;
-                    values.set(std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name),
-                               *foreignModelColumn);
-                }
-            };
+                values.set(std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name),
+                           *foreignModelColumn);
+            }
+        };
 
-            orm::utils::constexpr_for_tuple(foreignModelAsTuple, setForeignFieldToValue);
-        }
-        else
-        {
-            values.set(model.getModelInfo().columnsInfo[columnIndex].name, *column);
-        }
+        orm::utils::constexpr_for_tuple(foreignModelAsTuple, setForeignFieldToValue);
     }
 };
 
