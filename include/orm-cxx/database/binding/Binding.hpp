@@ -28,7 +28,7 @@ struct type_conversion<BindingPayload<T>>
         auto& modelValue = model.value;
         auto modelAsTuple = rfl::to_view(modelValue).values();
 
-        auto getObjectFromValues = [&model, &values](auto index, auto field)
+        auto getObjectFromValues = [&model, &values](auto index, auto* field)
         {
             using field_t = std::decay_t<decltype(*field)>;
             orm::db::binding::ObjectFieldFromValues<field_t>::get(field, model, index, values);
@@ -42,7 +42,7 @@ struct type_conversion<BindingPayload<T>>
         auto& modelValue = model.value;
         auto modelAsTuple = rfl::to_view(modelValue).values();
 
-        auto setObjectToValues = [&model, &values](auto index, auto field)
+        auto setObjectToValues = [&model, &values](auto index, const auto* field)
         {
             using field_t = std::decay_t<decltype(*field)>;
             orm::db::binding::ObjectFieldToValues<field_t>::set(field, model, index, values);

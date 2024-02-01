@@ -5,13 +5,15 @@
 #include "faker-cxx/Lorem.h"
 #include "faker-cxx/Number.h"
 
+DISABLE_WARNING_PUSH
+DISABLE_EXTERNAL_WARNINGS
+#include "rfl/to_view.hpp"
+DISABLE_WARNING_POP
+
 namespace orm
 {
 template <typename T>
-auto fillField(T& field) -> void
-{
-    field = T{};
-}
+auto fillField(T& field) -> void;
 
 template <std::integral T>
 auto fillField(T& field) -> void
@@ -36,7 +38,7 @@ auto fillField(std::optional<T>& field) -> void
 {
     if (faker::Number::integer(0, 1) == 1)
     {
-        field = T();
+        field = T{};
         fillField(*field);
     }
     else
@@ -52,7 +54,7 @@ auto generateModel() -> T
 
     auto modelAsTuple = rfl::to_view(model).values();
 
-    auto fieldGenerator = [](auto, auto& field) { fillField(field); };
+    auto fieldGenerator = [](auto, auto* field) { fillField(*field); };
 
     orm::utils::constexpr_for_tuple(modelAsTuple, fieldGenerator);
 
