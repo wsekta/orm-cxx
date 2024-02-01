@@ -4,6 +4,7 @@
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/values.h"
+#include "SociConvertationConcepts.hpp"
 
 namespace orm::db::binding
 {
@@ -82,52 +83,18 @@ struct ObjectFieldFromValuesWithCast
     }
 };
 
-template <>
-struct ObjectFieldFromValues<float> : ObjectFieldFromValuesWithCast<float, double>
+template <SociConvertableToDouble ModelField>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, double>
 {
 };
 
-template <>
-struct ObjectFieldFromValues<bool> : ObjectFieldFromValuesWithCast<bool, int>
-{
-};
-template <>
-struct ObjectFieldFromValues<int8_t> : ObjectFieldFromValuesWithCast<int8_t, int>
+template <SociConvertableToInt ModelField>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, int>
 {
 };
 
-template <>
-struct ObjectFieldFromValues<char> : ObjectFieldFromValuesWithCast<char, int>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<unsigned char> : ObjectFieldFromValuesWithCast<unsigned char, int>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<short> : ObjectFieldFromValuesWithCast<short, int>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<unsigned short> : ObjectFieldFromValuesWithCast<unsigned short, int>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<unsigned int> : ObjectFieldFromValuesWithCast<unsigned int, unsigned long long>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<long> : ObjectFieldFromValuesWithCast<long, int>
-{
-};
-
-template <>
-struct ObjectFieldFromValues<unsigned long> : ObjectFieldFromValuesWithCast<unsigned long, unsigned long long>
+template <SociConvertableToUnsignedLongLong ModelField>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, unsigned long long>
 {
 };
 } // namespace orm::db::binding
