@@ -8,19 +8,6 @@
 namespace orm
 {
 template <typename T>
-auto generateSomeDataModels(std::size_t count) -> std::vector<T>
-{
-    std::vector<T> result;
-
-    for (std::size_t i = 0; i < count; i++)
-    {
-        result.emplace_back(generateModel<T>());
-    }
-
-    return result;
-}
-
-template <typename T>
 auto fillField(T& field) -> void
 {
     field = T{};
@@ -70,5 +57,18 @@ auto generateModel() -> T
     orm::utils::constexpr_for_tuple(modelAsTuple, fieldGenerator);
 
     return model;
+}
+
+template <typename T>
+auto generateSomeDataModels(std::size_t count) -> std::vector<T>
+{
+    std::vector<T> result;
+
+    for (std::size_t i = 0; i < count; i++)
+    {
+        result.emplace_back(generateModel<T>());
+    }
+
+    return result;
 }
 } // namespace orm
