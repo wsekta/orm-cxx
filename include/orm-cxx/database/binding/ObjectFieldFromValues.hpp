@@ -73,133 +73,65 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
     }
 };
 
-template <>
-struct ObjectFieldFromValues<float>
+template <typename ModelField, typename SociType>
+struct ObjectFieldFromValuesWithCast
 {
     template <typename T>
-    static auto get(float* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<float>(values.get<double>(fieldNames));
-    }
-};
-
-template <>
-struct ObjectFieldFromValues<bool>
-{
-    template <typename T>
-    static auto get(bool* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<bool>(values.get<int>(fieldNames));
-    }
-};
-
-template <>
-struct ObjectFieldFromValues<int8_t>
-{
-    template <typename T>
-    static auto get(int8_t* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<int8_t>(values.get<int>(fieldNames));
-    }
-};
-
-template <>
-struct ObjectFieldFromValues<char>
-{
-    template <typename T>
-    static auto get(char* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<char>(values.get<int>(fieldNames));
-    }
-};
-
-template <>
-struct ObjectFieldFromValues<unsigned char>
-{
-    template <typename T>
-    static auto get(unsigned char* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
-        auto fieldNames =
+        auto fieldName =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<unsigned char>(values.get<int>(fieldNames));
+        *column = static_cast<ModelField>(values.get<SociType>(fieldName));
     }
 };
 
 template <>
-struct ObjectFieldFromValues<short>
+struct ObjectFieldFromValues<float> : ObjectFieldFromValuesWithCast<float, double>
 {
-    template <typename T>
-    static auto get(short* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<short>(values.get<int>(fieldNames));
-    }
 };
 
 template <>
-struct ObjectFieldFromValues<unsigned short>
+struct ObjectFieldFromValues<bool> : ObjectFieldFromValuesWithCast<bool, int>
 {
-    template <typename T>
-    static auto get(unsigned short* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<unsigned short>(values.get<int>(fieldNames));
-    }
+};
+template <>
+struct ObjectFieldFromValues<int8_t> : ObjectFieldFromValuesWithCast<int8_t, int>
+{
 };
 
 template <>
-struct ObjectFieldFromValues<unsigned int>
+struct ObjectFieldFromValues<char> : ObjectFieldFromValuesWithCast<char, int>
 {
-    template <typename T>
-    static auto get(unsigned int* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<unsigned int>(values.get<unsigned long long>(fieldNames));
-    }
 };
 
 template <>
-struct ObjectFieldFromValues<long>
+struct ObjectFieldFromValues<unsigned char> : ObjectFieldFromValuesWithCast<unsigned char, int>
 {
-    template <typename T>
-    static auto get(long* column, const BindingPayload<T>& model, std::size_t columnIndex, const soci::values& values)
-        -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<long>(values.get<int>(fieldNames));
-    }
 };
 
 template <>
-struct ObjectFieldFromValues<unsigned long>
+struct ObjectFieldFromValues<short> : ObjectFieldFromValuesWithCast<short, int>
 {
-    template <typename T>
-    static auto get(unsigned long* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
-    {
-        auto fieldNames =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<unsigned long>(values.get<unsigned long long>(fieldNames));
-    }
+};
+
+template <>
+struct ObjectFieldFromValues<unsigned short> : ObjectFieldFromValuesWithCast<unsigned short, int>
+{
+};
+
+template <>
+struct ObjectFieldFromValues<unsigned int> : ObjectFieldFromValuesWithCast<unsigned int, unsigned long long>
+{
+};
+
+template <>
+struct ObjectFieldFromValues<long> : ObjectFieldFromValuesWithCast<long, int>
+{
+};
+
+template <>
+struct ObjectFieldFromValues<unsigned long> : ObjectFieldFromValuesWithCast<unsigned long, unsigned long long>
+{
 };
 } // namespace orm::db::binding

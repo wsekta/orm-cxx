@@ -47,114 +47,65 @@ struct ObjectFieldToValues
     }
 };
 
-template <>
-struct ObjectFieldToValues<float>
+template <typename ModelField, typename SociType>
+struct ObjectFieldToValuesWithCast
 {
     template <typename T>
-    static auto set(const float* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<double>(*column));
-    }
-};
-
-template <>
-struct ObjectFieldToValues<bool>
-{
-    template <typename T>
-    static auto set(const bool* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
-};
-
-template <>
-struct ObjectFieldToValues<int8_t>
-{
-    template <typename T>
-    static auto set(const int8_t* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
-};
-
-template <>
-struct ObjectFieldToValues<char>
-{
-    template <typename T>
-    static auto set(const char* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
-};
-
-template <>
-struct ObjectFieldToValues<unsigned char>
-{
-    template <typename T>
-    static auto set(const unsigned char* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
+        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<SociType>(*column));
     }
 };
 
 template <>
-struct ObjectFieldToValues<short>
+struct ObjectFieldToValues<float> : ObjectFieldToValuesWithCast<float, double>
 {
-    template <typename T>
-    static auto set(const short* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
 };
 
 template <>
-struct ObjectFieldToValues<unsigned short>
+struct ObjectFieldToValues<bool> : ObjectFieldToValuesWithCast<bool, int>
 {
-    template <typename T>
-    static auto set(const unsigned short* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    soci::values& values) -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
 };
 
 template <>
-struct ObjectFieldToValues<unsigned int>
+struct ObjectFieldToValues<int8_t> : ObjectFieldToValuesWithCast<int8_t, int>
 {
-    template <typename T>
-    static auto set(const unsigned int* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    soci::values& values) -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<unsigned long long>(*column));
-    }
 };
 
 template <>
-struct ObjectFieldToValues<long>
+struct ObjectFieldToValues<char> : ObjectFieldToValuesWithCast<char, int>
 {
-    template <typename T>
-    static auto set(const long* column, const BindingPayload<T>& model, std::size_t columnIndex, soci::values& values)
-        -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<int>(*column));
-    }
 };
 
 template <>
-struct ObjectFieldToValues<unsigned long>
+struct ObjectFieldToValues<unsigned char> : ObjectFieldToValuesWithCast<unsigned char, int>
 {
-    template <typename T>
-    static auto set(const unsigned long* column, const BindingPayload<T>& model, std::size_t columnIndex,
-                    soci::values& values) -> void
-    {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<unsigned long long>(*column));
-    }
+};
+
+template <>
+struct ObjectFieldToValues<short> : ObjectFieldToValuesWithCast<short, int>
+{
+};
+
+template <>
+struct ObjectFieldToValues<unsigned short> : ObjectFieldToValuesWithCast<unsigned short, int>
+{
+};
+
+template <>
+struct ObjectFieldToValues<unsigned int> : ObjectFieldToValuesWithCast<unsigned int, unsigned long long>
+{
+};
+
+template <>
+struct ObjectFieldToValues<long> : ObjectFieldToValuesWithCast<long, int>
+{
+};
+
+template <>
+struct ObjectFieldToValues<unsigned long> : ObjectFieldToValuesWithCast<unsigned long, unsigned long long>
+{
 };
 
 template <typename ModelField>

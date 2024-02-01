@@ -22,6 +22,7 @@
     * boost::optional
 * Add .clang-tidy and .cmake-format
 * Noexcept where possible
+* Add support for auto incrementing primary keys
 
 # Far future:
 
@@ -29,3 +30,4 @@
 * Replace reflect-cpp with own reflection library, due to warnings and errors generated in reflect-cpp
 * Move as much as possible to compile time
 * Ensure thread safety
+* Add support for logging mechanisms
