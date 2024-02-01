@@ -7,14 +7,7 @@
 #include "database/CommandGeneratorFactory.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "query.hpp"
-
-DISABLE_WARNING_PUSH
-
-DISABLE_EXTERNAL_WARNINGS
-
 #include "soci/soci.h"
-
-DISABLE_WARNING_POP
 
 namespace orm
 {
@@ -28,7 +21,7 @@ class Database
 public:
     template <typename T>
     using Payload = db::binding::BindingPayload<T>;
-    
+
     /**
      * @brief Constructs a new Database object.
      */

@@ -5,15 +5,12 @@
 #include "ObjectFieldToValues.hpp"
 #include "orm-cxx/utils//ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
-
-DISABLE_WARNING_PUSH
-
-DISABLE_EXTERNAL_WARNINGS
-
-#include "rfl/to_view.hpp"
 #include "soci/type-conversion.h"
 #include "soci/values.h"
 
+DISABLE_WARNING_PUSH
+DISABLE_EXTERNAL_WARNINGS
+#include "rfl/to_view.hpp"
 DISABLE_WARNING_POP
 
 namespace soci
