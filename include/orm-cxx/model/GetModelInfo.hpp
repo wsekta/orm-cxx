@@ -19,7 +19,7 @@ auto getModelInfo() -> ModelInfo
     auto getForeignModelInfoFromField = [&modelInfo](auto i, auto field)
     { GetForeignModelInfoFromField<T, std::decay_t<decltype(*field)>>::get(i, modelInfo); };
 
-    utils::constexpr_for_tuple(model_tuple_t{}, getForeignModelInfoFromField);
+    utils::constexpr_for_tuple<model_tuple_t>(getForeignModelInfoFromField);
 
     return modelInfo;
 }

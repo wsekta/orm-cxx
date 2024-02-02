@@ -20,4 +20,15 @@ constexpr auto constexpr_for_tuple(Tuple&& t, F&& f, Args... args) -> void
     constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
         [&t, &f, &args...](auto I) { f(I, std::get<I>(std::forward<Tuple>(t)), std::forward<Args>(args)...); });
 }
+
+template <class Tuple, class F, class... Args>
+constexpr auto constexpr_for_tuple(F&& f, Args... args) -> void
+{
+    constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
+        [&f, &args...](auto I)
+        {
+            using field_t = std::tuple_element_t<I, std::decay_t<Tuple>>;
+            f(I, static_cast<field_t>(nullptr), std::forward<Args>(args)...);
+        });
+}
 } // namespace orm::utils
