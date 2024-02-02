@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model/ModelInfo.hpp"
+#include "model/GetModelInfo.hpp"
 
 namespace orm
 {
@@ -25,7 +25,7 @@ public:
     {
         if (not modelInfo.has_value() or force)
         {
-            modelInfo = model::generateModelInfo<T>();
+            modelInfo = model::getModelInfo<T>();
         }
 
         return modelInfo.value();
