@@ -23,6 +23,9 @@
 * Add .clang-tidy and .cmake-format
 * Noexcept where possible
 * Add support for auto incrementing primary keys
+* Add static analysis tool to githbu actions
+* Refactor and add docker development environment
+* Define devcontainers
 
 # Far future:
 
@@ -31,3 +34,4 @@
 * Move as much as possible to compile time
 * Ensure thread safety
 * Add support for logging mechanisms
+* Implement with coroutines
