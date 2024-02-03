@@ -1,6 +1,9 @@
 #pragma once
 
+#include <string>
 #include <type_traits>
+
+#include "orm-cxx/model/IdInfo.hpp"
 
 namespace orm::db::binding
 {
