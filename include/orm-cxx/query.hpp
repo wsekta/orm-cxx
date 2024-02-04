@@ -26,6 +26,17 @@ public:
     Query() : data{.modelInfo = Model<T>().getModelInfo()} {}
 
     /**
+     * @brief Where clause
+     * @param condition
+     */
+    auto where(const query::Condition& condition) -> Query<T>&
+    {
+        data.condition = condition;
+        
+        return *this;
+    }
+
+    /**
      * @brief Sets the OFFSET clause for the select query.
      * @param offset The number of rows to skip.
      * @return A reference to the QueryBuilder object.
