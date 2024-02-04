@@ -108,4 +108,21 @@ auto DefaultSelectCommand::getLimit(const std::optional<std::size_t>& limit) -> 
 
     return {};
 }
+
+auto DefaultSelectCommand::getWhere(const query::Condition& condition) -> std::string
+{
+    switch (condition.getOperatorType())
+    {
+    case orm::query::Operator::LIKE:
+        return std::format(" WHERE {} LIKE {}", condition.getColumnName(), condition.getComparisonValue());
+    case orm::query::Operator::NOT_LIKE:
+        return std::format(" WHERE {} NOT LIKE {}", condition.getColumnName(), condition.getComparisonValue());
+    case orm::query::Operator::IS_NULL:
+        return std::format(" WHERE {} IS NULL", condition.getColumnName());
+    case orm::query::Operator::IS_NOT_NULL:
+        return std::format(" WHERE {} IS NOT NULL", condition.getColumnName());
+    default:
+        return {};
+    }
+}
 } // namespace orm::db::commands

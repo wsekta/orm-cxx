@@ -6,6 +6,7 @@
     * Operators (>, <, =, !=, etc)
     * Logical operators (AND, OR, NOT)
     * String operators (LIKE, ILIKE, etc)
+* Add UPDATE and DELETE commands
 * Add support for models with relations OneToMany and ManyToMany
 * Refactor CMake files
 * Add support for other databases and drivers:

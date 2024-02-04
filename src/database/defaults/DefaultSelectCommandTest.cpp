@@ -28,6 +28,30 @@ const std::string selectSqlWithLimitAndOffset = "SELECT models_ModelWithFloat.fi
                                                 "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
                                                 "FROM models_ModelWithFloat OFFSET 10 LIMIT 10;";
 
+const std::string selectSqlWithWhereField1IsNotNull =
+    "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+    "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+    "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+    "FROM models_ModelWithFloat WHERE models_ModelWithFloat.field1 IS NOT NULL;";
+
+const std::string selectSqlWithWhereField1IsNull =
+    "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+    "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+    "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+    "FROM models_ModelWithFloat WHERE models_ModelWithFloat.field1 IS NULL;";
+
+const std::string selectSqlWithWhereField1LikeValue =
+    "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+    "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+    "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+    "FROM models_ModelWithFloat WHERE models_ModelWithFloat.field1 LIKE value;";
+
+const std::string selectSqlWithWhereField1NotLikeValue =
+    "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+    "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+    "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+    "FROM models_ModelWithFloat WHERE models_ModelWithFloat.field1 NOT LIKE value;";
+
 const std::string selectSqlWithModelRelatedToOtherModelWithoutJoining =
     "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
     "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "

@@ -2,24 +2,12 @@
 
 #include <string>
 
+#include "Operator.hpp"
+
 namespace orm::query
 {
 class Condition
 {
-    enum class Operator
-    {
-        EQUAL,
-        NOT_EQUAL,
-        GREATER,
-        GREATER_OR_EQUAL,
-        LESS,
-        LESS_OR_EQUAL,
-        LIKE,
-        NOT_LIKE,
-        IS_NULL,
-        IS_NOT_NULL
-    };
-
 public:
     Condition(std::string columnName);
 
@@ -42,6 +30,12 @@ public:
     auto isNull() -> Condition&;
 
     auto isNotNull() -> Condition&;
+
+    auto getColumnName() const -> const std::string&;
+
+    auto getOperatorType() const -> Operator;
+
+    auto getComparisonValue() const -> const std::string&;
 
 private:
     std::string columnName;
