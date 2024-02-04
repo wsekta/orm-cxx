@@ -4,5 +4,6 @@ var classorm_1_1Query =
     [ "disableJoining", "classorm_1_1Query.html#ab7a1cc60776eeb29212199765e4eaaba", null ],
     [ "limit", "classorm_1_1Query.html#a73f6efaddec024eed6b8dcd1e71dd4d4", null ],
     [ "offset", "classorm_1_1Query.html#ad277561652627e31187604dd6487fec8", null ],
+    [ "where", "classorm_1_1Query.html#abdb64ae015ffabc8c71f4e83bb9a8c4c", null ],
     [ "orm::Database", "classorm_1_1Query.html#a2899a70f009c4e51d27af81f1acea47d", null ]
 ];

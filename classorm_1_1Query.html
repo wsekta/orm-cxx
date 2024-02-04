@@ -112,6 +112,9 @@ Public Member Functions</h2></td></tr>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Query</b> ()</td></tr>
 <tr class="memdesc:abde0572a94dd2d8cfb471bf85c470f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> object. <br /></td></tr>
 <tr class="separator:abde0572a94dd2d8cfb471bf85c470f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdb64ae015ffabc8c71f4e83bb9a8c4c" id="r_abdb64ae015ffabc8c71f4e83bb9a8c4c"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#abdb64ae015ffabc8c71f4e83bb9a8c4c">where</a> (const query::Condition &amp;condition) -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memdesc:abdb64ae015ffabc8c71f4e83bb9a8c4c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Where clause.  <br /></td></tr>
+<tr class="separator:abdb64ae015ffabc8c71f4e83bb9a8c4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad277561652627e31187604dd6487fec8" id="r_ad277561652627e31187604dd6487fec8"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ad277561652627e31187604dd6487fec8">offset</a> (std::size_t offset) -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:ad277561652627e31187604dd6487fec8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OFFSET clause for the select query.  <br /></td></tr>
 <tr class="separator:ad277561652627e31187604dd6487fec8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -243,6 +246,42 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A reference to the QueryBuilder object. </dd></dl>
+
+</div>
+</div>
+<a id="abdb64ae015ffabc8c71f4e83bb9a8c4c" name="abdb64ae015ffabc8c71f4e83bb9a8c4c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abdb64ae015ffabc8c71f4e83bb9a8c4c">&#9670;&#160;</a></span>where()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::where </td>
+          <td>(</td>
+          <td class="paramtype">const query::Condition &amp;</td>          <td class="paramname"><span class="paramname"><em>condition</em></span></td><td>)</td>
+          <td> -&gt; <a class="el" href="classorm_1_1Query.html">Query</a>&lt;T&gt;&amp;
+    </td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Where clause. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">condition</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
 
 </div>
 </div>
