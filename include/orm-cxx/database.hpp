@@ -1,11 +1,8 @@
 #pragma once
 
-#include <iostream>
-
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
 

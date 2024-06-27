@@ -1,7 +1,6 @@
 #pragma once
 
 #include <optional>
-#include <string>
 
 #include "model.hpp"
 #include "query/QueryData.hpp"

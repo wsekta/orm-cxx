@@ -2,8 +2,6 @@
 
 #include <regex>
 
-#include "soci/empty/soci-empty.h"
-
 namespace
 {
 const std::regex sqliteRegex(R"(sqlite3\:\/\/.*)");
