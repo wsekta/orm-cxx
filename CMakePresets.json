@@ -1,0 +1,27 @@
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "name": "clang-libc++",
+            "displayName": "Clang with libc++",
+            "description": "Configure with Clang and libc++",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
+                "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+                "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++ -lc++abi",
+                "CMAKE_INCLUDE_PATH": "/usr/lib/llvm-18/include/c++/v1",
+                "CMAKE_LIBRARY_PATH": "/usr/lib/llvm-18/lib"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "clang-libc++",
+            "configurePreset": "clang-libc++",
+            "configuration": "Debug"
+        }
+    ]
+} 

@@ -7,7 +7,6 @@
 namespace
 {
 const std::regex optionalRegex(R"((class )?std\:\:optional\<(.*)\>)");
-const std::regex stringRegex{R"((class )?std.*::basic_string<.*>\W?)"};
 
 const std::unordered_map<orm::model::ColumnType, std::string> typeToStringMaping{
     {orm::model::ColumnType::Bool, "bool"},
@@ -91,7 +90,7 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     {
         columnType = ColumnType::Double;
     }
-    else if (std::regex_match(type, stringRegex))
+    else if (typeString.find("basic_string") != std::string::npos || typeString == "std::string")
     {
         columnType = ColumnType::String;
     }
