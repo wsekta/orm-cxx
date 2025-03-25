@@ -14,7 +14,7 @@ struct ModelWithOneField
 
 struct ModelWithTableName
 {
-    inline static const std::string table_name = "some_table_name";
+    inline static constexpr std::string_view table_name = "some_table_name";
 
     [[maybe_unused]] int field1;
 };
@@ -42,7 +42,7 @@ struct ModelWithFloat
 
 struct ModelWithOptionalFloat
 {
-    inline static const std::string table_name{"models_ModelWithFloat"};
+    inline static constexpr std::string_view table_name{"models_ModelWithFloat"};
 
     std::optional<int> field1;
     std::optional<std::string> field2;
@@ -93,7 +93,7 @@ struct ModelOptionallyRelatedToOtherModel
 
 struct ModelWithAllBasicTypes
 {
-    inline static const std::string table_name = "all_types";
+    inline static constexpr std::string_view table_name = "all_types";
 
     int id;
     bool field1;
@@ -114,7 +114,7 @@ struct ModelWithAllBasicTypes
 
 struct ModelWithAllInts
 {
-    inline static const std::string table_name = "all_ints";
+    inline static constexpr std::string_view table_name = "all_ints";
 
     int8_t field1;
     uint8_t field2;

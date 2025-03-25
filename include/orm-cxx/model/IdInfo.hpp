@@ -32,7 +32,7 @@ auto getPrimaryIdColumnsNames() -> std::unordered_set<std::string>
 }
 
 template <typename T>
-constexpr auto checkIfIsModelWithId() -> bool
+consteval auto checkIfIsModelWithId() -> bool
 {
     if constexpr (requires { T::id_columns; })
     {

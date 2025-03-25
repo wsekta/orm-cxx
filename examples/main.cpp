@@ -17,7 +17,7 @@ struct ObjectModel
     // int id;
 
     // defining table_name is optional, adding it will overwrite default table name
-    inline static const std::string table_name = "object_model";
+    inline static constexpr std::string_view table_name = "object_model";
 
     // defining columns_names is optional, adding it will overwrite default columns names
     // not all columns have to be defined, others will get default names

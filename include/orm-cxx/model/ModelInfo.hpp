@@ -7,7 +7,7 @@ namespace orm::model
 {
 struct ModelInfo
 {
-    std::string tableName;
+    std::string_view tableName;
     std::vector<ColumnInfo> columnsInfo;
     std::unordered_set<std::string> idColumnsNames;
     std::unordered_map<std::string, ModelInfo> foreignModelsInfo;

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "IdInfo.hpp"
 #include "ModelInfo.hpp"
 

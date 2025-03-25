@@ -1,3 +1,5 @@
+#pragma once
+
 #include "GetForeignModelInfoFromField.hpp"
 #include "ModelInfo.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"

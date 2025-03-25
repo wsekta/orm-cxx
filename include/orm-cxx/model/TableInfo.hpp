@@ -1,17 +1,11 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "orm-cxx/utils/StringUtils.hpp"
-
-DISABLE_WARNING_PUSH
-
-DISABLE_EXTERNAL_WARNINGS
-
-#include <rfl.hpp>
-
-DISABLE_WARNING_POP
+#include "orm-cxx/utils/ConstexprStringView.hpp"
+#include "orm-cxx/reflection/TypeName.hpp"
 
 namespace orm::model
 {
@@ -22,21 +16,25 @@ namespace orm::model
  * @return The table name as a string view.
  */
 template <typename T>
-auto getTableName() -> std::string
+consteval auto getTableName() -> std::string_view
 {
     if constexpr (requires { T::table_name; })
     {
-        return std::string(T::table_name);
+        return T::table_name;
     }
     else
     {
-        auto typeName = rfl::type_name_t<T>().str();
+        constexpr auto callable = []() {
+            auto typeName = std::string(reflection::getTypeName<T>());
 
-        utils::replaceAll(typeName, "::", "_");
-        utils::replaceAll(typeName, "class ", "");
-        utils::replaceAll(typeName, "struct ", "");
+            utils::replaceAll(typeName, "::", "_");
+            utils::replaceAll(typeName, "class ", "");
+            utils::replaceAll(typeName, "struct ", "");
 
-        return typeName;
+            return typeName;
+        };
+
+        return utils::makeConstexprStringView(callable);
     }
 }
 } // namespace orm::model

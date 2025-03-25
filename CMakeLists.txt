@@ -76,23 +76,25 @@ if (BUILD_ORM_CXX_TESTS)
     add_subdirectory(externals/googletest)
 
     set(UT_SOURCES
-            tests/ModelTest.cpp
-
             src/database/sqlite/SqliteTypeTranslatorTest.cpp
             src/model/ColumnTypeTest.cpp
             src/utils/StringUtilsTest.cpp
-            tests/model/IdInfoTest.cpp
-            tests/model/TableInfoTest.cpp
-            tests/database/TransactionsTest.cpp
-            tests/database/SimpleModelTest.cpp
-            tests/database/IdModelsTest.cpp
-            tests/database/RelatedModelTest.cpp
-            tests/database/BaseOperationsTest.cpp
             src/database/defaults/DefaultCreateTableCommandTest.cpp
             src/database/defaults/DefaultDropTableCommandTest.cpp
             src/database/defaults/DefaultInsertCommandTest.cpp
             src/database/defaults/DefaultSelectCommandTest.cpp
             src/query/ConditionTest.cpp
+
+            tests/ModelTest.cpp
+            tests/database/TransactionsTest.cpp
+            tests/database/SimpleModelTest.cpp
+            tests/database/IdModelsTest.cpp
+            tests/database/RelatedModelTest.cpp
+            tests/database/BaseOperationsTest.cpp
+            tests/model/IdInfoTest.cpp
+            tests/model/TableInfoTest.cpp
+            tests/reflection/TypeNameTest.cpp
+            tests/utils/ConstexprStringViewTest.cpp
     )
 
     set(GTEST_INCLUDE_DIR

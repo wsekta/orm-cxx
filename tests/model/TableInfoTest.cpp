@@ -4,6 +4,9 @@
 
 #include "tests/ModelsDefinitions.hpp"
 
+using namespace std::string_view_literals;
+using namespace orm::model;
+
 struct LocalModel
 {
     int id;
@@ -13,15 +16,21 @@ struct LocalModel
 
 TEST(TableInfoTest, shouldGetTableName)
 {
-    EXPECT_EQ(orm::model::getTableName<models::ModelWithId>(), "models_ModelWithId");
+    static_assert(getTableName<models::ModelWithId>() == "models_ModelWithId"sv);
+
+    EXPECT_EQ(getTableName<models::ModelWithId>(), "models_ModelWithId");
 }
 
 TEST(TableInfoTest, shouldGetTableNameFromModelWithTableName)
 {
-    EXPECT_EQ(orm::model::getTableName<models::ModelWithTableName>(), "some_table_name");
+    static_assert(getTableName<models::ModelWithTableName>() == "some_table_name"sv);
+
+    EXPECT_EQ(getTableName<models::ModelWithTableName>(), "some_table_name");
 }
 
 TEST(TableInfoTest, shouldGetTableNameFromLocalModel)
 {
-    EXPECT_EQ(orm::model::getTableName<LocalModel>(), "LocalModel");
+    static_assert(getTableName<LocalModel>() == "LocalModel"sv);
+
+    EXPECT_EQ(getTableName<LocalModel>(), "LocalModel");
 }
