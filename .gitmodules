@@ -10,3 +10,6 @@
 [submodule "externals/soci"]
 	path = externals/soci
 	url = https://github.com/SOCI/soci.git
+[submodule "externals/vcpkg"]
+	path = externals/vcpkg
+	url = https://github.com/microsoft/vcpkg.git

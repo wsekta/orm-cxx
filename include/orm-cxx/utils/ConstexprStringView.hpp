@@ -1,8 +1,8 @@
 #pragma once
 
+#include <array>
 #include <string>
 #include <string_view>
-#include <array>
 
 namespace orm::utils
 {
@@ -31,7 +31,7 @@ consteval auto makeRightSizedArray(auto callable)
     return result;
 }
 
-template<auto Data>
+template <auto Data>
 consteval const auto& makeStatic()
 {
     return Data;
@@ -40,6 +40,6 @@ consteval const auto& makeStatic()
 consteval auto makeConstexprStringView(auto callable) -> std::string_view
 {
     constexpr auto& data = makeStatic<makeRightSizedArray(callable)>();
-    return std::string_view{data.begin(), data.size()};
+    return std::string_view{data.data(), data.size()};
 }
 } // namespace orm::utils

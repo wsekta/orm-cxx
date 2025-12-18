@@ -1,9 +1,9 @@
 {
-    "name": "orm-cxx",
-    "builtin-baseline": "50bffcc62d7f6571eb32bc1a0b1807e77af1166c",
-    "dependencies": [
-      {
-        "name": "sqlite3"
-      }
-    ]
-  }
+  "name": "orm-cxx",
+  "builtin-baseline": "d2452281016c6d77b6ef199d599d9929eafe4807",
+  "dependencies": [
+    {
+      "name": "sqlite3"
+    }
+  ]
+}

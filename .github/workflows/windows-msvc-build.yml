@@ -19,9 +19,9 @@ jobs:
         with:
           submodules: recursive
 
-      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/bootstrap-vcpkg.bat
+      - run: ${{ github.workspace }}/externals/vcpkg/bootstrap-vcpkg.bat
 
-      - run: ${{ github.workspace }}/externals/reflect-cpp/vcpkg/vcpkg.exe install
+      - run: ${{ github.workspace }}/externals/vcpkg/vcpkg.exe install
 
       - run: cmake -E make_directory build
 
@@ -30,7 +30,7 @@ jobs:
       - uses: seanmiddleditch/gha-setup-ninja@master
 
       - working-directory: build/
-        run: cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/reflect-cpp/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
+        run: cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
 
       - working-directory: build/
         run: cmake --build .
