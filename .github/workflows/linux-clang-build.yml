@@ -26,15 +26,9 @@ jobs:
 
       - name: Install apt-get dependencies
         run: |
-          sudo add-apt-repository ppa:trebelnik-stefina/launchpad-getkeys \
-           && sudo apt-get update \
-           && sudo apt-get install launchpad-getkeys \
-           && sudo sudo apt-get update \
-           && sudo add-apt-repository 'deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-16 main' \
-           && sudo launchpad-getkeys \
-           && sudo apt-get update -y \
-           && sudo apt-get install -y lld-16 ninja-build build-essential libstdc++-13-dev \
-             clang-16 clang-tools-16 llvm-16 lcov sqlite3 libsqlite3-dev
+          sudo apt-get update -y \
+           && sudo apt-get install -y ninja-build build-essential libstdc++-13-dev \
+             clang clang-tools llvm lcov sqlite3 libsqlite3-dev
 
       - name: Initialize submodules
         run: git submodule update --init --recursive
@@ -43,7 +37,7 @@ jobs:
         run: |
           cmake -B ${{github.workspace}}/build \
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-            -DCMAKE_CXX_COMPILER=/usr/bin/clang++-16 \
+            -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
             -DCODE_COVERAGE:BOOL=ON \
             -GNinja
 
@@ -54,7 +48,7 @@ jobs:
         working-directory: ${{github.workspace}}/build/
         run: |
           ninja orm-cxx-ccov-all \
-          && llvm-cov-16 show `cat ccov/binaries.list` -instr-profile=ccov/all-merged.profdata > coverage.txt
+          && llvm-cov show `cat ccov/binaries.list` -instr-profile=ccov/all-merged.profdata > coverage.txt
 
       - name: Codecov
         uses: codecov/codecov-action@v3.1.4
