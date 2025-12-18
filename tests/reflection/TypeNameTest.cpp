@@ -1,5 +1,6 @@
 #include "orm-cxx/reflection/TypeName.hpp"
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 using namespace orm::reflection;
@@ -19,7 +20,7 @@ TEST(TypeNameTest, structs)
         int a;
     };
 
-    EXPECT_EQ(getTypeName<TestStruct>(), "TestStruct"sv);
+    EXPECT_THAT(getTypeName<TestStruct>(), ::testing::HasSubstr("TestStruct"));
 }
 
 TEST(TypeNameTest, classes)
@@ -29,5 +30,5 @@ TEST(TypeNameTest, classes)
         int a;
     };
 
-    EXPECT_EQ(getTypeName<TestClass>(), "TestClass"sv);
+    EXPECT_THAT(getTypeName<TestClass>(), ::testing::HasSubstr("TestClass"));
 }

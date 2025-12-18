@@ -14,7 +14,7 @@ consteval auto getTypeName() -> std::string_view
   const auto split = func_name.substr(0, func_name.size() - 1);
   return split.substr(split.find("T = ") + 4);
 #elif defined(__GNUC__)
-  const auto split = func_name.substr(0, func_name.size() - 1);
+  const auto split = func_name.substr(0, func_name.find(';'));
   return split.substr(split.find("T = ") + 4);
 #elif defined(_MSC_VER)
   const auto split = func_name.substr(0, func_name.size() - 7);
