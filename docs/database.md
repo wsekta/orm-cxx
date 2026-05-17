@@ -65,10 +65,15 @@ database.insert(object);
 
 ## Query objects
 
-To select objects from database use `select` method and pass [select](select.md) as argument:
+To select objects from database use `select` method and pass [query](query.md) as argument:
 
 ```cpp
+using namespace orm::query;
+
 orm::Query<ObjectModel> query;
+query.where(col("name").like("name%"))
+     .orderBy(asc(col("id")))
+     .limit(10);
 
 auto queriedObjects = database.select(query);
 ```

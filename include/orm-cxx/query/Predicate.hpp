@@ -57,6 +57,12 @@ enum class LogicalOperator
 class Column
 {
 public:
+    /**
+     * @brief Creates a column reference from a model field path.
+     *
+     * A path can reference a direct field such as "name" or one one-to-one relation level,
+     * such as "profile.city".
+     */
     explicit Column(std::string path) : path{std::move(path)} {}
 
     [[nodiscard]] auto getPath() const -> const std::string&
@@ -185,6 +191,9 @@ struct PredicateNode
 class Predicate
 {
 public:
+    /**
+     * @brief Creates a predicate from an expression node.
+     */
     explicit Predicate(PredicateNode node) : node{std::make_shared<PredicateNode>(std::move(node))} {}
 
     [[nodiscard]] auto getNode() const -> const PredicateNode&
@@ -356,6 +365,12 @@ inline auto col(std::string path) -> Column
     return Column{std::move(path)};
 }
 
+/**
+ * @brief Creates a typed field reference.
+ *
+ * The current implementation still receives the field name as a string. The Model and
+ * FieldType template parameters document the intended model and field type at the call site.
+ */
 template <typename Model, typename FieldType>
 auto field(std::string path) -> Column
 {
@@ -379,6 +394,12 @@ inline auto operator!(const Predicate& predicate) -> Predicate
     return Predicate{PredicateNode{NotExpression{.predicate = predicate.node}}};
 }
 
+/**
+ * @brief Creates a raw SQL predicate.
+ *
+ * The SQL text is inserted as-is. Values should be supplied with query::param
+ * so they can still be bound as database parameters.
+ */
 template <typename... Parameters>
 auto raw(std::string sql, Parameters... parameters) -> Predicate
 {

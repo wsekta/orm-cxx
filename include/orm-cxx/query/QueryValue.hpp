@@ -9,6 +9,12 @@
 
 namespace orm::query
 {
+/**
+ * @brief A value that can be bound as a query parameter.
+ *
+ * QueryValue stores the subset of C++ values supported by the SELECT query DSL.
+ * Values are rendered as SOCI bind parameters, not interpolated into SQL.
+ */
 class QueryValue
 {
 public:
@@ -51,12 +57,20 @@ private:
     Value value;
 };
 
+/**
+ * @brief A named parameter for raw query fragments.
+ */
 struct QueryParameter
 {
     std::string name;
     QueryValue value;
 };
 
+/**
+ * @brief Creates a named parameter for a raw SQL fragment.
+ *
+ * The name must not include the leading ':'.
+ */
 template <typename T>
 auto param(std::string name, T value) -> QueryParameter
 {

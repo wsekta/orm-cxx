@@ -10,5 +10,5 @@
 </div>
 
 1. [Model](model.md)
-2. [Query](select.md)
+2. [Query](query.md)
 3. [Database](database.md)

@@ -76,8 +76,13 @@ int main()
     database.insert(objects);
 
     // define select query with builder pattern
+    using namespace orm::query;
+
     orm::Query<ObjectModel> query;
-    query.limit(10).offset(5);
+    query.where(col("field2").like("te%"))
+         .orderBy(asc(col("field1")))
+         .limit(10)
+         .offset(5);
 
     // execute query
     auto queriedObjects = database.select(query);
@@ -91,6 +96,32 @@ int main()
 ## [Markdown](docs/main.md)
 
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
+
+### Query language
+
+`orm::Query<T>` supports ORM-style `SELECT` queries returning `std::vector<T>`.
+
+```cpp
+using namespace orm::query;
+
+orm::Query<User> query;
+query.where((col("age") >= 18 && col("name").like("Ann%")) || col("email").isNull())
+     .orderBy(desc(col("created_at")), asc(col("id")))
+     .limit(20)
+     .offset(40)
+     .distinct();
+
+auto users = database.select(query);
+```
+
+Values are passed as SOCI bind parameters. For advanced cases, raw SQL fragments can be used with explicit parameters:
+
+```cpp
+query.where(raw("LOWER(users.name) = :name", param("name", "wojtek")))
+     .orderBy(rawOrder("LOWER(users.name) ASC"));
+```
+
+See [Query documentation](docs/query.md) for supported operators and limitations.
 
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 
