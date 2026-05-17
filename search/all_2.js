@@ -1,8 +1,10 @@
 var searchData=
 [
-  ['database_0',['Database',['../classorm_1_1Database.html',1,'orm::Database'],['../classorm_1_1Database.html#a0cf947c50ac4c47b8478d66ec49a104b',1,'orm::Database::Database()'],['../md_docs_2database.html',1,'Database']]],
-  ['delete_20table_1',['Delete table',['../md_docs_2database.html#autotoc_md3',1,'']]],
-  ['deletetable_2',['deleteTable',['../classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604',1,'orm::Database']]],
-  ['disablejoining_3',['disableJoining',['../classorm_1_1Query.html#ab7a1cc60776eeb29212199765e4eaaba',1,'orm::Query']]],
-  ['disconnect_4',['disconnect',['../classorm_1_1Database.html#aed77524f1815ead26234adf09898f469',1,'orm::Database']]]
+  ['c_0',['ORM C++',['../index.html',1,'']]],
+  ['committransaction_1',['commitTransaction',['../classorm_1_1Database.html#a8e53db9a678a64b874158b175c02ff24',1,'orm::Database']]],
+  ['connect_2',['Connect',['../md_docs_2database.html#autotoc_md1',1,'']]],
+  ['connect_3',['connect',['../classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2',1,'orm::Database']]],
+  ['create_20simple_20model_4',['Create simple model',['../md_docs_2model.html#autotoc_md8',1,'']]],
+  ['create_20table_5',['Create table',['../md_docs_2database.html#autotoc_md2',1,'']]],
+  ['createtable_6',['createTable',['../classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d',1,'orm::Database']]]
 ];

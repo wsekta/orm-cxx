@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['begintransaction_0',['beginTransaction',['../classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c',1,'orm::Database']]]
+  ['andwhere_0',['andWhere',['../classorm_1_1Query.html#a1e2944880e1d93c88d9d69f5d884bde0',1,'orm::Query']]]
 ];

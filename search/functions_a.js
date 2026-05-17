@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['where_0',['where',['../classorm_1_1Query.html#abdb64ae015ffabc8c71f4e83bb9a8c4c',1,'orm::Query']]]
+  ['select_0',['select',['../classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7',1,'orm::Database']]]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['query_0',['Query',['../md_docs_2query.html',1,'']]]
+  ['insert_20objects_0',['Insert objects',['../md_docs_2database.html#autotoc_md4',1,'']]]
 ];
