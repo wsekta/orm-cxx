@@ -42,9 +42,13 @@ var NAVTREE =
     ] ],
     [ "Query", "md_docs_2query.html", [
       [ "Build select", "md_docs_2query.html#autotoc_md14", null ],
-      [ "Limit select", "md_docs_2query.html#autotoc_md15", null ],
-      [ "Offset select", "md_docs_2query.html#autotoc_md16", null ],
-      [ "Build select", "md_docs_2query.html#autotoc_md17", null ]
+      [ "Where predicates", "md_docs_2query.html#autotoc_md15", null ],
+      [ "Column names and relations", "md_docs_2query.html#autotoc_md16", null ],
+      [ "Ordering", "md_docs_2query.html#autotoc_md17", null ],
+      [ "Distinct", "md_docs_2query.html#autotoc_md18", null ],
+      [ "Limit and offset", "md_docs_2query.html#autotoc_md19", null ],
+      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md20", null ],
+      [ "Current limitations", "md_docs_2query.html#autotoc_md21", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

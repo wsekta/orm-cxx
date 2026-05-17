@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['select_0',['select',['../md_docs_2query.html#autotoc_md14',1,'Build select'],['../md_docs_2query.html#autotoc_md17',1,'Build select'],['../md_docs_2query.html#autotoc_md15',1,'Limit select'],['../md_docs_2query.html#autotoc_md16',1,'Offset select']]],
-  ['simple_20model_1',['Create simple model',['../md_docs_2model.html#autotoc_md8',1,'']]]
+  ['query_0',['Query',['../md_docs_2query.html',1,'']]],
+  ['query_20objects_1',['Query objects',['../md_docs_2database.html#autotoc_md5',1,'']]]
 ];

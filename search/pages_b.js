@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['query_0',['Query',['../md_docs_2query.html',1,'']]],
-  ['query_20objects_1',['Query objects',['../md_docs_2database.html#autotoc_md5',1,'']]]
+  ['predicates_0',['Where predicates',['../md_docs_2query.html#autotoc_md15',1,'']]],
+  ['primary_20key_1',['Primary key',['../md_docs_2model.html#autotoc_md12',1,'']]]
 ];

@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md11',1,'']]],
-  ['fields_20types_1',['Fields types',['../md_docs_2model.html#autotoc_md9',1,'']]]
+  ['database_0',['Database',['../md_docs_2database.html',1,'']]],
+  ['delete_20table_1',['Delete table',['../md_docs_2database.html#autotoc_md3',1,'']]],
+  ['distinct_2',['Distinct',['../md_docs_2query.html#autotoc_md18',1,'']]]
 ];

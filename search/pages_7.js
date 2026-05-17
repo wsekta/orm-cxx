@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['mapping_20fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md11',1,'']]],
-  ['model_1',['Model',['../md_docs_2model.html',1,'']]],
-  ['model_2',['Create simple model',['../md_docs_2model.html#autotoc_md8',1,'']]]
+  ['limit_20and_20offset_0',['Limit and offset',['../md_docs_2query.html#autotoc_md19',1,'']]],
+  ['limitations_1',['Current limitations',['../md_docs_2query.html#autotoc_md21',1,'']]]
 ];

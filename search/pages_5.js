@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['key_0',['Primary key',['../md_docs_2model.html#autotoc_md12',1,'']]]
+  ['insert_20objects_0',['Insert objects',['../md_docs_2database.html#autotoc_md4',1,'']]]
 ];

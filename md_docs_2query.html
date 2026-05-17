@@ -96,43 +96,171 @@ $(function(){initNavTree('md_docs_2query.html','',''); });
 <div class="textblock"><p><a class="anchor" id="autotoc_md13"></a></p>
 <ol type="1">
 <li>Build select</li>
-<li>Limit select</li>
-<li>Offset select</li>
-<li>Build select</li>
+<li>Where predicates</li>
+<li>Column names and relations</li>
+<li>Ordering</li>
+<li>Distinct</li>
+<li>Limit and offset</li>
+<li>Raw SQL fragments</li>
+<li>Current limitations</li>
 </ol>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
 Build select</h1>
-<p>To build select use <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a></span> class. For example:</p>
-<div class="fragment"><div class="line"><span class="keyword">struct </span>ObjectModel</div>
+<p>To query objects from a table use <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;Model&gt;</span> and pass it to <span class="tt"><a class="el" href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7" title="Executes a select query and returns the result.">orm::Database::select</a></span>. The result is always <span class="tt">std::vector&lt;Model&gt;</span>.</p>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &quot;orm-cxx/orm.hpp&quot;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>User</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
+<div class="line">    <span class="keywordtype">int</span> age;</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;ObjectModel&gt;</a> select;</div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line"><span class="keyword">auto</span> users = database.<a class="code hl_function" href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">select</a>(query);</div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:23</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_aae29e5eab83e887cac4f2a230670fdc7"><div class="ttname"><a href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">orm::Database::select</a></div><div class="ttdeci">auto select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a select query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:53</div></div>
 <div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:22</div></div>
-</div><!-- fragment --><p>it is builder class so you can chain methods:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;ObjectModel&gt;</a> select;</div>
-<div class="line">select.<a class="code hl_function" href="classorm_1_1Query.html#a73f6efaddec024eed6b8dcd1e71dd4d4">limit</a>(10).offset(10);</div>
-<div class="ttc" id="aclassorm_1_1Query_html_a73f6efaddec024eed6b8dcd1e71dd4d4"><div class="ttname"><a href="classorm_1_1Query.html#a73f6efaddec024eed6b8dcd1e71dd4d4">orm::Query::limit</a></div><div class="ttdeci">auto limit(std::size_t limit) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the LIMIT clause for the select query.</div><div class="ttdef"><b>Definition</b> query.hpp:104</div></div>
+</div><!-- fragment --><p><span class="tt">Query</span> is a builder, so methods can be chained:</p>
+<div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(col(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18)</div>
+<div class="line">     .orderBy(desc(col(<span class="stringliteral">&quot;id&quot;</span>)))</div>
+<div class="line">     .limit(10)</div>
+<div class="line">     .offset(20);</div>
+<div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:33</div></div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
-Limit select</h1>
-<p>To limit select use <span class="tt">limit</span> method:</p>
-<div class="fragment"><div class="line">select.<a class="code hl_function" href="classorm_1_1Query.html#a73f6efaddec024eed6b8dcd1e71dd4d4">limit</a>(10);</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
-Offset select</h1>
-<p>To offset select use <span class="tt">offset</span> method:</p>
-<div class="fragment"><div class="line">select.<a class="code hl_function" href="classorm_1_1Query.html#ad277561652627e31187604dd6487fec8">offset</a>(10);</div>
-<div class="ttc" id="aclassorm_1_1Query_html_ad277561652627e31187604dd6487fec8"><div class="ttname"><a href="classorm_1_1Query.html#ad277561652627e31187604dd6487fec8">orm::Query::offset</a></div><div class="ttdeci">auto offset(std::size_t offset) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the OFFSET clause for the select query.</div><div class="ttdef"><b>Definition</b> query.hpp:92</div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
-Build select</h1>
-<p>To build select use <span class="tt">buildQuery</span> method, it will return string with select:</p>
-<div class="fragment"><div class="line"><span class="keyword">auto</span> queryString = select.buildQuery();</div>
-</div><!-- fragment --> </div></div><!-- contents -->
+Where predicates</h1>
+<p>Use helpers from <span class="tt">orm::query</span> to build a predicate tree.</p>
+<div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>((col(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18 &amp;&amp; col(<span class="stringliteral">&quot;name&quot;</span>).like(<span class="stringliteral">&quot;Ann%&quot;</span>)) || col(<span class="stringliteral">&quot;email&quot;</span>).isNull());</div>
+</div><!-- fragment --><p>Supported operators:</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">C++ API  </th><th class="markdownTableHeadNone">SQL  </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("age") == 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">=</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("age") != 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">!=</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("age") &gt; 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">&gt;</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("age") &gt;= 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">&gt;=</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("age") &lt; 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">&lt;</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("age") &lt;= 18</span>  </td><td class="markdownTableBodyNone"><span class="tt">&lt;=</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("name").like("Ann%")</span>  </td><td class="markdownTableBodyNone"><span class="tt">LIKE</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("name").notLike("Ann%")</span>  </td><td class="markdownTableBodyNone"><span class="tt">NOT LIKE</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("email").isNull()</span> or <span class="tt">col("email") == nullptr</span>  </td><td class="markdownTableBodyNone"><span class="tt">IS NULL</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("email").isNotNull()</span> or <span class="tt">col("email") != nullptr</span>  </td><td class="markdownTableBodyNone"><span class="tt">IS NOT NULL</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("age").in({18, 19, 20})</span>  </td><td class="markdownTableBodyNone"><span class="tt">IN</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("age").notIn({18, 19, 20})</span>  </td><td class="markdownTableBodyNone"><span class="tt">NOT IN</span>  </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><span class="tt">col("age").between(18, 30)</span>  </td><td class="markdownTableBodyNone"><span class="tt">BETWEEN</span>  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><span class="tt">col("age").notBetween(18, 30)</span>  </td><td class="markdownTableBodyNone"><span class="tt">NOT BETWEEN</span>  </td></tr>
+</table>
+<p>Logical operators are available with <span class="tt">&amp;&amp;</span>, <span class="tt">||</span> and <span class="tt">!</span>.</p>
+<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(!(col(<span class="stringliteral">&quot;name&quot;</span>).like(<span class="stringliteral">&quot;test%&quot;</span>) || col(<span class="stringliteral">&quot;email&quot;</span>).isNull()));</div>
+</div><!-- fragment --><p>Calling <span class="tt">where</span> replaces the current predicate. Use <span class="tt">andWhere</span> or <span class="tt">orWhere</span> to append to the current predicate:</p>
+<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(col(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18)</div>
+<div class="line">     .andWhere(col(<span class="stringliteral">&quot;email&quot;</span>).isNotNull())</div>
+<div class="line">     .orWhere(col(<span class="stringliteral">&quot;name&quot;</span>) == <span class="stringliteral">&quot;admin&quot;</span>);</div>
+</div><!-- fragment --><p>All comparison values are sent to the database as SOCI bind parameters. They are not interpolated into SQL strings.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
+Column names and relations</h1>
+<p><span class="tt">col("field")</span> uses the C++ model field name. If the model defines <span class="tt">columns_names</span>, the query renderer maps the field name to the configured database column name.</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::string displayName;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::map&lt;std::string, std::string&gt; columns_names = {</div>
+<div class="line">        {<span class="stringliteral">&quot;displayName&quot;</span>, <span class="stringliteral">&quot;display_name&quot;</span>},</div>
+<div class="line">    };</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(orm::query::col(<span class="stringliteral">&quot;displayName&quot;</span>) == <span class="stringliteral">&quot;Wojtek&quot;</span>);</div>
+</div><!-- fragment --><p>For one-to-one related models use a one-level path:</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>Profile</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::string city;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>User</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    Profile profile;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(orm::query::col(<span class="stringliteral">&quot;profile.city&quot;</span>) == <span class="stringliteral">&quot;Warsaw&quot;</span>);</div>
+</div><!-- fragment --><p>By default related models are joined. If <span class="tt">disableJoining()</span> is used, only related id fields are available in query paths.</p>
+<p>The typed helper is also available when you want to document the expected field type at the call site:</p>
+<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(orm::query::field&lt;User, int&gt;(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18);</div>
+</div><!-- fragment --><p>The typed helper still takes the field name as a string. It does not infer field names from member pointers.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
+Ordering</h1>
+<p>Use <span class="tt">asc</span> and <span class="tt">desc</span> to add <span class="tt">ORDER BY</span> clauses:</p>
+<div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a>(desc(col(<span class="stringliteral">&quot;age&quot;</span>)), asc(col(<span class="stringliteral">&quot;id&quot;</span>)));</div>
+<div class="ttc" id="aclassorm_1_1Query_html_a0e4c45fc5b506b7dfb03f96d995fe65c"><div class="ttname"><a href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orm::Query::orderBy</a></div><div class="ttdeci">auto orderBy(Orders... orders) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the ORDER BY clauses for the select query.</div><div class="ttdef"><b>Definition</b> query.hpp:69</div></div>
+</div><!-- fragment --><p>Ordering can also use related field paths:</p>
+<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a>(asc(col(<span class="stringliteral">&quot;profile.city&quot;</span>)));</div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
+Distinct</h1>
+<p>Use <span class="tt">distinct()</span> to render <span class="tt">SELECT DISTINCT</span>:</p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a>();</div>
+<div class="ttc" id="aclassorm_1_1Query_html_a6b9e97270d5af0c1aebfcc6c408cf9e2"><div class="ttname"><a href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">orm::Query::distinct</a></div><div class="ttdeci">auto distinct() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Select distinct rows.</div><div class="ttdef"><b>Definition</b> query.hpp:80</div></div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md19"></a>
+Limit and offset</h1>
+<p>Use <span class="tt">limit</span> and <span class="tt">offset</span> to page through results:</p>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a>(orm::query::asc(orm::query::col(<span class="stringliteral">&quot;id&quot;</span>)))</div>
+<div class="line">     .limit(25)</div>
+<div class="line">     .offset(50);</div>
+</div><!-- fragment --><p>SQL clauses are rendered in this order:</p>
+<div class="fragment"><div class="line"><span class="keyword">WHERE</span> ... <span class="keyword">ORDER</span> <span class="keyword">BY</span> ... LIMIT ... OFFSET ...</div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
+Raw SQL fragments</h1>
+<p>Raw predicates and raw ordering are available for cases not covered by the ORM DSL.</p>
+<div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
+<div class="line"> </div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(raw(<span class="stringliteral">&quot;LOWER(users.name) = :name&quot;</span>, param(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;wojtek&quot;</span>)))</div>
+<div class="line">     .orderBy(rawOrder(<span class="stringliteral">&quot;LOWER(users.name) ASC&quot;</span>));</div>
+</div><!-- fragment --><p>Raw SQL text is inserted into the generated query as-is. Values should still be passed as parameters with <span class="tt">param</span>.</p>
+<p>Raw parameter names:</p>
+<ul>
+<li>must not be empty,</li>
+<li>must not include the leading <span class="tt">:</span>,</li>
+<li>must be unique within the query,</li>
+<li>must not use the reserved <span class="tt">orm_p</span> prefix.</li>
+</ul>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md21"></a>
+Current limitations</h1>
+<p>The query language currently covers ORM-style <span class="tt">SELECT</span> returning full model objects. It does not yet support projections, aggregate functions, <span class="tt">GROUP BY</span>, <span class="tt">HAVING</span>, subqueries, <span class="tt">EXISTS</span>, <span class="tt">UPDATE</span> or <span class="tt">DELETE</span>. </p>
+</div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->
 <div id="page-nav" class="page-nav-panel">

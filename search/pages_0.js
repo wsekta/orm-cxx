@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['build_20select_0',['Build select',['../md_docs_2query.html#autotoc_md14',1,'Build select'],['../md_docs_2query.html#autotoc_md17',1,'Build select']]]
+  ['and_20offset_0',['Limit and offset',['../md_docs_2query.html#autotoc_md19',1,'']]],
+  ['and_20relations_1',['Column names and relations',['../md_docs_2query.html#autotoc_md16',1,'']]]
 ];
