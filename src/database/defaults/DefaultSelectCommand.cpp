@@ -243,9 +243,11 @@ auto renderPredicate(const query::PredicateNode& node, DefaultSelectCommand::Ren
     return std::visit(
         Overloaded{[&context](const query::ComparisonExpression& expression)
                    {
-                       return std::format("{} {} {}", renderColumn(expression.column, context),
-                                          comparisonOperatorToSql(expression.comparisonOperator),
-                                          addAutomaticParameter(context, expression.value));
+                       const auto column = renderColumn(expression.column, context);
+                       const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
+                       const auto parameter = addAutomaticParameter(context, expression.value);
+
+                       return std::format("{} {} {}", column, sqlOperator, parameter);
                    },
                    [&context](const query::NullExpression& expression)
                    {
@@ -255,6 +257,8 @@ auto renderPredicate(const query::PredicateNode& node, DefaultSelectCommand::Ren
                    },
                    [&context](const query::ListExpression& expression)
                    {
+                       const auto column = renderColumn(expression.column, context);
+                       const auto sqlOperator = expression.listOperator == query::ListOperator::In ? "IN" : "NOT IN";
                        std::vector<std::string> placeholders;
                        placeholders.reserve(expression.values.size());
 
@@ -263,23 +267,26 @@ auto renderPredicate(const query::PredicateNode& node, DefaultSelectCommand::Ren
                            placeholders.push_back(addAutomaticParameter(context, value));
                        }
 
-                       return std::format("{} {} ({})", renderColumn(expression.column, context),
-                                          expression.listOperator == query::ListOperator::In ? "IN" : "NOT IN",
-                                          join(placeholders, ", "));
+                       return std::format("{} {} ({})", column, sqlOperator, join(placeholders, ", "));
                    },
                    [&context](const query::BetweenExpression& expression)
                    {
-                       return std::format("{} {} {} AND {}", renderColumn(expression.column, context),
-                                          expression.betweenOperator == query::BetweenOperator::Between ? "BETWEEN" :
-                                                                                                          "NOT BETWEEN",
-                                          addAutomaticParameter(context, expression.lowerValue),
-                                          addAutomaticParameter(context, expression.upperValue));
+                       const auto column = renderColumn(expression.column, context);
+                       const auto sqlOperator = expression.betweenOperator == query::BetweenOperator::Between ?
+                                                    "BETWEEN" :
+                                                    "NOT BETWEEN";
+                       const auto lowerParameter = addAutomaticParameter(context, expression.lowerValue);
+                       const auto upperParameter = addAutomaticParameter(context, expression.upperValue);
+
+                       return std::format("{} {} {} AND {}", column, sqlOperator, lowerParameter, upperParameter);
                    },
                    [&context](const query::LogicalExpression& expression)
                    {
-                       return std::format("({} {} {})", renderPredicate(expression.left, context),
-                                          expression.logicalOperator == query::LogicalOperator::And ? "AND" : "OR",
-                                          renderPredicate(expression.right, context));
+                       const auto left = renderPredicate(expression.left, context);
+                       const auto sqlOperator = expression.logicalOperator == query::LogicalOperator::And ? "AND" : "OR";
+                       const auto right = renderPredicate(expression.right, context);
+
+                       return std::format("({} {} {})", left, sqlOperator, right);
                    },
                    [&context](const query::NotExpression& expression)
                    { return std::format("(NOT ({}))", renderPredicate(expression.predicate, context)); },

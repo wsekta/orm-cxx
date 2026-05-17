@@ -123,7 +123,7 @@ if (BUILD_ORM_CXX_TESTS)
         add_test(
                 NAME ${LIBRARY_NAME}-UT
                 COMMAND ${LIBRARY_NAME}-UT
-                WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/build/bin)
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
     else ()
         add_test(
                 NAME ${LIBRARY_NAME}-UT
