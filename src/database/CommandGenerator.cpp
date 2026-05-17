@@ -28,7 +28,7 @@ auto CommandGenerator::insert(const model::ModelInfo& modelInfo) const -> std::s
     return insertCommand->insert(modelInfo);
 }
 
-auto CommandGenerator::select(const query::QueryData& queryData) const -> std::string
+auto CommandGenerator::select(const query::QueryData& queryData) const -> SelectStatement
 {
     return selectCommand->select(queryData);
 }

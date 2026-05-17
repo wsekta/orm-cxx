@@ -8,6 +8,7 @@
 #include "commands/SelectCommand.hpp"
 #include "orm-cxx/model/ModelInfo.hpp"
 #include "orm-cxx/query/QueryData.hpp"
+#include "SelectStatement.hpp"
 
 namespace orm::db
 {
@@ -22,7 +23,7 @@ public:
     [[nodiscard]] auto createTable(const model::ModelInfo& modelInfo) const -> std::string;
     [[nodiscard]] auto dropTable(const model::ModelInfo& modelInfo) const -> std::string;
     [[nodiscard]] auto insert(const model::ModelInfo& modelInfo) const -> std::string;
-    [[nodiscard]] auto select(const query::QueryData& queryData) const -> std::string;
+    [[nodiscard]] auto select(const query::QueryData& queryData) const -> SelectStatement;
 
 private:
     std::unique_ptr<commands::CreateTableCommand> createTableCommand;

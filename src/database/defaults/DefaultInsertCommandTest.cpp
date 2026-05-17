@@ -10,7 +10,11 @@ namespace
 const std::string insertSql =
     "INSERT INTO models_ModelWithFloat (field1, field2, field3) VALUES (:field1, :field2, :field3);";
 const std::string insertSqlWithModelRelatedToOtherModel =
-    "INSERT INTO models_ModelRelatedToOtherModel (id, field1, field2, field3_id) VALUES (:id, :field1, :field2, :field3_id);";
+    "INSERT INTO models_ModelRelatedToOtherModel (id, field1, field2, field3_id) VALUES (:id, :field1, :field2, "
+    ":field3_id);";
+const std::string insertSqlWithModelRelatedToCompositeIdModel =
+    "INSERT INTO models_ModelRelatedToCompositeIdModel (id, field1, field3_field1, field3_field2) "
+    "VALUES (:id, :field1, :field3_field1, :field3_field2);";
 } // namespace
 
 class DefaultInsertCommandTest : public ::testing::Test
@@ -31,4 +35,11 @@ TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToOtherModel)
     orm::Model<models::ModelRelatedToOtherModel> model;
 
     EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToOtherModel);
+}
+
+TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToCompositeIdModel)
+{
+    orm::Model<models::ModelRelatedToCompositeIdModel> model;
+
+    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToCompositeIdModel);
 }

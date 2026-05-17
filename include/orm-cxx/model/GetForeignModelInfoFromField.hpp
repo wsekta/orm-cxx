@@ -15,13 +15,11 @@ struct GetForeignModelInfoFromField
     {
         if constexpr (checkIfIsModelWithId<ModelField>())
         {
-            auto name = rfl::fields<T>()[i].name();
-
             modelInfo.columnsInfo[i].isForeignModel = true;
 
             modelInfo.columnsInfo[i].type = ColumnType::OneToOne;
 
-            modelInfo.foreignModelsInfo[name] = getModelInfo<ModelField>();
+            modelInfo.foreignModelsInfo[modelInfo.columnsInfo[i].name] = getModelInfo<ModelField>();
         }
     }
 };

@@ -38,9 +38,12 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
     {
         command.append("\tPRIMARY KEY (");
 
-        for (const auto& idColumn : modelInfo.idColumnsNames)
+        for (const auto& columnInfo : modelInfo.columnsInfo)
         {
-            command.append(std::format("{}, ", idColumn));
+            if (columnInfo.isPrimaryKey)
+            {
+                command.append(std::format("{}, ", columnInfo.name));
+            }
         }
 
         utils::removeLastComma(command);
@@ -97,9 +100,12 @@ auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo)
 
         foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignModelInfo.tableName));
 
-        for (const auto& foreignIdName : foreignModelInfo.idColumnsNames)
+        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
         {
-            foreignKeyCommand.append(std::format("{}, ", foreignIdName));
+            if (foreignColumnInfo.isPrimaryKey)
+            {
+                foreignKeyCommand.append(std::format("{}, ", foreignColumnInfo.name));
+            }
         }
 
         utils::removeLastComma(foreignKeyCommand);

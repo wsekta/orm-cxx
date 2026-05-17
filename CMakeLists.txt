@@ -39,7 +39,6 @@ set(SOURCES
         src/database/defaults/DefaultInsertCommand.cpp
         src/database/defaults/DefaultSelectCommand.cpp
         src/database/CommandGenerator.cpp
-        src/query/Condition.cpp
 )
 
 add_library(${LIBRARY_NAME} ${SOURCES})
@@ -83,13 +82,14 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultDropTableCommandTest.cpp
             src/database/defaults/DefaultInsertCommandTest.cpp
             src/database/defaults/DefaultSelectCommandTest.cpp
-            src/query/ConditionTest.cpp
+            src/query/PredicateTest.cpp
 
             tests/ModelTest.cpp
             tests/database/TransactionsTest.cpp
             tests/database/SimpleModelTest.cpp
             tests/database/IdModelsTest.cpp
             tests/database/RelatedModelTest.cpp
+            tests/database/QueryLanguageTest.cpp
             tests/database/BaseOperationsTest.cpp
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp

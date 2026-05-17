@@ -1,10 +1,16 @@
 #pragma once
 
+#include <memory>
+#include <utility>
+#include <variant>
+#include <vector>
+
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
+#include "soci/values.h"
 
 namespace orm
 {
@@ -48,15 +54,35 @@ public:
     {
         std::vector<T> result;
 
-        auto command = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
+        auto statement = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
+
+        soci::values parameterValues;
+
+        for (const auto& parameter : statement.parameters)
+        {
+            std::visit([&parameterValues, &parameter](const auto& value)
+                       { parameterValues.set(parameter.name, value); }, parameter.value.get());
+        }
 
         Payload<T>::bindingInfo.joinedValues = query.getData().shouldJoin;
 
-        soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << command);
-
-        for (auto& payload : preparedRowSet)
+        if (statement.parameters.empty())
         {
-            result.push_back(std::move(payload.value));
+            soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql);
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
+        }
+        else
+        {
+            soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql, soci::use(parameterValues));
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
         }
 
         return result;

@@ -24,6 +24,16 @@ const std::string createTableSqlWithReferringToSimpleModel = "CREATE TABLE IF NO
                                                              "\tFOREIGN KEY (field3_id) REFERENCES "
                                                              "models_ModelWithId (id)\n"
                                                              ");";
+
+const std::string createTableSqlWithReferringToCompositeIdModel =
+    "CREATE TABLE IF NOT EXISTS models_ModelRelatedToCompositeIdModel (\n"
+    "\tid INTEGER NOT NULL,\n"
+    "\tfield1 TEXT NOT NULL,\n"
+    "\tfield3_field1 INTEGER NOT NULL,\n"
+    "\tfield3_field2 TEXT NOT NULL,\n"
+    "\tPRIMARY KEY (id),\n"
+    "\tFOREIGN KEY (field3_field1, field3_field2) REFERENCES models_ModelWithOverwrittenId (field1, field2)\n"
+    ");";
 } // namespace
 
 class DefaultCreateTableCommandTest : public ::testing::Test
@@ -46,4 +56,11 @@ TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToSimpleModel)
     orm::Model<models::ModelRelatedToOtherModel> model;
 
     EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToSimpleModel);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToCompositeIdModel)
+{
+    orm::Model<models::ModelRelatedToCompositeIdModel> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToCompositeIdModel);
 }

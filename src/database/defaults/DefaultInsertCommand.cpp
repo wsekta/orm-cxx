@@ -10,10 +10,8 @@ auto DefaultInsertCommand::insert(const model::ModelInfo& modelInfo) const -> st
 {
     auto fieldsNames = getFieldsNames(modelInfo);
 
-    return std::format("INSERT INTO {0:} ({1:}) VALUES ({2:});", 
-                        modelInfo.tableName, 
-                        getInsertFields(fieldsNames),
-                        getInsertValues(fieldsNames));
+    return std::format("INSERT INTO {0:} ({1:}) VALUES ({2:});", modelInfo.tableName, getInsertFields(fieldsNames),
+                       getInsertValues(fieldsNames));
 }
 
 auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& fieldNames) -> std::string
@@ -50,7 +48,7 @@ auto DefaultInsertCommand::getFieldsNames(const model::ModelInfo& modelInfo) -> 
 
     for (const auto& columnInfo : modelInfo.columnsInfo)
     {
-        if(columnInfo.isForeignModel)
+        if (columnInfo.isForeignModel)
         {
             const auto& foreignModelInfo = modelInfo.foreignModelsInfo.at(columnInfo.name);
 
@@ -67,14 +65,17 @@ auto DefaultInsertCommand::getFieldsNames(const model::ModelInfo& modelInfo) -> 
     return fieldsNames;
 }
 
-auto DefaultInsertCommand::getForeginModelIdsNames(const std::string& foreginModelFieldName, 
+auto DefaultInsertCommand::getForeginModelIdsNames(const std::string& foreginModelFieldName,
                                                    const model::ModelInfo& modelInfo) -> std::vector<std::string>
 {
     std::vector<std::string> foreignModelIdsNames;
 
-    for (const auto& idColumnName : modelInfo.idColumnsNames)
+    for (const auto& columnInfo : modelInfo.columnsInfo)
     {
-        foreignModelIdsNames.push_back(std::format("{}_{}", foreginModelFieldName, idColumnName));
+        if (columnInfo.isPrimaryKey)
+        {
+            foreignModelIdsNames.push_back(std::format("{}_{}", foreginModelFieldName, columnInfo.name));
+        }
     }
 
     return foreignModelIdsNames;

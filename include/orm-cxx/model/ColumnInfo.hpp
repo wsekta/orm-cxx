@@ -30,7 +30,9 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids) -> std::vector<C
     {
         ColumnInfo columnInfo{};
 
-        columnInfo.name = getColumnName<T>(field.name());
+        columnInfo.fieldName = field.name();
+
+        columnInfo.name = getColumnName<T>(columnInfo.fieldName);
 
         auto [type, isNotNull] = toColumnType(field.type());
 

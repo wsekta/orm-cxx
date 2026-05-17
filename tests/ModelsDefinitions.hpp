@@ -83,6 +83,13 @@ struct ModelRelatedToOtherModel
     ModelWithId field3;
 };
 
+struct ModelRelatedToCompositeIdModel
+{
+    int id;
+    std::string field1;
+    ModelWithOverwrittenId field3;
+};
+
 struct ModelOptionallyRelatedToOtherModel
 {
     int id;

@@ -1,6 +1,8 @@
 #pragma once
 
+#include <cstddef>
 #include <optional>
+#include <utility>
 
 #include "model.hpp"
 #include "query/QueryData.hpp"
@@ -25,13 +27,60 @@ public:
     Query() : data{.modelInfo = Model<T>().getModelInfo()} {}
 
     /**
-     * @brief Where clause
-     * @param condition
+     * @brief Replaces the WHERE predicate.
+     * @param predicate
      */
-    auto where(const query::Condition& condition) -> Query<T>&
+    auto where(const query::Predicate& predicate) -> Query<T>&
     {
-        data.condition = condition;
-        
+        data.predicate = predicate;
+
+        return *this;
+    }
+
+    /**
+     * @brief Adds a predicate with AND.
+     * @param predicate
+     */
+    auto andWhere(const query::Predicate& predicate) -> Query<T>&
+    {
+        data.predicate = data.predicate.has_value() ? data.predicate.value() && predicate : predicate;
+
+        return *this;
+    }
+
+    /**
+     * @brief Adds a predicate with OR.
+     * @param predicate
+     */
+    auto orWhere(const query::Predicate& predicate) -> Query<T>&
+    {
+        data.predicate = data.predicate.has_value() ? data.predicate.value() || predicate : predicate;
+
+        return *this;
+    }
+
+    /**
+     * @brief Sets the ORDER BY clauses for the select query.
+     * @param orders The ORDER BY clauses.
+     *
+     * @return A reference to the QueryBuilder object.
+     */
+    template <typename... Orders>
+    auto orderBy(Orders... orders) -> Query<T>&
+    {
+        data.orderBy = {std::move(orders)...};
+
+        return *this;
+    }
+
+    /**
+     * @brief Select distinct rows.
+     * @return A reference to the QueryBuilder object.
+     */
+    inline auto distinct() -> Query<T>&
+    {
+        data.isDistinct = true;
+
         return *this;
     }
 

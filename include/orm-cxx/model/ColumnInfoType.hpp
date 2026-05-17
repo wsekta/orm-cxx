@@ -8,6 +8,7 @@ namespace orm::model
 {
 struct ColumnInfo
 {
+    std::string fieldName;
     std::string name;
     ColumnType type;
     bool isPrimaryKey;
