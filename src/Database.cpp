@@ -1,6 +1,7 @@
 #include "orm-cxx/database.hpp"
 
 #include <regex>
+#include <stdexcept>
 
 namespace
 {
@@ -48,5 +49,35 @@ auto Database::rollbackTransaction() -> void
 {
     transaction->rollback();
     transaction.reset();
+}
+
+auto Database::executeMutation(const db::Statement& statement) -> std::size_t
+{
+    soci::values parameterValues;
+    detail::bindStatementParameters(parameterValues, statement.parameters);
+
+    auto executeAndGetAffectedRows = [](soci::statement& preparedStatement) -> std::size_t
+    {
+        preparedStatement.execute(true);
+
+        const auto affectedRows = preparedStatement.get_affected_rows();
+        if (affectedRows < 0)
+        {
+            throw std::runtime_error{"Database backend did not report affected row count"};
+        }
+
+        return static_cast<std::size_t>(affectedRows);
+    };
+
+    if (statement.parameters.empty())
+    {
+        soci::statement preparedStatement = (sql.prepare << statement.sql);
+
+        return executeAndGetAffectedRows(preparedStatement);
+    }
+
+    soci::statement preparedStatement = (sql.prepare << statement.sql, soci::use(parameterValues));
+
+    return executeAndGetAffectedRows(preparedStatement);
 }
 } // namespace orm

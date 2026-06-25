@@ -7,7 +7,8 @@
 5. [Distinct](#distinct)
 6. [Limit and offset](#limit-and-offset)
 7. [Raw SQL fragments](#raw-sql-fragments)
-8. [Current limitations](#current-limitations)
+8. [Write predicates](#write-predicates)
+9. [Current limitations](#current-limitations)
 
 ## Build select
 
@@ -202,7 +203,34 @@ Raw parameter names:
 * must be unique within the query,
 * must not use the reserved `orm_p` prefix.
 
+## Write predicates
+
+The same predicate DSL is used by `orm::Update<Model>` and `orm::Database::remove<Model>`:
+
+```cpp
+using namespace orm::query;
+
+orm::Update<User> update;
+update.set(col("email"), "new-email@example.com")
+      .where(col("id") == 1);
+
+auto updatedRows = database.update(update);
+auto removedRows = database.remove<User>(col("email").isNull());
+```
+
+Write predicates do not generate joins. They support direct model fields and related primary-key paths that can be mapped
+to local foreign-key columns:
+
+```cpp
+update.where(col("profile.id") == 10);
+```
+
+Non-primary-key related paths in write predicates, such as `col("profile.city")`, throw `std::invalid_argument`.
+Assignments use the same rule: direct fields are supported, and related primary-key assignments update the local
+foreign-key column.
+
 ## Current limitations
 
-The query language currently covers ORM-style `SELECT` returning full model objects.
-It does not yet support projections, aggregate functions, `GROUP BY`, `HAVING`, subqueries, `EXISTS`, `UPDATE` or `DELETE`.
+The query language currently covers ORM-style `SELECT` returning full model objects plus predicate-based `UPDATE` and
+`DELETE` operations.
+It does not yet support projections, aggregate functions, `GROUP BY`, `HAVING`, subqueries or `EXISTS`.

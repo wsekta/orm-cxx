@@ -1,6 +1,8 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -8,12 +10,79 @@
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
+#include "database/Statement.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
 #include "soci/values.h"
+#include "update.hpp"
 
 namespace orm
 {
+namespace detail
+{
+template <typename T>
+inline auto bindTypedNullStatementParameter(soci::values& values, const std::string& name, const T& value) -> void
+{
+    values.set(name, value);
+    values.set(name, value, soci::i_null);
+}
+
+inline auto bindNullStatementParameter(soci::values& values, const db::StatementParameter& parameter) -> void
+{
+    switch (parameter.nullType)
+    {
+    case model::ColumnType::Bool:
+    case model::ColumnType::Char:
+    case model::ColumnType::UnsignedChar:
+    case model::ColumnType::Short:
+    case model::ColumnType::UnsignedShort:
+    case model::ColumnType::Int:
+        bindTypedNullStatementParameter(values, parameter.name, int{});
+        return;
+    case model::ColumnType::UnsignedInt:
+    case model::ColumnType::UnsignedLongLong:
+        bindTypedNullStatementParameter(values, parameter.name, static_cast<unsigned long long>(0));
+        return;
+    case model::ColumnType::LongLong:
+        bindTypedNullStatementParameter(values, parameter.name, static_cast<long long>(0));
+        return;
+    case model::ColumnType::Float:
+    case model::ColumnType::Double:
+        bindTypedNullStatementParameter(values, parameter.name, 0.0);
+        return;
+    case model::ColumnType::String:
+        bindTypedNullStatementParameter(values, parameter.name, std::string{});
+        return;
+    case model::ColumnType::Uuid:
+    case model::ColumnType::Unknown:
+    case model::ColumnType::OneToOne:
+        throw std::invalid_argument{"Cannot bind NULL parameter with unsupported column type"};
+    }
+
+    throw std::invalid_argument{"Cannot bind NULL parameter with unsupported column type"};
+}
+
+inline auto bindStatementParameter(soci::values& values, const db::StatementParameter& parameter) -> void
+{
+    if (parameter.value.has_value())
+    {
+        std::visit([&values, &parameter](const auto& value) { values.set(parameter.name, value); },
+                   parameter.value->get());
+        return;
+    }
+
+    bindNullStatementParameter(values, parameter);
+}
+
+inline auto bindStatementParameters(soci::values& values, const std::vector<db::StatementParameter>& parameters) -> void
+{
+    for (const auto& parameter : parameters)
+    {
+        bindStatementParameter(values, parameter);
+    }
+}
+} // namespace detail
+
 /**
  * @brief A class representing a database in the ORM framework.
  *
@@ -60,8 +129,7 @@ public:
 
         for (const auto& parameter : statement.parameters)
         {
-            std::visit([&parameterValues, &parameter](const auto& value)
-                       { parameterValues.set(parameter.name, value); }, parameter.value.get());
+            detail::bindStatementParameter(parameterValues, parameter);
         }
 
         Payload<T>::bindingInfo.joinedValues = query.getData().shouldJoin;
@@ -122,6 +190,37 @@ public:
     }
 
     /**
+     * @brief Executes an update query.
+     *
+     * @tparam T The type of the query model.
+     * @param update The update builder with assignments and a required predicate.
+     * @return The number of affected rows.
+     */
+    template <typename T>
+    auto update(const Update<T>& update) -> std::size_t
+    {
+        const auto statement = commandGeneratorFactory.getCommandGenerator(backendType).update(update.getData());
+
+        return executeMutation(statement);
+    }
+
+    /**
+     * @brief Executes a delete query for rows matching a predicate.
+     *
+     * @tparam T The type of the model whose rows will be deleted.
+     * @param predicate The required predicate used in the WHERE clause.
+     * @return The number of affected rows.
+     */
+    template <typename T>
+    auto remove(const query::Predicate& predicate) -> std::size_t
+    {
+        static auto modelInfo = Model<T>::getModelInfo();
+        const auto statement = commandGeneratorFactory.getCommandGenerator(backendType).remove(modelInfo, predicate);
+
+        return executeMutation(statement);
+    }
+
+    /**
      * @brief Execute a create table query for a model.
      *
      * @tparam T The type of the model which table to will be created.
@@ -174,6 +273,8 @@ public:
     auto rollbackTransaction() -> void;
 
 private:
+    auto executeMutation(const db::Statement& statement) -> std::size_t;
+
     soci::session sql;
     std::unique_ptr<soci::transaction> transaction;
     db::BackendType backendType;

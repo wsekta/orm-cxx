@@ -1,9 +1,11 @@
 #include "orm-cxx/database/CommandGeneratorFactory.hpp"
 
 #include "defaults/DefaultCreateTableCommand.hpp"
+#include "defaults/DefaultDeleteCommand.hpp"
 #include "defaults/DefaultDropTableCommand.hpp"
 #include "defaults/DefaultInsertCommand.hpp"
 #include "defaults/DefaultSelectCommand.hpp"
+#include "defaults/DefaultUpdateCommand.hpp"
 #include "sqlite/SqliteTypeTranslator.hpp"
 
 namespace orm::db
@@ -15,9 +17,12 @@ CommandGeneratorFactory::CommandGeneratorFactory()
     auto defaultDropTableCommand = std::make_unique<commands::DefaultDropTableCommand>();
     auto defaultInsertCommand = std::make_unique<commands::DefaultInsertCommand>();
     auto defaultSelectCommand = std::make_unique<commands::DefaultSelectCommand>();
+    auto defaultUpdateCommand = std::make_unique<commands::DefaultUpdateCommand>();
+    auto defaultDeleteCommand = std::make_unique<commands::DefaultDeleteCommand>();
 
     CommandGenerator sqliteCommandGenerator{std::move(sqliteCreateTableCommand), std::move(defaultDropTableCommand),
-                                            std::move(defaultInsertCommand), std::move(defaultSelectCommand)};
+                                            std::move(defaultInsertCommand), std::move(defaultSelectCommand),
+                                            std::move(defaultUpdateCommand), std::move(defaultDeleteCommand)};
 
     commandGenerators.emplace(BackendType::Sqlite, std::move(sqliteCommandGenerator));
 }

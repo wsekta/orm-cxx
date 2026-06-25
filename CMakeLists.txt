@@ -38,6 +38,9 @@ set(SOURCES
         src/database/defaults/DefaultDropTableCommand.cpp
         src/database/defaults/DefaultInsertCommand.cpp
         src/database/defaults/DefaultSelectCommand.cpp
+        src/database/defaults/DefaultUpdateCommand.cpp
+        src/database/defaults/DefaultDeleteCommand.cpp
+        src/database/defaults/SqlRenderer.cpp
         src/database/CommandGenerator.cpp
 )
 
@@ -82,11 +85,14 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultDropTableCommandTest.cpp
             src/database/defaults/DefaultInsertCommandTest.cpp
             src/database/defaults/DefaultSelectCommandTest.cpp
+            src/database/defaults/DefaultUpdateCommandTest.cpp
+            src/database/defaults/DefaultDeleteCommandTest.cpp
             src/query/PredicateTest.cpp
 
             tests/ModelTest.cpp
             tests/database/TransactionsTest.cpp
             tests/database/SimpleModelTest.cpp
+            tests/database/WriteOperationsTest.cpp
             tests/database/IdModelsTest.cpp
             tests/database/RelatedModelTest.cpp
             tests/database/QueryLanguageTest.cpp

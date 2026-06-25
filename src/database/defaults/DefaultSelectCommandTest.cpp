@@ -58,9 +58,9 @@ const std::string selectSqlWithModelRelatedToCompositeIdModelWithJoining =
     "field3.field2 = models_ModelRelatedToCompositeIdModel.field3_field2;";
 
 template <typename T>
-auto getValue(const orm::query::QueryParameter& parameter) -> T
+auto getValue(const orm::db::StatementParameter& parameter) -> T
 {
-    return std::get<T>(parameter.value.get());
+    return std::get<T>(parameter.value->get());
 }
 } // namespace
 
@@ -277,7 +277,7 @@ TEST_F(DefaultSelectCommandTest, selectWithUnknownColumn_shouldThrow)
 
     query.where(col("missing") == 1);
 
-    EXPECT_THROW(command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
@@ -286,7 +286,7 @@ TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
 
     query.where(raw("field1 = :orm_p0", param("orm_p0", 1)));
 
-    EXPECT_THROW(command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
@@ -295,5 +295,5 @@ TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
 
     query.where(raw("field1 = :value OR field2 = :value", param("value", 1), param("value", 2)));
 
-    EXPECT_THROW(command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }

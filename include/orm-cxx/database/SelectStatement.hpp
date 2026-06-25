@@ -1,15 +1,8 @@
 #pragma once
 
-#include <string>
-#include <vector>
-
-#include "orm-cxx/query/QueryValue.hpp"
+#include "Statement.hpp"
 
 namespace orm::db
 {
-struct SelectStatement
-{
-    std::string sql;
-    std::vector<query::QueryParameter> parameters;
-};
+using SelectStatement = Statement;
 } // namespace orm::db

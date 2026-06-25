@@ -5,7 +5,9 @@
 3. [Delete table](#delete-table)
 4. [Insert objects](#insert-objects)
 5. [Query objects](#select-objects)
-6. [Transactions](#transactions)
+6. [Update objects](#update-objects)
+7. [Remove objects](#remove-objects)
+8. [Transactions](#transactions)
 
 ## Connect
 
@@ -77,6 +79,44 @@ query.where(col("name").like("name%"))
 
 auto queriedObjects = database.select(query);
 ```
+
+## Update objects
+
+To update rows, build an `orm::Update<Model>` with one or more assignments and a required predicate:
+
+```cpp
+using namespace orm::query;
+
+orm::Update<ObjectModel> update;
+update.set(col("email"), "new-email@example.com")
+      .set(col("updated_at"), "updated_at")
+      .where(col("id") == 1);
+
+std::size_t updatedRows = database.update(update);
+```
+
+Use `std::nullopt` to store `NULL` in nullable columns:
+
+```cpp
+orm::Update<ObjectModel> clearEmail;
+clearEmail.set(col("email"), std::nullopt)
+          .where(col("id") == 1);
+```
+
+`update` returns the number of affected rows. Calling it without a `where` predicate or without assignments throws
+`std::invalid_argument`. Assigning `NULL` to a non-nullable column also throws before executing SQL.
+
+## Remove objects
+
+To delete rows, call `remove` with the model type and a required predicate:
+
+```cpp
+using namespace orm::query;
+
+std::size_t removedRows = database.remove<ObjectModel>(col("id") == 1);
+```
+
+`remove` returns the number of affected rows. There is no unfiltered public delete-row API.
 
 ## Transactions
 
