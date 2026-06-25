@@ -20,26 +20,26 @@ class QueryValue
 public:
     using Value = std::variant<int, long long, unsigned long long, double, std::string>;
 
-    QueryValue(bool value) : value{static_cast<int>(value)} {}
-    QueryValue(char value) : value{static_cast<int>(value)} {}
-    QueryValue(signed char value) : value{static_cast<int>(value)} {}
-    QueryValue(unsigned char value) : value{static_cast<int>(value)} {}
-    QueryValue(short value) : value{static_cast<int>(value)} {}
-    QueryValue(unsigned short value) : value{static_cast<int>(value)} {}
-    QueryValue(int value) : value{value} {}
-    QueryValue(unsigned int value) : value{static_cast<unsigned long long>(value)} {}
-    QueryValue(long value) : value{static_cast<long long>(value)} {}
-    QueryValue(unsigned long value) : value{static_cast<unsigned long long>(value)} {}
-    QueryValue(long long value) : value{value} {}
-    QueryValue(unsigned long long value) : value{value} {}
-    QueryValue(float value) : value{static_cast<double>(value)} {}
-    QueryValue(double value) : value{value} {}
-    QueryValue(const char* value) : value{std::string{value}} {}
-    QueryValue(std::string value) : value{std::move(value)} {}
-    QueryValue(std::string_view value) : value{std::string{value}} {}
+    QueryValue(bool inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(char inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(signed char inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(unsigned char inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(short inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(unsigned short inputValue) : value{static_cast<int>(inputValue)} {}
+    QueryValue(int inputValue) : value{inputValue} {}
+    QueryValue(unsigned int inputValue) : value{static_cast<unsigned long long>(inputValue)} {}
+    QueryValue(long inputValue) : value{static_cast<long long>(inputValue)} {}
+    QueryValue(unsigned long inputValue) : value{static_cast<unsigned long long>(inputValue)} {}
+    QueryValue(long long inputValue) : value{inputValue} {}
+    QueryValue(unsigned long long inputValue) : value{inputValue} {}
+    QueryValue(float inputValue) : value{static_cast<double>(inputValue)} {}
+    QueryValue(double inputValue) : value{inputValue} {}
+    QueryValue(const char* inputValue) : value{std::string{inputValue}} {}
+    QueryValue(std::string inputValue) : value{std::move(inputValue)} {}
+    QueryValue(std::string_view inputValue) : value{std::string{inputValue}} {}
 
     template <std::size_t Size>
-    QueryValue(const char (&value)[Size]) : value{std::string{value}}
+    QueryValue(const char (&inputValue)[Size]) : value{std::string{inputValue}}
     {
     }
 

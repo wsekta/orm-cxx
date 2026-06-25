@@ -301,7 +301,12 @@ auto renderPredicate(const query::PredicateNode& node, DefaultSelectCommand::Ren
 
 auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> SelectStatement
 {
-    RenderContext context{.queryData = queryData};
+    RenderContext context{
+        .queryData = queryData,
+        .parameters = {},
+        .parameterNames = {},
+        .nextParameterIndex = 0,
+    };
     const auto selectFields = getSelectFields(queryData.shouldJoin, queryData.modelInfo);
     const auto joins = getJoins(queryData.shouldJoin, queryData.modelInfo);
     const auto where = getWhere(queryData.predicate, context);

@@ -63,7 +63,7 @@ public:
      * A path can reference a direct field such as "name" or one one-to-one relation level,
      * such as "profile.city".
      */
-    explicit Column(std::string path) : path{std::move(path)} {}
+    explicit Column(std::string columnPath) : path{std::move(columnPath)} {}
 
     [[nodiscard]] auto getPath() const -> const std::string&
     {
@@ -194,7 +194,7 @@ public:
     /**
      * @brief Creates a predicate from an expression node.
      */
-    explicit Predicate(PredicateNode node) : node{std::make_shared<PredicateNode>(std::move(node))} {}
+    explicit Predicate(PredicateNode predicateNode) : node{std::make_shared<PredicateNode>(std::move(predicateNode))} {}
 
     [[nodiscard]] auto getNode() const -> const PredicateNode&
     {
