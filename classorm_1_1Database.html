@@ -151,6 +151,12 @@ auto&#160;</td><td class="memItemRight"><b>disconnect</b> () -&gt; void</td></tr
 <tr class="memitem:acbc75aba074b7474bc0c2ee6445a1c0e" id="r_acbc75aba074b7474bc0c2ee6445a1c0e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:acbc75aba074b7474bc0c2ee6445a1c0e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#acbc75aba074b7474bc0c2ee6445a1c0e">insert</a> (T object) -&gt; void</td></tr>
 <tr class="memdesc:acbc75aba074b7474bc0c2ee6445a1c0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for a single object.  <br /></td></tr>
+<tr class="memitem:a221678fa744bb78b0ecd6a6610231433" id="r_a221678fa744bb78b0ecd6a6610231433"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a221678fa744bb78b0ecd6a6610231433 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a221678fa744bb78b0ecd6a6610231433">update</a> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
+<tr class="memdesc:a221678fa744bb78b0ecd6a6610231433"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes an update query.  <br /></td></tr>
+<tr class="memitem:a2321eb9d51932ca7d6278142a3dbac9e" id="r_a2321eb9d51932ca7d6278142a3dbac9e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a2321eb9d51932ca7d6278142a3dbac9e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a2321eb9d51932ca7d6278142a3dbac9e">remove</a> (const query::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
+<tr class="memdesc:a2321eb9d51932ca7d6278142a3dbac9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
 <tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d" id="r_a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a5dc553baa29a3ec7fd46b81e412ffa5d template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a> () -&gt; void</td></tr>
 <tr class="memdesc:a5dc553baa29a3ec7fd46b81e412ffa5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a create table query for a model.  <br /></td></tr>
@@ -370,6 +376,48 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
+<a id="a2321eb9d51932ca7d6278142a3dbac9e" name="a2321eb9d51932ca7d6278142a3dbac9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2321eb9d51932ca7d6278142a3dbac9e">&#9670;&#160;</a></span>remove()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::remove </td>
+          <td>(</td>
+          <td class="paramtype">const query::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
+          <td> -&gt; std::size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes a delete query for rows matching a predicate. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the model whose rows will be deleted. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">predicate</td><td>The required predicate used in the WHERE clause. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of affected rows. </dd></dl>
+
+</div>
+</div>
 <a id="aae29e5eab83e887cac4f2a230670fdc7" name="aae29e5eab83e887cac4f2a230670fdc7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aae29e5eab83e887cac4f2a230670fdc7">&#9670;&#160;</a></span>select()</h2>
 
@@ -409,6 +457,48 @@ template&lt;typename T&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The vector of objects of type T returned by the select query. </dd></dl>
+
+</div>
+</div>
+<a id="a221678fa744bb78b0ecd6a6610231433" name="a221678fa744bb78b0ecd6a6610231433"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a221678fa744bb78b0ecd6a6610231433">&#9670;&#160;</a></span>update()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::update </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>update</em></span></td><td>)</td>
+          <td> -&gt; std::size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes an update query. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">T</td><td>The type of the query model. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">update</td><td>The update builder with assignments and a required predicate. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The number of affected rows. </dd></dl>
 
 </div>
 </div>

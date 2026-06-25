@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['where_0',['where',['../classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38',1,'orm::Query']]],
-  ['where_20predicates_1',['Where predicates',['../md_docs_2query.html#autotoc_md15',1,'']]]
+  ['update_0',['Update',['../classorm_1_1Update.html',1,'orm']]],
+  ['update_1',['update',['../classorm_1_1Database.html#a221678fa744bb78b0ecd6a6610231433',1,'orm::Database']]],
+  ['update_20objects_2',['Update objects',['../md_docs_2database.html#autotoc_md6',1,'']]]
 ];

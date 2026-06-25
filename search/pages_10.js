@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['where_20predicates_0',['Where predicates',['../md_docs_2query.html#autotoc_md15',1,'']]]
+  ['update_20objects_0',['Update objects',['../md_docs_2database.html#autotoc_md6',1,'']]]
 ];
