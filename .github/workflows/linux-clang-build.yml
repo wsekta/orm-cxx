@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -47,10 +47,20 @@ jobs:
       - name: Run tests
         working-directory: ${{github.workspace}}/build/
         run: |
-          ninja orm-cxx-ccov-all \
-          && llvm-cov show `cat ccov/binaries.list` -instr-profile=ccov/all-merged.profdata > coverage.txt
+          ninja orm-cxx-ccov-all
+          llvm-cov export \
+            ./orm-cxx-UT \
+            -instr-profile=ccov/all-merged.profdata \
+            -format=lcov \
+            > coverage.lcov
 
       - name: Codecov
-        uses: codecov/codecov-action@v3.1.4
+        uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOVTOKEN }}
+          token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
+          files: ${{github.workspace}}/build/coverage.lcov
+          flags: clang
+          name: clang
+          disable_search: true
+          fail_ci_if_error: true
+          verbose: true

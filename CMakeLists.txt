@@ -117,6 +117,8 @@ if (BUILD_ORM_CXX_TESTS)
 
     add_code_coverage_all_targets()
 
+    target_code_coverage(${LIBRARY_NAME})
+
     add_executable(${LIBRARY_NAME}-UT ${UT_SOURCES})
 
     target_link_libraries(${LIBRARY_NAME}-UT PRIVATE gtest_main gmock_main orm-cxx faker-cxx)
