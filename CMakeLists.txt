@@ -100,6 +100,7 @@ if (BUILD_ORM_CXX_TESTS)
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp
             tests/reflection/TypeNameTest.cpp
+            tests/utils/ConstexprForTest.cpp
             tests/utils/ConstexprStringViewTest.cpp
     )
 
