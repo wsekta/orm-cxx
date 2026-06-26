@@ -23,9 +23,9 @@ struct RenderContext
     const model::ModelInfo& modelInfo;
     bool shouldJoin = true;
     ColumnRenderMode columnRenderMode = ColumnRenderMode::Select;
-    std::vector<StatementParameter> parameters;
-    std::unordered_set<std::string> parameterNames;
-    std::size_t nextParameterIndex{};
+    std::vector<StatementParameter> parameters = {};
+    std::unordered_set<std::string> parameterNames = {};
+    std::size_t nextParameterIndex = 0;
 };
 
 struct WriteColumn
