@@ -52,6 +52,7 @@ jobs:
             ./orm-cxx-UT \
             -instr-profile=ccov/all-merged.profdata \
             -format=lcov \
+            --skip-branches \
             -ignore-filename-regex='.*/externals/.*' \
             -ignore-filename-regex='.*/tests/.*' \
             -ignore-filename-regex='.*/src/.*Test\.cpp' \
