@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -81,6 +82,8 @@ inline auto bindStatementParameters(soci::values& values, const std::vector<db::
         bindStatementParameter(values, parameter);
     }
 }
+
+auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 } // namespace detail
 
 /**

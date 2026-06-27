@@ -52,6 +52,9 @@ jobs:
             ./orm-cxx-UT \
             -instr-profile=ccov/all-merged.profdata \
             -format=lcov \
+            -ignore-filename-regex='.*/externals/.*' \
+            -ignore-filename-regex='.*/tests/.*' \
+            -ignore-filename-regex='.*/src/.*Test\.cpp' \
             > coverage.lcov
 
       - name: Codecov

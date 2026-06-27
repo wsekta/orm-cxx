@@ -62,6 +62,24 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 {
     return std::get<T>(parameter.value->get());
 }
+
+auto expectedModelWithFloatWhereSql(const std::string& predicateSql) -> std::string
+{
+    return "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+           "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+           "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+           "FROM models_ModelWithFloat WHERE " +
+           predicateSql + ";";
+}
+
+auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& command,
+                                  const orm::query::Predicate& predicate) -> std::string
+{
+    orm::Query<models::ModelWithFloat> query;
+    query.where(predicate);
+
+    return command.select(orm::Database::getQueryData(query)).sql;
+}
 } // namespace
 
 class DefaultSelectCommandTest : public ::testing::Test
@@ -137,6 +155,34 @@ TEST_F(DefaultSelectCommandTest, selectWithComparisonPredicate_shouldUseBindPara
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(statement.parameters[0].name, "orm_p0");
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 5);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithComparisonOperators_shouldRenderSqlOperators)
+{
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field1") != 5),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field1 != :orm_p0"));
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field1") > 5),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field1 > :orm_p0"));
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field1") >= 5),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field1 >= :orm_p0"));
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field1") < 5),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field1 < :orm_p0"));
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field1") <= 5),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field1 <= :orm_p0"));
+    EXPECT_EQ(renderModelWithFloatWhereSql(command, col("field2").notLike("%abc%")),
+              expectedModelWithFloatWhereSql("models_ModelWithFloat.field2 NOT LIKE :orm_p0"));
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithUnsupportedComparisonOperator_shouldThrow)
+{
+    orm::Query<models::ModelWithFloat> query;
+    query.where(orm::query::Predicate{orm::query::PredicateNode{orm::query::ComparisonExpression{
+        .column = col("field1"),
+        .comparisonOperator = static_cast<orm::query::ComparisonOperator>(999),
+        .value = orm::query::QueryValue{1},
+    }}});
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLogicalPredicates)
@@ -246,6 +292,69 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedFieldPath)
               "WHERE field3.field2 = :orm_p0;");
 }
 
+TEST_F(DefaultSelectCommandTest, selectWithEmptyColumnPath_shouldThrow)
+{
+    orm::Query<models::ModelWithFloat> query;
+
+    query.where(col("") == 1);
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithScalarUsedAsRelatedPath_shouldThrow)
+{
+    orm::Query<models::ModelWithFloat> query;
+
+    query.where(col("field1.field2") == 1);
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithRelatedModelColumn_shouldThrow)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.where(col("field3") == 1);
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithRelatedNonPrimaryKeyWithoutJoining_shouldThrow)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.disableJoining().where(col("field3.field2") == "target");
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithRelatedPrimaryKeyWithoutJoining_shouldUseForeignKeyColumn)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.disableJoining().where(col("field3.id") == 2);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
+              "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
+              "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
+              "models_ModelRelatedToOtherModel.field3_id AS models_ModelRelatedToOtherModel_field3_id "
+              "FROM models_ModelRelatedToOtherModel WHERE models_ModelRelatedToOtherModel.field3_id = :orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 2);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithTooDeepRelatedPath_shouldThrow)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.where(col("field3.id.extra") == 1);
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoining)
 {
     orm::Query<models::ModelRelatedToOtherModel> query;
@@ -296,4 +405,21 @@ TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
     query.where(raw("field1 = :value OR field2 = :value", param("value", 1), param("value", 2)));
 
     EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectWithInvalidRawParameterName_shouldThrow)
+{
+    {
+        orm::Query<models::ModelWithFloat> query;
+        query.where(raw("field1 = :value", param("", 1)));
+
+        EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    }
+
+    {
+        orm::Query<models::ModelWithFloat> query;
+        query.where(raw("field1 = :value", param(":value", 1)));
+
+        EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    }
 }

@@ -93,6 +93,20 @@ TEST_P(WriteOperationsTest, removeMatchingRow_shouldDeleteOnlyMatchingRow)
     EXPECT_EQ(returnedModels[0].field1, 1);
 }
 
+TEST_P(WriteOperationsTest, removeWithRawPredicateWithoutParameters_shouldReturnAffectedRows)
+{
+    createTable<models::SomeDataModel>();
+    database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}});
+
+    const auto affectedRows = database.remove<models::SomeDataModel>(raw("field1 = field1"));
+
+    orm::Query<models::SomeDataModel> query;
+    const auto returnedModels = database.select(query);
+
+    ASSERT_EQ(affectedRows, 2);
+    EXPECT_TRUE(returnedModels.empty());
+}
+
 TEST_P(WriteOperationsTest, updateWithSqlInjectionLikeValue_shouldTreatValueAsParameter)
 {
     createTable<models::SomeDataModel>();

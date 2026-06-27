@@ -1,5 +1,8 @@
 #pragma once
 
+#include <type_traits>
+#include <utility>
+
 #include "GetForeignModelInfoFromField.hpp"
 #include "ModelInfo.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
@@ -15,8 +18,7 @@ auto getModelInfo() -> ModelInfo
     modelInfo.tableName = getTableName<T>();
     modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames);
 
-    using model_tuple_t =
-        std::decay_t<std::invoke_result_t<decltype([](auto t) { return rfl::to_view(t).values(); }), T>>;
+    using model_tuple_t = std::decay_t<decltype(rfl::to_view(std::declval<T&>()).values())>;
 
     auto getForeignModelInfoFromField = [&modelInfo](auto i, auto field)
     { GetForeignModelInfoFromField<T, std::decay_t<decltype(*field)>>::get(i, modelInfo); };

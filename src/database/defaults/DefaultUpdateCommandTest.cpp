@@ -111,6 +111,24 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedNonPrimaryKeyAssignment_should
     EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
 }
 
+TEST_F(DefaultUpdateCommandTest, updateWithRelatedModelAssignment_shouldThrow)
+{
+    orm::Update<models::ModelRelatedToOtherModel> update;
+
+    update.set(col("field3"), 2).where(col("id") == 1);
+
+    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+}
+
+TEST_F(DefaultUpdateCommandTest, updateWithTooDeepRelatedAssignment_shouldThrow)
+{
+    orm::Update<models::ModelRelatedToOtherModel> update;
+
+    update.set(col("field3.id.extra"), 2).where(col("id") == 1);
+
+    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+}
+
 TEST_F(DefaultUpdateCommandTest, updateWithoutPredicate_shouldThrow)
 {
     orm::Update<models::ModelWithFloat> update;

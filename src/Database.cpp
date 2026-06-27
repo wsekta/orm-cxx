@@ -10,6 +10,16 @@ const std::regex sqliteRegex(R"(sqlite3\:\/\/.*)");
 
 namespace orm
 {
+auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
+{
+    if (affectedRows < 0)
+    {
+        throw std::runtime_error{"Database backend did not report affected row count"};
+    }
+
+    return static_cast<std::size_t>(affectedRows);
+}
+
 Database::Database() : backendType{db::BackendType::Empty} {}
 
 auto Database::connect(const std::string& connectionString) -> void
@@ -60,13 +70,7 @@ auto Database::executeMutation(const db::Statement& statement) -> std::size_t
     {
         preparedStatement.execute(true);
 
-        const auto affectedRows = preparedStatement.get_affected_rows();
-        if (affectedRows < 0)
-        {
-            throw std::runtime_error{"Database backend did not report affected row count"};
-        }
-
-        return static_cast<std::size_t>(affectedRows);
+        return detail::normalizeAffectedRows(preparedStatement.get_affected_rows());
     };
 
     if (statement.parameters.empty())

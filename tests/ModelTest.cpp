@@ -1,4 +1,5 @@
 #include "orm-cxx/model.hpp"
+#include "orm-cxx/model/NameMapping.hpp"
 
 #include <gtest/gtest.h>
 
@@ -79,6 +80,16 @@ TEST(ModelTest, StructWithNamesMapping_shouldHaveTwoColumnsWithNamesFromMapping)
     EXPECT_EQ(model.getModelInfo().columnsInfo[1].name, "some_field1_name");
     EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "some_field2_name");
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("some_id_name"));
+}
+
+TEST(ModelTest, shouldGetMappedAndFallbackColumnNames)
+{
+    const auto unmappedName = std::string{"field1"};
+    const auto missingMappedName = std::string{"missing"};
+
+    EXPECT_EQ(orm::model::getColumnName<models::ModelWithIdAndNamesMapping>("field1"), "some_field1_name");
+    EXPECT_EQ(orm::model::getColumnName<models::ModelWithIdAndNamesMapping>(missingMappedName), missingMappedName);
+    EXPECT_EQ(orm::model::getColumnName<models::ModelWithOneField>(unmappedName), unmappedName);
 }
 
 TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)

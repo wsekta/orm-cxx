@@ -88,8 +88,10 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultUpdateCommandTest.cpp
             src/database/defaults/DefaultDeleteCommandTest.cpp
             src/query/PredicateTest.cpp
+            src/query/QueryValueTest.cpp
 
             tests/ModelTest.cpp
+            tests/database/StatementParameterBindingTest.cpp
             tests/database/TransactionsTest.cpp
             tests/database/SimpleModelTest.cpp
             tests/database/WriteOperationsTest.cpp
@@ -112,10 +114,14 @@ if (BUILD_ORM_CXX_TESTS)
     enable_testing()
 
     set(target_code_coverage_ALL 1)
+    set(ORM_CXX_COVERAGE_EXCLUDES
+            ".*/externals/.*"
+            ".*/tests/.*"
+            ".*/src/.*Test\\.cpp")
 
     include("cmake/cmake-coverage.cmake")
 
-    add_code_coverage_all_targets()
+    add_code_coverage_all_targets(EXCLUDE ${ORM_CXX_COVERAGE_EXCLUDES})
 
     target_code_coverage(${LIBRARY_NAME})
 
