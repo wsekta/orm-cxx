@@ -108,6 +108,8 @@ int main()
 
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
+## [Roadmap](ROADMAP.md)
+
 ### Query language
 
 `orm::Query<T>` supports ORM-style `SELECT` queries returning `std::vector<T>`.

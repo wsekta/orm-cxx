@@ -1,32 +1,14 @@
-# TODO:
+# TODO
 
-* Add UPDATE and DELETE commands
-* Add projections, aggregations, GROUP BY and HAVING to queries
-* Add support for models with relations OneToMany and ManyToMany
-* Refactor CMake files
-* Add support for other databases and drivers:
-    * PostgreSQL
-    * MySQL
-    * Oracle
-    * ODBC
-    * Firebird
-    * DB2
-* Add update command
-* Add support for other types:
-    * std::tm
-    * boost::uuids::uuid
-    * boost::optional
-* Add .clang-tidy and .cmake-format
-* Noexcept where possible
-* Add static analysis tool to githbu actions
-* Refactor and add docker development environment
-* Define devcontainers
+The project roadmap lives in [ROADMAP.md](ROADMAP.md).
 
-# Far future:
+Use this file as a short scratch backlog for ideas that are not ready to become
+roadmap items yet.
 
-* Add to vcpkg and conan package managers
-* Replace reflect-cpp with own reflection library, due to warnings and errors generated in reflect-cpp
-* Move as much as possible to compile time
-* Ensure thread safety
-* Add support for logging mechanisms
-* Implement with coroutines
+## Backlog
+
+- Add support for additional field types:
+  - `std::tm`
+  - `boost::uuids::uuid`
+  - `boost::optional`
+- Add `noexcept` where the API and implementation can guarantee it.
