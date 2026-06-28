@@ -19,6 +19,7 @@ private:
 
     [[nodiscard]] auto addColumnsForForeignIds(const model::ModelInfo& modelInfo,
                                                const model::ColumnInfo& columnInfo) const -> std::string;
+    [[nodiscard]] static auto hasAutoIncrementPrimaryKey(const model::ModelInfo& modelInfo) -> bool;
     [[nodiscard]] static auto addForeignIds(const model::ModelInfo& modelInfo) -> std::string;
 };
 } // namespace orm::db::commands

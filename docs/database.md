@@ -65,6 +65,24 @@ ObjectModel object{1, "name", "email", "password", "created_at", "updated_at"};
 database.insert(object);
 ```
 
+For models with an auto-increment primary key, the generated `INSERT` statement omits that primary-key column and
+SQLite assigns the value:
+
+```cpp
+struct User
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+    std::string name;
+};
+
+database.createTable<User>();
+database.insert(User{0, "Ann"});
+```
+
+`insert` does not mutate the passed object. Select the row after insertion if you need the generated id.
+
 ## Query objects
 
 To select objects from database use `select` method and pass [query](query.md) as argument:

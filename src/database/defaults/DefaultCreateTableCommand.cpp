@@ -26,11 +26,18 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
             continue;
         }
 
+        if (column.isAutoIncrement)
+        {
+            command.append(std::format("\t{} INTEGER PRIMARY KEY AUTOINCREMENT,\n", column.name));
+
+            continue;
+        }
+
         command.append(std::format("\t{} {}{},\n", column.name, typeTranslator->toSqlType(column.type),
                                    column.isNotNull ? " NOT NULL" : ""));
     }
 
-    if (modelInfo.idColumnsNames.empty())
+    if (modelInfo.idColumnsNames.empty() or hasAutoIncrementPrimaryKey(modelInfo))
     {
         utils::removeLastComma(command);
     }
@@ -59,6 +66,19 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
     command.append("\n);");
 
     return command;
+}
+
+auto DefaultCreateTableCommand::hasAutoIncrementPrimaryKey(const model::ModelInfo& modelInfo) -> bool
+{
+    for (const auto& columnInfo : modelInfo.columnsInfo)
+    {
+        if (columnInfo.isAutoIncrement)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 auto DefaultCreateTableCommand::addColumnsForForeignIds(const model::ModelInfo& modelInfo,

@@ -13,6 +13,7 @@ struct ColumnInfo
     ColumnType type;
     bool isPrimaryKey;
     bool isForeignModel;
+    bool isAutoIncrement;
     [[maybe_unused]] bool isUnique;
     bool isNotNull;
 };

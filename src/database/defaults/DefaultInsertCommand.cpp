@@ -58,6 +58,11 @@ auto DefaultInsertCommand::getFieldsNames(const model::ModelInfo& modelInfo) -> 
         }
         else
         {
+            if (columnInfo.isAutoIncrement)
+            {
+                continue;
+            }
+
             fieldsNames.push_back(columnInfo.name);
         }
     }
