@@ -3,6 +3,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "AutoIncrementInfo.hpp"
 #include "GetForeignModelInfoFromField.hpp"
 #include "ModelInfo.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
@@ -15,6 +16,7 @@ auto getModelInfo() -> ModelInfo
     ModelInfo modelInfo;
 
     modelInfo.idColumnsNames = getPrimaryIdColumnsNames<T>();
+    const auto autoIncrementColumnsNames = getAutoIncrementColumnsNames<T>();
     modelInfo.tableName = getTableName<T>();
     modelInfo.columnsInfo = getColumnsInfo<T>(modelInfo.idColumnsNames);
 
@@ -24,6 +26,8 @@ auto getModelInfo() -> ModelInfo
     { GetForeignModelInfoFromField<T, std::decay_t<decltype(*field)>>::get(i, modelInfo); };
 
     utils::constexpr_for_tuple<model_tuple_t>(getForeignModelInfoFromField);
+
+    applyAutoIncrementColumns(modelInfo, autoIncrementColumnsNames);
 
     return modelInfo;
 }

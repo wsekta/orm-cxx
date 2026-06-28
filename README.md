@@ -59,6 +59,15 @@ struct ObjectModel
                                                                             {"field2", "some_field2_name"}};
 };
 
+struct User
+{
+    // SQLite INTEGER PRIMARY KEY AUTOINCREMENT. The id column is omitted from INSERT statements.
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+    std::string name;
+};
+
 int main()
 {
     // connect with standard connection string
@@ -70,10 +79,12 @@ int main()
 
     // create table in database
     database.createTable<ObjectModel>();
+    database.createTable<User>();
 
     // create objects and insert them into table
     std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
     database.insert(objects);
+    database.insert(User{0, "Ann"});
 
     // define select query with builder pattern
     using namespace orm::query;
@@ -122,6 +133,23 @@ query.where(raw("LOWER(users.name) = :name", param("name", "wojtek")))
 ```
 
 See [Query documentation](docs/query.md) for supported operators and limitations.
+
+### Auto-increment primary keys
+
+SQLite `int` primary keys can opt in to database-generated values:
+
+```cpp
+struct User
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+    std::string name;
+};
+```
+
+The auto-increment field must be the only primary key and must be a non-optional `int`. Existing models are not changed
+unless they define `auto_increment_columns`. See [Model documentation](docs/model.md#auto-increment-primary-key).
 
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 

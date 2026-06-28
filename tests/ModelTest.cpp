@@ -5,6 +5,15 @@
 
 #include "ModelsDefinitions.hpp"
 
+namespace
+{
+template <typename T>
+auto expectInvalidAutoIncrementModel() -> void
+{
+    EXPECT_THROW((void)orm::Model<T>::getModelInfo(true), std::invalid_argument);
+}
+} // namespace
+
 TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
 {
     orm::Model<models::ModelWithOneField> model;
@@ -13,6 +22,7 @@ TEST(ModelTest, OneFieldStruct_shouldHaveOneColumn)
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "field1");
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, orm::model::ColumnType::Int);
     EXPECT_EQ(model.getModelInfo().columnsInfo[0].isNotNull, true);
+    EXPECT_FALSE(model.getModelInfo().columnsInfo[0].isAutoIncrement);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.empty());
 }
 
@@ -53,6 +63,31 @@ TEST(ModelTest, StructWithId_shouldHaveOneIdColumn)
     EXPECT_EQ(model.getModelInfo().columnsInfo[2].name, "field2");
     EXPECT_EQ(model.getModelInfo().columnsInfo[2].isPrimaryKey, false);
     EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
+}
+
+TEST(ModelTest, StructWithAutoIncrementId_shouldHaveOneAutoIncrementIdColumn)
+{
+    orm::Model<models::ModelWithAutoIncrementId> model;
+
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "id");
+    EXPECT_TRUE(model.getModelInfo().columnsInfo[0].isPrimaryKey);
+    EXPECT_TRUE(model.getModelInfo().columnsInfo[0].isAutoIncrement);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].type, orm::model::ColumnType::Int);
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("id"));
+    EXPECT_FALSE(model.getModelInfo().columnsInfo[1].isAutoIncrement);
+    EXPECT_FALSE(model.getModelInfo().columnsInfo[2].isAutoIncrement);
+}
+
+TEST(ModelTest, StructWithAutoIncrementIdAndNamesMapping_shouldUseMappedColumnName)
+{
+    orm::Model<models::ModelWithAutoIncrementIdAndNamesMapping> model;
+
+    EXPECT_EQ(model.getModelInfo().columnsInfo.size(), 3);
+    EXPECT_EQ(model.getModelInfo().columnsInfo[0].name, "some_id_name");
+    EXPECT_TRUE(model.getModelInfo().columnsInfo[0].isPrimaryKey);
+    EXPECT_TRUE(model.getModelInfo().columnsInfo[0].isAutoIncrement);
+    EXPECT_TRUE(model.getModelInfo().idColumnsNames.contains("some_id_name"));
 }
 
 TEST(ModelTest, StructWithIdColumns_shouldHaveTwoIdColumns)
@@ -109,6 +144,17 @@ TEST(ModelTest, StructWithOtherStructWithId_shouldHaveProperlyFilledForeignIdsIn
     EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.size(), 1);
     EXPECT_TRUE(model.getModelInfo().foreignModelsInfo["field3"].idColumnsNames.contains("id"));
     EXPECT_EQ(model.getModelInfo().foreignModelsInfo["field3"].tableName, relatedModel.getModelInfo().tableName);
+}
+
+TEST(ModelTest, InvalidAutoIncrementModels_shouldThrow)
+{
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementNonPrimaryKey>();
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementCompositeId>();
+    expectInvalidAutoIncrementModel<models::ModelWithMultipleAutoIncrementColumns>();
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementOptionalId>();
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementMissingColumn>();
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementForeignModel>();
+    expectInvalidAutoIncrementModel<models::ModelWithAutoIncrementWrongType>();
 }
 
 TEST(ModelTest, StructWithOptionalOtherStructWithId_shouldHaveProperlyFilledForeignIdsInfo)

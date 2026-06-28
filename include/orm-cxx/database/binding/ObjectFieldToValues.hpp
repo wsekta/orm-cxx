@@ -18,7 +18,14 @@ struct ObjectFieldToValues<ModelField>
     static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, *column);
+        const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
+
+        if (columnInfo.isAutoIncrement)
+        {
+            return;
+        }
+
+        values.set(columnInfo.name, *column);
     }
 };
 

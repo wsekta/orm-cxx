@@ -12,6 +12,7 @@ expand database support.
 - Table creation and drop commands.
 - Full row-level CRUD operations through `orm::Database`, including insert,
   select, predicate-based update, and predicate-based remove operations.
+- Opt-in SQLite auto-increment support for a single integer primary key.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
   `DISTINCT`, `LIMIT`, `OFFSET`, raw predicates, raw ordering, and bind
   parameters.
@@ -30,7 +31,6 @@ expand database support.
 The next priority is to tighten the SQLite model behavior and documentation now
 that basic CRUD is available.
 
-- Add auto-increment primary key support, starting with SQLite semantics.
 - Align the model documentation with the currently supported scalar types,
   optional fields, primary-key behavior, and one-to-one relations.
 - Remove duplicated or stale backlog items as work moves into documented

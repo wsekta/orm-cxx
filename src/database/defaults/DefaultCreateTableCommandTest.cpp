@@ -34,6 +34,29 @@ const std::string createTableSqlWithReferringToCompositeIdModel =
     "\tPRIMARY KEY (id),\n"
     "\tFOREIGN KEY (field3_field1, field3_field2) REFERENCES models_ModelWithOverwrittenId (field1, field2)\n"
     ");";
+
+const std::string createTableSqlWithAutoIncrementId =
+    "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementId (\n"
+    "\tid INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+    "\tfield1 INTEGER NOT NULL,\n"
+    "\tfield2 TEXT NOT NULL\n"
+    ");";
+
+const std::string createTableSqlWithMappedAutoIncrementId =
+    "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementIdAndNamesMapping (\n"
+    "\tsome_id_name INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+    "\tsome_field1_name INTEGER NOT NULL,\n"
+    "\tsome_field2_name TEXT NOT NULL\n"
+    ");";
+
+const std::string createTableSqlWithReferringToAutoIncrementModel =
+    "CREATE TABLE IF NOT EXISTS models_ModelRelatedToAutoIncrementModel (\n"
+    "\tid INTEGER NOT NULL,\n"
+    "\tfield1 INTEGER NOT NULL,\n"
+    "\tfield3_id INTEGER NOT NULL,\n"
+    "\tPRIMARY KEY (id),\n"
+    "\tFOREIGN KEY (field3_id) REFERENCES models_ModelWithAutoIncrementId (id)\n"
+    ");";
 } // namespace
 
 class DefaultCreateTableCommandTest : public ::testing::Test
@@ -63,4 +86,25 @@ TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToCompositeIdModel
     orm::Model<models::ModelRelatedToCompositeIdModel> model;
 
     EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToCompositeIdModel);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithAutoIncrementId)
+{
+    orm::Model<models::ModelWithAutoIncrementId> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithAutoIncrementId);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithMappedAutoIncrementId)
+{
+    orm::Model<models::ModelWithAutoIncrementIdAndNamesMapping> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithMappedAutoIncrementId);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToAutoIncrementModel)
+{
+    orm::Model<models::ModelRelatedToAutoIncrementModel> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToAutoIncrementModel);
 }

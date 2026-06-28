@@ -56,6 +56,26 @@ struct ModelWithId
     std::string field2;
 };
 
+struct ModelWithAutoIncrementId
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+    int field1;
+    std::string field2;
+};
+
+struct ModelWithAutoIncrementIdAndNamesMapping
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
+
+    int id;
+    int field1;
+    std::string field2;
+};
+
 struct ModelWithOverwrittenId
 {
     int id;
@@ -81,6 +101,13 @@ struct ModelRelatedToOtherModel
     [[maybe_unused]] int field1;
     std::string field2;
     ModelWithId field3;
+};
+
+struct ModelRelatedToAutoIncrementModel
+{
+    int id;
+    int field1;
+    ModelWithAutoIncrementId field3;
 };
 
 struct ModelRelatedToCompositeIdModel
@@ -132,5 +159,64 @@ struct ModelWithAllInts
     int64_t field7;
     uint64_t field8;
     size_t field9;
+};
+
+struct ModelWithAutoIncrementNonPrimaryKey
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"field1"};
+
+    int id;
+    int field1;
+};
+
+struct ModelWithAutoIncrementCompositeId
+{
+    inline static const std::vector<std::string> id_columns = {"id", "field1"};
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+    int field1;
+};
+
+struct ModelWithMultipleAutoIncrementColumns
+{
+    inline static const std::vector<std::string> id_columns = {"id", "field1"};
+    inline static const std::vector<std::string> auto_increment_columns = {"id", "field1"};
+
+    int id;
+    int field1;
+};
+
+struct ModelWithAutoIncrementOptionalId
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    std::optional<int> id;
+    int field1;
+};
+
+struct ModelWithAutoIncrementMissingColumn
+{
+    inline static const std::vector<std::string> auto_increment_columns = {"missing"};
+
+    int id;
+};
+
+struct ModelWithAutoIncrementForeignModel
+{
+    inline static const std::vector<std::string> id_columns = {"field3"};
+    inline static const std::vector<std::string> auto_increment_columns = {"field3"};
+
+    int id;
+    ModelWithId field3;
+};
+
+struct ModelWithAutoIncrementWrongType
+{
+    inline static const std::vector<std::string> id_columns = {"field2"};
+    inline static const std::vector<std::string> auto_increment_columns = {"field2"};
+
+    int id;
+    std::string field2;
 };
 } // namespace models
