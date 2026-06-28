@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2query
   <div class="headertitle"><div class="title">Query </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md15"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md16"></a></p>
 <ol type="1">
 <li>Build selectBuild select</li>
 </ol>
@@ -148,7 +148,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2query
 <ol type="1">
 <li>Current limitationsCurrent limitations</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
 Build select</h1>
 <p>To query objects from a table use <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;Model&gt;</span> and pass it to <span class="tt"><a class="el" href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7" title="Executes a select query and returns the result.">orm::Database::select</a></span>. The result is always <span class="tt">std::vector&lt;Model&gt;</span>.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;orm-cxx/orm.hpp&quot;</span></div>
@@ -179,7 +179,7 @@ Build select</h1>
 <div class="line">     .limit(10)</div>
 <div class="line">     .offset(20);</div>
 <div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:33</div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
 Where predicates</h1>
 <p>Use helpers from <span class="tt">orm::query</span> to build a predicate tree.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -226,7 +226,7 @@ Where predicates</h1>
 <div class="line">     .andWhere(col(<span class="stringliteral">&quot;email&quot;</span>).isNotNull())</div>
 <div class="line">     .orWhere(col(<span class="stringliteral">&quot;name&quot;</span>) == <span class="stringliteral">&quot;admin&quot;</span>);</div>
 </div><!-- fragment --><p>All comparison values are sent to the database as SOCI bind parameters. They are not interpolated into SQL strings.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md19"></a>
 Column names and relations</h1>
 <p><span class="tt">col("field")</span> uses the C++ model field name. If the model defines <span class="tt">columns_names</span>, the query renderer maps the field name to the configured database column name.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
@@ -260,7 +260,7 @@ Column names and relations</h1>
 <p>The typed helper is also available when you want to document the expected field type at the call site:</p>
 <div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(orm::query::field&lt;User, int&gt;(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18);</div>
 </div><!-- fragment --><p>The typed helper still takes the field name as a string. It does not infer field names from member pointers.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md19"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
 Ordering</h1>
 <p>Use <span class="tt">asc</span> and <span class="tt">desc</span> to add <span class="tt">ORDER BY</span> clauses:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -270,13 +270,13 @@ Ordering</h1>
 <div class="ttc" id="aclassorm_1_1Query_html_a0e4c45fc5b506b7dfb03f96d995fe65c"><div class="ttname"><a href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orm::Query::orderBy</a></div><div class="ttdeci">auto orderBy(Orders... orders) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the ORDER BY clauses for the select query.</div><div class="ttdef"><b>Definition</b> query.hpp:69</div></div>
 </div><!-- fragment --><p>Ordering can also use related field paths:</p>
 <div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a>(asc(col(<span class="stringliteral">&quot;profile.city&quot;</span>)));</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md20"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md21"></a>
 Distinct</h1>
 <p>Use <span class="tt">distinct()</span> to render <span class="tt">SELECT DISTINCT</span>:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
 <div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a>();</div>
 <div class="ttc" id="aclassorm_1_1Query_html_a6b9e97270d5af0c1aebfcc6c408cf9e2"><div class="ttname"><a href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">orm::Query::distinct</a></div><div class="ttdeci">auto distinct() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Select distinct rows.</div><div class="ttdef"><b>Definition</b> query.hpp:80</div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md21"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
 Limit and offset</h1>
 <p>Use <span class="tt">limit</span> and <span class="tt">offset</span> to page through results:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
@@ -285,7 +285,7 @@ Limit and offset</h1>
 <div class="line">     .offset(50);</div>
 </div><!-- fragment --><p>SQL clauses are rendered in this order:</p>
 <div class="fragment"><div class="line"><span class="keyword">WHERE</span> ... <span class="keyword">ORDER</span> <span class="keyword">BY</span> ... LIMIT ... OFFSET ...</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md23"></a>
 Raw SQL fragments</h1>
 <p>Raw predicates and raw ordering are available for cases not covered by the ORM DSL.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -301,7 +301,7 @@ Raw SQL fragments</h1>
 <li>must be unique within the query,</li>
 <li>must not use the reserved <span class="tt">orm_p</span> prefix.</li>
 </ul>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md23"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md24"></a>
 Write predicates</h1>
 <p>The same predicate DSL is used by <span class="tt"><a class="el" href="classorm_1_1Update.html">orm::Update</a>&lt;Model&gt;</span> and <span class="tt"><a class="el" href="classorm_1_1Database.html#a2321eb9d51932ca7d6278142a3dbac9e" title="Executes a delete query for rows matching a predicate.">orm::Database::remove</a>&lt;Model&gt;</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -318,7 +318,7 @@ Write predicates</h1>
 </div><!-- fragment --><p>Write predicates do not generate joins. They support direct model fields and related primary-key paths that can be mapped to local foreign-key columns:</p>
 <div class="fragment"><div class="line">update.where(col(<span class="stringliteral">&quot;profile.id&quot;</span>) == 10);</div>
 </div><!-- fragment --><p>Non-primary-key related paths in write predicates, such as <span class="tt">col("profile.city")</span>, throw <span class="tt">std::invalid_argument</span>. Assignments use the same rule: direct fields are supported, and related primary-key assignments update the local foreign-key column.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md24"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md25"></a>
 Current limitations</h1>
 <p>The query language currently covers ORM-style <span class="tt">SELECT</span> returning full model objects plus predicate-based <span class="tt">UPDATE</span> and <span class="tt">DELETE</span> operations. It does not yet support projections, aggregate functions, <span class="tt">GROUP BY</span>, <span class="tt">HAVING</span>, subqueries or <span class="tt">EXISTS</span>. </p>
 </div></div><!-- contents -->

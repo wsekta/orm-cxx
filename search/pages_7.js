@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['limit_20and_20offset_0',['Limit and offset',['../md_docs_2query.html#autotoc_md21',1,'']]],
-  ['limitations_1',['Current limitations',['../md_docs_2query.html#autotoc_md24',1,'']]]
+  ['limit_20and_20offset_0',['Limit and offset',['../md_docs_2query.html#autotoc_md22',1,'']]],
+  ['limitations_1',['Current limitations',['../md_docs_2query.html#autotoc_md25',1,'']]]
 ];
