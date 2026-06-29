@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['mapping_20fields_20names_0',['Mapping fields&apos; names',['../md_docs_2model.html#autotoc_md13',1,'']]],
-  ['model_1',['Model',['../md_docs_2model.html',1,'']]],
-  ['model_2',['Create simple model',['../md_docs_2model.html#autotoc_md10',1,'']]]
+  ['model_0',['Model',['../md_docs_2model.html',1,'']]],
+  ['model_1',['Create a model',['../md_docs_2model.html#autotoc_md10',1,'']]]
 ];

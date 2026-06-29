@@ -36,23 +36,26 @@ var NAVTREE =
       [ "Transactions", "md_docs_2database.html#autotoc_md8", null ]
     ] ],
     [ "Model", "md_docs_2model.html", [
-      [ "Create simple model", "md_docs_2model.html#autotoc_md10", null ],
-      [ "Fields types", "md_docs_2model.html#autotoc_md11", null ],
-      [ "Table name", "md_docs_2model.html#autotoc_md12", null ],
-      [ "Mapping fields' names", "md_docs_2model.html#autotoc_md13", null ],
-      [ "Primary key", "md_docs_2model.html#autotoc_md14", null ],
-      [ "Auto-increment primary key", "md_docs_2model.html#autotoc_md15", null ]
+      [ "Create a model", "md_docs_2model.html#autotoc_md10", null ],
+      [ "Supported field types", "md_docs_2model.html#autotoc_md11", null ],
+      [ "Optional fields", "md_docs_2model.html#autotoc_md12", null ],
+      [ "Table name", "md_docs_2model.html#autotoc_md13", null ],
+      [ "Column names", "md_docs_2model.html#autotoc_md14", null ],
+      [ "Primary key", "md_docs_2model.html#autotoc_md15", null ],
+      [ "Auto-increment primary key", "md_docs_2model.html#autotoc_md16", null ],
+      [ "One-to-one relations", "md_docs_2model.html#autotoc_md17", null ],
+      [ "Current limitations", "md_docs_2model.html#autotoc_md18", null ]
     ] ],
     [ "Query", "md_docs_2query.html", [
-      [ "Build select", "md_docs_2query.html#autotoc_md17", null ],
-      [ "Where predicates", "md_docs_2query.html#autotoc_md18", null ],
-      [ "Column names and relations", "md_docs_2query.html#autotoc_md19", null ],
-      [ "Ordering", "md_docs_2query.html#autotoc_md20", null ],
-      [ "Distinct", "md_docs_2query.html#autotoc_md21", null ],
-      [ "Limit and offset", "md_docs_2query.html#autotoc_md22", null ],
-      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md23", null ],
-      [ "Write predicates", "md_docs_2query.html#autotoc_md24", null ],
-      [ "Current limitations", "md_docs_2query.html#autotoc_md25", null ]
+      [ "Build select", "md_docs_2query.html#autotoc_md20", null ],
+      [ "Where predicates", "md_docs_2query.html#autotoc_md21", null ],
+      [ "Column names and relations", "md_docs_2query.html#autotoc_md22", null ],
+      [ "Ordering", "md_docs_2query.html#autotoc_md23", null ],
+      [ "Distinct", "md_docs_2query.html#autotoc_md24", null ],
+      [ "Limit and offset", "md_docs_2query.html#autotoc_md25", null ],
+      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md26", null ],
+      [ "Write predicates", "md_docs_2query.html#autotoc_md27", null ],
+      [ "Current limitations", "md_docs_2query.html#autotoc_md28", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

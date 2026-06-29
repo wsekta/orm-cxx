@@ -122,16 +122,19 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2model
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="autotoc_md9"></a></p>
 <ol type="1">
-<li>Create simple modelCreate simple model</li>
+<li>Create a modelCreate a model</li>
 </ol>
 <ol type="1">
-<li>Fields typesFields types</li>
+<li>Supported field typesSupported field types</li>
+</ol>
+<ol type="1">
+<li>Optional fieldsOptional fields</li>
 </ol>
 <ol type="1">
 <li>Table nameTable name</li>
 </ol>
 <ol type="1">
-<li>Mapping fields' namesMapping fields' names</li>
+<li>Column namesColumn names</li>
 </ol>
 <ol type="1">
 <li>Primary keyPrimary key</li>
@@ -139,107 +142,99 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2model
 <ol type="1">
 <li>Auto-increment primary keyAuto-increment primary key</li>
 </ol>
+<ol type="1">
+<li>One-to-one relationsOne-to-one relations</li>
+</ol>
+<ol type="1">
+<li>Current limitationsCurrent limitations</li>
+</ol>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md10"></a>
-Create simple model</h1>
-<p>Simple model is a struct with supoorted types of fields. For example:</p>
+Create a model</h1>
+<p>A model is a reflected C++ struct whose fields can be mapped to SQLite columns.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
-Fields types</h1>
-<p>Supported types of fields:</p>
+</div><!-- fragment --><p>By default the table name is derived from the C++ type name and <span class="tt">::</span> is replaced with <span class="tt">_</span>.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
+Supported field types</h1>
+<p>SQLite models currently support these scalar C++ field types:</p>
 <ul>
-<li>int</li>
-<li>float</li>
-<li>double</li>
-<li>std::string</li>
+<li><span class="tt">bool</span></li>
+<li><span class="tt">char</span>, <span class="tt">signed char</span>, <span class="tt">unsigned char</span></li>
+<li><span class="tt">short</span>, <span class="tt">short int</span>, <span class="tt">unsigned short</span>, <span class="tt">short unsigned int</span></li>
+<li><span class="tt">int</span></li>
+<li><span class="tt">long</span>, <span class="tt">long int</span>, <span class="tt">unsigned int</span>, <span class="tt">unsigned long</span>, <span class="tt">long unsigned int</span></li>
+<li><span class="tt">long long</span>, <span class="tt">long long int</span>, <span class="tt">__int64</span></li>
+<li><span class="tt">unsigned long long</span>, <span class="tt">long long unsigned int</span>, <span class="tt">unsigned __int64</span></li>
+<li><span class="tt">float</span></li>
+<li><span class="tt">double</span></li>
+<li><span class="tt">std::string</span></li>
 </ul>
+<p>These types are mapped to SQLite storage classes by the SQLite backend. Types outside this list are not supported as scalar columns.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md12"></a>
-Table name</h1>
-<p>To override table name use <span class="tt">table_name</span> static field:</p>
+Optional fields</h1>
+<p>Wrap a supported scalar type in <span class="tt">std::optional&lt;T&gt;</span> to make the column nullable.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
-<div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">const</span> <span class="keywordtype">char</span>* table_name = <span class="stringliteral">&quot;users&quot;</span>;</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
-<div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
+<div class="line">    std::optional&lt;std::string&gt; email;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
-Mapping fields' names</h1>
-<p>If you want to map fields' names to database columns' names use 'columns_names' static field with dictionary type ( e.g. <span class="tt">std::map</span> or <span class="tt">std::unordered_map</span>). Not all fields have to be mapped, those that are not mapped will be named the same as fields' names. For example:</p>
+</div><!-- fragment --><p>Non-optional fields are generated as <span class="tt">NOT NULL</span>. Optional fields are generated without <span class="tt">NOT NULL</span>, and <span class="tt">std::nullopt</span> is stored and read back as SQL <span class="tt">NULL</span>.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md13"></a>
+Table name</h1>
+<p>Override the generated table name with a static <span class="tt">table_name</span> field:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
-<div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::map&lt;const char*, const char*&gt; columns_names = {</div>
-<div class="line">        {<span class="stringliteral">&quot;id&quot;</span>, <span class="stringliteral">&quot;user_id&quot;</span>},</div>
-<div class="line">        {<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;user_name&quot;</span>},</div>
-<div class="line">        {<span class="stringliteral">&quot;email&quot;</span>, <span class="stringliteral">&quot;user_email&quot;</span>},</div>
-<div class="line">        {<span class="stringliteral">&quot;password&quot;</span>, <span class="stringliteral">&quot;user_password&quot;</span>},</div>
-<div class="line">        {<span class="stringliteral">&quot;created_at&quot;</span>, <span class="stringliteral">&quot;user_created_at&quot;</span>},</div>
-<div class="line">        {<span class="stringliteral">&quot;updated_at&quot;</span>, <span class="stringliteral">&quot;user_updated_at&quot;</span>}</div>
-<div class="line">    };</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> std::string_view table_name = <span class="stringliteral">&quot;users&quot;</span>;</div>
+<div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md14"></a>
+Column names</h1>
+<p>Override database column names with a static <span class="tt">columns_names</span> mapping. The mapping uses C++ field names as keys. Fields omitted from the mapping keep their C++ field names.</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::map&lt;std::string, std::string&gt; columns_names = {</div>
+<div class="line">        {<span class="stringliteral">&quot;id&quot;</span>, <span class="stringliteral">&quot;user_id&quot;</span>},</div>
+<div class="line">        {<span class="stringliteral">&quot;displayName&quot;</span>, <span class="stringliteral">&quot;display_name&quot;</span>},</div>
+<div class="line">    };</div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::string displayName;</div>
+<div class="line">};</div>
+</div><!-- fragment --><p>Query and update builders still use C++ field names such as <span class="tt">col("displayName")</span>; the renderer maps them to database column names.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
 Primary key</h1>
-<p>The default primary key is <span class="tt">id</span> field:</p>
+<p>If a model has an <span class="tt">id</span> field, it is used as the default primary key.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>If you want to change primary key use <span class="tt">id_columns</span> static field with iterable type containing fields' names as std:: string (e.g. <span class="tt">std::vector&lt;std::string&gt;</span> or <span class="tt">std::array&lt;std::string&gt;</span>):</p>
+</div><!-- fragment --><p>Override the primary key with <span class="tt">id_columns</span>. Values are C++ field names, not database column names.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
-<div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::array&lt;std::string, 2&gt; id_columns = {<span class="stringliteral">&quot;id&quot;</span>, <span class="stringliteral">&quot;name&quot;</span>};</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; id_columns = {<span class="stringliteral">&quot;tenantId&quot;</span>, <span class="stringliteral">&quot;name&quot;</span>};</div>
+<div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    <span class="keywordtype">int</span> tenantId;</div>
 <div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>You can also create model without primary key, just do not add <span class="tt">id</span> field:</p>
-<div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
-<div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
+</div><!-- fragment --><p>To create a model without a primary key, omit <span class="tt">id</span> or define an empty <span class="tt">id_columns</span> collection.</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>LogEntry {</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; id_columns = {};</div>
+<div class="line"> </div>
+<div class="line">    std::string message;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>or use <span class="tt">id_columns</span> static field with empty iterable:</p>
-<div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
-<div class="line">    <span class="keyword">static</span> <span class="keyword">constexpr</span> std::array&lt;std::string, 0&gt; id_columns = {};</div>
-<div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
-<div class="line">    std::string password;</div>
-<div class="line">    std::string created_at;</div>
-<div class="line">    std::string updated_at;</div>
-<div class="line">};</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md15"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md16"></a>
 Auto-increment primary key</h1>
-<p>SQLite integer primary keys can be generated by the database. To enable this behavior, define <span class="tt">auto_increment_columns</span> with the C++ field name of the primary-key field:</p>
+<p>SQLite integer primary keys can be generated by the database. To enable this, define <span class="tt">auto_increment_columns</span> with the C++ field name of the primary-key field:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; auto_increment_columns = {<span class="stringliteral">&quot;id&quot;</span>};</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
-<div class="line">    std::string email;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>This creates the <span class="tt">id</span> column as <span class="tt">INTEGER PRIMARY KEY AUTOINCREMENT</span> and omits it from generated <span class="tt">INSERT</span> statements. Existing models are unchanged unless they explicitly define <span class="tt">auto_increment_columns</span>.</p>
-<p>Auto-increment support has the following limitations:</p>
+</div><!-- fragment --><p>This creates <span class="tt">id INTEGER PRIMARY KEY AUTOINCREMENT</span> and omits the field from generated <span class="tt">INSERT</span> statements. Existing models are unchanged unless they define <span class="tt">auto_increment_columns</span>.</p>
+<p>Auto-increment support has these limitations:</p>
 <ul>
 <li>The auto-increment column must be the only primary-key column.</li>
 <li>The column must have type <span class="tt">int</span>.</li>
@@ -249,12 +244,36 @@ Auto-increment primary key</h1>
 <p>If <span class="tt">columns_names</span> maps the field name, <span class="tt">auto_increment_columns</span> still uses the C++ field name:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; auto_increment_columns = {<span class="stringliteral">&quot;id&quot;</span>};</div>
-<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::map&lt;std::string, std::string&gt; columns_names = {{<span class="stringliteral">&quot;id&quot;</span>, <span class="stringliteral">&quot;user_id&quot;</span>}};</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::map&lt;std::string, std::string&gt; columns_names = {</div>
+<div class="line">        {<span class="stringliteral">&quot;id&quot;</span>, <span class="stringliteral">&quot;user_id&quot;</span>},</div>
+<div class="line">    };</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>This creates <span class="tt">user_id INTEGER PRIMARY KEY AUTOINCREMENT</span>. </p>
+</div><!-- fragment --><p>This creates <span class="tt">user_id INTEGER PRIMARY KEY AUTOINCREMENT</span>.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md17"></a>
+One-to-one relations</h1>
+<p>A field whose type is another model with a primary key is treated as a one-to-one relation. The owning table stores the related model primary key as local foreign key column(s).</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>Profile {</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::string city;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>User {</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    Profile profile;</div>
+<div class="line">};</div>
+</div><!-- fragment --><p>For this model, <span class="tt">User</span> stores <span class="tt">profile_id</span> and references <span class="tt">Profile(id)</span>. Selecting a model joins one-to-one relations by default. Use <span class="tt">Query&lt;T&gt;::disableJoining()</span> to read only related primary-key values.</p>
+<p>Relations can also be nullable:</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::optional&lt;Profile&gt; profile;</div>
+<div class="line">};</div>
+</div><!-- fragment --><p>Nullable relations generate nullable foreign-key columns, store <span class="tt">std::nullopt</span> as SQL <span class="tt">NULL</span>, and read SQL <span class="tt">NULL</span> back as <span class="tt">std::nullopt</span>.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md18"></a>
+Current limitations</h1>
+<p>Model metadata currently supports one level of one-to-one relations. It does not yet support <span class="tt">OneToMany</span>, <span class="tt">ManyToMany</span>, nested relation paths beyond one relation field, custom converters, date/time fields, UUID fields, or <span class="tt">boost::optional</span>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

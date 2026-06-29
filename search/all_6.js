@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md15',1,'']]],
+  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md16',1,'']]],
   ['insert_1',['insert',['../classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2',1,'orm::Database::insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1Database.html#acbc75aba074b7474bc0c2ee6445a1c0e',1,'orm::Database::insert(T object) -&gt; void']]],
   ['insert_20objects_2',['Insert objects',['../md_docs_2database.html#autotoc_md4',1,'']]]
 ];
