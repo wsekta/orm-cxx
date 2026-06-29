@@ -129,6 +129,13 @@ orm::Query<User> query;
 query.where(orm::query::col("profile.city") == "Warsaw");
 ```
 
+Nullable one-to-one relations declared as `std::optional<RelatedModel>` use the same query paths. Their local
+foreign-key columns can be tested with `isNull()` through the related primary-key path:
+
+```cpp
+query.where(orm::query::col("profile.id").isNull());
+```
+
 By default related models are joined. If `disableJoining()` is used, only related id fields are available in query paths.
 
 The typed helper is also available when you want to document the expected field type at the call site:

@@ -1,4 +1,5 @@
 #include <format>
+#include <stdexcept>
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
@@ -8,6 +9,41 @@
 
 namespace orm::db::binding
 {
+inline auto setNullValue(soci::values& values, const std::string& name, model::ColumnType type) -> void
+{
+    switch (type)
+    {
+    case model::ColumnType::Bool:
+    case model::ColumnType::Char:
+    case model::ColumnType::UnsignedChar:
+    case model::ColumnType::Short:
+    case model::ColumnType::UnsignedShort:
+    case model::ColumnType::Int:
+        values.set(name, int{}, soci::i_null);
+        return;
+    case model::ColumnType::UnsignedInt:
+    case model::ColumnType::UnsignedLongLong:
+        values.set(name, static_cast<unsigned long long>(0), soci::i_null);
+        return;
+    case model::ColumnType::LongLong:
+        values.set(name, static_cast<long long>(0), soci::i_null);
+        return;
+    case model::ColumnType::Float:
+    case model::ColumnType::Double:
+        values.set(name, 0.0, soci::i_null);
+        return;
+    case model::ColumnType::String:
+        values.set(name, std::string{}, soci::i_null);
+        return;
+    case model::ColumnType::Uuid:
+    case model::ColumnType::Unknown:
+    case model::ColumnType::OneToOne:
+        throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
+    }
+
+    throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
+}
+
 template <typename ModelField>
 struct ObjectFieldToValues;
 
@@ -64,7 +100,29 @@ struct ObjectFieldToValues<std::optional<ModelField>>
         if (column->has_value())
         {
             ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values);
+
+            return;
         }
+
+        const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
+
+        if (columnInfo.isForeignModel)
+        {
+            const auto& foreignModelInfo = model.getModelInfo().foreignModelsInfo.at(columnInfo.name);
+
+            for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
+            {
+                if (foreignColumnInfo.isPrimaryKey)
+                {
+                    setNullValue(values, std::format("{}_{}", columnInfo.name, foreignColumnInfo.name),
+                                 foreignColumnInfo.type);
+                }
+            }
+
+            return;
+        }
+
+        setNullValue(values, columnInfo.name, columnInfo.type);
     }
 };
 

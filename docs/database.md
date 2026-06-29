@@ -83,6 +83,24 @@ database.insert(User{0, "Ann"});
 
 `insert` does not mutate the passed object. Select the row after insertion if you need the generated id.
 
+Optional fields and optional one-to-one relations store `std::nullopt` as SQL `NULL`:
+
+```cpp
+struct Profile
+{
+    int id;
+    std::string city;
+};
+
+struct User
+{
+    int id;
+    std::optional<Profile> profile;
+};
+
+database.insert(User{1, std::nullopt});
+```
+
 ## Query objects
 
 To select objects from database use `select` method and pass [query](query.md) as argument:

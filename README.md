@@ -153,6 +153,14 @@ struct User
 The auto-increment field must be the only primary key and must be a non-optional `int`. Existing models are not changed
 unless they define `auto_increment_columns`. See [Model documentation](docs/model.md#auto-increment-primary-key).
 
+### Model support
+
+SQLite models support common scalar C++ fields, nullable scalar fields through `std::optional<T>`, mapped table and
+column names, default or explicit primary keys, and one-level one-to-one relations. Nullable one-to-one relations can be
+modeled as `std::optional<RelatedModel>`.
+
+See [Model documentation](docs/model.md) for the supported type list and current limitations.
+
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 
 1. Add config to git submodules (execute in project root):

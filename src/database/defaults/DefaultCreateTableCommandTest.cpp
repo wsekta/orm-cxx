@@ -25,6 +25,23 @@ const std::string createTableSqlWithReferringToSimpleModel = "CREATE TABLE IF NO
                                                              "models_ModelWithId (id)\n"
                                                              ");";
 
+const std::string createTableSqlWithOptionalFields = "CREATE TABLE IF NOT EXISTS models_ModelWithOptional (\n"
+                                                     "\tfield1 INTEGER,\n"
+                                                     "\tfield2 TEXT,\n"
+                                                     "\tfield3 REAL\n"
+                                                     ");";
+
+const std::string createTableSqlWithOptionalRelation = "CREATE TABLE IF NOT EXISTS "
+                                                       "models_ModelOptionallyRelatedToOtherModel (\n"
+                                                       "\tid INTEGER NOT NULL,\n"
+                                                       "\tfield1 INTEGER NOT NULL,\n"
+                                                       "\tfield2 TEXT NOT NULL,\n"
+                                                       "\tfield3_id INTEGER,\n"
+                                                       "\tPRIMARY KEY (id),\n"
+                                                       "\tFOREIGN KEY (field3_id) REFERENCES "
+                                                       "models_ModelWithId (id)\n"
+                                                       ");";
+
 const std::string createTableSqlWithReferringToCompositeIdModel =
     "CREATE TABLE IF NOT EXISTS models_ModelRelatedToCompositeIdModel (\n"
     "\tid INTEGER NOT NULL,\n"
@@ -79,6 +96,20 @@ TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToSimpleModel)
     orm::Model<models::ModelRelatedToOtherModel> model;
 
     EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToSimpleModel);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithOptionalFields)
+{
+    orm::Model<models::ModelWithOptional> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithOptionalFields);
+}
+
+TEST_F(DefaultCreateTableCommandTest, createTableWithOptionalRelation)
+{
+    orm::Model<models::ModelOptionallyRelatedToOtherModel> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithOptionalRelation);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToCompositeIdModel)

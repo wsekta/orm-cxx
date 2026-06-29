@@ -1,137 +1,135 @@
 # Model
 
-1. [Create simple model](#create-simple-model)
-2. [Fields types](#fields-types)
-3. [Table name](#table-name)
-4. [Mapping fields' names](#mapping-fields-names)
-5. [Primary key](#primary-key)
-6. [Auto-increment primary key](#auto-increment-primary-key)
+1. [Create a model](#create-a-model)
+2. [Supported field types](#supported-field-types)
+3. [Optional fields](#optional-fields)
+4. [Table name](#table-name)
+5. [Column names](#column-names)
+6. [Primary key](#primary-key)
+7. [Auto-increment primary key](#auto-increment-primary-key)
+8. [One-to-one relations](#one-to-one-relations)
+9. [Current limitations](#current-limitations)
 
-## Create simple model
+## Create a model
 
-Simple model is a struct with supoorted types of fields. For example:
+A model is a reflected C++ struct whose fields can be mapped to SQLite columns.
 
 ```cpp
 struct User {
     int id;
     std::string name;
     std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
 };
 ```
 
-## Fields types
+By default the table name is derived from the C++ type name and `::` is replaced
+with `_`.
 
-Supported types of fields:
+## Supported field types
 
-* int
-* float
-* double
-* std::string
+SQLite models currently support these scalar C++ field types:
+
+* `bool`
+* `char`, `signed char`, `unsigned char`
+* `short`, `short int`, `unsigned short`, `short unsigned int`
+* `int`
+* `long`, `long int`, `unsigned int`, `unsigned long`, `long unsigned int`
+* `long long`, `long long int`, `__int64`
+* `unsigned long long`, `long long unsigned int`, `unsigned __int64`
+* `float`
+* `double`
+* `std::string`
+
+These types are mapped to SQLite storage classes by the SQLite backend. Types
+outside this list are not supported as scalar columns.
+
+## Optional fields
+
+Wrap a supported scalar type in `std::optional<T>` to make the column nullable.
+
+```cpp
+struct User {
+    int id;
+    std::optional<std::string> email;
+};
+```
+
+Non-optional fields are generated as `NOT NULL`. Optional fields are generated
+without `NOT NULL`, and `std::nullopt` is stored and read back as SQL `NULL`.
 
 ## Table name
 
-To override table name use `table_name` static field:
+Override the generated table name with a static `table_name` field:
 
 ```cpp
 struct User {
-    static constexpr const char* table_name = "users";
+    inline static constexpr std::string_view table_name = "users";
+
     int id;
     std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
 };
 ```
 
-## Mapping fields' names
+## Column names
 
-If you want to map fields' names to database columns' names use 'columns_names' static field with dictionary type (
-e.g. `std::map` or `std::unordered_map`).
-Not all fields have to be mapped, those that are not mapped will be named the same as fields' names.
-For example:
+Override database column names with a static `columns_names` mapping. The mapping
+uses C++ field names as keys. Fields omitted from the mapping keep their C++
+field names.
 
 ```cpp
 struct User {
-    static constexpr std::map<const char*, const char*> columns_names = {
+    inline static const std::map<std::string, std::string> columns_names = {
         {"id", "user_id"},
-        {"name", "user_name"},
-        {"email", "user_email"},
-        {"password", "user_password"},
-        {"created_at", "user_created_at"},
-        {"updated_at", "user_updated_at"}
+        {"displayName", "display_name"},
     };
+
     int id;
-    std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
+    std::string displayName;
 };
 ```
+
+Query and update builders still use C++ field names such as `col("displayName")`;
+the renderer maps them to database column names.
 
 ## Primary key
 
-The default primary key is `id` field:
+If a model has an `id` field, it is used as the default primary key.
 
 ```cpp
 struct User {
     int id;
     std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
 };
 ```
 
-If you want to change primary key use `id_columns` static field with iterable type containing fields' names as std::
-string (e.g. `std::vector<std::string>` or `std::array<std::string>`):
+Override the primary key with `id_columns`. Values are C++ field names, not
+database column names.
 
 ```cpp
 struct User {
-    static constexpr std::array<std::string, 2> id_columns = {"id", "name"};
+    inline static const std::vector<std::string> id_columns = {"tenantId", "name"};
+
     int id;
+    int tenantId;
     std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
 };
 ```
 
-You can also create model without primary key, just do not add `id` field:
+To create a model without a primary key, omit `id` or define an empty
+`id_columns` collection.
 
 ```cpp
-struct User {
-    std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
-};
-```
+struct LogEntry {
+    inline static const std::vector<std::string> id_columns = {};
 
-or use `id_columns` static field with empty iterable:
-
-```cpp
-struct User {
-    static constexpr std::array<std::string, 0> id_columns = {};
-    std::string name;
-    std::string email;
-    std::string password;
-    std::string created_at;
-    std::string updated_at;
+    std::string message;
 };
 ```
 
 ## Auto-increment primary key
 
-SQLite integer primary keys can be generated by the database. To enable this behavior, define
-`auto_increment_columns` with the C++ field name of the primary-key field:
+SQLite integer primary keys can be generated by the database. To enable this,
+define `auto_increment_columns` with the C++ field name of the primary-key field:
 
 ```cpp
 struct User {
@@ -139,26 +137,29 @@ struct User {
 
     int id;
     std::string name;
-    std::string email;
 };
 ```
 
-This creates the `id` column as `INTEGER PRIMARY KEY AUTOINCREMENT` and omits it from generated `INSERT`
-statements. Existing models are unchanged unless they explicitly define `auto_increment_columns`.
+This creates `id INTEGER PRIMARY KEY AUTOINCREMENT` and omits the field from
+generated `INSERT` statements. Existing models are unchanged unless they define
+`auto_increment_columns`.
 
-Auto-increment support has the following limitations:
+Auto-increment support has these limitations:
 
 * The auto-increment column must be the only primary-key column.
 * The column must have type `int`.
 * The column cannot be `std::optional`.
 * The column cannot be a related model field.
 
-If `columns_names` maps the field name, `auto_increment_columns` still uses the C++ field name:
+If `columns_names` maps the field name, `auto_increment_columns` still uses the
+C++ field name:
 
 ```cpp
 struct User {
     inline static const std::vector<std::string> auto_increment_columns = {"id"};
-    inline static const std::map<std::string, std::string> columns_names = {{"id", "user_id"}};
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"id", "user_id"},
+    };
 
     int id;
     std::string name;
@@ -166,3 +167,43 @@ struct User {
 ```
 
 This creates `user_id INTEGER PRIMARY KEY AUTOINCREMENT`.
+
+## One-to-one relations
+
+A field whose type is another model with a primary key is treated as a one-to-one
+relation. The owning table stores the related model primary key as local foreign
+key column(s).
+
+```cpp
+struct Profile {
+    int id;
+    std::string city;
+};
+
+struct User {
+    int id;
+    Profile profile;
+};
+```
+
+For this model, `User` stores `profile_id` and references `Profile(id)`.
+Selecting a model joins one-to-one relations by default. Use
+`Query<T>::disableJoining()` to read only related primary-key values.
+
+Relations can also be nullable:
+
+```cpp
+struct User {
+    int id;
+    std::optional<Profile> profile;
+};
+```
+
+Nullable relations generate nullable foreign-key columns, store `std::nullopt`
+as SQL `NULL`, and read SQL `NULL` back as `std::nullopt`.
+
+## Current limitations
+
+Model metadata currently supports one level of one-to-one relations. It does not
+yet support `OneToMany`, `ManyToMany`, nested relation paths beyond one relation
+field, custom converters, date/time fields, UUID fields, or `boost::optional`.

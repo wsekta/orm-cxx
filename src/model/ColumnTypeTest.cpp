@@ -7,17 +7,27 @@ using namespace orm::model;
 namespace
 {
 const std::string charType{"char"};
+const std::string signedCharType{"signed char"};
 const std::string unsignedCharType{"unsigned char"};
 const std::string shortType{"short"};
+const std::string shortIntType{"short int"};
 const std::string unsignedShortType{"unsigned short"};
+const std::string shortUnsignedIntType{"short unsigned int"};
 const std::string longType{"long"};
+const std::string longIntType{"long int"};
 const std::string unsignedLongType{"unsigned long"};
+const std::string longUnsignedIntType{"long unsigned int"};
 const std::string longLongType{"long long"};
+const std::string longLongIntType{"long long int"};
+const std::string int64Type{"__int64"};
 const std::string unsignedLongLongType{"unsigned long long"};
+const std::string longLongUnsignedIntType{"long long unsigned int"};
+const std::string unsignedInt64Type{"unsigned __int64"};
 const std::string boolType{"bool"};
 const std::string intType{"int"};
 const std::string floatType{"float"};
 const std::string doubleType{"double"};
+const std::string stringType{"std::string"};
 const std::string stringTypeVisualStudioStyle{
     "class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >"};
 const std::string stringTypeClangStyle{"std::basic_string<char, std::char_traits<char>, std::allocator<char>>"};
@@ -54,6 +64,13 @@ TEST(ColumnTypeTests, shouldTranslateDouble)
 TEST(ColumnTypeTests, shouldTranslateStringVisualStudioStyle)
 {
     auto [columnType, isNotNull] = toColumnType(stringTypeVisualStudioStyle);
+    EXPECT_EQ(columnType, ColumnType::String);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateString)
+{
+    auto [columnType, isNotNull] = toColumnType(stringType);
     EXPECT_EQ(columnType, ColumnType::String);
     EXPECT_TRUE(isNotNull);
 }
@@ -114,6 +131,13 @@ TEST(ColumnTypeTests, shouldTranslateChar)
     EXPECT_TRUE(isNotNull);
 }
 
+TEST(ColumnTypeTests, shouldTranslateSignedChar)
+{
+    auto [columnType, isNotNull] = toColumnType(signedCharType);
+    EXPECT_EQ(columnType, ColumnType::Char);
+    EXPECT_TRUE(isNotNull);
+}
+
 TEST(ColumnTypeTests, shouldTranslateUnsignedChar)
 {
     auto [columnType, isNotNull] = toColumnType(unsignedCharType);
@@ -128,9 +152,23 @@ TEST(ColumnTypeTests, shouldTranslateShort)
     EXPECT_TRUE(isNotNull);
 }
 
+TEST(ColumnTypeTests, shouldTranslateShortInt)
+{
+    auto [columnType, isNotNull] = toColumnType(shortIntType);
+    EXPECT_EQ(columnType, ColumnType::Short);
+    EXPECT_TRUE(isNotNull);
+}
+
 TEST(ColumnTypeTests, shouldTranslateUnsignedShort)
 {
     auto [columnType, isNotNull] = toColumnType(unsignedShortType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedShort);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateShortUnsignedInt)
+{
+    auto [columnType, isNotNull] = toColumnType(shortUnsignedIntType);
     EXPECT_EQ(columnType, ColumnType::UnsignedShort);
     EXPECT_TRUE(isNotNull);
 }
@@ -142,9 +180,30 @@ TEST(ColumnTypeTests, shouldTranslateLongLong)
     EXPECT_TRUE(isNotNull);
 }
 
+TEST(ColumnTypeTests, shouldTranslateLongLongInt)
+{
+    auto [columnType, isNotNull] = toColumnType(longLongIntType);
+    EXPECT_EQ(columnType, ColumnType::LongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateInt64)
+{
+    auto [columnType, isNotNull] = toColumnType(int64Type);
+    EXPECT_EQ(columnType, ColumnType::LongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
 TEST(ColumnTypeTests, shouldTranslateLong)
 {
     auto [columnType, isNotNull] = toColumnType(longType);
+    EXPECT_EQ(columnType, ColumnType::Int);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateLongInt)
+{
+    auto [columnType, isNotNull] = toColumnType(longIntType);
     EXPECT_EQ(columnType, ColumnType::Int);
     EXPECT_TRUE(isNotNull);
 }
@@ -156,9 +215,30 @@ TEST(ColumnTypeTests, shouldTranslateUnsignedLong)
     EXPECT_TRUE(isNotNull);
 }
 
+TEST(ColumnTypeTests, shouldTranslateLongUnsignedInt)
+{
+    auto [columnType, isNotNull] = toColumnType(longUnsignedIntType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedInt);
+    EXPECT_TRUE(isNotNull);
+}
+
 TEST(ColumnTypeTests, shouldTranslateUnsignedLongLong)
 {
     auto [columnType, isNotNull] = toColumnType(unsignedLongLongType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateLongLongUnsignedInt)
+{
+    auto [columnType, isNotNull] = toColumnType(longLongUnsignedIntType);
+    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
+    EXPECT_TRUE(isNotNull);
+}
+
+TEST(ColumnTypeTests, shouldTranslateUnsignedInt64)
+{
+    auto [columnType, isNotNull] = toColumnType(unsignedInt64Type);
     EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
     EXPECT_TRUE(isNotNull);
 }

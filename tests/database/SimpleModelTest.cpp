@@ -68,6 +68,37 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_value
     }
 }
 
+TEST_P(SimpleModelTest, shouldRoundTripExplicitNullAndPresentOptionalValues)
+{
+    createTable<models::ModelWithOptional>();
+    const auto models =
+        std::vector<models::ModelWithOptional>{{std::nullopt, std::nullopt, std::nullopt}, {42, "present", 3.5}};
+
+    database.insert(models);
+
+    orm::Query<models::ModelWithOptional> nullQuery;
+    nullQuery.where(orm::query::col("field1").isNull() && orm::query::col("field2").isNull() &&
+                    orm::query::col("field3").isNull());
+    const auto nullModels = database.select(nullQuery);
+
+    ASSERT_EQ(nullModels.size(), 1);
+    EXPECT_FALSE(nullModels[0].field1.has_value());
+    EXPECT_FALSE(nullModels[0].field2.has_value());
+    EXPECT_FALSE(nullModels[0].field3.has_value());
+
+    orm::Query<models::ModelWithOptional> presentQuery;
+    presentQuery.where(orm::query::col("field1") == 42);
+    const auto presentModels = database.select(presentQuery);
+
+    ASSERT_EQ(presentModels.size(), 1);
+    ASSERT_TRUE(presentModels[0].field1.has_value());
+    ASSERT_TRUE(presentModels[0].field2.has_value());
+    ASSERT_TRUE(presentModels[0].field3.has_value());
+    EXPECT_EQ(presentModels[0].field1.value(), 42);
+    EXPECT_EQ(presentModels[0].field2.value(), "present");
+    EXPECT_DOUBLE_EQ(presentModels[0].field3.value(), 3.5);
+}
+
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesShouldBeSame)
 {
     createTable<models::ModelWithFloat>();

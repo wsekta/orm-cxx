@@ -15,6 +15,11 @@ TEST_F(SqliteTypeTranslatorTest, shouldTranslateInt)
     EXPECT_EQ(translator.toSqlType(orm::model::ColumnType::Int), "INTEGER");
 }
 
+TEST_F(SqliteTypeTranslatorTest, shouldTranslateUnsignedInt)
+{
+    EXPECT_EQ(translator.toSqlType(orm::model::ColumnType::UnsignedInt), "UNSIGNED BIG INT");
+}
+
 TEST_F(SqliteTypeTranslatorTest, shouldTranslateFloat)
 {
     EXPECT_EQ(translator.toSqlType(orm::model::ColumnType::Float), "REAL");
@@ -67,7 +72,9 @@ TEST_F(SqliteTypeTranslatorTest, shouldTranslateUnsignedLongLong)
 
 TEST_F(SqliteTypeTranslatorTest, shouldThrowOnUnsupportedType)
 {
-    auto exceptionCallback = [this] { std::ignore = translator.toSqlType(orm::model::ColumnType::Uuid); };
+    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Uuid), std::runtime_error);
+    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Unknown), std::runtime_error);
+    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::OneToOne), std::runtime_error);
 
-    EXPECT_THROW(exceptionCallback(), std::runtime_error);
+    EXPECT_THROW((void)translator.toSqlType(static_cast<orm::model::ColumnType>(999)), std::runtime_error);
 }

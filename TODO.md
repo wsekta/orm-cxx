@@ -7,8 +7,4 @@ roadmap items yet.
 
 ## Backlog
 
-- Add support for additional field types:
-  - `std::tm`
-  - `boost::uuids::uuid`
-  - `boost::optional`
 - Add `noexcept` where the API and implementation can guarantee it.

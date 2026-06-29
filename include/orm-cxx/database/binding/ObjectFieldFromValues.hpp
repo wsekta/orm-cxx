@@ -1,4 +1,5 @@
 #include <format>
+#include <stdexcept>
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
@@ -62,16 +63,63 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
     static auto get(std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
-
-        auto fieldName =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        if (values.get_indicator(fieldName) == soci::i_null)
+        if constexpr (ModelWithId<ModelField>)
         {
-            *column = std::nullopt;
+            const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
+            const auto& foreignModel = model.getModelInfo().foreignModelsInfo.at(columnInfo.name);
+            bool hasPresentPrimaryKey{};
+            bool hasNullPrimaryKey{};
+
+            for (const auto& foreignColumnInfo : foreignModel.columnsInfo)
+            {
+                if (not foreignColumnInfo.isPrimaryKey)
+                {
+                    continue;
+                }
+
+                const auto fieldName =
+                    model.bindingInfo.joinedValues
+                        ? std::format("{}_{}", columnInfo.name, foreignColumnInfo.name)
+                        : std::format("{}_{}_{}", model.getModelInfo().tableName, columnInfo.name,
+                                      foreignColumnInfo.name);
+
+                if (values.get_indicator(fieldName) == soci::i_null)
+                {
+                    hasNullPrimaryKey = true;
+                }
+                else
+                {
+                    hasPresentPrimaryKey = true;
+                }
+            }
+
+            if (not hasPresentPrimaryKey)
+            {
+                *column = std::nullopt;
+
+                return;
+            }
+
+            if (hasNullPrimaryKey)
+            {
+                throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"};
+            }
+
+            ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
         }
         else
         {
-            ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
+            const auto fieldName =
+                std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+
+            if (values.get_indicator(fieldName) == soci::i_null)
+            {
+                *column = std::nullopt;
+            }
+            else
+            {
+                ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
+            }
         }
     }
 };

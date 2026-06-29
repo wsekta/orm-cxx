@@ -97,7 +97,7 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
     // TODO: handle uuid, date, etc. types
     else
     {
-        std::cerr << "Wnknown type: " << type << std::endl;
+        std::cerr << "Unknown type: " << type << std::endl;
         columnType = ColumnType::Unknown;
     }
 
@@ -106,6 +106,13 @@ auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>
 
 auto toString(ColumnType type) -> std::string
 {
-    return typeToStringMaping.at(type);
+    const auto typeIterator = typeToStringMaping.find(type);
+
+    if (typeIterator == typeToStringMaping.end())
+    {
+        return "unknown";
+    }
+
+    return typeIterator->second;
 }
 } // namespace orm::model

@@ -1,18 +1,24 @@
 # ORM C++ Roadmap
 
 This roadmap is focused on making `orm-cxx` easier to adopt as an open source
-C++ ORM: complete the core SQLite workflow first, stabilize the public API, then
-expand database support.
+C++ ORM: keep the SQLite workflow stable, document the public model and query
+contracts, then expand expressiveness and database support deliberately.
 
 ## Current State
 
-`orm-cxx` already provides a usable SQLite-first foundation:
+`orm-cxx` provides a usable SQLite-first foundation:
 
 - C++20 model metadata based on reflected struct fields.
+- A documented SQLite model contract for supported scalar fields, nullable
+  fields with `std::optional<T>`, table and column name mapping, default and
+  explicit primary keys, SQLite auto-increment primary keys, and one-level
+  one-to-one relations.
+- Nullable one-to-one relations through `std::optional<RelatedModel>`, including
+  nullable local foreign-key columns, SQL `NULL` inserts, joined selects, and
+  non-joined selects that hydrate related primary-key values.
 - Table creation and drop commands.
 - Full row-level CRUD operations through `orm::Database`, including insert,
   select, predicate-based update, and predicate-based remove operations.
-- Opt-in SQLite auto-increment support for a single integer primary key.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
   `DISTINCT`, `LIMIT`, `OFFSET`, raw predicates, raw ordering, and bind
   parameters.
@@ -28,25 +34,27 @@ expand database support.
 
 ## Near Term
 
-The next priority is to tighten the SQLite model behavior and documentation now
-that basic CRUD is available.
+The next priority is to improve query expressiveness without making result
+types unpredictable.
 
-- Align the model documentation with the currently supported scalar types,
-  optional fields, primary-key behavior, and one-to-one relations.
-- Remove duplicated or stale backlog items as work moves into documented
-  milestones.
+- Decide and document the public shape for partial-result queries.
+- Add projections for selecting a subset of fields once the result type contract
+  is settled.
+- Add aggregate functions, `GROUP BY`, and `HAVING` on top of the projection
+  design.
+- Add examples that show full-model selects, projected selects, and aggregate
+  queries side by side.
 
 ## Mid Term
 
-With basic CRUD complete, improve query expressiveness and contributor
-experience.
+After projections are stable, improve contributor experience and relation
+coverage.
 
-- Extend the query DSL with projections, aggregate functions, `GROUP BY`, and
-  `HAVING`.
-- Decide the public shape for partial-result queries before implementing
-  projections, so result types are predictable and documented.
 - Plan relation support beyond one-to-one, including `OneToMany` and
   `ManyToMany` mappings.
+- Decide how custom field converters should work before adding date/time, UUID,
+  or third-party optional types such as `std::tm`, `boost::uuids::uuid`, and
+  `boost::optional`.
 - Refactor CMake configuration into clearer library, example, test, and
   dependency boundaries.
 - Add `.clang-tidy`, `.cmake-format`, and static-analysis checks in GitHub
