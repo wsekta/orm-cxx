@@ -46,16 +46,23 @@ var NAVTREE =
       [ "One-to-one relations", "md_docs_2model.html#autotoc_md17", null ],
       [ "Current limitations", "md_docs_2model.html#autotoc_md18", null ]
     ] ],
+    [ "Partial-result queries", "md_docs_2partial-result-queries.html", [
+      [ "Contract", "md_docs_2partial-result-queries.html#autotoc_md20", null ],
+      [ "Query behavior", "md_docs_2partial-result-queries.html#autotoc_md21", null ],
+      [ "Result DTO rules", "md_docs_2partial-result-queries.html#autotoc_md22", null ],
+      [ "Future aggregate queries", "md_docs_2partial-result-queries.html#autotoc_md23", null ]
+    ] ],
     [ "Query", "md_docs_2query.html", [
-      [ "Build select", "md_docs_2query.html#autotoc_md20", null ],
-      [ "Where predicates", "md_docs_2query.html#autotoc_md21", null ],
-      [ "Column names and relations", "md_docs_2query.html#autotoc_md22", null ],
-      [ "Ordering", "md_docs_2query.html#autotoc_md23", null ],
-      [ "Distinct", "md_docs_2query.html#autotoc_md24", null ],
-      [ "Limit and offset", "md_docs_2query.html#autotoc_md25", null ],
-      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md26", null ],
-      [ "Write predicates", "md_docs_2query.html#autotoc_md27", null ],
-      [ "Current limitations", "md_docs_2query.html#autotoc_md28", null ]
+      [ "Build select", "md_docs_2query.html#autotoc_md25", null ],
+      [ "Where predicates", "md_docs_2query.html#autotoc_md26", null ],
+      [ "Column names and relations", "md_docs_2query.html#autotoc_md27", null ],
+      [ "Ordering", "md_docs_2query.html#autotoc_md28", null ],
+      [ "Distinct", "md_docs_2query.html#autotoc_md29", null ],
+      [ "Limit and offset", "md_docs_2query.html#autotoc_md30", null ],
+      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md31", null ],
+      [ "Partial-result queries", "md_docs_2query.html#autotoc_md32", null ],
+      [ "Write predicates", "md_docs_2query.html#autotoc_md33", null ],
+      [ "Current limitations", "md_docs_2query.html#autotoc_md34", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

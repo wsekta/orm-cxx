@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['predicates_0',['predicates',['../md_docs_2query.html#autotoc_md21',1,'Where predicates'],['../md_docs_2query.html#autotoc_md27',1,'Write predicates']]],
-  ['primary_20key_1',['Primary key',['../md_docs_2model.html#autotoc_md15',1,'']]],
-  ['primary_20key_2',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md16',1,'']]]
+  ['partial_20result_20queries_0',['Partial result queries',['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md32',1,'Partial-result queries']]],
+  ['predicates_1',['predicates',['../md_docs_2query.html#autotoc_md26',1,'Where predicates'],['../md_docs_2query.html#autotoc_md33',1,'Write predicates']]],
+  ['primary_20key_2',['Primary key',['../md_docs_2model.html#autotoc_md15',1,'']]],
+  ['primary_20key_3',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md16',1,'']]]
 ];

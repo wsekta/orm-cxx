@@ -131,6 +131,9 @@ Public Types</h2></td></tr>
 <tr class="memitem:a03db7117cb4e61558f7b29552fa77e19" id="r_a03db7117cb4e61558f7b29552fa77e19"><td class="memTemplParams" colspan="2"><a id="a03db7117cb4e61558f7b29552fa77e19" name="a03db7117cb4e61558f7b29552fa77e19"></a>
 template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a03db7117cb4e61558f7b29552fa77e19 template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>Payload</b> = db::binding::BindingPayload&lt;T&gt;</td></tr>
+<tr class="memitem:a9d2e0fc9f54eaa219c98dc938305dfea" id="r_a9d2e0fc9f54eaa219c98dc938305dfea"><td class="memTemplParams" colspan="2"><a id="a9d2e0fc9f54eaa219c98dc938305dfea" name="a9d2e0fc9f54eaa219c98dc938305dfea"></a>
+template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a9d2e0fc9f54eaa219c98dc938305dfea template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>ProjectionPayload</b> = db::binding::ProjectionPayload&lt;T&gt;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -145,6 +148,9 @@ auto&#160;</td><td class="memItemRight"><b>disconnect</b> () -&gt; void</td></tr
 <tr class="memitem:aae29e5eab83e887cac4f2a230670fdc7" id="r_aae29e5eab83e887cac4f2a230670fdc7"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:aae29e5eab83e887cac4f2a230670fdc7 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aae29e5eab83e887cac4f2a230670fdc7">select</a> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
 <tr class="memdesc:aae29e5eab83e887cac4f2a230670fdc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a select query and returns the result.  <br /></td></tr>
+<tr class="memitem:a3a3433a5e24e248ae9ad344fd443533b" id="r_a3a3433a5e24e248ae9ad344fd443533b"><td class="memTemplParams" colspan="2">template&lt;typename Source, typename Result&gt; </td></tr>
+<tr class="memitem:a3a3433a5e24e248ae9ad344fd443533b template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3a3433a5e24e248ae9ad344fd443533b">select</a> (<a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a>&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
+<tr class="memdesc:a3a3433a5e24e248ae9ad344fd443533b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a projection select query and returns DTO results.  <br /></td></tr>
 <tr class="memitem:acaaa43ce08ccb8b9b686d45a5d8e10e2" id="r_acaaa43ce08ccb8b9b686d45a5d8e10e2"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:acaaa43ce08ccb8b9b686d45a5d8e10e2 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
 <tr class="memdesc:acaaa43ce08ccb8b9b686d45a5d8e10e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for multiple objects.  <br /></td></tr>
@@ -418,8 +424,51 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
+<a id="a3a3433a5e24e248ae9ad344fd443533b" name="a3a3433a5e24e248ae9ad344fd443533b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3a3433a5e24e248ae9ad344fd443533b">&#9670;&#160;</a></span>select() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Source, typename Result&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::select </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a>&lt; Source, Result &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>query</em></span></td><td>)</td>
+          <td> -&gt; std::vector&lt; Result &gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Executes a projection select query and returns DTO results. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">Source</td><td>The source ORM model. </td></tr>
+    <tr><td class="paramname">Result</td><td>The flat projection DTO. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">query</td><td>The projection query to execute. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>The vector of DTO objects returned by the projection query. </dd></dl>
+
+</div>
+</div>
 <a id="aae29e5eab83e887cac4f2a230670fdc7" name="aae29e5eab83e887cac4f2a230670fdc7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aae29e5eab83e887cac4f2a230670fdc7">&#9670;&#160;</a></span>select()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aae29e5eab83e887cac4f2a230670fdc7">&#9670;&#160;</a></span>select() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
