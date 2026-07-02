@@ -93,17 +93,10 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
                 }
             }
 
-            if (not hasPresentPrimaryKey)
-            {
-                *column = std::nullopt;
-
-                return;
-            }
+            if (not hasPresentPrimaryKey) { *column = std::nullopt; return; }
 
             if (hasNullPrimaryKey)
-            {
-                throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"};
-            }
+            { throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"}; }
 
             ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
         }

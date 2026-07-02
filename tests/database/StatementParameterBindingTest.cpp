@@ -218,6 +218,59 @@ TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongConvertedModelF
     EXPECT_EQ(field, 42);
 }
 
+TEST(StatementParameterBindingTest, shouldBindNullOptionalScalarFields)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;
+
+    const auto model = models::ModelWithOptional{.field1 = std::nullopt, .field2 = std::nullopt, .field3 = std::nullopt};
+    const auto payload = Payload{.value = model};
+    auto values = soci::values{};
+    auto indicator = soci::indicator{};
+
+    EXPECT_NO_THROW(soci::type_conversion<Payload>::to_base(payload, values, indicator));
+
+    EXPECT_EQ(indicator, soci::i_ok);
+}
+
+TEST(StatementParameterBindingTest, shouldBindNullOptionalRelationPrimaryKey)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelOptionallyRelatedToOtherModel>;
+
+    const auto model = models::ModelOptionallyRelatedToOtherModel{.id = 1,
+                                                                 .field1 = 2,
+                                                                 .field2 = "without-relation",
+                                                                 .field3 = std::nullopt};
+    const auto payload = Payload{.value = model};
+    auto values = soci::values{};
+    auto indicator = soci::indicator{};
+
+    EXPECT_NO_THROW(soci::type_conversion<Payload>::to_base(payload, values, indicator));
+
+    EXPECT_EQ(indicator, soci::i_ok);
+}
+
+TEST(StatementParameterBindingTest, shouldHydratePresentOptionalCompositeRelation)
+{
+    using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+    auto relation = std::optional<models::ModelWithOverwrittenId>{};
+    const auto& modelInfo = payload.getModelInfo();
+    const auto& relationInfo = modelInfo.columnsInfo[1];
+
+    values.set(std::format("{}_{}_field1", modelInfo.tableName, relationInfo.name), 7);
+    values.set(std::format("{}_{}_field2", modelInfo.tableName, relationInfo.name), std::string{"composite"});
+
+    orm::db::binding::ObjectFieldFromValues<std::optional<models::ModelWithOverwrittenId>>::get(&relation, payload, 1,
+                                                                                                values);
+
+    ASSERT_TRUE(relation.has_value());
+    EXPECT_EQ(relation->id, 0);
+    EXPECT_EQ(relation->field1, 7);
+    EXPECT_EQ(relation->field2, "composite");
+}
+
 TEST(StatementParameterBindingTest, shouldRejectPartiallyNullOptionalCompositeRelation)
 {
     using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel>;

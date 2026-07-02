@@ -44,6 +44,27 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
 }
 
+inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo, std::size_t columnIndex)
+    -> void
+{
+    const auto& columnInfo = modelInfo.columnsInfo[columnIndex];
+
+    if (columnInfo.isForeignModel)
+    {
+        const auto& foreignModelInfo = modelInfo.foreignModelsInfo.at(columnInfo.name);
+
+        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
+        {
+            if (foreignColumnInfo.isPrimaryKey)
+            { setNullValue(values, std::format("{}_{}", columnInfo.name, foreignColumnInfo.name), foreignColumnInfo.type); }
+        }
+
+        return;
+    }
+
+    setNullValue(values, columnInfo.name, columnInfo.type);
+}
+
 template <typename ModelField>
 struct ObjectFieldToValues;
 
@@ -56,10 +77,7 @@ struct ObjectFieldToValues<ModelField>
     {
         const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
 
-        if (columnInfo.isAutoIncrement)
-        {
-            return;
-        }
+        if (columnInfo.isAutoIncrement) { return; }
 
         values.set(columnInfo.name, *column);
     }
@@ -97,32 +115,9 @@ struct ObjectFieldToValues<std::optional<ModelField>>
     static auto set(const std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
-        if (column->has_value())
-        {
-            ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values);
+        if (column->has_value()) { ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values); return; }
 
-            return;
-        }
-
-        const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
-
-        if (columnInfo.isForeignModel)
-        {
-            const auto& foreignModelInfo = model.getModelInfo().foreignModelsInfo.at(columnInfo.name);
-
-            for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
-            {
-                if (foreignColumnInfo.isPrimaryKey)
-                {
-                    setNullValue(values, std::format("{}_{}", columnInfo.name, foreignColumnInfo.name),
-                                 foreignColumnInfo.type);
-                }
-            }
-
-            return;
-        }
-
-        setNullValue(values, columnInfo.name, columnInfo.type);
+        setOptionalNullValue(values, model.getModelInfo(), columnIndex);
     }
 };
 

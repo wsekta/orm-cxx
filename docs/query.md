@@ -8,8 +8,9 @@
 6. [Limit and offset](#limit-and-offset)
 7. [Raw SQL fragments](#raw-sql-fragments)
 8. [Partial-result queries](#partial-result-queries)
-9. [Write predicates](#write-predicates)
-10. [Current limitations](#current-limitations)
+9. [Aggregate projection queries](#aggregate-projection-queries)
+10. [Write predicates](#write-predicates)
+11. [Current limitations](#current-limitations)
 
 ## Build select
 
@@ -187,7 +188,7 @@ query.orderBy(orm::query::asc(orm::query::col("id")))
 SQL clauses are rendered in this order:
 
 ```sql
-WHERE ... ORDER BY ... LIMIT ... OFFSET ...
+WHERE ... GROUP BY ... HAVING ... ORDER BY ... LIMIT ... OFFSET ...
 ```
 
 ## Raw SQL fragments
@@ -238,6 +239,45 @@ Projection aliases must match the DTO field names. See
 [Partial-result queries](partial-result-queries.md) for the full contract and
 validation rules.
 
+## Aggregate projection queries
+
+Aggregate queries use `ProjectionQuery<Source, Result>` and hydrate flat DTOs
+through explicit aliases:
+
+```cpp
+using namespace orm::query;
+
+struct CityStats
+{
+    std::string city;
+    long long users;
+    double averageAge;
+};
+
+orm::ProjectionQuery<User, CityStats> query;
+query.project(as("city", col("profile.city")),
+              as("users", countAll()),
+              as("averageAge", avg(col("age"))))
+     .groupBy(col("profile.city"))
+     .having(countAll() > 1)
+     .andHaving(avg(col("age")) >= 18.0);
+
+std::vector<CityStats> stats = database.select(query);
+```
+
+Supported aggregate helpers are `count(col(...))`, `countAll()`,
+`sum(col(...))`, `avg(col(...))`, `min(col(...))`, and `max(col(...))`.
+`HAVING` predicates compare aggregate expressions to values and can be combined
+with `&&`, `||`, `!`, `having`, `andHaving`, and `orHaving`.
+
+`GROUP BY` and aggregate column paths follow the same one-level relation rules
+as `WHERE`, `ORDER BY`, and column projections. With `disableJoining()`, related
+paths are limited to related primary-key fields.
+
+`count` and `countAll` are usually represented as `long long` DTO fields, while
+`avg` is usually represented as `double`. Use `std::optional<T>` for aggregate
+results that may be SQL `NULL`.
+
 ## Write predicates
 
 The same predicate DSL is used by `orm::Update<Model>` and `orm::Database::remove<Model>`:
@@ -268,4 +308,5 @@ foreign-key column.
 
 The query language currently covers ORM-style `SELECT` returning full model objects plus predicate-based `UPDATE` and
 `DELETE` operations.
-It does not yet support aggregate functions, `GROUP BY`, `HAVING`, subqueries or `EXISTS`.
+It does not yet support subqueries, `EXISTS`, raw aggregate expressions, aggregate `ORDER BY`, or
+`COUNT(DISTINCT ...)`.

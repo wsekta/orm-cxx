@@ -142,23 +142,11 @@ public:
 
         Payload<T>::bindingInfo.joinedValues = query.getData().shouldJoin;
 
-        if (statement.parameters.empty())
-        {
-            soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql);
+        soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql, soci::use(parameterValues));
 
-            for (auto& payload : preparedRowSet)
-            {
-                result.push_back(std::move(payload.value));
-            }
-        }
-        else
+        for (auto& payload : preparedRowSet)
         {
-            soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql, soci::use(parameterValues));
-
-            for (auto& payload : preparedRowSet)
-            {
-                result.push_back(std::move(payload.value));
-            }
+            result.push_back(std::move(payload.value));
         }
 
         return result;
@@ -186,24 +174,12 @@ public:
             detail::bindStatementParameter(parameterValues, parameter);
         }
 
-        if (statement.parameters.empty())
-        {
-            soci::rowset<ProjectionPayload<Result>> preparedRowSet = (sql.prepare << statement.sql);
+        soci::rowset<ProjectionPayload<Result>> preparedRowSet =
+            (sql.prepare << statement.sql, soci::use(parameterValues));
 
-            for (auto& payload : preparedRowSet)
-            {
-                result.push_back(std::move(payload.value));
-            }
-        }
-        else
+        for (auto& payload : preparedRowSet)
         {
-            soci::rowset<ProjectionPayload<Result>> preparedRowSet =
-                (sql.prepare << statement.sql, soci::use(parameterValues));
-
-            for (auto& payload : preparedRowSet)
-            {
-                result.push_back(std::move(payload.value));
-            }
+            result.push_back(std::move(payload.value));
         }
 
         return result;

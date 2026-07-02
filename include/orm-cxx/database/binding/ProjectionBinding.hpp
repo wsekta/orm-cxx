@@ -3,6 +3,7 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 
 #include "BindingConcepts.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
@@ -32,12 +33,73 @@ struct ObjectFieldFromProjectionValues
     }
 };
 
+template <typename ResultField>
+auto parseNumericProjectionValue(const std::string& value) -> ResultField
+{
+    if constexpr (std::is_floating_point_v<ResultField>)
+    {
+        return static_cast<ResultField>(std::stod(value));
+    }
+    else if constexpr (std::is_unsigned_v<ResultField>)
+    {
+        return static_cast<ResultField>(std::stoull(value));
+    }
+    else
+    {
+        return static_cast<ResultField>(std::stoll(value));
+    }
+}
+
+template <typename ResultField, typename StoredField>
+auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldName, const soci::values& values) -> bool
+{
+    try
+    {
+        *field = static_cast<ResultField>(values.get<StoredField>(fieldName));
+
+        return true;
+    }
+    catch (const std::exception&)
+    {
+        return false;
+    }
+}
+
+template <typename ResultField>
+auto getNumericProjectionValue(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
+{
+    if (tryGetNumericProjectionValue<ResultField, ResultField>(field, fieldName, values) or
+        tryGetNumericProjectionValue<ResultField, int>(field, fieldName, values) or
+        tryGetNumericProjectionValue<ResultField, long long>(field, fieldName, values) or
+        tryGetNumericProjectionValue<ResultField, unsigned long long>(field, fieldName, values) or
+        tryGetNumericProjectionValue<ResultField, double>(field, fieldName, values))
+    {
+        return;
+    }
+
+    try
+    {
+        *field = parseNumericProjectionValue<ResultField>(values.get<std::string>(fieldName));
+    }
+    catch (const std::exception&)
+    {
+        throw std::invalid_argument{"Cannot hydrate numeric projection result field: " + fieldName};
+    }
+}
+
 template <SociDefaultSupported ResultField>
 struct ObjectFieldFromProjectionValues<ResultField>
 {
     static auto get(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
     {
-        *field = values.get<ResultField>(fieldName);
+        if constexpr (std::is_arithmetic_v<ResultField>)
+        {
+            getNumericProjectionValue(field, fieldName, values);
+        }
+        else
+        {
+            *field = values.get<ResultField>(fieldName);
+        }
     }
 };
 
@@ -63,7 +125,9 @@ struct ObjectFieldFromProjectionValuesWithCast
 {
     static auto get(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
     {
-        *field = static_cast<ResultField>(values.get<SociType>(fieldName));
+        SociType value{};
+        getNumericProjectionValue(&value, fieldName, values);
+        *field = static_cast<ResultField>(value);
     }
 };
 

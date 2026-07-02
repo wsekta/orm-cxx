@@ -24,6 +24,19 @@ struct NumericProjection
     std::uint64_t unsignedValue;
 };
 
+struct WideIntegralProjection
+{
+    long long signedValue;
+    unsigned long long unsignedValue;
+};
+
+struct NumericFromStringProjection
+{
+    int intValue;
+    unsigned long long unsignedValue;
+    double doubleValue;
+};
+
 struct OptionalProjection
 {
     int id;
@@ -36,10 +49,36 @@ struct RelatedProjection
     std::string relatedName;
 };
 
+struct AggregateSummaryProjection
+{
+    std::string name;
+    long long users;
+    long long totalField1;
+    double averageField1;
+    int minField1;
+    int maxField1;
+};
+
+struct RelatedAggregateSummaryProjection
+{
+    std::string relatedName;
+    long long users;
+};
+
+struct NullableAggregateProjection
+{
+    std::optional<double> averageValue;
+};
+
 struct UnsupportedProjection
 {
     int id;
     models::ModelWithId nested;
+};
+
+struct InvalidNumericProjection
+{
+    int value;
 };
 } // namespace projection_query_database_test_models
 
@@ -79,6 +118,52 @@ TEST(ProjectionBindingTest, shouldHydrateConvertedProjectionFields)
 
     EXPECT_FLOAT_EQ(payload.value.floatValue, 2.5F);
     EXPECT_EQ(payload.value.unsignedValue, 42);
+}
+
+TEST(ProjectionBindingTest, shouldHydrateWideIntegralProjectionFieldsFromIntValues)
+{
+    using Payload = orm::db::binding::ProjectionPayload<WideIntegralProjection>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+
+    values.set("signedValue", 7);
+    values.set("unsignedValue", 9);
+
+    soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload);
+
+    EXPECT_EQ(payload.value.signedValue, 7);
+    EXPECT_EQ(payload.value.unsignedValue, 9);
+}
+
+TEST(ProjectionBindingTest, shouldHydrateNumericProjectionFieldsFromStringValues)
+{
+    using Payload = orm::db::binding::ProjectionPayload<NumericFromStringProjection>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+
+    values.set("intValue", std::string{"12"});
+    values.set("unsignedValue", std::string{"42"});
+    values.set("doubleValue", std::string{"2.5"});
+
+    soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload);
+
+    EXPECT_EQ(payload.value.intValue, 12);
+    EXPECT_EQ(payload.value.unsignedValue, 42);
+    EXPECT_DOUBLE_EQ(payload.value.doubleValue, 2.5);
+}
+
+TEST(ProjectionBindingTest, shouldRejectInvalidNumericProjectionFieldValue)
+{
+    using Payload = orm::db::binding::ProjectionPayload<InvalidNumericProjection>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+
+    values.set("value", std::string{"not-a-number"});
+
+    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload), std::invalid_argument);
 }
 
 TEST(ProjectionBindingTest, shouldHydrateOptionalProjectionFields)
@@ -177,6 +262,74 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedOptionalField)
     EXPECT_EQ(rows[1].id, 2);
     ASSERT_TRUE(rows[1].name.has_value());
     EXPECT_EQ(rows[1].name.value(), "present");
+}
+
+TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByScalarField)
+{
+    createTable<models::ModelWithId>();
+    database.insert(std::vector<models::ModelWithId>{{1, 10, "alpha"},
+                                                     {2, 20, "alpha"},
+                                                     {3, 30, "beta"},
+                                                     {4, 40, "beta"},
+                                                     {5, 50, "beta"}});
+
+    orm::ProjectionQuery<models::ModelWithId, AggregateSummaryProjection> query;
+    query.project(as("name", col("field2")), as("users", countAll()), as("totalField1", sum(col("field1"))),
+                  as("averageField1", avg(col("field1"))), as("minField1", min(col("field1"))),
+                  as("maxField1", max(col("field1"))))
+        .groupBy(col("field2"))
+        .having(countAll() > 2)
+        .orderBy(asc(col("field2")));
+
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_EQ(rows[0].name, "beta");
+    EXPECT_EQ(rows[0].users, 3);
+    EXPECT_EQ(rows[0].totalField1, 120);
+    EXPECT_DOUBLE_EQ(rows[0].averageField1, 40.0);
+    EXPECT_EQ(rows[0].minField1, 30);
+    EXPECT_EQ(rows[0].maxField1, 50);
+}
+
+TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByRelatedField)
+{
+    createTable<models::ModelWithId>();
+    createTable<models::ModelRelatedToOtherModel>();
+    const auto relatedModels = std::vector<models::ModelWithId>{{1, 10, "profile-one"}, {2, 20, "profile-two"}};
+    const auto models = std::vector<models::ModelRelatedToOtherModel>{{1, 100, "first", relatedModels[0]},
+                                                                      {2, 200, "second", relatedModels[0]},
+                                                                      {3, 300, "third", relatedModels[1]}};
+
+    database.insert(relatedModels);
+    database.insert(models);
+
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateSummaryProjection> query;
+    query.project(as("relatedName", col("field3.field2")), as("users", countAll()))
+        .groupBy(col("field3.field2"))
+        .orderBy(asc(col("field3.field2")));
+
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 2);
+    EXPECT_EQ(rows[0].relatedName, "profile-one");
+    EXPECT_EQ(rows[0].users, 2);
+    EXPECT_EQ(rows[1].relatedName, "profile-two");
+    EXPECT_EQ(rows[1].users, 1);
+}
+
+TEST_P(ProjectionQueryDatabaseTest, shouldSelectNullableAggregateProjection)
+{
+    createTable<models::ModelWithOptional>();
+    database.insert(std::vector<models::ModelWithOptional>{{1, "present", 1.0}, {2, "present", 2.0}});
+
+    orm::ProjectionQuery<models::ModelWithOptional, NullableAggregateProjection> query;
+    query.project(as("averageValue", avg(col("field3")))).where(col("field1") == 999);
+
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_FALSE(rows[0].averageValue.has_value());
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, ProjectionQueryDatabaseTest, connectionStrings);

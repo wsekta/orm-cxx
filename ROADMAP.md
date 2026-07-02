@@ -24,6 +24,10 @@ contracts, then expand expressiveness and database support deliberately.
   parameters.
 - A projection query builder for partial-result `SELECT` queries that hydrate
   flat DTOs through explicit field aliases.
+- Aggregate projection queries with `count`, `countAll`, `sum`, `avg`, `min`,
+  `max`, `GROUP BY`, and aggregate `HAVING` predicates.
+- Query examples that show full-model selects, projected selects, and aggregate
+  projection queries side by side.
 - A patch-style `orm::Update<T>` builder for safe, filtered `UPDATE`
   statements, nullable-field updates through `std::nullopt`, and affected-row
   counts for `UPDATE` and `DELETE`.
@@ -36,13 +40,8 @@ contracts, then expand expressiveness and database support deliberately.
 
 ## Near Term
 
-The next priority is to improve query expressiveness without making result
-types unpredictable.
-
-- Add aggregate functions, `GROUP BY`, and `HAVING` on top of the projection
-  design.
-- Add examples that show full-model selects, projected selects, and aggregate
-  queries side by side.
+Near-term query expressiveness work is complete. The next short-cycle priority
+can be promoted here from the mid-term list when it is ready.
 
 ## Mid Term
 

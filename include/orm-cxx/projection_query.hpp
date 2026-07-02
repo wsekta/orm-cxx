@@ -7,6 +7,7 @@
 #include <string>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include "model.hpp"
 #include "orm-cxx/model/ColumnType.hpp"
@@ -50,59 +51,63 @@ inline auto isSupportedProjectionResultType(model::ColumnType type) -> bool
     return false;
 }
 
-template <typename Result>
-auto validateProjectionAliases(const std::vector<query::Projection>& projections) -> void
+struct ProjectionResultField
 {
-    if (projections.empty())
-    {
-        throw std::invalid_argument{"Projection query requires at least one projected field"};
-    }
+    std::string name;
+    model::ColumnType type;
+};
 
-    const auto fields = rfl::fields<Result>();
+inline auto validateProjectionAliasNames(const std::vector<query::Projection>& projections,
+                                         const std::vector<ProjectionResultField>& fields) -> void
+{
+    if (projections.empty()) { throw std::invalid_argument{"Projection query requires at least one projected field"}; }
+
     std::unordered_set<std::string> resultFields;
 
     for (const auto& field : fields)
     {
-        const auto fieldName = std::string{field.name()};
-        const auto [type, isNotNull] = model::toColumnType(field.type());
+        if (not isSupportedProjectionResultType(field.type))
+        { throw std::invalid_argument{"Unsupported projection result field type: " + field.name}; }
 
-        (void)isNotNull;
-
-        if (not isSupportedProjectionResultType(type))
-        {
-            throw std::invalid_argument{"Unsupported projection result field type: " + fieldName};
-        }
-
-        resultFields.insert(fieldName);
+        resultFields.insert(field.name);
     }
 
     std::unordered_set<std::string> projectedFields;
 
     for (const auto& projection : projections)
     {
-        if (projection.resultField.empty())
-        {
-            throw std::invalid_argument{"Projection alias must not be empty"};
-        }
+        if (projection.resultField.empty()) { throw std::invalid_argument{"Projection alias must not be empty"}; }
 
         if (not resultFields.contains(projection.resultField))
-        {
-            throw std::invalid_argument{"Projection alias does not match a result field: " + projection.resultField};
-        }
+        { throw std::invalid_argument{"Projection alias does not match a result field: " + projection.resultField}; }
 
         if (not projectedFields.insert(projection.resultField).second)
-        {
-            throw std::invalid_argument{"Duplicate projection alias: " + projection.resultField};
-        }
+        { throw std::invalid_argument{"Duplicate projection alias: " + projection.resultField}; }
     }
 
     for (const auto& resultField : resultFields)
     {
         if (not projectedFields.contains(resultField))
-        {
-            throw std::invalid_argument{"Missing projection alias for result field: " + resultField};
-        }
+        { throw std::invalid_argument{"Missing projection alias for result field: " + resultField}; }
     }
+}
+
+template <typename Result>
+auto validateProjectionAliases(const std::vector<query::Projection>& projections) -> void
+{
+    const auto fields = rfl::fields<Result>();
+    std::vector<ProjectionResultField> resultFields;
+
+    for (const auto& field : fields)
+    {
+        const auto [type, isNotNull] = model::toColumnType(field.type());
+
+        (void)isNotNull;
+
+        resultFields.push_back({std::string{field.name()}, type});
+    }
+
+    validateProjectionAliasNames(projections, resultFields);
 }
 } // namespace detail
 
@@ -152,6 +157,35 @@ public:
     auto orderBy(Orders... orders) -> ProjectionQuery<Source, Result>&
     {
         data.orderBy = {std::move(orders)...};
+
+        return *this;
+    }
+
+    template <typename... Columns>
+    auto groupBy(Columns... columns) -> ProjectionQuery<Source, Result>&
+    {
+        data.groupBy = {std::move(columns)...};
+
+        return *this;
+    }
+
+    auto having(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    {
+        data.having = predicate;
+
+        return *this;
+    }
+
+    auto andHaving(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    {
+        data.having = data.having.has_value() ? data.having.value() && predicate : predicate;
+
+        return *this;
+    }
+
+    auto orHaving(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    {
+        data.having = data.having.has_value() ? data.having.value() || predicate : predicate;
 
         return *this;
     }

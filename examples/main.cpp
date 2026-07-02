@@ -1,4 +1,8 @@
+#include <map>
 #include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 
 #include "orm-cxx/orm.hpp"
 
@@ -25,8 +29,23 @@ struct ObjectModel
                                                                             {"field2", "some_field2_name"}};
 };
 
+struct ObjectSummary
+{
+    std::optional<int> number;
+    std::string name;
+};
+
+struct ObjectStats
+{
+    std::string name;
+    long long rows;
+    std::optional<double> averageNumber;
+};
+
 int main()
 {
+    using namespace orm::query;
+
     // connect with standard connection string
     orm::Database database;
     database.connect("sqlite3://test.db");
@@ -38,15 +57,25 @@ int main()
     database.createTable<ObjectModel>();
 
     // create objects and insert them into table
-    std::vector<ObjectModel> objects{{1, "test"}, {std::nullopt, "text"}};
+    std::vector<ObjectModel> objects{{1, "test"}, {2, "test"}, {std::nullopt, "text"}};
     database.insert(objects);
 
-    // define select query with builder pattern
-    orm::Query<ObjectModel> query;
-    query.limit(10).offset(5);
+    // full-model select returns std::vector<ObjectModel>
+    orm::Query<ObjectModel> fullQuery;
+    fullQuery.limit(10).offset(5);
+    auto queriedObjects = database.select(fullQuery);
 
-    // execute query
-    auto queriedObjects = database.select(query);
+    // projection select returns a flat DTO
+    orm::ProjectionQuery<ObjectModel, ObjectSummary> summaryQuery;
+    summaryQuery.project(as("number", col("field1")), as("name", col("field2"))).orderBy(asc(col("field2")));
+    auto summaries = database.select(summaryQuery);
+
+    // aggregate projection returns a flat DTO with aggregate fields
+    orm::ProjectionQuery<ObjectModel, ObjectStats> statsQuery;
+    statsQuery.project(as("name", col("field2")), as("rows", countAll()), as("averageNumber", avg(col("field1"))))
+        .groupBy(col("field2"))
+        .having(countAll() > 0);
+    auto stats = database.select(statsQuery);
 
     return 0;
 }

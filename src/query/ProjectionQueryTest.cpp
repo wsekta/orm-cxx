@@ -5,6 +5,8 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <variant>
+#include <vector>
 
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
@@ -30,16 +32,59 @@ struct ProjectionDtoWithUnsupportedField
     int id;
     models::ModelWithId nested;
 };
+
+struct AggregateProjectionDto
+{
+    std::string name;
+    long long users;
+    double averageField1;
+};
 } // namespace projection_query_test_models
 
 using namespace projection_query_test_models;
+
+namespace
+{
+auto projectionColumnPath(const Projection& projection) -> std::string
+{
+    return std::get<Column>(projection.source).getPath();
+}
+} // namespace
 
 TEST(ProjectionQueryTest, shouldCreateProjectionAlias)
 {
     const auto projection = as("name", col("displayName"));
 
     EXPECT_EQ(projection.resultField, "name");
-    EXPECT_EQ(projection.sourceColumn.getPath(), "displayName");
+    EXPECT_EQ(projectionColumnPath(projection), "displayName");
+}
+
+TEST(ProjectionQueryTest, shouldCreateAggregateProjectionAlias)
+{
+    const auto projection = as("users", countAll());
+    const auto& aggregate = std::get<AggregateExpression>(projection.source);
+
+    EXPECT_EQ(projection.resultField, "users");
+    EXPECT_EQ(aggregate.function, AggregateFunction::CountAll);
+    EXPECT_FALSE(aggregate.column.has_value());
+}
+
+TEST(ProjectionQueryTest, shouldCreateAggregateExpressions)
+{
+    const auto aggregates = std::vector<std::pair<AggregateExpression, AggregateFunction>>{
+        {count(col("field1")), AggregateFunction::Count},
+        {sum(col("field1")), AggregateFunction::Sum},
+        {avg(col("field1")), AggregateFunction::Avg},
+        {min(col("field1")), AggregateFunction::Min},
+        {max(col("field1")), AggregateFunction::Max},
+    };
+
+    for (const auto& [aggregate, function] : aggregates)
+    {
+        EXPECT_EQ(aggregate.function, function);
+        ASSERT_TRUE(aggregate.column.has_value());
+        EXPECT_EQ(aggregate.column->getPath(), "field1");
+    }
 }
 
 TEST(ProjectionQueryTest, shouldIdentifySupportedProjectionResultTypes)
@@ -93,9 +138,9 @@ TEST(ProjectionQueryTest, shouldStoreProjectionDataAndSupportChaining)
 
     ASSERT_EQ(data.projections.size(), 2);
     EXPECT_EQ(data.projections[0].resultField, "id");
-    EXPECT_EQ(data.projections[0].sourceColumn.getPath(), "id");
+    EXPECT_EQ(projectionColumnPath(data.projections[0]), "id");
     EXPECT_EQ(data.projections[1].resultField, "name");
-    EXPECT_EQ(data.projections[1].sourceColumn.getPath(), "field2");
+    EXPECT_EQ(projectionColumnPath(data.projections[1]), "field2");
     EXPECT_TRUE(data.predicate.has_value());
     ASSERT_EQ(data.orderBy.size(), 1);
     EXPECT_TRUE(data.isDistinct);
@@ -104,6 +149,27 @@ TEST(ProjectionQueryTest, shouldStoreProjectionDataAndSupportChaining)
     ASSERT_TRUE(data.offset.has_value());
     EXPECT_EQ(data.offset.value(), 5);
     EXPECT_FALSE(data.shouldJoin);
+}
+
+TEST(ProjectionQueryTest, shouldStoreGroupByAndHavingData)
+{
+    orm::ProjectionQuery<models::ModelWithId, AggregateProjectionDto> query;
+
+    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
+        .groupBy(col("field2"))
+        .having(countAll() > 1)
+        .andHaving(avg(col("field1")) >= 10.0)
+        .orHaving(max(col("id")) == 3);
+
+    const auto& data = orm::Database::getQueryData(query);
+
+    ASSERT_EQ(data.groupBy.size(), 1);
+    EXPECT_EQ(data.groupBy[0].getPath(), "field2");
+    ASSERT_TRUE(data.having.has_value());
+
+    const auto& havingRoot = data.having->getNode();
+    ASSERT_TRUE(std::holds_alternative<AggregateLogicalExpression>(havingRoot.expression));
+    EXPECT_EQ(std::get<AggregateLogicalExpression>(havingRoot.expression).logicalOperator, LogicalOperator::Or);
 }
 
 TEST(ProjectionQueryTest, shouldAllowOptionalResultFields)

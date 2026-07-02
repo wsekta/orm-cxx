@@ -32,6 +32,14 @@ namespace orm::query
 struct Projection;
 
 auto as(std::string resultField, Column sourceColumn) -> Projection;
+auto as(std::string resultField, AggregateExpression aggregate) -> Projection;
+
+auto count(Column sourceColumn) -> AggregateExpression;
+auto countAll() -> AggregateExpression;
+auto sum(Column sourceColumn) -> AggregateExpression;
+auto avg(Column sourceColumn) -> AggregateExpression;
+auto min(Column sourceColumn) -> AggregateExpression;
+auto max(Column sourceColumn) -> AggregateExpression;
 } // namespace orm::query
 ```
 
@@ -88,6 +96,10 @@ The supported builder methods are:
 * `limit`
 * `offset`
 * `disableJoining`
+* `groupBy`
+* `having`
+* `andHaving`
+* `orHaving`
 
 Projection field paths use the same one-level relation rules as the existing
 query DSL. Relation fields are flattened into DTO fields through aliases:
@@ -130,6 +142,54 @@ query.project(as("id", col("id")),
               as("email", col("email")));
 ```
 
+## Aggregate queries
+
+Aggregate queries also use `ProjectionQuery<Source, Result>`. Aggregated values
+are projected into DTO fields through the same explicit `as("dtoField", ...)`
+aliases:
+
+```cpp
+using namespace orm::query;
+
+struct CityStats
+{
+    std::string city;
+    long long users;
+    double averageAge;
+};
+
+orm::ProjectionQuery<User, CityStats> query;
+query.project(as("city", col("profile.city")),
+              as("users", countAll()),
+              as("averageAge", avg(col("age"))))
+     .groupBy(col("profile.city"))
+     .having(countAll() > 1);
+```
+
+Supported v1 aggregate helpers are `count(col(...))`, `countAll()`,
+`sum(col(...))`, `avg(col(...))`, `min(col(...))`, and `max(col(...))`.
+`countAll()` renders `COUNT(*)`; the other helpers validate and render a source
+column path.
+
+`HAVING` uses aggregate predicates instead of regular column predicates:
+
+```cpp
+query.having(countAll() > 1)
+     .andHaving(avg(col("age")) >= 18.0)
+     .orHaving(!(max(col("age")) < 65));
+```
+
+Comparison values are bound as SQL parameters, the same way `WHERE` predicate
+values are bound.
+
+Common DTO field choices are:
+
+* `long long` for `count` and `countAll`,
+* `double` for `avg`,
+* the database result type for `sum`, `min`, and `max`,
+* `std::optional<T>` when the aggregate can return SQL `NULL`, such as `avg`
+  or `sum` over an empty result set.
+
 ## Result DTO rules
 
 Projection DTOs are flat result objects. Supported DTO field types are the
@@ -147,9 +207,11 @@ Alias validation is part of the public contract:
 Alias validation failures throw `std::invalid_argument` before executing
 SQL.
 
-## Future aggregate queries
+## V1 limitations
 
-Aggregate functions, `GROUP BY`, and `HAVING` are intentionally outside the
-first projection step. They should reuse the same explicit alias contract so
-aggregate values can hydrate DTO fields without introducing tuple or dynamic-row
-result types.
+Projection DTOs are flat. Relation fields must be flattened through aliases,
+for example `as("city", col("profile.city"))`.
+
+Aggregate `ORDER BY`, `COUNT(DISTINCT ...)`, raw aggregate expressions,
+`GROUP BY` on full-model `Query<Model>`, subqueries, and `EXISTS` are not part
+of this version.

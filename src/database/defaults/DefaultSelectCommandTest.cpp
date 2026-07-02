@@ -97,6 +97,35 @@ struct RelatedProjection
     int id;
     int relatedId;
 };
+
+struct AggregateFunctionsProjection
+{
+    long long allRows;
+    long long countedNames;
+    long long totalField1;
+    double averageField1;
+    int minField1;
+    int maxField1;
+};
+
+struct GroupedAggregateProjection
+{
+    std::string name;
+    long long users;
+    double averageField1;
+};
+
+struct RelatedAggregateProjection
+{
+    int relatedId;
+    long long users;
+};
+
+struct RelatedNameAggregateProjection
+{
+    std::string relatedName;
+    long long users;
+};
 } // namespace projection_select_command_test_models
 
 using namespace projection_select_command_test_models;
@@ -232,6 +261,186 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffs
               "ORDER BY models_ModelWithId.id DESC LIMIT 1 OFFSET 2;");
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateFunctions)
+{
+    orm::ProjectionQuery<models::ModelWithId, AggregateFunctionsProjection> query;
+
+    query.project(as("allRows", countAll()), as("countedNames", count(col("field2"))),
+                  as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
+                  as("minField1", min(col("field1"))), as("maxField1", max(col("field1"))));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT COUNT(*) AS allRows, COUNT(models_ModelWithId.field2) AS countedNames, "
+              "SUM(models_ModelWithId.field1) AS totalField1, AVG(models_ModelWithId.field1) AS averageField1, "
+              "MIN(models_ModelWithId.field1) AS minField1, MAX(models_ModelWithId.field1) AS maxField1 "
+              "FROM models_ModelWithId;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateMappedFieldName)
+{
+    orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, AggregateFunctionsProjection> query;
+
+    query.project(as("allRows", countAll()), as("countedNames", count(col("field2"))),
+                  as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
+                  as("minField1", min(col("field1"))), as("maxField1", max(col("field1"))));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT COUNT(*) AS allRows, COUNT(models_ModelWithIdAndNamesMapping.some_field2_name) AS countedNames, "
+              "SUM(models_ModelWithIdAndNamesMapping.some_field1_name) AS totalField1, "
+              "AVG(models_ModelWithIdAndNamesMapping.some_field1_name) AS averageField1, "
+              "MIN(models_ModelWithIdAndNamesMapping.some_field1_name) AS minField1, "
+              "MAX(models_ModelWithIdAndNamesMapping.some_field1_name) AS maxField1 "
+              "FROM models_ModelWithIdAndNamesMapping;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithGroupByHavingAndClauseOrder)
+{
+    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+
+    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
+        .where(col("field1") >= 10)
+        .groupBy(col("field2"))
+        .having(countAll() > 1)
+        .andHaving(avg(col("field1")) >= 10.0)
+        .orderBy(desc(col("field2")))
+        .limit(5)
+        .offset(2);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+              "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
+              "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
+              "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
+    ASSERT_EQ(statement.parameters.size(), 3);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
+    EXPECT_EQ(getValue<int>(statement.parameters[1]), 1);
+    EXPECT_EQ(getValue<double>(statement.parameters[2]), 10.0);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithOrAndNotHaving)
+{
+    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+
+    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
+        .groupBy(col("field2"))
+        .having(countAll() > 1)
+        .orHaving(!(max(col("id")) <= 3));
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+              "GROUP BY models_ModelWithId.field2 HAVING (COUNT(*) > :orm_p0 OR "
+              "(NOT (MAX(models_ModelWithId.id) <= :orm_p1)));");
+    ASSERT_EQ(statement.parameters.size(), 2);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[1]), 3);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRemainingHavingComparisonOperators)
+{
+    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+
+    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
+        .groupBy(col("field2"))
+        .having((countAll() == 2) && (sum(col("field1")) != 30) && (min(col("id")) < 5));
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+              "GROUP BY models_ModelWithId.field2 HAVING ((COUNT(*) = :orm_p0 AND "
+              "SUM(models_ModelWithId.field1) != :orm_p1) AND MIN(models_ModelWithId.id) < :orm_p2);");
+    ASSERT_EQ(statement.parameters.size(), 3);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 2);
+    EXPECT_EQ(getValue<int>(statement.parameters[1]), 30);
+    EXPECT_EQ(getValue<int>(statement.parameters[2]), 5);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedGroupByPath)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedNameAggregateProjection> query;
+
+    query.project(as("relatedName", col("field3.field2")), as("users", countAll())).groupBy(col("field3.field2"));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT field3.field2 AS relatedName, COUNT(*) AS users FROM models_ModelRelatedToOtherModel "
+              "LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id "
+              "GROUP BY field3.field2;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyGroupByWithoutJoining)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
+
+    query.project(as("relatedId", col("field3.id")), as("users", countAll()))
+        .groupBy(col("field3.id"))
+        .disableJoining();
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT models_ModelRelatedToOtherModel.field3_id AS relatedId, COUNT(*) AS users "
+              "FROM models_ModelRelatedToOtherModel GROUP BY models_ModelRelatedToOtherModel.field3_id;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyGroupByWithoutJoining_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
+
+    query.project(as("relatedId", col("field3.id")), as("users", countAll()))
+        .groupBy(col("field3.field2"))
+        .disableJoining();
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithInvalidAggregateSource_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", count(col("missing"))));
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateWithoutSourceColumn_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")),
+                  as("name", AggregateExpression{.function = AggregateFunction::Sum, .column = std::nullopt}));
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunction_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")),
+                  as("name", AggregateExpression{.function = static_cast<AggregateFunction>(999),
+                                                 .column = col("field1")}));
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedHavingOperator_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+    const auto having = AggregatePredicate{AggregatePredicateNode{AggregateComparisonExpression{
+        .aggregate = countAll(), .comparisonOperator = ComparisonOperator::Like, .value = QueryValue{1}}}};
+
+    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
+        .groupBy(col("field2"))
+        .having(having);
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldThrow)
