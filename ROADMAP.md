@@ -22,6 +22,8 @@ contracts, then expand expressiveness and database support deliberately.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
   `DISTINCT`, `LIMIT`, `OFFSET`, raw predicates, raw ordering, and bind
   parameters.
+- A projection query builder for partial-result `SELECT` queries that hydrate
+  flat DTOs through explicit field aliases.
 - A patch-style `orm::Update<T>` builder for safe, filtered `UPDATE`
   statements, nullable-field updates through `std::nullopt`, and affected-row
   counts for `UPDATE` and `DELETE`.
@@ -37,9 +39,6 @@ contracts, then expand expressiveness and database support deliberately.
 The next priority is to improve query expressiveness without making result
 types unpredictable.
 
-- Decide and document the public shape for partial-result queries.
-- Add projections for selecting a subset of fields once the result type contract
-  is settled.
 - Add aggregate functions, `GROUP BY`, and `HAVING` on top of the projection
   design.
 - Add examples that show full-model selects, projected selects, and aggregate

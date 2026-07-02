@@ -6,6 +6,7 @@
 #include <format>
 #include <optional>
 #include <stdexcept>
+#include <string>
 #include <vector>
 
 #include "soci/values.h"
@@ -120,6 +121,23 @@ TEST(StatementParameterBindingTest, shouldBindPresentParameterValue)
     EXPECT_NO_THROW(orm::detail::bindStatementParameter(values, parameter));
 }
 
+TEST(StatementParameterBindingTest, shouldBindAllPresentParameterValueVariants)
+{
+    const auto parameters = std::vector<orm::db::StatementParameter>{
+        {.name = "intValue", .value = orm::query::QueryValue{42}},
+        {.name = "longLongValue", .value = orm::query::QueryValue{42LL}},
+        {.name = "unsignedLongLongValue", .value = orm::query::QueryValue{42ULL}},
+        {.name = "doubleValue", .value = orm::query::QueryValue{4.2}},
+        {.name = "stringValue", .value = orm::query::QueryValue{std::string{"value"}}},
+    };
+    soci::values values;
+
+    for (const auto& parameter : parameters)
+    {
+        EXPECT_NO_THROW(orm::detail::bindStatementParameter(values, parameter));
+    }
+}
+
 TEST(StatementParameterBindingTest, shouldBindModelFieldsAndRelatedModelPrimaryKey)
 {
     using Payload = orm::db::binding::BindingPayload<models::ModelRelatedToOtherModel>;
@@ -143,6 +161,46 @@ TEST(StatementParameterBindingTest, shouldBindModelFieldsAndRelatedModelPrimaryK
     EXPECT_EQ(values.get<int>("field1"), model.field1);
     EXPECT_EQ(values.get<std::string>("field2"), model.field2);
     EXPECT_EQ(values.get<int>("field3_id"), model.field3.id);
+}
+
+TEST(StatementParameterBindingTest, shouldBindModelWithOverwrittenIdFields)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId>;
+
+    const auto model = models::ModelWithOverwrittenId{.id = 1, .field1 = 2, .field2 = "composite"};
+    const auto payload = Payload{.value = model};
+    auto values = soci::values{};
+    auto indicator = soci::indicator{};
+
+    soci::type_conversion<Payload>::to_base(payload, values, indicator);
+
+    EXPECT_EQ(indicator, soci::i_ok);
+    EXPECT_EQ(values.get<int>("id"), model.id);
+    EXPECT_EQ(values.get<int>("field1"), model.field1);
+    EXPECT_EQ(values.get<std::string>("field2"), model.field2);
+}
+
+TEST(StatementParameterBindingTest, shouldHydrateModelWithOverwrittenIdFields)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId>;
+
+    const auto payload = Payload{};
+    auto values = soci::values{};
+    auto id = int{};
+    auto field1 = int{};
+    auto field2 = std::string{};
+
+    values.set("models_ModelWithOverwrittenId_id", 1);
+    values.set("models_ModelWithOverwrittenId_field1", 2);
+    values.set("models_ModelWithOverwrittenId_field2", std::string{"composite"});
+
+    orm::db::binding::ObjectFieldFromValues<int>::get(&id, payload, 0, values);
+    orm::db::binding::ObjectFieldFromValues<int>::get(&field1, payload, 1, values);
+    orm::db::binding::ObjectFieldFromValues<std::string>::get(&field2, payload, 2, values);
+
+    EXPECT_EQ(id, 1);
+    EXPECT_EQ(field1, 2);
+    EXPECT_EQ(field2, "composite");
 }
 
 TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongConvertedModelField)

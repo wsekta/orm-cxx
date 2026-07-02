@@ -1,6 +1,7 @@
 #pragma once
 
 #include "orm-cxx/query.hpp"
+#include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/update.hpp"
 
 namespace orm
@@ -10,6 +11,12 @@ class Database
 public:
     template <class T>
     static auto getQueryData(Query<T>& query) -> const query::QueryData&
+    {
+        return query.getData();
+    }
+
+    template <class Source, class Result>
+    static auto getQueryData(ProjectionQuery<Source, Result>& query) -> const query::QueryData&
     {
         return query.getData();
     }

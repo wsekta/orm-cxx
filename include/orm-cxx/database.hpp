@@ -10,8 +10,10 @@
 
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
+#include "database/binding/ProjectionBinding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
 #include "database/Statement.hpp"
+#include "projection_query.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
 #include "soci/values.h"
@@ -97,6 +99,9 @@ public:
     template <typename T>
     using Payload = db::binding::BindingPayload<T>;
 
+    template <typename T>
+    using ProjectionPayload = db::binding::ProjectionPayload<T>;
+
     /**
      * @brief Constructs a new Database object.
      */
@@ -149,6 +154,51 @@ public:
         else
         {
             soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql, soci::use(parameterValues));
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * @brief Executes a projection select query and returns DTO results.
+     *
+     * @tparam Source The source ORM model.
+     * @tparam Result The flat projection DTO.
+     * @param query The projection query to execute.
+     * @return The vector of DTO objects returned by the projection query.
+     */
+    template <typename Source, typename Result>
+    auto select(ProjectionQuery<Source, Result>& query) -> std::vector<Result>
+    {
+        std::vector<Result> result;
+
+        auto statement = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
+
+        soci::values parameterValues;
+
+        for (const auto& parameter : statement.parameters)
+        {
+            detail::bindStatementParameter(parameterValues, parameter);
+        }
+
+        if (statement.parameters.empty())
+        {
+            soci::rowset<ProjectionPayload<Result>> preparedRowSet = (sql.prepare << statement.sql);
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
+        }
+        else
+        {
+            soci::rowset<ProjectionPayload<Result>> preparedRowSet =
+                (sql.prepare << statement.sql, soci::use(parameterValues));
 
             for (auto& payload : preparedRowSet)
             {

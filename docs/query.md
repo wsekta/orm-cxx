@@ -7,8 +7,9 @@
 5. [Distinct](#distinct)
 6. [Limit and offset](#limit-and-offset)
 7. [Raw SQL fragments](#raw-sql-fragments)
-8. [Write predicates](#write-predicates)
-9. [Current limitations](#current-limitations)
+8. [Partial-result queries](#partial-result-queries)
+9. [Write predicates](#write-predicates)
+10. [Current limitations](#current-limitations)
 
 ## Build select
 
@@ -210,6 +211,33 @@ Raw parameter names:
 * must be unique within the query,
 * must not use the reserved `orm_p` prefix.
 
+## Partial-result queries
+
+Use `orm::ProjectionQuery<Source, Result>` to select a subset of fields into a
+flat DTO:
+
+```cpp
+using namespace orm::query;
+
+struct UserSummary
+{
+    int id;
+    std::string name;
+};
+
+orm::ProjectionQuery<User, UserSummary> query;
+query.project(as("id", col("id")),
+              as("name", col("displayName")))
+     .where(col("email").isNotNull())
+     .orderBy(asc(col("id")));
+
+std::vector<UserSummary> users = database.select(query);
+```
+
+Projection aliases must match the DTO field names. See
+[Partial-result queries](partial-result-queries.md) for the full contract and
+validation rules.
+
 ## Write predicates
 
 The same predicate DSL is used by `orm::Update<Model>` and `orm::Database::remove<Model>`:
@@ -240,4 +268,4 @@ foreign-key column.
 
 The query language currently covers ORM-style `SELECT` returning full model objects plus predicate-based `UPDATE` and
 `DELETE` operations.
-It does not yet support projections, aggregate functions, `GROUP BY`, `HAVING`, subqueries or `EXISTS`.
+It does not yet support aggregate functions, `GROUP BY`, `HAVING`, subqueries or `EXISTS`.

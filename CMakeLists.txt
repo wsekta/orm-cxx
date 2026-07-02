@@ -88,10 +88,12 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultUpdateCommandTest.cpp
             src/database/defaults/DefaultDeleteCommandTest.cpp
             src/query/PredicateTest.cpp
+            src/query/ProjectionQueryTest.cpp
             src/query/QueryValueTest.cpp
 
             tests/ModelTest.cpp
             tests/database/StatementParameterBindingTest.cpp
+            tests/database/ProjectionQueryTest.cpp
             tests/database/TransactionsTest.cpp
             tests/database/SimpleModelTest.cpp
             tests/database/WriteOperationsTest.cpp

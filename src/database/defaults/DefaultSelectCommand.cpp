@@ -38,7 +38,7 @@ auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> Se
         .shouldJoin = queryData.shouldJoin,
         .columnRenderMode = ColumnRenderMode::Select,
     };
-    const auto selectFields = getSelectFields(queryData.shouldJoin, queryData.modelInfo);
+    const auto selectFields = getSelectFields(queryData, context);
     const auto joins = getJoins(queryData.shouldJoin, queryData.modelInfo);
     const auto where = renderWhere(queryData.predicate, context);
     const auto orderBy = getOrderBy(queryData, context);
@@ -51,7 +51,17 @@ auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> Se
     return SelectStatement{.sql = sql, .parameters = std::move(context.parameters)};
 }
 
-auto DefaultSelectCommand::getSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string
+auto DefaultSelectCommand::getSelectFields(const query::QueryData& queryData, RenderContext& context) -> std::string
+{
+    if (queryData.projections.empty())
+    {
+        return getFullModelSelectFields(queryData.shouldJoin, queryData.modelInfo);
+    }
+
+    return getProjectionSelectFields(queryData.projections, context);
+}
+
+auto DefaultSelectCommand::getFullModelSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string
 {
     std::string selectFields;
 
@@ -71,6 +81,21 @@ auto DefaultSelectCommand::getSelectFields(bool shouldJoin, const model::ModelIn
     removeLastComma(selectFields);
 
     return selectFields;
+}
+
+auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Projection>& projections,
+                                                     RenderContext& context) -> std::string
+{
+    std::vector<std::string> selectFields;
+    selectFields.reserve(projections.size());
+
+    for (const auto& projection : projections)
+    {
+        selectFields.push_back(std::format("{} AS {}", renderColumn(projection.sourceColumn, context),
+                                           projection.resultField));
+    }
+
+    return join(selectFields, ", ");
 }
 
 auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const std::string& foreignModelFieldName,

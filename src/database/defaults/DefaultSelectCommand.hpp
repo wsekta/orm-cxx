@@ -12,7 +12,10 @@ public:
     [[nodiscard]] auto select(const query::QueryData& queryData) const -> SelectStatement override;
 
 private:
-    static auto getSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string;
+    static auto getSelectFields(const query::QueryData& queryData, RenderContext& context) -> std::string;
+    static auto getFullModelSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string;
+    static auto getProjectionSelectFields(const std::vector<query::Projection>& projections, RenderContext& context)
+        -> std::string;
     static auto getForeignModelSelectFields(bool shouldJoin, const std::string& foreginModelFieldName,
                                             const model::ModelInfo& foreignModelInfo, const model::ModelInfo& modelInfo)
         -> std::string;

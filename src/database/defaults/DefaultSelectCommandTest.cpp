@@ -5,6 +5,7 @@
 #include <string>
 #include <variant>
 
+#include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
@@ -80,7 +81,25 @@ auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& comma
 
     return command.select(orm::Database::getQueryData(query)).sql;
 }
+
 } // namespace
+
+namespace projection_select_command_test_models
+{
+struct ModelWithIdProjection
+{
+    int id;
+    std::string name;
+};
+
+struct RelatedProjection
+{
+    int id;
+    int relatedId;
+};
+} // namespace projection_select_command_test_models
+
+using namespace projection_select_command_test_models;
 
 class DefaultSelectCommandTest : public ::testing::Test
 {
@@ -138,6 +157,90 @@ TEST_F(DefaultSelectCommandTest, selectWithDistinct)
               "SELECT DISTINCT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
               "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
               "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 FROM models_ModelWithFloat;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjection)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("field2")));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name FROM models_ModelWithId;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithMappedFieldName)
+{
+    orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("field2")));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS id, "
+              "models_ModelWithIdAndNamesMapping.some_field2_name AS name "
+              "FROM models_ModelWithIdAndNamesMapping;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedFieldPath)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("field3.field2")));
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT models_ModelRelatedToOtherModel.id AS id, field3.field2 AS name "
+              "FROM models_ModelRelatedToOtherModel "
+              "LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyWithoutJoining)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedProjection> query;
+
+    query.project(as("id", col("id")), as("relatedId", col("field3.id"))).disableJoining();
+
+    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+              "SELECT models_ModelRelatedToOtherModel.id AS id, "
+              "models_ModelRelatedToOtherModel.field3_id AS relatedId FROM models_ModelRelatedToOtherModel;");
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyWithoutJoining_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("field3.field2"))).disableJoining();
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffset)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("field2")))
+        .distinct()
+        .where(col("field1") >= 10)
+        .orderBy(desc(col("id")))
+        .limit(1)
+        .offset(2);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT DISTINCT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name "
+              "FROM models_ModelWithId WHERE models_ModelWithId.field1 >= :orm_p0 "
+              "ORDER BY models_ModelWithId.id DESC LIMIT 1 OFFSET 2;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
+}
+
+TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldThrow)
+{
+    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+
+    query.project(as("id", col("id")), as("name", col("missing")));
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithComparisonPredicate_shouldUseBindParameter)
