@@ -7,6 +7,7 @@
 #include "OrderBy.hpp"
 #include "orm-cxx/model/ModelInfo.hpp"
 #include "Predicate.hpp"
+#include "Aggregate.hpp"
 #include "Projection.hpp"
 
 namespace orm::query
@@ -19,7 +20,7 @@ struct QueryData
     std::optional<Predicate> predicate = std::nullopt; /**< The optional WHERE predicate tree. */
     std::vector<OrderBy> orderBy;                      /**< ORDER BY clauses. */
     std::vector<Projection> projections;               /**< Partial-result projections. */
-    std::vector<Column> groupBy;                       /**< GROUP BY columns for projection queries. */
+    std::vector<Column> groupBy;                       /**< GROUP BY columns. */
     std::optional<AggregatePredicate> having = std::nullopt; /**< The optional HAVING predicate tree. */
     bool isDistinct = false; /**< The flag that indicates if SELECT DISTINCT should be used. */
     bool shouldJoin = true;  /**< The flag that indicates if the query should join. */

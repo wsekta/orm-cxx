@@ -74,6 +74,55 @@ public:
     }
 
     /**
+     * @brief Sets the GROUP BY columns for the select query.
+     * @param columns The model column paths to group by.
+     * @return A reference to this query.
+     */
+    template <typename... Columns>
+    auto groupBy(Columns... columns) -> Query<T>&
+    {
+        data.groupBy = {std::move(columns)...};
+
+        return *this;
+    }
+
+    /**
+     * @brief Replaces the HAVING predicate.
+     * @param predicate The aggregate predicate.
+     * @return A reference to this query.
+     */
+    auto having(const query::AggregatePredicate& predicate) -> Query<T>&
+    {
+        data.having = predicate;
+
+        return *this;
+    }
+
+    /**
+     * @brief Adds an aggregate predicate with AND.
+     * @param predicate The aggregate predicate.
+     * @return A reference to this query.
+     */
+    auto andHaving(const query::AggregatePredicate& predicate) -> Query<T>&
+    {
+        data.having = data.having.has_value() ? data.having.value() && predicate : predicate;
+
+        return *this;
+    }
+
+    /**
+     * @brief Adds an aggregate predicate with OR.
+     * @param predicate The aggregate predicate.
+     * @return A reference to this query.
+     */
+    auto orHaving(const query::AggregatePredicate& predicate) -> Query<T>&
+    {
+        data.having = data.having.has_value() ? data.having.value() || predicate : predicate;
+
+        return *this;
+    }
+
+    /**
      * @brief Select distinct rows.
      * @return A reference to the QueryBuilder object.
      */

@@ -188,6 +188,125 @@ TEST_F(DefaultSelectCommandTest, selectWithDistinct)
               "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 FROM models_ModelWithFloat;");
 }
 
+TEST_F(DefaultSelectCommandTest, selectFullModelWithGroupByHavingAndClauseOrder)
+{
+    orm::Query<models::ModelWithId> query;
+
+    query.where(col("field1") >= 10)
+        .groupBy(col("field2"))
+        .having(countAll() > 1)
+        .andHaving(avg(col("field1")) >= 10.0)
+        .orderBy(desc(col("field2")))
+        .limit(5)
+        .offset(2);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
+              "models_ModelWithId.field1 AS models_ModelWithId_field1, "
+              "models_ModelWithId.field2 AS models_ModelWithId_field2 FROM models_ModelWithId "
+              "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
+              "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
+              "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
+    ASSERT_EQ(statement.parameters.size(), 3);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
+    EXPECT_EQ(getValue<int>(statement.parameters[1]), 1);
+    EXPECT_EQ(getValue<double>(statement.parameters[2]), 10.0);
+}
+
+TEST_F(DefaultSelectCommandTest, selectFullModelWithAllAggregateFunctionsInHaving)
+{
+    orm::Query<models::ModelWithId> query;
+
+    query.groupBy(col("field2"))
+        .having((count(col("field2")) == 2) && (sum(col("field1")) != 30) && (min(col("id")) < 5) &&
+                (max(col("id")) <= 4));
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
+              "models_ModelWithId.field1 AS models_ModelWithId_field1, "
+              "models_ModelWithId.field2 AS models_ModelWithId_field2 FROM models_ModelWithId "
+              "GROUP BY models_ModelWithId.field2 HAVING (((COUNT(models_ModelWithId.field2) = :orm_p0 AND "
+              "SUM(models_ModelWithId.field1) != :orm_p1) AND MIN(models_ModelWithId.id) < :orm_p2) AND "
+              "MAX(models_ModelWithId.id) <= :orm_p3);");
+    ASSERT_EQ(statement.parameters.size(), 4);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 2);
+    EXPECT_EQ(getValue<int>(statement.parameters[1]), 30);
+    EXPECT_EQ(getValue<int>(statement.parameters[2]), 5);
+    EXPECT_EQ(getValue<int>(statement.parameters[3]), 4);
+}
+
+TEST_F(DefaultSelectCommandTest, selectFullModelWithMappedGroupByAndHavingColumns)
+{
+    orm::Query<models::ModelWithIdAndNamesMapping> query;
+
+    query.groupBy(col("field2")).having(count(col("field1")) > 1);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS models_ModelWithIdAndNamesMapping_some_id_name, "
+              "models_ModelWithIdAndNamesMapping.some_field1_name AS "
+              "models_ModelWithIdAndNamesMapping_some_field1_name, "
+              "models_ModelWithIdAndNamesMapping.some_field2_name AS "
+              "models_ModelWithIdAndNamesMapping_some_field2_name FROM models_ModelWithIdAndNamesMapping "
+              "GROUP BY models_ModelWithIdAndNamesMapping.some_field2_name "
+              "HAVING COUNT(models_ModelWithIdAndNamesMapping.some_field1_name) > :orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
+}
+
+TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedGroupByAndHavingPath)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.groupBy(col("field3.field2")).having(count(col("field3.id")) > 1);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
+              "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
+              "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
+              "field3.id AS field3_id, field3.field1 AS field3_field1, field3.field2 AS field3_field2 "
+              "FROM models_ModelRelatedToOtherModel "
+              "LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id "
+              "GROUP BY field3.field2 HAVING COUNT(field3.id) > :orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
+}
+
+TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedPrimaryKeyGroupingWithoutJoining)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.groupBy(col("field3.id")).having(count(col("field3.id")) > 1).disableJoining();
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql,
+              "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
+              "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
+              "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
+              "models_ModelRelatedToOtherModel.field3_id AS models_ModelRelatedToOtherModel_field3_id "
+              "FROM models_ModelRelatedToOtherModel GROUP BY models_ModelRelatedToOtherModel.field3_id "
+              "HAVING COUNT(models_ModelRelatedToOtherModel.field3_id) > :orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
+}
+
+TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedNonPrimaryKeyGroupingWithoutJoining_shouldThrow)
+{
+    orm::Query<models::ModelRelatedToOtherModel> query;
+
+    query.groupBy(col("field3.field2")).having(count(col("field3.field1")) > 1).disableJoining();
+
+    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+}
+
 TEST_F(DefaultSelectCommandTest, selectProjection)
 {
     orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;

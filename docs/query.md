@@ -8,9 +8,10 @@
 6. [Limit and offset](#limit-and-offset)
 7. [Raw SQL fragments](#raw-sql-fragments)
 8. [Partial-result queries](#partial-result-queries)
-9. [Aggregate projection queries](#aggregate-projection-queries)
-10. [Write predicates](#write-predicates)
-11. [Current limitations](#current-limitations)
+9. [Full-model grouping and HAVING](#full-model-grouping-and-having)
+10. [Aggregate projection queries](#aggregate-projection-queries)
+11. [Write predicates](#write-predicates)
+12. [Current limitations](#current-limitations)
 
 ## Build select
 
@@ -239,6 +240,42 @@ Projection aliases must match the DTO field names. See
 [Partial-result queries](partial-result-queries.md) for the full contract and
 validation rules.
 
+## Full-model grouping and HAVING
+
+`Query<Model>` supports `GROUP BY` and aggregate `HAVING` predicates without
+changing its result type:
+
+```cpp
+using namespace orm::query;
+
+orm::Query<User> query;
+query.where(col("active") == true)
+     .groupBy(col("profile.city"))
+     .having(countAll() > 2)
+     .andHaving(avg(col("age")) >= 18.0)
+     .orderBy(asc(col("profile.city")));
+
+std::vector<User> users = database.select(query);
+```
+
+The result remains `std::vector<Model>`. Aggregate expressions are used only
+inside `HAVING`; they are not added to the `SELECT` list. Supported helpers are
+`count(col(...))`, `countAll()`, `sum(col(...))`, `avg(col(...))`,
+`min(col(...))`, and `max(col(...))`.
+
+`having` replaces the aggregate predicate. Use `andHaving` and `orHaving` to
+combine predicates, or compose them directly with `&&`, `||`, and `!`.
+Comparison values are always sent as bind parameters.
+
+Column mappings, one-level relation paths, and `disableJoining()` follow the
+same rules as `WHERE` and `ORDER BY`. Without joins, only related primary-key
+paths are available.
+
+SQLite permits a full-model `SELECT` grouped by only some model fields. In that
+case each returned model is a representative row for its group, and values of
+fields outside `GROUP BY` are not deterministic. Group by every selected field
+when deterministic full-model values are required.
+
 ## Aggregate projection queries
 
 Aggregate queries use `ProjectionQuery<Source, Result>` and hydrate flat DTOs
@@ -273,6 +310,9 @@ with `&&`, `||`, `!`, `having`, `andHaving`, and `orHaving`.
 `GROUP BY` and aggregate column paths follow the same one-level relation rules
 as `WHERE`, `ORDER BY`, and column projections. With `disableJoining()`, related
 paths are limited to related primary-key fields.
+
+The aggregate predicate DSL is shared with full-model `Query<Model>`. Use a
+projection query only when aggregate values themselves must be returned.
 
 `count` and `countAll` are usually represented as `long long` DTO fields, while
 `avg` is usually represented as `double`. Use `std::optional<T>` for aggregate

@@ -113,4 +113,57 @@ TEST_P(QueryLanguageTest, whereWithCompositeRelatedFieldPath_shouldJoinByAllIds)
     EXPECT_EQ(returnedModels[0].field3.field2, "second");
 }
 
+TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldFilterAndPageGroups)
+{
+    createTable<models::ModelWithId>();
+    database.insert(std::vector<models::ModelWithId>{{1, 10, "alpha"},
+                                                     {2, 20, "alpha"},
+                                                     {3, 30, "beta"},
+                                                     {4, 40, "beta"},
+                                                     {5, 50, "gamma"},
+                                                     {6, 60, "gamma"}});
+
+    orm::Query<models::ModelWithId> query;
+    query.where(col("id") >= 1)
+        .groupBy(col("field2"))
+        .having(countAll() == 2)
+        .andHaving(count(col("field1")) == 2)
+        .andHaving(sum(col("field1")) > 20)
+        .andHaving(avg(col("field1")) >= 15.0)
+        .andHaving(min(col("field1")) >= 10)
+        .andHaving(max(col("field1")) <= 60)
+        .orderBy(asc(col("field2")))
+        .limit(1)
+        .offset(1);
+
+    const std::vector<models::ModelWithId> returnedModels = database.select(query);
+
+    ASSERT_EQ(returnedModels.size(), 1);
+    EXPECT_EQ(returnedModels[0].field2, "beta");
+}
+
+TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
+{
+    createTable<models::ModelWithId>();
+    createTable<models::ModelRelatedToOtherModel>();
+    const auto relatedModels =
+        std::vector<models::ModelWithId>{{1, 100, "group-a"}, {2, 200, "group-b"}};
+    const auto models = std::vector<models::ModelRelatedToOtherModel>{{1, 10, "first", relatedModels[0]},
+                                                                      {2, 20, "second", relatedModels[0]},
+                                                                      {3, 30, "third", relatedModels[1]}};
+    database.insert(relatedModels);
+    database.insert(models);
+
+    orm::Query<models::ModelRelatedToOtherModel> query;
+    query.groupBy(col("field3.field2"))
+        .having(countAll() > 1)
+        .andHaving(avg(col("field1")) >= 15.0);
+
+    const std::vector<models::ModelRelatedToOtherModel> returnedModels = database.select(query);
+
+    ASSERT_EQ(returnedModels.size(), 1);
+    EXPECT_EQ(returnedModels[0].field3.id, 1);
+    EXPECT_EQ(returnedModels[0].field3.field2, "group-a");
+}
+
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, QueryLanguageTest, connectionStrings);

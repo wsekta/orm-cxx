@@ -20,14 +20,14 @@ contracts, then expand expressiveness and database support deliberately.
 - Full row-level CRUD operations through `orm::Database`, including insert,
   select, predicate-based update, and predicate-based remove operations.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
-  `DISTINCT`, `LIMIT`, `OFFSET`, raw predicates, raw ordering, and bind
-  parameters.
+  `DISTINCT`, `LIMIT`, `OFFSET`, `GROUP BY`, aggregate `HAVING`, raw predicates,
+  raw ordering, and bind parameters.
 - A projection query builder for partial-result `SELECT` queries that hydrate
   flat DTOs through explicit field aliases.
 - Aggregate projection queries with `count`, `countAll`, `sum`, `avg`, `min`,
   `max`, `GROUP BY`, and aggregate `HAVING` predicates.
-- Query examples that show full-model selects, projected selects, and aggregate
-  projection queries side by side.
+- Query examples that show full-model selects, full-model grouping, projected
+  selects, and aggregate projection queries side by side.
 - A patch-style `orm::Update<T>` builder for safe, filtered `UPDATE`
   statements, nullable-field updates through `std::nullopt`, and affected-row
   counts for `UPDATE` and `DELETE`.

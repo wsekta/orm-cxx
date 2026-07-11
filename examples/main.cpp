@@ -65,6 +65,14 @@ int main()
     fullQuery.limit(10).offset(5);
     auto queriedObjects = database.select(fullQuery);
 
+    // grouping and HAVING keep the full-model result type
+    orm::Query<ObjectModel> groupedQuery;
+    groupedQuery.where(col("field1").isNotNull())
+        .groupBy(col("field2"))
+        .having(countAll() > 0)
+        .andHaving(avg(col("field1")) >= 1.0);
+    auto groupedObjects = database.select(groupedQuery);
+
     // projection select returns a flat DTO
     orm::ProjectionQuery<ObjectModel, ObjectSummary> summaryQuery;
     summaryQuery.project(as("number", col("field1")), as("name", col("field2"))).orderBy(asc(col("field2")));

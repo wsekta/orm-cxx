@@ -142,11 +142,11 @@ query.project(as("id", col("id")),
               as("email", col("email")));
 ```
 
-## Aggregate queries
+## Aggregate result queries
 
-Aggregate queries also use `ProjectionQuery<Source, Result>`. Aggregated values
-are projected into DTO fields through the same explicit `as("dtoField", ...)`
-aliases:
+Use `ProjectionQuery<Source, Result>` when aggregated values must be returned.
+They are projected into DTO fields through the same explicit
+`as("dtoField", ...)` aliases:
 
 ```cpp
 using namespace orm::query;
@@ -182,6 +182,11 @@ query.having(countAll() > 1)
 Comparison values are bound as SQL parameters, the same way `WHERE` predicate
 values are bound.
 
+The same aggregate helpers, `groupBy`, `having`, `andHaving`, and `orHaving`
+are available on full-model `Query<Model>`. That query still returns
+`std::vector<Model>` and uses aggregates only for `HAVING`; it does not require
+a DTO unless aggregate values are selected as result fields.
+
 Common DTO field choices are:
 
 * `long long` for `count` and `countAll`,
@@ -213,5 +218,4 @@ Projection DTOs are flat. Relation fields must be flattened through aliases,
 for example `as("city", col("profile.city"))`.
 
 Aggregate `ORDER BY`, `COUNT(DISTINCT ...)`, raw aggregate expressions,
-`GROUP BY` on full-model `Query<Model>`, subqueries, and `EXISTS` are not part
-of this version.
+subqueries, and `EXISTS` are not part of this version.

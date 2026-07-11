@@ -89,6 +89,7 @@ if (BUILD_ORM_CXX_TESTS)
             src/database/defaults/DefaultDeleteCommandTest.cpp
             src/query/PredicateTest.cpp
             src/query/ProjectionQueryTest.cpp
+            src/query/QueryTest.cpp
             src/query/QueryValueTest.cpp
 
             tests/ModelTest.cpp
