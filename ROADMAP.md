@@ -52,46 +52,52 @@ contracts, then expand expressiveness and database support deliberately.
 
 ## Near Term
 
-The collection-relation milestone was delivered in four independently testable
-stages:
+With the collection-relation milestone complete, make the project easier to
+build, verify, and contribute to:
 
-1. Public wrappers, mapping descriptors, relation metadata, and validation.
-2. Explicit junction-table DDL, SQLite foreign-key enforcement, and relation
-   mutations.
-3. Explicit batched collection loading with `include`.
-4. Correlated collection predicates, examples, and the canonical relation
-   contract in `docs/relations.md`.
+1. Refactor CMake configuration into clear library, example, test, coverage,
+   and dependency boundaries. Each part should be independently configurable
+   without duplicating compiler or dependency settings.
+2. Add maintained `.clang-tidy` and `.cmake-format` configurations, then run
+   formatting and static-analysis checks in GitHub Actions alongside the
+   existing compiler and coverage jobs.
+3. Add a Docker or devcontainer-based development environment and document the
+   shortest path from a clean checkout to building examples and running all
+   tests.
 
-The next short-cycle priority can be promoted from the mid-term list when its
-public conversion contract is ready.
+This milestone is complete when contributors can reproduce the supported CI
+checks locally without relying on machine-specific setup.
 
 ## Mid Term
 
-With projections and collection relations stable, improve type coverage and
-the contributor experience.
+Prepare database portability before claiming support for another backend:
 
-- Decide how custom field converters should work before adding date/time, UUID,
-  or third-party optional types such as `std::tm`, `boost::uuids::uuid`, and
-  `boost::optional`.
-- Refactor CMake configuration into clearer library, example, test, and
-  dependency boundaries.
-- Add `.clang-tidy`, `.cmake-format`, and static-analysis checks in GitHub
-  Actions.
-- Add a Docker or devcontainer-based development environment for predictable
-  local setup.
+1. Inventory SQLite-specific assumptions in DDL generation, value binding,
+   transactions, affected-row reporting, pagination, and relation handling.
+2. Harden backend-neutral command-generation and binding contracts, expressing
+   backend capabilities explicitly instead of branching on scattered enum
+   checks.
+3. Extract reusable backend conformance tests from the SQLite integration suite
+   so future implementations are verified against the same public behavior.
+4. Document the backend extension contract, including required operations,
+   feature negotiation, error handling, and the minimum CI matrix.
 
 ## Long Term
 
 Once the SQLite API is stable, make database portability a real feature rather
 than just an enum-level intention.
 
-- Harden the command-generation contracts needed by non-SQLite backends.
 - Add PostgreSQL as the first backend after SQLite.
 - Add MySQL, ODBC, Oracle, Firebird, and DB2 according to user demand and
   maintainer capacity.
 - Introduce backend-specific integration tests so supported databases are
   verified by behavior, not only by SQL string generation.
 - Package the library for vcpkg and Conan once the public API has settled.
+- After adding non-SQLite backends with native date/time and UUID types, decide
+  how custom field converters should work before supporting types such as
+  `std::tm`, `boost::uuids::uuid`, `boost::optional`, or other third-party
+  values. SQLite has no native UUID type, so defining this abstraction before
+  those backends exist would not provide a useful portability contract.
 
 ## Far Future
 
