@@ -1,5 +1,6 @@
 #pragma once
 
+#include <iterator>
 #include <string>
 #include <unordered_set>
 
@@ -32,11 +33,28 @@ auto getPrimaryIdColumnsNames() -> std::unordered_set<std::string>
 }
 
 template <typename T>
-consteval auto checkIfIsModelWithId() -> bool
+consteval auto hasIdDefinition() -> bool
 {
     if constexpr (requires { T::id_columns; })
     {
         return true;
+    }
+    else if constexpr (requires(T t) { t.id; })
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+template <typename T>
+constexpr auto checkIfIsModelWithId() -> bool
+{
+    if constexpr (requires { T::id_columns; })
+    {
+        return not std::empty(T::id_columns);
     }
     else if constexpr (requires(T t) { t.id; })
     {

@@ -8,7 +8,8 @@
 6. [Primary key](#primary-key)
 7. [Auto-increment primary key](#auto-increment-primary-key)
 8. [One-to-one relations](#one-to-one-relations)
-9. [Current limitations](#current-limitations)
+9. [Collection relations](#collection-relations)
+10. [Current limitations](#current-limitations)
 
 ## Create a model
 
@@ -202,8 +203,83 @@ struct User {
 Nullable relations generate nullable foreign-key columns, store `std::nullopt`
 as SQL `NULL`, and read SQL `NULL` back as `std::nullopt`.
 
+These existing fields are represented as to-one relation metadata. Their
+database layout and `ColumnType::OneToOne` classification remain compatible
+with earlier releases; the ORM does not add a `UNIQUE` constraint to their
+foreign-key columns.
+
+## Collection relations
+
+Use `orm::OneToMany<T>` and `orm::ManyToMany<T>` for fields that contain
+multiple related models. A collection field must have exactly one matching
+entry in the model's static `relations` metadata:
+
+```cpp
+struct Book;
+
+struct Author
+{
+    int id;
+    std::string name;
+    orm::OneToMany<Book> books;
+
+    inline static const auto relations =
+        orm::relations(orm::oneToMany("books").mappedBy("author"));
+};
+
+struct Book
+{
+    int id;
+    std::string title;
+    Author author;
+};
+```
+
+`mappedBy` names the existing to-one field on the child. `OneToMany` does not
+add a column to the parent or create a hidden child foreign key.
+
+The owning side of a many-to-many relation declares its junction table:
+
+```cpp
+struct Role;
+
+struct User
+{
+    int id;
+    orm::ManyToMany<Role> roles;
+
+    inline static const auto relations =
+        orm::relations(
+            orm::manyToMany("roles")
+                .through("user_roles")
+                .ownerColumns({"user_id"})
+                .targetColumns({"role_id"}));
+};
+
+struct Role
+{
+    int id;
+    orm::ManyToMany<User> users;
+
+    inline static const auto relations =
+        orm::relations(orm::manyToMany("users").mappedBy("roles"));
+};
+```
+
+The inverse `mappedBy` side is optional. Endpoint models must have non-empty
+primary keys. `optional<OneToMany<T>>` and `optional<ManyToMany<T>>` are not
+valid mappings; the wrapper already represents an unloaded or loaded-empty
+collection.
+
+Collection fields are omitted from base-table DDL, insert statements, and
+ordinary row binding. Inserting a model never traverses or saves a collection.
+See [Collection relations](relations.md) for wrapper behavior, junction naming,
+schema lifecycle, explicit mutations, includes, predicates, composite keys,
+and validation rules.
+
 ## Current limitations
 
-Model metadata currently supports one level of one-to-one relations. It does not
-yet support `OneToMany`, `ManyToMany`, nested relation paths beyond one relation
-field, custom converters, date/time fields, UUID fields, or `boost::optional`.
+Model metadata supports to-one fields and explicitly mapped `OneToMany` and
+`ManyToMany` collection fields. It does not support nested collection loading,
+junction models with payload fields, ordered relations, custom converters,
+date/time fields, UUID fields, or `boost::optional`.

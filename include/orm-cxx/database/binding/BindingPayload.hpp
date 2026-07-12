@@ -1,16 +1,14 @@
 #pragma once
 
-#include "BindingInfo.hpp"
 #include "orm-cxx/model.hpp"
 
 namespace orm::db::binding
 {
-template <typename T>
+template <typename T, bool JoinedValues = false>
 struct BindingPayload
 {
     mutable T value;
-
-    [[maybe_unused]] inline static BindingInfo bindingInfo = {};
+    inline static constexpr bool joinedValues = JoinedValues;
 
     auto getModelInfo() const -> const model::ModelInfo&
     {

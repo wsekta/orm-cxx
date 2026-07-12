@@ -111,6 +111,7 @@ auto renderSelectColumn(const orm::query::Column& column, const orm::db::command
     -> std::string
 {
     const auto parts = splitPath(column.getPath());
+    const auto rootTable = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
 
     if (parts.size() == 1)
     {
@@ -122,7 +123,7 @@ auto renderSelectColumn(const orm::query::Column& column, const orm::db::command
                                         column.getPath()};
         }
 
-        return std::format("{}.{}", context.modelInfo.tableName, columnInfo.name);
+        return std::format("{}.{}", rootTable, columnInfo.name);
     }
 
     if (parts.size() == 2)
@@ -142,7 +143,7 @@ auto renderSelectColumn(const orm::query::Column& column, const orm::db::command
                                         column.getPath()};
         }
 
-        return std::format("{}.{}_{}", context.modelInfo.tableName, relatedColumnInfo.name, foreignColumnInfo.name);
+        return std::format("{}.{}_{}", rootTable, relatedColumnInfo.name, foreignColumnInfo.name);
     }
 
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
@@ -198,6 +199,183 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
 }
 
 auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string;
+auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context)
+    -> std::string;
+
+auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<const orm::model::ColumnInfo*>
+{
+    std::vector<const orm::model::ColumnInfo*> columns;
+
+    for (const auto& column : modelInfo.columnsInfo)
+    {
+        if (column.isPrimaryKey)
+        {
+            if (column.isForeignModel)
+            {
+                throw std::invalid_argument{"Relations with model-valued primary-key fields are not supported"};
+            }
+
+            columns.push_back(&column);
+        }
+    }
+
+    if (columns.empty())
+    {
+        throw std::invalid_argument{"Collection relation endpoint must define a primary key"};
+    }
+
+    return columns;
+}
+
+auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const std::string& rootAlias) -> std::string
+{
+    std::string joins;
+
+    for (const auto& relation : modelInfo.relationsInfo)
+    {
+        if (relation.kind != orm::model::RelationKind::ToOne)
+        {
+            continue;
+        }
+
+        const auto& targetInfo = relation.targetModel();
+        std::vector<std::string> predicates;
+
+        for (const auto* targetColumn : primaryKeyColumns(targetInfo))
+        {
+            predicates.push_back(std::format("{}.{} = {}.{}_{}", relation.columnName, targetColumn->name,
+                                             rootAlias, relation.columnName, targetColumn->name));
+        }
+
+        joins += std::format(" LEFT JOIN {} AS {} ON {}", targetInfo.tableName, relation.columnName,
+                             join(predicates, " AND "));
+    }
+
+    return joins;
+}
+
+auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate,
+                           const orm::model::ModelInfo& targetInfo,
+                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias)
+    -> std::string
+{
+    if (predicate == nullptr)
+    {
+        return {};
+    }
+
+    orm::db::commands::RenderContext targetContext{
+        .modelInfo = targetInfo,
+        .shouldJoin = true,
+        .columnRenderMode = orm::db::commands::ColumnRenderMode::Select,
+        .tableAlias = targetAlias,
+        .allowCollectionPredicates = false,
+        .parameters = std::move(outerContext.parameters),
+        .parameterNames = std::move(outerContext.parameterNames),
+        .nextParameterIndex = outerContext.nextParameterIndex,
+    };
+    const auto sql = renderPredicate(predicate, targetContext);
+    outerContext.parameters = std::move(targetContext.parameters);
+    outerContext.parameterNames = std::move(targetContext.parameterNames);
+    outerContext.nextParameterIndex = targetContext.nextParameterIndex;
+
+    return sql;
+}
+
+auto renderCollectionPredicate(const orm::query::CollectionExpression& expression,
+                               orm::db::commands::RenderContext& context) -> std::string
+{
+    if (not context.allowCollectionPredicates)
+    {
+        throw std::invalid_argument{"Nested collection predicates are not supported"};
+    }
+
+    const auto* relation = context.modelInfo.findRelation(expression.relation);
+
+    if (relation == nullptr or relation->kind == orm::model::RelationKind::ToOne)
+    {
+        throw std::invalid_argument{"Unknown collection relation: " + expression.relation};
+    }
+
+    if (expression.collectionOperator != orm::query::CollectionOperator::Exists and expression.predicate == nullptr)
+    {
+        throw std::invalid_argument{"Collection any/none requires an element predicate"};
+    }
+
+    const auto outerAlias =
+        context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
+    const auto targetAlias = std::string{"orm_relation_target"};
+    const auto junctionAlias = std::string{"orm_relation_junction"};
+    const auto ownerPrimaryKey = primaryKeyColumns(context.modelInfo);
+    const auto& targetInfo = relation->targetModel();
+    const auto targetPrimaryKey = primaryKeyColumns(targetInfo);
+    std::vector<std::string> predicates;
+    std::string from;
+
+    if (relation->kind == orm::model::RelationKind::OneToMany)
+    {
+        const auto* mappedRelation = targetInfo.findRelation(relation->mappedBy);
+
+        if (mappedRelation == nullptr or mappedRelation->kind != orm::model::RelationKind::ToOne)
+        {
+            throw std::invalid_argument{"Invalid OneToMany mappedBy relation: " + relation->fieldName};
+        }
+
+        for (const auto* ownerColumn : ownerPrimaryKey)
+        {
+            predicates.push_back(std::format("{}.{}_{} = {}.{}", targetAlias, mappedRelation->columnName,
+                                             ownerColumn->name, outerAlias, ownerColumn->name));
+        }
+
+        from = std::format("{} AS {}{}", targetInfo.tableName, targetAlias,
+                           renderToOneJoins(targetInfo, targetAlias));
+    }
+    else
+    {
+        if (not relation->junction.has_value())
+        {
+            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " + relation->fieldName};
+        }
+
+        const auto& junction = relation->junction.value();
+
+        if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
+            junction.targetColumns.size() != targetPrimaryKey.size())
+        {
+            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " +
+                                        junction.tableName};
+        }
+
+        std::vector<std::string> targetJoin;
+
+        for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
+        {
+            predicates.push_back(std::format("{}.{} = {}.{}", junctionAlias, junction.ownerColumns[i],
+                                             outerAlias, ownerPrimaryKey[i]->name));
+        }
+
+        for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
+        {
+            targetJoin.push_back(std::format("{}.{} = {}.{}", targetAlias, targetPrimaryKey[i]->name,
+                                             junctionAlias, junction.targetColumns[i]));
+        }
+
+        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", junction.tableName, junctionAlias,
+                           targetInfo.tableName, targetAlias, join(targetJoin, " AND "),
+                           renderToOneJoins(targetInfo, targetAlias));
+    }
+
+    if (expression.predicate != nullptr)
+    {
+        predicates.push_back(renderNestedPredicate(expression.predicate, targetInfo, context, targetAlias));
+    }
+
+    const auto existsSql = std::format("EXISTS (SELECT 1 FROM {} WHERE {})", from, join(predicates, " AND "));
+
+    return expression.collectionOperator == orm::query::CollectionOperator::None ?
+               std::format("NOT ({})", existsSql) :
+               existsSql;
+}
 
 auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context) -> std::string
 {
@@ -264,7 +442,9 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
                    {
                        addRawParameters(context, expression.parameters);
                        return expression.sql;
-                   }},
+                   },
+                   [&context](const orm::query::CollectionExpression& expression)
+                   { return renderCollectionPredicate(expression, context); }},
         node.expression);
 }
 } // namespace

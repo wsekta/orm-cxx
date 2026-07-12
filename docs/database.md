@@ -3,11 +3,13 @@
 1. [Connect](#connect)
 2. [Create table](#create-table)
 3. [Delete table](#delete-table)
-4. [Insert objects](#insert-objects)
-5. [Query objects](#select-objects)
-6. [Update objects](#update-objects)
-7. [Remove objects](#remove-objects)
-8. [Transactions](#transactions)
+4. [Create and delete relation tables](#create-and-delete-relation-tables)
+5. [Insert objects](#insert-objects)
+6. [Link and unlink relations](#link-and-unlink-relations)
+7. [Query objects](#query-objects)
+8. [Update objects](#update-objects)
+9. [Remove objects](#remove-objects)
+10. [Transactions](#transactions)
 
 ## Connect
 
@@ -17,6 +19,10 @@ To connect to database create its object and connect it with standard connection
 orm::Database database;
 database.connect("sqlite3://test.db");
 ```
+
+SQLite connections automatically enable `PRAGMA foreign_keys=ON`. Foreign-key
+violations therefore fail immediately, and deleting a many-to-many endpoint
+removes its junction rows through the generated `ON DELETE CASCADE` rules.
 
 ## Create table
 
@@ -43,6 +49,34 @@ To delete table from database use `deleteTable` method and pass model as templat
 ```cpp
 database.deleteTable<ObjectModel>();
 ```
+
+## Create and delete relation tables
+
+Base model tables and many-to-many junction tables have an explicit lifecycle.
+Create both endpoint tables first, then create junction tables from the owning
+model:
+
+```cpp
+database.createTable<User>();
+database.createTable<Role>();
+database.createRelationTables<User>();
+```
+
+`createRelationTables<T>()` creates only junction tables owned by `T`. It is a
+no-op for one-to-many mappings and inverse many-to-many mappings. Repeated calls
+are safe. Endpoint tables must already exist.
+
+Drop junction tables before either endpoint table:
+
+```cpp
+database.deleteRelationTables<User>();
+database.deleteTable<Role>();
+database.deleteTable<User>();
+```
+
+`deleteRelationTables<T>()` is also idempotent and affects only junction tables
+owned by `T`. `createTable`, `deleteTable`, `insert`, and row deletion never
+recursively create, drop, or synchronize relation tables.
 
 ## Insert objects
 
@@ -101,6 +135,47 @@ struct User
 database.insert(User{1, std::nullopt});
 ```
 
+`OneToMany` and `ManyToMany` wrapper fields are ignored by `insert`. Endpoint
+objects must be inserted separately, followed by explicit `link` calls where a
+stored relation is needed. There is no cascade-save.
+
+## Link and unlink relations
+
+Many-to-many mutations add or remove one junction row:
+
+```cpp
+User user{1, "Ada"};
+Role admin{10, "admin"};
+
+std::size_t linked = database.link(user, "roles", admin);
+std::size_t unlinked = database.unlink(user, "roles", admin);
+```
+
+Each operation is idempotent: it returns `1` when the relation changed and `0`
+when the database was already in the requested state. The same operations can
+be called through an inverse many-to-many field.
+
+For one-to-many, pass the parent, collection field name, and child:
+
+```cpp
+std::size_t assigned = database.link(author, "books", book);
+std::size_t detached = database.unlink(author, "books", book);
+```
+
+`link` updates the child's mapped foreign key, including moving it from another
+parent. `unlink` writes SQL `NULL`; it throws `std::invalid_argument` when the
+child's mapped to-one field is not optional. They return `1` only when the
+stored foreign key changed and `0` when it was already in the requested state.
+
+`link` and `unlink` read only endpoint primary keys. They do not persist either
+object, and all components of a simple or composite key must be present and
+non-null. A model with a database-generated key must be selected after insert
+before it is used as an endpoint. Missing endpoint rows are rejected by SQLite
+foreign-key enforcement.
+
+See [Collection relations](relations.md) for mapping declarations, generated
+junction schemas, delete behavior, and self-referencing mappings.
+
 ## Query objects
 
 To select objects from database use `select` method and pass [query](query.md) as argument:
@@ -156,22 +231,29 @@ std::size_t removedRows = database.remove<ObjectModel>(col("id") == 1);
 
 ## Transactions
 
-To use transaction use database's `transactionBegin` method followed by `transactionCommit` or `transactionRollback`:
+Start a transaction with `beginTransaction`, then call `commitTransaction` or
+`rollbackTransaction`:
 
 ```cpp
-database.transactionBegin();
+database.beginTransaction();
 
 database.insert(objects);
 
-database.transactionCommit();
+database.commitTransaction();
 ```
 
 or:
 
 ```cpp
-database.transactionBegin();
+database.beginTransaction();
 
 database.insert(objects);
 
-database.transactionRollback();
+database.rollbackTransaction();
 ```
+
+Relation-table operations, `link`, `unlink`, and included selects participate
+in the current explicit transaction and never start a private transaction.
+Because an included select uses the parent query plus one or more batched
+queries per included collection, wrap it in a transaction when those
+statements must observe a single consistent application-level snapshot.

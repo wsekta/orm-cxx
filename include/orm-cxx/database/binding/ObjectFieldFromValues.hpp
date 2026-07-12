@@ -3,6 +3,7 @@
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
+#include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/values.h"
@@ -15,8 +16,8 @@ struct ObjectFieldFromValues;
 template <SociDefaultSupported ModelField>
 struct ObjectFieldFromValues<ModelField>
 {
-    template <typename T>
-    static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
         auto fieldName =
@@ -28,27 +29,40 @@ struct ObjectFieldFromValues<ModelField>
 template <ModelWithId ModelField>
 struct ObjectFieldFromValues<ModelField>
 {
-    template <typename T>
-    static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
         auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
         auto foreignModelAsTuple = rfl::to_view(column).values();
         auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+        std::size_t foreignColumnIndex = 0;
 
         auto getForeignFieldFromValue =
-            [&foreignModel, &values, &foreignFieldName, &model](auto index, auto foreignModelColumn)
+            [&foreignModel, &values, &foreignFieldName, &model, &foreignColumnIndex](auto /*fieldIndex*/,
+                                                                                    auto foreignModelColumn)
         {
-            if (model.bindingInfo.joinedValues)
+            using field_t = std::decay_t<decltype(*foreignModelColumn)>;
+
+            if constexpr (orm::is_relation_collection_v<field_t>)
             {
-                auto fieldName = std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name);
-                *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
+                return;
             }
-            else if (foreignModel.columnsInfo[index].isPrimaryKey)
+            else
             {
-                auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
-                                             foreignModel.columnsInfo[index].name);
-                *foreignModelColumn = values.get<std::decay_t<decltype(*foreignModelColumn)>>(fieldName);
+                const auto& columnInfo = foreignModel.columnsInfo[foreignColumnIndex++];
+
+                if constexpr (JoinedValues)
+                {
+                    auto fieldName = std::format("{}_{}", foreignFieldName, columnInfo.name);
+                    *foreignModelColumn = values.get<field_t>(fieldName);
+                }
+                else if (columnInfo.isPrimaryKey)
+                {
+                    auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
+                                                 columnInfo.name);
+                    *foreignModelColumn = values.get<field_t>(fieldName);
+                }
             }
         };
 
@@ -59,8 +73,9 @@ struct ObjectFieldFromValues<ModelField>
 template <typename ModelField>
 struct ObjectFieldFromValues<std::optional<ModelField>>
 {
-    template <typename T>
-    static auto get(std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto get(std::optional<ModelField>* column, const BindingPayload<T, JoinedValues>& model,
+                    std::size_t columnIndex,
                     const soci::values& values) -> void
     {
         if constexpr (ModelWithId<ModelField>)
@@ -78,7 +93,7 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
                 }
 
                 const auto fieldName =
-                    model.bindingInfo.joinedValues
+                    JoinedValues
                         ? std::format("{}_{}", columnInfo.name, foreignColumnInfo.name)
                         : std::format("{}_{}_{}", model.getModelInfo().tableName, columnInfo.name,
                                       foreignColumnInfo.name);
@@ -120,8 +135,8 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
 template <typename ModelField, typename SociType>
 struct ObjectFieldFromValuesWithCast
 {
-    template <typename T>
-    static auto get(ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     const soci::values& values) -> void
     {
         auto fieldName =

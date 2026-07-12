@@ -34,22 +34,42 @@ contracts, then expand expressiveness and database support deliberately.
 - One-level one-to-one relation support in model metadata, inserts, select
   joins, related-field query paths, and write operations targeting local
   foreign-key columns through related primary-key paths.
+- Explicit `OneToMany` and owning or inverse `ManyToMany` mappings with
+  collection wrappers, lazy metadata target resolution, and validation for
+  primary keys, inverse fields, junction names, and composite-key column
+  counts.
+- SQLite junction-table DDL plus idempotent `link` and `unlink` mutations.
+  Collection mutations never cascade-save endpoint models; junction rows use
+  foreign keys and `ON DELETE CASCADE` without deleting the opposite endpoint.
+- One-level `Query<T>::include` loading with parameter-bounded batched relation
+  queries per included field, complete collections under parent pagination,
+  and an explicit loaded-versus-unloaded wrapper state.
+- Collection predicates through correlated `any`, `exists`, and `none`
+  expressions without implicitly loading the matching collection.
 - Unit and integration tests across model metadata, command rendering, query
   behavior, write operations, transactions, and SQLite execution.
 - CI coverage for GCC, Clang, MSVC, and Codecov.
 
 ## Near Term
 
-Near-term query expressiveness work is complete. The next short-cycle priority
-can be promoted here from the mid-term list when it is ready.
+The collection-relation milestone was delivered in four independently testable
+stages:
+
+1. Public wrappers, mapping descriptors, relation metadata, and validation.
+2. Explicit junction-table DDL, SQLite foreign-key enforcement, and relation
+   mutations.
+3. Explicit batched collection loading with `include`.
+4. Correlated collection predicates, examples, and the canonical relation
+   contract in `docs/relations.md`.
+
+The next short-cycle priority can be promoted from the mid-term list when its
+public conversion contract is ready.
 
 ## Mid Term
 
-After projections are stable, improve contributor experience and relation
-coverage.
+With projections and collection relations stable, improve type coverage and
+the contributor experience.
 
-- Plan relation support beyond one-to-one, including `OneToMany` and
-  `ManyToMany` mappings.
 - Decide how custom field converters should work before adding date/time, UUID,
   or third-party optional types such as `std::tm`, `boost::uuids::uuid`, and
   `boost::optional`.

@@ -54,6 +54,13 @@ enum class LogicalOperator
     Or,
 };
 
+enum class CollectionOperator
+{
+    Any,
+    Exists,
+    None,
+};
+
 class Column
 {
 public:
@@ -180,10 +187,17 @@ struct RawExpression
     std::vector<QueryParameter> parameters;
 };
 
+struct CollectionExpression
+{
+    std::string relation;
+    CollectionOperator collectionOperator;
+    PredicateNodePtr predicate;
+};
+
 struct PredicateNode
 {
     using Expression = std::variant<ComparisonExpression, NullExpression, ListExpression, BetweenExpression,
-                                    LogicalExpression, NotExpression, RawExpression>;
+                                    LogicalExpression, NotExpression, RawExpression, CollectionExpression>;
 
     Expression expression;
 };
@@ -392,6 +406,40 @@ inline auto operator||(const Predicate& left, const Predicate& right) -> Predica
 inline auto operator!(const Predicate& predicate) -> Predicate
 {
     return Predicate{PredicateNode{NotExpression{.predicate = predicate.node}}};
+}
+
+/**
+ * @brief Matches models for which at least one collection element satisfies a predicate.
+ *
+ * Column paths inside the predicate are relative to the collection element model.
+ */
+inline auto any(std::string relation, const Predicate& predicate) -> Predicate
+{
+    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
+                                                        .collectionOperator = CollectionOperator::Any,
+                                                        .predicate = std::make_shared<PredicateNode>(
+                                                            predicate.getNode())}}};
+}
+
+/**
+ * @brief Matches models whose mapped collection contains at least one element.
+ */
+inline auto exists(std::string relation) -> Predicate
+{
+    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
+                                                        .collectionOperator = CollectionOperator::Exists,
+                                                        .predicate = nullptr}}};
+}
+
+/**
+ * @brief Matches models for which no collection element satisfies a predicate.
+ */
+inline auto none(std::string relation, const Predicate& predicate) -> Predicate
+{
+    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
+                                                        .collectionOperator = CollectionOperator::None,
+                                                        .predicate = std::make_shared<PredicateNode>(
+                                                            predicate.getNode())}}};
 }
 
 /**

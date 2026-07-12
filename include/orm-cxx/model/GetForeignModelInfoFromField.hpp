@@ -13,8 +13,13 @@ struct GetForeignModelInfoFromField
 {
     static inline auto get(std::size_t i, ModelInfo& modelInfo) -> void
     {
-        if constexpr (checkIfIsModelWithId<ModelField>())
+        if constexpr (hasIdDefinition<ModelField>())
         {
+            if (getPrimaryIdColumnsNames<ModelField>().empty())
+            {
+                return;
+            }
+
             modelInfo.columnsInfo[i].isForeignModel = true;
 
             modelInfo.columnsInfo[i].type = ColumnType::OneToOne;

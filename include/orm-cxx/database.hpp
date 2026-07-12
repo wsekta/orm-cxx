@@ -1,9 +1,14 @@
 #pragma once
 
 #include <cstddef>
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -12,7 +17,9 @@
 #include "database/binding/Binding.hpp"
 #include "database/binding/ProjectionBinding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
+#include "database/RelationStatements.hpp"
 #include "database/Statement.hpp"
+#include "database/binding/CollectionBinding.hpp"
 #include "projection_query.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
@@ -140,14 +147,27 @@ public:
             detail::bindStatementParameter(parameterValues, parameter);
         }
 
-        Payload<T>::bindingInfo.joinedValues = query.getData().shouldJoin;
-
-        soci::rowset<Payload<T>> preparedRowSet = (sql.prepare << statement.sql, soci::use(parameterValues));
-
-        for (auto& payload : preparedRowSet)
+        auto readRows = [&]<bool JoinedValues>()
         {
-            result.push_back(std::move(payload.value));
+            soci::rowset<db::binding::BindingPayload<T, JoinedValues>> preparedRowSet =
+                (sql.prepare << statement.sql, soci::use(parameterValues));
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
+        };
+
+        if (query.getData().shouldJoin)
+        {
+            readRows.template operator()<true>();
         }
+        else
+        {
+            readRows.template operator()<false>();
+        }
+
+        loadIncludedCollections(query.getData(), result);
 
         return result;
     }
@@ -280,6 +300,102 @@ public:
     }
 
     /**
+     * @brief Creates junction tables owned by a model's ManyToMany mappings.
+     *
+     * Endpoint tables must already exist. Inverse mappings intentionally do
+     * not create the shared junction table.
+     */
+    template <typename T>
+    auto createRelationTables() -> void
+    {
+        const auto& modelInfo = Model<T>::getModelInfo();
+
+        ensureRelationTableEndpointsExist(modelInfo);
+
+        for (const auto& command : db::relations::createTableStatements(modelInfo))
+        {
+            sql << command;
+        }
+    }
+
+    /**
+     * @brief Drops junction tables owned by a model's ManyToMany mappings.
+     */
+    template <typename T>
+    auto deleteRelationTables() -> void
+    {
+        const auto& modelInfo = Model<T>::getModelInfo();
+
+        for (const auto& command : db::relations::dropTableStatements(modelInfo))
+        {
+            sql << command;
+        }
+    }
+
+    /**
+     * @brief Creates or changes a OneToMany/ManyToMany association.
+     * @return 1 when database state changed, otherwise 0.
+     */
+    template <typename Owner, typename Target>
+    auto link(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
+    {
+        const auto& ownerInfo = Model<Owner>::getModelInfo();
+        const auto relation =
+            std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
+                                 { return candidate.fieldName == relationField; });
+
+        if (relation == ownerInfo.relationsInfo.end() or relation->kind == model::RelationKind::ToOne)
+        {
+            throw std::invalid_argument{"Unknown collection relation: " + std::string{relationField}};
+        }
+
+        if (relation->targetType != std::type_index{typeid(Target)})
+        {
+            throw std::invalid_argument{"Relation target type does not match mapping: " +
+                                        std::string{relationField}};
+        }
+
+        const auto ownerKey = db::binding::getPrimaryKey(owner);
+        const auto targetKey = db::binding::getPrimaryKey(target);
+
+        if (not relationEndpointExists(ownerInfo, ownerKey) or
+            not relationEndpointExists(relation->targetModel(), targetKey))
+        {
+            throw std::invalid_argument{"Cannot link relation endpoints that do not exist"};
+        }
+
+        return executeMutation(db::relations::linkStatement(ownerInfo, *relation, ownerKey, targetKey));
+    }
+
+    /**
+     * @brief Removes a OneToMany/ManyToMany association.
+     * @return 1 when database state changed, otherwise 0.
+     */
+    template <typename Owner, typename Target>
+    auto unlink(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
+    {
+        const auto& ownerInfo = Model<Owner>::getModelInfo();
+        const auto relation =
+            std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
+                                 { return candidate.fieldName == relationField; });
+
+        if (relation == ownerInfo.relationsInfo.end() or relation->kind == model::RelationKind::ToOne)
+        {
+            throw std::invalid_argument{"Unknown collection relation: " + std::string{relationField}};
+        }
+
+        if (relation->targetType != std::type_index{typeid(Target)})
+        {
+            throw std::invalid_argument{"Relation target type does not match mapping: " +
+                                        std::string{relationField}};
+        }
+
+        return executeMutation(db::relations::unlinkStatement(ownerInfo, *relation,
+                                                              db::binding::getPrimaryKey(owner),
+                                                              db::binding::getPrimaryKey(target)));
+    }
+
+    /**
      * @brief Get the backend type of the database.
      *
      * @return The backend type of the database.
@@ -302,7 +418,152 @@ public:
     auto rollbackTransaction() -> void;
 
 private:
+    template <typename Owner, typename Target, bool JoinedValues>
+    auto appendCollectionRows(const db::Statement& statement,
+                              std::map<db::binding::PrimaryKey, std::vector<Target>>& groupedTargets) -> void
+    {
+        soci::values parameterValues;
+        detail::bindStatementParameters(parameterValues, statement.parameters);
+        soci::rowset<db::binding::CollectionPayload<Owner, Target, JoinedValues>> preparedRowSet =
+            (sql.prepare << statement.sql, soci::use(parameterValues));
+
+        for (auto& payload : preparedRowSet)
+        {
+            groupedTargets[payload.ownerKey].push_back(std::move(payload.value));
+        }
+    }
+
+    template <typename Owner>
+    auto loadIncludedCollections(const query::QueryData& queryData, std::vector<Owner>& owners) -> void
+    {
+        if (queryData.includes.empty())
+        {
+            return;
+        }
+
+        const auto& ownerInfo = queryData.modelInfo;
+
+        for (const auto& includedRelation : queryData.includes)
+        {
+            const auto* relation = ownerInfo.findRelation(includedRelation);
+
+            if (relation == nullptr or relation->kind == model::RelationKind::ToOne)
+            {
+                throw std::invalid_argument{"Unknown collection relation: " + includedRelation};
+            }
+        }
+
+        if (owners.empty())
+        {
+            return;
+        }
+
+        const auto reflectedFields = rfl::fields<Owner>();
+        auto ownerFields = rfl::to_view(owners.front()).values();
+        auto loadField = [this, &queryData, &owners, &ownerInfo, &reflectedFields](auto fieldIndex, auto* field)
+        {
+            using collection_t = std::decay_t<decltype(*field)>;
+
+            if constexpr (orm::is_relation_collection_v<collection_t>)
+            {
+                const auto relationName = std::string{reflectedFields[fieldIndex].name()};
+
+                if (std::ranges::find(queryData.includes, relationName) == queryData.includes.end())
+                {
+                    return;
+                }
+
+                const auto* relation = ownerInfo.findRelation(relationName);
+
+                if (relation == nullptr)
+                {
+                    throw std::invalid_argument{"Unknown collection relation: " + relationName};
+                }
+
+                loadCollectionField<decltype(fieldIndex)::value, Owner, collection_t>(queryData, owners, *relation);
+            }
+        };
+
+        utils::constexpr_for_tuple(ownerFields, loadField);
+    }
+
+    template <std::size_t FieldIndex, typename Owner, typename Collection>
+    auto loadCollectionField(const query::QueryData& queryData, std::vector<Owner>& owners,
+                             const model::RelationInfo& relation) -> void
+    {
+        using target_t = orm::relation_target_t<Collection>;
+
+        if (relation.targetType != std::type_index{typeid(target_t)})
+        {
+            throw std::invalid_argument{"Collection wrapper target does not match relation metadata: " +
+                                        relation.fieldName};
+        }
+
+        const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(queryData.modelInfo);
+        constexpr std::size_t parameterBudget = 900;
+        const auto batchSize = std::max<std::size_t>(1, parameterBudget / ownerPrimaryKey.size());
+        std::map<db::binding::PrimaryKey, std::vector<target_t>> groupedTargets;
+
+        orm::Query<target_t> targetQuery;
+
+        if (not queryData.shouldJoin)
+        {
+            targetQuery.disableJoining();
+        }
+
+        const auto baseTargetStatement =
+            commandGeneratorFactory.getCommandGenerator(backendType).select(targetQuery.getData());
+
+        if (not baseTargetStatement.parameters.empty())
+        {
+            throw std::logic_error{"Internal collection target query unexpectedly contains parameters"};
+        }
+
+        for (std::size_t batchStart = 0; batchStart < owners.size(); batchStart += batchSize)
+        {
+            const auto batchEnd = std::min(owners.size(), batchStart + batchSize);
+            std::vector<db::binding::PrimaryKey> ownerKeys;
+            ownerKeys.reserve(batchEnd - batchStart);
+
+            for (auto ownerIndex = batchStart; ownerIndex < batchEnd; ++ownerIndex)
+            {
+                ownerKeys.push_back(db::binding::getPrimaryKey(owners[ownerIndex]));
+            }
+
+            const auto statement = db::relations::collectionSelectStatement(
+                queryData.modelInfo, relation, baseTargetStatement.sql, ownerKeys, queryData.shouldJoin);
+            if (queryData.shouldJoin)
+            {
+                appendCollectionRows<Owner, target_t, true>(statement, groupedTargets);
+            }
+            else
+            {
+                appendCollectionRows<Owner, target_t, false>(statement, groupedTargets);
+            }
+        }
+
+        for (auto& owner : owners)
+        {
+            const auto ownerKey = db::binding::getPrimaryKey(owner);
+            auto ownerFields = rfl::to_view(owner).values();
+            auto* collection = std::get<FieldIndex>(ownerFields);
+            const auto targets = groupedTargets.find(ownerKey);
+
+            if (targets == groupedTargets.end())
+            {
+                collection->setLoaded({});
+            }
+            else
+            {
+                collection->setLoaded(targets->second);
+            }
+        }
+    }
+
     auto executeMutation(const db::Statement& statement) -> std::size_t;
+    auto relationEndpointExists(const model::ModelInfo& modelInfo, const db::binding::PrimaryKey& key) -> bool;
+    auto tableExists(std::string_view tableName) -> bool;
+    auto ensureRelationTableEndpointsExist(const model::ModelInfo& ownerInfo) -> void;
 
     soci::session sql;
     std::unique_ptr<soci::transaction> transaction;

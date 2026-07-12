@@ -22,6 +22,7 @@ struct QueryData
     std::vector<Projection> projections;               /**< Partial-result projections. */
     std::vector<Column> groupBy;                       /**< GROUP BY columns. */
     std::optional<AggregatePredicate> having = std::nullopt; /**< The optional HAVING predicate tree. */
+    std::vector<std::string> includes;                       /**< Explicit collection relations to hydrate. */
     bool isDistinct = false; /**< The flag that indicates if SELECT DISTINCT should be used. */
     bool shouldJoin = true;  /**< The flag that indicates if the query should join. */
 };

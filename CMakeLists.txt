@@ -41,6 +41,7 @@ set(SOURCES
         src/database/defaults/DefaultUpdateCommand.cpp
         src/database/defaults/DefaultDeleteCommand.cpp
         src/database/defaults/SqlRenderer.cpp
+        src/database/defaults/RelationStatements.cpp
         src/database/CommandGenerator.cpp
 )
 
@@ -100,8 +101,11 @@ if (BUILD_ORM_CXX_TESTS)
             tests/database/WriteOperationsTest.cpp
             tests/database/IdModelsTest.cpp
             tests/database/RelatedModelTest.cpp
+            tests/database/CollectionRelationTest.cpp
+            tests/database/CollectionRelationAcceptanceTest.cpp
             tests/database/QueryLanguageTest.cpp
             tests/database/BaseOperationsTest.cpp
+            tests/model/CollectionRelationTest.cpp
             tests/model/IdInfoTest.cpp
             tests/model/TableInfoTest.cpp
             tests/reflection/TypeNameTest.cpp

@@ -106,6 +106,8 @@ int main()
 
 ## [Markdown](docs/main.md)
 
+## [Collection relations](docs/relations.md)
+
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
 ## [Roadmap](ROADMAP.md)
@@ -156,10 +158,53 @@ unless they define `auto_increment_columns`. See [Model documentation](docs/mode
 ### Model support
 
 SQLite models support common scalar C++ fields, nullable scalar fields through `std::optional<T>`, mapped table and
-column names, default or explicit primary keys, and one-level one-to-one relations. Nullable one-to-one relations can be
-modeled as `std::optional<RelatedModel>`.
+column names, default or explicit primary keys, to-one relations, and explicitly
+mapped `OneToMany` and `ManyToMany` collections. Nullable to-one relations can
+be modeled as `std::optional<RelatedModel>`.
 
 See [Model documentation](docs/model.md) for the supported type list and current limitations.
+
+### Collection relations
+
+Collection wrappers are mapped through static relation descriptors and loaded
+only when requested:
+
+```cpp
+struct Book;
+
+struct Author
+{
+    int id;
+    std::string name;
+    orm::OneToMany<Book> books;
+
+    inline static const auto relations =
+        orm::relations(orm::oneToMany("books").mappedBy("author"));
+};
+
+struct Book
+{
+    int id;
+    std::string title;
+    Author author;
+};
+
+orm::Query<Author> query;
+query.include("books")
+     .where(orm::query::any("books", orm::query::col("title").like("C++%")));
+
+auto authors = database.select(query);
+```
+
+Many-to-many owning mappings use
+`manyToMany("roles").through("user_roles")`; relation tables are managed with
+`createRelationTables<T>()` and `deleteRelationTables<T>()`, while individual
+links are changed with `link` and `unlink`. In-memory collection changes never
+cascade-save endpoints or synchronize the database.
+
+See [Collection relation documentation](docs/relations.md) for the full
+mapping, DDL, loading, mutation, predicate, transaction, and migration
+contract.
 
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 

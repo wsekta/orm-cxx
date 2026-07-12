@@ -3,6 +3,7 @@
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
+#include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/values.h"
@@ -71,8 +72,8 @@ struct ObjectFieldToValues;
 template <SociDefaultSupported ModelField>
 struct ObjectFieldToValues<ModelField>
 {
-    template <typename T>
-    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto set(const ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
         const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
@@ -86,21 +87,33 @@ struct ObjectFieldToValues<ModelField>
 template <ModelWithId ModelField>
 struct ObjectFieldToValues<ModelField>
 {
-    template <typename T>
-    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto set(const ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
         auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
         const auto foreignModelAsTuple = rfl::to_view(*column).values();
         auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
+        std::size_t foreignColumnIndex = 0;
 
         auto setForeignFieldToValue =
-            [&foreignModel, &values, &foreignFieldName](auto index, const auto foreignModelColumn)
+            [&foreignModel, &values, &foreignFieldName, &foreignColumnIndex](auto /*fieldIndex*/,
+                                                                            const auto foreignModelColumn)
         {
-            if (foreignModel.columnsInfo[index].isPrimaryKey)
+            using field_t = std::decay_t<decltype(*foreignModelColumn)>;
+
+            if constexpr (orm::is_relation_collection_v<field_t>)
             {
-                values.set(std::format("{}_{}", foreignFieldName, foreignModel.columnsInfo[index].name),
-                           *foreignModelColumn);
+                return;
+            }
+            else
+            {
+                const auto& columnInfo = foreignModel.columnsInfo[foreignColumnIndex++];
+
+                if (columnInfo.isPrimaryKey)
+                {
+                    values.set(std::format("{}_{}", foreignFieldName, columnInfo.name), *foreignModelColumn);
+                }
             }
         };
 
@@ -111,8 +124,9 @@ struct ObjectFieldToValues<ModelField>
 template <typename ModelField>
 struct ObjectFieldToValues<std::optional<ModelField>>
 {
-    template <typename T>
-    static auto set(const std::optional<ModelField>* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto set(const std::optional<ModelField>* column, const BindingPayload<T, JoinedValues>& model,
+                    std::size_t columnIndex,
                     soci::values& values) -> void
     {
         if (column->has_value()) { ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values); return; }
@@ -124,8 +138,8 @@ struct ObjectFieldToValues<std::optional<ModelField>>
 template <typename ModelField, typename SociType>
 struct ObjectFieldToValuesWithCast
 {
-    template <typename T>
-    static auto set(const ModelField* column, const BindingPayload<T>& model, std::size_t columnIndex,
+    template <typename T, bool JoinedValues>
+    static auto set(const ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
         values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<SociType>(*column));

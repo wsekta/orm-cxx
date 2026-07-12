@@ -1,6 +1,7 @@
 #pragma once
 
 #include "model/GetModelInfo.hpp"
+#include "relations.hpp"
 
 namespace orm
 {
@@ -23,15 +24,7 @@ public:
      */
     static auto getModelInfo(bool force = false) -> model::ModelInfo&
     {
-        if (not modelInfo.has_value() or force)
-        {
-            modelInfo = model::getModelInfo<T>();
-        }
-
-        return modelInfo.value();
+        return model::getCachedModelInfo<T>(force);
     }
-
-private:
-    inline static std::optional<model::ModelInfo> modelInfo = std::nullopt;
 };
 } // namespace orm

@@ -23,5 +23,5 @@ template <typename ModelField>
 concept SociDefaultSupported = IsOneOfTypes<ModelField, int, long long, unsigned long long, double, std::string>;
 
 template <typename ModelField>
-concept ModelWithId = orm::model::checkIfIsModelWithId<ModelField>();
+concept ModelWithId = orm::model::hasIdDefinition<ModelField>();
 } // namespace orm::db::binding

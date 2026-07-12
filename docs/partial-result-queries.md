@@ -217,5 +217,11 @@ SQL.
 Projection DTOs are flat. Relation fields must be flattened through aliases,
 for example `as("city", col("profile.city"))`.
 
+`ProjectionQuery` does not expose `include`; collection wrappers are model
+state and are never hydrated into a flat DTO. A projection `WHERE` predicate
+may still use the dedicated `any`, `exists`, and `none` helpers to filter by a
+mapped source-model collection, but the collection itself cannot be projected.
+
 Aggregate `ORDER BY`, `COUNT(DISTINCT ...)`, raw aggregate expressions,
-subqueries, and `EXISTS` are not part of this version.
+and general subqueries are not part of this version. Correlated `EXISTS` is
+available only through the collection predicate helpers.

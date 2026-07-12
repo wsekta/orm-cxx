@@ -1,7 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <algorithm>
 #include <optional>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 #include "model.hpp"
@@ -165,6 +168,27 @@ public:
     inline auto disableJoining() -> Query<T>&
     {
         data.shouldJoin = false;
+
+        return *this;
+    }
+
+    /**
+     * @brief Explicitly loads a mapped OneToMany or ManyToMany collection.
+     *
+     * Repeating the same include is idempotent. Collection loading is performed
+     * after the root SELECT, so root pagination is preserved.
+     */
+    auto include(std::string relation) -> Query<T>&
+    {
+        if (relation.empty())
+        {
+            throw std::invalid_argument{"Included relation name must not be empty"};
+        }
+
+        if (std::ranges::find(data.includes, relation) == data.includes.end())
+        {
+            data.includes.push_back(std::move(relation));
+        }
 
         return *this;
     }

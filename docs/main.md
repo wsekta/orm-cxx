@@ -10,5 +10,6 @@
 </div>
 
 1. [Model](model.md)
-2. [Query](query.md)
-3. [Database](database.md)
+2. [Collection relations](relations.md)
+3. [Query](query.md)
+4. [Database](database.md)

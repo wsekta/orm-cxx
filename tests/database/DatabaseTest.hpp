@@ -29,9 +29,10 @@ public:
 
     auto TearDown() -> void override
     {
-        for (auto& tearDownFunction : tearDownFunctions)
+        for (auto tearDownFunction = tearDownFunctions.rbegin(); tearDownFunction != tearDownFunctions.rend();
+             ++tearDownFunction)
         {
-            tearDownFunction();
+            (*tearDownFunction)();
         }
 
         database.disconnect();

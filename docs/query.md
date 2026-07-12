@@ -1,17 +1,19 @@
 # Query
 
 1. [Build select](#build-select)
-2. [Where predicates](#where-predicates)
-3. [Column names and relations](#column-names-and-relations)
-4. [Ordering](#ordering)
-5. [Distinct](#distinct)
-6. [Limit and offset](#limit-and-offset)
-7. [Raw SQL fragments](#raw-sql-fragments)
-8. [Partial-result queries](#partial-result-queries)
-9. [Full-model grouping and HAVING](#full-model-grouping-and-having)
-10. [Aggregate projection queries](#aggregate-projection-queries)
-11. [Write predicates](#write-predicates)
-12. [Current limitations](#current-limitations)
+2. [Loading collections](#loading-collections)
+3. [Where predicates](#where-predicates)
+4. [Collection predicates](#collection-predicates)
+5. [Column names and relations](#column-names-and-relations)
+6. [Ordering](#ordering)
+7. [Distinct](#distinct)
+8. [Limit and offset](#limit-and-offset)
+9. [Raw SQL fragments](#raw-sql-fragments)
+10. [Partial-result queries](#partial-result-queries)
+11. [Full-model grouping and HAVING](#full-model-grouping-and-having)
+12. [Aggregate projection queries](#aggregate-projection-queries)
+13. [Write predicates](#write-predicates)
+14. [Current limitations](#current-limitations)
 
 ## Build select
 
@@ -47,6 +49,39 @@ query.where(col("age") >= 18)
      .limit(10)
      .offset(20);
 ```
+
+## Loading collections
+
+`OneToMany` and `ManyToMany` fields are unloaded by default. Request a
+collection explicitly on a full-model query:
+
+```cpp
+orm::Query<Author> query;
+query.include("books")
+     .orderBy(orm::query::asc(orm::query::col("id")))
+     .limit(20);
+
+std::vector<Author> authors = database.select(query);
+```
+
+After selection, every returned `books` wrapper has `isLoaded() == true`, even
+when it is empty. Collection wrappers that were not included remain empty with
+`isLoaded() == false`. Repeating the same include is idempotent.
+
+The main query is executed first, followed by one or more parameter-bounded
+batched queries for each unique included field. Results are grouped by the
+complete parent primary key, so parents are not duplicated and the
+implementation never issues one query per parent. Large key sets are split to
+respect SQLite's parameter limit.
+
+Pagination, `DISTINCT`, and ordering apply to the parent query only. Included
+collections are complete for the selected parents, but their element order is
+not guaranteed. Includes support one level; collection wrappers within loaded
+elements stay unloaded.
+
+`disableJoining()` controls existing to-one joins and is propagated while
+hydrating collection elements. It does not disable an explicit include.
+`ProjectionQuery` has no `include` method because its result is a flat DTO.
 
 ## Where predicates
 
@@ -94,6 +129,35 @@ query.where(col("age") >= 18)
 
 All comparison values are sent to the database as SOCI bind parameters. They are not interpolated into SQL strings.
 
+## Collection predicates
+
+Use `any`, `exists`, and `none` to filter a model by a mapped collection:
+
+```cpp
+using namespace orm::query;
+
+orm::Query<Author> query;
+query.where(any("books", col("title").like("C++%")) &&
+            none("books", col("title").like("Draft%")));
+
+orm::Query<Author> nonEmpty;
+nonEmpty.where(exists("books"));
+```
+
+`any("books", predicate)` renders a correlated `EXISTS` subquery.
+`none("books", predicate)` renders `NOT EXISTS`, and `exists("books")` checks
+only whether at least one related row exists. They work for both `OneToMany`
+and `ManyToMany`, including inverse many-to-many mappings.
+
+The element predicate is resolved relative to the target model. It may contain
+target scalar fields and that model's existing one-level to-one paths. Values
+are bound normally; they are never interpolated into SQL. Nested collection
+predicates are rejected.
+
+A collection predicate filters only. It does not mark the wrapper loaded or
+fetch its elements; combine it with `include("books")` when both behaviors are
+needed.
+
 ## Column names and relations
 
 `col("field")` uses the C++ model field name. If the model defines `columns_names`, the query renderer maps the field name to the configured database column name.
@@ -140,6 +204,11 @@ query.where(orm::query::col("profile.id").isNull());
 ```
 
 By default related models are joined. If `disableJoining()` is used, only related id fields are available in query paths.
+
+Collection fields are not column-path prefixes. Use the collection predicate
+helpers instead of `col("books.title")`; such paths are rejected. Collections
+also cannot be used as `ORDER BY` or `GROUP BY` expressions, projection fields,
+aggregate arguments, or update targets.
 
 The typed helper is also available when you want to document the expected field type at the call site:
 
@@ -348,5 +417,7 @@ foreign-key column.
 
 The query language currently covers ORM-style `SELECT` returning full model objects plus predicate-based `UPDATE` and
 `DELETE` operations.
-It does not yet support subqueries, `EXISTS`, raw aggregate expressions, aggregate `ORDER BY`, or
-`COUNT(DISTINCT ...)`.
+It supports the dedicated correlated `EXISTS` forms exposed by `any`, `exists`,
+and `none`, but not general subqueries or nested collection predicates. It also
+does not support nested includes, collection ordering, raw aggregate
+expressions, aggregate `ORDER BY`, or `COUNT(DISTINCT ...)`.
