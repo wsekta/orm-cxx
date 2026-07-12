@@ -523,6 +523,27 @@ TEST_P(CollectionRelationDatabaseTest, relationEndpointValidation_shouldRejectMe
     userInfo = savedInfo;
 }
 
+TEST_P(CollectionRelationDatabaseTest, relationTableCreationForInverseMapping_shouldBeNoOp)
+{
+    EXPECT_NO_THROW(database.createRelationTables<collection_models::Role>());
+}
+
+TEST_P(CollectionRelationDatabaseTest, include_shouldRejectWrapperTargetMetadataMismatch)
+{
+    database.createTable<collection_models::User>();
+    database.insert(collection_models::User{1, "user", {}});
+
+    auto& userInfo = orm::Model<collection_models::User>::getModelInfo();
+    const auto savedType = userInfo.relationsInfo.front().targetType;
+    userInfo.relationsInfo.front().targetType = typeid(collection_models::Book);
+
+    orm::Query<collection_models::User> query;
+    query.include("roles");
+    EXPECT_THROW((void)database.select(query), std::invalid_argument);
+
+    userInfo.relationsInfo.front().targetType = savedType;
+}
+
 TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutSqliteConnection_shouldRejectBackend)
 {
     orm::Database disconnected;

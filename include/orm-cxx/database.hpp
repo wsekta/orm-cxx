@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cstddef>
 #include <algorithm>
 #include <map>
@@ -474,11 +475,7 @@ private:
                 }
 
                 const auto* relation = ownerInfo.findRelation(relationName);
-
-                if (relation == nullptr)
-                {
-                    throw std::invalid_argument{"Unknown collection relation: " + relationName};
-                }
+                assert(relation != nullptr);
 
                 loadCollectionField<decltype(fieldIndex)::value, Owner, collection_t>(queryData, owners, *relation);
             }
@@ -514,10 +511,7 @@ private:
         const auto baseTargetStatement =
             commandGeneratorFactory.getCommandGenerator(backendType).select(targetQuery.getData());
 
-        if (not baseTargetStatement.parameters.empty())
-        {
-            throw std::logic_error{"Internal collection target query unexpectedly contains parameters"};
-        }
+        assert(baseTargetStatement.parameters.empty());
 
         for (std::size_t batchStart = 0; batchStart < owners.size(); batchStart += batchSize)
         {

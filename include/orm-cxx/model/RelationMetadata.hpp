@@ -69,11 +69,13 @@ auto orderedPrimaryKeyColumns() -> std::vector<std::string>
         {
             return;
         }
-
-        auto name = getColumnName<T>(fields[i].name());
-        if (ids.contains(name))
+        else
         {
-            result.push_back(std::move(name));
+            auto name = getColumnName<T>(fields[i].name());
+            if (ids.contains(name))
+            {
+                result.push_back(std::move(name));
+            }
         }
     };
     utils::constexpr_for_tuple<model_tuple_t>(appendPrimaryKey);

@@ -259,11 +259,6 @@ auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate,
                            orm::db::commands::RenderContext& outerContext, const std::string& targetAlias)
     -> std::string
 {
-    if (predicate == nullptr)
-    {
-        return {};
-    }
-
     orm::db::commands::RenderContext targetContext{
         .modelInfo = targetInfo,
         .shouldJoin = true,

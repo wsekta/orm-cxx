@@ -39,26 +39,28 @@ auto getColumnsInfo(const std::unordered_set<std::string>& ids) -> std::vector<C
         {
             return;
         }
-
-        const auto& field = fields[i];
-        ColumnInfo columnInfo{};
-
-        columnInfo.fieldName = field.name();
-
-        columnInfo.name = getColumnName<T>(columnInfo.fieldName);
-
-        auto [type, isNotNull] = toColumnType(field.type());
-
-        columnInfo.type = type;
-
-        columnInfo.isNotNull = isNotNull;
-
-        if (ids.contains(columnInfo.name))
+        else
         {
-            columnInfo.isPrimaryKey = true;
-        }
+            const auto& field = fields[i];
+            ColumnInfo columnInfo{};
 
-        columnsInfo.push_back(columnInfo);
+            columnInfo.fieldName = field.name();
+
+            columnInfo.name = getColumnName<T>(columnInfo.fieldName);
+
+            auto [type, isNotNull] = toColumnType(field.type());
+
+            columnInfo.type = type;
+
+            columnInfo.isNotNull = isNotNull;
+
+            if (ids.contains(columnInfo.name))
+            {
+                columnInfo.isPrimaryKey = true;
+            }
+
+            columnsInfo.push_back(columnInfo);
+        }
     };
 
     utils::constexpr_for_tuple<model_tuple_t>(appendColumn);
