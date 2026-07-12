@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['model_0',['Model',['../md_docs_2model.html',1,'']]],
-  ['model_1',['Create a model',['../md_docs_2model.html#autotoc_md10',1,'']]]
+  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md18',1,'']]],
+  ['insert_20objects_1',['Insert objects',['../md_docs_2database.html#autotoc_md5',1,'']]]
 ];

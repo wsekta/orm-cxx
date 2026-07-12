@@ -1,6 +1,10 @@
 var searchData=
 [
-  ['select_0',['select',['../md_docs_2query.html#autotoc_md25',1,'Build select'],['../classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7',1,'orm::Database::select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;'],['../classorm_1_1Database.html#a3a3433a5e24e248ae9ad344fd443533b',1,'orm::Database::select(ProjectionQuery&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;']]],
-  ['sql_20fragments_1',['Raw SQL fragments',['../md_docs_2query.html#autotoc_md31',1,'']]],
-  ['supported_20field_20types_2',['Supported field types',['../md_docs_2model.html#autotoc_md11',1,'']]]
+  ['partial_20result_20queries_0',['Partial result queries',['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md38',1,'Partial-result queries']]],
+  ['predicates_1',['predicates',['../md_docs_2query.html#autotoc_md32',1,'Collection predicates'],['../md_docs_2query.html#autotoc_md31',1,'Where predicates'],['../md_docs_2query.html#autotoc_md41',1,'Write predicates']]],
+  ['primary_20key_2',['Primary key',['../md_docs_2model.html#autotoc_md17',1,'']]],
+  ['primary_20key_3',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md18',1,'']]],
+  ['projection_20queries_4',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md40',1,'']]],
+  ['projectionquery_5',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]],
+  ['projectionresultfield_6',['ProjectionResultField',['../structorm_1_1detail_1_1ProjectionResultField.html',1,'orm::detail']]]
 ];

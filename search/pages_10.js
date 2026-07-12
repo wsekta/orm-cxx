@@ -1,4 +1,7 @@
 var searchData=
 [
-  ['update_20objects_0',['Update objects',['../md_docs_2database.html#autotoc_md6',1,'']]]
+  ['queries_0',['queries',['../md_docs_2query.html#autotoc_md40',1,'Aggregate projection queries'],['../md_docs_2partial-result-queries.html#autotoc_md25',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md38',1,'Partial-result queries']]],
+  ['query_1',['Query',['../md_docs_2query.html',1,'']]],
+  ['query_20behavior_2',['Query behavior',['../md_docs_2partial-result-queries.html#autotoc_md24',1,'']]],
+  ['query_20objects_3',['Query objects',['../md_docs_2database.html#autotoc_md7',1,'']]]
 ];

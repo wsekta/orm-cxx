@@ -169,6 +169,19 @@ auto&#160;</td><td class="memItemRight"><b>disconnect</b> () -&gt; void</td></tr
 <tr class="memitem:adc8f4be2035069fa45881dfb498f2604" id="r_adc8f4be2035069fa45881dfb498f2604"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:adc8f4be2035069fa45881dfb498f2604 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#adc8f4be2035069fa45881dfb498f2604">deleteTable</a> () -&gt; void</td></tr>
 <tr class="memdesc:adc8f4be2035069fa45881dfb498f2604"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a delete table query for a model.  <br /></td></tr>
+<tr class="memitem:a56193616d588084845aeef03a2c44615" id="r_a56193616d588084845aeef03a2c44615"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a56193616d588084845aeef03a2c44615 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a56193616d588084845aeef03a2c44615">createRelationTables</a> () -&gt; void</td></tr>
+<tr class="memdesc:a56193616d588084845aeef03a2c44615"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates junction tables owned by a model's <a class="el" href="classorm_1_1ManyToMany.html">ManyToMany</a> mappings.  <br /></td></tr>
+<tr class="memitem:a28707f3e8fdbe3c755820d0b51f8fb4e" id="r_a28707f3e8fdbe3c755820d0b51f8fb4e"><td class="memTemplParams" colspan="2"><a id="a28707f3e8fdbe3c755820d0b51f8fb4e" name="a28707f3e8fdbe3c755820d0b51f8fb4e"></a>
+template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a28707f3e8fdbe3c755820d0b51f8fb4e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>deleteRelationTables</b> () -&gt; void</td></tr>
+<tr class="memdesc:a28707f3e8fdbe3c755820d0b51f8fb4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops junction tables owned by a model's <a class="el" href="classorm_1_1ManyToMany.html">ManyToMany</a> mappings. <br /></td></tr>
+<tr class="memitem:a460eed600ff934216d4c30f388e808c3" id="r_a460eed600ff934216d4c30f388e808c3"><td class="memTemplParams" colspan="2">template&lt;typename Owner, typename Target&gt; </td></tr>
+<tr class="memitem:a460eed600ff934216d4c30f388e808c3 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a460eed600ff934216d4c30f388e808c3">link</a> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
+<tr class="memdesc:a460eed600ff934216d4c30f388e808c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates or changes a OneToMany/ManyToMany association.  <br /></td></tr>
+<tr class="memitem:aae9e59f0fa15ab44830a10ef0b9bc13e" id="r_aae9e59f0fa15ab44830a10ef0b9bc13e"><td class="memTemplParams" colspan="2">template&lt;typename Owner, typename Target&gt; </td></tr>
+<tr class="memitem:aae9e59f0fa15ab44830a10ef0b9bc13e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aae9e59f0fa15ab44830a10ef0b9bc13e">unlink</a> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
+<tr class="memdesc:aae9e59f0fa15ab44830a10ef0b9bc13e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a OneToMany/ManyToMany association.  <br /></td></tr>
 <tr class="memitem:af5bf41d4644f6d3e8835bfbad5cb07a0" id="r_af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#af5bf41d4644f6d3e8835bfbad5cb07a0">getBackendType</a> () -&gt; db::BackendType</td></tr>
 <tr class="memdesc:af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
 <tr class="memitem:a56318393652ad4c68c2bc71b5474b03c" id="r_a56318393652ad4c68c2bc71b5474b03c"><td class="memItemLeft"><a id="a56318393652ad4c68c2bc71b5474b03c" name="a56318393652ad4c68c2bc71b5474b03c"></a>
@@ -207,6 +220,36 @@ auto&#160;</td><td class="memItemRight"><b>rollbackTransaction</b> () -&gt; void
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a56193616d588084845aeef03a2c44615" name="a56193616d588084845aeef03a2c44615"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56193616d588084845aeef03a2c44615">&#9670;&#160;</a></span>createRelationTables()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::createRelationTables </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt; void</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates junction tables owned by a model's <a class="el" href="classorm_1_1ManyToMany.html">ManyToMany</a> mappings. </p>
+<p>Endpoint tables must already exist. Inverse mappings intentionally do not create the shared junction table. </p>
 
 </div>
 </div>
@@ -382,6 +425,45 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
+<a id="a460eed600ff934216d4c30f388e808c3" name="a460eed600ff934216d4c30f388e808c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a460eed600ff934216d4c30f388e808c3">&#9670;&#160;</a></span>link()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Owner, typename Target&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::link </td>
+          <td>(</td>
+          <td class="paramtype">const Owner &amp;</td>          <td class="paramname"><span class="paramname"><em>owner</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>relationField</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Target &amp;</td>          <td class="paramname"><span class="paramname"><em>target</em></span>&#160;) -&gt; std::size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates or changes a OneToMany/ManyToMany association. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 when database state changed, otherwise 0. </dd></dl>
+
+</div>
+</div>
 <a id="a2321eb9d51932ca7d6278142a3dbac9e" name="a2321eb9d51932ca7d6278142a3dbac9e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2321eb9d51932ca7d6278142a3dbac9e">&#9670;&#160;</a></span>remove()</h2>
 
@@ -506,6 +588,45 @@ template&lt;typename T&gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The vector of objects of type T returned by the select query. </dd></dl>
+
+</div>
+</div>
+<a id="aae9e59f0fa15ab44830a10ef0b9bc13e" name="aae9e59f0fa15ab44830a10ef0b9bc13e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aae9e59f0fa15ab44830a10ef0b9bc13e">&#9670;&#160;</a></span>unlink()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Owner, typename Target&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::unlink </td>
+          <td>(</td>
+          <td class="paramtype">const Owner &amp;</td>          <td class="paramname"><span class="paramname"><em>owner</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>relationField</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const Target &amp;</td>          <td class="paramname"><span class="paramname"><em>target</em></span>&#160;) -&gt; std::size_t</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Removes a OneToMany/ManyToMany association. </p>
+<dl class="section return"><dt>Returns</dt><dd>1 when database state changed, otherwise 0. </dd></dl>
 
 </div>
 </div>

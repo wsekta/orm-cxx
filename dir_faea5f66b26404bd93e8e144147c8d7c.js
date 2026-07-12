@@ -5,5 +5,6 @@ var dir_faea5f66b26404bd93e8e144147c8d7c =
     [ "orm.hpp", "orm_8hpp_source.html", null ],
     [ "projection_query.hpp", "projection__query_8hpp_source.html", null ],
     [ "query.hpp", "query_8hpp_source.html", null ],
+    [ "relations.hpp", "relations_8hpp_source.html", null ],
     [ "update.hpp", "update_8hpp_source.html", null ]
 ];

@@ -140,6 +140,15 @@ auto&#160;</td><td class="memItemRight"><b>orWhere</b> (const query::Predicate &
 <tr class="memitem:ab925a4c57e36b4323066865178b02b47" id="r_ab925a4c57e36b4323066865178b02b47"><td class="memTemplParams" colspan="2"><a id="ab925a4c57e36b4323066865178b02b47" name="ab925a4c57e36b4323066865178b02b47"></a>
 template&lt;typename... Orders&gt; </td></tr>
 <tr class="memitem:ab925a4c57e36b4323066865178b02b47 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>orderBy</b> (Orders... orders) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a8d4477f57092587d7598daca3963ed9a" id="r_a8d4477f57092587d7598daca3963ed9a"><td class="memTemplParams" colspan="2"><a id="a8d4477f57092587d7598daca3963ed9a" name="a8d4477f57092587d7598daca3963ed9a"></a>
+template&lt;typename... Columns&gt; </td></tr>
+<tr class="memitem:a8d4477f57092587d7598daca3963ed9a template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>groupBy</b> (Columns... columns) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a00299a92623567f4df1020e813023c73" id="r_a00299a92623567f4df1020e813023c73"><td class="memItemLeft"><a id="a00299a92623567f4df1020e813023c73" name="a00299a92623567f4df1020e813023c73"></a>
+auto&#160;</td><td class="memItemRight"><b>having</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a7066128877b89de8f172cd26d755f53a" id="r_a7066128877b89de8f172cd26d755f53a"><td class="memItemLeft"><a id="a7066128877b89de8f172cd26d755f53a" name="a7066128877b89de8f172cd26d755f53a"></a>
+auto&#160;</td><td class="memItemRight"><b>andHaving</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a5728b8f31114913e6d507111849f706f" id="r_a5728b8f31114913e6d507111849f706f"><td class="memItemLeft"><a id="a5728b8f31114913e6d507111849f706f" name="a5728b8f31114913e6d507111849f706f"></a>
+auto&#160;</td><td class="memItemRight"><b>orHaving</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
 <tr class="memitem:a0e90cd92827d5a371740a62db0956145" id="r_a0e90cd92827d5a371740a62db0956145"><td class="memItemLeft"><a id="a0e90cd92827d5a371740a62db0956145" name="a0e90cd92827d5a371740a62db0956145"></a>
 auto&#160;</td><td class="memItemRight"><b>distinct</b> () -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
 <tr class="memitem:ac404aee04e5dffeb920d8fef3ae5cb48" id="r_ac404aee04e5dffeb920d8fef3ae5cb48"><td class="memItemLeft"><a id="ac404aee04e5dffeb920d8fef3ae5cb48" name="ac404aee04e5dffeb920d8fef3ae5cb48"></a>

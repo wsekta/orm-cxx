@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md16',1,'']]],
-  ['insert_1',['insert',['../classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2',1,'orm::Database::insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1Database.html#acbc75aba074b7474bc0c2ee6445a1c0e',1,'orm::Database::insert(T object) -&gt; void']]],
-  ['insert_20objects_2',['Insert objects',['../md_docs_2database.html#autotoc_md4',1,'']]]
+  ['getbackendtype_0',['getBackendType',['../classorm_1_1Database.html#af5bf41d4644f6d3e8835bfbad5cb07a0',1,'orm::Database']]],
+  ['getmodelinfo_1',['getModelInfo',['../classorm_1_1Model.html#a5ca625ab1bf6b9fb81d6391407332537',1,'orm::Model']]],
+  ['groupby_2',['groupBy',['../classorm_1_1Query.html#a1df7eac703bed39ca665ca533b21a023',1,'orm::Query']]],
+  ['grouping_20and_20having_3',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md39',1,'']]]
 ];

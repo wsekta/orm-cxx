@@ -1,5 +1,8 @@
 var searchData=
 [
-  ['getbackendtype_0',['getBackendType',['../classorm_1_1Database.html#af5bf41d4644f6d3e8835bfbad5cb07a0',1,'orm::Database']]],
-  ['getmodelinfo_1',['getModelInfo',['../classorm_1_1Model.html#a5ca625ab1bf6b9fb81d6391407332537',1,'orm::Model']]]
+  ['field_20types_0',['Supported field types',['../md_docs_2model.html#autotoc_md13',1,'']]],
+  ['fields_1',['Optional fields',['../md_docs_2model.html#autotoc_md14',1,'']]],
+  ['filtering_20by_20collections_2',['Filtering by collections',['../md_docs_2relations.html#autotoc_md51',1,'']]],
+  ['fragments_3',['Raw SQL fragments',['../md_docs_2query.html#autotoc_md37',1,'']]],
+  ['full_20model_20grouping_20and_20having_4',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md39',1,'']]]
 ];

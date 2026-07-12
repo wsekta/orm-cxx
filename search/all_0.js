@@ -1,9 +1,18 @@
 var searchData=
 [
-  ['a_20model_0',['Create a model',['../md_docs_2model.html#autotoc_md10',1,'']]],
-  ['aggregate_20queries_1',['Future aggregate queries',['../md_docs_2partial-result-queries.html#autotoc_md23',1,'']]],
-  ['and_20offset_2',['Limit and offset',['../md_docs_2query.html#autotoc_md30',1,'']]],
-  ['and_20relations_3',['Column names and relations',['../md_docs_2query.html#autotoc_md27',1,'']]],
-  ['andwhere_4',['andWhere',['../classorm_1_1Query.html#a1e2944880e1d93c88d9d69f5d884bde0',1,'orm::Query']]],
-  ['auto_20increment_20primary_20key_5',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md16',1,'']]]
+  ['a_20model_0',['Create a model',['../md_docs_2model.html#autotoc_md12',1,'']]],
+  ['aggregate_20projection_20queries_1',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md40',1,'']]],
+  ['aggregate_20result_20queries_2',['Aggregate result queries',['../md_docs_2partial-result-queries.html#autotoc_md25',1,'']]],
+  ['an_20existing_20schema_3',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md56',1,'']]],
+  ['and_20consistency_4',['Transactions and consistency',['../md_docs_2relations.html#autotoc_md53',1,'']]],
+  ['and_20delete_20relation_20tables_5',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md4',1,'']]],
+  ['and_20having_6',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md39',1,'']]],
+  ['and_20offset_7',['Limit and offset',['../md_docs_2query.html#autotoc_md36',1,'']]],
+  ['and_20relations_8',['Column names and relations',['../md_docs_2query.html#autotoc_md33',1,'']]],
+  ['and_20unlink_9',['Link and unlink',['../md_docs_2relations.html#autotoc_md49',1,'']]],
+  ['and_20unlink_20relations_10',['Link and unlink relations',['../md_docs_2database.html#autotoc_md6',1,'']]],
+  ['and_20unsupported_20mappings_11',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md54',1,'']]],
+  ['andhaving_12',['andHaving',['../classorm_1_1Query.html#a601ca839d3168f1dba6f6c79dea3a207',1,'orm::Query']]],
+  ['andwhere_13',['andWhere',['../classorm_1_1Query.html#a1e2944880e1d93c88d9d69f5d884bde0',1,'orm::Query']]],
+  ['auto_20increment_20primary_20key_14',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md18',1,'']]]
 ];

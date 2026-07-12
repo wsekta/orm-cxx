@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['table_0',['table',['../md_docs_2database.html#autotoc_md2',1,'Create table'],['../md_docs_2database.html#autotoc_md3',1,'Delete table']]],
-  ['table_20name_1',['Table name',['../md_docs_2model.html#autotoc_md13',1,'']]],
-  ['to_20one_20relations_2',['One-to-one relations',['../md_docs_2model.html#autotoc_md17',1,'']]],
-  ['transactions_3',['Transactions',['../md_docs_2database.html#autotoc_md8',1,'']]],
-  ['types_4',['Supported field types',['../md_docs_2model.html#autotoc_md11',1,'']]]
+  ['queries_0',['queries',['../md_docs_2query.html#autotoc_md40',1,'Aggregate projection queries'],['../md_docs_2partial-result-queries.html#autotoc_md25',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md38',1,'Partial-result queries']]],
+  ['query_1',['Query',['../classorm_1_1Query.html',1,'orm::Query&lt; T &gt;'],['../classorm_1_1Query.html#abde0572a94dd2d8cfb471bf85c470f9b',1,'orm::Query::Query()'],['../md_docs_2query.html',1,'Query']]],
+  ['query_20behavior_2',['Query behavior',['../md_docs_2partial-result-queries.html#autotoc_md24',1,'']]],
+  ['query_20objects_3',['Query objects',['../md_docs_2database.html#autotoc_md7',1,'']]]
 ];
