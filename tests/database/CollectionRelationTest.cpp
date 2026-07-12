@@ -464,4 +464,69 @@ TEST_P(CollectionRelationDatabaseTest, invalidCollectionPathsAndMissingKeys_shou
         std::invalid_argument);
 }
 
+TEST_P(CollectionRelationDatabaseTest, relationMutations_shouldRejectUnknownFieldsAndWrongTargetTypes)
+{
+    const collection_models::User user{1, "user", {}};
+    const collection_models::Role role{10, "role", {}};
+    const collection_models::Book book{20, "book", std::nullopt};
+
+    EXPECT_THROW((void)database.link(user, "missing", role), std::invalid_argument);
+    EXPECT_THROW((void)database.unlink(user, "missing", role), std::invalid_argument);
+    EXPECT_THROW((void)database.link(user, "roles", book), std::invalid_argument);
+    EXPECT_THROW((void)database.unlink(user, "roles", book), std::invalid_argument);
+}
+
+TEST_P(CollectionRelationDatabaseTest, includeOnEmptyRootResult_shouldNotRunCollectionHydration)
+{
+    createUserRoleSchema();
+    orm::Query<collection_models::User> query;
+    query.include("roles");
+
+    EXPECT_TRUE(database.select(query).empty());
+}
+
+TEST_P(CollectionRelationDatabaseTest, includeOneOfSeveralCollections_shouldLeaveTheOtherUnloaded)
+{
+    database.createTable<collection_models::Member>();
+    database.createTable<collection_models::Permission>();
+    database.createTable<collection_models::Team>();
+    database.createRelationTables<collection_models::Member>();
+    database.insert(collection_models::Member{1, "member", {}, {}});
+
+    orm::Query<collection_models::Member> query;
+    query.include("permissions");
+    const auto members = database.select(query);
+
+    ASSERT_EQ(members.size(), 1);
+    EXPECT_TRUE(members[0].permissions.isLoaded());
+    EXPECT_FALSE(members[0].teams.isLoaded());
+}
+
+TEST_P(CollectionRelationDatabaseTest, relationEndpointValidation_shouldRejectMetadataKeySizeMismatch)
+{
+    auto& userInfo = orm::Model<collection_models::User>::getModelInfo();
+    const auto savedInfo = userInfo;
+    userInfo.columnsInfo.push_back(orm::model::ColumnInfo{.fieldName = "second_id",
+                                                          .name = "second_id",
+                                                          .type = orm::model::ColumnType::Int,
+                                                          .isPrimaryKey = true,
+                                                          .isForeignModel = false,
+                                                          .isAutoIncrement = false,
+                                                          .isUnique = false,
+                                                          .isNotNull = true});
+    userInfo.idColumnsNames.insert("second_id");
+
+    const collection_models::User user{1, "user", {}};
+    const collection_models::Role role{10, "role", {}};
+    EXPECT_THROW((void)database.link(user, "roles", role), std::invalid_argument);
+
+    userInfo = savedInfo;
+}
+
+TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutSqliteConnection_shouldRejectBackend)
+{
+    orm::Database disconnected;
+    EXPECT_THROW((void)disconnected.createRelationTables<collection_models::User>(), std::invalid_argument);
+}
+
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationDatabaseTest, connectionStrings);

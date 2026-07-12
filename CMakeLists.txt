@@ -94,6 +94,7 @@ if (BUILD_ORM_CXX_TESTS)
             src/query/QueryValueTest.cpp
 
             tests/ModelTest.cpp
+            tests/CollectionRelationCoverageTest.cpp
             tests/database/StatementParameterBindingTest.cpp
             tests/database/ProjectionQueryTest.cpp
             tests/database/TransactionsTest.cpp
