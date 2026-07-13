@@ -1,0 +1,11 @@
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    user: vscode
+    working_dir: /workspaces/orm-cxx
+    volumes:
+      - .:/workspaces/orm-cxx
+    command: sleep infinity

@@ -38,9 +38,8 @@ struct ObjectFieldFromValues<ModelField>
         auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
         std::size_t foreignColumnIndex = 0;
 
-        auto getForeignFieldFromValue =
-            [&foreignModel, &values, &foreignFieldName, &model, &foreignColumnIndex](auto /*fieldIndex*/,
-                                                                                    auto foreignModelColumn)
+        auto getForeignFieldFromValue = [&foreignModel, &values, &foreignFieldName, &model,
+                                         &foreignColumnIndex](auto /*fieldIndex*/, auto foreignModelColumn)
         {
             using field_t = std::decay_t<decltype(*foreignModelColumn)>;
 
@@ -59,8 +58,8 @@ struct ObjectFieldFromValues<ModelField>
                 }
                 else if (columnInfo.isPrimaryKey)
                 {
-                    auto fieldName = std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName,
-                                                 columnInfo.name);
+                    auto fieldName =
+                        std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName, columnInfo.name);
                     *foreignModelColumn = values.get<field_t>(fieldName);
                 }
             }
@@ -75,8 +74,7 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
 {
     template <typename T, bool JoinedValues>
     static auto get(std::optional<ModelField>* column, const BindingPayload<T, JoinedValues>& model,
-                    std::size_t columnIndex,
-                    const soci::values& values) -> void
+                    std::size_t columnIndex, const soci::values& values) -> void
     {
         if constexpr (ModelWithId<ModelField>)
         {
@@ -92,11 +90,9 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
                     continue;
                 }
 
-                const auto fieldName =
-                    JoinedValues
-                        ? std::format("{}_{}", columnInfo.name, foreignColumnInfo.name)
-                        : std::format("{}_{}_{}", model.getModelInfo().tableName, columnInfo.name,
-                                      foreignColumnInfo.name);
+                const auto fieldName = JoinedValues ? std::format("{}_{}", columnInfo.name, foreignColumnInfo.name) :
+                                                      std::format("{}_{}_{}", model.getModelInfo().tableName,
+                                                                  columnInfo.name, foreignColumnInfo.name);
 
                 if (values.get_indicator(fieldName) == soci::i_null)
                 {
@@ -108,17 +104,23 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
                 }
             }
 
-            if (not hasPresentPrimaryKey) { *column = std::nullopt; return; }
+            if (not hasPresentPrimaryKey)
+            {
+                *column = std::nullopt;
+                return;
+            }
 
             if (hasNullPrimaryKey)
-            { throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"}; }
+            {
+                throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"};
+            }
 
             ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
         }
         else
         {
-            const auto fieldName =
-                std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
+            const auto fieldName = std::format("{}_{}", model.getModelInfo().tableName,
+                                               model.getModelInfo().columnsInfo[columnIndex].name);
 
             if (values.get_indicator(fieldName) == soci::i_null)
             {

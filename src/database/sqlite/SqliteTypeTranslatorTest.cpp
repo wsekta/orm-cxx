@@ -76,5 +76,7 @@ TEST_F(SqliteTypeTranslatorTest, shouldThrowOnUnsupportedType)
     EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Unknown), std::runtime_error);
     EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::OneToOne), std::runtime_error);
 
-    EXPECT_THROW((void)translator.toSqlType(static_cast<orm::model::ColumnType>(999)), std::runtime_error);
+    const auto invalidColumnType =
+        static_cast<orm::model::ColumnType>(999); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    EXPECT_THROW((void)translator.toSqlType(invalidColumnType), std::runtime_error);
 }

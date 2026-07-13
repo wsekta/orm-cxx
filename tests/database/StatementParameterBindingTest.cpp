@@ -1,14 +1,12 @@
-#include "orm-cxx/database.hpp"
-
-#include <gtest/gtest.h>
-
 #include <cstdint>
 #include <format>
+#include <gtest/gtest.h>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
+#include "orm-cxx/database.hpp"
 #include "soci/values.h"
 #include "tests/ModelsDefinitions.hpp"
 
@@ -32,18 +30,12 @@ auto nullParameter(orm::model::ColumnType type) -> orm::db::StatementParameter
 TEST(StatementParameterBindingTest, shouldBindSupportedNullParameterTypes)
 {
     const auto supportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Bool,
-        orm::model::ColumnType::Char,
-        orm::model::ColumnType::UnsignedChar,
-        orm::model::ColumnType::Short,
-        orm::model::ColumnType::UnsignedShort,
-        orm::model::ColumnType::Int,
-        orm::model::ColumnType::UnsignedInt,
-        orm::model::ColumnType::UnsignedLongLong,
-        orm::model::ColumnType::LongLong,
-        orm::model::ColumnType::Float,
-        orm::model::ColumnType::Double,
-        orm::model::ColumnType::String,
+        orm::model::ColumnType::Bool,          orm::model::ColumnType::Char,
+        orm::model::ColumnType::UnsignedChar,  orm::model::ColumnType::Short,
+        orm::model::ColumnType::UnsignedShort, orm::model::ColumnType::Int,
+        orm::model::ColumnType::UnsignedInt,   orm::model::ColumnType::UnsignedLongLong,
+        orm::model::ColumnType::LongLong,      orm::model::ColumnType::Float,
+        orm::model::ColumnType::Double,        orm::model::ColumnType::String,
     };
 
     for (const auto type : supportedTypes)
@@ -57,10 +49,8 @@ TEST(StatementParameterBindingTest, shouldBindSupportedNullParameterTypes)
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
-        orm::model::ColumnType::Unknown,
-        orm::model::ColumnType::OneToOne,
-        static_cast<orm::model::ColumnType>(999),
+        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
     for (const auto type : unsupportedTypes)
@@ -74,18 +64,12 @@ TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes)
 {
     const auto supportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Bool,
-        orm::model::ColumnType::Char,
-        orm::model::ColumnType::UnsignedChar,
-        orm::model::ColumnType::Short,
-        orm::model::ColumnType::UnsignedShort,
-        orm::model::ColumnType::Int,
-        orm::model::ColumnType::UnsignedInt,
-        orm::model::ColumnType::UnsignedLongLong,
-        orm::model::ColumnType::LongLong,
-        orm::model::ColumnType::Float,
-        orm::model::ColumnType::Double,
-        orm::model::ColumnType::String,
+        orm::model::ColumnType::Bool,          orm::model::ColumnType::Char,
+        orm::model::ColumnType::UnsignedChar,  orm::model::ColumnType::Short,
+        orm::model::ColumnType::UnsignedShort, orm::model::ColumnType::Int,
+        orm::model::ColumnType::UnsignedInt,   orm::model::ColumnType::UnsignedLongLong,
+        orm::model::ColumnType::LongLong,      orm::model::ColumnType::Float,
+        orm::model::ColumnType::Double,        orm::model::ColumnType::String,
     };
 
     for (const auto type : supportedTypes)
@@ -99,10 +83,8 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedObjectFieldNullValueTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
-        orm::model::ColumnType::Unknown,
-        orm::model::ColumnType::OneToOne,
-        static_cast<orm::model::ColumnType>(999),
+        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
     for (const auto type : unsupportedTypes)
@@ -222,7 +204,8 @@ TEST(StatementParameterBindingTest, shouldBindNullOptionalScalarFields)
 {
     using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;
 
-    const auto model = models::ModelWithOptional{.field1 = std::nullopt, .field2 = std::nullopt, .field3 = std::nullopt};
+    const auto model =
+        models::ModelWithOptional{.field1 = std::nullopt, .field2 = std::nullopt, .field3 = std::nullopt};
     const auto payload = Payload{.value = model};
     auto values = soci::values{};
     auto indicator = soci::indicator{};
@@ -236,10 +219,8 @@ TEST(StatementParameterBindingTest, shouldBindNullOptionalRelationPrimaryKey)
 {
     using Payload = orm::db::binding::BindingPayload<models::ModelOptionallyRelatedToOtherModel>;
 
-    const auto model = models::ModelOptionallyRelatedToOtherModel{.id = 1,
-                                                                 .field1 = 2,
-                                                                 .field2 = "without-relation",
-                                                                 .field3 = std::nullopt};
+    const auto model = models::ModelOptionallyRelatedToOtherModel{
+        .id = 1, .field1 = 2, .field2 = "without-relation", .field3 = std::nullopt};
     const auto payload = Payload{.value = model};
     auto values = soci::values{};
     auto indicator = soci::indicator{};

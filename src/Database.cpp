@@ -91,8 +91,7 @@ auto Database::executeMutation(const db::Statement& statement) -> std::size_t
     return executeAndGetAffectedRows(preparedStatement);
 }
 
-auto Database::relationEndpointExists(const model::ModelInfo& modelInfo,
-                                      const db::binding::PrimaryKey& key) -> bool
+auto Database::relationEndpointExists(const model::ModelInfo& modelInfo, const db::binding::PrimaryKey& key) -> bool
 {
     const auto primaryKeyColumns = db::binding::getPrimaryKeyColumns(modelInfo);
 
@@ -113,8 +112,8 @@ auto Database::relationEndpointExists(const model::ModelInfo& modelInfo,
 
         const auto parameterName = std::format("orm_endpoint_{}", i);
         where += std::format("{} = :{}", primaryKeyColumns[i]->name, parameterName);
-        statement.parameters.push_back(db::StatementParameter{
-            .name = parameterName, .value = db::binding::toQueryValue(key[i])});
+        statement.parameters.push_back(
+            db::StatementParameter{.name = parameterName, .value = db::binding::toQueryValue(key[i])});
     }
 
     statement.sql = std::format("SELECT COUNT(*) FROM {} WHERE {};", modelInfo.tableName, where);

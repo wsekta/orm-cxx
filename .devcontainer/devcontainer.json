@@ -1,0 +1,9 @@
+{
+  "name": "orm-cxx",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/workspaces/orm-cxx",
+  "remoteUser": "vscode",
+  "overrideCommand": false,
+  "shutdownAction": "stopCompose"
+}

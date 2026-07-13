@@ -42,8 +42,8 @@ public:
             return *this;
         }
 
-        auto copiedValues =
-            other.values_ == nullptr ? std::shared_ptr<container_type>{} : std::make_shared<container_type>(*other.values_);
+        auto copiedValues = other.values_ == nullptr ? std::shared_ptr<container_type>{} :
+                                                       std::make_shared<container_type>(*other.values_);
         values_ = std::move(copiedValues);
         loaded_ = other.loaded_;
         return *this;
@@ -212,16 +212,14 @@ struct OptionalRelationCollectionTraits<std::optional<T>>
 };
 
 template <typename T>
-inline constexpr bool isOptionalRelationCollection =
-    OptionalRelationCollectionTraits<std::remove_cv_t<T>>::value;
+inline constexpr bool isOptionalRelationCollection = OptionalRelationCollectionTraits<std::remove_cv_t<T>>::value;
 } // namespace detail
 
 template <typename T>
 inline constexpr bool is_relation_collection_v = detail::isRelationCollection<std::remove_cvref_t<T>>;
 
 template <typename T>
-inline constexpr bool is_optional_relation_collection_v =
-    detail::isOptionalRelationCollection<std::remove_cvref_t<T>>;
+inline constexpr bool is_optional_relation_collection_v = detail::isOptionalRelationCollection<std::remove_cvref_t<T>>;
 
 template <typename T>
 using relation_target_t = typename detail::RelationCollectionTraits<std::remove_cvref_t<T>>::Target;
@@ -233,9 +231,7 @@ inline constexpr bool is_one_to_many_v =
 class OneToManyDescriptor
 {
 public:
-    explicit OneToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName)
-    {
-    }
+    explicit OneToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName) {}
 
     [[nodiscard]] auto mappedBy(std::string_view fieldName) const -> OneToManyDescriptor
     {
@@ -262,9 +258,7 @@ private:
 class ManyToManyDescriptor
 {
 public:
-    explicit ManyToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName)
-    {
-    }
+    explicit ManyToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName) {}
 
     [[nodiscard]] auto through(std::string_view tableName) const -> ManyToManyDescriptor
     {
@@ -364,11 +358,10 @@ private:
 template <typename... Descriptors>
 [[nodiscard]] auto relations(Descriptors&&... descriptors)
 {
-    static_assert(
-        ((std::is_same_v<std::decay_t<Descriptors>, OneToManyDescriptor> ||
-          std::is_same_v<std::decay_t<Descriptors>, ManyToManyDescriptor>) &&
-         ...),
-        "orm::relations accepts only relation descriptors");
+    static_assert(((std::is_same_v<std::decay_t<Descriptors>, OneToManyDescriptor> ||
+                    std::is_same_v<std::decay_t<Descriptors>, ManyToManyDescriptor>) &&
+                   ...),
+                  "orm::relations accepts only relation descriptors");
     return std::make_tuple(std::forward<Descriptors>(descriptors)...);
 }
 } // namespace orm

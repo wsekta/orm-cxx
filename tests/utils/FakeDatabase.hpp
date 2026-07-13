@@ -1,7 +1,7 @@
 #pragma once
 
-#include "orm-cxx/query.hpp"
 #include "orm-cxx/projection_query.hpp"
+#include "orm-cxx/query.hpp"
 #include "orm-cxx/update.hpp"
 
 namespace orm

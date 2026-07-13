@@ -249,4 +249,3 @@ TEST(ColumnTypeTests, shouldTranslateBool)
     EXPECT_EQ(columnType, ColumnType::Bool);
     EXPECT_TRUE(isNotNull);
 }
-

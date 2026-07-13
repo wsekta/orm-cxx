@@ -160,8 +160,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRawPredicate)
 {
     orm::Update<models::ModelWithFloat> update;
 
-    update.set(col("field2"), "updated")
-        .where(raw("models_ModelWithFloat.field1 = :value", param("value", 1)));
+    update.set(col("field2"), "updated").where(raw("models_ModelWithFloat.field1 = :value", param("value", 1)));
 
     const auto statement = command.update(orm::Database::getUpdateData(update));
 

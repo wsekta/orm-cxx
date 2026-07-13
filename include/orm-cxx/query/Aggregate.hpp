@@ -72,8 +72,7 @@ struct AggregateNotExpression
 
 struct AggregatePredicateNode
 {
-    using Expression =
-        std::variant<AggregateComparisonExpression, AggregateLogicalExpression, AggregateNotExpression>;
+    using Expression = std::variant<AggregateComparisonExpression, AggregateLogicalExpression, AggregateNotExpression>;
 
     Expression expression;
 };
@@ -81,8 +80,8 @@ struct AggregatePredicateNode
 class AggregatePredicate
 {
 public:
-    explicit AggregatePredicate(AggregatePredicateNode predicateNode) :
-        node{std::make_shared<AggregatePredicateNode>(std::move(predicateNode))}
+    explicit AggregatePredicate(AggregatePredicateNode predicateNode)
+        : node{std::make_shared<AggregatePredicateNode>(std::move(predicateNode))}
     {
     }
 
@@ -165,8 +164,8 @@ auto AggregateExpression::operator<=(T value) const -> AggregatePredicate
     return compare(ComparisonOperator::LessOrEqual, QueryValue{std::move(value)});
 }
 
-inline auto AggregateExpression::compare(ComparisonOperator comparisonOperator, QueryValue value) const
-    -> AggregatePredicate
+inline auto AggregateExpression::compare(ComparisonOperator comparisonOperator,
+                                         QueryValue value) const -> AggregatePredicate
 {
     return AggregatePredicate{AggregatePredicateNode{
         AggregateComparisonExpression{.aggregate = *this, .comparisonOperator = comparisonOperator, .value = value}}};

@@ -3,9 +3,9 @@
 #include <string>
 #include <string_view>
 
-#include "orm-cxx/utils/StringUtils.hpp"
-#include "orm-cxx/utils/ConstexprStringView.hpp"
 #include "orm-cxx/reflection/TypeName.hpp"
+#include "orm-cxx/utils/ConstexprStringView.hpp"
+#include "orm-cxx/utils/StringUtils.hpp"
 
 namespace orm::model
 {
@@ -24,7 +24,8 @@ consteval auto getTableName() -> std::string_view
     }
     else
     {
-        constexpr auto callable = []() {
+        constexpr auto callable = []()
+        {
             auto typeName = std::string(reflection::getTypeName<T>());
 
             utils::replaceAll(typeName, "::", "_");

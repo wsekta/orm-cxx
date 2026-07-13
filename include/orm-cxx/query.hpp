@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstddef>
 #include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -78,7 +78,8 @@ public:
 
     /**
      * @brief Sets the GROUP BY columns for the select query.
-     * @param columns The model column paths to group by.
+     * @param columns The model column paths to
+     * group by.
      * @return A reference to this query.
      */
     template <typename... Columns>
@@ -92,7 +93,8 @@ public:
     /**
      * @brief Replaces the HAVING predicate.
      * @param predicate The aggregate predicate.
-     * @return A reference to this query.
+     * @return A
+     * reference to this query.
      */
     auto having(const query::AggregatePredicate& predicate) -> Query<T>&
     {
@@ -104,6 +106,7 @@ public:
     /**
      * @brief Adds an aggregate predicate with AND.
      * @param predicate The aggregate predicate.
+     *
      * @return A reference to this query.
      */
     auto andHaving(const query::AggregatePredicate& predicate) -> Query<T>&
@@ -116,6 +119,7 @@ public:
     /**
      * @brief Adds an aggregate predicate with OR.
      * @param predicate The aggregate predicate.
+     *
      * @return A reference to this query.
      */
     auto orHaving(const query::AggregatePredicate& predicate) -> Query<T>&
@@ -175,8 +179,10 @@ public:
     /**
      * @brief Explicitly loads a mapped OneToMany or ManyToMany collection.
      *
-     * Repeating the same include is idempotent. Collection loading is performed
-     * after the root SELECT, so root pagination is preserved.
+     * Repeating the same
+     * include is idempotent. Collection loading is performed
+     * after the root SELECT, so root pagination is
+     * preserved.
      */
     auto include(std::string relation) -> Query<T>&
     {

@@ -1,15 +1,91 @@
 {
-    "version": 3,
+    "version": 6,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 25,
+        "patch": 0
+    },
     "configurePresets": [
+        {
+            "name": "developer-base",
+            "hidden": true,
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+                "ORM_CXX_BUILD_TESTS": true,
+                "ORM_CXX_BUILD_EXAMPLES": true,
+                "ORM_CXX_WARNINGS_AS_ERRORS": true
+            }
+        },
+        {
+            "name": "linux-gcc-debug",
+            "displayName": "Linux GCC Debug",
+            "inherits": "developer-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "gcc-13",
+                "CMAKE_CXX_COMPILER": "g++-13"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-clang-debug",
+            "displayName": "Linux Clang Debug",
+            "inherits": "developer-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-18",
+                "CMAKE_CXX_COMPILER": "clang++-18"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-clang-coverage",
+            "displayName": "Linux Clang Coverage",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_COVERAGE": true,
+                "LLVM_COV_PATH": "/usr/bin/llvm-cov-18",
+                "LLVM_PROFDATA_PATH": "/usr/bin/llvm-profdata-18"
+            }
+        },
+        {
+            "name": "msvc-debug",
+            "displayName": "MSVC Debug",
+            "inherits": "developer-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl",
+                "CMAKE_CXX_COMPILER": "cl",
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/externals/vcpkg/scripts/buildsystems/vcpkg.cmake"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            }
+        },
+        {
+            "name": "quality",
+            "displayName": "Clang quality analysis database",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
         {
             "name": "clang-libc++",
             "displayName": "Clang with libc++",
-            "description": "Configure with Clang and libc++",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build",
+            "description": "Optional compatibility build with Clang and libc++",
+            "inherits": "linux-clang-debug",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "/usr/bin/clang",
-                "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
                 "CMAKE_CXX_FLAGS": "-stdlib=libc++",
                 "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++ -lc++abi",
                 "CMAKE_INCLUDE_PATH": "/usr/lib/llvm-18/include/c++/v1",
@@ -19,9 +95,184 @@
     ],
     "buildPresets": [
         {
+            "name": "linux-gcc-debug",
+            "configurePreset": "linux-gcc-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-debug",
+            "configurePreset": "linux-clang-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-coverage",
+            "configurePreset": "linux-clang-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "orm-cxx-coverage"
+            ]
+        },
+        {
+            "name": "msvc-debug",
+            "configurePreset": "msvc-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "quality",
+            "configurePreset": "quality",
+            "configuration": "Debug"
+        },
+        {
             "name": "clang-libc++",
             "configurePreset": "clang-libc++",
             "configuration": "Debug"
         }
+    ],
+    "testPresets": [
+        {
+            "name": "linux-gcc-debug",
+            "configurePreset": "linux-gcc-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-debug",
+            "configurePreset": "linux-clang-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-coverage",
+            "configurePreset": "linux-clang-coverage",
+            "configuration": "Debug",
+            "environment": {
+                "LLVM_PROFILE_FILE": "${sourceDir}/build/linux-clang-coverage/ctest-%p.profraw"
+            },
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-debug",
+            "configurePreset": "msvc-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "quality",
+            "configurePreset": "quality",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        }
+    ],
+    "workflowPresets": [
+        {
+            "name": "linux-gcc-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-debug"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-debug"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-coverage",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-coverage"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-coverage"
+                }
+            ]
+        },
+        {
+            "name": "msvc-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-debug"
+                }
+            ]
+        },
+        {
+            "name": "quality",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "quality"
+                },
+                {
+                    "type": "build",
+                    "name": "quality"
+                },
+                {
+                    "type": "test",
+                    "name": "quality"
+                }
+            ]
+        }
     ]
-} 
+}

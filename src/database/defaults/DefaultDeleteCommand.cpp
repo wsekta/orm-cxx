@@ -4,8 +4,8 @@
 
 namespace orm::db::commands
 {
-auto DefaultDeleteCommand::remove(const model::ModelInfo& modelInfo, const query::Predicate& predicate) const
-    -> Statement
+auto DefaultDeleteCommand::remove(const model::ModelInfo& modelInfo,
+                                  const query::Predicate& predicate) const -> Statement
 {
     RenderContext context{
         .modelInfo = modelInfo,

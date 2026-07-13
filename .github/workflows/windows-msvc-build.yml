@@ -1,39 +1,33 @@
-name: 'msvc'
+name: MSVC
 
 on:
   push:
     branches:
-      - 'main'
+      - main
   pull_request:
 
-env:
-  BUILD_TYPE: Debug
+permissions:
+  contents: read
 
 jobs:
   build:
     runs-on: windows-2022
+    timeout-minutes: 45
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
-      - run: ${{ github.workspace }}/externals/vcpkg/bootstrap-vcpkg.bat
+      - name: Configure the MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
 
-      - run: ${{ github.workspace }}/externals/vcpkg/vcpkg.exe install
+      - name: Bootstrap vcpkg
+        run: .\externals\vcpkg\bootstrap-vcpkg.bat
 
-      - run: cmake -E make_directory build
+      - name: Install vcpkg dependencies
+        run: .\externals\vcpkg\vcpkg.exe install
 
-      - uses: seanmiddleditch/gha-setup-vsdevenv@master
-
-      - uses: seanmiddleditch/gha-setup-ninja@master
-
-      - working-directory: build/
-        run: cmake .. -GNinja -DCMAKE_TOOLCHAIN_FILE="${{ github.workspace }}/externals/vcpkg/scripts/buildsystems/vcpkg.cmake" -DCMAKE_CXX_COMPILER=cl.exe -DCMAKE_C_COMPILER=cl.exe
-
-      - working-directory: build/
-        run: cmake --build .
-
-      - working-directory: build/
-        run: ctest -C Debug --output-on-failure
+      - name: Build and test
+        run: cmake --workflow --preset msvc-debug

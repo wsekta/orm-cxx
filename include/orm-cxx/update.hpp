@@ -20,8 +20,7 @@ public:
     auto set(query::Column column, Value value) -> Update<T>&
     {
         data.assignments.push_back(query::UpdateAssignment{
-            .column = std::move(column),
-            .value = query::UpdateValue{.value = query::QueryValue{std::move(value)}}});
+            .column = std::move(column), .value = query::UpdateValue{.value = query::QueryValue{std::move(value)}}});
 
         return *this;
     }
@@ -32,8 +31,7 @@ public:
         if (value.has_value())
         {
             data.assignments.push_back(query::UpdateAssignment{
-                .column = std::move(column),
-                .value = query::UpdateValue{.value = query::QueryValue{value.value()}}});
+                .column = std::move(column), .value = query::UpdateValue{.value = query::QueryValue{value.value()}}});
         }
         else
         {

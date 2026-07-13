@@ -42,7 +42,7 @@ struct ObjectStats
     std::optional<double> averageNumber;
 };
 
-int main()
+int main() // NOLINT(bugprone-exception-escape)
 {
     using namespace orm::query;
 

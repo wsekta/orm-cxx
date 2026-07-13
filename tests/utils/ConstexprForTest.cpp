@@ -1,7 +1,6 @@
 #include "orm-cxx/utils/ConstexprFor.hpp"
 
 #include <gtest/gtest.h>
-
 #include <string>
 #include <tuple>
 #include <type_traits>

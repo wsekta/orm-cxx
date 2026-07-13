@@ -93,9 +93,7 @@ auto sqlSession(orm::Database& database) -> soci::session&
 class QueryCountingLogger final : public soci::logger_impl
 {
 public:
-    explicit QueryCountingLogger(std::shared_ptr<std::vector<std::string>> queries) : queries{std::move(queries)}
-    {
-    }
+    explicit QueryCountingLogger(std::shared_ptr<std::vector<std::string>> queries) : queries{std::move(queries)} {}
 
     auto start_query(const std::string& query) -> void override
     {

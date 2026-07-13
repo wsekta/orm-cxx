@@ -94,11 +94,10 @@ struct FirstGlobalJunctionOwner
     int id;
     orm::ManyToMany<models::ModelWithId> related;
 
-    inline static const auto relations =
-        orm::relations(orm::manyToMany("related")
-                           .through("globally_conflicting_junction")
-                           .ownerColumns({"first_owner_id"})
-                           .targetColumns({"target_id"}));
+    inline static const auto relations = orm::relations(orm::manyToMany("related")
+                                                            .through("globally_conflicting_junction")
+                                                            .ownerColumns({"first_owner_id"})
+                                                            .targetColumns({"target_id"}));
 };
 
 struct SecondGlobalJunctionOwner
@@ -106,11 +105,10 @@ struct SecondGlobalJunctionOwner
     int id;
     orm::ManyToMany<models::ModelWithId> related;
 
-    inline static const auto relations =
-        orm::relations(orm::manyToMany("related")
-                           .through("globally_conflicting_junction")
-                           .ownerColumns({"second_owner_id"})
-                           .targetColumns({"target_id"}));
+    inline static const auto relations = orm::relations(orm::manyToMany("related")
+                                                            .through("globally_conflicting_junction")
+                                                            .ownerColumns({"second_owner_id"})
+                                                            .targetColumns({"target_id"}));
 };
 
 struct OptionalCollection
@@ -140,8 +138,8 @@ using collection_test_models::MissingDescriptor;
 using collection_test_models::MissingJunction;
 using collection_test_models::OptionalCollection;
 using collection_test_models::RelationToKeylessTarget;
-using collection_test_models::SelfRelated;
 using collection_test_models::SecondGlobalJunctionOwner;
+using collection_test_models::SelfRelated;
 
 TEST(CollectionRelationTest, defaultCollection_shouldBeEmptyAndNotLoaded)
 {

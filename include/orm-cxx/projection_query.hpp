@@ -60,14 +60,19 @@ struct ProjectionResultField
 inline auto validateProjectionAliasNames(const std::vector<query::Projection>& projections,
                                          const std::vector<ProjectionResultField>& fields) -> void
 {
-    if (projections.empty()) { throw std::invalid_argument{"Projection query requires at least one projected field"}; }
+    if (projections.empty())
+    {
+        throw std::invalid_argument{"Projection query requires at least one projected field"};
+    }
 
     std::unordered_set<std::string> resultFields;
 
     for (const auto& field : fields)
     {
         if (not isSupportedProjectionResultType(field.type))
-        { throw std::invalid_argument{"Unsupported projection result field type: " + field.name}; }
+        {
+            throw std::invalid_argument{"Unsupported projection result field type: " + field.name};
+        }
 
         resultFields.insert(field.name);
     }
@@ -76,19 +81,28 @@ inline auto validateProjectionAliasNames(const std::vector<query::Projection>& p
 
     for (const auto& projection : projections)
     {
-        if (projection.resultField.empty()) { throw std::invalid_argument{"Projection alias must not be empty"}; }
+        if (projection.resultField.empty())
+        {
+            throw std::invalid_argument{"Projection alias must not be empty"};
+        }
 
         if (not resultFields.contains(projection.resultField))
-        { throw std::invalid_argument{"Projection alias does not match a result field: " + projection.resultField}; }
+        {
+            throw std::invalid_argument{"Projection alias does not match a result field: " + projection.resultField};
+        }
 
         if (not projectedFields.insert(projection.resultField).second)
-        { throw std::invalid_argument{"Duplicate projection alias: " + projection.resultField}; }
+        {
+            throw std::invalid_argument{"Duplicate projection alias: " + projection.resultField};
+        }
     }
 
     for (const auto& resultField : resultFields)
     {
         if (not projectedFields.contains(resultField))
-        { throw std::invalid_argument{"Missing projection alias for result field: " + resultField}; }
+        {
+            throw std::invalid_argument{"Missing projection alias for result field: " + resultField};
+        }
     }
 }
 

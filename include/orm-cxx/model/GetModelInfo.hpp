@@ -9,8 +9,8 @@
 #include "AutoIncrementInfo.hpp"
 #include "GetForeignModelInfoFromField.hpp"
 #include "ModelInfo.hpp"
-#include "RelationMetadata.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
+#include "RelationMetadata.hpp"
 
 namespace orm::model
 {

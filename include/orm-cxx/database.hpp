@@ -1,8 +1,8 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <algorithm>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -16,11 +16,11 @@
 
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
+#include "database/binding/CollectionBinding.hpp"
 #include "database/binding/ProjectionBinding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
 #include "database/RelationStatements.hpp"
 #include "database/Statement.hpp"
-#include "database/binding/CollectionBinding.hpp"
 #include "projection_query.hpp"
 #include "query.hpp"
 #include "soci/soci.h"
@@ -341,9 +341,8 @@ public:
     auto link(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
     {
         const auto& ownerInfo = Model<Owner>::getModelInfo();
-        const auto relation =
-            std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
-                                 { return candidate.fieldName == relationField; });
+        const auto relation = std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
+                                                   { return candidate.fieldName == relationField; });
 
         if (relation == ownerInfo.relationsInfo.end() or relation->kind == model::RelationKind::ToOne)
         {
@@ -352,8 +351,7 @@ public:
 
         if (relation->targetType != std::type_index{typeid(Target)})
         {
-            throw std::invalid_argument{"Relation target type does not match mapping: " +
-                                        std::string{relationField}};
+            throw std::invalid_argument{"Relation target type does not match mapping: " + std::string{relationField}};
         }
 
         const auto ownerKey = db::binding::getPrimaryKey(owner);
@@ -376,9 +374,8 @@ public:
     auto unlink(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
     {
         const auto& ownerInfo = Model<Owner>::getModelInfo();
-        const auto relation =
-            std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
-                                 { return candidate.fieldName == relationField; });
+        const auto relation = std::ranges::find_if(ownerInfo.relationsInfo, [&relationField](const auto& candidate)
+                                                   { return candidate.fieldName == relationField; });
 
         if (relation == ownerInfo.relationsInfo.end() or relation->kind == model::RelationKind::ToOne)
         {
@@ -387,12 +384,10 @@ public:
 
         if (relation->targetType != std::type_index{typeid(Target)})
         {
-            throw std::invalid_argument{"Relation target type does not match mapping: " +
-                                        std::string{relationField}};
+            throw std::invalid_argument{"Relation target type does not match mapping: " + std::string{relationField}};
         }
 
-        return executeMutation(db::relations::unlinkStatement(ownerInfo, *relation,
-                                                              db::binding::getPrimaryKey(owner),
+        return executeMutation(db::relations::unlinkStatement(ownerInfo, *relation, db::binding::getPrimaryKey(owner),
                                                               db::binding::getPrimaryKey(target)));
     }
 

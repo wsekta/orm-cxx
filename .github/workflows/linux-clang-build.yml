@@ -1,22 +1,18 @@
-name: 'clang++'
+name: Clang coverage
 
 on:
   push:
     branches:
-      - 'main'
+      - main
   pull_request:
 
 permissions:
   contents: read
-  actions: read
-  checks: write
-
-env:
-  BUILD_TYPE: Debug
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
@@ -24,45 +20,30 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install apt-get dependencies
+      - name: Install Clang 18 dependencies
         run: |
-          sudo apt-get update -y \
-           && sudo apt-get install -y ninja-build build-essential libstdc++-13-dev \
-             clang clang-tools llvm lcov sqlite3 libsqlite3-dev
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-18 \
+            clang-tools-18 \
+            libclang-rt-18-dev \
+            llvm-18 \
+            lcov \
+            ninja-build \
+            sqlite3 \
+            libsqlite3-dev
 
-      - name: Initialize submodules
-        run: git submodule update --init --recursive
+      - name: Configure coverage
+        run: cmake --preset linux-clang-coverage
 
-      - name: Configure CMake
-        run: |
-          cmake -B ${{github.workspace}}/build \
-            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} \
-            -DCMAKE_CXX_COMPILER=/usr/bin/clang++ \
-            -DCODE_COVERAGE:BOOL=ON \
-            -GNinja
+      - name: Run tests and generate coverage
+        run: cmake --build --preset linux-clang-coverage --target orm-cxx-coverage
 
-      - name: Build
-        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
-
-      - name: Run tests
-        working-directory: ${{github.workspace}}/build/
-        run: |
-          ninja orm-cxx-ccov-all
-          llvm-cov export \
-            ./orm-cxx-UT \
-            -instr-profile=ccov/all-merged.profdata \
-            -format=lcov \
-            --skip-branches \
-            -ignore-filename-regex='.*/externals/.*' \
-            -ignore-filename-regex='.*/tests/.*' \
-            -ignore-filename-regex='.*/src/.*Test\.cpp' \
-            > coverage.lcov
-
-      - name: Codecov
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
-          files: ${{github.workspace}}/build/coverage.lcov
+          files: ${{ github.workspace }}/build/linux-clang-coverage/coverage.lcov
           flags: clang
           name: clang
           disable_search: true

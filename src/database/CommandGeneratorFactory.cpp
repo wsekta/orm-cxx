@@ -21,8 +21,8 @@ CommandGeneratorFactory::CommandGeneratorFactory()
     auto defaultDeleteCommand = std::make_unique<commands::DefaultDeleteCommand>();
 
     CommandGenerator sqliteCommandGenerator{std::move(sqliteCreateTableCommand), std::move(defaultDropTableCommand),
-                                            std::move(defaultInsertCommand), std::move(defaultSelectCommand),
-                                            std::move(defaultUpdateCommand), std::move(defaultDeleteCommand)};
+                                            std::move(defaultInsertCommand),     std::move(defaultSelectCommand),
+                                            std::move(defaultUpdateCommand),     std::move(defaultDeleteCommand)};
 
     commandGenerators.emplace(BackendType::Sqlite, std::move(sqliteCommandGenerator));
 }

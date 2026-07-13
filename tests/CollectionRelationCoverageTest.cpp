@@ -1,5 +1,4 @@
 #include <gtest/gtest.h>
-
 #include <optional>
 #include <string>
 #include <typeindex>
@@ -7,8 +6,8 @@
 #include <utility>
 #include <vector>
 
-#include "orm-cxx/database/RelationStatements.hpp"
 #include "orm-cxx/database/binding/PrimaryKey.hpp"
+#include "orm-cxx/database/RelationStatements.hpp"
 #include "orm-cxx/model.hpp"
 #include "orm-cxx/model/RelationMetadata.hpp"
 #include "orm-cxx/query.hpp"
@@ -109,8 +108,7 @@ TEST(CollectionRelationCoverageTest, queryRejectsEmptyInclude)
 TEST(CollectionRelationCoverageTest, primaryKeyHelpersRejectInvalidValuesAndMetadata)
 {
     EXPECT_THROW((void)orm::db::binding::toPrimaryKeyValue(std::optional<int>{}, "id"), std::invalid_argument);
-    EXPECT_EQ(orm::db::binding::toPrimaryKeyValue(std::optional<int>{7}, "id"),
-              orm::query::QueryValue{7}.get());
+    EXPECT_EQ(orm::db::binding::toPrimaryKeyValue(std::optional<int>{7}, "id"), orm::query::QueryValue{7}.get());
     EXPECT_THROW((void)orm::db::binding::toPrimaryKeyValue(std::vector<int>{1}, "id"), std::invalid_argument);
     EXPECT_THROW((void)orm::db::binding::getPrimaryKey(models::ModelWithOneField{1}), std::invalid_argument);
 
@@ -137,12 +135,11 @@ TEST(CollectionRelationCoverageTest, hydratedPrimaryKeySupportsEveryStorageCateg
     values.set("null_value", 0);
     values.set("null_value", 0, soci::i_null);
 
-    for (const auto type : {orm::model::ColumnType::Bool, orm::model::ColumnType::Char,
-                            orm::model::ColumnType::UnsignedChar, orm::model::ColumnType::Short,
-                            orm::model::ColumnType::UnsignedShort, orm::model::ColumnType::Int})
+    for (const auto type :
+         {orm::model::ColumnType::Bool, orm::model::ColumnType::Char, orm::model::ColumnType::UnsignedChar,
+          orm::model::ColumnType::Short, orm::model::ColumnType::UnsignedShort, orm::model::ColumnType::Int})
     {
-        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "integer", type),
-                  orm::query::QueryValue{7}.get());
+        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "integer", type), orm::query::QueryValue{7}.get());
     }
     for (const auto type : {orm::model::ColumnType::UnsignedInt, orm::model::ColumnType::UnsignedLongLong})
     {
@@ -153,8 +150,7 @@ TEST(CollectionRelationCoverageTest, hydratedPrimaryKeySupportsEveryStorageCateg
               orm::query::QueryValue{static_cast<long long>(9)}.get());
     for (const auto type : {orm::model::ColumnType::Float, orm::model::ColumnType::Double})
     {
-        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "floating", type),
-                  orm::query::QueryValue{10.5}.get());
+        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "floating", type), orm::query::QueryValue{10.5}.get());
     }
     EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "text", orm::model::ColumnType::String),
               orm::query::QueryValue{std::string{"key"}}.get());
@@ -180,8 +176,7 @@ TEST(CollectionRelationCoverageTest, junctionMetadataValidationRejectsEveryInval
     using Owner = collection_models::User;
     using Target = collection_models::Role;
 
-    EXPECT_THROW(orm::model::detail::validateJunctionColumnNames({""}, "roles", "owner"),
-                 std::invalid_argument);
+    EXPECT_THROW(orm::model::detail::validateJunctionColumnNames({""}, "roles", "owner"), std::invalid_argument);
     EXPECT_THROW(orm::model::detail::validateJunctionColumnNames({"duplicate", "duplicate"}, "roles", "owner"),
                  std::invalid_argument);
     EXPECT_THROW(((void)orm::model::detail::makeOwningJunction<Owner, Target>(
@@ -190,30 +185,27 @@ TEST(CollectionRelationCoverageTest, junctionMetadataValidationRejectsEveryInval
     EXPECT_THROW(((void)orm::model::detail::makeOwningJunction<Owner, Target>(
                      orm::manyToMany("roles").through("coverage_target_count").targetColumns({"a", "b"}))),
                  std::invalid_argument);
-    EXPECT_THROW(((void)orm::model::detail::makeOwningJunction<Owner, Target>(
-                     orm::manyToMany("roles")
-                         .through("coverage_colliding_columns")
-                         .ownerColumns({"same"})
-                         .targetColumns({"same"}))),
+    EXPECT_THROW(((void)orm::model::detail::makeOwningJunction<Owner, Target>(orm::manyToMany("roles")
+                                                                                  .through("coverage_colliding_columns")
+                                                                                  .ownerColumns({"same"})
+                                                                                  .targetColumns({"same"}))),
                  std::invalid_argument);
 }
 
 TEST(CollectionRelationCoverageTest, mappedByAndInverseMetadataValidationRejectInvalidDescriptors)
 {
-    EXPECT_THROW(((void)orm::model::detail::validateOneToManyMappedBy<collection_models::Author,
-                                                                     collection_models::Book>(
-                     orm::oneToMany("books"))),
-                 std::invalid_argument);
-    EXPECT_THROW(((void)orm::model::detail::makeInverseJunction<collection_models::Role,
-                                                               collection_models::User>(
+    EXPECT_THROW(
+        ((void)orm::model::detail::validateOneToManyMappedBy<collection_models::Author, collection_models::Book>(
+            orm::oneToMany("books"))),
+        std::invalid_argument);
+    EXPECT_THROW(((void)orm::model::detail::makeInverseJunction<collection_models::Role, collection_models::User>(
                      orm::manyToMany("users").mappedBy("roles").through("forbidden"))),
                  std::invalid_argument);
-    EXPECT_THROW(((void)orm::model::detail::makeInverseJunction<collection_models::Role,
-                                                               collection_models::User>(
+    EXPECT_THROW(((void)orm::model::detail::makeInverseJunction<collection_models::Role, collection_models::User>(
                      orm::manyToMany("users").mappedBy("name"))),
                  std::invalid_argument);
     EXPECT_THROW(((void)orm::model::detail::makeInverseJunction<coverage_models::InverseCurrent,
-                                                               coverage_models::BrokenInverseTarget>(
+                                                                coverage_models::BrokenInverseTarget>(
                      orm::manyToMany("broken").mappedBy("currents"))),
                  std::invalid_argument);
 }
@@ -222,8 +214,7 @@ TEST(CollectionRelationCoverageTest, descriptorSetValidationRejectsNamesAndMissi
 {
     EXPECT_THROW(orm::model::detail::validateDescriptors<coverage_models::EmptyDescriptorName>({}),
                  std::invalid_argument);
-    EXPECT_THROW(orm::model::detail::validateDescriptors<coverage_models::ScalarDescriptor>({}),
-                 std::invalid_argument);
+    EXPECT_THROW(orm::model::detail::validateDescriptors<coverage_models::ScalarDescriptor>({}), std::invalid_argument);
     EXPECT_THROW(orm::model::detail::validateDescriptors<coverage_models::NoDescriptors>({"ghost"}),
                  std::invalid_argument);
 }
@@ -240,10 +231,8 @@ TEST(CollectionRelationCoverageTest, relationStatementValidationRejectsMalformed
     invalidDdlInfo.relationsInfo.front().junction->ownerColumns.clear();
     EXPECT_THROW((void)orm::db::relations::createTableStatements(invalidDdlInfo), std::invalid_argument);
 
-    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, userRelation, {}, key(10)),
-                 std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, userRelation, key(1), {}),
-                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, userRelation, {}, key(10)), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, userRelation, key(1), {}), std::invalid_argument);
 
     auto missingJunction = userRelation;
     missingJunction.junction.reset();
@@ -254,10 +243,8 @@ TEST(CollectionRelationCoverageTest, relationStatementValidationRejectsMalformed
 
     auto toOne = userRelation;
     toOne.kind = orm::model::RelationKind::ToOne;
-    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, toOne, key(1), key(10)),
-                 std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::unlinkStatement(userInfo, toOne, key(1), key(10)),
-                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(userInfo, toOne, key(1), key(10)), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(userInfo, toOne, key(1), key(10)), std::invalid_argument);
 }
 
 TEST(CollectionRelationCoverageTest, collectionSelectStatementRejectsMalformedInputs)
@@ -288,8 +275,7 @@ TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectMissingMappedRelat
     auto relation = authorInfo.relationsInfo.front();
     relation.mappedBy = "missing";
 
-    EXPECT_THROW((void)orm::db::relations::linkStatement(authorInfo, relation, key(1), key(10)),
-                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(authorInfo, relation, key(1), key(10)), std::invalid_argument);
     EXPECT_THROW((void)orm::db::relations::unlinkStatement(authorInfo, relation, key(1), key(10)),
                  std::invalid_argument);
 }
@@ -304,8 +290,8 @@ TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsMalformed
                  std::invalid_argument);
 
     orm::db::commands::RenderContext missingPredicateContext{.modelInfo = userInfo};
-    EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("roles", orm::query::CollectionOperator::Any), missingPredicateContext),
+    EXPECT_THROW((void)orm::db::commands::renderWhere(collectionPredicate("roles", orm::query::CollectionOperator::Any),
+                                                      missingPredicateContext),
                  std::invalid_argument);
 
     auto noJunction = userInfo;

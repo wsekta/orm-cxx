@@ -1,7 +1,8 @@
+#include "orm-cxx/query.hpp"
+
 #include <gtest/gtest.h>
 #include <variant>
 
-#include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
 

@@ -206,6 +206,38 @@ See [Collection relation documentation](docs/relations.md) for the full
 mapping, DDL, loading, mutation, predicate, transaction, and migration
 contract.
 
+## Development quick start
+
+The supported container includes the Linux compilers and tools used by the
+project. From a clean machine with Git and Docker:
+
+```bash
+git clone --recurse-submodules https://github.com/wsekta/orm-cxx.git
+cd orm-cxx
+docker compose run --build --rm dev bash ./scripts/check-fast.sh
+```
+
+That command builds the library and examples, runs the test suite with Clang
+18, and runs the quality workflow. To reproduce all supported Linux checks,
+including GCC 13 and coverage, run:
+
+```bash
+docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
+```
+
+The repository also includes a devcontainer backed by the same Dockerfile and
+Compose service. MSVC is verified natively on Windows because the Linux image
+does not emulate Microsoft's compiler:
+
+```powershell
+./externals/vcpkg/bootstrap-vcpkg.bat
+./externals/vcpkg/vcpkg.exe install
+./scripts/check-msvc.ps1
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for native prerequisites, individual
+presets, and the CI-to-local command matrix.
+
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 
 1. Add config to git submodules (execute in project root):
@@ -219,14 +251,14 @@ contract.
 2. Link with library:
 
  ```cmake
- set(BUILD_CONFIG_CXX_TESTS OFF)
-set(BUILD_ORM_CXX_EXAMPLE OFF)
+set(ORM_CXX_BUILD_TESTS OFF CACHE BOOL "Build orm-cxx tests")
+set(ORM_CXX_BUILD_EXAMPLES OFF CACHE BOOL "Build orm-cxx examples")
 
 add_subdirectory(externals/orm-cxx)
 
 add_executable(main Main.cpp)
 
-target_link_libraries(main orm-cxx)
+target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
  ```
 
 ## ⚒️ Compiler support
@@ -237,8 +269,8 @@ target_link_libraries(main orm-cxx)
 
 ## 📦 Dependencies
 
-- [GTest](https://github.com/google/googletest) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
-- [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (```BUILD_ORM_CXX_TESTS=OFF``` CMake flag to disable)
+- [GTest](https://github.com/google/googletest) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
+- [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
 - [reflect-cpp](https://github.com/wsekta/reflect-cpp)
 - [SOCI](https://github.com/SOCI/soci)
 

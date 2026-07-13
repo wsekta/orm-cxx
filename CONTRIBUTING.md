@@ -1,63 +1,119 @@
-How to contribute
-=================
+# How to contribute
 
+## Getting started
 
-Getting Started
----------------
-
-- Pick an issue from [Issues](https://github.com/wsekta/orm-cxx/issues).
-- Fork the repository on GitHub
-- **Working on your first Pull Request?** You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://kcd.im/pull-request) 
-
-Making Changes
---------------
-
-- Create a feature/bug branch from main branch:
-
-  ``git checkout -b feature/feature-name``
-
-  Please avoid working directly on the ``main`` branch.
-- Make commits of logical units.
-- Make sure you have added the necessary tests for your changes.
-- Run *all* the tests to assure nothing else was accidentally broken.
-- If you've added a new file to your project with non-Latin characters, ensure that the file encoding is set to <strong>Unicode (UTF-8 without signature) - Codepage 65001</strong> in Microsoft Visual Studio Code.
-
-Submitting Changes
-------------------
-
-- Format code with ``clang-format src/**/*.cpp src/**/*.h include/**/*.h -i -style=file``
-- Push your changes to the branch in your fork of the repository.
-- Submit a pull request to the repository.
-
-Local verification
-------------------
-
-On Windows, run the project checks from Ubuntu on WSL with the Clang preset:
+Fork the repository, then create a branch from `main`. Clone with submodules so
+the vendored build dependencies are present from the start:
 
 ```bash
-cd /mnt/c/Users/Gosia/orm-cxx
-cmake --preset clang-libc++ -DCODE_COVERAGE=ON
-cmake --build --preset clang-libc++
-ctest --test-dir build --output-on-failure
+git clone --recurse-submodules https://github.com/<your-account>/orm-cxx.git
+cd orm-cxx
+git switch -c feature/short-description
 ```
 
-If the local LLVM tools are installed with versioned names, configure the coverage build with explicit paths:
+If you already cloned the repository without submodules, run:
 
 ```bash
-cmake -S . -B /tmp/orm-cxx-build-coverage -G Ninja \
-  -DCMAKE_C_COMPILER=/usr/bin/clang-18 \
-  -DCMAKE_CXX_COMPILER=/usr/bin/clang++-18 \
-  -DCMAKE_CXX_FLAGS='-stdlib=libc++' \
-  -DCMAKE_EXE_LINKER_FLAGS='-stdlib=libc++ -lc++abi' \
-  -DCMAKE_INCLUDE_PATH=/usr/lib/llvm-18/include/c++/v1 \
-  -DCMAKE_LIBRARY_PATH=/usr/lib/llvm-18/lib \
-  -DLLVM_COV_PATH=/usr/bin/llvm-cov-18 \
-  -DLLVM_PROFDATA_PATH=/usr/bin/llvm-profdata-18 \
-  -DCODE_COVERAGE=ON
-cmake --build /tmp/orm-cxx-build-coverage
-ctest --test-dir /tmp/orm-cxx-build-coverage --output-on-failure
-cmake --build /tmp/orm-cxx-build-coverage --target orm-cxx-ccov-all-report
-cmake --build /tmp/orm-cxx-build-coverage --target orm-cxx-ccov-all-export
+git submodule update --init --recursive
 ```
 
-Keep documentation changes in the same pull request as user-facing behavior changes.
+Keep commits focused, add tests for behavior changes, and include documentation
+changes in the same pull request as user-facing changes.
+
+## Fastest supported setup
+
+The development image contains GCC 13, Clang/LLVM 18, Ninja, CMake, SQLite,
+clang-format, clang-tidy, and cmake-format. Docker Compose and the devcontainer
+both build that image from the repository's single `Dockerfile`.
+
+Run the normal Clang build, tests, and quality checks from a clean checkout:
+
+```bash
+docker compose run --build --rm dev bash ./scripts/check-fast.sh
+```
+
+Reproduce all supported Linux build, test, coverage, and quality workflows:
+
+```bash
+docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
+```
+
+The second command produces the Clang coverage report at
+`build/linux-clang-coverage/coverage.lcov`.
+
+To use an editor container instead, open the repository in a client that
+supports the [Development Containers specification](https://containers.dev/)
+and choose **Reopen in Container**. It uses the same Compose service and image
+as the commands above.
+
+The Linux image does not contain or emulate the Microsoft toolchain. Run the
+MSVC workflow natively on Windows as described below.
+
+## Presets and CI-equivalent commands
+
+CMake 3.25 or newer is required for the workflow presets. Each workflow
+configures, builds, and tests its own directory under `build/`.
+
+| Check | Local command | Output directory |
+| --- | --- | --- |
+| Fast Linux check | `bash ./scripts/check-fast.sh` | `build/linux-clang-debug`, `build/quality` |
+| GCC 13 build and tests | `cmake --workflow --preset linux-gcc-debug` | `build/linux-gcc-debug` |
+| Clang 18 build and tests | `cmake --workflow --preset linux-clang-debug` | `build/linux-clang-debug` |
+| Clang 18 coverage | `cmake --workflow --preset linux-clang-coverage` | `build/linux-clang-coverage` |
+| Format and static analysis | `bash ./scripts/check-quality.sh` | `build/quality` |
+| Full Linux verification | `bash ./scripts/check-linux-ci.sh` | all Linux directories above |
+| MSVC build and tests | `./scripts/check-msvc.ps1` | `build/msvc-debug` |
+
+The named presets own compiler paths, build options, warning policy, and
+coverage settings. Do not copy those flags into local scripts.
+
+Top-level debug presets build both example executables as well as the tests.
+The verification scripts compile the examples but intentionally do not run
+them, because the examples create SQLite files in their current directory. If
+you run one manually, use a temporary working directory so the source checkout
+stays clean:
+
+```bash
+repo_root="$PWD"
+example_dir="$(mktemp -d)"
+(cd "$example_dir" && "$repo_root/build/linux-clang-debug/examples/example")
+rm -rf "$example_dir"
+```
+
+Run `relations-example` the same way if needed.
+
+## Native Linux setup
+
+Install CMake 3.25 or newer, Ninja, SQLite development headers, GCC 13,
+Clang/LLVM 18, and the Python tools pinned in `tools/requirements-dev.txt`.
+Then invoke the same workflow presets shown above. The container is the
+reference environment when host package names or versions differ.
+
+## Native Windows and MSVC
+
+Install Visual Studio 2022 with the **Desktop development with C++** workload,
+CMake, Ninja, and PowerShell. Initialize the repository submodules, then open a
+Visual Studio Developer PowerShell and run:
+
+```powershell
+./externals/vcpkg/bootstrap-vcpkg.bat
+./externals/vcpkg/vcpkg.exe install
+./scripts/check-msvc.ps1
+```
+
+The first two commands bootstrap the repository's pinned vcpkg checkout and
+install SQLite. They are required once per clean checkout. The script itself
+only invokes the `msvc-debug` workflow preset; the preset contains the
+toolchain and build settings.
+
+## Before submitting a pull request
+
+- Run the fast check while iterating and the relevant full workflows before
+  pushing.
+- Add or update tests for changed behavior.
+- Keep generated build, coverage, database, and formatting artifacts out of
+  the commit.
+- Run `bash ./scripts/format.sh` to apply the pinned C++ and CMake formatters,
+  then let the checks validate the result. The repository `.clang-format` and
+  `.cmake-format.yaml` files are the source of formatting policy.
+- Push the branch to your fork and open a pull request against `main`.

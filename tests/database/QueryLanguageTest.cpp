@@ -116,12 +116,8 @@ TEST_P(QueryLanguageTest, whereWithCompositeRelatedFieldPath_shouldJoinByAllIds)
 TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldFilterAndPageGroups)
 {
     createTable<models::ModelWithId>();
-    database.insert(std::vector<models::ModelWithId>{{1, 10, "alpha"},
-                                                     {2, 20, "alpha"},
-                                                     {3, 30, "beta"},
-                                                     {4, 40, "beta"},
-                                                     {5, 50, "gamma"},
-                                                     {6, 60, "gamma"}});
+    database.insert(std::vector<models::ModelWithId>{
+        {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "gamma"}, {6, 60, "gamma"}});
 
     orm::Query<models::ModelWithId> query;
     query.where(col("id") >= 1)
@@ -146,18 +142,14 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
 {
     createTable<models::ModelWithId>();
     createTable<models::ModelRelatedToOtherModel>();
-    const auto relatedModels =
-        std::vector<models::ModelWithId>{{1, 100, "group-a"}, {2, 200, "group-b"}};
-    const auto models = std::vector<models::ModelRelatedToOtherModel>{{1, 10, "first", relatedModels[0]},
-                                                                      {2, 20, "second", relatedModels[0]},
-                                                                      {3, 30, "third", relatedModels[1]}};
+    const auto relatedModels = std::vector<models::ModelWithId>{{1, 100, "group-a"}, {2, 200, "group-b"}};
+    const auto models = std::vector<models::ModelRelatedToOtherModel>{
+        {1, 10, "first", relatedModels[0]}, {2, 20, "second", relatedModels[0]}, {3, 30, "third", relatedModels[1]}};
     database.insert(relatedModels);
     database.insert(models);
 
     orm::Query<models::ModelRelatedToOtherModel> query;
-    query.groupBy(col("field3.field2"))
-        .having(countAll() > 1)
-        .andHaving(avg(col("field1")) >= 15.0);
+    query.groupBy(col("field3.field2")).having(countAll() > 1).andHaving(avg(col("field1")) >= 15.0);
 
     const std::vector<models::ModelRelatedToOtherModel> returnedModels = database.select(query);
 

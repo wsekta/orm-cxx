@@ -25,8 +25,7 @@ TEST(ConstexprStringViewTest, shouldMakeOversizedArray)
         {
             constexpr auto result = makeOversizedArray("abc"s);
 
-            return result.size == 3 and result.data[0] == 'a' and result.data[1] == 'b'
-                   and result.data[2] == 'c';
+            return result.size == 3 and result.data[0] == 'a' and result.data[1] == 'b' and result.data[2] == 'c';
         }());
 #else
     auto result = makeOversizedArray("abc"s);

@@ -48,25 +48,15 @@ contracts, then expand expressiveness and database support deliberately.
   expressions without implicitly loading the matching collection.
 - Unit and integration tests across model metadata, command rendering, query
   behavior, write operations, transactions, and SQLite execution.
-- CI coverage for GCC, Clang, MSVC, and Codecov.
-
-## Near Term
-
-With the collection-relation milestone complete, make the project easier to
-build, verify, and contribute to:
-
-1. Refactor CMake configuration into clear library, example, test, coverage,
-   and dependency boundaries. Each part should be independently configurable
-   without duplicating compiler or dependency settings.
-2. Add maintained `.clang-tidy` and `.cmake-format` configurations, then run
-   formatting and static-analysis checks in GitHub Actions alongside the
-   existing compiler and coverage jobs.
-3. Add a Docker or devcontainer-based development environment and document the
-   shortest path from a clean checkout to building examples and running all
-   tests.
-
-This milestone is complete when contributors can reproduce the supported CI
-checks locally without relying on machine-specific setup.
+- Target-scoped CMake configuration with independent library, example, test,
+  coverage, and dependency boundaries plus maintained GCC, Clang, coverage,
+  MSVC, and quality presets.
+- Repository-wide formatting and static-analysis policy through `.clang-tidy`,
+  `.cmake-format.yaml`, local quality scripts, and matching GitHub Actions jobs.
+- A shared Docker, Compose, and devcontainer environment with documented
+  one-command paths for the supported Linux CI checks and an equivalent MSVC
+  workflow.
+- CI coverage for GCC, Clang, MSVC, Codecov, formatting, and static analysis.
 
 ## Mid Term
 

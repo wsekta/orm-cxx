@@ -1,0 +1,33 @@
+---
+Checks: >-
+  -*,
+  clang-analyzer-*,
+  bugprone-assert-side-effect,
+  bugprone-dangling-handle,
+  bugprone-exception-escape,
+  bugprone-infinite-loop,
+  bugprone-macro-parentheses,
+  bugprone-move-forwarding-reference,
+  bugprone-multiple-statement-macro,
+  bugprone-parent-virtual-call,
+  bugprone-string-constructor,
+  bugprone-swapped-arguments,
+  bugprone-terminating-continue,
+  bugprone-unused-raii,
+  bugprone-use-after-move,
+  performance-faster-string-find,
+  performance-for-range-copy,
+  performance-implicit-conversion-in-loop,
+  performance-inefficient-algorithm,
+  performance-inefficient-string-concatenation,
+  performance-inefficient-vector-operation,
+  performance-move-constructor-init,
+  performance-no-int-to-ptr,
+  performance-type-promotion-in-math-fn,
+  portability-simd-intrinsics,
+  portability-std-allocator-const
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*[/\\]include[/\\]orm-cxx[/\\].*'
+SystemHeaders: false
+FormatStyle: file
+...

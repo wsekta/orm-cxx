@@ -1,10 +1,9 @@
-#include "DatabaseTest.hpp"
-
 #include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
 
+#include "DatabaseTest.hpp"
 #include "orm-cxx/database/binding/ProjectionBinding.hpp"
 #include "soci/values.h"
 
@@ -267,16 +266,14 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedOptionalField)
 TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByScalarField)
 {
     createTable<models::ModelWithId>();
-    database.insert(std::vector<models::ModelWithId>{{1, 10, "alpha"},
-                                                     {2, 20, "alpha"},
-                                                     {3, 30, "beta"},
-                                                     {4, 40, "beta"},
-                                                     {5, 50, "beta"}});
+    database.insert(std::vector<models::ModelWithId>{
+        {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "beta"}});
 
     orm::ProjectionQuery<models::ModelWithId, AggregateSummaryProjection> query;
-    query.project(as("name", col("field2")), as("users", countAll()), as("totalField1", sum(col("field1"))),
-                  as("averageField1", avg(col("field1"))), as("minField1", min(col("field1"))),
-                  as("maxField1", max(col("field1"))))
+    query
+        .project(as("name", col("field2")), as("users", countAll()), as("totalField1", sum(col("field1"))),
+                 as("averageField1", avg(col("field1"))), as("minField1", min(col("field1"))),
+                 as("maxField1", max(col("field1"))))
         .groupBy(col("field2"))
         .having(countAll() > 2)
         .orderBy(asc(col("field2")));
@@ -297,9 +294,8 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByRela
     createTable<models::ModelWithId>();
     createTable<models::ModelRelatedToOtherModel>();
     const auto relatedModels = std::vector<models::ModelWithId>{{1, 10, "profile-one"}, {2, 20, "profile-two"}};
-    const auto models = std::vector<models::ModelRelatedToOtherModel>{{1, 100, "first", relatedModels[0]},
-                                                                      {2, 200, "second", relatedModels[0]},
-                                                                      {3, 300, "third", relatedModels[1]}};
+    const auto models = std::vector<models::ModelRelatedToOtherModel>{
+        {1, 100, "first", relatedModels[0]}, {2, 200, "second", relatedModels[0]}, {3, 300, "third", relatedModels[1]}};
 
     database.insert(relatedModels);
     database.insert(models);

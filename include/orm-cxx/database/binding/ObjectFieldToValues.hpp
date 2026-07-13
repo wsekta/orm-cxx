@@ -45,8 +45,8 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
 }
 
-inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo, std::size_t columnIndex)
-    -> void
+inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo,
+                                 std::size_t columnIndex) -> void
 {
     const auto& columnInfo = modelInfo.columnsInfo[columnIndex];
 
@@ -57,7 +57,10 @@ inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& m
         for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
         {
             if (foreignColumnInfo.isPrimaryKey)
-            { setNullValue(values, std::format("{}_{}", columnInfo.name, foreignColumnInfo.name), foreignColumnInfo.type); }
+            {
+                setNullValue(values, std::format("{}_{}", columnInfo.name, foreignColumnInfo.name),
+                             foreignColumnInfo.type);
+            }
         }
 
         return;
@@ -78,7 +81,10 @@ struct ObjectFieldToValues<ModelField>
     {
         const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
 
-        if (columnInfo.isAutoIncrement) { return; }
+        if (columnInfo.isAutoIncrement)
+        {
+            return;
+        }
 
         values.set(columnInfo.name, *column);
     }
@@ -96,9 +102,8 @@ struct ObjectFieldToValues<ModelField>
         auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
         std::size_t foreignColumnIndex = 0;
 
-        auto setForeignFieldToValue =
-            [&foreignModel, &values, &foreignFieldName, &foreignColumnIndex](auto /*fieldIndex*/,
-                                                                            const auto foreignModelColumn)
+        auto setForeignFieldToValue = [&foreignModel, &values, &foreignFieldName,
+                                       &foreignColumnIndex](auto /*fieldIndex*/, const auto foreignModelColumn)
         {
             using field_t = std::decay_t<decltype(*foreignModelColumn)>;
 
@@ -126,10 +131,13 @@ struct ObjectFieldToValues<std::optional<ModelField>>
 {
     template <typename T, bool JoinedValues>
     static auto set(const std::optional<ModelField>* column, const BindingPayload<T, JoinedValues>& model,
-                    std::size_t columnIndex,
-                    soci::values& values) -> void
+                    std::size_t columnIndex, soci::values& values) -> void
     {
-        if (column->has_value()) { ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values); return; }
+        if (column->has_value())
+        {
+            ObjectFieldToValues<ModelField>::set(&column->value(), model, columnIndex, values);
+            return;
+        }
 
         setOptionalNullValue(values, model.getModelInfo(), columnIndex);
     }

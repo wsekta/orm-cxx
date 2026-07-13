@@ -1,9 +1,9 @@
 #include "orm-cxx/model.hpp"
-#include "orm-cxx/model/NameMapping.hpp"
 
 #include <gtest/gtest.h>
 
 #include "ModelsDefinitions.hpp"
+#include "orm-cxx/model/NameMapping.hpp"
 
 namespace
 {

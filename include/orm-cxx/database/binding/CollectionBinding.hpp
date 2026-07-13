@@ -27,8 +27,7 @@ struct type_conversion<orm::db::binding::CollectionPayload<Owner, Target, Joined
                                            orm::db::binding::CollectionPayload<Owner, Target, JoinedValues>& payload)
     {
         orm::db::binding::BindingPayload<Target, JoinedValues> targetPayload{};
-        type_conversion<orm::db::binding::BindingPayload<Target, JoinedValues>>::from_base(values, ind,
-                                                                                            targetPayload);
+        type_conversion<orm::db::binding::BindingPayload<Target, JoinedValues>>::from_base(values, ind, targetPayload);
         payload.value = std::move(targetPayload.value);
 
         const auto& ownerInfo = orm::Model<Owner>::getModelInfo();
@@ -43,9 +42,9 @@ struct type_conversion<orm::db::binding::CollectionPayload<Owner, Target, Joined
         }
     }
 
-    [[maybe_unused]] static void to_base(
-        const orm::db::binding::CollectionPayload<Owner, Target, JoinedValues>& /*payload*/,
-                                         soci::values& /*values*/, indicator& ind)
+    [[maybe_unused]] static void
+    to_base(const orm::db::binding::CollectionPayload<Owner, Target, JoinedValues>& /*payload*/,
+            soci::values& /*values*/, indicator& ind)
     {
         ind = i_ok;
     }

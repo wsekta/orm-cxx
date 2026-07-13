@@ -16,10 +16,10 @@
 #include "IdInfo.hpp"
 #include "ModelInfo.hpp"
 #include "NameMapping.hpp"
-#include "TableInfo.hpp"
 #include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
+#include "TableInfo.hpp"
 
 DISABLE_WARNING_PUSH
 
@@ -90,8 +90,8 @@ auto requirePrimaryKey(std::string_view relationField) -> std::vector<std::strin
     const auto orderedIds = orderedPrimaryKeyColumns<T>();
     if (ids.empty() || orderedIds.size() != ids.size())
     {
-        throw std::invalid_argument{
-            "Relation '" + std::string{relationField} + "' requires a model with a valid, non-empty primary key"};
+        throw std::invalid_argument{"Relation '" + std::string{relationField} +
+                                    "' requires a model with a valid, non-empty primary key"};
     }
     return orderedIds;
 }
@@ -108,8 +108,8 @@ auto defaultJunctionColumns(const std::vector<std::string>& primaryKeyColumns) -
     return result;
 }
 
-inline auto validateJunctionColumnNames(
-    const std::vector<std::string>& columns, std::string_view relationField, std::string_view side) -> void
+inline auto validateJunctionColumnNames(const std::vector<std::string>& columns, std::string_view relationField,
+                                        std::string_view side) -> void
 {
     std::unordered_set<std::string> uniqueNames;
     for (const auto& column : columns)
@@ -160,10 +160,10 @@ auto makeOwningJunction(const ManyToManyDescriptor& descriptor) -> JunctionInfo
         }
     }
 
-    auto ownerColumns = descriptor.ownerColumnNames().empty() ? defaultJunctionColumns<Owner>(ownerIds)
-                                                               : descriptor.ownerColumnNames();
-    auto targetColumns = descriptor.targetColumnNames().empty() ? defaultJunctionColumns<Target>(targetIds)
-                                                                 : descriptor.targetColumnNames();
+    auto ownerColumns =
+        descriptor.ownerColumnNames().empty() ? defaultJunctionColumns<Owner>(ownerIds) : descriptor.ownerColumnNames();
+    auto targetColumns = descriptor.targetColumnNames().empty() ? defaultJunctionColumns<Target>(targetIds) :
+                                                                  descriptor.targetColumnNames();
 
     validateJunctionColumnNames(ownerColumns, descriptor.fieldName(), "owner");
     validateJunctionColumnNames(targetColumns, descriptor.fieldName(), "target");
@@ -177,8 +177,7 @@ auto makeOwningJunction(const ManyToManyDescriptor& descriptor) -> JunctionInfo
         }
     }
 
-    return JunctionInfo{
-        descriptor.throughTable(), std::move(ownerColumns), std::move(targetColumns), true};
+    return JunctionInfo{descriptor.throughTable(), std::move(ownerColumns), std::move(targetColumns), true};
 }
 
 template <typename Model, typename Callback>
@@ -211,13 +210,14 @@ auto validateOneToManyMappedBy(const OneToManyDescriptor& descriptor) -> bool
 
     bool compatible = false;
     bool nullable = false;
-    const auto found = visitField<Target>(descriptor.mappedByField(), [&]<typename Field>()
-                                         {
-                                             using field_t = std::remove_cv_t<Field>;
-                                             using value_t = optional_value_t<field_t>;
-                                             compatible = std::is_same_v<value_t, Owner>;
-                                             nullable = OptionalTraits<field_t>::isOptional;
-                                         });
+    const auto found = visitField<Target>(descriptor.mappedByField(),
+                                          [&]<typename Field>()
+                                          {
+                                              using field_t = std::remove_cv_t<Field>;
+                                              using value_t = optional_value_t<field_t>;
+                                              compatible = std::is_same_v<value_t, Owner>;
+                                              nullable = OptionalTraits<field_t>::isOptional;
+                                          });
     if (not found || not compatible)
     {
         throw std::invalid_argument{"One-to-many relation '" + descriptor.fieldName() +
@@ -237,11 +237,9 @@ auto makeInverseJunction(const ManyToManyDescriptor& inverseDescriptor) -> Junct
     }
 
     bool compatibleField = false;
-    const auto foundField = visitField<Target>(inverseDescriptor.mappedByField(), [&]<typename Field>()
-                                               {
-                                                   compatibleField =
-                                                       std::is_same_v<std::remove_cv_t<Field>, ManyToMany<Current>>;
-                                               });
+    const auto foundField =
+        visitField<Target>(inverseDescriptor.mappedByField(), [&]<typename Field>()
+                           { compatibleField = std::is_same_v<std::remove_cv_t<Field>, ManyToMany<Current>>; });
     if (not foundField || not compatibleField)
     {
         throw std::invalid_argument{"Inverse many-to-many relation '" + inverseDescriptor.fieldName() +
@@ -252,7 +250,8 @@ auto makeInverseJunction(const ManyToManyDescriptor& inverseDescriptor) -> Junct
     std::size_t descriptorCount = 0;
     if constexpr (requires { Target::relations; })
     {
-        utils::constexpr_for_tuple(Target::relations, [&](auto, const auto& descriptor)
+        utils::constexpr_for_tuple(Target::relations,
+                                   [&](auto, const auto& descriptor)
                                    {
                                        if (descriptor.fieldName() == inverseDescriptor.mappedByField())
                                        {
@@ -273,10 +272,8 @@ auto makeInverseJunction(const ManyToManyDescriptor& inverseDescriptor) -> Junct
     }
 
     auto owningJunction = makeOwningJunction<Target, Current>(*owningDescriptor);
-    return JunctionInfo{owningJunction.tableName,
-                        std::move(owningJunction.targetColumns),
-                        std::move(owningJunction.ownerColumns),
-                        false};
+    return JunctionInfo{owningJunction.tableName, std::move(owningJunction.targetColumns),
+                        std::move(owningJunction.ownerColumns), false};
 }
 
 template <typename Owner, typename Collection>
@@ -299,7 +296,8 @@ auto makeCollectionRelation(const std::string& fieldName) -> RelationInfo
     bool descriptorKindMatches = false;
     if constexpr (requires { Owner::relations; })
     {
-        utils::constexpr_for_tuple(Owner::relations, [&](auto, const auto& descriptor)
+        utils::constexpr_for_tuple(Owner::relations,
+                                   [&](auto, const auto& descriptor)
                                    {
                                        if (descriptor.fieldName() != fieldName)
                                        {
@@ -320,9 +318,9 @@ auto makeCollectionRelation(const std::string& fieldName) -> RelationInfo
                                        {
                                            descriptorKindMatches = true;
                                            result.mappedBy = descriptor.mappedByField();
-                                           result.junction = descriptor.mappedByField().empty()
-                                                                 ? makeOwningJunction<Owner, target_t>(descriptor)
-                                                                 : makeInverseJunction<Owner, target_t>(descriptor);
+                                           result.junction = descriptor.mappedByField().empty() ?
+                                                                 makeOwningJunction<Owner, target_t>(descriptor) :
+                                                                 makeInverseJunction<Owner, target_t>(descriptor);
                                        }
                                    });
     }
@@ -366,31 +364,31 @@ auto validateDescriptors(const std::unordered_set<std::string>& collectionFields
     std::unordered_set<std::string> junctionTables;
     if constexpr (requires { T::relations; })
     {
-        utils::constexpr_for_tuple(T::relations, [&](auto, const auto& descriptor)
-                                   {
-                                       if (descriptor.fieldName().empty() ||
-                                           not descriptorFields.insert(descriptor.fieldName()).second)
-                                       {
-                                           throw std::invalid_argument{
-                                               "Every collection field must have exactly one relation descriptor"};
-                                       }
-                                       if (not collectionFields.contains(descriptor.fieldName()))
-                                       {
-                                           throw std::invalid_argument{"Relation descriptor '" + descriptor.fieldName() +
-                                                                       "' does not name a collection field"};
-                                       }
+        utils::constexpr_for_tuple(
+            T::relations,
+            [&](auto, const auto& descriptor)
+            {
+                if (descriptor.fieldName().empty() || not descriptorFields.insert(descriptor.fieldName()).second)
+                {
+                    throw std::invalid_argument{"Every collection field must have exactly one relation descriptor"};
+                }
+                if (not collectionFields.contains(descriptor.fieldName()))
+                {
+                    throw std::invalid_argument{"Relation descriptor '" + descriptor.fieldName() +
+                                                "' does not name a collection field"};
+                }
 
-                                       using descriptor_t = std::decay_t<decltype(descriptor)>;
-                                       if constexpr (std::is_same_v<descriptor_t, ManyToManyDescriptor>)
-                                       {
-                                           if (not descriptor.throughTable().empty() &&
-                                               not junctionTables.insert(descriptor.throughTable()).second)
-                                           {
-                                               throw std::invalid_argument{"Conflicting owning relations use junction table '" +
-                                                                           descriptor.throughTable() + "'"};
-                                           }
-                                       }
-                                   });
+                using descriptor_t = std::decay_t<decltype(descriptor)>;
+                if constexpr (std::is_same_v<descriptor_t, ManyToManyDescriptor>)
+                {
+                    if (not descriptor.throughTable().empty() &&
+                        not junctionTables.insert(descriptor.throughTable()).second)
+                    {
+                        throw std::invalid_argument{"Conflicting owning relations use junction table '" +
+                                                    descriptor.throughTable() + "'"};
+                    }
+                }
+            });
     }
 
     if (descriptorFields.size() != collectionFields.size())
@@ -423,10 +421,9 @@ inline auto validateGlobalJunctionMappings(std::type_index ownerType, const Mode
         }
 
         const auto& junction = relation.junction.value();
-        candidates.emplace_back(
-            junction.tableName,
-            JunctionRegistration{ownerType, relation.targetType, relation.fieldName, junction.ownerColumns,
-                                 junction.targetColumns});
+        candidates.emplace_back(junction.tableName,
+                                JunctionRegistration{ownerType, relation.targetType, relation.fieldName,
+                                                     junction.ownerColumns, junction.targetColumns});
     }
 
     const std::scoped_lock lock{registryMutex};
@@ -439,11 +436,10 @@ inline auto validateGlobalJunctionMappings(std::type_index ownerType, const Mode
         }
 
         const auto& registered = existing->second;
-        const auto sameMapping = registered.ownerType == candidate.ownerType &&
-                                 registered.targetType == candidate.targetType &&
-                                 registered.fieldName == candidate.fieldName &&
-                                 registered.ownerColumns == candidate.ownerColumns &&
-                                 registered.targetColumns == candidate.targetColumns;
+        const auto sameMapping =
+            registered.ownerType == candidate.ownerType && registered.targetType == candidate.targetType &&
+            registered.fieldName == candidate.fieldName && registered.ownerColumns == candidate.ownerColumns &&
+            registered.targetColumns == candidate.targetColumns;
         if (not sameMapping)
         {
             throw std::invalid_argument{"Conflicting owning relations use junction table '" + tableName + "'"};

@@ -68,8 +68,8 @@ auto startsWith(std::string_view value, std::string_view prefix) -> bool
     return value.substr(0, prefix.size()) == prefix;
 }
 
-auto findColumnInfo(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
-    -> const orm::model::ColumnInfo*
+auto findColumnInfo(const orm::model::ModelInfo& modelInfo,
+                    const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo*
 {
     const auto columnInfo =
         std::ranges::find_if(modelInfo.columnsInfo, [&fieldOrColumnName](const orm::model::ColumnInfo& column)
@@ -83,8 +83,8 @@ auto findColumnInfo(const orm::model::ModelInfo& modelInfo, const std::string& f
     return &*columnInfo;
 }
 
-auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
-    -> const orm::model::ColumnInfo&
+auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo,
+                          const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo&
 {
     const auto* columnInfo = findColumnInfo(modelInfo, fieldOrColumnName);
 
@@ -96,8 +96,8 @@ auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo, const std::str
     return *columnInfo;
 }
 
-auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo, const orm::model::ColumnInfo& columnInfo)
-    -> const orm::model::ModelInfo&
+auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo,
+                                const orm::model::ColumnInfo& columnInfo) -> const orm::model::ModelInfo&
 {
     if (not columnInfo.isForeignModel)
     {
@@ -107,8 +107,8 @@ auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo, const or
     return modelInfo.foreignModelsInfo.at(columnInfo.name);
 }
 
-auto renderSelectColumn(const orm::query::Column& column, const orm::db::commands::RenderContext& context)
-    -> std::string
+auto renderSelectColumn(const orm::query::Column& column,
+                        const orm::db::commands::RenderContext& context) -> std::string
 {
     const auto parts = splitPath(column.getPath());
     const auto rootTable = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
@@ -199,8 +199,8 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
 }
 
 auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string;
-auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context)
-    -> std::string;
+auto renderPredicate(const orm::query::PredicateNodePtr& node,
+                     orm::db::commands::RenderContext& context) -> std::string;
 
 auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<const orm::model::ColumnInfo*>
 {
@@ -243,8 +243,8 @@ auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const std::string&
 
         for (const auto* targetColumn : primaryKeyColumns(targetInfo))
         {
-            predicates.push_back(std::format("{}.{} = {}.{}_{}", relation.columnName, targetColumn->name,
-                                             rootAlias, relation.columnName, targetColumn->name));
+            predicates.push_back(std::format("{}.{} = {}.{}_{}", relation.columnName, targetColumn->name, rootAlias,
+                                             relation.columnName, targetColumn->name));
         }
 
         joins += std::format(" LEFT JOIN {} AS {} ON {}", targetInfo.tableName, relation.columnName,
@@ -254,10 +254,9 @@ auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const std::string&
     return joins;
 }
 
-auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate,
-                           const orm::model::ModelInfo& targetInfo,
-                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias)
-    -> std::string
+auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, const orm::model::ModelInfo& targetInfo,
+                           orm::db::commands::RenderContext& outerContext,
+                           const std::string& targetAlias) -> std::string
 {
     orm::db::commands::RenderContext targetContext{
         .modelInfo = targetInfo,
@@ -297,8 +296,7 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
         throw std::invalid_argument{"Collection any/none requires an element predicate"};
     }
 
-    const auto outerAlias =
-        context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
+    const auto outerAlias = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
     const auto targetAlias = std::string{"orm_relation_target"};
     const auto junctionAlias = std::string{"orm_relation_junction"};
     const auto ownerPrimaryKey = primaryKeyColumns(context.modelInfo);
@@ -322,8 +320,7 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
                                              ownerColumn->name, outerAlias, ownerColumn->name));
         }
 
-        from = std::format("{} AS {}{}", targetInfo.tableName, targetAlias,
-                           renderToOneJoins(targetInfo, targetAlias));
+        from = std::format("{} AS {}{}", targetInfo.tableName, targetAlias, renderToOneJoins(targetInfo, targetAlias));
     }
     else
     {
@@ -337,27 +334,25 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
         if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
             junction.targetColumns.size() != targetPrimaryKey.size())
         {
-            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " +
-                                        junction.tableName};
+            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " + junction.tableName};
         }
 
         std::vector<std::string> targetJoin;
 
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
         {
-            predicates.push_back(std::format("{}.{} = {}.{}", junctionAlias, junction.ownerColumns[i],
-                                             outerAlias, ownerPrimaryKey[i]->name));
+            predicates.push_back(std::format("{}.{} = {}.{}", junctionAlias, junction.ownerColumns[i], outerAlias,
+                                             ownerPrimaryKey[i]->name));
         }
 
         for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
         {
-            targetJoin.push_back(std::format("{}.{} = {}.{}", targetAlias, targetPrimaryKey[i]->name,
-                                             junctionAlias, junction.targetColumns[i]));
+            targetJoin.push_back(std::format("{}.{} = {}.{}", targetAlias, targetPrimaryKey[i]->name, junctionAlias,
+                                             junction.targetColumns[i]));
         }
 
-        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", junction.tableName, junctionAlias,
-                           targetInfo.tableName, targetAlias, join(targetJoin, " AND "),
-                           renderToOneJoins(targetInfo, targetAlias));
+        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", junction.tableName, junctionAlias, targetInfo.tableName,
+                           targetAlias, join(targetJoin, " AND "), renderToOneJoins(targetInfo, targetAlias));
     }
 
     if (expression.predicate != nullptr)
@@ -367,9 +362,8 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
     const auto existsSql = std::format("EXISTS (SELECT 1 FROM {} WHERE {})", from, join(predicates, " AND "));
 
-    return expression.collectionOperator == orm::query::CollectionOperator::None ?
-               std::format("NOT ({})", existsSql) :
-               existsSql;
+    return expression.collectionOperator == orm::query::CollectionOperator::None ? std::format("NOT ({})", existsSql) :
+                                                                                   existsSql;
 }
 
 auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context) -> std::string
@@ -380,66 +374,62 @@ auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands
 auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string
 {
     return std::visit(
-        Overloaded{[&context](const orm::query::ComparisonExpression& expression)
-                   {
-                       const auto column = orm::db::commands::renderColumn(expression.column, context);
-                       const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
-                       const auto parameter = orm::db::commands::addAutomaticParameter(context, expression.value);
+        Overloaded{
+            [&context](const orm::query::ComparisonExpression& expression)
+            {
+                const auto column = orm::db::commands::renderColumn(expression.column, context);
+                const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
+                const auto parameter = orm::db::commands::addAutomaticParameter(context, expression.value);
 
-                       return std::format("{} {} {}", column, sqlOperator, parameter);
-                   },
-                   [&context](const orm::query::NullExpression& expression)
-                   {
-                       return std::format("{} {}", orm::db::commands::renderColumn(expression.column, context),
-                                          expression.nullOperator == orm::query::NullOperator::IsNull ? "IS NULL" :
-                                                                                                        "IS NOT NULL");
-                   },
-                   [&context](const orm::query::ListExpression& expression)
-                   {
-                       const auto column = orm::db::commands::renderColumn(expression.column, context);
-                       const auto sqlOperator = expression.listOperator == orm::query::ListOperator::In ? "IN" :
-                                                                                                          "NOT IN";
-                       std::vector<std::string> placeholders;
-                       placeholders.reserve(expression.values.size());
+                return std::format("{} {} {}", column, sqlOperator, parameter);
+            },
+            [&context](const orm::query::NullExpression& expression)
+            {
+                return std::format("{} {}", orm::db::commands::renderColumn(expression.column, context),
+                                   expression.nullOperator == orm::query::NullOperator::IsNull ? "IS NULL" :
+                                                                                                 "IS NOT NULL");
+            },
+            [&context](const orm::query::ListExpression& expression)
+            {
+                const auto column = orm::db::commands::renderColumn(expression.column, context);
+                const auto sqlOperator = expression.listOperator == orm::query::ListOperator::In ? "IN" : "NOT IN";
+                std::vector<std::string> placeholders;
+                placeholders.reserve(expression.values.size());
 
-                       for (const auto& value : expression.values)
-                       {
-                           placeholders.push_back(orm::db::commands::addAutomaticParameter(context, value));
-                       }
+                for (const auto& value : expression.values)
+                {
+                    placeholders.push_back(orm::db::commands::addAutomaticParameter(context, value));
+                }
 
-                       return std::format("{} {} ({})", column, sqlOperator, join(placeholders, ", "));
-                   },
-                   [&context](const orm::query::BetweenExpression& expression)
-                   {
-                       const auto column = orm::db::commands::renderColumn(expression.column, context);
-                       const auto sqlOperator = expression.betweenOperator == orm::query::BetweenOperator::Between ?
-                                                    "BETWEEN" :
-                                                    "NOT BETWEEN";
-                       const auto lowerParameter =
-                           orm::db::commands::addAutomaticParameter(context, expression.lowerValue);
-                       const auto upperParameter =
-                           orm::db::commands::addAutomaticParameter(context, expression.upperValue);
+                return std::format("{} {} ({})", column, sqlOperator, join(placeholders, ", "));
+            },
+            [&context](const orm::query::BetweenExpression& expression)
+            {
+                const auto column = orm::db::commands::renderColumn(expression.column, context);
+                const auto sqlOperator =
+                    expression.betweenOperator == orm::query::BetweenOperator::Between ? "BETWEEN" : "NOT BETWEEN";
+                const auto lowerParameter = orm::db::commands::addAutomaticParameter(context, expression.lowerValue);
+                const auto upperParameter = orm::db::commands::addAutomaticParameter(context, expression.upperValue);
 
-                       return std::format("{} {} {} AND {}", column, sqlOperator, lowerParameter, upperParameter);
-                   },
-                   [&context](const orm::query::LogicalExpression& expression)
-                   {
-                       const auto left = renderPredicate(expression.left, context);
-                       const auto sqlOperator =
-                           expression.logicalOperator == orm::query::LogicalOperator::And ? "AND" : "OR";
-                       const auto right = renderPredicate(expression.right, context);
+                return std::format("{} {} {} AND {}", column, sqlOperator, lowerParameter, upperParameter);
+            },
+            [&context](const orm::query::LogicalExpression& expression)
+            {
+                const auto left = renderPredicate(expression.left, context);
+                const auto sqlOperator = expression.logicalOperator == orm::query::LogicalOperator::And ? "AND" : "OR";
+                const auto right = renderPredicate(expression.right, context);
 
-                       return std::format("({} {} {})", left, sqlOperator, right);
-                   },
-                   [&context](const orm::query::NotExpression& expression)
-                   { return std::format("(NOT ({}))", renderPredicate(expression.predicate, context)); },
-                   [&context](const orm::query::RawExpression& expression)
-                   {
-                       addRawParameters(context, expression.parameters);
-                       return expression.sql;
-                   },
-                   [&context](const orm::query::CollectionExpression& expression)
-                   { return renderCollectionPredicate(expression, context); }},
+                return std::format("({} {} {})", left, sqlOperator, right);
+            },
+            [&context](const orm::query::NotExpression& expression)
+            { return std::format("(NOT ({}))", renderPredicate(expression.predicate, context)); },
+            [&context](const orm::query::RawExpression& expression)
+            {
+                addRawParameters(context, expression.parameters);
+                return expression.sql;
+            },
+            [&context](const orm::query::CollectionExpression& expression)
+            { return renderCollectionPredicate(expression, context); }},
         node.expression);
 }
 } // namespace
@@ -456,8 +446,8 @@ auto renderColumn(const query::Column& column, const RenderContext& context) -> 
     return renderSelectColumn(column, context);
 }
 
-auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo, bool qualifyWithTable)
-    -> WriteColumn
+auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo,
+                       bool qualifyWithTable) -> WriteColumn
 {
     const auto parts = splitPath(column.getPath());
 
@@ -490,8 +480,7 @@ auto renderWriteColumn(const query::Column& column, const model::ModelInfo& mode
 
         const auto columnName = std::format("{}_{}", relatedColumnInfo.name, foreignColumnInfo.name);
 
-        return WriteColumn{.sql = qualifyWithTable ? std::format("{}.{}", modelInfo.tableName, columnName) :
-                                                     columnName,
+        return WriteColumn{.sql = qualifyWithTable ? std::format("{}.{}", modelInfo.tableName, columnName) : columnName,
                            .type = foreignColumnInfo.type,
                            .isNotNull = relatedColumnInfo.isNotNull};
     }

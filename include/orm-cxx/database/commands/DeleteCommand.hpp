@@ -11,7 +11,7 @@ class DeleteCommand
 public:
     virtual ~DeleteCommand() = default;
 
-    [[nodiscard]] virtual auto remove(const model::ModelInfo& modelInfo, const query::Predicate& predicate) const
-        -> Statement = 0;
+    [[nodiscard]] virtual auto remove(const model::ModelInfo& modelInfo,
+                                      const query::Predicate& predicate) const -> Statement = 0;
 };
 } // namespace orm::db::commands

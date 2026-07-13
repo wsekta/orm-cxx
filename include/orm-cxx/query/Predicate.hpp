@@ -411,14 +411,15 @@ inline auto operator!(const Predicate& predicate) -> Predicate
 /**
  * @brief Matches models for which at least one collection element satisfies a predicate.
  *
- * Column paths inside the predicate are relative to the collection element model.
+ * Column paths inside
+ * the predicate are relative to the collection element model.
  */
 inline auto any(std::string relation, const Predicate& predicate) -> Predicate
 {
-    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
-                                                        .collectionOperator = CollectionOperator::Any,
-                                                        .predicate = std::make_shared<PredicateNode>(
-                                                            predicate.getNode())}}};
+    return Predicate{
+        PredicateNode{CollectionExpression{.relation = std::move(relation),
+                                           .collectionOperator = CollectionOperator::Any,
+                                           .predicate = std::make_shared<PredicateNode>(predicate.getNode())}}};
 }
 
 /**
@@ -426,9 +427,8 @@ inline auto any(std::string relation, const Predicate& predicate) -> Predicate
  */
 inline auto exists(std::string relation) -> Predicate
 {
-    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
-                                                        .collectionOperator = CollectionOperator::Exists,
-                                                        .predicate = nullptr}}};
+    return Predicate{PredicateNode{CollectionExpression{
+        .relation = std::move(relation), .collectionOperator = CollectionOperator::Exists, .predicate = nullptr}}};
 }
 
 /**
@@ -436,10 +436,10 @@ inline auto exists(std::string relation) -> Predicate
  */
 inline auto none(std::string relation, const Predicate& predicate) -> Predicate
 {
-    return Predicate{PredicateNode{CollectionExpression{.relation = std::move(relation),
-                                                        .collectionOperator = CollectionOperator::None,
-                                                        .predicate = std::make_shared<PredicateNode>(
-                                                            predicate.getNode())}}};
+    return Predicate{
+        PredicateNode{CollectionExpression{.relation = std::move(relation),
+                                           .collectionOperator = CollectionOperator::None,
+                                           .predicate = std::make_shared<PredicateNode>(predicate.getNode())}}};
 }
 
 /**

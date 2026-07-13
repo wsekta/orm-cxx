@@ -202,13 +202,12 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithGroupByHavingAndClauseOrder)
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
-              "models_ModelWithId.field1 AS models_ModelWithId_field1, "
-              "models_ModelWithId.field2 AS models_ModelWithId_field2 FROM models_ModelWithId "
-              "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
-              "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
-              "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
+    EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
+                             "models_ModelWithId.field1 AS models_ModelWithId_field1, "
+                             "models_ModelWithId.field2 AS models_ModelWithId_field2 FROM models_ModelWithId "
+                             "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
+                             "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
+                             "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
     ASSERT_EQ(statement.parameters.size(), 3);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
     EXPECT_EQ(getValue<int>(statement.parameters[1]), 1);
@@ -247,14 +246,15 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithMappedGroupByAndHavingColumn
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS models_ModelWithIdAndNamesMapping_some_id_name, "
-              "models_ModelWithIdAndNamesMapping.some_field1_name AS "
-              "models_ModelWithIdAndNamesMapping_some_field1_name, "
-              "models_ModelWithIdAndNamesMapping.some_field2_name AS "
-              "models_ModelWithIdAndNamesMapping_some_field2_name FROM models_ModelWithIdAndNamesMapping "
-              "GROUP BY models_ModelWithIdAndNamesMapping.some_field2_name "
-              "HAVING COUNT(models_ModelWithIdAndNamesMapping.some_field1_name) > :orm_p0;");
+    EXPECT_EQ(
+        statement.sql,
+        "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS models_ModelWithIdAndNamesMapping_some_id_name, "
+        "models_ModelWithIdAndNamesMapping.some_field1_name AS "
+        "models_ModelWithIdAndNamesMapping_some_field1_name, "
+        "models_ModelWithIdAndNamesMapping.some_field2_name AS "
+        "models_ModelWithIdAndNamesMapping_some_field2_name FROM models_ModelWithIdAndNamesMapping "
+        "GROUP BY models_ModelWithIdAndNamesMapping.some_field2_name "
+        "HAVING COUNT(models_ModelWithIdAndNamesMapping.some_field1_name) > :orm_p0;");
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
 }
@@ -287,13 +287,12 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedPrimaryKeyGroupingWit
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
-              "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
-              "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
-              "models_ModelRelatedToOtherModel.field3_id AS models_ModelRelatedToOtherModel_field3_id "
-              "FROM models_ModelRelatedToOtherModel GROUP BY models_ModelRelatedToOtherModel.field3_id "
-              "HAVING COUNT(models_ModelRelatedToOtherModel.field3_id) > :orm_p0;");
+    EXPECT_EQ(statement.sql, "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
+                             "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
+                             "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
+                             "models_ModelRelatedToOtherModel.field3_id AS models_ModelRelatedToOtherModel_field3_id "
+                             "FROM models_ModelRelatedToOtherModel GROUP BY models_ModelRelatedToOtherModel.field3_id "
+                             "HAVING COUNT(models_ModelRelatedToOtherModel.field3_id) > :orm_p0;");
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
 }
@@ -374,10 +373,9 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffs
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT DISTINCT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name "
-              "FROM models_ModelWithId WHERE models_ModelWithId.field1 >= :orm_p0 "
-              "ORDER BY models_ModelWithId.id DESC LIMIT 1 OFFSET 2;");
+    EXPECT_EQ(statement.sql, "SELECT DISTINCT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name "
+                             "FROM models_ModelWithId WHERE models_ModelWithId.field1 >= :orm_p0 "
+                             "ORDER BY models_ModelWithId.id DESC LIMIT 1 OFFSET 2;");
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
 }
@@ -429,12 +427,11 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithGroupByHavingAndClauseOrder
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
-              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
-              "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
-              "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
-              "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
+    EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+                             "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+                             "WHERE models_ModelWithId.field1 >= :orm_p0 GROUP BY models_ModelWithId.field2 "
+                             "HAVING (COUNT(*) > :orm_p1 AND AVG(models_ModelWithId.field1) >= :orm_p2) "
+                             "ORDER BY models_ModelWithId.field2 DESC LIMIT 5 OFFSET 2;");
     ASSERT_EQ(statement.parameters.size(), 3);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 10);
     EXPECT_EQ(getValue<int>(statement.parameters[1]), 1);
@@ -452,11 +449,10 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithOrAndNotHaving)
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
-              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
-              "GROUP BY models_ModelWithId.field2 HAVING (COUNT(*) > :orm_p0 OR "
-              "(NOT (MAX(models_ModelWithId.id) <= :orm_p1)));");
+    EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+                             "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+                             "GROUP BY models_ModelWithId.field2 HAVING (COUNT(*) > :orm_p0 OR "
+                             "(NOT (MAX(models_ModelWithId.id) <= :orm_p1)));");
     ASSERT_EQ(statement.parameters.size(), 2);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 1);
     EXPECT_EQ(getValue<int>(statement.parameters[1]), 3);
@@ -472,11 +468,10 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRemainingHavingComparisonOp
 
     const auto statement = command.select(orm::Database::getQueryData(query));
 
-    EXPECT_EQ(statement.sql,
-              "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
-              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
-              "GROUP BY models_ModelWithId.field2 HAVING ((COUNT(*) = :orm_p0 AND "
-              "SUM(models_ModelWithId.field1) != :orm_p1) AND MIN(models_ModelWithId.id) < :orm_p2);");
+    EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
+                             "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
+                             "GROUP BY models_ModelWithId.field2 HAVING ((COUNT(*) = :orm_p0 AND "
+                             "SUM(models_ModelWithId.field1) != :orm_p1) AND MIN(models_ModelWithId.id) < :orm_p2);");
     ASSERT_EQ(statement.parameters.size(), 3);
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 2);
     EXPECT_EQ(getValue<int>(statement.parameters[1]), 30);
@@ -542,9 +537,8 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunctio
 {
     orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
-    query.project(as("id", col("id")),
-                  as("name", AggregateExpression{.function = static_cast<AggregateFunction>(999),
-                                                 .column = col("field1")}));
+    query.project(as("id", col("id")), as("name", AggregateExpression{.function = static_cast<AggregateFunction>(999),
+                                                                      .column = col("field1")}));
 
     EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
 }

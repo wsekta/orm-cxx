@@ -149,15 +149,15 @@ auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Pr
 
     for (const auto& projection : projections)
     {
-        selectFields.push_back(std::format("{} AS {}", renderProjectionSource(projection.source, context),
-                                           projection.resultField));
+        selectFields.push_back(
+            std::format("{} AS {}", renderProjectionSource(projection.source, context), projection.resultField));
     }
 
     return join(selectFields, ", ");
 }
 
-auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source,
+                                                  RenderContext& context) -> std::string
 {
     return std::visit(Overloaded{[&context](const query::Column& column) { return renderColumn(column, context); },
                                  [&context](const query::AggregateExpression& aggregate)
@@ -165,8 +165,8 @@ auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource&
                       source);
 }
 
-auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate,
+                                           RenderContext& context) -> std::string
 {
     const auto functionName = aggregateFunctionToSql(aggregate.function);
 
@@ -269,8 +269,8 @@ auto DefaultSelectCommand::getGroupBy(const query::QueryData& queryData, RenderC
     return " GROUP BY " + join(groupByClauses, ", ");
 }
 
-auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having,
+                                     RenderContext& context) -> std::string
 {
     if (not having.has_value())
     {
@@ -286,8 +286,8 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
     return renderAggregatePredicate(*node, context);
 }
 
-auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node,
+                                                    RenderContext& context) -> std::string
 {
     return std::visit(
         Overloaded{[&context](const query::AggregateComparisonExpression& expression)
@@ -301,8 +301,8 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
                    [&context](const query::AggregateLogicalExpression& expression)
                    {
                        const auto left = renderAggregatePredicate(expression.left, context);
-                       const auto sqlOperator = expression.logicalOperator == query::LogicalOperator::And ? "AND" :
-                                                                                                            "OR";
+                       const auto sqlOperator =
+                           expression.logicalOperator == query::LogicalOperator::And ? "AND" : "OR";
                        const auto right = renderAggregatePredicate(expression.right, context);
 
                        return std::format("({} {} {})", left, sqlOperator, right);

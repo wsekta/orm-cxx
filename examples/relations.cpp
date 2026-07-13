@@ -12,8 +12,7 @@ struct Author
     std::string name;
     orm::OneToMany<Book> books;
 
-    inline static const auto relations =
-        orm::relations(orm::oneToMany("books").mappedBy("author"));
+    inline static const auto relations = orm::relations(orm::oneToMany("books").mappedBy("author"));
 };
 
 struct Book
@@ -31,12 +30,8 @@ struct User
     std::string name;
     orm::ManyToMany<Role> roles;
 
-    inline static const auto relations =
-        orm::relations(
-            orm::manyToMany("roles")
-                .through("user_roles")
-                .ownerColumns({"user_id"})
-                .targetColumns({"role_id"}));
+    inline static const auto relations = orm::relations(
+        orm::manyToMany("roles").through("user_roles").ownerColumns({"user_id"}).targetColumns({"role_id"}));
 };
 
 struct Role
@@ -45,11 +40,10 @@ struct Role
     std::string name;
     orm::ManyToMany<User> users;
 
-    inline static const auto relations =
-        orm::relations(orm::manyToMany("users").mappedBy("roles"));
+    inline static const auto relations = orm::relations(orm::manyToMany("users").mappedBy("roles"));
 };
 
-int main()
+int main() // NOLINT(bugprone-exception-escape)
 {
     using namespace orm::query;
 
@@ -84,17 +78,15 @@ int main()
     const std::size_t assignedRoles = database.link(user, "roles", role);
 
     orm::Query<Author> authorQuery;
-    authorQuery.include("books")
-        .where(any("books", col("title").like("Kind%")));
+    authorQuery.include("books").where(any("books", col("title").like("Kind%")));
     const auto authors = database.select(authorQuery);
 
     orm::Query<User> userQuery;
     userQuery.include("roles").where(exists("roles"));
     const auto users = database.select(userQuery);
 
-    return assignedBooks == 1 && assignedRoles == 1 && !authors.empty() &&
-                   authors.front().books.isLoaded() && !users.empty() &&
-                   users.front().roles.isLoaded()
-               ? 0
-               : 1;
+    return assignedBooks == 1 && assignedRoles == 1 && !authors.empty() && authors.front().books.isLoaded() &&
+                   !users.empty() && users.front().roles.isLoaded() ?
+               0 :
+               1;
 }

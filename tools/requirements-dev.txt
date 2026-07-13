@@ -1,0 +1,4 @@
+# Keep this version aligned with the formatter installed by the quality workflow
+# and the development container.
+cmakelang==0.6.13
+PyYAML==6.0.2

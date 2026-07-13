@@ -32,8 +32,7 @@ TEST_P(WriteOperationsTest, updateSingleRow_shouldChangeOnlyMatchingRow)
 TEST_P(WriteOperationsTest, updateMultipleRows_shouldReturnAffectedRows)
 {
     createTable<models::SomeDataModel>();
-    database.insert(
-        std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
+    database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
 
     orm::Update<models::SomeDataModel> update;
     update.set(col("field2"), "updated").where(col("field1") >= 2);

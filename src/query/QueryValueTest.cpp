@@ -1,7 +1,6 @@
 #include "orm-cxx/query/QueryValue.hpp"
 
 #include <gtest/gtest.h>
-
 #include <string>
 #include <string_view>
 #include <variant>

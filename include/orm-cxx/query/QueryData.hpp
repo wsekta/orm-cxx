@@ -4,23 +4,23 @@
 #include <string>
 #include <vector>
 
+#include "Aggregate.hpp"
 #include "OrderBy.hpp"
 #include "orm-cxx/model/ModelInfo.hpp"
 #include "Predicate.hpp"
-#include "Aggregate.hpp"
 #include "Projection.hpp"
 
 namespace orm::query
 {
 struct QueryData
 {
-    const model::ModelInfo& modelInfo;                 /**< The model info for the query. */
-    std::optional<std::size_t> offset = std::nullopt;  /**< The optional OFFSET value for the query. */
-    std::optional<std::size_t> limit = std::nullopt;   /**< The optional LIMIT value for the query. */
-    std::optional<Predicate> predicate = std::nullopt; /**< The optional WHERE predicate tree. */
-    std::vector<OrderBy> orderBy;                      /**< ORDER BY clauses. */
-    std::vector<Projection> projections;               /**< Partial-result projections. */
-    std::vector<Column> groupBy;                       /**< GROUP BY columns. */
+    const model::ModelInfo& modelInfo;                       /**< The model info for the query. */
+    std::optional<std::size_t> offset = std::nullopt;        /**< The optional OFFSET value for the query. */
+    std::optional<std::size_t> limit = std::nullopt;         /**< The optional LIMIT value for the query. */
+    std::optional<Predicate> predicate = std::nullopt;       /**< The optional WHERE predicate tree. */
+    std::vector<OrderBy> orderBy;                            /**< ORDER BY clauses. */
+    std::vector<Projection> projections;                     /**< Partial-result projections. */
+    std::vector<Column> groupBy;                             /**< GROUP BY columns. */
     std::optional<AggregatePredicate> having = std::nullopt; /**< The optional HAVING predicate tree. */
     std::vector<std::string> includes;                       /**< Explicit collection relations to hydrate. */
     bool isDistinct = false; /**< The flag that indicates if SELECT DISTINCT should be used. */

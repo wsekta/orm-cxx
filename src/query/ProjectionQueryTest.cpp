@@ -1,13 +1,11 @@
-#include "orm-cxx/projection_query.hpp"
-
 #include <gtest/gtest.h>
-
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <variant>
 #include <vector>
 
+#include "orm-cxx/projection_query.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
 
@@ -72,10 +70,8 @@ TEST(ProjectionQueryTest, shouldCreateAggregateProjectionAlias)
 TEST(ProjectionQueryTest, shouldCreateAggregateExpressions)
 {
     const auto aggregates = std::vector<std::pair<AggregateExpression, AggregateFunction>>{
-        {count(col("field1")), AggregateFunction::Count},
-        {sum(col("field1")), AggregateFunction::Sum},
-        {avg(col("field1")), AggregateFunction::Avg},
-        {min(col("field1")), AggregateFunction::Min},
+        {count(col("field1")), AggregateFunction::Count}, {sum(col("field1")), AggregateFunction::Sum},
+        {avg(col("field1")), AggregateFunction::Avg},     {min(col("field1")), AggregateFunction::Min},
         {max(col("field1")), AggregateFunction::Max},
     };
 
@@ -110,10 +106,8 @@ TEST(ProjectionQueryTest, shouldIdentifySupportedProjectionResultTypes)
     }
 
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
-        orm::model::ColumnType::Unknown,
-        orm::model::ColumnType::OneToOne,
-        static_cast<orm::model::ColumnType>(999),
+        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
     for (const auto type : unsupportedTypes)

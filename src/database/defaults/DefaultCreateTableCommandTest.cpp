@@ -52,12 +52,11 @@ const std::string createTableSqlWithReferringToCompositeIdModel =
     "\tFOREIGN KEY (field3_field1, field3_field2) REFERENCES models_ModelWithOverwrittenId (field1, field2)\n"
     ");";
 
-const std::string createTableSqlWithAutoIncrementId =
-    "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementId (\n"
-    "\tid INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-    "\tfield1 INTEGER NOT NULL,\n"
-    "\tfield2 TEXT NOT NULL\n"
-    ");";
+const std::string createTableSqlWithAutoIncrementId = "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementId (\n"
+                                                      "\tid INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+                                                      "\tfield1 INTEGER NOT NULL,\n"
+                                                      "\tfield2 TEXT NOT NULL\n"
+                                                      ");";
 
 const std::string createTableSqlWithMappedAutoIncrementId =
     "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementIdAndNamesMapping (\n"
