@@ -1,11 +1,11 @@
 #include "DefaultDropTableCommand.hpp"
 
-#include <format>
-
 namespace orm::db::commands
 {
+DefaultDropTableCommand::DefaultDropTableCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+
 auto DefaultDropTableCommand::dropTable(const model::ModelInfo& modelInfo) const -> std::string
 {
-    return std::format("DROP TABLE IF EXISTS {};", modelInfo.tableName);
+    return dialect.renderDropTable(modelInfo.tableName, true);
 }
 } // namespace orm::db::commands

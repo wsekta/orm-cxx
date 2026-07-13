@@ -1,15 +1,16 @@
 # Database
 
 1. [Connect](#connect)
-2. [Create table](#create-table)
-3. [Delete table](#delete-table)
-4. [Create and delete relation tables](#create-and-delete-relation-tables)
-5. [Insert objects](#insert-objects)
-6. [Link and unlink relations](#link-and-unlink-relations)
-7. [Query objects](#query-objects)
-8. [Update objects](#update-objects)
-9. [Remove objects](#remove-objects)
-10. [Transactions](#transactions)
+2. [Capabilities and errors](#capabilities-and-errors)
+3. [Create table](#create-table)
+4. [Delete table](#delete-table)
+5. [Create and delete relation tables](#create-and-delete-relation-tables)
+6. [Insert objects](#insert-objects)
+7. [Link and unlink relations](#link-and-unlink-relations)
+8. [Query objects](#query-objects)
+9. [Update objects](#update-objects)
+10. [Remove objects](#remove-objects)
+11. [Transactions](#transactions)
 
 ## Connect
 
@@ -20,9 +21,34 @@ orm::Database database;
 database.connect("sqlite3://test.db");
 ```
 
+Automatic selection requires exactly one registered backend to accept the
+connection string. Select a known backend explicitly when desired:
+
+```cpp
+database.connect(orm::db::BackendType::Sqlite, "sqlite3://test.db");
+```
+
+Use `isConnected()` and `getBackendType()` to inspect lifecycle state. Calling
+`disconnect()` rolls back an active transaction before closing the session; the
+same `Database` object can then connect again. A `Database` is intentionally
+neither copyable nor movable because an active transaction is tied to its SOCI
+session.
+
 SQLite connections automatically enable `PRAGMA foreign_keys=ON`. Foreign-key
 violations therefore fail immediately, and deleting a many-to-many endpoint
 removes its junction rows through the generated `ON DELETE CASCADE` rules.
+
+## Capabilities and errors
+
+`getBackendCapabilities()` returns the selected backend's centralized schema,
+query, mutation, relation, type, value-limit, and transaction feature profile.
+Unsupported optional behavior is rejected before SQL execution with
+`DatabaseErrorCode::UnsupportedFeature`.
+
+Operations crossing the backend boundary throw `orm::DatabaseError`. Inspect
+`getCode()`, `getBackendType()`, `getOperation()`, and the optional
+`getNativeCode()` instead of parsing vendor message text. Diagnostics are
+sanitized and do not contain connection strings or bound values.
 
 ## Create table
 

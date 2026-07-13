@@ -2,9 +2,9 @@
 
 #include <gtest/gtest.h>
 
-#include "../sqlite/SqliteTypeTranslator.hpp"
 #include "orm-cxx/model.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/utils/SqlDialectTestDoubles.hpp"
 
 namespace
 {
@@ -78,9 +78,8 @@ const std::string createTableSqlWithReferringToAutoIncrementModel =
 class DefaultCreateTableCommandTest : public ::testing::Test
 {
 public:
-    std::shared_ptr<orm::db::TypeTranslator> typeTranslator = std::make_shared<orm::db::sqlite::SqliteTypeTranslator>();
-
-    orm::db::commands::DefaultCreateTableCommand command{typeTranslator};
+    orm::tests::SnapshotSqliteDialect dialect;
+    orm::db::commands::DefaultCreateTableCommand command{dialect};
 
     orm::Model<models::ModelWithFloat> model;
 };
@@ -137,4 +136,18 @@ TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToAutoIncrementMod
     orm::Model<models::ModelRelatedToAutoIncrementModel> model;
 
     EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToAutoIncrementModel);
+}
+
+TEST(DefaultCreateTableCommandDialectTest, delegatesDdlTypesAutoincrementAndIdentifiersToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultCreateTableCommand command{dialect};
+    const orm::Model<models::ModelWithAutoIncrementId> model;
+
+    EXPECT_EQ(command.createTable(model.getModelInfo()),
+              "CREATE_PORTABLE_IF_ABSENT [models_ModelWithAutoIncrementId] (\n"
+              "\tPORTABLE_AUTO [id],\n"
+              "\t[field1] PORTABLE_TYPE NOT NULL,\n"
+              "\t[field2] PORTABLE_TYPE NOT NULL\n"
+              ");");
 }

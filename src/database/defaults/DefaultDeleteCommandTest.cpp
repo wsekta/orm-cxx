@@ -8,6 +8,7 @@
 #include "orm-cxx/model.hpp"
 #include "orm-cxx/query.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/utils/SqlDialectTestDoubles.hpp"
 
 using namespace orm::query;
 
@@ -23,7 +24,8 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 class DefaultDeleteCommandTest : public ::testing::Test
 {
 public:
-    orm::db::commands::DefaultDeleteCommand command;
+    orm::tests::SnapshotSqliteDialect dialect;
+    orm::db::commands::DefaultDeleteCommand command{dialect};
 };
 
 TEST_F(DefaultDeleteCommandTest, removeWithComparisonPredicate)
@@ -36,6 +38,17 @@ TEST_F(DefaultDeleteCommandTest, removeWithComparisonPredicate)
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(statement.parameters[0].name, "orm_p0");
     EXPECT_EQ(getValue<int>(statement.parameters[0]), 5);
+}
+
+TEST(DefaultDeleteCommandDialectTest, delegatesIdentifiersAndAutomaticBindMarkersToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultDeleteCommand command{dialect};
+    const orm::Model<models::ModelWithFloat> model;
+
+    const auto statement = command.remove(model.getModelInfo(), col("field1") == 5);
+
+    EXPECT_EQ(statement.sql, "DELETE FROM [models_ModelWithFloat] WHERE [models_ModelWithFloat].[field1] = $orm_p0;");
 }
 
 TEST_F(DefaultDeleteCommandTest, removeWithMappedFieldName)

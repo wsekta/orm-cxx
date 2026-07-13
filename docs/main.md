@@ -13,3 +13,6 @@
 2. [Collection relations](relations.md)
 3. [Query](query.md)
 4. [Database](database.md)
+5. [Backends](backends.md)
+6. [Backend portability](backend-portability.md)
+7. [Backend extension contract](backend-extension.md)

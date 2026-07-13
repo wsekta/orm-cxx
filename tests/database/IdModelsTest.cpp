@@ -22,6 +22,7 @@ TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithId_value
     auto models = std::vector<models::ModelWithId>{{1, 1, ""}, {2, 2, ""}};
     database.insert(models);
     orm::Query<models::ModelWithId> queryForIdModel;
+    queryForIdModel.orderBy(asc(col("id")));
     auto returnedModels = database.select(queryForIdModel);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -38,6 +39,7 @@ TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valu
     auto models = std::vector<models::ModelWithIdAndNamesMapping>{{1, 1, "test"}, {2, 2, "test2"}};
     database.insert(models);
     orm::Query<models::ModelWithIdAndNamesMapping> queryForNamesMapping;
+    queryForNamesMapping.orderBy(asc(col("id")));
     auto returnedModels = database.select(queryForNamesMapping);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -60,10 +62,11 @@ TEST_P(IdModelsTest, shouldGenerateAutoIncrementIdsOnInsert)
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 2);
-    EXPECT_EQ(returnedModels[0].id, 1);
+    EXPECT_NE(returnedModels[0].id, 0);
     EXPECT_EQ(returnedModels[0].field1, 10);
     EXPECT_EQ(returnedModels[0].field2, "first");
-    EXPECT_EQ(returnedModels[1].id, 2);
+    EXPECT_NE(returnedModels[1].id, 0);
+    EXPECT_LT(returnedModels[0].id, returnedModels[1].id);
     EXPECT_EQ(returnedModels[1].field1, 20);
     EXPECT_EQ(returnedModels[1].field2, "second");
 }
@@ -117,4 +120,4 @@ TEST_P(IdModelsTest, shouldUseGeneratedAutoIncrementIdInRelatedModel)
     EXPECT_EQ(returnedModels[0].field3.field2, generatedModels[1].field2);
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, IdModelsTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, IdModelsTest, backendTestConfigs, backendTestName);

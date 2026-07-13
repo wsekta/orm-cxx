@@ -6,6 +6,8 @@
 #include <type_traits>
 
 #include "BindingConcepts.hpp"
+#include "ConversionError.hpp"
+#include "NumericConversion.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/type-conversion.h"
@@ -29,24 +31,54 @@ struct ObjectFieldFromProjectionValues
 {
     static auto get(ResultField* /*field*/, const std::string& fieldName, const soci::values& /*values*/) -> void
     {
-        throw std::invalid_argument{"Unsupported projection result field type: " + fieldName};
+        throw ConversionError{"Unsupported projection result field type: " + fieldName};
     }
 };
 
 template <typename ResultField>
-auto parseNumericProjectionValue(const std::string& value) -> ResultField
+auto parseNumericProjectionValue(const std::string& value, const std::string& fieldName) -> ResultField
 {
+    std::size_t parsedCharacters{};
+
     if constexpr (std::is_floating_point_v<ResultField>)
     {
-        return static_cast<ResultField>(std::stod(value));
+        const auto parsed = std::stod(value, &parsedCharacters);
+
+        if (parsedCharacters != value.size())
+        {
+            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
+        }
+
+        return checkedNumericCast<ResultField>(parsed, fieldName);
     }
     else if constexpr (std::is_unsigned_v<ResultField>)
     {
-        return static_cast<ResultField>(std::stoull(value));
+        const auto firstNonWhitespace = value.find_first_not_of(" \f\n\r\t\v");
+
+        if (firstNonWhitespace != std::string::npos and value[firstNonWhitespace] == '-')
+        {
+            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
+        }
+
+        const auto parsed = std::stoull(value, &parsedCharacters);
+
+        if (parsedCharacters != value.size())
+        {
+            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
+        }
+
+        return checkedNumericCast<ResultField>(parsed, fieldName);
     }
     else
     {
-        return static_cast<ResultField>(std::stoll(value));
+        const auto parsed = std::stoll(value, &parsedCharacters);
+
+        if (parsedCharacters != value.size())
+        {
+            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
+        }
+
+        return checkedNumericCast<ResultField>(parsed, fieldName);
     }
 }
 
@@ -55,9 +87,13 @@ auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldNa
 {
     try
     {
-        *field = static_cast<ResultField>(values.get<StoredField>(fieldName));
+        *field = checkedNumericCast<ResultField>(values.get<StoredField>(fieldName), fieldName);
 
         return true;
+    }
+    catch (const ConversionError&)
+    {
+        throw;
     }
     catch (const std::exception&)
     {
@@ -79,11 +115,11 @@ auto getNumericProjectionValue(ResultField* field, const std::string& fieldName,
 
     try
     {
-        *field = parseNumericProjectionValue<ResultField>(values.get<std::string>(fieldName));
+        *field = parseNumericProjectionValue<ResultField>(values.get<std::string>(fieldName), fieldName);
     }
     catch (const std::exception&)
     {
-        throw std::invalid_argument{"Cannot hydrate numeric projection result field: " + fieldName};
+        throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
     }
 }
 
@@ -127,7 +163,7 @@ struct ObjectFieldFromProjectionValuesWithCast
     {
         SociType value{};
         getNumericProjectionValue(&value, fieldName, values);
-        *field = static_cast<ResultField>(value);
+        *field = checkedNumericCast<ResultField>(value, fieldName);
     }
 };
 
@@ -138,6 +174,11 @@ struct ObjectFieldFromProjectionValues<ResultField> : ObjectFieldFromProjectionV
 
 template <SociConvertableToInt ResultField>
 struct ObjectFieldFromProjectionValues<ResultField> : ObjectFieldFromProjectionValuesWithCast<ResultField, int>
+{
+};
+
+template <SociConvertableToLongLong ResultField>
+struct ObjectFieldFromProjectionValues<ResultField> : ObjectFieldFromProjectionValuesWithCast<ResultField, long long>
 {
 };
 

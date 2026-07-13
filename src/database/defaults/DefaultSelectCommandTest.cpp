@@ -7,8 +7,10 @@
 
 #include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/query.hpp"
+#include "tests/CollectionModelsDefinitions.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
+#include "tests/utils/SqlDialectTestDoubles.hpp"
 
 using namespace orm::query;
 
@@ -27,7 +29,7 @@ const std::string selectSqlWithLimit = "SELECT models_ModelWithFloat.field1 AS m
 const std::string selectSqlWithOffset = "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
                                         "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
                                         "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
-                                        "FROM models_ModelWithFloat OFFSET 10;";
+                                        "FROM models_ModelWithFloat LIMIT -1 OFFSET 10;";
 
 const std::string selectSqlWithLimitAndOffset = "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
                                                 "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
@@ -133,7 +135,8 @@ using namespace projection_select_command_test_models;
 class DefaultSelectCommandTest : public ::testing::Test
 {
 public:
-    orm::db::commands::DefaultSelectCommand command;
+    orm::tests::SnapshotSqliteDialect dialect;
+    orm::db::commands::DefaultSelectCommand command{dialect};
 };
 
 TEST_F(DefaultSelectCommandTest, select)
@@ -141,6 +144,23 @@ TEST_F(DefaultSelectCommandTest, select)
     orm::Query<models::ModelWithFloat> query;
 
     EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSql);
+}
+
+TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBindMarkersToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::Query<models::ModelWithFloat> query;
+    query.where(col("field1") == 5);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql, "SELECT [models_ModelWithFloat].[field1] AS [models_ModelWithFloat_field1], "
+                             "[models_ModelWithFloat].[field2] AS [models_ModelWithFloat_field2], "
+                             "[models_ModelWithFloat].[field3] AS [models_ModelWithFloat_field3] "
+                             "FROM [models_ModelWithFloat] WHERE [models_ModelWithFloat].[field1] = $orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(statement.parameters[0].name, "orm_p0");
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLimit)
@@ -847,4 +867,53 @@ TEST_F(DefaultSelectCommandTest, selectWithInvalidRawParameterName_shouldThrow)
 
         EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
     }
+}
+
+TEST_F(DefaultSelectCommandTest, manuallyConstructedEmptyListPredicatesRenderPortableConstants)
+{
+    const auto emptyIn = Predicate{PredicateNode{ListExpression{
+        .column = col("field1"),
+        .listOperator = ListOperator::In,
+        .values = {},
+    }}};
+    const auto emptyNotIn = Predicate{PredicateNode{ListExpression{
+        .column = col("field1"),
+        .listOperator = ListOperator::NotIn,
+        .values = {},
+    }}};
+    orm::Query<models::ModelWithFloat> query;
+    query.where(emptyIn && emptyNotIn);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_NE(statement.sql.find("WHERE ((1 = 0) AND (1 = 1))"), std::string::npos);
+    EXPECT_TRUE(statement.parameters.empty());
+}
+
+TEST_F(DefaultSelectCommandTest, collectionPredicateAliasesDoNotShadowOuterCorrelationAlias)
+{
+    auto context = orm::db::commands::RenderContext{
+        .modelInfo = orm::Model<collection_models::User>::getModelInfo(),
+        .dialect = dialect,
+        .tableAlias = "orm_relation_target",
+    };
+
+    const auto sql = orm::db::commands::renderWhere(any("roles", col("name") == "admin"), context);
+
+    EXPECT_NE(sql.find("collection_roles AS orm_relation_target_1"), std::string::npos);
+    EXPECT_NE(sql.find("orm_relation_junction.user_id = orm_relation_target.id"), std::string::npos);
+}
+
+TEST_F(DefaultSelectCommandTest, collectionPredicateJunctionAliasDoesNotShadowOuterCorrelationAlias)
+{
+    auto context = orm::db::commands::RenderContext{
+        .modelInfo = orm::Model<collection_models::User>::getModelInfo(),
+        .dialect = dialect,
+        .tableAlias = "orm_relation_junction",
+    };
+
+    const auto sql = orm::db::commands::renderWhere(exists("roles"), context);
+
+    EXPECT_NE(sql.find("collection_user_roles AS orm_relation_junction_1"), std::string::npos);
+    EXPECT_NE(sql.find("orm_relation_junction_1.user_id = orm_relation_junction.id"), std::string::npos);
 }

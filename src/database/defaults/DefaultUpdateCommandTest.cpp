@@ -9,6 +9,7 @@
 #include "orm-cxx/update.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/FakeDatabase.hpp"
+#include "tests/utils/SqlDialectTestDoubles.hpp"
 
 using namespace orm::query;
 
@@ -24,7 +25,8 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 class DefaultUpdateCommandTest : public ::testing::Test
 {
 public:
-    orm::db::commands::DefaultUpdateCommand command;
+    orm::tests::SnapshotSqliteDialect dialect;
+    orm::db::commands::DefaultUpdateCommand command{dialect};
 };
 
 TEST_F(DefaultUpdateCommandTest, updateWithComparisonPredicate)
@@ -59,6 +61,21 @@ TEST_F(DefaultUpdateCommandTest, updateWithNullAssignment)
     EXPECT_FALSE(statement.parameters[0].value.has_value());
     EXPECT_EQ(statement.parameters[0].nullType, orm::model::ColumnType::Int);
     EXPECT_EQ(getValue<std::string>(statement.parameters[1]), "target");
+}
+
+TEST(DefaultUpdateCommandDialectTest, delegatesIdentifiersAndPresentAndNullBindMarkersToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultUpdateCommand command{dialect};
+    orm::Update<models::ModelWithOptional> update;
+    update.set(col("field1"), std::nullopt).set(col("field2"), "updated").where(col("field3") >= 1.0);
+
+    const auto statement = command.update(orm::Database::getUpdateData(update));
+
+    EXPECT_EQ(statement.sql, "UPDATE [models_ModelWithOptional] SET [field1] = $orm_p0, [field2] = $orm_p1 "
+                             "WHERE [models_ModelWithOptional].[field3] >= $orm_p2;");
+    ASSERT_EQ(statement.parameters.size(), 3);
+    EXPECT_FALSE(statement.parameters[0].value.has_value());
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithNullAssignmentToNotNullColumn_shouldThrow)

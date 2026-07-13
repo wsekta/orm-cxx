@@ -16,7 +16,7 @@ TEST_P(QueryLanguageTest, whereWithComparisonAndLike_shouldFilterRows)
     database.insert(std::vector<models::SomeDataModel>{{1, "miss", 1.0}, {2, "match-one", 2.0}, {3, "match-two", 3.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field1") >= 2 && col("field2").like("match%"));
+    query.where(col("field1") >= 2 && col("field2").like("match%")).orderBy(asc(col("field1")));
 
     const auto returnedModels = database.select(query);
 
@@ -69,6 +69,21 @@ TEST_P(QueryLanguageTest, orderByWithLimitAndOffset_shouldReturnExpectedPage)
 
     ASSERT_EQ(returnedModels.size(), 1);
     EXPECT_EQ(returnedModels[0].field1, 2);
+}
+
+TEST_P(QueryLanguageTest, orderByWithOffsetOnly_shouldReturnRemainingRows)
+{
+    createTable<models::SomeDataModel>();
+    database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
+
+    orm::Query<models::SomeDataModel> query;
+    query.orderBy(asc(col("field1"))).offset(1);
+
+    const auto returnedModels = database.select(query);
+
+    ASSERT_EQ(returnedModels.size(), 2);
+    EXPECT_EQ(returnedModels[0].field1, 2);
+    EXPECT_EQ(returnedModels[1].field1, 3);
 }
 
 TEST_P(QueryLanguageTest, whereWithRelatedFieldPath_shouldFilterJoinedRows)
@@ -158,4 +173,4 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
     EXPECT_EQ(returnedModels[0].field3.field2, "group-a");
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, QueryLanguageTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, QueryLanguageTest, backendTestConfigs, backendTestName);

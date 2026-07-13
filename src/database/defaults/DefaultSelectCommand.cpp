@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "orm-cxx/utils/StringUtils.hpp"
+#include "SqlAliases.hpp"
 
 using orm::utils::removeLastComma;
 
@@ -86,25 +87,31 @@ Overloaded(Ts...) -> Overloaded<Ts...>;
 
 namespace orm::db::commands
 {
+DefaultSelectCommand::DefaultSelectCommand(const SqlDialect& dialect) : dialect{dialect} {}
+
 auto DefaultSelectCommand::select(const query::QueryData& queryData) const -> SelectStatement
 {
     RenderContext context{
         .modelInfo = queryData.modelInfo,
+        .dialect = dialect,
         .shouldJoin = queryData.shouldJoin,
         .columnRenderMode = ColumnRenderMode::Select,
     };
     const auto selectFields = getSelectFields(queryData, context);
-    const auto joins = getJoins(queryData.shouldJoin, queryData.modelInfo);
+    const auto joins = getJoins(queryData.shouldJoin, queryData.modelInfo, dialect);
     const auto where = renderWhere(queryData.predicate, context);
     const auto groupBy = getGroupBy(queryData, context);
     const auto having = getHaving(queryData.having, context);
     const auto orderBy = getOrderBy(queryData, context);
-    const auto limit = getLimit(queryData.limit);
-    const auto offset = getOffset(queryData.offset);
+    const auto pagination = dialect.renderPagination(PaginationSpec{
+        .limit = queryData.limit,
+        .offset = queryData.offset,
+        .hasOrderBy = not queryData.orderBy.empty(),
+    });
 
-    const auto sql =
-        std::format("{} {} FROM {}{}{}{}{}{}{}{};", queryData.isDistinct ? "SELECT DISTINCT" : "SELECT", selectFields,
-                    queryData.modelInfo.tableName, joins, where, groupBy, having, orderBy, limit, offset);
+    const auto sql = std::format("{} {} FROM {}{}{}{}{}{}{};", queryData.isDistinct ? "SELECT DISTINCT" : "SELECT",
+                                 selectFields, dialect.quoteIdentifier(queryData.modelInfo.tableName), joins, where,
+                                 groupBy, having, orderBy, pagination);
 
     return SelectStatement{.sql = sql, .parameters = std::move(context.parameters)};
 }
@@ -113,13 +120,14 @@ auto DefaultSelectCommand::getSelectFields(const query::QueryData& queryData, Re
 {
     if (queryData.projections.empty())
     {
-        return getFullModelSelectFields(queryData.shouldJoin, queryData.modelInfo);
+        return getFullModelSelectFields(queryData.shouldJoin, queryData.modelInfo, context.dialect);
     }
 
     return getProjectionSelectFields(queryData.projections, context);
 }
 
-auto DefaultSelectCommand::getFullModelSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string
+auto DefaultSelectCommand::getFullModelSelectFields(bool shouldJoin, const model::ModelInfo& modelInfo,
+                                                    const SqlDialect& dialect) -> std::string
 {
     std::string selectFields;
 
@@ -127,12 +135,14 @@ auto DefaultSelectCommand::getFullModelSelectFields(bool shouldJoin, const model
     {
         if (columnInfo.isForeignModel)
         {
-            selectFields += getForeignModelSelectFields(shouldJoin, columnInfo.name,
-                                                        modelInfo.foreignModelsInfo.at(columnInfo.name), modelInfo);
+            selectFields += getForeignModelSelectFields(
+                shouldJoin, columnInfo.name, modelInfo.foreignModelsInfo.at(columnInfo.name), modelInfo, dialect);
         }
         else
         {
-            selectFields += std::format("{0:}.{1:} AS {0:}_{1:}, ", modelInfo.tableName, columnInfo.name);
+            selectFields +=
+                std::format("{} AS {}, ", aliases::qualifiedIdentifier(dialect, modelInfo.tableName, columnInfo.name),
+                            dialect.quoteIdentifier(aliases::modelColumn(modelInfo.tableName, columnInfo.name)));
         }
     }
 
@@ -149,15 +159,15 @@ auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Pr
 
     for (const auto& projection : projections)
     {
-        selectFields.push_back(
-            std::format("{} AS {}", renderProjectionSource(projection.source, context), projection.resultField));
+        selectFields.push_back(std::format("{} AS {}", renderProjectionSource(projection.source, context),
+                                           context.dialect.quoteIdentifier(projection.resultField)));
     }
 
     return join(selectFields, ", ");
 }
 
-auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source,
-                                                  RenderContext& context) -> std::string
+auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source, RenderContext& context)
+    -> std::string
 {
     return std::visit(Overloaded{[&context](const query::Column& column) { return renderColumn(column, context); },
                                  [&context](const query::AggregateExpression& aggregate)
@@ -165,8 +175,8 @@ auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource&
                       source);
 }
 
-auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate,
-                                           RenderContext& context) -> std::string
+auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate, RenderContext& context)
+    -> std::string
 {
     const auto functionName = aggregateFunctionToSql(aggregate.function);
 
@@ -185,7 +195,8 @@ auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& agg
 
 auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const std::string& foreignModelFieldName,
                                                        const model::ModelInfo& foreignModelInfo,
-                                                       const model::ModelInfo& modelInfo) -> std::string
+                                                       const model::ModelInfo& modelInfo, const SqlDialect& dialect)
+    -> std::string
 {
 
     std::string selectFields;
@@ -193,7 +204,9 @@ auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const st
     {
         for (const auto& columnInfo : foreignModelInfo.columnsInfo)
         {
-            selectFields += std::format("{0:}.{1:} AS {0:}_{1:}, ", foreignModelFieldName, columnInfo.name);
+            selectFields += std::format(
+                "{} AS {}, ", aliases::qualifiedIdentifier(dialect, foreignModelFieldName, columnInfo.name),
+                dialect.quoteIdentifier(aliases::joinedRelationColumn(foreignModelFieldName, columnInfo.name)));
         }
     }
     else
@@ -202,8 +215,12 @@ auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const st
         {
             if (columnInfo.isPrimaryKey)
             {
-                selectFields += std::format("{2:}.{0:}_{1:} AS {2:}_{0:}_{1:}, ", foreignModelFieldName,
-                                            columnInfo.name, modelInfo.tableName);
+                selectFields += std::format(
+                    "{} AS {}, ",
+                    aliases::qualifiedIdentifier(dialect, modelInfo.tableName,
+                                                 aliases::joinedRelationColumn(foreignModelFieldName, columnInfo.name)),
+                    dialect.quoteIdentifier(
+                        aliases::unjoinedRelationColumn(modelInfo.tableName, foreignModelFieldName, columnInfo.name)));
             }
         }
     }
@@ -211,7 +228,8 @@ auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const st
     return selectFields;
 }
 
-auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& modelInfo) -> std::string
+auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& modelInfo, const SqlDialect& dialect)
+    -> std::string
 {
     if (not shouldJoin)
     {
@@ -234,13 +252,16 @@ auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& mod
         {
             if (foreignColumnInfo.isPrimaryKey)
             {
-                joinPredicates.push_back(std::format("{0:}.{1:} = {2:}.{3:}_{1:}", columnInfo.name,
-                                                     foreignColumnInfo.name, modelInfo.tableName, columnInfo.name));
+                joinPredicates.push_back(std::format(
+                    "{} = {}", aliases::qualifiedIdentifier(dialect, columnInfo.name, foreignColumnInfo.name),
+                    aliases::qualifiedIdentifier(
+                        dialect, modelInfo.tableName,
+                        aliases::joinedRelationColumn(columnInfo.name, foreignColumnInfo.name))));
             }
         }
 
-        joins += std::format(" LEFT JOIN {0:} AS {1:} ON {2:} ", foreignModelInfo.tableName, columnInfo.name,
-                             join(joinPredicates, " AND "));
+        joins += std::format(" LEFT JOIN {} AS {} ON {} ", dialect.quoteIdentifier(foreignModelInfo.tableName),
+                             dialect.quoteIdentifier(columnInfo.name), join(joinPredicates, " AND "));
     }
 
     if (not joins.empty())
@@ -269,8 +290,8 @@ auto DefaultSelectCommand::getGroupBy(const query::QueryData& queryData, RenderC
     return " GROUP BY " + join(groupByClauses, ", ");
 }
 
-auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having,
-                                     RenderContext& context) -> std::string
+auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having, RenderContext& context)
+    -> std::string
 {
     if (not having.has_value())
     {
@@ -286,8 +307,8 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
     return renderAggregatePredicate(*node, context);
 }
 
-auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node,
-                                                    RenderContext& context) -> std::string
+auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node, RenderContext& context)
+    -> std::string
 {
     return std::visit(
         Overloaded{[&context](const query::AggregateComparisonExpression& expression)
@@ -310,26 +331,6 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
                    [&context](const query::AggregateNotExpression& expression)
                    { return std::format("(NOT ({}))", renderAggregatePredicate(expression.predicate, context)); }},
         node.expression);
-}
-
-auto DefaultSelectCommand::getOffset(const std::optional<std::size_t>& offset) -> std::string
-{
-    if (offset.has_value())
-    {
-        return std::format(" OFFSET {}", offset.value());
-    }
-
-    return {};
-}
-
-auto DefaultSelectCommand::getLimit(const std::optional<std::size_t>& limit) -> std::string
-{
-    if (limit.has_value())
-    {
-        return std::format(" LIMIT {}", limit.value());
-    }
-
-    return {};
 }
 
 auto DefaultSelectCommand::getOrderBy(const query::QueryData& queryData, RenderContext& context) -> std::string

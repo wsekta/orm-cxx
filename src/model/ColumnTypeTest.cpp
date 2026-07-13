@@ -197,28 +197,34 @@ TEST(ColumnTypeTests, shouldTranslateInt64)
 TEST(ColumnTypeTests, shouldTranslateLong)
 {
     auto [columnType, isNotNull] = toColumnType(longType);
-    EXPECT_EQ(columnType, ColumnType::Int);
+    const auto expectedType = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
+    EXPECT_EQ(columnType, expectedType);
     EXPECT_TRUE(isNotNull);
 }
 
 TEST(ColumnTypeTests, shouldTranslateLongInt)
 {
     auto [columnType, isNotNull] = toColumnType(longIntType);
-    EXPECT_EQ(columnType, ColumnType::Int);
+    const auto expectedType = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
+    EXPECT_EQ(columnType, expectedType);
     EXPECT_TRUE(isNotNull);
 }
 
 TEST(ColumnTypeTests, shouldTranslateUnsignedLong)
 {
     auto [columnType, isNotNull] = toColumnType(unsignedLongType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedInt);
+    const auto expectedType =
+        sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
+    EXPECT_EQ(columnType, expectedType);
     EXPECT_TRUE(isNotNull);
 }
 
 TEST(ColumnTypeTests, shouldTranslateLongUnsignedInt)
 {
     auto [columnType, isNotNull] = toColumnType(longUnsignedIntType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedInt);
+    const auto expectedType =
+        sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
+    EXPECT_EQ(columnType, expectedType);
     EXPECT_TRUE(isNotNull);
 }
 

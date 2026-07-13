@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
+#include <limits>
 #include <map>
 #include <memory>
 #include <stdexcept>
@@ -14,11 +15,16 @@
 #include <variant>
 #include <vector>
 
+#include "database/BackendCapabilities.hpp"
+#include "database/BackendRuntime.hpp"
 #include "database/BackendType.hpp"
 #include "database/binding/Binding.hpp"
 #include "database/binding/CollectionBinding.hpp"
+#include "database/binding/ConversionError.hpp"
 #include "database/binding/ProjectionBinding.hpp"
+#include "database/binding/StatementBinding.hpp"
 #include "database/CommandGeneratorFactory.hpp"
+#include "database/DatabaseError.hpp"
 #include "database/RelationStatements.hpp"
 #include "database/Statement.hpp"
 #include "projection_query.hpp"
@@ -31,68 +37,23 @@ namespace orm
 {
 namespace detail
 {
-template <typename T>
-inline auto bindTypedNullStatementParameter(soci::values& values, const std::string& name, const T& value) -> void
+inline auto bindStatementParameter(const db::BackendRuntime& runtime, soci::values& values,
+                                   const db::StatementParameter& parameter) -> void
 {
-    values.set(name, value);
-    values.set(name, value, soci::i_null);
+    runtime.bind(values, parameter.name, parameter.getBoundValue());
 }
 
-inline auto bindNullStatementParameter(soci::values& values, const db::StatementParameter& parameter) -> void
-{
-    switch (parameter.nullType)
-    {
-    case model::ColumnType::Bool:
-    case model::ColumnType::Char:
-    case model::ColumnType::UnsignedChar:
-    case model::ColumnType::Short:
-    case model::ColumnType::UnsignedShort:
-    case model::ColumnType::Int:
-        bindTypedNullStatementParameter(values, parameter.name, int{});
-        return;
-    case model::ColumnType::UnsignedInt:
-    case model::ColumnType::UnsignedLongLong:
-        bindTypedNullStatementParameter(values, parameter.name, static_cast<unsigned long long>(0));
-        return;
-    case model::ColumnType::LongLong:
-        bindTypedNullStatementParameter(values, parameter.name, static_cast<long long>(0));
-        return;
-    case model::ColumnType::Float:
-    case model::ColumnType::Double:
-        bindTypedNullStatementParameter(values, parameter.name, 0.0);
-        return;
-    case model::ColumnType::String:
-        bindTypedNullStatementParameter(values, parameter.name, std::string{});
-        return;
-    case model::ColumnType::Uuid:
-    case model::ColumnType::Unknown:
-    case model::ColumnType::OneToOne:
-        throw std::invalid_argument{"Cannot bind NULL parameter with unsupported column type"};
-    }
-
-    throw std::invalid_argument{"Cannot bind NULL parameter with unsupported column type"};
-}
-
-inline auto bindStatementParameter(soci::values& values, const db::StatementParameter& parameter) -> void
-{
-    if (parameter.value.has_value())
-    {
-        std::visit([&values, &parameter](const auto& value) { values.set(parameter.name, value); },
-                   parameter.value->get());
-        return;
-    }
-
-    bindNullStatementParameter(values, parameter);
-}
-
-inline auto bindStatementParameters(soci::values& values, const std::vector<db::StatementParameter>& parameters) -> void
+inline auto bindStatementParameters(const db::BackendRuntime& runtime, soci::values& values,
+                                    const std::vector<db::StatementParameter>& parameters) -> void
 {
     for (const auto& parameter : parameters)
     {
-        bindStatementParameter(values, parameter);
+        bindStatementParameter(runtime, values, parameter);
     }
 }
 
+auto bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
+                         const soci::values& serializedModel, const model::ModelInfo& modelInfo) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 } // namespace detail
 
@@ -116,11 +77,25 @@ public:
     Database();
 
     /**
+     * @brief Constructs a database with an application-supplied backend registry.
+     */
+    explicit Database(db::CommandGeneratorFactory factory);
+    Database(const Database&) = delete;
+    Database(Database&&) = delete;
+    auto operator=(const Database&) -> Database& = delete;
+    auto operator=(Database&&) -> Database& = delete;
+
+    /**
      * @brief Connects to a database.
      *
      * @param connectionString The connection string for the database.
      */
     auto connect(const std::string& connectionString) -> void;
+
+    /**
+     * @brief Connects using an explicitly selected registered backend.
+     */
+    auto connect(db::BackendType requestedBackend, const std::string& connectionString) -> void;
 
     /**
      * @brief Disconnects from the database.
@@ -137,38 +112,46 @@ public:
     template <typename T>
     auto select(Query<T>& query) -> std::vector<T>
     {
+        ensureQuerySupported(query.getData());
         std::vector<T> result;
+        const auto statement = getCommandGenerator().select(query.getData());
 
-        auto statement = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
-
-        soci::values parameterValues;
-
-        for (const auto& parameter : statement.parameters)
+        try
         {
-            detail::bindStatementParameter(parameterValues, parameter);
-        }
+            soci::values parameterValues;
+            detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
 
-        auto readRows = [&]<bool JoinedValues>()
-        {
-            soci::rowset<db::binding::BindingPayload<T, JoinedValues>> preparedRowSet =
-                (sql.prepare << statement.sql, soci::use(parameterValues));
-
-            for (auto& payload : preparedRowSet)
+            auto readRows = [&]<bool JoinedValues>()
             {
-                result.push_back(std::move(payload.value));
+                soci::rowset<db::binding::BindingPayload<T, JoinedValues>> preparedRowSet =
+                    (sql.prepare << statement.sql, soci::use(parameterValues));
+
+                for (auto& payload : preparedRowSet)
+                {
+                    result.push_back(std::move(payload.value));
+                }
+            };
+
+            if (query.getData().shouldJoin)
+            {
+                readRows.template operator()<true>();
             }
-        };
+            else
+            {
+                readRows.template operator()<false>();
+            }
 
-        if (query.getData().shouldJoin)
-        {
-            readRows.template operator()<true>();
+            loadIncludedCollections(query.getData(), result);
         }
-        else
+        catch (const db::binding::ConversionError&)
         {
-            readRows.template operator()<false>();
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, "select",
+                                "A database result cannot be represented by the requested model"};
         }
-
-        loadIncludedCollections(query.getData(), result);
+        catch (const soci::soci_error& error)
+        {
+            throwTranslatedError(error, DatabaseErrorCode::Statement, "select");
+        }
 
         return result;
     }
@@ -184,23 +167,31 @@ public:
     template <typename Source, typename Result>
     auto select(ProjectionQuery<Source, Result>& query) -> std::vector<Result>
     {
+        ensureQuerySupported(query.getData());
         std::vector<Result> result;
+        const auto statement = getCommandGenerator().select(query.getData());
 
-        auto statement = commandGeneratorFactory.getCommandGenerator(backendType).select(query.getData());
-
-        soci::values parameterValues;
-
-        for (const auto& parameter : statement.parameters)
+        try
         {
-            detail::bindStatementParameter(parameterValues, parameter);
+            soci::values parameterValues;
+            detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
+
+            soci::rowset<ProjectionPayload<Result>> preparedRowSet =
+                (sql.prepare << statement.sql, soci::use(parameterValues));
+
+            for (auto& payload : preparedRowSet)
+            {
+                result.push_back(std::move(payload.value));
+            }
         }
-
-        soci::rowset<ProjectionPayload<Result>> preparedRowSet =
-            (sql.prepare << statement.sql, soci::use(parameterValues));
-
-        for (auto& payload : preparedRowSet)
+        catch (const db::binding::ConversionError&)
         {
-            result.push_back(std::move(payload.value));
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, "select projection",
+                                "A database result cannot be represented by the requested projection"};
+        }
+        catch (const soci::soci_error& error)
+        {
+            throwTranslatedError(error, DatabaseErrorCode::Statement, "select projection");
         }
 
         return result;
@@ -230,13 +221,43 @@ public:
     template <typename T>
     auto insert(T object) -> void
     {
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).insert(Model<T>::getModelInfo());
+        const auto& modelInfo = Model<T>::getModelInfo();
+        ensureModelSupported(modelInfo, "insert");
+        requireCapability(getBackendCapabilities().mutations.insert, "insert", "insert is not supported");
+        const auto command = getCommandGenerator().insert(modelInfo);
 
         const Payload<T> payload{};
 
         payload.value = std::move(object);
 
-        sql << command, soci::use(payload);
+        try
+        {
+            soci::values serializedModel;
+            auto indicator = soci::i_ok;
+            soci::type_conversion<Payload<T>>::to_base(payload, serializedModel, indicator);
+
+            soci::values parameterValues;
+            const auto parameterCount =
+                detail::bindModelParameters(getBackend().runtime(), parameterValues, serializedModel, modelInfo);
+
+            if (parameterCount == 0)
+            {
+                sql << command;
+            }
+            else
+            {
+                sql << command, soci::use(parameterValues);
+            }
+        }
+        catch (const db::binding::ConversionError&)
+        {
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, "insert",
+                                "A model value cannot be represented by the selected backend"};
+        }
+        catch (const soci::soci_error& error)
+        {
+            throwTranslatedError(error, DatabaseErrorCode::Statement, "insert");
+        }
     }
 
     /**
@@ -249,9 +270,11 @@ public:
     template <typename T>
     auto update(const Update<T>& update) -> std::size_t
     {
-        const auto statement = commandGeneratorFactory.getCommandGenerator(backendType).update(update.getData());
+        ensureModelSupported(update.getData().modelInfo, "update");
+        requireCapability(getBackendCapabilities().mutations.update, "update", "update is not supported");
+        const auto statement = getCommandGenerator().update(update.getData());
 
-        return executeMutation(statement);
+        return executeMutation(statement, "update");
     }
 
     /**
@@ -265,9 +288,11 @@ public:
     auto remove(const query::Predicate& predicate) -> std::size_t
     {
         static auto modelInfo = Model<T>::getModelInfo();
-        const auto statement = commandGeneratorFactory.getCommandGenerator(backendType).remove(modelInfo, predicate);
+        ensureModelSupported(modelInfo, "remove");
+        requireCapability(getBackendCapabilities().mutations.remove, "remove", "remove is not supported");
+        const auto statement = getCommandGenerator().remove(modelInfo, predicate);
 
-        return executeMutation(statement);
+        return executeMutation(statement, "remove");
     }
 
     /**
@@ -278,11 +303,12 @@ public:
     template <typename T>
     auto createTable() -> void
     {
-        static auto modelInfo = Model<T>::getModelInfo();
-
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).createTable(modelInfo);
-
-        sql << command;
+        const auto& modelInfo = Model<T>::getModelInfo();
+        ensureModelSupported(modelInfo, "create table");
+        requireCapability(getBackendCapabilities().schema.createTableIfNotExists, "create table",
+                          "idempotent table creation is not supported");
+        const auto command = getCommandGenerator().createTable(modelInfo);
+        executeSql(command, "create table");
     }
 
     /**
@@ -293,11 +319,11 @@ public:
     template <typename T>
     auto deleteTable() -> void
     {
-        static Model<T> model;
-
-        static auto command = commandGeneratorFactory.getCommandGenerator(backendType).dropTable(model.getModelInfo());
-
-        sql << command;
+        const auto& modelInfo = Model<T>::getModelInfo();
+        requireCapability(getBackendCapabilities().schema.dropTableIfExists, "drop table",
+                          "idempotent table removal is not supported");
+        const auto command = getCommandGenerator().dropTable(modelInfo);
+        executeSql(command, "drop table");
     }
 
     /**
@@ -310,12 +336,24 @@ public:
     auto createRelationTables() -> void
     {
         const auto& modelInfo = Model<T>::getModelInfo();
+        const auto ownsJunctionTable =
+            std::ranges::any_of(modelInfo.relationsInfo,
+                                [](const auto& relation)
+                                {
+                                    return relation.kind == model::RelationKind::ManyToMany and
+                                           relation.junction.has_value() and relation.junction->owningSide;
+                                });
+
+        if (not ownsJunctionTable)
+        {
+            return;
+        }
 
         ensureRelationTableEndpointsExist(modelInfo);
 
-        for (const auto& command : db::relations::createTableStatements(modelInfo))
+        for (const auto& command : db::relations::createTableStatements(getBackend().dialect(), modelInfo))
         {
-            sql << command;
+            executeSql(command, "create relation table");
         }
     }
 
@@ -326,10 +364,27 @@ public:
     auto deleteRelationTables() -> void
     {
         const auto& modelInfo = Model<T>::getModelInfo();
+        const auto ownsJunctionTable =
+            std::ranges::any_of(modelInfo.relationsInfo,
+                                [](const auto& relation)
+                                {
+                                    return relation.kind == model::RelationKind::ManyToMany and
+                                           relation.junction.has_value() and relation.junction->owningSide;
+                                });
 
-        for (const auto& command : db::relations::dropTableStatements(modelInfo))
+        if (not ownsJunctionTable)
         {
-            sql << command;
+            return;
+        }
+
+        requireCapability(getBackendCapabilities().relations.junctionTables, "drop relation tables",
+                          "junction tables are not supported");
+        requireCapability(getBackendCapabilities().schema.dropTableIfExists, "drop relation tables",
+                          "idempotent table removal is not supported");
+
+        for (const auto& command : db::relations::dropTableStatements(getBackend().dialect(), modelInfo))
+        {
+            executeSql(command, "drop relation table");
         }
     }
 
@@ -357,13 +412,31 @@ public:
         const auto ownerKey = db::binding::getPrimaryKey(owner);
         const auto targetKey = db::binding::getPrimaryKey(target);
 
+        if (relation->kind == model::RelationKind::OneToMany)
+        {
+            requireCapability(getBackendCapabilities().relations.oneToMany, "link relation",
+                              "one-to-many relations are not supported");
+        }
+        else
+        {
+            requireCapability(getBackendCapabilities().relations.manyToMany, "link relation",
+                              "many-to-many relations are not supported");
+            requireCapability(getBackendCapabilities().mutations.atomicInsertIfAbsent, "link relation",
+                              "idempotent relation links are not supported");
+        }
+        requireCapability(relation->kind == model::RelationKind::OneToMany ? getBackendCapabilities().mutations.update :
+                                                                             getBackendCapabilities().mutations.insert,
+                          "link relation", "relation mutations are not supported");
+
         if (not relationEndpointExists(ownerInfo, ownerKey) or
             not relationEndpointExists(relation->targetModel(), targetKey))
         {
             throw std::invalid_argument{"Cannot link relation endpoints that do not exist"};
         }
 
-        return executeMutation(db::relations::linkStatement(ownerInfo, *relation, ownerKey, targetKey));
+        return executeMutation(
+            db::relations::linkStatement(getBackend().dialect(), ownerInfo, *relation, ownerKey, targetKey),
+            "link relation");
     }
 
     /**
@@ -387,8 +460,18 @@ public:
             throw std::invalid_argument{"Relation target type does not match mapping: " + std::string{relationField}};
         }
 
-        return executeMutation(db::relations::unlinkStatement(ownerInfo, *relation, db::binding::getPrimaryKey(owner),
-                                                              db::binding::getPrimaryKey(target)));
+        requireCapability(relation->kind == model::RelationKind::OneToMany ?
+                              getBackendCapabilities().relations.oneToMany :
+                              getBackendCapabilities().relations.manyToMany,
+                          "unlink relation", "the requested collection relation is not supported");
+        requireCapability(relation->kind == model::RelationKind::OneToMany ? getBackendCapabilities().mutations.update :
+                                                                             getBackendCapabilities().mutations.remove,
+                          "unlink relation", "relation mutations are not supported");
+
+        return executeMutation(db::relations::unlinkStatement(getBackend().dialect(), ownerInfo, *relation,
+                                                              db::binding::getPrimaryKey(owner),
+                                                              db::binding::getPrimaryKey(target)),
+                               "unlink relation");
     }
 
     /**
@@ -396,7 +479,18 @@ public:
      *
      * @return The backend type of the database.
      */
-    auto getBackendType() -> db::BackendType;
+    [[nodiscard]] auto getBackendType() const noexcept -> db::BackendType;
+
+    /**
+     * @brief Returns whether a backend session is currently open.
+     */
+    [[nodiscard]] auto isConnected() const noexcept -> bool;
+
+    /**
+     * @brief Returns the capabilities advertised by the connected backend.
+     * @throws DatabaseError when no backend is connected.
+     */
+    [[nodiscard]] auto getBackendCapabilities() const -> const db::BackendCapabilities&;
 
     /**
      * @brief Starts a transaction.
@@ -419,7 +513,7 @@ private:
                               std::map<db::binding::PrimaryKey, std::vector<Target>>& groupedTargets) -> void
     {
         soci::values parameterValues;
-        detail::bindStatementParameters(parameterValues, statement.parameters);
+        detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
         soci::rowset<db::binding::CollectionPayload<Owner, Target, JoinedValues>> preparedRowSet =
             (sql.prepare << statement.sql, soci::use(parameterValues));
 
@@ -492,8 +586,18 @@ private:
         }
 
         const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(queryData.modelInfo);
-        constexpr std::size_t parameterBudget = 900;
-        const auto batchSize = std::max<std::size_t>(1, parameterBudget / ownerPrimaryKey.size());
+        const auto runtimeLimits = getBackendRuntimeLimits();
+        const auto parameterBudget = runtimeLimits.maxBindParameters.value_or(std::numeric_limits<std::size_t>::max());
+
+        if (parameterBudget < ownerPrimaryKey.size())
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "include collection",
+                                "The backend bind-parameter limit is too small for the relation primary key"};
+        }
+
+        const auto batchSize = runtimeLimits.maxBindParameters.has_value() ?
+                                   std::max<std::size_t>(1, parameterBudget / ownerPrimaryKey.size()) :
+                                   owners.size();
         std::map<db::binding::PrimaryKey, std::vector<target_t>> groupedTargets;
 
         orm::Query<target_t> targetQuery;
@@ -503,8 +607,7 @@ private:
             targetQuery.disableJoining();
         }
 
-        const auto baseTargetStatement =
-            commandGeneratorFactory.getCommandGenerator(backendType).select(targetQuery.getData());
+        const auto baseTargetStatement = getCommandGenerator().select(targetQuery.getData());
 
         assert(baseTargetStatement.parameters.empty());
 
@@ -519,8 +622,9 @@ private:
                 ownerKeys.push_back(db::binding::getPrimaryKey(owners[ownerIndex]));
             }
 
-            const auto statement = db::relations::collectionSelectStatement(
-                queryData.modelInfo, relation, baseTargetStatement.sql, ownerKeys, queryData.shouldJoin);
+            const auto statement =
+                db::relations::collectionSelectStatement(getBackend().dialect(), queryData.modelInfo, relation,
+                                                         baseTargetStatement.sql, ownerKeys, queryData.shouldJoin);
             if (queryData.shouldJoin)
             {
                 appendCollectionRows<Owner, target_t, true>(statement, groupedTargets);
@@ -549,14 +653,25 @@ private:
         }
     }
 
-    auto executeMutation(const db::Statement& statement) -> std::size_t;
+    auto executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t;
+    auto executeSql(std::string_view statement, std::string_view operation) -> void;
     auto relationEndpointExists(const model::ModelInfo& modelInfo, const db::binding::PrimaryKey& key) -> bool;
     auto tableExists(std::string_view tableName) -> bool;
     auto ensureRelationTableEndpointsExist(const model::ModelInfo& ownerInfo) -> void;
+    [[nodiscard]] auto getBackend() const -> const db::BackendProvider&;
+    [[nodiscard]] auto getCommandGenerator() const -> const db::CommandGenerator&;
+    [[nodiscard]] auto getBackendRuntimeLimits() -> db::BackendRuntimeLimits;
+    auto ensureModelSupported(const model::ModelInfo& modelInfo, std::string_view operation) const -> void;
+    auto ensureQuerySupported(const query::QueryData& queryData) const -> void;
+    auto ensureAffectedRowsAvailable(std::string_view operation) const -> void;
+    auto requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void;
+    [[noreturn]] auto throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
+                                           std::string_view operation) const -> void;
 
     soci::session sql;
     std::unique_ptr<soci::transaction> transaction;
     db::BackendType backendType;
     db::CommandGeneratorFactory commandGeneratorFactory;
+    const db::BackendProvider* backend = nullptr;
 };
 } // namespace orm

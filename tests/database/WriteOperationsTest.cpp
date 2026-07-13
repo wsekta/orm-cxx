@@ -152,4 +152,4 @@ TEST_P(WriteOperationsTest, updateRelatedPrimaryKey_shouldChangeForeignKey)
     EXPECT_EQ(returnedModels[0].field3.field2, "second");
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, WriteOperationsTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, WriteOperationsTest, backendTestConfigs, backendTestName);

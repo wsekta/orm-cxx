@@ -28,6 +28,8 @@ auto join(const std::vector<std::string>& parts, std::string_view separator) -> 
 
 namespace orm::db::commands
 {
+DefaultUpdateCommand::DefaultUpdateCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+
 auto DefaultUpdateCommand::update(const query::UpdateData& updateData) const -> Statement
 {
     if (updateData.assignments.empty())
@@ -42,13 +44,15 @@ auto DefaultUpdateCommand::update(const query::UpdateData& updateData) const -> 
 
     RenderContext context{
         .modelInfo = updateData.modelInfo,
+        .dialect = dialect,
         .shouldJoin = false,
         .columnRenderMode = ColumnRenderMode::WritePredicate,
     };
 
     const auto assignments = getAssignments(updateData, context);
     const auto where = renderWhere(updateData.predicate, context);
-    const auto sql = std::format("UPDATE {} SET {}{};", updateData.modelInfo.tableName, assignments, where);
+    const auto sql =
+        std::format("UPDATE {} SET {}{};", dialect.quoteIdentifier(updateData.modelInfo.tableName), assignments, where);
 
     return Statement{.sql = sql, .parameters = std::move(context.parameters)};
 }
@@ -60,7 +64,7 @@ auto DefaultUpdateCommand::getAssignments(const query::UpdateData& updateData, R
 
     for (const auto& assignment : updateData.assignments)
     {
-        const auto column = renderWriteColumn(assignment.column, updateData.modelInfo, false);
+        const auto column = renderWriteColumn(assignment.column, updateData.modelInfo, context.dialect, false);
         std::string parameter;
 
         if (assignment.value.value.has_value())

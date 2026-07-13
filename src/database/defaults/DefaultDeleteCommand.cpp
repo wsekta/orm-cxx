@@ -4,17 +4,20 @@
 
 namespace orm::db::commands
 {
-auto DefaultDeleteCommand::remove(const model::ModelInfo& modelInfo,
-                                  const query::Predicate& predicate) const -> Statement
+DefaultDeleteCommand::DefaultDeleteCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+
+auto DefaultDeleteCommand::remove(const model::ModelInfo& modelInfo, const query::Predicate& predicate) const
+    -> Statement
 {
     RenderContext context{
         .modelInfo = modelInfo,
+        .dialect = dialect,
         .shouldJoin = false,
         .columnRenderMode = ColumnRenderMode::WritePredicate,
     };
 
     const auto where = renderWhere(predicate, context);
-    const auto sql = std::format("DELETE FROM {}{};", modelInfo.tableName, where);
+    const auto sql = std::format("DELETE FROM {}{};", dialect.quoteIdentifier(modelInfo.tableName), where);
 
     return Statement{.sql = sql, .parameters = std::move(context.parameters)};
 }

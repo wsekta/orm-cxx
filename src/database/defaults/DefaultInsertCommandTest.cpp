@@ -4,6 +4,7 @@
 
 #include "orm-cxx/model.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/utils/SqlDialectTestDoubles.hpp"
 
 namespace
 {
@@ -27,7 +28,8 @@ const std::string insertSqlWithModelRelatedToAutoIncrementModel =
 class DefaultInsertCommandTest : public ::testing::Test
 {
 public:
-    orm::db::commands::DefaultInsertCommand command;
+    orm::tests::SnapshotSqliteDialect dialect;
+    orm::db::commands::DefaultInsertCommand command{dialect};
 
     orm::Model<models::ModelWithFloat> model;
 };
@@ -35,6 +37,17 @@ public:
 TEST_F(DefaultInsertCommandTest, insert)
 {
     EXPECT_EQ(command.insert(model.getModelInfo()), insertSql);
+}
+
+TEST(DefaultInsertCommandDialectTest, delegatesIdentifiersAndBindMarkersToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultInsertCommand command{dialect};
+    const orm::Model<models::ModelWithFloat> model;
+
+    EXPECT_EQ(command.insert(model.getModelInfo()),
+              "INSERT INTO [models_ModelWithFloat] ([field1], [field2], [field3]) "
+              "VALUES ($field1, $field2, $field3);");
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToOtherModel)

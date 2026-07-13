@@ -57,20 +57,19 @@ contracts, then expand expressiveness and database support deliberately.
   one-command paths for the supported Linux CI checks and an equivalent MSVC
   workflow.
 - CI coverage for GCC, Clang, MSVC, Codecov, formatting, and static analysis.
-
-## Mid Term
-
-Prepare database portability before claiming support for another backend:
-
-1. Inventory SQLite-specific assumptions in DDL generation, value binding,
-   transactions, affected-row reporting, pagination, and relation handling.
-2. Harden backend-neutral command-generation and binding contracts, expressing
-   backend capabilities explicitly instead of branching on scattered enum
-   checks.
-3. Extract reusable backend conformance tests from the SQLite integration suite
-   so future implementations are verified against the same public behavior.
-4. Document the backend extension contract, including required operations,
-   feature negotiation, error handling, and the minimum CI matrix.
+- A source-level backend provider contract that centralizes backend selection,
+  capabilities, runtime limits, session hooks, value binding, SQL dialect
+  behavior, command generation, affected-row normalization, and driver-error
+  translation.
+- Stable backend-neutral database errors for lifecycle, capability, connection,
+  statement, constraint, transaction, conversion, and affected-row failures.
+- Reusable backend conformance configuration and tests, with SQLite exercising
+  the shared public behavior on GCC, Clang, and MSVC.
+- An optional SQLite build boundary: core-only consumers can omit SQLite
+  sources, registration, and driver linkage while retaining the shared ORM and
+  SOCI core.
+- A documented backend support matrix, portability policy, source extension
+  contract, feature negotiation rules, and minimum CI requirements.
 
 ## Long Term
 

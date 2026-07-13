@@ -79,6 +79,11 @@ struct InvalidNumericProjection
 {
     int value;
 };
+
+struct NarrowIntegralProjection
+{
+    unsigned char value;
+};
 } // namespace projection_query_database_test_models
 
 using namespace projection_query_database_test_models;
@@ -162,7 +167,35 @@ TEST(ProjectionBindingTest, shouldRejectInvalidNumericProjectionFieldValue)
 
     values.set("value", std::string{"not-a-number"});
 
-    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload), std::invalid_argument);
+    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload),
+                 orm::db::binding::ConversionError);
+}
+
+TEST(ProjectionBindingTest, shouldRejectWhitespacePrefixedNegativeUnsignedProjectionValue)
+{
+    using Payload = orm::db::binding::ProjectionPayload<NumericFromStringProjection>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+
+    values.set("intValue", std::string{"12"});
+    values.set("unsignedValue", std::string{" -1"});
+    values.set("doubleValue", std::string{"2.5"});
+
+    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload),
+                 orm::db::binding::ConversionError);
+}
+
+TEST(ProjectionBindingTest, shouldRejectLossyNumericProjectionConversion)
+{
+    using Payload = orm::db::binding::ProjectionPayload<NarrowIntegralProjection>;
+
+    auto payload = Payload{};
+    auto values = soci::values{};
+    values.set("value", 300);
+
+    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload),
+                 orm::db::binding::ConversionError);
 }
 
 TEST(ProjectionBindingTest, shouldHydrateOptionalProjectionFields)
@@ -203,7 +236,29 @@ TEST(ProjectionBindingTest, shouldRejectUnsupportedProjectionField)
 
     values.set("id", 1);
 
-    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload), std::invalid_argument);
+    EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload),
+                 orm::db::binding::ConversionError);
+}
+
+TEST_P(ProjectionQueryDatabaseTest, shouldReportLossyHydrationAsStructuredConversionError)
+{
+    createTable<models::ModelWithId>();
+    database.insert(models::ModelWithId{1, 300, "too-wide"});
+
+    orm::ProjectionQuery<models::ModelWithId, NarrowIntegralProjection> query;
+    query.project(as("value", col("field1")));
+
+    try
+    {
+        (void)database.select(query);
+        FAIL() << "Expected orm::DatabaseError";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Conversion);
+        EXPECT_EQ(error.getBackendType(), GetParam().type);
+        EXPECT_EQ(error.getOperation(), "select projection");
+    }
 }
 
 TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedDtos)
@@ -328,4 +383,4 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectNullableAggregateProjection)
     EXPECT_FALSE(rows[0].averageValue.has_value());
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, ProjectionQueryDatabaseTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, ProjectionQueryDatabaseTest, backendTestConfigs, backendTestName);

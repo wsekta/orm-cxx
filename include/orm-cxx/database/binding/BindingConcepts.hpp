@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <string>
 #include <type_traits>
 
@@ -11,7 +12,12 @@ template <typename ModelField, typename... Types>
 concept IsOneOfTypes = (std::is_same_v<ModelField, Types> || ...);
 
 template <typename ModelField>
-concept SociConvertableToInt = IsOneOfTypes<ModelField, bool, int8_t, char, unsigned char, short, unsigned short, long>;
+concept SociConvertableToInt =
+    IsOneOfTypes<ModelField, bool, std::int8_t, char, unsigned char, short, unsigned short> or
+    (std::is_same_v<ModelField, long> and sizeof(long) <= sizeof(int));
+
+template <typename ModelField>
+concept SociConvertableToLongLong = std::is_same_v<ModelField, long> and sizeof(long) > sizeof(int);
 
 template <typename ModelField>
 concept SociConvertableToUnsignedLongLong = IsOneOfTypes<ModelField, unsigned int, unsigned long>;

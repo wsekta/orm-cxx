@@ -10,6 +10,13 @@ include(OrmCxxProjectSettings)
 
 orm_cxx_define_options()
 
+if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND AND (ORM_CXX_BUILD_TESTS OR ORM_CXX_BUILD_EXAMPLES))
+    message(
+        FATAL_ERROR
+            "ORM_CXX_BUILD_TESTS and ORM_CXX_BUILD_EXAMPLES exercise the SQLite backend. Configure both developer targets OFF when ORM_CXX_ENABLE_SQLITE_BACKEND=OFF."
+    )
+endif()
+
 if(ORM_CXX_ENABLE_COVERAGE AND NOT ORM_CXX_BUILD_TESTS)
     message(
         FATAL_ERROR

@@ -22,7 +22,7 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 🆕 Base on native reflection from modern C++(C++20)<br>
 ✅ 100% test coverage with unit tests and integration tests<br>
-🗂️ Support for multiple databases<br>
+🗂️ SQLite support today, with a [documented path for additional backends](docs/backend-portability.md)<br>
 ⚙️ Support for multiple compilers<br>
 ☠️ No macros (currently few 😕)<br>
 🚀 As low as possible runtime overhead<br>

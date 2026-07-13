@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -121,22 +122,24 @@ protected:
     }
 };
 
-TEST_P(CollectionRelationAcceptanceDatabaseTest, junctionDdlContainsOnlyEndpointKeysAndConstraints)
+TEST(SqliteCollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAndConstraints)
 {
     const auto statements =
         orm::db::relations::createTableStatements(orm::Model<collection_models::CompositeOwner>::getModelInfo());
 
     ASSERT_EQ(statements.size(), 1);
     EXPECT_EQ(statements.front(),
-              "CREATE TABLE IF NOT EXISTS collection_owner_tags (\n"
-              "\towner_tenant TEXT NOT NULL,\n"
-              "\towner_id INTEGER NOT NULL,\n"
-              "\ttag_scope TEXT NOT NULL,\n"
-              "\ttag_id INTEGER NOT NULL,\n"
-              "\tPRIMARY KEY (owner_tenant, owner_id, tag_scope, tag_id),\n"
-              "\tFOREIGN KEY (owner_tenant, owner_id) REFERENCES collection_composite_owners (tenant, id) ON "
+              "CREATE TABLE IF NOT EXISTS \"collection_owner_tags\" (\n"
+              "\t\"owner_tenant\" TEXT NOT NULL,\n"
+              "\t\"owner_id\" INTEGER NOT NULL,\n"
+              "\t\"tag_scope\" TEXT NOT NULL,\n"
+              "\t\"tag_id\" INTEGER NOT NULL,\n"
+              "\tPRIMARY KEY (\"owner_tenant\", \"owner_id\", \"tag_scope\", \"tag_id\"),\n"
+              "\tFOREIGN KEY (\"owner_tenant\", \"owner_id\") REFERENCES \"collection_composite_owners\" "
+              "(\"tenant\", \"id\") ON "
               "DELETE CASCADE,\n"
-              "\tFOREIGN KEY (tag_scope, tag_id) REFERENCES collection_composite_tags (scope, id) ON DELETE "
+              "\tFOREIGN KEY (\"tag_scope\", \"tag_id\") REFERENCES \"collection_composite_tags\" "
+              "(\"scope\", \"id\") ON DELETE "
               "CASCADE\n"
               ");");
 }
@@ -211,7 +214,8 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeGroupsLongPrimaryKeysUsi
     database.createTable<long_key_models::Owner>();
     database.createTable<long_key_models::Target>();
     database.createRelationTables<long_key_models::Owner>();
-    const long_key_models::Owner owner{7L, "owner", {}};
+    const auto ownerId = sizeof(long) > sizeof(int) ? std::numeric_limits<long>::max() : 7L;
+    const long_key_models::Owner owner{ownerId, "owner", {}};
     const long_key_models::Target target{10, "target"};
     database.insert(owner);
     database.insert(target);
@@ -222,9 +226,10 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeGroupsLongPrimaryKeysUsi
     const auto owners = database.select(query);
 
     ASSERT_EQ(owners.size(), 1);
+    EXPECT_EQ(owners[0].id, ownerId);
     ASSERT_TRUE(owners[0].targets.isLoaded());
     ASSERT_EQ(owners[0].targets.size(), 1);
     EXPECT_EQ(owners[0].targets[0].id, target.id);
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationAcceptanceDatabaseTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationAcceptanceDatabaseTest, backendTestConfigs, backendTestName);

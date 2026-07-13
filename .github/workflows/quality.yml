@@ -56,3 +56,21 @@ jobs:
 
       - name: Run clang-tidy
         run: bash ./scripts/check-tidy.sh
+
+  docs:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes doxygen graphviz
+
+      - name: Validate documentation generation
+        run: |
+          { cat Doxyfile; echo 'HTML_EXTRA_STYLESHEET ='; } | doxygen -
+          test -f html/index.html

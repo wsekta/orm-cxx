@@ -82,6 +82,26 @@ rm -rf "$example_dir"
 
 Run `relations-example` the same way if needed.
 
+## Database backend work
+
+SQLite is currently the only supported database backend. Before changing
+backend selection, SQL generation, binding, execution, or driver dependencies,
+read the project documentation for [backend
+portability](docs/backend-portability.md) and the [backend extension
+contract](docs/backend-extension.md). The current support matrix is maintained
+in [Backends](docs/backends.md).
+
+Backend extension is currently a source-level contribution model. The project
+does not promise a stable binary plugin ABI or compatibility for independently
+compiled backend modules. A new backend must keep its driver dependency optional,
+declare capabilities and limits centrally, reuse the common conformance tests,
+and run those tests against a real database service in CI.
+
+Backend pull requests must update the support matrix and document connection
+format, supported server versions, capabilities, limits, and known exclusions.
+Raw SQL examples must name the dialect they target; SOCI driver availability by
+itself is not a backend support claim.
+
 ## Native Linux setup
 
 Install CMake 3.25 or newer, Ninja, SQLite development headers, GCC 13,

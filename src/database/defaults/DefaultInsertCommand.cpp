@@ -6,21 +6,23 @@
 
 namespace orm::db::commands
 {
+DefaultInsertCommand::DefaultInsertCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+
 auto DefaultInsertCommand::insert(const model::ModelInfo& modelInfo) const -> std::string
 {
     auto fieldsNames = getFieldsNames(modelInfo);
 
-    return std::format("INSERT INTO {0:} ({1:}) VALUES ({2:});", modelInfo.tableName, getInsertFields(fieldsNames),
-                       getInsertValues(fieldsNames));
+    return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(modelInfo.tableName),
+                       getInsertFields(fieldsNames), getInsertValues(fieldsNames));
 }
 
-auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& fieldNames) -> std::string
+auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& fieldNames) const -> std::string
 {
     std::string insertFields;
 
     for (const auto& fieldName : fieldNames)
     {
-        insertFields += std::format("{}, ", fieldName);
+        insertFields += std::format("{}, ", dialect.quoteIdentifier(fieldName));
     }
 
     utils::removeLastComma(insertFields);
@@ -28,13 +30,13 @@ auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& field
     return insertFields;
 }
 
-auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& fieldNames) -> std::string
+auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& fieldNames) const -> std::string
 {
     std::string insertValues;
 
     for (const auto& fieldName : fieldNames)
     {
-        insertValues += std::format(":{}, ", fieldName);
+        insertValues += std::format("{}, ", dialect.bindMarker(fieldName));
     }
 
     utils::removeLastComma(insertValues);

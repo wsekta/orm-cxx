@@ -1,8 +1,14 @@
+#pragma once
+
 #include <format>
+#include <optional>
 #include <stdexcept>
+#include <type_traits>
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
+#include "ConversionError.hpp"
+#include "NumericConversion.hpp"
 #include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
@@ -13,6 +19,63 @@ namespace orm::db::binding
 template <typename ModelField>
 struct ObjectFieldFromValues;
 
+template <typename T>
+struct IsOptionalBoundField : std::false_type
+{
+};
+
+template <typename T>
+struct IsOptionalBoundField<std::optional<T>> : std::true_type
+{
+    using value_type = T;
+};
+
+template <typename ModelField>
+auto getScalarFieldValue(const soci::values& values, const std::string& fieldName) -> ModelField
+{
+    if constexpr (IsOptionalBoundField<ModelField>::value)
+    {
+        if (values.get_indicator(fieldName) == soci::i_null)
+        {
+            return std::nullopt;
+        }
+
+        using value_type = typename IsOptionalBoundField<ModelField>::value_type;
+        return getScalarFieldValue<value_type>(values, fieldName);
+    }
+    else if constexpr (SociConvertableToDouble<ModelField>)
+    {
+        return checkedNumericCast<ModelField>(values.get<double>(fieldName), fieldName);
+    }
+    else if constexpr (SociConvertableToInt<ModelField>)
+    {
+        return checkedNumericCast<ModelField>(values.get<int>(fieldName), fieldName);
+    }
+    else if constexpr (SociConvertableToLongLong<ModelField>)
+    {
+        return checkedNumericCast<ModelField>(values.get<long long>(fieldName), fieldName);
+    }
+    else if constexpr (SociConvertableToUnsignedLongLong<ModelField>)
+    {
+        return checkedNumericCast<ModelField>(values.get<unsigned long long>(fieldName), fieldName);
+    }
+    else if constexpr (SociDefaultSupported<ModelField>)
+    {
+        if constexpr (std::is_arithmetic_v<ModelField>)
+        {
+            return checkedNumericCast<ModelField>(values.get<ModelField>(fieldName), fieldName);
+        }
+        else
+        {
+            return values.get<ModelField>(fieldName);
+        }
+    }
+    else
+    {
+        throw ConversionError{"Unsupported related model field type: " + fieldName};
+    }
+}
+
 template <SociDefaultSupported ModelField>
 struct ObjectFieldFromValues<ModelField>
 {
@@ -22,7 +85,14 @@ struct ObjectFieldFromValues<ModelField>
     {
         auto fieldName =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = values.get<ModelField>(fieldName);
+        if constexpr (std::is_arithmetic_v<ModelField>)
+        {
+            *column = checkedNumericCast<ModelField>(values.get<ModelField>(fieldName), fieldName);
+        }
+        else
+        {
+            *column = values.get<ModelField>(fieldName);
+        }
     }
 };
 
@@ -54,13 +124,13 @@ struct ObjectFieldFromValues<ModelField>
                 if constexpr (JoinedValues)
                 {
                     auto fieldName = std::format("{}_{}", foreignFieldName, columnInfo.name);
-                    *foreignModelColumn = values.get<field_t>(fieldName);
+                    *foreignModelColumn = getScalarFieldValue<field_t>(values, fieldName);
                 }
                 else if (columnInfo.isPrimaryKey)
                 {
                     auto fieldName =
                         std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName, columnInfo.name);
-                    *foreignModelColumn = values.get<field_t>(fieldName);
+                    *foreignModelColumn = getScalarFieldValue<field_t>(values, fieldName);
                 }
             }
         };
@@ -112,7 +182,7 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
 
             if (hasNullPrimaryKey)
             {
-                throw std::runtime_error{"Cannot hydrate optional relation with a partially null primary key"};
+                throw ConversionError{"Cannot hydrate optional relation with a partially null primary key"};
             }
 
             ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
@@ -143,7 +213,7 @@ struct ObjectFieldFromValuesWithCast
     {
         auto fieldName =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = static_cast<ModelField>(values.get<SociType>(fieldName));
+        *column = checkedNumericCast<ModelField>(values.get<SociType>(fieldName), fieldName);
     }
 };
 
@@ -154,6 +224,11 @@ struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelFi
 
 template <SociConvertableToInt ModelField>
 struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, int>
+{
+};
+
+template <SociConvertableToLongLong ModelField>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, long long>
 {
 };
 

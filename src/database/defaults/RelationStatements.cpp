@@ -6,7 +6,7 @@
 #include <string_view>
 #include <utility>
 
-#include "../sqlite/SqliteTypeTranslator.hpp"
+#include "SqlAliases.hpp"
 
 namespace
 {
@@ -27,8 +27,8 @@ auto join(const std::vector<std::string>& values, std::string_view separator) ->
     return result;
 }
 
-auto findRelation(const orm::model::ModelInfo& modelInfo,
-                  const std::string& fieldName) -> const orm::model::RelationInfo&
+auto findRelation(const orm::model::ModelInfo& modelInfo, const std::string& fieldName)
+    -> const orm::model::RelationInfo&
 {
     const auto relation =
         std::ranges::find_if(modelInfo.relationsInfo, [&fieldName](const auto& candidate)
@@ -51,16 +51,17 @@ auto requireKeySize(const orm::db::binding::PrimaryKey& key, const std::vector<c
     }
 }
 
-auto addValueParameter(orm::db::Statement& statement, std::string name,
-                       const orm::query::QueryValue::Value& value) -> std::string
+auto addValueParameter(const orm::db::SqlDialect& dialect, orm::db::Statement& statement, std::string name,
+                       const orm::query::QueryValue& value) -> std::string
 {
     statement.parameters.push_back(
         orm::db::StatementParameter{.name = name, .value = orm::db::binding::toQueryValue(value)});
 
-    return ":" + name;
+    return dialect.bindMarker(name);
 }
 
-auto renderOwnerKeyFilter(orm::db::Statement& statement, const std::vector<std::string>& expressions,
+auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement& statement,
+                          const std::vector<std::string>& expressions,
                           const std::vector<orm::db::binding::PrimaryKey>& keys) -> std::string
 {
     if (keys.empty())
@@ -84,7 +85,7 @@ auto renderOwnerKeyFilter(orm::db::Statement& statement, const std::vector<std::
         for (std::size_t columnIndex = 0; columnIndex < expressions.size(); ++columnIndex)
         {
             const auto parameterName = std::format("orm_rel_key_{}_{}", keyIndex, columnIndex);
-            const auto parameter = addValueParameter(statement, parameterName, keys[keyIndex][columnIndex]);
+            const auto parameter = addValueParameter(dialect, statement, parameterName, keys[keyIndex][columnIndex]);
             columnPredicates.push_back(std::format("{} = {}", expressions[columnIndex], parameter));
         }
 
@@ -92,6 +93,20 @@ auto renderOwnerKeyFilter(orm::db::Statement& statement, const std::vector<std::
     }
 
     return "(" + join(keyPredicates, " OR ") + ")";
+}
+
+auto quoteIdentifiers(const orm::db::SqlDialect& dialect, const std::vector<std::string>& identifiers)
+    -> std::vector<std::string>
+{
+    std::vector<std::string> quoted;
+    quoted.reserve(identifiers.size());
+
+    for (const auto& identifier : identifiers)
+    {
+        quoted.push_back(dialect.quoteIdentifier(identifier));
+    }
+
+    return quoted;
 }
 
 auto stripTerminator(std::string sql) -> std::string
@@ -107,9 +122,8 @@ auto stripTerminator(std::string sql) -> std::string
 
 namespace orm::db::relations
 {
-auto createTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto createTableStatements(const SqlDialect& dialect, const model::ModelInfo& ownerInfo) -> std::vector<std::string>
 {
-    sqlite::SqliteTypeTranslator translator;
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
     std::vector<std::string> statements;
 
@@ -136,20 +150,21 @@ auto createTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std
 
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
         {
-            definitions.push_back(std::format("\t{} {} NOT NULL", junction.ownerColumns[i],
-                                              translator.toSqlType(ownerPrimaryKey[i]->type)));
+            definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.ownerColumns[i]),
+                                              dialect.toSqlType(ownerPrimaryKey[i]->type)));
         }
 
         for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
         {
-            definitions.push_back(std::format("\t{} {} NOT NULL", junction.targetColumns[i],
-                                              translator.toSqlType(targetPrimaryKey[i]->type)));
+            definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.targetColumns[i]),
+                                              dialect.toSqlType(targetPrimaryKey[i]->type)));
         }
 
         auto allJunctionColumns = junction.ownerColumns;
         allJunctionColumns.insert(allJunctionColumns.end(), junction.targetColumns.begin(),
                                   junction.targetColumns.end());
-        definitions.push_back(std::format("\tPRIMARY KEY ({})", join(allJunctionColumns, ", ")));
+        definitions.push_back(
+            std::format("\tPRIMARY KEY ({})", join(quoteIdentifiers(dialect, allJunctionColumns), ", ")));
 
         std::vector<std::string> ownerColumnNames;
         std::vector<std::string> targetColumnNames;
@@ -158,29 +173,30 @@ auto createTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std
 
         for (const auto* column : ownerPrimaryKey)
         {
-            ownerColumnNames.push_back(column->name);
+            ownerColumnNames.push_back(dialect.quoteIdentifier(column->name));
         }
 
         for (const auto* column : targetPrimaryKey)
         {
-            targetColumnNames.push_back(column->name);
+            targetColumnNames.push_back(dialect.quoteIdentifier(column->name));
         }
 
         definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
-                                          join(junction.ownerColumns, ", "), ownerInfo.tableName,
-                                          join(ownerColumnNames, ", ")));
+                                          join(quoteIdentifiers(dialect, junction.ownerColumns), ", "),
+                                          dialect.quoteIdentifier(ownerInfo.tableName), join(ownerColumnNames, ", ")));
         definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
-                                          join(junction.targetColumns, ", "), targetInfo.tableName,
+                                          join(quoteIdentifiers(dialect, junction.targetColumns), ", "),
+                                          dialect.quoteIdentifier(targetInfo.tableName),
                                           join(targetColumnNames, ", ")));
 
-        statements.push_back(
-            std::format("CREATE TABLE IF NOT EXISTS {} (\n{}\n);", junction.tableName, join(definitions, ",\n")));
+        statements.push_back(std::format("{}\n{}\n);", dialect.renderCreateTablePrefix(junction.tableName, true),
+                                         join(definitions, ",\n")));
     }
 
     return statements;
 }
 
-auto dropTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto dropTableStatements(const SqlDialect& dialect, const model::ModelInfo& ownerInfo) -> std::vector<std::string>
 {
     std::vector<std::string> statements;
 
@@ -189,14 +205,14 @@ auto dropTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std::
         if (relation->kind == model::RelationKind::ManyToMany and relation->junction.has_value() and
             relation->junction->owningSide)
         {
-            statements.push_back(std::format("DROP TABLE IF EXISTS {};", relation->junction->tableName));
+            statements.push_back(dialect.renderDropTable(relation->junction->tableName, true));
         }
     }
 
     return statements;
 }
 
-auto linkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
+auto linkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
                    const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
@@ -218,18 +234,24 @@ auto linkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo&
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
         {
-            placeholders.push_back(addValueParameter(statement, std::format("orm_rel_owner_{}", i), ownerKey[i]));
+            placeholders.push_back(
+                addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]));
         }
 
         for (std::size_t i = 0; i < targetKey.size(); ++i)
         {
-            placeholders.push_back(addValueParameter(statement, std::format("orm_rel_target_{}", i), targetKey[i]));
+            placeholders.push_back(
+                addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]));
         }
 
         auto allColumns = junction.ownerColumns;
         allColumns.insert(allColumns.end(), junction.targetColumns.begin(), junction.targetColumns.end());
-        statement.sql = std::format("INSERT INTO {} ({}) VALUES ({}) ON CONFLICT ({}) DO NOTHING;", junction.tableName,
-                                    join(allColumns, ", "), join(placeholders, ", "), join(allColumns, ", "));
+        statement.sql = dialect.renderInsertIfAbsent(InsertIfAbsentSpec{
+            .tableName = junction.tableName,
+            .columns = allColumns,
+            .valueExpressions = placeholders,
+            .conflictColumns = allColumns,
+        });
 
         return statement;
     }
@@ -247,24 +269,27 @@ auto linkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo&
     for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
     {
         const auto localColumn = std::format("{}_{}", mappedRelation.columnName, ownerPrimaryKey[i]->name);
-        const auto parameter = addValueParameter(statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
-        assignments.push_back(std::format("{} = {}", localColumn, parameter));
-        changedPredicates.push_back(std::format("({0} IS NULL OR {0} != {1})", localColumn, parameter));
+        const auto quotedLocalColumn = dialect.quoteIdentifier(localColumn);
+        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+        assignments.push_back(std::format("{} = {}", quotedLocalColumn, parameter));
+        changedPredicates.push_back(std::format("({0} IS NULL OR {0} != {1})", quotedLocalColumn, parameter));
     }
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        const auto parameter = addValueParameter(statement, std::format("orm_rel_target_{}", i), targetKey[i]);
-        targetPredicates.push_back(std::format("{} = {}", targetPrimaryKey[i]->name, parameter));
+        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+        targetPredicates.push_back(
+            std::format("{} = {}", dialect.quoteIdentifier(targetPrimaryKey[i]->name), parameter));
     }
 
-    statement.sql = std::format("UPDATE {} SET {} WHERE ({}) AND ({});", targetInfo.tableName, join(assignments, ", "),
-                                join(targetPredicates, " AND "), join(changedPredicates, " OR "));
+    statement.sql =
+        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(targetInfo.tableName),
+                    join(assignments, ", "), join(targetPredicates, " AND "), join(changedPredicates, " OR "));
 
     return statement;
 }
 
-auto unlinkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
+auto unlinkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
                      const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
@@ -286,17 +311,20 @@ auto unlinkStatement(const model::ModelInfo& ownerInfo, const model::RelationInf
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
         {
-            const auto parameter = addValueParameter(statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
-            predicates.push_back(std::format("{} = {}", junction.ownerColumns[i], parameter));
+            const auto parameter =
+                addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+            predicates.push_back(std::format("{} = {}", dialect.quoteIdentifier(junction.ownerColumns[i]), parameter));
         }
 
         for (std::size_t i = 0; i < targetKey.size(); ++i)
         {
-            const auto parameter = addValueParameter(statement, std::format("orm_rel_target_{}", i), targetKey[i]);
-            predicates.push_back(std::format("{} = {}", junction.targetColumns[i], parameter));
+            const auto parameter =
+                addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+            predicates.push_back(std::format("{} = {}", dialect.quoteIdentifier(junction.targetColumns[i]), parameter));
         }
 
-        statement.sql = std::format("DELETE FROM {} WHERE {};", junction.tableName, join(predicates, " AND "));
+        statement.sql = std::format("DELETE FROM {} WHERE {};", dialect.quoteIdentifier(junction.tableName),
+                                    join(predicates, " AND "));
 
         return statement;
     }
@@ -320,29 +348,34 @@ auto unlinkStatement(const model::ModelInfo& ownerInfo, const model::RelationInf
     for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
     {
         const auto localColumn = std::format("{}_{}", mappedRelation.columnName, ownerPrimaryKey[i]->name);
+        const auto quotedLocalColumn = dialect.quoteIdentifier(localColumn);
         const auto nullParameterName = std::format("orm_rel_null_{}", i);
         statement.parameters.push_back(
             StatementParameter{.name = nullParameterName, .value = std::nullopt, .nullType = ownerPrimaryKey[i]->type});
-        assignments.push_back(std::format("{} = :{}", localColumn, nullParameterName));
-        const auto ownerParameter = addValueParameter(statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
-        ownerPredicates.push_back(std::format("{} = {}", localColumn, ownerParameter));
+        assignments.push_back(std::format("{} = {}", quotedLocalColumn, dialect.bindMarker(nullParameterName)));
+        const auto ownerParameter =
+            addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+        ownerPredicates.push_back(std::format("{} = {}", quotedLocalColumn, ownerParameter));
     }
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        const auto targetParameter = addValueParameter(statement, std::format("orm_rel_target_{}", i), targetKey[i]);
-        targetPredicates.push_back(std::format("{} = {}", targetPrimaryKey[i]->name, targetParameter));
+        const auto targetParameter =
+            addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+        targetPredicates.push_back(
+            std::format("{} = {}", dialect.quoteIdentifier(targetPrimaryKey[i]->name), targetParameter));
     }
 
-    statement.sql = std::format("UPDATE {} SET {} WHERE ({}) AND ({});", targetInfo.tableName, join(assignments, ", "),
-                                join(targetPredicates, " AND "), join(ownerPredicates, " AND "));
+    statement.sql =
+        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(targetInfo.tableName),
+                    join(assignments, ", "), join(targetPredicates, " AND "), join(ownerPredicates, " AND "));
 
     return statement;
 }
 
-auto collectionSelectStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
-                               std::string targetSelectSql, const std::vector<binding::PrimaryKey>& ownerKeys,
-                               bool joinedValues) -> Statement
+auto collectionSelectStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo,
+                               const model::RelationInfo& relation, std::string targetSelectSql,
+                               const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
     const auto& targetInfo = relation.targetModel();
@@ -351,6 +384,10 @@ auto collectionSelectStatement(const model::ModelInfo& ownerInfo, const model::R
     Statement statement;
     std::vector<std::string> ownerExpressions;
     std::vector<std::string> selectedOwnerFields;
+    constexpr std::string_view targetAlias = "orm_relation_target";
+    constexpr std::string_view junctionAlias = "orm_relation_junction";
+    const auto quotedTargetAlias = dialect.quoteIdentifier(targetAlias);
+    const auto quotedJunctionAlias = dialect.quoteIdentifier(junctionAlias);
 
     if (relation.kind == model::RelationKind::OneToMany)
     {
@@ -358,18 +395,19 @@ auto collectionSelectStatement(const model::ModelInfo& ownerInfo, const model::R
 
         for (const auto* ownerColumn : ownerPrimaryKey)
         {
-            const auto mappedAlias = joinedValues ? std::format("{}_{}", mappedRelation.columnName, ownerColumn->name) :
-                                                    std::format("{}_{}_{}", targetInfo.tableName,
-                                                                mappedRelation.columnName, ownerColumn->name);
-            const auto expression = std::format("orm_relation_target.{}", mappedAlias);
+            const auto mappedAlias =
+                joinedValues ?
+                    aliases::joinedRelationColumn(mappedRelation.columnName, ownerColumn->name) :
+                    aliases::unjoinedRelationColumn(targetInfo.tableName, mappedRelation.columnName, ownerColumn->name);
+            const auto expression = aliases::qualifiedIdentifier(dialect, targetAlias, mappedAlias);
             ownerExpressions.push_back(expression);
-            selectedOwnerFields.push_back(
-                std::format("{} AS {}", expression, binding::relationOwnerAlias(*ownerColumn)));
+            selectedOwnerFields.push_back(std::format(
+                "{} AS {}", expression, dialect.quoteIdentifier(binding::relationOwnerAlias(*ownerColumn))));
         }
 
-        const auto where = renderOwnerKeyFilter(statement, ownerExpressions, ownerKeys);
-        statement.sql = std::format("SELECT {}, orm_relation_target.* FROM ({}) AS orm_relation_target WHERE {};",
-                                    join(selectedOwnerFields, ", "), targetSelectSql, where);
+        const auto where = renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys);
+        statement.sql = std::format("SELECT {}, {}.* FROM ({}) AS {} WHERE {};", join(selectedOwnerFields, ", "),
+                                    quotedTargetAlias, targetSelectSql, quotedTargetAlias, where);
 
         return statement;
     }
@@ -392,25 +430,27 @@ auto collectionSelectStatement(const model::ModelInfo& ownerInfo, const model::R
 
     for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
     {
-        const auto expression = std::format("orm_relation_junction.{}", junction.ownerColumns[i]);
+        const auto expression = aliases::qualifiedIdentifier(dialect, junctionAlias, junction.ownerColumns[i]);
         ownerExpressions.push_back(expression);
-        selectedOwnerFields.push_back(
-            std::format("{} AS {}", expression, binding::relationOwnerAlias(*ownerPrimaryKey[i])));
+        selectedOwnerFields.push_back(std::format(
+            "{} AS {}", expression, dialect.quoteIdentifier(binding::relationOwnerAlias(*ownerPrimaryKey[i]))));
     }
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        joinPredicates.push_back(std::format("orm_relation_target.{}_{} = orm_relation_junction.{}",
-                                             targetInfo.tableName, targetPrimaryKey[i]->name,
-                                             junction.targetColumns[i]));
+        const auto targetOutputColumn = aliases::modelColumn(targetInfo.tableName, targetPrimaryKey[i]->name);
+        joinPredicates.push_back(
+            std::format("{} = {}", aliases::qualifiedIdentifier(dialect, targetAlias, targetOutputColumn),
+                        aliases::qualifiedIdentifier(dialect, junctionAlias, junction.targetColumns[i])));
     }
 
-    const auto where = renderOwnerKeyFilter(statement, ownerExpressions, ownerKeys);
-    statement.sql = std::format(
-        "SELECT {}, orm_relation_target.* FROM {} AS orm_relation_junction JOIN ({}) AS orm_relation_target ON {} "
-        "WHERE {};",
-        join(selectedOwnerFields, ", "), junction.tableName, targetSelectSql, join(joinPredicates, " AND "), where);
+    const auto where = renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys);
+    statement.sql =
+        std::format("SELECT {}, {}.* FROM {} AS {} JOIN ({}) AS {} ON {} WHERE {};", join(selectedOwnerFields, ", "),
+                    quotedTargetAlias, dialect.quoteIdentifier(junction.tableName), quotedJunctionAlias,
+                    targetSelectSql, quotedTargetAlias, join(joinPredicates, " AND "), where);
 
     return statement;
 }
+
 } // namespace orm::db::relations

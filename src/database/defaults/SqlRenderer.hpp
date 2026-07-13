@@ -6,6 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "orm-cxx/database/SqlDialect.hpp"
 #include "orm-cxx/database/Statement.hpp"
 #include "orm-cxx/model/ModelInfo.hpp"
 #include "orm-cxx/query/Predicate.hpp"
@@ -21,6 +22,7 @@ enum class ColumnRenderMode
 struct RenderContext
 {
     const model::ModelInfo& modelInfo;
+    const SqlDialect& dialect;
     bool shouldJoin = true;
     ColumnRenderMode columnRenderMode = ColumnRenderMode::Select;
     std::string tableAlias = {};
@@ -39,7 +41,7 @@ struct WriteColumn
 
 [[nodiscard]] auto renderColumn(const query::Column& column, const RenderContext& context) -> std::string;
 [[nodiscard]] auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo,
-                                     bool qualifyWithTable) -> WriteColumn;
+                                     const SqlDialect& dialect, bool qualifyWithTable) -> WriteColumn;
 [[nodiscard]] auto renderWhere(const std::optional<query::Predicate>& predicate, RenderContext& context) -> std::string;
 [[nodiscard]] auto renderWhere(const query::Predicate& predicate, RenderContext& context) -> std::string;
 [[nodiscard]] auto addAutomaticParameter(RenderContext& context, const query::QueryValue& value) -> std::string;

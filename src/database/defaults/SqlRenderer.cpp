@@ -4,7 +4,10 @@
 #include <format>
 #include <stdexcept>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
+
+#include "SqlAliases.hpp"
 
 namespace
 {
@@ -68,8 +71,21 @@ auto startsWith(std::string_view value, std::string_view prefix) -> bool
     return value.substr(0, prefix.size()) == prefix;
 }
 
-auto findColumnInfo(const orm::model::ModelInfo& modelInfo,
-                    const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo*
+auto uniqueAlias(std::string_view base, const std::unordered_set<std::string>& reserved) -> std::string
+{
+    auto candidate = std::string{base};
+    std::size_t suffix = 1;
+
+    while (reserved.contains(candidate))
+    {
+        candidate = std::format("{}_{}", base, suffix++);
+    }
+
+    return candidate;
+}
+
+auto findColumnInfo(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
+    -> const orm::model::ColumnInfo*
 {
     const auto columnInfo =
         std::ranges::find_if(modelInfo.columnsInfo, [&fieldOrColumnName](const orm::model::ColumnInfo& column)
@@ -83,8 +99,8 @@ auto findColumnInfo(const orm::model::ModelInfo& modelInfo,
     return &*columnInfo;
 }
 
-auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo,
-                          const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo&
+auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
+    -> const orm::model::ColumnInfo&
 {
     const auto* columnInfo = findColumnInfo(modelInfo, fieldOrColumnName);
 
@@ -96,8 +112,8 @@ auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo,
     return *columnInfo;
 }
 
-auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo,
-                                const orm::model::ColumnInfo& columnInfo) -> const orm::model::ModelInfo&
+auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo, const orm::model::ColumnInfo& columnInfo)
+    -> const orm::model::ModelInfo&
 {
     if (not columnInfo.isForeignModel)
     {
@@ -107,8 +123,8 @@ auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo,
     return modelInfo.foreignModelsInfo.at(columnInfo.name);
 }
 
-auto renderSelectColumn(const orm::query::Column& column,
-                        const orm::db::commands::RenderContext& context) -> std::string
+auto renderSelectColumn(const orm::query::Column& column, const orm::db::commands::RenderContext& context)
+    -> std::string
 {
     const auto parts = splitPath(column.getPath());
     const auto rootTable = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
@@ -123,7 +139,7 @@ auto renderSelectColumn(const orm::query::Column& column,
                                         column.getPath()};
         }
 
-        return std::format("{}.{}", rootTable, columnInfo.name);
+        return orm::db::aliases::qualifiedIdentifier(context.dialect, rootTable, columnInfo.name);
     }
 
     if (parts.size() == 2)
@@ -134,7 +150,8 @@ auto renderSelectColumn(const orm::query::Column& column,
 
         if (context.shouldJoin)
         {
-            return std::format("{}.{}", relatedColumnInfo.name, foreignColumnInfo.name);
+            return orm::db::aliases::qualifiedIdentifier(context.dialect, relatedColumnInfo.name,
+                                                         foreignColumnInfo.name);
         }
 
         if (not foreignColumnInfo.isPrimaryKey)
@@ -143,7 +160,9 @@ auto renderSelectColumn(const orm::query::Column& column,
                                         column.getPath()};
         }
 
-        return std::format("{}.{}_{}", rootTable, relatedColumnInfo.name, foreignColumnInfo.name);
+        return orm::db::aliases::qualifiedIdentifier(
+            context.dialect, rootTable,
+            orm::db::aliases::joinedRelationColumn(relatedColumnInfo.name, foreignColumnInfo.name));
     }
 
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
@@ -199,8 +218,8 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
 }
 
 auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string;
-auto renderPredicate(const orm::query::PredicateNodePtr& node,
-                     orm::db::commands::RenderContext& context) -> std::string;
+auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context)
+    -> std::string;
 
 auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<const orm::model::ColumnInfo*>
 {
@@ -227,7 +246,8 @@ auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<co
     return columns;
 }
 
-auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const std::string& rootAlias) -> std::string
+auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const orm::db::SqlDialect& dialect,
+                      const std::string& rootAlias) -> std::string
 {
     std::string joins;
 
@@ -243,23 +263,27 @@ auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const std::string&
 
         for (const auto* targetColumn : primaryKeyColumns(targetInfo))
         {
-            predicates.push_back(std::format("{}.{} = {}.{}_{}", relation.columnName, targetColumn->name, rootAlias,
-                                             relation.columnName, targetColumn->name));
+            predicates.push_back(std::format(
+                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relation.columnName, targetColumn->name),
+                orm::db::aliases::qualifiedIdentifier(
+                    dialect, rootAlias,
+                    orm::db::aliases::joinedRelationColumn(relation.columnName, targetColumn->name))));
         }
 
-        joins += std::format(" LEFT JOIN {} AS {} ON {}", targetInfo.tableName, relation.columnName,
-                             join(predicates, " AND "));
+        joins += std::format(" LEFT JOIN {} AS {} ON {}", dialect.quoteIdentifier(targetInfo.tableName),
+                             dialect.quoteIdentifier(relation.columnName), join(predicates, " AND "));
     }
 
     return joins;
 }
 
 auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, const orm::model::ModelInfo& targetInfo,
-                           orm::db::commands::RenderContext& outerContext,
-                           const std::string& targetAlias) -> std::string
+                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias)
+    -> std::string
 {
     orm::db::commands::RenderContext targetContext{
         .modelInfo = targetInfo,
+        .dialect = outerContext.dialect,
         .shouldJoin = true,
         .columnRenderMode = orm::db::commands::ColumnRenderMode::Select,
         .tableAlias = targetAlias,
@@ -297,11 +321,22 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
     }
 
     const auto outerAlias = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
-    const auto targetAlias = std::string{"orm_relation_target"};
-    const auto junctionAlias = std::string{"orm_relation_junction"};
     const auto ownerPrimaryKey = primaryKeyColumns(context.modelInfo);
     const auto& targetInfo = relation->targetModel();
     const auto targetPrimaryKey = primaryKeyColumns(targetInfo);
+    auto reservedAliases = std::unordered_set<std::string>{outerAlias};
+
+    for (const auto& targetRelation : targetInfo.relationsInfo)
+    {
+        if (targetRelation.kind == orm::model::RelationKind::ToOne)
+        {
+            reservedAliases.insert(targetRelation.columnName);
+        }
+    }
+
+    const auto targetAlias = uniqueAlias("orm_relation_target", reservedAliases);
+    reservedAliases.insert(targetAlias);
+    const auto junctionAlias = uniqueAlias("orm_relation_junction", reservedAliases);
     std::vector<std::string> predicates;
     std::string from;
 
@@ -316,11 +351,17 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
         for (const auto* ownerColumn : ownerPrimaryKey)
         {
-            predicates.push_back(std::format("{}.{}_{} = {}.{}", targetAlias, mappedRelation->columnName,
-                                             ownerColumn->name, outerAlias, ownerColumn->name));
+            predicates.push_back(
+                std::format("{} = {}",
+                            orm::db::aliases::qualifiedIdentifier(
+                                context.dialect, targetAlias,
+                                orm::db::aliases::joinedRelationColumn(mappedRelation->columnName, ownerColumn->name)),
+                            orm::db::aliases::qualifiedIdentifier(context.dialect, outerAlias, ownerColumn->name)));
         }
 
-        from = std::format("{} AS {}{}", targetInfo.tableName, targetAlias, renderToOneJoins(targetInfo, targetAlias));
+        from = std::format("{} AS {}{}", context.dialect.quoteIdentifier(targetInfo.tableName),
+                           context.dialect.quoteIdentifier(targetAlias),
+                           renderToOneJoins(targetInfo, context.dialect, targetAlias));
     }
     else
     {
@@ -341,18 +382,25 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
         {
-            predicates.push_back(std::format("{}.{} = {}.{}", junctionAlias, junction.ownerColumns[i], outerAlias,
-                                             ownerPrimaryKey[i]->name));
+            predicates.push_back(std::format(
+                "{} = {}",
+                orm::db::aliases::qualifiedIdentifier(context.dialect, junctionAlias, junction.ownerColumns[i]),
+                orm::db::aliases::qualifiedIdentifier(context.dialect, outerAlias, ownerPrimaryKey[i]->name)));
         }
 
         for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
         {
-            targetJoin.push_back(std::format("{}.{} = {}.{}", targetAlias, targetPrimaryKey[i]->name, junctionAlias,
-                                             junction.targetColumns[i]));
+            targetJoin.push_back(std::format(
+                "{} = {}",
+                orm::db::aliases::qualifiedIdentifier(context.dialect, targetAlias, targetPrimaryKey[i]->name),
+                orm::db::aliases::qualifiedIdentifier(context.dialect, junctionAlias, junction.targetColumns[i])));
         }
 
-        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", junction.tableName, junctionAlias, targetInfo.tableName,
-                           targetAlias, join(targetJoin, " AND "), renderToOneJoins(targetInfo, targetAlias));
+        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", context.dialect.quoteIdentifier(junction.tableName),
+                           context.dialect.quoteIdentifier(junctionAlias),
+                           context.dialect.quoteIdentifier(targetInfo.tableName),
+                           context.dialect.quoteIdentifier(targetAlias), join(targetJoin, " AND "),
+                           renderToOneJoins(targetInfo, context.dialect, targetAlias));
     }
 
     if (expression.predicate != nullptr)
@@ -391,6 +439,12 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
             },
             [&context](const orm::query::ListExpression& expression)
             {
+                if (expression.values.empty())
+                {
+                    return expression.listOperator == orm::query::ListOperator::In ? std::string{"(1 = 0)"} :
+                                                                                     std::string{"(1 = 1)"};
+                }
+
                 const auto column = orm::db::commands::renderColumn(expression.column, context);
                 const auto sqlOperator = expression.listOperator == orm::query::ListOperator::In ? "IN" : "NOT IN";
                 std::vector<std::string> placeholders;
@@ -440,13 +494,13 @@ auto renderColumn(const query::Column& column, const RenderContext& context) -> 
 {
     if (context.columnRenderMode == ColumnRenderMode::WritePredicate)
     {
-        return renderWriteColumn(column, context.modelInfo, true).sql;
+        return renderWriteColumn(column, context.modelInfo, context.dialect, true).sql;
     }
 
     return renderSelectColumn(column, context);
 }
 
-auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo,
+auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo, const SqlDialect& dialect,
                        bool qualifyWithTable) -> WriteColumn
 {
     const auto parts = splitPath(column.getPath());
@@ -460,8 +514,9 @@ auto renderWriteColumn(const query::Column& column, const model::ModelInfo& mode
             throw std::invalid_argument{"Use a related primary-key field path in write queries: " + column.getPath()};
         }
 
-        return WriteColumn{.sql = qualifyWithTable ? std::format("{}.{}", modelInfo.tableName, columnInfo.name) :
-                                                     columnInfo.name,
+        return WriteColumn{.sql = qualifyWithTable ?
+                                      aliases::qualifiedIdentifier(dialect, modelInfo.tableName, columnInfo.name) :
+                                      dialect.quoteIdentifier(columnInfo.name),
                            .type = columnInfo.type,
                            .isNotNull = columnInfo.isNotNull};
     }
@@ -480,7 +535,9 @@ auto renderWriteColumn(const query::Column& column, const model::ModelInfo& mode
 
         const auto columnName = std::format("{}_{}", relatedColumnInfo.name, foreignColumnInfo.name);
 
-        return WriteColumn{.sql = qualifyWithTable ? std::format("{}.{}", modelInfo.tableName, columnName) : columnName,
+        return WriteColumn{.sql = qualifyWithTable ?
+                                      aliases::qualifiedIdentifier(dialect, modelInfo.tableName, columnName) :
+                                      dialect.quoteIdentifier(columnName),
                            .type = foreignColumnInfo.type,
                            .isNotNull = relatedColumnInfo.isNotNull};
     }
@@ -515,7 +572,7 @@ auto addAutomaticParameter(RenderContext& context, const query::QueryValue& valu
     context.parameterNames.insert(parameterName);
     context.parameters.push_back(StatementParameter{.name = parameterName, .value = value});
 
-    return ":" + parameterName;
+    return context.dialect.bindMarker(parameterName);
 }
 
 auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::string
@@ -530,6 +587,6 @@ auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::st
     context.parameterNames.insert(parameterName);
     context.parameters.push_back(StatementParameter{.name = parameterName, .value = std::nullopt, .nullType = type});
 
-    return ":" + parameterName;
+    return context.dialect.bindMarker(parameterName);
 }
 } // namespace orm::db::commands

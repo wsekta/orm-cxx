@@ -1,8 +1,14 @@
+#pragma once
+
 #include <format>
+#include <optional>
 #include <stdexcept>
+#include <type_traits>
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
+#include "NullBinding.hpp"
+#include "NumericConversion.hpp"
 #include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
@@ -20,21 +26,21 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     case model::ColumnType::Short:
     case model::ColumnType::UnsignedShort:
     case model::ColumnType::Int:
-        values.set(name, int{}, soci::i_null);
+        bindTypedNull(values, name, int{});
         return;
     case model::ColumnType::UnsignedInt:
     case model::ColumnType::UnsignedLongLong:
-        values.set(name, static_cast<unsigned long long>(0), soci::i_null);
+        bindTypedNull(values, name, static_cast<unsigned long long>(0));
         return;
     case model::ColumnType::LongLong:
-        values.set(name, static_cast<long long>(0), soci::i_null);
+        bindTypedNull(values, name, static_cast<long long>(0));
         return;
     case model::ColumnType::Float:
     case model::ColumnType::Double:
-        values.set(name, 0.0, soci::i_null);
+        bindTypedNull(values, name, 0.0);
         return;
     case model::ColumnType::String:
-        values.set(name, std::string{}, soci::i_null);
+        bindTypedNull(values, name, std::string{});
         return;
     case model::ColumnType::Uuid:
     case model::ColumnType::Unknown:
@@ -45,8 +51,8 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
 }
 
-inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo,
-                                 std::size_t columnIndex) -> void
+inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo, std::size_t columnIndex)
+    -> void
 {
     const auto& columnInfo = modelInfo.columnsInfo[columnIndex];
 
@@ -69,6 +75,64 @@ inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& m
     setNullValue(values, columnInfo.name, columnInfo.type);
 }
 
+template <typename T>
+struct IsOptionalScalarField : std::false_type
+{
+};
+
+template <typename T>
+struct IsOptionalScalarField<std::optional<T>> : std::true_type
+{
+    using value_type = T;
+};
+
+template <typename ModelField>
+auto setScalarFieldValue(soci::values& values, const std::string& fieldName, const ModelField& field,
+                         model::ColumnType columnType) -> void
+{
+    if constexpr (IsOptionalScalarField<ModelField>::value)
+    {
+        if (not field.has_value())
+        {
+            setNullValue(values, fieldName, columnType);
+            return;
+        }
+
+        setScalarFieldValue(values, fieldName, field.value(), columnType);
+    }
+    else if constexpr (SociConvertableToDouble<ModelField>)
+    {
+        values.set(fieldName, checkedNumericCast<double>(field, fieldName));
+    }
+    else if constexpr (SociConvertableToInt<ModelField>)
+    {
+        values.set(fieldName, checkedNumericCast<int>(field, fieldName));
+    }
+    else if constexpr (SociConvertableToLongLong<ModelField>)
+    {
+        values.set(fieldName, checkedNumericCast<long long>(field, fieldName));
+    }
+    else if constexpr (SociConvertableToUnsignedLongLong<ModelField>)
+    {
+        values.set(fieldName, checkedNumericCast<unsigned long long>(field, fieldName));
+    }
+    else if constexpr (SociDefaultSupported<ModelField>)
+    {
+        if constexpr (std::is_arithmetic_v<ModelField>)
+        {
+            values.set(fieldName, checkedNumericCast<ModelField>(field, fieldName));
+        }
+        else
+        {
+            values.set(fieldName, field);
+        }
+    }
+    else
+    {
+        throw std::invalid_argument{"Unsupported related model field type: " + fieldName};
+    }
+}
+
 template <typename ModelField>
 struct ObjectFieldToValues;
 
@@ -86,7 +150,14 @@ struct ObjectFieldToValues<ModelField>
             return;
         }
 
-        values.set(columnInfo.name, *column);
+        if constexpr (std::is_arithmetic_v<ModelField>)
+        {
+            values.set(columnInfo.name, checkedNumericCast<ModelField>(*column, columnInfo.name));
+        }
+        else
+        {
+            values.set(columnInfo.name, *column);
+        }
     }
 };
 
@@ -117,7 +188,8 @@ struct ObjectFieldToValues<ModelField>
 
                 if (columnInfo.isPrimaryKey)
                 {
-                    values.set(std::format("{}_{}", foreignFieldName, columnInfo.name), *foreignModelColumn);
+                    setScalarFieldValue(values, std::format("{}_{}", foreignFieldName, columnInfo.name),
+                                        *foreignModelColumn, columnInfo.type);
                 }
             }
         };
@@ -150,7 +222,8 @@ struct ObjectFieldToValuesWithCast
     static auto set(const ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
                     soci::values& values) -> void
     {
-        values.set(model.getModelInfo().columnsInfo[columnIndex].name, static_cast<SociType>(*column));
+        const auto& fieldName = model.getModelInfo().columnsInfo[columnIndex].name;
+        values.set(fieldName, checkedNumericCast<SociType>(*column, fieldName));
     }
 };
 
@@ -161,6 +234,11 @@ struct ObjectFieldToValues<ModelField> : ObjectFieldToValuesWithCast<ModelField,
 
 template <SociConvertableToInt ModelField>
 struct ObjectFieldToValues<ModelField> : ObjectFieldToValuesWithCast<ModelField, int>
+{
+};
+
+template <SociConvertableToLongLong ModelField>
+struct ObjectFieldToValues<ModelField> : ObjectFieldToValuesWithCast<ModelField, long long>
 {
 };
 

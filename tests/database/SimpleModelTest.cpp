@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "DatabaseTest.hpp"
 
 class SimpleModelTest : public DatabaseTest
@@ -40,6 +42,12 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSam
     auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
     orm::Query<models::SomeDataModel> query;
 
+    for (std::size_t i = 0; i < models.size(); ++i)
+    {
+        models[i].field1 = static_cast<int>(i);
+    }
+    query.orderBy(orm::query::asc(orm::query::col("field1")));
+
     database.insert(models);
 
     auto returnedModels = database.select(query);
@@ -56,9 +64,15 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_value
     createTable<models::ModelWithOptional>();
     auto models = generateSomeDataModels<models::ModelWithOptional>(modelCount);
 
+    for (std::size_t i = 0; i < models.size(); ++i)
+    {
+        models[i].field1 = static_cast<int>(i);
+    }
+
     database.insert(models);
 
     orm::Query<models::ModelWithOptional> queryForOptional;
+    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -104,9 +118,15 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesSh
     createTable<models::ModelWithFloat>();
     auto models = generateSomeDataModels<models::ModelWithFloat>(modelCount);
 
+    for (std::size_t i = 0; i < models.size(); ++i)
+    {
+        models[i].field1 = static_cast<int>(i);
+    }
+
     database.insert(models);
 
     orm::Query<models::ModelWithFloat> queryForOptional;
+    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -120,11 +140,17 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloatAndOption
 {
     createTable<models::ModelWithOptionalFloat>();
     auto models = generateSomeDataModels<models::ModelWithOptionalFloat>(modelCount);
-    models[0].field3 = std::nullopt;
+
+    for (std::size_t i = 0; i < models.size(); ++i)
+    {
+        models[i].field1 = static_cast<int>(i);
+    }
+    models.front().field3 = std::nullopt;
 
     database.insert(models);
 
     orm::Query<models::ModelWithOptionalFloat> queryForOptional;
+    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -190,4 +216,31 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllIn
     EXPECT_EQ(model.field9, returnedModels[0].field9);
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, SimpleModelTest, connectionStrings);
+TEST_P(SimpleModelTest, shouldRejectUnsigned64BitInsertOutsideBackendValueLimit)
+{
+    createTable<models::ModelWithAllInts>();
+    const auto maximum = database.getBackendCapabilities().valueLimits.maxUnsignedLongLong;
+
+    if (not maximum.has_value() or maximum.value() == std::numeric_limits<unsigned long long>::max())
+    {
+        GTEST_SKIP() << "The configured backend supports the complete unsigned 64-bit range";
+    }
+
+    const auto model = models::ModelWithAllInts{1, 2, 3, 4, 5, 6, 7, maximum.value() + 1, 9};
+
+    try
+    {
+        database.insert(model);
+        FAIL() << "Expected an unsigned 64-bit conversion error";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Conversion);
+        EXPECT_EQ(error.getOperation(), "insert");
+    }
+
+    orm::Query<models::ModelWithAllInts> query;
+    EXPECT_TRUE(database.select(query).empty());
+}
+
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, SimpleModelTest, backendTestConfigs, backendTestName);

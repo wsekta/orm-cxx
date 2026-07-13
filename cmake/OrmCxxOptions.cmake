@@ -33,5 +33,6 @@ function(orm_cxx_define_options)
     _orm_cxx_deprecated_bool_option(
         ORM_CXX_ENABLE_COVERAGE CODE_COVERAGE "Instrument orm-cxx and generate code coverage reports" OFF
     )
+    option(ORM_CXX_ENABLE_SQLITE_BACKEND "Build and register the SQLite backend" ON)
     option(ORM_CXX_WARNINGS_AS_ERRORS "Treat warnings from orm-cxx sources as errors" "${developer_default}")
 endfunction()

@@ -96,7 +96,18 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyForeignKey_shouldBlockDeletingPa
     database.insert(author);
     database.insert(book);
 
-    EXPECT_ANY_THROW((void)database.remove<collection_models::Author>(orm::query::col("id") == author.id));
+    try
+    {
+        (void)database.remove<collection_models::Author>(orm::query::col("id") == author.id);
+        FAIL() << "Expected DatabaseError";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Constraint);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
+        EXPECT_EQ(error.getOperation(), "remove");
+        EXPECT_TRUE(error.getNativeCode().has_value());
+    }
 }
 
 TEST_P(CollectionRelationDatabaseTest, includeWithJoiningDisabled_shouldStillLoadCollectionButNotNestedObjects)
@@ -544,10 +555,29 @@ TEST_P(CollectionRelationDatabaseTest, include_shouldRejectWrapperTargetMetadata
     userInfo.relationsInfo.front().targetType = savedType;
 }
 
-TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutSqliteConnection_shouldRejectBackend)
+TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnection_shouldReportNotConnected)
 {
     orm::Database disconnected;
-    EXPECT_THROW((void)disconnected.createRelationTables<collection_models::User>(), std::invalid_argument);
+
+    try
+    {
+        disconnected.createRelationTables<collection_models::User>();
+        FAIL() << "Expected DatabaseError";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::NotConnected);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Empty);
+    }
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationDatabaseTest, connectionStrings);
+TEST(CollectionRelationDatabaseStandaloneTest, relationTableLifecycleWithoutOwnedJunctionShouldBeNoOp)
+{
+    orm::Database disconnected;
+
+    EXPECT_NO_THROW(disconnected.createRelationTables<collection_models::Role>());
+    EXPECT_NO_THROW(disconnected.deleteRelationTables<collection_models::Role>());
+    EXPECT_FALSE(disconnected.isConnected());
+}
+
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationDatabaseTest, backendTestConfigs, backendTestName);

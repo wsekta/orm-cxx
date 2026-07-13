@@ -1,13 +1,15 @@
 include_guard(GLOBAL)
 
 function(orm_cxx_add_runtime_dependencies source_dir)
-    if(TARGET soci_core OR TARGET soci_sqlite3)
-        if(NOT TARGET soci_core OR NOT TARGET soci_sqlite3)
+    if(TARGET soci_core)
+        if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)
             message(
                 FATAL_ERROR
-                    "orm-cxx requires both soci_core and soci_sqlite3 when SOCI targets are supplied by a parent project."
+                    "ORM_CXX_ENABLE_SQLITE_BACKEND=ON requires the parent project to provide the soci_sqlite3 target alongside soci_core."
             )
         endif()
+    elseif(TARGET soci_sqlite3)
+        message(FATAL_ERROR "orm-cxx requires the soci_core target when SOCI targets are supplied by a parent project.")
     else()
         # Keep all SOCI configuration local to this function/directory tree. In particular, do not overwrite a parent
         # project's cache or BUILD_SHARED_LIBS setting.
@@ -23,13 +25,23 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         set(WITH_ODBC OFF)
         set(WITH_ORACLE OFF)
         set(WITH_POSTGRESQL OFF)
-        set(WITH_SQLITE3 ON)
-        set(SOCI_SQLITE3 ON)
-        set(SOCI_SQLITE3_TEST_CONNSTR ":memory:")
+        set(WITH_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
+        set(SOCI_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
+
+        if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+            set(SOCI_SQLITE3_TEST_CONNSTR ":memory:")
+        endif()
 
         add_subdirectory("${source_dir}/externals/soci" "${CMAKE_CURRENT_BINARY_DIR}/externals/soci" EXCLUDE_FROM_ALL)
 
-        if(NOT TARGET soci_core OR NOT TARGET soci_sqlite3)
+        if(NOT TARGET soci_core)
+            message(
+                FATAL_ERROR
+                    "The bundled SOCI configuration could not create the soci_core target."
+            )
+        endif()
+
+        if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)
             message(
                 FATAL_ERROR
                     "The bundled SOCI configuration could not create its SQLite backend. Install the SQLite development package or configure through the repository's vcpkg toolchain."

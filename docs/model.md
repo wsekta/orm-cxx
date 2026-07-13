@@ -44,6 +44,12 @@ SQLite models currently support these scalar C++ field types:
 These types are mapped to SQLite storage classes by the SQLite backend. Types
 outside this list are not supported as scalar columns.
 
+SQLite and its SOCI driver exchange integer values through signed 64-bit
+storage. Consequently, `unsigned long long` and 64-bit `unsigned long` values
+are supported through `INT64_MAX`; larger values fail with
+`DatabaseErrorCode::Conversion` instead of being silently wrapped. The selected
+backend reports this bound in `BackendCapabilities::valueLimits`.
+
 ## Optional fields
 
 Wrap a supported scalar type in `std::optional<T>` to make the column nullable.

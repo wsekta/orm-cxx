@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "BindingPayload.hpp"
+#include "ConversionError.hpp"
 #include "orm-cxx/query/QueryValue.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
@@ -21,11 +22,11 @@ DISABLE_WARNING_POP
 
 namespace orm::db::binding
 {
-using PrimaryKey = std::vector<query::QueryValue::Value>;
+using PrimaryKey = std::vector<query::QueryValue>;
 
-inline auto toQueryValue(const query::QueryValue::Value& value) -> query::QueryValue
+inline auto toQueryValue(const query::QueryValue& value) -> query::QueryValue
 {
-    return std::visit([](const auto& storedValue) { return query::QueryValue{storedValue}; }, value);
+    return value;
 }
 
 template <typename T>
@@ -42,7 +43,7 @@ template <typename T>
 inline constexpr bool isOptional = IsOptional<std::remove_cv_t<T>>::value;
 
 template <typename T>
-auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::QueryValue::Value
+auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::QueryValue
 {
     using value_t = std::remove_cv_t<T>;
 
@@ -55,15 +56,9 @@ auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::Q
 
         return toPrimaryKeyValue(value.value(), fieldName);
     }
-    else if constexpr (std::is_same_v<value_t, long>)
-    {
-        // Model metadata maps long to ColumnType::Int and SOCI reads it back as int.
-        // Keep the in-memory key representation identical to hydrated relation keys.
-        return query::QueryValue{static_cast<int>(value)}.get();
-    }
     else if constexpr (requires { query::QueryValue{value}; })
     {
-        return query::QueryValue{value}.get();
+        return query::QueryValue{value};
     }
     else
     {
@@ -110,13 +105,25 @@ auto getPrimaryKey(const T& object) -> PrimaryKey
     return key;
 }
 
-inline auto getPrimaryKeyValue(const soci::values& values, const std::string& name,
-                               model::ColumnType type) -> query::QueryValue::Value
+inline auto getPrimaryKeyValue(const soci::values& values, const std::string& name, model::ColumnType type)
+    -> query::QueryValue
 {
     if (values.get_indicator(name) == soci::i_null)
     {
         throw std::runtime_error{"Cannot hydrate NULL relation primary key: " + name};
     }
+
+    const auto fromStorage = [type, &name](query::QueryValue::Value value)
+    {
+        try
+        {
+            return query::QueryValue::fromStorage(type, std::move(value));
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ConversionError{"Cannot hydrate relation primary key without data loss: " + name};
+        }
+    };
 
     switch (type)
     {
@@ -126,17 +133,17 @@ inline auto getPrimaryKeyValue(const soci::values& values, const std::string& na
     case model::ColumnType::Short:
     case model::ColumnType::UnsignedShort:
     case model::ColumnType::Int:
-        return query::QueryValue{values.get<int>(name)}.get();
+        return fromStorage(values.get<int>(name));
     case model::ColumnType::UnsignedInt:
     case model::ColumnType::UnsignedLongLong:
-        return query::QueryValue{values.get<unsigned long long>(name)}.get();
+        return fromStorage(values.get<unsigned long long>(name));
     case model::ColumnType::LongLong:
-        return query::QueryValue{values.get<long long>(name)}.get();
+        return fromStorage(values.get<long long>(name));
     case model::ColumnType::Float:
     case model::ColumnType::Double:
-        return query::QueryValue{values.get<double>(name)}.get();
+        return fromStorage(values.get<double>(name));
     case model::ColumnType::String:
-        return query::QueryValue{values.get<std::string>(name)}.get();
+        return fromStorage(values.get<std::string>(name));
     case model::ColumnType::Uuid:
     case model::ColumnType::Unknown:
     case model::ColumnType::OneToOne:

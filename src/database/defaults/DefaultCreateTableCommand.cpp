@@ -6,14 +6,11 @@
 
 namespace orm::db::commands
 {
-DefaultCreateTableCommand::DefaultCreateTableCommand(std::shared_ptr<TypeTranslator> typeTranslatorInit)
-    : typeTranslator(std::move(typeTranslatorInit))
-{
-}
+DefaultCreateTableCommand::DefaultCreateTableCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
 auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) const -> std::string
 {
-    std::string command = std::format("CREATE TABLE IF NOT EXISTS {} (\n", modelInfo.tableName);
+    std::string command = dialect.renderCreateTablePrefix(modelInfo.tableName, true) + "\n";
 
     const auto& columns = modelInfo.columnsInfo;
 
@@ -28,12 +25,12 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
 
         if (column.isAutoIncrement)
         {
-            command.append(std::format("\t{} INTEGER PRIMARY KEY AUTOINCREMENT,\n", column.name));
+            command.append(std::format("\t{},\n", dialect.renderAutoIncrementPrimaryKey(column.name)));
 
             continue;
         }
 
-        command.append(std::format("\t{} {}{},\n", column.name, typeTranslator->toSqlType(column.type),
+        command.append(std::format("\t{} {}{},\n", dialect.quoteIdentifier(column.name), dialect.toSqlType(column.type),
                                    column.isNotNull ? " NOT NULL" : ""));
     }
 
@@ -49,7 +46,7 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
         {
             if (columnInfo.isPrimaryKey)
             {
-                command.append(std::format("{}, ", columnInfo.name));
+                command.append(std::format("{}, ", dialect.quoteIdentifier(columnInfo.name)));
             }
         }
 
@@ -93,15 +90,16 @@ auto DefaultCreateTableCommand::addColumnsForForeignIds(const model::ModelInfo& 
     {
         if (foreignColumnInfo.isPrimaryKey)
         {
-            command.append(std::format("\t{}_{} {}{},\n", fieldName, foreignColumnInfo.name,
-                                       typeTranslator->toSqlType(foreignColumnInfo.type), isNullable));
+            command.append(std::format("\t{} {}{},\n",
+                                       dialect.quoteIdentifier(std::format("{}_{}", fieldName, foreignColumnInfo.name)),
+                                       dialect.toSqlType(foreignColumnInfo.type), isNullable));
         }
     }
 
     return command;
 }
 
-auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo) -> std::string
+auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo) const -> std::string
 {
     std::string command{};
 
@@ -112,19 +110,20 @@ auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo)
         {
             if (foreignColumnInfo.isPrimaryKey)
             {
-                foreignKeyCommand.append(std::format("{}_{}, ", fieldName, foreignColumnInfo.name));
+                foreignKeyCommand.append(std::format(
+                    "{}, ", dialect.quoteIdentifier(std::format("{}_{}", fieldName, foreignColumnInfo.name))));
             }
         }
 
         utils::removeLastComma(foreignKeyCommand);
 
-        foreignKeyCommand.append(std::format(") REFERENCES {} (", foreignModelInfo.tableName));
+        foreignKeyCommand.append(std::format(") REFERENCES {} (", dialect.quoteIdentifier(foreignModelInfo.tableName)));
 
         for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
         {
             if (foreignColumnInfo.isPrimaryKey)
             {
-                foreignKeyCommand.append(std::format("{}, ", foreignColumnInfo.name));
+                foreignKeyCommand.append(std::format("{}, ", dialect.quoteIdentifier(foreignColumnInfo.name)));
             }
         }
 

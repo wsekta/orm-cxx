@@ -39,6 +39,9 @@ jobs:
       - name: Run tests and generate coverage
         run: cmake --build --preset linux-clang-coverage --target orm-cxx-coverage
 
+      - name: Run full portability profile
+        run: ctest --preset linux-clang-coverage
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:

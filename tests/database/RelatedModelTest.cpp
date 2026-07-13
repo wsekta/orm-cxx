@@ -22,6 +22,7 @@ TEST_P(RelatedModelTest,
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
+    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col("id")));
     queryForRelatedModel.disableJoining();
     auto returnedModels = database.select(queryForRelatedModel);
 
@@ -43,6 +44,7 @@ TEST_P(RelatedModelTest, shouldExecuteInsertQueryAndSelectQueryWithRelatedModel_
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
+    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col("id")));
     auto returnedModels = database.select(queryForRelatedModel);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -99,4 +101,4 @@ TEST_P(RelatedModelTest, shouldRoundTripOptionalRelatedModelWithoutJoining)
     EXPECT_FALSE(returnedModels[1].field3.has_value());
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, RelatedModelTest, connectionStrings);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, RelatedModelTest, backendTestConfigs, backendTestName);
