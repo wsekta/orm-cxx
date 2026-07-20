@@ -199,13 +199,7 @@ auto Database::connect(db::BackendType requestedBackend, const std::string& conn
             return;
         }
 
-        try
-        {
-            sql.close();
-        }
-        catch (...)
-        {
-        }
+        sql.close();
     };
 
     try
@@ -261,17 +255,7 @@ auto Database::disconnect() -> void
         transaction.reset();
     }
 
-    try
-    {
-        sql.close();
-    }
-    catch (const soci::soci_error& error)
-    {
-        if (not failure.has_value())
-        {
-            failure = connectedBackend->runtime().translateError(error, DatabaseErrorCode::Connection, "disconnect");
-        }
-    }
+    sql.close();
 
     backend = nullptr;
     backendType = db::BackendType::Empty;

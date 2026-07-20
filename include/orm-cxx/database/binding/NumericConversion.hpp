@@ -96,6 +96,8 @@ auto checkedNumericCast(Source value, std::string_view fieldName) -> Result
                 throwLossyNumericConversion(fieldName);
             }
         }
+
+        return static_cast<Result>(value);
     }
     else if constexpr (std::is_integral_v<Result> and std::is_floating_point_v<Source>)
     {
@@ -109,6 +111,8 @@ auto checkedNumericCast(Source value, std::string_view fieldName) -> Result
         {
             throwLossyNumericConversion(fieldName);
         }
+
+        return static_cast<Result>(value);
     }
     else if constexpr (std::is_floating_point_v<Result> and std::is_integral_v<Source>)
     {
@@ -144,6 +148,8 @@ auto checkedNumericCast(Source value, std::string_view fieldName) -> Result
                 }
             }
         }
+
+        return static_cast<Result>(value);
     }
     else if constexpr (std::is_floating_point_v<Result> and std::is_floating_point_v<Source> and
                        std::numeric_limits<Result>::digits < std::numeric_limits<Source>::digits)
@@ -163,7 +169,9 @@ auto checkedNumericCast(Source value, std::string_view fieldName) -> Result
 
         return converted;
     }
-
-    return static_cast<Result>(value);
+    else
+    {
+        return static_cast<Result>(value);
+    }
 }
 } // namespace orm::db::binding

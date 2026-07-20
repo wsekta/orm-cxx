@@ -249,6 +249,16 @@ TEST(CollectionRelationCoverageTest, junctionMetadataValidationRejectsEveryInval
                  std::invalid_argument);
 }
 
+TEST(CollectionRelationCoverageTest, owningJunctionDefaultsEndpointColumnNames)
+{
+    const auto junction =
+        orm::model::detail::makeOwningJunction<collection_models::Member, collection_models::Permission>(
+            orm::manyToMany("permissions").through("coverage_default_columns"));
+
+    EXPECT_EQ(junction.ownerColumns, std::vector<std::string>{"collection_members_id"});
+    EXPECT_EQ(junction.targetColumns, std::vector<std::string>{"collection_permissions_id"});
+}
+
 TEST(CollectionRelationCoverageTest, mappedByAndInverseMetadataValidationRejectInvalidDescriptors)
 {
     EXPECT_THROW(
@@ -334,6 +344,7 @@ TEST(CollectionRelationCoverageTest, relationStatementValidationRejectsMalformed
     auto userRelation = userInfo.relationsInfo.front();
 
     EXPECT_TRUE(orm::db::relations::createTableStatements(roleInfo).empty());
+    EXPECT_TRUE(orm::db::relations::dropTableStatements(roleInfo).empty());
 
     auto invalidDdlInfo = userInfo;
     invalidDdlInfo.relationsInfo.front().junction->ownerColumns.clear();

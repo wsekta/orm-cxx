@@ -8,6 +8,26 @@
 #include "orm-cxx/database/binding/ConversionError.hpp"
 #include "soci/soci.h"
 
+namespace
+{
+class CategorizedSociError final : public soci::soci_error
+{
+public:
+    explicit CategorizedSociError(error_category categoryInit)
+        : soci_error{"categorized test error"}, category{categoryInit}
+    {
+    }
+
+    [[nodiscard]] auto get_error_category() const -> error_category override
+    {
+        return category;
+    }
+
+private:
+    error_category category;
+};
+} // namespace
+
 TEST(SqliteBackendTest, exposesSQLiteIdentityAndCapabilities)
 {
     const orm::db::sqlite::SqliteBackend backend;
@@ -96,4 +116,41 @@ TEST(SqliteBackendTest, runtimeAdaptsUnsigned64BitValuesToTheLosslessSQLiteRange
                                         orm::db::BoundValue{.logicalType = orm::model::ColumnType::UnsignedLongLong,
                                                             .value = orm::query::QueryValue::Value{maximum + 1}}),
                  orm::db::binding::ConversionError);
+}
+
+TEST(SqliteBackendTest, runtimeRejectsMismatchedUnsigned64BitStorage)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    auto values = soci::values{};
+
+    EXPECT_THROW(backend.runtime().bind(values, "mismatched",
+                                        orm::db::BoundValue{
+                                            .logicalType = orm::model::ColumnType::UnsignedLongLong,
+                                            .value = orm::query::QueryValue::Value{42},
+                                        }),
+                 orm::db::binding::ConversionError);
+}
+
+TEST(SqliteBackendTest, runtimeTranslatesEveryPortableSociErrorCategory)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+
+    const auto expectCode = [&backend](soci::soci_error::error_category category, orm::DatabaseErrorCode expected)
+    {
+        const auto translated = backend.runtime().translateError(CategorizedSociError{category},
+                                                                 orm::DatabaseErrorCode::Statement, "query");
+        EXPECT_EQ(translated.getCode(), expected);
+        EXPECT_EQ(translated.getBackendType(), orm::db::BackendType::Sqlite);
+        EXPECT_EQ(translated.getOperation(), "query");
+        EXPECT_FALSE(translated.getNativeCode().has_value());
+    };
+
+    expectCode(soci::soci_error::connection_error, orm::DatabaseErrorCode::Connection);
+    expectCode(soci::soci_error::constraint_violation, orm::DatabaseErrorCode::Constraint);
+    expectCode(soci::soci_error::unknown_transaction_state, orm::DatabaseErrorCode::Transaction);
+    expectCode(soci::soci_error::invalid_statement, orm::DatabaseErrorCode::Statement);
+    expectCode(soci::soci_error::no_privilege, orm::DatabaseErrorCode::Statement);
+    expectCode(soci::soci_error::no_data, orm::DatabaseErrorCode::Statement);
+    expectCode(soci::soci_error::system_error, orm::DatabaseErrorCode::Statement);
+    expectCode(soci::soci_error::unknown, orm::DatabaseErrorCode::Statement);
 }

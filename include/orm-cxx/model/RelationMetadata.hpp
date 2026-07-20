@@ -151,19 +151,24 @@ auto makeOwningJunction(const ManyToManyDescriptor& descriptor) -> JunctionInfo
                                     "' has a targetColumns() count different from the target primary key"};
     }
 
-    if constexpr (std::is_same_v<Owner, Target>)
+    if (std::is_same_v<Owner, Target> &&
+        (descriptor.ownerColumnNames().empty() || descriptor.targetColumnNames().empty()))
     {
-        if (descriptor.ownerColumnNames().empty() || descriptor.targetColumnNames().empty())
-        {
-            throw std::invalid_argument{"Self-referencing many-to-many relation '" + descriptor.fieldName() +
-                                        "' requires explicit ownerColumns() and targetColumns()"};
-        }
+        throw std::invalid_argument{"Self-referencing many-to-many relation '" + descriptor.fieldName() +
+                                    "' requires explicit ownerColumns() and targetColumns()"};
     }
 
-    auto ownerColumns =
-        descriptor.ownerColumnNames().empty() ? defaultJunctionColumns<Owner>(ownerIds) : descriptor.ownerColumnNames();
-    auto targetColumns = descriptor.targetColumnNames().empty() ? defaultJunctionColumns<Target>(targetIds) :
-                                                                  descriptor.targetColumnNames();
+    auto ownerColumns = descriptor.ownerColumnNames();
+    if (ownerColumns.empty())
+    {
+        ownerColumns = defaultJunctionColumns<Owner>(ownerIds);
+    }
+
+    auto targetColumns = descriptor.targetColumnNames();
+    if (targetColumns.empty())
+    {
+        targetColumns = defaultJunctionColumns<Target>(targetIds);
+    }
 
     validateJunctionColumnNames(ownerColumns, descriptor.fieldName(), "owner");
     validateJunctionColumnNames(targetColumns, descriptor.fieldName(), "target");

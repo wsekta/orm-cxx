@@ -20,6 +20,7 @@ set(ORM_CXX_TEST_SOURCES
     ModelTest.cpp
     CollectionRelationCoverageTest.cpp
     database/BackendConformanceTest.cpp
+    database/DatabaseCoverageCompletionTest.cpp
     database/DatabaseErrorTest.cpp
     database/StatementParameterBindingTest.cpp
     database/ProjectionQueryTest.cpp

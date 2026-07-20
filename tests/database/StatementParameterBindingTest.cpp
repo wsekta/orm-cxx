@@ -209,6 +209,16 @@ TEST(StatementParameterBindingTest, nullParameterShouldExposeBoundValueWithItsDe
     EXPECT_FALSE(boundValue.value.has_value());
 }
 
+TEST(StatementParameterBindingTest, nullBoundValueShouldAlwaysHaveCompatibleStorage)
+{
+    const auto value = orm::db::BoundValue{
+        .logicalType = orm::model::ColumnType::Unknown,
+        .value = std::nullopt,
+    };
+
+    EXPECT_TRUE(orm::db::binding::hasCompatibleStorage(value));
+}
+
 TEST(StatementParameterBindingTest, shouldBindAllPresentParameterValueVariants)
 {
     const auto parameters = std::vector<orm::db::StatementParameter>{

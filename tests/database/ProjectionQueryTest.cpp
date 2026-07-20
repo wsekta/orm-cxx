@@ -158,6 +158,33 @@ TEST(ProjectionBindingTest, shouldHydrateNumericProjectionFieldsFromStringValues
     EXPECT_DOUBLE_EQ(payload.value.doubleValue, 2.5);
 }
 
+TEST(ProjectionBindingTest, shouldRejectNumericProjectionStringsWithTrailingCharacters)
+{
+    EXPECT_THROW((void)orm::db::binding::parseNumericProjectionValue<double>("2.5x", "doubleValue"),
+                 orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::parseNumericProjectionValue<unsigned long long>("42x", "unsignedValue"),
+                 orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::parseNumericProjectionValue<long long>("12x", "signedValue"),
+                 orm::db::binding::ConversionError);
+}
+
+TEST(ProjectionBindingTest, shouldPreserveExactlyRepresentableNegativeIntegerWhenConvertingToDouble)
+{
+    EXPECT_DOUBLE_EQ(orm::db::binding::checkedNumericCast<double>(-42, "value"), -42.0);
+}
+
+#if defined(__SIZEOF_INT128__)
+TEST(ProjectionBindingTest, shouldRejectUnsigned128ValueOutsideFloatRange)
+{
+    const auto outOfRangeValue = ~__uint128_t{};
+    const auto exactValue = __uint128_t{1} << 100;
+
+    EXPECT_THROW((void)orm::db::binding::checkedNumericCast<float>(outOfRangeValue, "value"),
+                 orm::db::binding::ConversionError);
+    EXPECT_EQ(orm::db::binding::checkedNumericCast<float>(exactValue, "value"), static_cast<float>(exactValue));
+}
+#endif
+
 TEST(ProjectionBindingTest, shouldRejectInvalidNumericProjectionFieldValue)
 {
     using Payload = orm::db::binding::ProjectionPayload<InvalidNumericProjection>;
@@ -195,6 +222,16 @@ TEST(ProjectionBindingTest, shouldRejectLossyNumericProjectionConversion)
     values.set("value", 300);
 
     EXPECT_THROW(soci::type_conversion<Payload>::from_base(values, soci::i_ok, payload),
+                 orm::db::binding::ConversionError);
+}
+
+TEST(ProjectionBindingTest, shouldRethrowLossyStoredNumericProjectionConversion)
+{
+    auto value = static_cast<unsigned char>(0);
+    auto values = soci::values{};
+    values.set("value", 300);
+
+    EXPECT_THROW((orm::db::binding::tryGetNumericProjectionValue<unsigned char, int>(&value, "value", values)),
                  orm::db::binding::ConversionError);
 }
 
