@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2relat
   <div class="headertitle"><div class="title">Collection relations </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md43"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md69"></a></p>
 <p><span class="tt">orm-cxx</span> supports explicit one-level collection relations with <span class="tt"><a class="el" href="classorm_1_1OneToMany.html">orm::OneToMany</a>&lt;T&gt;</span> and <span class="tt"><a class="el" href="classorm_1_1ManyToMany.html">orm::ManyToMany</a>&lt;T&gt;</span>. Collection fields are model metadata: they are not columns of the model's base table, are never written by <span class="tt">insert</span>, and are loaded only when a query explicitly requests them.</p>
 <ol type="1">
 <li>Collection wrappersCollection wrappers</li>
@@ -161,7 +161,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2relat
 <ol type="1">
 <li>Migrating an existing schemaMigrating an existing schema</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md44"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md70"></a>
 Collection wrappers</h1>
 <p>A collection field uses one of the ORM wrappers rather than <span class="tt">std::vector&lt;T&gt;</span>:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1OneToMany.html">orm::OneToMany&lt;Book&gt;</a> books;</div>
@@ -178,7 +178,7 @@ Collection wrappers</h1>
 </ul>
 <p>A default-constructed wrapper is empty and has <span class="tt">isLoaded() == false</span>. After an explicit <span class="tt">include</span>, it has <span class="tt">isLoaded() == true</span>, including when the database contains no related rows. This distinction lets callers tell "not requested" from "requested and empty".</p>
 <p>Changing <span class="tt">values()</span> or an element of the wrapper changes only the C++ object. The ORM does not cascade-save or synchronize a collection. Use <span class="tt">link</span> and <span class="tt">unlink</span> for relation mutations, and insert or update endpoint models separately.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md45"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md71"></a>
 One-to-many</h1>
 <p><span class="tt">OneToMany</span> is the inverse of an existing to-one field on the child. Declare the collection descriptor in the parent's static <span class="tt">relations</span> metadata and name the child's to-one field with <span class="tt">mappedBy</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Book;</div>
@@ -208,7 +208,7 @@ One-to-many</h1>
 <div class="line">    std::optional&lt;Author&gt; author;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>This choice also determines whether <span class="tt">unlink(author, "books", book)</span> is valid.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md46"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md72"></a>
 Many-to-many</h1>
 <p>The owning side declares the junction table with <span class="tt">through</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Role;</div>
@@ -238,7 +238,7 @@ Many-to-many</h1>
 <div class="line">};</div>
 </div><!-- fragment --><p><span class="tt">through("user_roles")</span> is required on the owning side. The inverse side is optional; when present, <span class="tt">mappedBy("roles")</span> names the owning collection field. Both sides support <span class="tt">include</span>, collection predicates, <span class="tt">link</span>, and <span class="tt">unlink</span>.</p>
 <p>The junction table contains only the complete primary keys of both endpoints. Every junction column is <span class="tt">NOT NULL</span>; all columns together form its composite primary key. It has one foreign key to each endpoint with <span class="tt">ON DELETE CASCADE</span>. Deleting an endpoint therefore deletes only its junction rows, never the model at the other endpoint. No surrogate id, ordering column, or payload columns are added.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md47"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md73"></a>
 Junction column names</h1>
 <p><span class="tt">ownerColumns</span> and <span class="tt">targetColumns</span> are optional. By default each junction column is named <span class="tt">&lt;endpoint-table&gt;_&lt;primary-key-column&gt;</span>. Database column names, including <span class="tt">columns_names</span> mappings, are used for the primary-key part.</p>
 <p>For a composite primary key there must be exactly one junction column name per primary-key column, in primary-key order:</p>
@@ -249,7 +249,7 @@ Junction column names</h1>
 <div class="line">            .ownerColumns({<span class="stringliteral">&quot;document_tenant_id&quot;</span>, <span class="stringliteral">&quot;document_id&quot;</span>})</div>
 <div class="line">            .targetColumns({<span class="stringliteral">&quot;tag_tenant_id&quot;</span>, <span class="stringliteral">&quot;tag_id&quot;</span>}));</div>
 </div><!-- fragment --><p>Self-referencing many-to-many mappings must specify distinct owner and target column names explicitly, because the default names would collide.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md48"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md74"></a>
 Schema lifecycle</h1>
 <p>Create endpoint tables first, then create junction tables from the owning model:</p>
 <div class="fragment"><div class="line">database.createTable&lt;User&gt;();</div>
@@ -261,7 +261,7 @@ Schema lifecycle</h1>
 <div class="line">database.deleteTable&lt;Role&gt;();</div>
 <div class="line">database.deleteTable&lt;User&gt;();</div>
 </div><!-- fragment --><p>Relation-table creation and deletion are idempotent. They remain explicit; <span class="tt">createTable&lt;T&gt;()</span> and <span class="tt">deleteTable&lt;T&gt;()</span> do not recursively alter relation tables. Connecting to SQLite enables <span class="tt">PRAGMA foreign_keys=ON</span> automatically.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md49"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md75"></a>
 Link and unlink</h1>
 <p>Use endpoint objects with complete, non-null primary-key values:</p>
 <div class="fragment"><div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
@@ -275,7 +275,7 @@ Link and unlink</h1>
 <div class="line">std::size_t detached = database.unlink(author, <span class="stringliteral">&quot;books&quot;</span>, book);</div>
 </div><!-- fragment --><p><span class="tt">link</span> assigns the child's mapped foreign key and may move the child from a different parent. <span class="tt">unlink</span> stores SQL <span class="tt">NULL</span> in that foreign key. It throws <span class="tt">std::invalid_argument</span> when the mapped child relation is non-nullable. As with many-to-many, the return value is <span class="tt">1</span> only when the stored foreign key changed and <span class="tt">0</span> when it was already in the requested state.</p>
 <p>These operations read primary keys only. They do not insert, update, or cascade-save either endpoint. All primary-key components must be present and non-null, including every component of a composite key. For an auto-increment model, select the inserted row to obtain its generated key before calling <span class="tt">link</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md50"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md76"></a>
 Loading collections</h1>
 <p>Collections are not joined into the main model query. Request one level explicitly with <span class="tt">Query&lt;T&gt;::include</span>:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> query;</div>
@@ -289,7 +289,7 @@ Loading collections</h1>
 </div><!-- fragment --><p>Duplicate includes are idempotent. The ORM first runs the unchanged parent query, then one or more parameter-bounded batched queries per included field and groups rows by the complete parent primary key. It never issues one relation query per parent.</p>
 <p><span class="tt">LIMIT</span>, <span class="tt">OFFSET</span>, <span class="tt">DISTINCT</span>, and parent ordering apply only to the main query, so each returned parent's collection is complete. Large primary-key sets are split into batches that respect SQLite's parameter limit. Element order inside a collection is not guaranteed.</p>
 <p>Includes are available only on full-model <span class="tt">Query&lt;T&gt;</span>, not on flat <span class="tt">ProjectionQuery</span> results. Only one include level is supported: collection fields on included elements remain unloaded. <span class="tt">disableJoining()</span> still controls to-one hydration and is propagated to collection elements, but does not cancel an explicit collection include.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md51"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md77"></a>
 Filtering by collections</h1>
 <p>Collection predicates use correlated <span class="tt">EXISTS</span> subqueries:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -306,7 +306,7 @@ Filtering by collections</h1>
 </div><!-- fragment --><p>The predicate passed to <span class="tt">any</span> or <span class="tt">none</span> is relative to the collection's target model. It may use scalar target fields and existing one-level to-one paths. <span class="tt">any</span> renders correlated <span class="tt">EXISTS</span>, <span class="tt">none</span> renders <span class="tt">NOT EXISTS</span>, and <span class="tt">exists</span> checks only whether the collection is non-empty. Values remain SOCI bind parameters.</p>
 <p>Filtering does not load the collection. Add <span class="tt">include("books")</span> separately when the result objects also need the elements. Nested collection predicates are not supported.</p>
 <p>A collection is not a flat column path. Expressions such as <span class="tt">col("books.title")</span> are rejected, as are collection fields in <span class="tt">ORDER BY</span>, <span class="tt">GROUP BY</span>, projections, aggregate expressions, and <span class="tt">Update</span> assignments.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md52"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md78"></a>
 End-to-end workflow</h1>
 <p>The complete lifecycle below uses both relation kinds. Endpoint rows are inserted first, links are written explicitly, and collection values are loaded only by <span class="tt">include</span>:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
@@ -360,26 +360,26 @@ End-to-end workflow</h1>
 <div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;User&gt;();</div>
 <div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;Book&gt;();</div>
 <div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;Author&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:105</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a28707f3e8fdbe3c755820d0b51f8fb4e"><div class="ttname"><a href="classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e">orm::Database::deleteRelationTables</a></div><div class="ttdeci">auto deleteRelationTables() -&gt; void</div><div class="ttdoc">Drops junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:326</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a460eed600ff934216d4c30f388e808c3"><div class="ttname"><a href="classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3">orm::Database::link</a></div><div class="ttdeci">auto link(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Creates or changes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:341</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a56193616d588084845aeef03a2c44615"><div class="ttname"><a href="classorm_1_1Database.html#a56193616d588084845aeef03a2c44615">orm::Database::createRelationTables</a></div><div class="ttdeci">auto createRelationTables() -&gt; void</div><div class="ttdoc">Creates junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:310</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a5dc553baa29a3ec7fd46b81e412ffa5d"><div class="ttname"><a href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">orm::Database::createTable</a></div><div class="ttdeci">auto createTable() -&gt; void</div><div class="ttdoc">Execute a create table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:279</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:66</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a28707f3e8fdbe3c755820d0b51f8fb4e"><div class="ttname"><a href="classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e">orm::Database::deleteRelationTables</a></div><div class="ttdeci">auto deleteRelationTables() -&gt; void</div><div class="ttdoc">Drops junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:364</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a460eed600ff934216d4c30f388e808c3"><div class="ttname"><a href="classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3">orm::Database::link</a></div><div class="ttdeci">auto link(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Creates or changes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:396</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a56193616d588084845aeef03a2c44615"><div class="ttname"><a href="classorm_1_1Database.html#a56193616d588084845aeef03a2c44615">orm::Database::createRelationTables</a></div><div class="ttdeci">auto createRelationTables() -&gt; void</div><div class="ttdoc">Creates junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:336</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a5dc553baa29a3ec7fd46b81e412ffa5d"><div class="ttname"><a href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">orm::Database::createTable</a></div><div class="ttdeci">auto createTable() -&gt; void</div><div class="ttdoc">Execute a create table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:304</div></div>
 <div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_aae29e5eab83e887cac4f2a230670fdc7"><div class="ttname"><a href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">orm::Database::select</a></div><div class="ttdeci">auto select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a select query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:138</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_aae9e59f0fa15ab44830a10ef0b9bc13e"><div class="ttname"><a href="classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e">orm::Database::unlink</a></div><div class="ttdeci">auto unlink(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Removes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:374</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_acaaa43ce08ccb8b9b686d45a5d8e10e2"><div class="ttname"><a href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">orm::Database::insert</a></div><div class="ttdeci">auto insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void</div><div class="ttdoc">Executes a insert query for multiple objects.</div><div class="ttdef"><b>Definition</b> database.hpp:216</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_adc8f4be2035069fa45881dfb498f2604"><div class="ttname"><a href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">orm::Database::deleteTable</a></div><div class="ttdeci">auto deleteTable() -&gt; void</div><div class="ttdoc">Execute a delete table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:294</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_aae29e5eab83e887cac4f2a230670fdc7"><div class="ttname"><a href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">orm::Database::select</a></div><div class="ttdeci">auto select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a select query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:113</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_aae9e59f0fa15ab44830a10ef0b9bc13e"><div class="ttname"><a href="classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e">orm::Database::unlink</a></div><div class="ttdeci">auto unlink(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Removes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:447</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_acaaa43ce08ccb8b9b686d45a5d8e10e2"><div class="ttname"><a href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">orm::Database::insert</a></div><div class="ttdeci">auto insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void</div><div class="ttdoc">Executes a insert query for multiple objects.</div><div class="ttdef"><b>Definition</b> database.hpp:207</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_adc8f4be2035069fa45881dfb498f2604"><div class="ttname"><a href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">orm::Database::deleteTable</a></div><div class="ttdeci">auto deleteTable() -&gt; void</div><div class="ttdoc">Execute a delete table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:320</div></div>
 </div><!-- fragment --><p>For generated primary keys, insert the endpoint and select it back before step</p><ol type="1">
 <li>Calling <span class="tt">link</span> with the original object whose auto-increment key is still empty is rejected.</li>
 </ol>
 <p>A complete program containing the model declarations and this lifecycle is available in <a href="../examples/relations.cpp"><span class="tt">examples/relations.cpp</span></a>. It is built as the <span class="tt">relations-example</span> CMake target.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md53"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md79"></a>
 Transactions and consistency</h1>
 <p>Schema operations, <span class="tt">link</span>, <span class="tt">unlink</span>, and collection queries participate in the database's current explicit transaction. They do not start or commit a private transaction.</p>
 <p>An included select uses multiple SQL statements. It does not create an automatic snapshot around them; wrap the select in an explicit transaction when the parent rows and included collections must be observed consistently.</p>
 <p>Deleting a one-to-many parent is blocked by the child's foreign key unless the application detaches or removes the children first. The ORM does not generate cascade deletion for child rows.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md54"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md80"></a>
 Validation and unsupported mappings</h1>
 <p>Metadata construction rejects invalid collection mappings, including:</p>
 <ul>
@@ -394,7 +394,7 @@ Validation and unsupported mappings</h1>
 </ul>
 <p>Collection mapping cycles are supported because relation targets are resolved lazily from cached metadata rather than recursively copied.</p>
 <p>Lazy loading, nested includes, nested collection predicates, automatic collection synchronization, cascade-save, ordered collections, junction payload models, and schema migrations are outside the current contract.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md55"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md81"></a>
 Common mistakes</h1>
 <ul>
 <li><span class="tt">oneToMany("books")</span>, <span class="tt">manyToMany("roles")</span>, and <span class="tt">mappedBy("author")</span> refer to C++ model field names, not SQL table or column names.</li>
@@ -405,7 +405,7 @@ Common mistakes</h1>
 <li>Only the owning many-to-many model calls <span class="tt">createRelationTables&lt;T&gt;()</span> and <span class="tt">deleteRelationTables&lt;T&gt;()</span>. Calling them for the inverse model is a no-op.</li>
 <li>Do not call <span class="tt">deleteTable</span> for an endpoint while its owning junction table still exists. Drop the junction table first.</li>
 </ul>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md56"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md82"></a>
 Migrating an existing schema</h1>
 <p>Adding relation metadata does not migrate an existing database. Apply schema changes manually:</p>
 <ul>

@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['database_0',['Database',['../classorm_1_1Database.html#a0cf947c50ac4c47b8478d66ec49a104b',1,'orm::Database']]],
+  ['database_0',['Database',['../classorm_1_1Database.html#a0cf947c50ac4c47b8478d66ec49a104b',1,'orm::Database::Database()'],['../classorm_1_1Database.html#a48021088c2e868b668340280e04c20b5',1,'orm::Database::Database(db::CommandGeneratorFactory factory)']]],
   ['deleterelationtables_1',['deleteRelationTables',['../classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e',1,'orm::Database']]],
   ['deletetable_2',['deleteTable',['../classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604',1,'orm::Database']]],
   ['disablejoining_3',['disableJoining',['../classorm_1_1Query.html#ab7a1cc60776eeb29212199765e4eaaba',1,'orm::Query']]],

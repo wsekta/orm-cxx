@@ -140,8 +140,22 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0cf947c50ac4c47b8478d66ec49a104b" id="r_a0cf947c50ac4c47b8478d66ec49a104b"><td class="memItemLeft"><a id="a0cf947c50ac4c47b8478d66ec49a104b" name="a0cf947c50ac4c47b8478d66ec49a104b"></a>
 &#160;</td><td class="memItemRight"><b>Database</b> ()</td></tr>
 <tr class="memdesc:a0cf947c50ac4c47b8478d66ec49a104b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="A class representing a database in the ORM framework.">Database</a> object. <br /></td></tr>
+<tr class="memitem:a48021088c2e868b668340280e04c20b5" id="r_a48021088c2e868b668340280e04c20b5"><td class="memItemLeft"><a id="a48021088c2e868b668340280e04c20b5" name="a48021088c2e868b668340280e04c20b5"></a>
+&#160;</td><td class="memItemRight"><b>Database</b> (db::CommandGeneratorFactory factory)</td></tr>
+<tr class="memdesc:a48021088c2e868b668340280e04c20b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
+<tr class="memitem:a4a8e0cab6afc9fa09b55065f4b0bda01" id="r_a4a8e0cab6afc9fa09b55065f4b0bda01"><td class="memItemLeft"><a id="a4a8e0cab6afc9fa09b55065f4b0bda01" name="a4a8e0cab6afc9fa09b55065f4b0bda01"></a>
+&#160;</td><td class="memItemRight"><b>Database</b> (const Database &amp;)=delete</td></tr>
+<tr class="memitem:a42a37cbd257520af833fbbf201811aee" id="r_a42a37cbd257520af833fbbf201811aee"><td class="memItemLeft"><a id="a42a37cbd257520af833fbbf201811aee" name="a42a37cbd257520af833fbbf201811aee"></a>
+&#160;</td><td class="memItemRight"><b>Database</b> (Database &amp;&amp;)=delete</td></tr>
+<tr class="memitem:aba0eb5e2b7cacdc0f61b13317a6c0451" id="r_aba0eb5e2b7cacdc0f61b13317a6c0451"><td class="memItemLeft"><a id="aba0eb5e2b7cacdc0f61b13317a6c0451" name="aba0eb5e2b7cacdc0f61b13317a6c0451"></a>
+auto&#160;</td><td class="memItemRight"><b>operator=</b> (const <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;) -&gt; <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td></tr>
+<tr class="memitem:a270afca31a98d211b5a801e99adb0218" id="r_a270afca31a98d211b5a801e99adb0218"><td class="memItemLeft"><a id="a270afca31a98d211b5a801e99adb0218" name="a270afca31a98d211b5a801e99adb0218"></a>
+auto&#160;</td><td class="memItemRight"><b>operator=</b> (<a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;&amp;) -&gt; <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td></tr>
 <tr class="memitem:a86f01ed300b1a8a7a74bedbf61e45fa2" id="r_a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a> (const std::string &amp;connectionString) -&gt; void</td></tr>
 <tr class="memdesc:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
+<tr class="memitem:a838dec6f6358add79205f223cd164e04" id="r_a838dec6f6358add79205f223cd164e04"><td class="memItemLeft"><a id="a838dec6f6358add79205f223cd164e04" name="a838dec6f6358add79205f223cd164e04"></a>
+auto&#160;</td><td class="memItemRight"><b>connect</b> (db::BackendType requestedBackend, const std::string &amp;connectionString) -&gt; void</td></tr>
+<tr class="memdesc:a838dec6f6358add79205f223cd164e04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects using an explicitly selected registered backend. <br /></td></tr>
 <tr class="memitem:aed77524f1815ead26234adf09898f469" id="r_aed77524f1815ead26234adf09898f469"><td class="memItemLeft"><a id="aed77524f1815ead26234adf09898f469" name="aed77524f1815ead26234adf09898f469"></a>
 auto&#160;</td><td class="memItemRight"><b>disconnect</b> () -&gt; void</td></tr>
 <tr class="memdesc:aed77524f1815ead26234adf09898f469"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnects from the database. <br /></td></tr>
@@ -182,8 +196,13 @@ template&lt;typename T&gt; </td></tr>
 <tr class="memitem:aae9e59f0fa15ab44830a10ef0b9bc13e" id="r_aae9e59f0fa15ab44830a10ef0b9bc13e"><td class="memTemplParams" colspan="2">template&lt;typename Owner, typename Target&gt; </td></tr>
 <tr class="memitem:aae9e59f0fa15ab44830a10ef0b9bc13e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aae9e59f0fa15ab44830a10ef0b9bc13e">unlink</a> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
 <tr class="memdesc:aae9e59f0fa15ab44830a10ef0b9bc13e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a OneToMany/ManyToMany association.  <br /></td></tr>
-<tr class="memitem:af5bf41d4644f6d3e8835bfbad5cb07a0" id="r_af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#af5bf41d4644f6d3e8835bfbad5cb07a0">getBackendType</a> () -&gt; db::BackendType</td></tr>
-<tr class="memdesc:af5bf41d4644f6d3e8835bfbad5cb07a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
+<tr class="memitem:aa59f20483f628b4d0d73ebc4ec7bc57d" id="r_aa59f20483f628b4d0d73ebc4ec7bc57d"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa59f20483f628b4d0d73ebc4ec7bc57d">getBackendType</a> () const noexcept -&gt; db::BackendType</td></tr>
+<tr class="memdesc:aa59f20483f628b4d0d73ebc4ec7bc57d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
+<tr class="memitem:a64d431e5f73bc213b6e16406d6c4516e" id="r_a64d431e5f73bc213b6e16406d6c4516e"><td class="memItemLeft"><a id="a64d431e5f73bc213b6e16406d6c4516e" name="a64d431e5f73bc213b6e16406d6c4516e"></a>
+auto&#160;</td><td class="memItemRight"><b>isConnected</b> () const noexcept -&gt; bool</td></tr>
+<tr class="memdesc:a64d431e5f73bc213b6e16406d6c4516e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether a backend session is currently open. <br /></td></tr>
+<tr class="memitem:a083686788355dbaed24c690ca1be27e9" id="r_a083686788355dbaed24c690ca1be27e9"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a083686788355dbaed24c690ca1be27e9">getBackendCapabilities</a> () const -&gt; const db::BackendCapabilities &amp;</td></tr>
+<tr class="memdesc:a083686788355dbaed24c690ca1be27e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the capabilities advertised by the connected backend.  <br /></td></tr>
 <tr class="memitem:a56318393652ad4c68c2bc71b5474b03c" id="r_a56318393652ad4c68c2bc71b5474b03c"><td class="memItemLeft"><a id="a56318393652ad4c68c2bc71b5474b03c" name="a56318393652ad4c68c2bc71b5474b03c"></a>
 auto&#160;</td><td class="memItemRight"><b>beginTransaction</b> () -&gt; void</td></tr>
 <tr class="memdesc:a56318393652ad4c68c2bc71b5474b03c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a transaction. <br /></td></tr>
@@ -323,19 +342,60 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a id="af5bf41d4644f6d3e8835bfbad5cb07a0" name="af5bf41d4644f6d3e8835bfbad5cb07a0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af5bf41d4644f6d3e8835bfbad5cb07a0">&#9670;&#160;</a></span>getBackendType()</h2>
+<a id="a083686788355dbaed24c690ca1be27e9" name="a083686788355dbaed24c690ca1be27e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a083686788355dbaed24c690ca1be27e9">&#9670;&#160;</a></span>getBackendCapabilities()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::getBackendCapabilities </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> const -&gt;  const db::BackendCapabilities &amp;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Returns the capabilities advertised by the connected backend. </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname">DatabaseError</td><td>when no backend is connected. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aa59f20483f628b4d0d73ebc4ec7bc57d" name="aa59f20483f628b4d0d73ebc4ec7bc57d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa59f20483f628b4d0d73ebc4ec7bc57d">&#9670;&#160;</a></span>getBackendType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">auto orm::Database::getBackendType </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> -&gt;  db::BackendType</td>
+          <td> const -&gt;  db::BackendType</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Get the backend type of the database. </p>
