@@ -152,8 +152,8 @@ class StaticDeleteCommand final : public orm::db::commands::DeleteCommand
 public:
     explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto remove(const orm::model::ModelInfo& /*modelInfo*/, const orm::query::Predicate& /*predicate*/) const
-        -> orm::db::Statement override
+    auto remove(const orm::model::ModelInfo& /*modelInfo*/,
+                const orm::query::Predicate& /*predicate*/) const -> orm::db::Statement override
     {
         return statement;
     }
@@ -388,8 +388,8 @@ public:
 };
 
 template <typename Operation>
-auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code, std::string_view expectedOperation = {})
-    -> void
+auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code,
+                         std::string_view expectedOperation = {}) -> void
 {
     try
     {

@@ -10,8 +10,8 @@ class DefaultDeleteCommand : public DeleteCommand
 public:
     explicit DefaultDeleteCommand(const SqlDialect& dialect);
 
-    [[nodiscard]] auto remove(const model::ModelInfo& modelInfo, const query::Predicate& predicate) const
-        -> Statement override;
+    [[nodiscard]] auto remove(const model::ModelInfo& modelInfo,
+                              const query::Predicate& predicate) const -> Statement override;
 
 private:
     const SqlDialect& dialect;

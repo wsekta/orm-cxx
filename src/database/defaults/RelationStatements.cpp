@@ -27,8 +27,8 @@ auto join(const std::vector<std::string>& values, std::string_view separator) ->
     return result;
 }
 
-auto findRelation(const orm::model::ModelInfo& modelInfo, const std::string& fieldName)
-    -> const orm::model::RelationInfo&
+auto findRelation(const orm::model::ModelInfo& modelInfo,
+                  const std::string& fieldName) -> const orm::model::RelationInfo&
 {
     const auto relation =
         std::ranges::find_if(modelInfo.relationsInfo, [&fieldName](const auto& candidate)
@@ -95,8 +95,8 @@ auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement
     return "(" + join(keyPredicates, " OR ") + ")";
 }
 
-auto quoteIdentifiers(const orm::db::SqlDialect& dialect, const std::vector<std::string>& identifiers)
-    -> std::vector<std::string>
+auto quoteIdentifiers(const orm::db::SqlDialect& dialect,
+                      const std::vector<std::string>& identifiers) -> std::vector<std::string>
 {
     std::vector<std::string> quoted;
     quoted.reserve(identifiers.size());

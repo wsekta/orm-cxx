@@ -91,8 +91,8 @@ public:
     /**
      * @brief Checks both the canonical variant alternative and its logical range.
      */
-    [[nodiscard]] static auto isCompatibleStorage(model::ColumnType logicalType, const Value& storedValue) noexcept
-        -> bool
+    [[nodiscard]] static auto isCompatibleStorage(model::ColumnType logicalType,
+                                                  const Value& storedValue) noexcept -> bool
     {
         const auto* intValue = std::get_if<int>(&storedValue);
         const auto* unsignedValue = std::get_if<unsigned long long>(&storedValue);

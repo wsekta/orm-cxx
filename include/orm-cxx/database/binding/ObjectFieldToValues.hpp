@@ -51,8 +51,8 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
 }
 
-inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo, std::size_t columnIndex)
-    -> void
+inline auto setOptionalNullValue(soci::values& values, const model::ModelInfo& modelInfo,
+                                 std::size_t columnIndex) -> void
 {
     const auto& columnInfo = modelInfo.columnsInfo[columnIndex];
 

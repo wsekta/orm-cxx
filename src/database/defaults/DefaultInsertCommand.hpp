@@ -18,7 +18,7 @@ private:
     auto getInsertFields(const std::vector<std::string>& fieldNames) const -> std::string;
     auto getInsertValues(const std::vector<std::string>& fieldNames) const -> std::string;
     static auto getFieldsNames(const model::ModelInfo& modelInfo) -> std::vector<std::string>;
-    static auto getForeginModelIdsNames(const std::string& foreginModelFieldName, const model::ModelInfo& modelInfo)
-        -> std::vector<std::string>;
+    static auto getForeginModelIdsNames(const std::string& foreginModelFieldName,
+                                        const model::ModelInfo& modelInfo) -> std::vector<std::string>;
 };
 } // namespace orm::db::commands

@@ -19,8 +19,8 @@ namespace orm::db::aliases
     return std::format("{}_{}", tableName, columnName);
 }
 
-[[nodiscard]] inline auto joinedRelationColumn(std::string_view relationName, std::string_view columnName)
-    -> std::string
+[[nodiscard]] inline auto joinedRelationColumn(std::string_view relationName,
+                                               std::string_view columnName) -> std::string
 {
     return std::format("{}_{}", relationName, columnName);
 }

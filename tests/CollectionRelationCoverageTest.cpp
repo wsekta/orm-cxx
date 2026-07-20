@@ -81,8 +81,8 @@ public:
         return "PORTABLE_TYPE";
     }
 
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
-        -> std::string override
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
+                                               bool ifNotExists) const -> std::string override
     {
         return std::string{ifNotExists ? "CREATE_RELATION_IF_ABSENT " : "CREATE_RELATION "} +
                quoteIdentifier(tableName) + " (";

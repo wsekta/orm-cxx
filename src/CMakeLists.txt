@@ -15,13 +15,8 @@ set(ORM_CXX_SOURCES
 )
 
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
-    list(
-        APPEND
-        ORM_CXX_SOURCES
-        database/sqlite/SqliteBackend.cpp
-        database/sqlite/SqliteDialect.cpp
-        database/sqlite/SqliteRelationStatements.cpp
-        database/sqlite/SqliteTypeTranslator.cpp
+    list(APPEND ORM_CXX_SOURCES database/sqlite/SqliteBackend.cpp database/sqlite/SqliteDialect.cpp
+         database/sqlite/SqliteRelationStatements.cpp database/sqlite/SqliteTypeTranslator.cpp
     )
 endif()
 
@@ -30,9 +25,7 @@ add_library(orm-cxx::orm-cxx ALIAS orm-cxx)
 
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
 target_include_directories(orm-cxx PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
-target_compile_definitions(
-    orm-cxx PUBLIC ORM_CXX_ENABLE_SQLITE_BACKEND=$<BOOL:${ORM_CXX_ENABLE_SQLITE_BACKEND}>
-)
+target_compile_definitions(orm-cxx PUBLIC ORM_CXX_ENABLE_SQLITE_BACKEND=$<BOOL:${ORM_CXX_ENABLE_SQLITE_BACKEND}>)
 target_link_libraries(
     orm-cxx
     PUBLIC soci_core orm-cxx-reflect-cpp
@@ -41,7 +34,5 @@ target_link_libraries(
 
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     target_link_libraries(orm-cxx PUBLIC soci_sqlite3)
-    target_include_directories(
-        orm-cxx PRIVATE "$<TARGET_PROPERTY:soci_sqlite3,INCLUDE_DIRECTORIES>"
-    )
+    target_include_directories(orm-cxx PRIVATE "$<TARGET_PROPERTY:soci_sqlite3,INCLUDE_DIRECTORIES>")
 endif()

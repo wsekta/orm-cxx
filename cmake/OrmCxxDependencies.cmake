@@ -35,10 +35,7 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         add_subdirectory("${source_dir}/externals/soci" "${CMAKE_CURRENT_BINARY_DIR}/externals/soci" EXCLUDE_FROM_ALL)
 
         if(NOT TARGET soci_core)
-            message(
-                FATAL_ERROR
-                    "The bundled SOCI configuration could not create the soci_core target."
-            )
+            message(FATAL_ERROR "The bundled SOCI configuration could not create the soci_core target.")
         endif()
 
         if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)

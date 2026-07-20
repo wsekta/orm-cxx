@@ -64,13 +64,11 @@ add_test(
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(
-    orm-cxx-UT
-    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>" LABELS "unit;backend-sqlite"
+    orm-cxx-UT PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>" LABELS "unit;backend-sqlite"
 )
 set_tests_properties(
     orm-cxx-sqlite-conformance
-    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>"
-               LABELS "conformance;backend-sqlite"
+    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>" LABELS "conformance;backend-sqlite"
                FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
 )
 
@@ -94,11 +92,8 @@ if(CMAKE_TOOLCHAIN_FILE)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 endif()
 if(VCPKG_INSTALLED_DIR)
-    list(
-        APPEND
-        orm_cxx_consumer_common_configure_arguments
-        "-DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR}"
-        -DVCPKG_MANIFEST_INSTALL=OFF
+    list(APPEND orm_cxx_consumer_common_configure_arguments "-DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR}"
+         -DVCPKG_MANIFEST_INSTALL=OFF
     )
 endif()
 if(VCPKG_TARGET_TRIPLET)
@@ -106,8 +101,8 @@ if(VCPKG_TARGET_TRIPLET)
 endif()
 
 set(orm_cxx_consumer_binary_dir "${PROJECT_BINARY_DIR}/consumer-test")
-set(orm_cxx_consumer_configure_arguments
-    ${orm_cxx_consumer_common_configure_arguments} -B "${orm_cxx_consumer_binary_dir}"
+set(orm_cxx_consumer_configure_arguments ${orm_cxx_consumer_common_configure_arguments} -B
+                                         "${orm_cxx_consumer_binary_dir}"
 )
 
 add_test(NAME orm-cxx-consumer-configure COMMAND "${CMAKE_COMMAND}" ${orm_cxx_consumer_configure_arguments})
@@ -123,23 +118,17 @@ set_tests_properties(orm-cxx-consumer-run PROPERTIES DEPENDS orm-cxx-consumer-bu
 
 set(orm_cxx_no_sqlite_consumer_binary_dir "${PROJECT_BINARY_DIR}/consumer-no-sqlite-test")
 set(orm_cxx_no_sqlite_consumer_configure_arguments
-    ${orm_cxx_consumer_common_configure_arguments}
-    -B
-    "${orm_cxx_no_sqlite_consumer_binary_dir}"
+    ${orm_cxx_consumer_common_configure_arguments} -B "${orm_cxx_no_sqlite_consumer_binary_dir}"
     -DORM_CXX_ENABLE_SQLITE_BACKEND=OFF
 )
 
-add_test(
-    NAME orm-cxx-consumer-no-sqlite-configure
-    COMMAND "${CMAKE_COMMAND}" ${orm_cxx_no_sqlite_consumer_configure_arguments}
+add_test(NAME orm-cxx-consumer-no-sqlite-configure COMMAND "${CMAKE_COMMAND}"
+                                                           ${orm_cxx_no_sqlite_consumer_configure_arguments}
 )
-add_test(
-    NAME orm-cxx-consumer-no-sqlite-build
-    COMMAND "${CMAKE_COMMAND}" --build "${orm_cxx_no_sqlite_consumer_binary_dir}" --config Debug
+add_test(NAME orm-cxx-consumer-no-sqlite-build COMMAND "${CMAKE_COMMAND}" --build
+                                                       "${orm_cxx_no_sqlite_consumer_binary_dir}" --config Debug
 )
-set_tests_properties(
-    orm-cxx-consumer-no-sqlite-build PROPERTIES DEPENDS orm-cxx-consumer-no-sqlite-configure
-)
+set_tests_properties(orm-cxx-consumer-no-sqlite-build PROPERTIES DEPENDS orm-cxx-consumer-no-sqlite-configure)
 
 add_test(
     NAME orm-cxx-consumer-no-sqlite-run
