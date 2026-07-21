@@ -1,12 +1,16 @@
 #include "orm-cxx/database.hpp"
 
+#include <algorithm>
 #include <format>
 #include <optional>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 
+#include "database/defaults/SqlAliases.hpp"
+#include "database/defaults/SqlRenderer.hpp"
 #include "orm-cxx/database/BackendRuntime.hpp"
 #include "orm-cxx/database/SqlDialect.hpp"
 
@@ -14,8 +18,20 @@ namespace
 {
 auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool;
 
-auto serializedBoundValue(const soci::values& values, const std::string& name,
-                          orm::model::ColumnType type) -> orm::db::BoundValue
+auto renderColumnForValidation(const orm::query::Column& column, const orm::query::QueryData& queryData,
+                               const orm::db::SqlDialect& dialect) -> std::string
+{
+    const orm::db::commands::RenderContext context{
+        .modelInfo = queryData.modelInfo,
+        .dialect = dialect,
+        .shouldJoin = queryData.shouldJoin,
+    };
+
+    return orm::db::commands::renderColumn(column, context);
+}
+
+auto serializedBoundValue(const soci::values& values, const std::string& name, orm::model::ColumnType type)
+    -> orm::db::BoundValue
 {
     if (values.get_indicator(name) == soci::i_null)
     {
@@ -86,6 +102,101 @@ auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool
             }
         },
         node.expression);
+}
+
+auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelInfo& modelInfo,
+                              std::unordered_set<const orm::model::ModelInfo*>& visited) -> void
+{
+    if (not visited.insert(&modelInfo).second)
+    {
+        return;
+    }
+
+    (void)dialect.quoteIdentifier(modelInfo.tableName);
+
+    for (const auto& column : modelInfo.columnsInfo)
+    {
+        (void)dialect.quoteIdentifier(column.name);
+
+        if (not column.isForeignModel)
+        {
+            (void)dialect.quoteIdentifier(orm::db::aliases::modelColumn(modelInfo.tableName, column.name));
+
+            if (column.isPrimaryKey)
+            {
+                (void)dialect.quoteIdentifier(orm::db::binding::relationOwnerAlias(column));
+            }
+
+            if (not column.isAutoIncrement)
+            {
+                (void)dialect.bindMarker(column.name);
+            }
+
+            continue;
+        }
+
+        const auto& relatedModel = modelInfo.foreignModelsInfo.at(column.name);
+        (void)dialect.quoteIdentifier(relatedModel.tableName);
+
+        for (const auto& relatedColumn : relatedModel.columnsInfo)
+        {
+            (void)dialect.quoteIdentifier(relatedColumn.name);
+            (void)dialect.quoteIdentifier(orm::db::aliases::joinedRelationColumn(column.name, relatedColumn.name));
+
+            if (relatedColumn.isPrimaryKey)
+            {
+                const auto localColumn = orm::db::aliases::joinedRelationColumn(column.name, relatedColumn.name);
+                (void)dialect.quoteIdentifier(localColumn);
+                (void)dialect.bindMarker(localColumn);
+                (void)dialect.quoteIdentifier(
+                    orm::db::aliases::unjoinedRelationColumn(modelInfo.tableName, column.name, relatedColumn.name));
+            }
+        }
+
+        validateModelIdentifiers(dialect, relatedModel, visited);
+    }
+
+    for (const auto& relation : modelInfo.relationsInfo)
+    {
+        (void)dialect.quoteIdentifier(relation.columnName);
+        const auto& targetModel = relation.targetModel();
+        (void)dialect.quoteIdentifier(targetModel.tableName);
+
+        for (const auto& targetColumn : targetModel.columnsInfo)
+        {
+            (void)dialect.quoteIdentifier(targetColumn.name);
+
+            if (targetColumn.isPrimaryKey)
+            {
+                (void)dialect.quoteIdentifier(
+                    orm::db::aliases::joinedRelationColumn(relation.columnName, targetColumn.name));
+            }
+        }
+
+        if (relation.junction.has_value())
+        {
+            const auto& junction = relation.junction.value();
+            (void)dialect.quoteIdentifier(junction.tableName);
+
+            for (const auto& column : junction.ownerColumns)
+            {
+                (void)dialect.quoteIdentifier(column);
+            }
+
+            for (const auto& column : junction.targetColumns)
+            {
+                (void)dialect.quoteIdentifier(column);
+            }
+        }
+
+        validateModelIdentifiers(dialect, targetModel, visited);
+    }
+}
+
+auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelInfo& modelInfo) -> void
+{
+    std::unordered_set<const orm::model::ModelInfo*> visited;
+    validateModelIdentifiers(dialect, modelInfo, visited);
 }
 } // namespace
 
@@ -204,7 +315,7 @@ auto Database::connect(db::BackendType requestedBackend, const std::string& conn
 
     try
     {
-        sql.open(connectionString);
+        selectedBackend->runtime().open(sql, connectionString);
         selectedBackend->runtime().onConnect(sql);
     }
     catch (const soci::soci_error& error)
@@ -253,12 +364,14 @@ auto Database::disconnect() -> void
         }
 
         transaction.reset();
+        transactionFailed = false;
     }
 
     sql.close();
 
     backend = nullptr;
     backendType = db::BackendType::Empty;
+    transactionFailed = false;
 
     if (failure.has_value())
     {
@@ -295,6 +408,7 @@ auto Database::beginTransaction() -> void
     try
     {
         transaction = std::make_unique<soci::transaction>(sql);
+        transactionFailed = false;
     }
     catch (const soci::soci_error& error)
     {
@@ -312,14 +426,22 @@ auto Database::commitTransaction() -> void
                             "No transaction is active"};
     }
 
+    if (transactionFailed)
+    {
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "commit transaction",
+                            "The transaction contains a failed statement and must be rolled back"};
+    }
+
     try
     {
         transaction->commit();
         transaction.reset();
+        transactionFailed = false;
     }
     catch (const soci::soci_error& error)
     {
         transaction.reset();
+        transactionFailed = false;
         throwTranslatedError(error, DatabaseErrorCode::Transaction, "commit transaction");
     }
 }
@@ -338,16 +460,19 @@ auto Database::rollbackTransaction() -> void
     {
         transaction->rollback();
         transaction.reset();
+        transactionFailed = false;
     }
     catch (const soci::soci_error& error)
     {
         transaction.reset();
+        transactionFailed = false;
         throwTranslatedError(error, DatabaseErrorCode::Transaction, "rollback transaction");
     }
 }
 
 auto Database::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
 {
+    ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
     soci::values parameterValues;
 
@@ -436,6 +561,7 @@ auto Database::relationEndpointExists(const model::ModelInfo& modelInfo, const d
 
     statement.sql =
         std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(modelInfo.tableName), where);
+    ensureStatementWithinBindLimit(statement.parameters.size(), "validate relation endpoint");
     soci::values parameterValues;
     long long count{};
 
@@ -557,6 +683,17 @@ auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
 auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::string_view operation) const -> void
 {
     const auto& capabilities = getBackendCapabilities();
+    const auto& dialect = getBackend().dialect();
+
+    try
+    {
+        validateModelIdentifiers(dialect, modelInfo);
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                            "A model identifier is not supported by the selected backend"};
+    }
 
     if (operation == "create table")
     {
@@ -609,6 +746,26 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
 {
     ensureModelSupported(queryData.modelInfo, "select");
     const auto& capabilities = getBackendCapabilities();
+    const auto& dialect = getBackend().dialect();
+
+    try
+    {
+        for (const auto& projection : queryData.projections)
+        {
+            (void)dialect.quoteIdentifier(projection.resultField);
+        }
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "select projection",
+                            "A projection alias is not supported by the selected backend"};
+    }
+
+    if (queryData.projections.empty() and (not queryData.groupBy.empty() or queryData.having.has_value()))
+    {
+        requireCapability(capabilities.query.fullModelGrouping, "select",
+                          "GROUP BY and HAVING for full-model queries are not supported");
+    }
 
     if (queryData.limit.has_value())
     {
@@ -636,6 +793,29 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
         requireCapability(capabilities.query.projections, "select projection", "projections are not supported");
     }
 
+    if (queryData.isDistinct and not queryData.projections.empty() and
+        capabilities.query.distinctOrderByRequiresProjectedColumn)
+    {
+        for (const auto& ordering : queryData.orderBy)
+        {
+            const auto orderingSql =
+                ordering.isRaw ? std::string{} : renderColumnForValidation(ordering.column, queryData, dialect);
+            const auto ordersByProjectedColumn =
+                not ordering.isRaw and
+                std::ranges::any_of(queryData.projections,
+                                    [&orderingSql, &queryData, &dialect](const auto& projection)
+                                    {
+                                        const auto* projectedColumn = std::get_if<query::Column>(&projection.source);
+                                        return projectedColumn != nullptr and
+                                               renderColumnForValidation(*projectedColumn, queryData, dialect) ==
+                                                   orderingSql;
+                                    });
+
+            requireCapability(ordersByProjectedColumn, "select projection",
+                              "DISTINCT projection queries may order only by projected columns");
+        }
+    }
+
     if (not queryData.groupBy.empty())
     {
         requireCapability(capabilities.query.groupBy, "select", "GROUP BY is not supported");
@@ -644,6 +824,47 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
     if (queryData.having.has_value())
     {
         requireCapability(capabilities.query.having, "select", "HAVING is not supported");
+    }
+
+    const auto isAggregateProjection =
+        std::ranges::any_of(queryData.projections, [](const auto& projection)
+                            { return std::holds_alternative<query::AggregateExpression>(projection.source); });
+    const auto isAggregateQuery =
+        not queryData.groupBy.empty() or queryData.having.has_value() or isAggregateProjection;
+
+    if (capabilities.query.strictProjectionGrouping and not queryData.projections.empty() and isAggregateQuery)
+    {
+        std::vector<std::string> groupedColumns;
+        groupedColumns.reserve(queryData.groupBy.size());
+
+        for (const auto& groupedColumn : queryData.groupBy)
+        {
+            groupedColumns.push_back(renderColumnForValidation(groupedColumn, queryData, dialect));
+        }
+
+        auto isGroupedColumn = [&groupedColumns, &queryData, &dialect](const query::Column& column)
+        {
+            const auto rendered = renderColumnForValidation(column, queryData, dialect);
+            return std::ranges::find(groupedColumns, rendered) != groupedColumns.end();
+        };
+
+        for (const auto& projection : queryData.projections)
+        {
+            if (const auto* column = std::get_if<query::Column>(&projection.source); column != nullptr)
+            {
+                requireCapability(isGroupedColumn(*column), "select projection",
+                                  "Non-aggregate projected columns must appear in GROUP BY");
+            }
+        }
+
+        for (const auto& ordering : queryData.orderBy)
+        {
+            if (not ordering.isRaw)
+            {
+                requireCapability(isGroupedColumn(ordering.column), "select projection",
+                                  "Typed ORDER BY columns in aggregate queries must appear in GROUP BY");
+            }
+        }
     }
 
     if (queryData.predicate.has_value() and containsCollectionPredicate(queryData.predicate->getNode()))
@@ -702,7 +923,7 @@ auto Database::requireCapability(bool supported, std::string_view operation, std
 }
 
 auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
-                                    std::string_view operation) const -> void
+                                    std::string_view operation) -> void
 {
     if (backend == nullptr)
     {
@@ -710,6 +931,27 @@ auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseError
                             "No database backend is available to translate the driver error"};
     }
 
+    if (transaction != nullptr and backend->runtime().statementErrorInvalidatesTransaction(error))
+    {
+        transactionFailed = true;
+    }
+
     throw backend->runtime().translateError(error, fallback, operation);
+}
+
+auto Database::ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void
+{
+    if (parameterCount == 0)
+    {
+        return;
+    }
+
+    const auto maximum = getBackendRuntimeLimits().maxBindParameters;
+
+    if (maximum.has_value() and parameterCount > maximum.value())
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                            "The statement exceeds the backend bind-parameter limit"};
+    }
 }
 } // namespace orm

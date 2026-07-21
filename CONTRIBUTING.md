@@ -22,7 +22,7 @@ changes in the same pull request as user-facing changes.
 
 ## Fastest supported setup
 
-The development image contains GCC 13, Clang/LLVM 18, Ninja, CMake, SQLite,
+The development image contains GCC 13, Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
 clang-format, clang-tidy, and cmake-format. Docker Compose and the devcontainer
 both build that image from the repository's single `Dockerfile`.
 
@@ -63,6 +63,7 @@ configures, builds, and tests its own directory under `build/`.
 | Format and static analysis | `bash ./scripts/check-quality.sh` | `build/quality` |
 | Full Linux verification | `bash ./scripts/check-linux-ci.sh` | all Linux directories above |
 | MSVC build and tests | `./scripts/check-msvc.ps1` | `build/msvc-debug` |
+| PostgreSQL 15/18 profile | `cmake --workflow --preset linux-gcc-postgresql` or `linux-clang-postgresql-coverage` | matching preset directory |
 
 The named presets own compiler paths, build options, warning policy, and
 coverage settings. Do not copy those flags into local scripts.
@@ -84,7 +85,7 @@ Run `relations-example` the same way if needed.
 
 ## Database backend work
 
-SQLite is currently the only supported database backend. Before changing
+SQLite is the default backend and PostgreSQL is optional. Before changing
 backend selection, SQL generation, binding, execution, or driver dependencies,
 read the project documentation for [backend
 portability](docs/backend-portability.md) and the [backend extension
@@ -104,8 +105,9 @@ itself is not a backend support claim.
 
 ## Native Linux setup
 
-Install CMake 3.25 or newer, Ninja, SQLite development headers, GCC 13,
-Clang/LLVM 18, and the Python tools pinned in `tools/requirements-dev.txt`.
+Install CMake 3.25 or newer, Ninja, SQLite development headers, `libpq`
+development headers, the PostgreSQL client, GCC 13, Clang/LLVM 18, and the
+Python tools pinned in `tools/requirements-dev.txt`.
 Then invoke the same workflow presets shown above. The container is the
 reference environment when host package names or versions differ.
 
@@ -122,7 +124,9 @@ Visual Studio Developer PowerShell and run:
 ```
 
 The first two commands bootstrap the repository's pinned vcpkg checkout and
-install SQLite. They are required once per clean checkout. The script itself
+install SQLite. Add `--x-feature=postgresql` to the install command and use the
+`msvc-postgresql-debug` workflow preset to compile the PostgreSQL adapter and
+all consumer configurations. They are required once per clean checkout. The script itself
 only invokes the `msvc-debug` workflow preset; the preset contains the
 toolchain and build settings.
 

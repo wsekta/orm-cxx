@@ -152,8 +152,8 @@ class StaticDeleteCommand final : public orm::db::commands::DeleteCommand
 public:
     explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto remove(const orm::model::ModelInfo& /*modelInfo*/,
-                const orm::query::Predicate& /*predicate*/) const -> orm::db::Statement override
+    auto remove(const orm::model::ModelInfo& /*modelInfo*/, const orm::query::Predicate& /*predicate*/) const
+        -> orm::db::Statement override
     {
         return statement;
     }
@@ -202,6 +202,11 @@ class ConfigurableRuntime final : public orm::db::BackendRuntime
 {
 public:
     explicit ConfigurableRuntime(const orm::db::BackendRuntime& delegateInit) : delegate{delegateInit} {}
+
+    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    {
+        delegate.open(session, connectionString);
+    }
 
     auto onConnect(soci::session& session) const -> void override
     {
@@ -259,7 +264,7 @@ public:
         case NormalizeAction::Delegate:
             return delegate.normalizeAffectedRows(affectedRows);
         case NormalizeAction::ThrowDatabaseError:
-            throw orm::DatabaseError{orm::DatabaseErrorCode::Constraint, orm::db::BackendType::Postgres,
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Constraint, orm::db::BackendType::Mysql,
                                      "coverage mutation", "coverage database error"};
         case NormalizeAction::ThrowStandardError:
             throw std::runtime_error{"coverage affected rows failure"};
@@ -281,7 +286,7 @@ public:
     auto translateError(const soci::soci_error& /*error*/, orm::DatabaseErrorCode fallback,
                         std::string_view operation) const -> orm::DatabaseError override
     {
-        return orm::DatabaseError{fallback, orm::db::BackendType::Postgres, std::string{operation},
+        return orm::DatabaseError{fallback, orm::db::BackendType::Mysql, std::string{operation},
                                   "coverage translated driver error"};
     }
 
@@ -313,7 +318,7 @@ public:
 
     auto type() const noexcept -> orm::db::BackendType override
     {
-        return orm::db::BackendType::Postgres;
+        return orm::db::BackendType::Mysql;
     }
 
     auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
@@ -380,7 +385,7 @@ public:
 
     auto connect() -> void
     {
-        database->connect(orm::db::BackendType::Postgres, "sqlite3://:memory:");
+        database->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
     }
 
     ConfigurableBackend* backend{};
@@ -388,8 +393,8 @@ public:
 };
 
 template <typename Operation>
-auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code,
-                         std::string_view expectedOperation = {}) -> void
+auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code, std::string_view expectedOperation = {})
+    -> void
 {
     try
     {
@@ -451,7 +456,7 @@ TEST(DatabaseCoverageCompletionTest, typedConnectRejectsAlreadyConnectedDatabase
     DatabaseBundle bundle;
     bundle.connect();
 
-    expectDatabaseError([&bundle]() { bundle.database->connect(orm::db::BackendType::Postgres, "sqlite3://:memory:"); },
+    expectDatabaseError([&bundle]() { bundle.database->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:"); },
                         orm::DatabaseErrorCode::AlreadyConnected, "connect");
     bundle.database->disconnect();
 }
@@ -704,6 +709,90 @@ TEST(DatabaseCoverageCompletionTest, queryCapabilityChecksHandleNegatedCollectio
         expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, "select");
     }
+}
+
+TEST(DatabaseCoverageCompletionTest, fullModelGroupingRequiresItsDedicatedCapability)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.query.fullModelGrouping = false;
+    bundle.connect();
+
+    orm::Query<models::ModelWithOneField> groupedQuery;
+    groupedQuery.groupBy(orm::query::col("field1"));
+    expectDatabaseError([&bundle, &groupedQuery]() { (void)bundle.database->select(groupedQuery); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select");
+
+    orm::Query<models::ModelWithOneField> havingQuery;
+    havingQuery.having(orm::query::countAll() > 0);
+    expectDatabaseError([&bundle, &havingQuery]() { (void)bundle.database->select(havingQuery); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select");
+}
+
+TEST(DatabaseCoverageCompletionTest, distinctProjectionRejectsOrderingByAnUnprojectedColumnWhenRequired)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.query.distinctOrderByRequiresProjectedColumn = true;
+    bundle.connect();
+
+    orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
+    query.project(as("value", col("field1"))).distinct().orderBy(asc(col("field2")));
+
+    expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
+}
+
+TEST(DatabaseCoverageCompletionTest, distinctProjectionAcceptsMappedAndFieldNamesForTheSameColumn)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.query.distinctOrderByRequiresProjectedColumn = true;
+    bundle.connect();
+    bundle.database->createTable<models::ModelWithIdAndNamesMapping>();
+    bundle.database->insert(models::ModelWithIdAndNamesMapping{1, 7, "mapped"});
+
+    orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, ScalarProjection> query;
+    query.project(as("value", col("field1"))).distinct().orderBy(asc(col("some_field1_name")));
+
+    const auto rows = bundle.database->select(query);
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_EQ(rows.front().value, 7);
+}
+
+TEST(DatabaseCoverageCompletionTest, strictProjectionGroupingRejectsUngroupedProjectionAndOrderingColumns)
+{
+    {
+        DatabaseBundle bundle;
+        bundle.backend->capabilitiesValue.query.strictProjectionGrouping = true;
+        bundle.connect();
+        orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
+        query.project(as("value", col("field1"))).groupBy(col("field2"));
+
+        expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                            orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
+    }
+
+    {
+        DatabaseBundle bundle;
+        bundle.backend->capabilitiesValue.query.strictProjectionGrouping = true;
+        bundle.connect();
+        orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
+        query.project(as("value", col("field1"))).groupBy(col("field1")).orderBy(asc(col("field2")));
+
+        expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                            orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
+    }
+}
+
+TEST(DatabaseCoverageCompletionTest, statementBindLimitIsEnforcedBeforeExecution)
+{
+    DatabaseBundle bundle;
+    bundle.backend->runtimeStrategy.overrideLimits = true;
+    bundle.backend->runtimeStrategy.limitsValue.maxBindParameters = 2;
+    bundle.connect();
+    orm::Query<models::ModelWithOneField> query;
+    query.where(col("field1").in({1, 2, 3}));
+
+    expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select");
 }
 
 TEST(DatabaseCoverageCompletionTest, mutationRejectsBackendWithoutReliableAffectedRows)

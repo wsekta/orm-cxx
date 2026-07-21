@@ -61,6 +61,7 @@ int main()
 
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
+    const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
 
 #if ORM_CXX_ENABLE_SQLITE_BACKEND
     if (sqlite == nullptr)
@@ -74,13 +75,25 @@ int main()
     }
 #endif
 
+#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+    if (postgresql == nullptr or postgresql->type() != orm::db::BackendType::Postgres)
+    {
+        return 2;
+    }
+#else
+    if (postgresql != nullptr)
+    {
+        return 2;
+    }
+#endif
+
     const ConsumerDialect dialect;
 
     if (not orm::db::relations::createTableStatements(dialect,
                                                       orm::Model<consumer_models::ConsumerModel>::getModelInfo())
                 .empty())
     {
-        return 2;
+        return 3;
     }
 
     return 0;

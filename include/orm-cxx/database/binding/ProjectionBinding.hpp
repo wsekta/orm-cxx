@@ -7,7 +7,7 @@
 
 #include "BindingConcepts.hpp"
 #include "ConversionError.hpp"
-#include "NumericConversion.hpp"
+#include "NumericValue.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/type-conversion.h"
@@ -38,48 +38,7 @@ struct ObjectFieldFromProjectionValues
 template <typename ResultField>
 auto parseNumericProjectionValue(const std::string& value, const std::string& fieldName) -> ResultField
 {
-    std::size_t parsedCharacters{};
-
-    if constexpr (std::is_floating_point_v<ResultField>)
-    {
-        const auto parsed = std::stod(value, &parsedCharacters);
-
-        if (parsedCharacters != value.size())
-        {
-            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
-        }
-
-        return checkedNumericCast<ResultField>(parsed, fieldName);
-    }
-    else if constexpr (std::is_unsigned_v<ResultField>)
-    {
-        const auto firstNonWhitespace = value.find_first_not_of(" \f\n\r\t\v");
-
-        if (firstNonWhitespace != std::string::npos and value[firstNonWhitespace] == '-')
-        {
-            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
-        }
-
-        const auto parsed = std::stoull(value, &parsedCharacters);
-
-        if (parsedCharacters != value.size())
-        {
-            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
-        }
-
-        return checkedNumericCast<ResultField>(parsed, fieldName);
-    }
-    else
-    {
-        const auto parsed = std::stoll(value, &parsedCharacters);
-
-        if (parsedCharacters != value.size())
-        {
-            throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
-        }
-
-        return checkedNumericCast<ResultField>(parsed, fieldName);
-    }
+    return parseNumericValue<ResultField>(value, fieldName);
 }
 
 template <typename ResultField, typename StoredField>
@@ -104,23 +63,7 @@ auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldNa
 template <typename ResultField>
 auto getNumericProjectionValue(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
 {
-    if (tryGetNumericProjectionValue<ResultField, ResultField>(field, fieldName, values) or
-        tryGetNumericProjectionValue<ResultField, int>(field, fieldName, values) or
-        tryGetNumericProjectionValue<ResultField, long long>(field, fieldName, values) or
-        tryGetNumericProjectionValue<ResultField, unsigned long long>(field, fieldName, values) or
-        tryGetNumericProjectionValue<ResultField, double>(field, fieldName, values))
-    {
-        return;
-    }
-
-    try
-    {
-        *field = parseNumericProjectionValue<ResultField>(values.get<std::string>(fieldName), fieldName);
-    }
-    catch (const std::exception&)
-    {
-        throw ConversionError{"Cannot hydrate numeric projection result field: " + fieldName};
-    }
+    *field = getNumericValue<ResultField>(values, fieldName);
 }
 
 template <SociDefaultSupported ResultField>

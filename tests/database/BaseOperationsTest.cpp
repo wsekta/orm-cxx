@@ -84,9 +84,8 @@ TEST(DatabaseConnectionLifecycleTest, unimplementedExplicitBackendShouldReportUn
 {
     orm::Database database;
 
-    expectDatabaseError([&database]()
-                        { database.connect(orm::db::BackendType::Postgres, "postgresql://localhost/test"); },
-                        orm::DatabaseErrorCode::UnsupportedBackend, orm::db::BackendType::Postgres, "connect");
+    expectDatabaseError([&database]() { database.connect(orm::db::BackendType::Mysql, "mysql://localhost/test"); },
+                        orm::DatabaseErrorCode::UnsupportedBackend, orm::db::BackendType::Mysql, "connect");
 }
 
 TEST(DatabaseConnectionLifecycleTest, secondConnectShouldReportAlreadyConnected)

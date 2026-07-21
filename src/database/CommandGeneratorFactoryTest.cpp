@@ -67,7 +67,13 @@ TEST(CommandGeneratorFactoryTest, findsBackendByConnectionString)
 
     ASSERT_NE(sqlite, nullptr);
     EXPECT_EQ(sqlite->type(), orm::db::BackendType::Sqlite);
-    EXPECT_EQ(factory.findBackend("postgresql://localhost/test"), nullptr);
+#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+    const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=test");
+    ASSERT_NE(postgresql, nullptr);
+    EXPECT_EQ(postgresql->type(), orm::db::BackendType::Postgres);
+#else
+    EXPECT_EQ(factory.findBackend("postgresql://host=localhost dbname=test"), nullptr);
+#endif
 }
 
 TEST(CommandGeneratorFactoryTest, rejectsDuplicateAndNullBackendRegistration)
@@ -83,7 +89,7 @@ TEST(CommandGeneratorFactoryTest, rejectsDuplicateAndNullBackendRegistration)
 TEST(CommandGeneratorFactoryTest, rejectsAmbiguousAutomaticBackendSelectionDeterministically)
 {
     orm::db::CommandGeneratorFactory factory;
-    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Postgres, true));
+    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Mysql, true));
 
     EXPECT_EQ(factory.findBackend("sqlite3://:memory:"), nullptr);
 }
@@ -92,6 +98,6 @@ TEST(CommandGeneratorFactoryTest, preservesOutOfRangeForUnknownBackendLookup)
 {
     const orm::db::CommandGeneratorFactory factory;
 
-    EXPECT_THROW((void)factory.getBackend(orm::db::BackendType::Postgres), std::out_of_range);
-    EXPECT_THROW((void)factory.getCommandGenerator(orm::db::BackendType::Postgres), std::out_of_range);
+    EXPECT_THROW((void)factory.getBackend(orm::db::BackendType::Mysql), std::out_of_range);
+    EXPECT_THROW((void)factory.getCommandGenerator(orm::db::BackendType::Mysql), std::out_of_range);
 }

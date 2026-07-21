@@ -87,7 +87,9 @@ TEST(StatementParameterBindingTest, backendRuntimeBoundNullShouldRoundTripThroug
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid,
+        orm::model::ColumnType::Unknown,
+        orm::model::ColumnType::OneToOne,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -122,7 +124,9 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedObjectFieldNullValueTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid,
+        orm::model::ColumnType::Unknown,
+        orm::model::ColumnType::OneToOne,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -312,6 +316,53 @@ TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongConvertedModelF
     EXPECT_EQ(field, 42);
 }
 
+TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongFieldFromSignedDriverStorage)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts>;
+
+    const auto payload = Payload{};
+    auto values = soci::values{};
+    auto field = std::uint64_t{};
+
+    values.set("all_ints_field8", static_cast<long long>(42));
+
+    orm::db::binding::ObjectFieldFromValues<std::uint64_t>::get(&field, payload, 7, values);
+
+    EXPECT_EQ(field, 42);
+}
+
+TEST(StatementParameterBindingTest, numericHydrationUsesTheDriverDescribedHolderType)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    auto session = soci::session{};
+    backend.runtime().open(session, "sqlite3://:memory:");
+    session << "CREATE TABLE holder_probe (value BIGINT NOT NULL);";
+    session << "INSERT INTO holder_probe (value) VALUES (42);";
+
+    auto values = soci::values{};
+    soci::statement statement =
+        (session.prepare << "SELECT value AS numeric_value FROM holder_probe;", soci::into(values));
+    statement.execute(true);
+
+    ASSERT_EQ(values.get_properties("numeric_value").get_data_type(), soci::dt_long_long);
+    EXPECT_EQ(orm::db::binding::getNumericValue<unsigned long long>(values, "numeric_value"), 42);
+}
+
+TEST(StatementParameterBindingTest, shouldHydrateOptionalScalarFromWiderDriverStorage)
+{
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;
+
+    const auto payload = Payload{};
+    auto values = soci::values{};
+    auto field = std::optional<int>{};
+
+    values.set("models_ModelWithOptional_field1", static_cast<long long>(42));
+
+    orm::db::binding::ObjectFieldFromValues<std::optional<int>>::get(&field, payload, 0, values);
+
+    EXPECT_EQ(field, 42);
+}
+
 TEST(StatementParameterBindingTest, shouldRejectNonFiniteFullModelField)
 {
     using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes>;
@@ -333,6 +384,17 @@ TEST(StatementParameterBindingTest, shouldRejectOutOfRangeHydratedRelationPrimar
 
     EXPECT_THROW((void)orm::db::binding::getPrimaryKeyValue(values, "owner_key", orm::model::ColumnType::Bool),
                  orm::db::binding::ConversionError);
+}
+
+TEST(StatementParameterBindingTest, shouldHydrateUnsignedRelationPrimaryKeyFromSignedDriverStorage)
+{
+    auto values = soci::values{};
+    values.set("owner_key", static_cast<long long>(42));
+
+    const auto key =
+        orm::db::binding::getPrimaryKeyValue(values, "owner_key", orm::model::ColumnType::UnsignedLongLong);
+
+    EXPECT_EQ(std::get<unsigned long long>(key.get()), 42);
 }
 
 TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongWithoutNarrowing)
@@ -520,7 +582,7 @@ TEST(StatementParameterBindingTest, shouldHydratePresentOptionalCompositeRelatio
     const auto& modelInfo = payload.getModelInfo();
     const auto& relationInfo = modelInfo.columnsInfo[1];
 
-    values.set(std::format("{}_{}_field1", modelInfo.tableName, relationInfo.name), 7);
+    values.set(std::format("{}_{}_field1", modelInfo.tableName, relationInfo.name), static_cast<long long>(7));
     values.set(std::format("{}_{}_field2", modelInfo.tableName, relationInfo.name), std::string{"composite"});
 
     orm::db::binding::ObjectFieldFromValues<std::optional<models::ModelWithOverwrittenId>>::get(&relation, payload, 1,

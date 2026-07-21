@@ -28,6 +28,20 @@ connection string. Select a known backend explicitly when desired:
 database.connect(orm::db::BackendType::Sqlite, "sqlite3://test.db");
 ```
 
+PostgreSQL uses a `postgresql://` backend selector followed by SOCI's
+keyword/value connection payload:
+
+```cpp
+database.connect(
+    orm::db::BackendType::Postgres,
+    "postgresql://host=localhost port=5432 dbname=application user=application password=secret");
+```
+
+This is not an RFC-style `postgresql://user@host/database` URI. Connection
+strings are never copied into `DatabaseError` diagnostics. Keyword values with
+whitespace are not supported by the vendored SOCI parser; use a PostgreSQL
+passfile/`PGPASSFILE` for credentials that cannot be represented safely.
+
 Use `isConnected()` and `getBackendType()` to inspect lifecycle state. Calling
 `disconnect()` rolls back an active transaction before closing the session; the
 same `Database` object can then connect again. A `Database` is intentionally
@@ -37,6 +51,8 @@ session.
 SQLite connections automatically enable `PRAGMA foreign_keys=ON`. Foreign-key
 violations therefore fail immediately, and deleting a many-to-many endpoint
 removes its junction rows through the generated `ON DELETE CASCADE` rules.
+PostgreSQL uses the session's active `search_path`; schema-qualified model names
+are not a public API in this release.
 
 ## Capabilities and errors
 
@@ -126,7 +142,7 @@ database.insert(object);
 ```
 
 For models with an auto-increment primary key, the generated `INSERT` statement omits that primary-key column and
-SQLite assigns the value:
+the selected database assigns the value:
 
 ```cpp
 struct User
@@ -217,6 +233,10 @@ query.where(col("name").like("name%"))
 auto queriedObjects = database.select(query);
 ```
 
+PostgreSQL rejects full-model `GROUP BY`/`HAVING` queries before SQL execution,
+because selecting arbitrary non-grouped model fields has no portable meaning.
+Use `ProjectionQuery` and explicitly project grouped columns and aggregates.
+
 ## Update objects
 
 To update rows, build an `orm::Update<Model>` with one or more assignments and a required predicate:
@@ -277,6 +297,10 @@ database.insert(objects);
 
 database.rollbackTransaction();
 ```
+
+PostgreSQL marks a transaction failed after a statement error. `commitTransaction()`
+then returns `DatabaseErrorCode::Transaction` without sending a misleading
+commit; call `rollbackTransaction()` before starting another transaction.
 
 Relation-table operations, `link`, `unlink`, and included selects participate
 in the current explicit transaction and never start a private transaction.

@@ -8,7 +8,13 @@ function(orm_cxx_add_runtime_dependencies source_dir)
                     "ORM_CXX_ENABLE_SQLITE_BACKEND=ON requires the parent project to provide the soci_sqlite3 target alongside soci_core."
             )
         endif()
-    elseif(TARGET soci_sqlite3)
+        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND NOT TARGET soci_postgresql)
+            message(
+                FATAL_ERROR
+                    "ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON requires the parent project to provide the soci_postgresql target alongside soci_core."
+            )
+        endif()
+    elseif(TARGET soci_sqlite3 OR TARGET soci_postgresql)
         message(FATAL_ERROR "orm-cxx requires the soci_core target when SOCI targets are supplied by a parent project.")
     else()
         # Keep all SOCI configuration local to this function/directory tree. In particular, do not overwrite a parent
@@ -24,7 +30,8 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         set(WITH_MYSQL OFF)
         set(WITH_ODBC OFF)
         set(WITH_ORACLE OFF)
-        set(WITH_POSTGRESQL OFF)
+        set(WITH_POSTGRESQL "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}")
+        set(SOCI_POSTGRESQL "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}")
         set(WITH_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
         set(SOCI_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
 
@@ -42,6 +49,13 @@ function(orm_cxx_add_runtime_dependencies source_dir)
             message(
                 FATAL_ERROR
                     "The bundled SOCI configuration could not create its SQLite backend. Install the SQLite development package or configure through the repository's vcpkg toolchain."
+            )
+        endif()
+
+        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND NOT TARGET soci_postgresql)
+            message(
+                FATAL_ERROR
+                    "The bundled SOCI configuration could not create its PostgreSQL backend. Install the libpq development package or configure through the repository's vcpkg toolchain with the postgresql manifest feature."
             )
         endif()
     endif()

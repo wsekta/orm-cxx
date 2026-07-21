@@ -5,5 +5,13 @@
     {
       "name": "sqlite3"
     }
-  ]
+  ],
+  "features": {
+    "postgresql": {
+      "description": "Build the optional PostgreSQL backend through libpq",
+      "dependencies": [
+        "libpq"
+      ]
+    }
+  }
 }

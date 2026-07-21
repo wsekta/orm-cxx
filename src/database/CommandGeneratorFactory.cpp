@@ -6,6 +6,9 @@
 #if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
 #include "orm-cxx/database/sqlite/SqliteBackend.hpp"
 #endif
+#if defined(ORM_CXX_ENABLE_POSTGRESQL_BACKEND) && ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+#include "orm-cxx/database/postgresql/PostgresqlBackend.hpp"
+#endif
 
 namespace orm::db
 {
@@ -13,6 +16,9 @@ CommandGeneratorFactory::CommandGeneratorFactory()
 {
 #if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
     registerBackend(std::make_unique<sqlite::SqliteBackend>());
+#endif
+#if defined(ORM_CXX_ENABLE_POSTGRESQL_BACKEND) && ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+    registerBackend(std::make_unique<postgresql::PostgresqlBackend>());
 #endif
 }
 

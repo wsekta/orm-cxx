@@ -72,7 +72,7 @@ The main query is executed first, followed by one or more parameter-bounded
 batched queries for each unique included field. Results are grouped by the
 complete parent primary key, so parents are not duplicated and the
 implementation never issues one query per parent. Large key sets are split to
-respect SQLite's parameter limit.
+respect the selected backend's parameter limit.
 
 Pagination, `DISTINCT`, and ordering apply to the parent query only. Included
 collections are complete for the selected parents, but their element order is

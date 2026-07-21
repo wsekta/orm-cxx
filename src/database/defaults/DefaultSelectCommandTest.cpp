@@ -128,6 +128,12 @@ struct RelatedNameAggregateProjection
     std::string relatedName;
     long long users;
 };
+
+struct ExactNumericAggregateProjection
+{
+    long long total;
+    double average;
+};
 } // namespace projection_select_command_test_models
 
 using namespace projection_select_command_test_models;
@@ -161,6 +167,22 @@ TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBin
                              "FROM [models_ModelWithFloat] WHERE [models_ModelWithFloat].[field1] = $orm_p0;");
     ASSERT_EQ(statement.parameters.size(), 1);
     EXPECT_EQ(statement.parameters[0].name, "orm_p0");
+}
+
+TEST(DefaultSelectCommandDialectTest, delegatesOnlyProjectedNumericAggregateResultsToDialect)
+{
+    orm::tests::TrackingSqlDialect dialect;
+    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::ProjectionQuery<models::ModelWithId, ExactNumericAggregateProjection> query;
+    query.project(as("total", sum(col("field1"))), as("average", avg(col("field1")))).having(avg(col("field1")) > 0.0);
+
+    const auto statement = command.select(orm::Database::getQueryData(query));
+
+    EXPECT_EQ(statement.sql, "SELECT EXACT_RESULT(SUM([models_ModelWithId].[field1])) AS [total], "
+                             "EXACT_RESULT(AVG([models_ModelWithId].[field1])) AS [average] FROM [models_ModelWithId] "
+                             "HAVING AVG([models_ModelWithId].[field1]) > $orm_p0;");
+    ASSERT_EQ(statement.parameters.size(), 1);
+    EXPECT_EQ(getValue<double>(statement.parameters[0]), 0.0);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLimit)

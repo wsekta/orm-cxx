@@ -10,11 +10,29 @@ include(OrmCxxProjectSettings)
 
 orm_cxx_define_options()
 
-if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND AND (ORM_CXX_BUILD_TESTS OR ORM_CXX_BUILD_EXAMPLES))
+if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND AND ORM_CXX_BUILD_EXAMPLES)
     message(
         FATAL_ERROR
-            "ORM_CXX_BUILD_TESTS and ORM_CXX_BUILD_EXAMPLES exercise the SQLite backend. Configure both developer targets OFF when ORM_CXX_ENABLE_SQLITE_BACKEND=OFF."
+            "ORM_CXX_BUILD_EXAMPLES currently exercises the SQLite backend. Configure examples OFF when ORM_CXX_ENABLE_SQLITE_BACKEND=OFF."
     )
+endif()
+
+if(ORM_CXX_BUILD_TESTS AND NOT ORM_CXX_ENABLE_SQLITE_BACKEND)
+    message(
+        FATAL_ERROR
+            "The legacy developer test suite still exercises SQLite. Configure ORM_CXX_BUILD_TESTS=OFF for PostgreSQL-only and core-only consumer builds."
+    )
+endif()
+
+if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS AND NOT ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
+    message(
+        FATAL_ERROR
+            "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS requires ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON."
+    )
+endif()
+
+if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS AND NOT ORM_CXX_BUILD_TESTS)
+    message(FATAL_ERROR "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS requires ORM_CXX_BUILD_TESTS=ON.")
 endif()
 
 if(ORM_CXX_ENABLE_COVERAGE AND NOT ORM_CXX_BUILD_TESTS)

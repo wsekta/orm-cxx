@@ -58,18 +58,47 @@
             }
         },
         {
+            "name": "linux-gcc-postgresql",
+            "displayName": "Linux GCC with PostgreSQL",
+            "inherits": "linux-gcc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-postgresql-coverage",
+            "displayName": "Linux Clang PostgreSQL Coverage",
+            "inherits": "linux-clang-coverage",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+            }
+        },
+        {
             "name": "msvc-debug",
             "displayName": "MSVC Debug",
             "inherits": "developer-base",
             "cacheVariables": {
                 "CMAKE_C_COMPILER": "cl",
                 "CMAKE_CXX_COMPILER": "cl",
-                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/externals/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "${sourceDir}/externals/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_INSTALLED_DIR": "${sourceDir}/vcpkg_installed"
             },
             "condition": {
                 "type": "equals",
                 "lhs": "${hostSystemName}",
                 "rhs": "Windows"
+            }
+        },
+        {
+            "name": "msvc-postgresql-debug",
+            "displayName": "MSVC Debug with PostgreSQL",
+            "inherits": "msvc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "VCPKG_MANIFEST_FEATURES": "postgresql"
             }
         },
         {
@@ -113,8 +142,26 @@
             ]
         },
         {
+            "name": "linux-gcc-postgresql",
+            "configurePreset": "linux-gcc-postgresql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-postgresql-coverage",
+            "configurePreset": "linux-clang-postgresql-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "orm-cxx-coverage"
+            ]
+        },
+        {
             "name": "msvc-debug",
             "configurePreset": "msvc-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-postgresql-debug",
+            "configurePreset": "msvc-postgresql-debug",
             "configuration": "Debug"
         },
         {
@@ -166,8 +213,44 @@
             }
         },
         {
+            "name": "linux-gcc-postgresql",
+            "configurePreset": "linux-gcc-postgresql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-postgresql-coverage",
+            "configurePreset": "linux-clang-postgresql-coverage",
+            "configuration": "Debug",
+            "environment": {
+                "LLVM_PROFILE_FILE": "${sourceDir}/build/linux-clang-postgresql-coverage/ctest-%p.profraw"
+            },
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
             "name": "msvc-debug",
             "configurePreset": "msvc-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-postgresql-debug",
+            "configurePreset": "msvc-postgresql-debug",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -241,6 +324,40 @@
             ]
         },
         {
+            "name": "linux-gcc-postgresql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-postgresql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-postgresql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-postgresql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-postgresql-coverage",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-postgresql-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-postgresql-coverage"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-postgresql-coverage"
+                }
+            ]
+        },
+        {
             "name": "msvc-debug",
             "steps": [
                 {
@@ -254,6 +371,23 @@
                 {
                     "type": "test",
                     "name": "msvc-debug"
+                }
+            ]
+        },
+        {
+            "name": "msvc-postgresql-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-postgresql-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-postgresql-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-postgresql-debug"
                 }
             ]
         },

@@ -16,6 +16,11 @@ class ThrowingConnectRuntime final : public orm::db::BackendRuntime
 public:
     explicit ThrowingConnectRuntime(const orm::db::BackendRuntime& delegateInit) : delegate{delegateInit} {}
 
+    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    {
+        delegate.open(session, connectionString);
+    }
+
     auto onConnect(soci::session& /*session*/) const -> void override
     {
         throw std::runtime_error{"test runtime initialization failure"};
@@ -58,7 +63,7 @@ public:
 
     auto type() const noexcept -> orm::db::BackendType override
     {
-        return orm::db::BackendType::Postgres;
+        return orm::db::BackendType::Mysql;
     }
 
     auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
@@ -155,13 +160,13 @@ TEST(DatabaseErrorTest, nonDriverConnectHookFailureClosesSessionAndAllowsReconne
 
     try
     {
-        database.connect(orm::db::BackendType::Postgres, "sqlite3://:memory:");
+        database.connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
         FAIL() << "Expected backend initialization failure";
     }
     catch (const orm::DatabaseError& error)
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Connection);
-        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Postgres);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Mysql);
         EXPECT_EQ(error.getOperation(), "connect");
     }
 

@@ -12,6 +12,11 @@ auto DefaultInsertCommand::insert(const model::ModelInfo& modelInfo) const -> st
 {
     auto fieldsNames = getFieldsNames(modelInfo);
 
+    if (fieldsNames.empty())
+    {
+        return std::format("INSERT INTO {} DEFAULT VALUES;", dialect.quoteIdentifier(modelInfo.tableName));
+    }
+
     return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(modelInfo.tableName),
                        getInsertFields(fieldsNames), getInsertValues(fieldsNames));
 }

@@ -1,4 +1,4 @@
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
+#include "orm-cxx/database/postgresql/PostgresqlBackend.hpp"
 
 #include <limits>
 #include <optional>
@@ -11,44 +11,94 @@
 #include "orm-cxx/database/binding/StatementBinding.hpp"
 #include "orm-cxx/database/CommandGenerator.hpp"
 #include "orm-cxx/database/DatabaseError.hpp"
+#include "soci/postgresql/soci-postgresql.h"
 #include "soci/soci.h"
-#include "soci/sqlite3/soci-sqlite3.h"
 
 namespace
 {
-class SqliteRuntime final : public orm::db::BackendRuntime
+constexpr std::string_view connectionStringPrefix{"postgresql://"};
+
+auto codeFromSqlState(std::string_view sqlState, orm::DatabaseErrorCode fallback) -> orm::DatabaseErrorCode
+{
+    if (sqlState.starts_with("08"))
+    {
+        return orm::DatabaseErrorCode::Connection;
+    }
+
+    if (sqlState == "57P01" or sqlState == "57P02" or sqlState == "57P03" or sqlState == "57P04")
+    {
+        return orm::DatabaseErrorCode::Connection;
+    }
+
+    if (sqlState.starts_with("23"))
+    {
+        return orm::DatabaseErrorCode::Constraint;
+    }
+
+    if (sqlState.starts_with("25") or sqlState.starts_with("40"))
+    {
+        return orm::DatabaseErrorCode::Transaction;
+    }
+
+    return fallback;
+}
+
+class PostgresqlRuntime final : public orm::db::BackendRuntime
 {
 public:
     auto open(soci::session& session, std::string_view connectionString) const -> void override
     {
-        session.open(std::string{connectionString});
+        if (connectionString.find('\0') != std::string_view::npos)
+        {
+            throw std::invalid_argument{"PostgreSQL connection string must not contain an embedded NUL byte"};
+        }
+
+        if (not connectionString.starts_with(connectionStringPrefix))
+        {
+            throw std::invalid_argument{"PostgreSQL connection string must start with postgresql://"};
+        }
+
+        session.open(*soci::factory_postgresql(), std::string{connectionString.substr(connectionStringPrefix.size())});
     }
 
-    auto onConnect(soci::session& session) const -> void override
+    auto onConnect(soci::session& /*session*/) const -> void override {}
+
+    [[nodiscard]] auto statementErrorInvalidatesTransaction(const soci::soci_error& error) const noexcept
+        -> bool override
     {
-        session << "PRAGMA foreign_keys = ON;";
+        return dynamic_cast<const soci::postgresql_soci_error*>(&error) != nullptr;
     }
 
     auto tableExists(soci::session& session, std::string_view tableName) const -> bool override
     {
         auto name = std::string{tableName};
-        int count{};
-        session << "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = :name;", soci::use(name, "name"),
-            soci::into(count);
+        int exists{};
+        session << R"sql(
+            SELECT CASE WHEN EXISTS (
+                SELECT 1
+                FROM pg_catalog.pg_class AS table_info
+                JOIN pg_catalog.pg_namespace AS namespace_info
+                  ON namespace_info.oid = table_info.relnamespace
+                WHERE table_info.relname = :name
+                  AND table_info.relkind IN ('r', 'p')
+                  AND namespace_info.nspname = ANY (current_schemas(false))
+            ) THEN 1 ELSE 0 END
+        )sql",
+            soci::use(name, "name"), soci::into(exists);
 
-        return count > 0;
+        return exists != 0;
     }
 
     auto limits(soci::session& /*session*/) const -> orm::db::BackendRuntimeLimits override
     {
-        return orm::db::BackendRuntimeLimits{.maxBindParameters = 900};
+        return orm::db::BackendRuntimeLimits{.maxBindParameters = 65'535};
     }
 
     auto normalizeAffectedRows(long long affectedRows) const -> std::size_t override
     {
         if (affectedRows < 0)
         {
-            throw std::runtime_error{"SQLite did not report affected row count"};
+            throw std::runtime_error{"PostgreSQL did not report affected row count"};
         }
 
         return static_cast<std::size_t>(affectedRows);
@@ -56,6 +106,19 @@ public:
 
     auto bind(soci::values& values, std::string_view name, const orm::db::BoundValue& value) const -> void override
     {
+        if (value.logicalType == orm::model::ColumnType::String)
+        {
+            if (not orm::db::binding::hasCompatibleStorage(value))
+            {
+                throw orm::db::binding::ConversionError{"String value storage does not match its logical column type"};
+            }
+
+            if (not value.isNull() and std::get<std::string>(value.value.value()).find('\0') != std::string::npos)
+            {
+                throw orm::db::binding::ConversionError{"PostgreSQL text values must not contain an embedded NUL byte"};
+            }
+        }
+
         if (value.logicalType == orm::model::ColumnType::UnsignedLongLong)
         {
             if (not orm::db::binding::hasCompatibleStorage(value))
@@ -64,7 +127,7 @@ public:
                     "Unsigned 64-bit value storage does not match its logical column type"};
             }
 
-            auto sqliteValue = orm::db::BoundValue{
+            auto postgresqlValue = orm::db::BoundValue{
                 .logicalType = orm::model::ColumnType::LongLong,
                 .value = std::nullopt,
             };
@@ -76,13 +139,13 @@ public:
                 if (unsignedValue > static_cast<unsigned long long>(std::numeric_limits<long long>::max()))
                 {
                     throw orm::db::binding::ConversionError{
-                        "SQLite cannot represent an unsigned 64-bit value above INT64_MAX"};
+                        "PostgreSQL cannot represent an unsigned 64-bit value above INT64_MAX"};
                 }
 
-                sqliteValue.value = orm::query::QueryValue::Value{static_cast<long long>(unsignedValue)};
+                postgresqlValue.value = orm::query::QueryValue::Value{static_cast<long long>(unsignedValue)};
             }
 
-            orm::db::binding::bindBoundValue(values, name, sqliteValue);
+            orm::db::binding::bindBoundValue(values, name, postgresqlValue);
             return;
         }
 
@@ -115,25 +178,26 @@ public:
 
         std::optional<std::string> nativeCode;
 
-        if (const auto* sqliteError = dynamic_cast<const soci::sqlite3_soci_error*>(&error); sqliteError != nullptr)
+        if (const auto* postgresqlError = dynamic_cast<const soci::postgresql_soci_error*>(&error);
+            postgresqlError != nullptr)
         {
-            const auto result = sqliteError->result();
-            nativeCode = std::to_string(result);
+            const auto sqlState = std::string{postgresqlError->sqlstate()};
 
-            if ((result & 0xff) == SQLITE_CONSTRAINT)
+            if (sqlState.size() == 5 and sqlState.find_first_not_of(' ') != std::string::npos)
             {
-                code = orm::DatabaseErrorCode::Constraint;
+                nativeCode = sqlState;
+                code = codeFromSqlState(nativeCode.value(), code);
             }
         }
 
         const auto operationName = std::string{operation};
 
-        return orm::DatabaseError{code, orm::db::BackendType::Sqlite, operationName,
-                                  "SQLite operation failed: " + operationName, std::move(nativeCode)};
+        return orm::DatabaseError{code, orm::db::BackendType::Postgres, operationName,
+                                  "PostgreSQL operation failed: " + operationName, std::move(nativeCode)};
     }
 };
 
-auto sqliteCapabilities() -> orm::db::BackendCapabilities
+auto postgresqlCapabilities() -> orm::db::BackendCapabilities
 {
     using orm::model::ColumnType;
 
@@ -157,7 +221,9 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
                 .groupBy = true,
                 .having = true,
                 .collectionPredicates = true,
-                .fullModelGrouping = true,
+                .fullModelGrouping = false,
+                .distinctOrderByRequiresProjectedColumn = true,
+                .strictProjectionGrouping = true,
             },
         .mutations =
             {
@@ -199,47 +265,46 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
         .transactions = true,
     };
 }
-
 } // namespace
 
-namespace orm::db::sqlite
+namespace orm::db::postgresql
 {
-SqliteBackend::SqliteBackend()
-    : backendCapabilities{sqliteCapabilities()},
-      backendRuntime{std::make_unique<SqliteRuntime>()},
-      sqliteCommandGenerator{defaults::makeDefaultCommandGenerator(sqliteDialect)}
+PostgresqlBackend::PostgresqlBackend()
+    : backendCapabilities{postgresqlCapabilities()},
+      backendRuntime{std::make_unique<PostgresqlRuntime>()},
+      postgresqlCommandGenerator{defaults::makeDefaultCommandGenerator(postgresqlDialect)}
 {
 }
 
-SqliteBackend::~SqliteBackend() = default;
+PostgresqlBackend::~PostgresqlBackend() = default;
 
-auto SqliteBackend::type() const noexcept -> BackendType
+auto PostgresqlBackend::type() const noexcept -> BackendType
 {
-    return BackendType::Sqlite;
+    return BackendType::Postgres;
 }
 
-auto SqliteBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
+auto PostgresqlBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
 {
-    return connectionString.starts_with("sqlite3://");
+    return connectionString.starts_with(connectionStringPrefix);
 }
 
-auto SqliteBackend::capabilities() const noexcept -> const BackendCapabilities&
+auto PostgresqlBackend::capabilities() const noexcept -> const BackendCapabilities&
 {
     return backendCapabilities;
 }
 
-auto SqliteBackend::dialect() const noexcept -> const SqlDialect&
+auto PostgresqlBackend::dialect() const noexcept -> const SqlDialect&
 {
-    return sqliteDialect;
+    return postgresqlDialect;
 }
 
-auto SqliteBackend::runtime() const noexcept -> const BackendRuntime&
+auto PostgresqlBackend::runtime() const noexcept -> const BackendRuntime&
 {
     return *backendRuntime;
 }
 
-auto SqliteBackend::commandGenerator() const noexcept -> const CommandGenerator&
+auto PostgresqlBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
-    return *sqliteCommandGenerator;
+    return *postgresqlCommandGenerator;
 }
-} // namespace orm::db::sqlite
+} // namespace orm::db::postgresql

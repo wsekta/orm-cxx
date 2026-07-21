@@ -6,7 +6,7 @@ contracts, then expand expressiveness and database support deliberately.
 
 ## Current State
 
-`orm-cxx` provides a usable SQLite-first foundation:
+`orm-cxx` provides a usable SQLite-first foundation with an optional PostgreSQL backend:
 
 - C++20 model metadata based on reflected struct fields.
 - A documented SQLite model contract for supported scalar fields, nullable
@@ -70,17 +70,17 @@ contracts, then expand expressiveness and database support deliberately.
   SOCI core.
 - A documented backend support matrix, portability policy, source extension
   contract, feature negotiation rules, and minimum CI requirements.
+- An optional PostgreSQL adapter with native dialect/runtime behavior, isolated
+  live conformance tests, PostgreSQL 15 and 18 CI boundaries, and SQLite-only,
+  PostgreSQL-only, combined, and core-only consumer builds.
 
 ## Long Term
 
-Once the SQLite API is stable, make database portability a real feature rather
-than just an enum-level intention.
+SQLite and PostgreSQL now exercise the backend portability contract. Continue
+expanding that contract only where another production backend needs it.
 
-- Add PostgreSQL as the first backend after SQLite.
 - Add MySQL, ODBC, Oracle, Firebird, and DB2 according to user demand and
   maintainer capacity.
-- Introduce backend-specific integration tests so supported databases are
-  verified by behavior, not only by SQL string generation.
 - Package the library for vcpkg and Conan once the public API has settled.
 - After adding non-SQLite backends with native date/time and UUID types, decide
   how custom field converters should work before supporting types such as

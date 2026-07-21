@@ -4,8 +4,11 @@
 #include <gtest/gtest.h>
 #include <limits>
 
+#include "orm-cxx/database/binding/NumericValue.hpp"
+
 using orm::db::binding::checkedNumericCast;
 using orm::db::binding::ConversionError;
+using orm::db::binding::parseNumericValue;
 
 TEST(NumericConversionTest, acceptsLosslessIntegralConversions)
 {
@@ -55,4 +58,11 @@ TEST(NumericConversionTest, checksNarrowingBetweenFloatingPointTypes)
 
     EXPECT_THROW((void)checkedNumericCast<float>(0.1, "value"), ConversionError);
     EXPECT_THROW((void)checkedNumericCast<float>(std::numeric_limits<double>::max(), "value"), ConversionError);
+}
+
+TEST(NumericConversionTest, parsesDatabaseDecimalTextUsingLocaleIndependentSyntax)
+{
+    EXPECT_DOUBLE_EQ(parseNumericValue<double>("1234.5", "value"), 1234.5);
+    EXPECT_THROW((void)parseNumericValue<double>("1234,5", "value"), ConversionError);
+    EXPECT_THROW((void)parseNumericValue<double>("1234.5x", "value"), ConversionError);
 }

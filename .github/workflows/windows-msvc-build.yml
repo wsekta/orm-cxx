@@ -31,3 +31,26 @@ jobs:
 
       - name: Build and test
         run: cmake --workflow --preset msvc-debug
+
+  postgresql-build:
+    name: PostgreSQL adapter and consumers
+    runs-on: windows-2022
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure the MSVC environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Bootstrap vcpkg
+        run: .\externals\vcpkg\bootstrap-vcpkg.bat
+
+      - name: Install SQLite and PostgreSQL dependencies
+        run: .\externals\vcpkg\vcpkg.exe install --x-feature=postgresql
+
+      - name: Build and test the PostgreSQL-enabled configuration
+        run: cmake --workflow --preset msvc-postgresql-debug

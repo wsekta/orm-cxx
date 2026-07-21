@@ -8,7 +8,7 @@
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
 #include "ConversionError.hpp"
-#include "NumericConversion.hpp"
+#include "NumericValue.hpp"
 #include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
@@ -43,32 +43,13 @@ auto getScalarFieldValue(const soci::values& values, const std::string& fieldNam
         using value_type = typename IsOptionalBoundField<ModelField>::value_type;
         return getScalarFieldValue<value_type>(values, fieldName);
     }
-    else if constexpr (SociConvertableToDouble<ModelField>)
+    else if constexpr (std::is_arithmetic_v<ModelField>)
     {
-        return checkedNumericCast<ModelField>(values.get<double>(fieldName), fieldName);
-    }
-    else if constexpr (SociConvertableToInt<ModelField>)
-    {
-        return checkedNumericCast<ModelField>(values.get<int>(fieldName), fieldName);
-    }
-    else if constexpr (SociConvertableToLongLong<ModelField>)
-    {
-        return checkedNumericCast<ModelField>(values.get<long long>(fieldName), fieldName);
-    }
-    else if constexpr (SociConvertableToUnsignedLongLong<ModelField>)
-    {
-        return checkedNumericCast<ModelField>(values.get<unsigned long long>(fieldName), fieldName);
+        return getNumericValue<ModelField>(values, fieldName);
     }
     else if constexpr (SociDefaultSupported<ModelField>)
     {
-        if constexpr (std::is_arithmetic_v<ModelField>)
-        {
-            return checkedNumericCast<ModelField>(values.get<ModelField>(fieldName), fieldName);
-        }
-        else
-        {
-            return values.get<ModelField>(fieldName);
-        }
+        return values.get<ModelField>(fieldName);
     }
     else
     {
@@ -87,7 +68,7 @@ struct ObjectFieldFromValues<ModelField>
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
         if constexpr (std::is_arithmetic_v<ModelField>)
         {
-            *column = checkedNumericCast<ModelField>(values.get<ModelField>(fieldName), fieldName);
+            *column = getNumericValue<ModelField>(values, fieldName);
         }
         else
         {
@@ -204,7 +185,7 @@ struct ObjectFieldFromValues<std::optional<ModelField>>
     }
 };
 
-template <typename ModelField, typename SociType>
+template <typename ModelField>
 struct ObjectFieldFromValuesWithCast
 {
     template <typename T, bool JoinedValues>
@@ -213,27 +194,27 @@ struct ObjectFieldFromValuesWithCast
     {
         auto fieldName =
             std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = checkedNumericCast<ModelField>(values.get<SociType>(fieldName), fieldName);
+        *column = getNumericValue<ModelField>(values, fieldName);
     }
 };
 
 template <SociConvertableToDouble ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, double>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
 {
 };
 
 template <SociConvertableToInt ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, int>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
 {
 };
 
 template <SociConvertableToLongLong ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, long long>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
 {
 };
 
 template <SociConvertableToUnsignedLongLong ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField, unsigned long long>
+struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
 {
 };
 } // namespace orm::db::binding

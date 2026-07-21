@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <array>
+#include <limits>
 #include <map>
 #include <optional>
 #include <string>
@@ -20,6 +23,24 @@ struct Projection
 struct NarrowProjection
 {
     unsigned char value;
+};
+
+struct GroupedProjection
+{
+    std::string name;
+    long long users;
+};
+
+struct ReservedIdentifierModel
+{
+    inline static constexpr std::string_view table_name = "order";
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"id", "select"},
+        {"value", "group"},
+    };
+
+    int id;
+    std::string value;
 };
 
 struct MappedModel
@@ -65,6 +86,27 @@ auto supportsModelWithId(const orm::db::BackendCapabilities& capabilities) -> bo
 {
     return capabilities.supportsColumnType(orm::model::ColumnType::Int) and
            capabilities.supportsColumnType(orm::model::ColumnType::String);
+}
+
+auto supportsAllBasicTypes(const orm::db::BackendCapabilities& capabilities) -> bool
+{
+    constexpr auto requiredTypes = std::array{
+        orm::model::ColumnType::Bool,
+        orm::model::ColumnType::Char,
+        orm::model::ColumnType::UnsignedChar,
+        orm::model::ColumnType::Short,
+        orm::model::ColumnType::UnsignedShort,
+        orm::model::ColumnType::Int,
+        orm::model::ColumnType::UnsignedInt,
+        orm::model::ColumnType::LongLong,
+        orm::model::ColumnType::UnsignedLongLong,
+        orm::model::ColumnType::Float,
+        orm::model::ColumnType::Double,
+        orm::model::ColumnType::String,
+    };
+
+    return std::ranges::all_of(requiredTypes,
+                               [&capabilities](const auto type) { return capabilities.supportsColumnType(type); });
 }
 
 auto canCreateAndDropSomeDataModel(const orm::db::BackendCapabilities& capabilities) -> bool
@@ -123,7 +165,7 @@ TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBac
 {
     orm::Database detectedDatabase;
 
-    detectedDatabase.connect(GetParam().connectionString);
+    detectedDatabase.connect(testConnectionString());
 
     EXPECT_TRUE(detectedDatabase.isConnected());
     EXPECT_EQ(detectedDatabase.getBackendType(), GetParam().type);
@@ -132,7 +174,7 @@ TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBac
 
 TEST_P(BackendConformanceTest, connectedDatabaseRejectsSecondConnect)
 {
-    expectDatabaseError([this]() { database.connect(GetParam().connectionString); },
+    expectDatabaseError([this]() { database.connect(testConnectionString()); },
                         orm::DatabaseErrorCode::AlreadyConnected, GetParam().type, "connect");
     EXPECT_TRUE(database.isConnected());
 }
@@ -153,7 +195,7 @@ TEST_P(BackendConformanceTest, disconnectAllowsReconnect)
     EXPECT_FALSE(database.isConnected());
     EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Empty);
 
-    database.connect(GetParam().type, GetParam().connectionString);
+    database.connect(GetParam().type, testConnectionString());
 
     EXPECT_TRUE(database.isConnected());
     EXPECT_EQ(database.getBackendType(), GetParam().type);
@@ -220,6 +262,90 @@ TEST_P(BackendConformanceTest, crudRoundTripsSupportedScalarValues)
     EXPECT_DOUBLE_EQ(returnedModels[1].field3, 2.5);
 }
 
+TEST_P(BackendConformanceTest, advertisedScalarTypesRoundTripAtDeclaredBoundaries)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    if (not canPopulateModelWithId(capabilities) or not supportsAllBasicTypes(capabilities))
+    {
+        GTEST_SKIP() << "The backend does not advertise the complete built-in scalar profile";
+    }
+
+    createTable<models::ModelWithAllBasicTypes>();
+
+    const auto unsigned64Maximum =
+        capabilities.valueLimits.maxUnsignedLongLong.value_or(std::numeric_limits<unsigned long long>::max());
+    const auto unsignedLongMaximum =
+        std::min(static_cast<unsigned long long>(std::numeric_limits<unsigned long>::max()), unsigned64Maximum);
+    const auto rows = std::vector<models::ModelWithAllBasicTypes>{
+        {1, false, std::numeric_limits<char>::lowest(), std::numeric_limits<unsigned char>::lowest(),
+         std::numeric_limits<short>::lowest(), std::numeric_limits<unsigned short>::lowest(),
+         std::numeric_limits<int>::lowest(), std::numeric_limits<unsigned int>::lowest(),
+         std::numeric_limits<long>::lowest(), std::numeric_limits<unsigned long>::lowest(),
+         std::numeric_limits<long long>::lowest(), 0, -123.5F, -9876.25, "lowest"},
+        {2, true, std::numeric_limits<char>::max(), std::numeric_limits<unsigned char>::max(),
+         std::numeric_limits<short>::max(), std::numeric_limits<unsigned short>::max(), std::numeric_limits<int>::max(),
+         std::numeric_limits<unsigned int>::max(), std::numeric_limits<long>::max(),
+         static_cast<unsigned long>(unsignedLongMaximum), std::numeric_limits<long long>::max(), unsigned64Maximum,
+         123.5F, 9876.25, "highest"},
+    };
+    database.insert(rows);
+
+    orm::Query<models::ModelWithAllBasicTypes> query;
+    query.orderBy(asc(col("id")));
+    const auto returnedRows = database.select(query);
+
+    ASSERT_EQ(returnedRows.size(), rows.size());
+    EXPECT_EQ(returnedRows[0].field1, rows[0].field1);
+    EXPECT_EQ(returnedRows[0].field2, rows[0].field2);
+    EXPECT_EQ(returnedRows[0].field3, rows[0].field3);
+    EXPECT_EQ(returnedRows[0].field4, rows[0].field4);
+    EXPECT_EQ(returnedRows[0].field5, rows[0].field5);
+    EXPECT_EQ(returnedRows[0].field6, rows[0].field6);
+    EXPECT_EQ(returnedRows[0].field7, rows[0].field7);
+    EXPECT_EQ(returnedRows[0].field8, rows[0].field8);
+    EXPECT_EQ(returnedRows[0].field9, rows[0].field9);
+    EXPECT_EQ(returnedRows[0].field10, rows[0].field10);
+    EXPECT_EQ(returnedRows[0].field11, rows[0].field11);
+    EXPECT_FLOAT_EQ(returnedRows[0].field12, rows[0].field12);
+    EXPECT_DOUBLE_EQ(returnedRows[0].field13, rows[0].field13);
+    EXPECT_EQ(returnedRows[0].field14, rows[0].field14);
+    EXPECT_EQ(returnedRows[1].field1, rows[1].field1);
+    EXPECT_EQ(returnedRows[1].field2, rows[1].field2);
+    EXPECT_EQ(returnedRows[1].field3, rows[1].field3);
+    EXPECT_EQ(returnedRows[1].field4, rows[1].field4);
+    EXPECT_EQ(returnedRows[1].field5, rows[1].field5);
+    EXPECT_EQ(returnedRows[1].field6, rows[1].field6);
+    EXPECT_EQ(returnedRows[1].field7, rows[1].field7);
+    EXPECT_EQ(returnedRows[1].field8, rows[1].field8);
+    EXPECT_EQ(returnedRows[1].field9, rows[1].field9);
+    EXPECT_EQ(returnedRows[1].field10, rows[1].field10);
+    EXPECT_EQ(returnedRows[1].field11, rows[1].field11);
+    EXPECT_FLOAT_EQ(returnedRows[1].field12, rows[1].field12);
+    EXPECT_DOUBLE_EQ(returnedRows[1].field13, rows[1].field13);
+    EXPECT_EQ(returnedRows[1].field14, rows[1].field14);
+}
+
+TEST_P(BackendConformanceTest, preparedValuesPreserveInjectionLikeText)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    if (not canPopulateSomeDataModel(capabilities))
+    {
+        GTEST_SKIP() << "Schema/type/insert rejection is covered by other conformance tests";
+    }
+
+    createTable<models::SomeDataModel>();
+    const auto injectedValue = std::string{"x' OR 1=1 --"};
+    database.insert(std::vector<models::SomeDataModel>{{1, injectedValue, 1.0}, {2, "safe", 2.0}});
+
+    orm::Query<models::SomeDataModel> query;
+    query.where(col("field2") == injectedValue);
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_EQ(rows[0].field1, 1);
+    EXPECT_EQ(rows[0].field2, injectedValue);
+}
+
 TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
 {
     const auto& capabilities = database.getBackendCapabilities();
@@ -239,6 +365,26 @@ TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
     ASSERT_EQ(rows.size(), 1);
     EXPECT_EQ(rows[0].id, 7);
     EXPECT_EQ(rows[0].name, "mapped");
+}
+
+TEST_P(BackendConformanceTest, reservedTableAndColumnNamesRoundTrip)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    if (not canPopulateModelWithId(capabilities))
+    {
+        GTEST_SKIP() << "Schema/type/insert rejection is covered by other conformance tests";
+    }
+
+    createTable<conformance_models::ReservedIdentifierModel>();
+    database.insert(conformance_models::ReservedIdentifierModel{1, "quoted"});
+
+    orm::Query<conformance_models::ReservedIdentifierModel> query;
+    query.where(col("value") == "quoted");
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_EQ(rows[0].id, 1);
+    EXPECT_EQ(rows[0].value, "quoted");
 }
 
 TEST_P(BackendConformanceTest, compositePrimaryKeysFollowAdvertisedCapability)
@@ -340,6 +486,27 @@ TEST_P(BackendConformanceTest, nullableValuesRoundTripWithoutNullLoss)
     EXPECT_EQ(presentRows[0].field1, std::optional<int>{42});
     EXPECT_EQ(presentRows[0].field2, std::optional<std::string>{"present"});
     EXPECT_EQ(presentRows[0].field3, std::optional<double>{3.5});
+}
+
+TEST_P(BackendConformanceTest, nullableToOneRelationRoundTripsWithoutNullLoss)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    if (not canPopulateModelWithId(capabilities) or not capabilities.schema.foreignKeys or
+        not capabilities.relations.toOne)
+    {
+        GTEST_SKIP() << "Schema/type/to-one rejection is covered by other conformance tests";
+    }
+
+    createTable<models::ModelWithId>();
+    createTable<models::ModelOptionallyRelatedToOtherModel>();
+    database.insert(models::ModelOptionallyRelatedToOtherModel{1, 10, "without-target", std::nullopt});
+
+    orm::Query<models::ModelOptionallyRelatedToOtherModel> query;
+    query.where(col("id") == 1);
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_FALSE(rows[0].field3.has_value());
 }
 
 TEST_P(BackendConformanceTest, projectionFollowsAdvertisedCapability)
@@ -553,6 +720,7 @@ TEST_P(BackendConformanceTest, collectionRelationFollowsAdvertisedCapabilities)
     }
 
     EXPECT_EQ(database.link(user, "roles", role), 1);
+    EXPECT_EQ(database.link(user, "roles", role), 0);
     orm::Query<collection_models::User> query;
     query.include("roles");
 
@@ -703,6 +871,31 @@ TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
     EXPECT_EQ(rows[0].field2, "committed");
 }
 
+TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    if (not capabilities.transactions or not canPopulateModelWithId(capabilities))
+    {
+        GTEST_SKIP() << "Transaction/schema/type rejection is covered by other conformance tests";
+    }
+
+    createTable<models::ModelWithId>();
+    database.insert(models::ModelWithId{1, 10, "existing"});
+    database.beginTransaction();
+
+    expectDatabaseError([this]() { database.insert(models::ModelWithId{1, 20, "duplicate"}); },
+                        orm::DatabaseErrorCode::Constraint, GetParam().type, "insert");
+    EXPECT_NO_THROW(database.rollbackTransaction());
+    EXPECT_NO_THROW(database.insert(models::ModelWithId{2, 20, "recovered"}));
+
+    orm::Query<models::ModelWithId> query;
+    query.orderBy(asc(col("id")));
+    const auto rows = database.select(query);
+    ASSERT_EQ(rows.size(), 2);
+    EXPECT_EQ(rows[0].field2, "existing");
+    EXPECT_EQ(rows[1].field2, "recovered");
+}
+
 TEST_P(BackendConformanceTest, orderedLimitFollowsAdvertisedCapability)
 {
     const auto& capabilities = database.getBackendCapabilities();
@@ -737,7 +930,8 @@ TEST_P(BackendConformanceTest, groupByAndHavingFollowAdvertisedCapabilities)
     orm::Query<models::ModelWithId> query;
     query.groupBy(col("field2")).having(countAll() == 2).orderBy(asc(col("field2")));
 
-    if (supportsModelWithId(capabilities) and (not capabilities.query.groupBy or not capabilities.query.having))
+    if (supportsModelWithId(capabilities) and
+        (not capabilities.query.groupBy or not capabilities.query.having or not capabilities.query.fullModelGrouping))
     {
         expectDatabaseError([this, &query]() { (void)database.select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "select");
@@ -758,6 +952,41 @@ TEST_P(BackendConformanceTest, groupByAndHavingFollowAdvertisedCapabilities)
     ASSERT_EQ(rows.size(), 2);
     EXPECT_EQ(rows[0].field2, "alpha");
     EXPECT_EQ(rows[1].field2, "beta");
+}
+
+TEST_P(BackendConformanceTest, groupedProjectionWorksIndependentlyOfFullModelGrouping)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    orm::ProjectionQuery<models::ModelWithId, conformance_models::GroupedProjection> query;
+    query.project(as("name", col("field2")), as("users", countAll()))
+        .groupBy(col("field2"))
+        .having(countAll() >= 2)
+        .orderBy(asc(col("field2")));
+
+    if (supportsModelWithId(capabilities) and
+        (not capabilities.query.projections or not capabilities.query.groupBy or not capabilities.query.having))
+    {
+        expectDatabaseError([this, &query]() { (void)database.select(query); },
+                            orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "select projection");
+        return;
+    }
+
+    if (not canPopulateModelWithId(capabilities))
+    {
+        GTEST_SKIP() << "Schema/type/insert rejection is covered by other conformance tests";
+    }
+
+    createTable<models::ModelWithId>();
+    database.insert(std::vector<models::ModelWithId>{
+        {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "single"}});
+
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 2);
+    EXPECT_EQ(rows[0].name, "alpha");
+    EXPECT_EQ(rows[0].users, 2);
+    EXPECT_EQ(rows[1].name, "beta");
+    EXPECT_EQ(rows[1].users, 2);
 }
 
 TEST_P(BackendConformanceTest, orderedOffsetWithoutLimitReturnsRemainingRows)

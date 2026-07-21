@@ -50,6 +50,7 @@ TEST(SqliteBackendTest, exposesSQLiteIdentityAndCapabilities)
     EXPECT_TRUE(capabilities.query.groupBy);
     EXPECT_TRUE(capabilities.query.having);
     EXPECT_TRUE(capabilities.query.collectionPredicates);
+    EXPECT_TRUE(capabilities.query.fullModelGrouping);
     EXPECT_TRUE(capabilities.mutations.insert);
     EXPECT_TRUE(capabilities.mutations.update);
     EXPECT_TRUE(capabilities.mutations.remove);
@@ -74,7 +75,7 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
 {
     const orm::db::sqlite::SqliteBackend backend;
     soci::session session;
-    session.open("sqlite3://:memory:");
+    backend.runtime().open(session, "sqlite3://:memory:");
 
     backend.runtime().onConnect(session);
 
