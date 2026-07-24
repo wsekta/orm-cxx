@@ -117,9 +117,7 @@ auto getNumericValue(const soci::values& values, const std::string& fieldName) -
             return convertStoredValue.template operator()<double>();
         case soci::dt_string:
             return parseNumericValue<Result>(values.get<std::string>(fieldName), fieldName);
-        case soci::dt_date:
-        case soci::dt_blob:
-        case soci::dt_xml:
+        default:
             throw ConversionError{"Cannot hydrate numeric field: " + fieldName};
         }
     }

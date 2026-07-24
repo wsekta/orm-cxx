@@ -348,6 +348,25 @@ TEST(StatementParameterBindingTest, numericHydrationUsesTheDriverDescribedHolder
     EXPECT_EQ(orm::db::binding::getNumericValue<unsigned long long>(values, "numeric_value"), 42);
 }
 
+TEST(StatementParameterBindingTest, numericHydrationRejectsNonNumericDriverDescribedTypes)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    auto session = soci::session{};
+    backend.runtime().open(session, "sqlite3://:memory:");
+    session << "CREATE TABLE non_numeric_probe (date_value DATE, blob_value BLOB);";
+    session << "INSERT INTO non_numeric_probe (date_value, blob_value) VALUES ('2026-07-24', X'01');";
+
+    auto values = soci::values{};
+    soci::statement statement =
+        (session.prepare << "SELECT date_value, blob_value FROM non_numeric_probe;", soci::into(values));
+    statement.execute(true);
+
+    ASSERT_EQ(values.get_properties("date_value").get_data_type(), soci::dt_date);
+    ASSERT_EQ(values.get_properties("blob_value").get_data_type(), soci::dt_blob);
+    EXPECT_THROW((void)orm::db::binding::getNumericValue<int>(values, "date_value"), orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::getNumericValue<int>(values, "blob_value"), orm::db::binding::ConversionError);
+}
+
 TEST(StatementParameterBindingTest, shouldHydrateOptionalScalarFromWiderDriverStorage)
 {
     using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;

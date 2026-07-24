@@ -627,15 +627,6 @@ auto Database::ensureRelationTableEndpointsExist(const model::ModelInfo& ownerIn
                               "composite relation endpoint keys are not supported");
         }
 
-        for (const auto* column : ownerPrimaryKey)
-        {
-            if (not capabilities.supportsColumnType(column->type))
-            {
-                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "create relation tables",
-                                    "An owner primary-key type is not supported by the backend"};
-            }
-        }
-
         for (const auto* column : targetPrimaryKey)
         {
             if (not capabilities.supportsColumnType(column->type))

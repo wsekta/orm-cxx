@@ -198,6 +198,69 @@ enum class NormalizeAction
     ThrowStandardError,
 };
 
+class ConfigurableDialect final : public orm::db::SqlDialect
+{
+public:
+    explicit ConfigurableDialect(const orm::db::SqlDialect& delegateInit) : delegate{delegateInit} {}
+
+    [[nodiscard]] auto quoteIdentifier(std::string_view identifier) const -> std::string override
+    {
+        if (rejectedIdentifier == identifier)
+        {
+            throw std::invalid_argument{"coverage rejected identifier"};
+        }
+
+        return delegate.quoteIdentifier(identifier);
+    }
+
+    [[nodiscard]] auto bindMarker(std::string_view logicalName) const -> std::string override
+    {
+        return delegate.bindMarker(logicalName);
+    }
+
+    [[nodiscard]] auto toSqlType(orm::model::ColumnType type) const -> std::string override
+    {
+        return delegate.toSqlType(type);
+    }
+
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
+        -> std::string override
+    {
+        return delegate.renderCreateTablePrefix(tableName, ifNotExists);
+    }
+
+    [[nodiscard]] auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string override
+    {
+        return delegate.renderDropTable(tableName, ifExists);
+    }
+
+    [[nodiscard]] auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string override
+    {
+        return delegate.renderAutoIncrementPrimaryKey(columnName);
+    }
+
+    [[nodiscard]] auto renderPagination(const orm::db::PaginationSpec& pagination) const -> std::string override
+    {
+        return delegate.renderPagination(pagination);
+    }
+
+    [[nodiscard]] auto renderInsertIfAbsent(const orm::db::InsertIfAbsentSpec& insert) const -> std::string override
+    {
+        return delegate.renderInsertIfAbsent(insert);
+    }
+
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
+        -> std::string override
+    {
+        return delegate.renderAggregateResult(expression, preserveExactNumeric);
+    }
+
+    std::string rejectedIdentifier;
+
+private:
+    const orm::db::SqlDialect& delegate;
+};
+
 class ConfigurableRuntime final : public orm::db::BackendRuntime
 {
 public:
@@ -273,6 +336,12 @@ public:
         throw std::logic_error{"unreachable normalization action"};
     }
 
+    [[nodiscard]] auto statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept
+        -> bool override
+    {
+        return invalidateTransactionAfterStatementError;
+    }
+
     auto bind(soci::values& values, std::string_view name, const orm::db::BoundValue& value) const -> void override
     {
         if (throwFromBind)
@@ -296,6 +365,7 @@ public:
     bool throwFromTableExists = false;
     bool throwFromLimits = false;
     bool overrideLimits = false;
+    bool invalidateTransactionAfterStatementError = false;
     std::function<void()> beforeTableExistsFailure;
     orm::db::BackendRuntimeLimits limitsValue;
 
@@ -310,7 +380,8 @@ private:
 
 public:
     explicit ConfigurableBackend(std::unique_ptr<orm::db::CommandGenerator> customGeneratorInit = nullptr)
-        : runtimeStrategy{sqlite.runtime()},
+        : dialectStrategy{sqlite.dialect()},
+          runtimeStrategy{sqlite.runtime()},
           capabilitiesValue{sqlite.capabilities()},
           customGenerator{std::move(customGeneratorInit)}
     {
@@ -333,7 +404,7 @@ public:
 
     auto dialect() const noexcept -> const orm::db::SqlDialect& override
     {
-        return sqlite.dialect();
+        return dialectStrategy;
     }
 
     auto runtime() const noexcept -> const orm::db::BackendRuntime& override
@@ -346,6 +417,7 @@ public:
         return customGenerator != nullptr ? *customGenerator : sqlite.commandGenerator();
     }
 
+    ConfigurableDialect dialectStrategy;
     ConfigurableRuntime runtimeStrategy;
     orm::db::BackendCapabilities capabilitiesValue;
 
@@ -612,23 +684,13 @@ TEST(DatabaseCoverageCompletionTest, driverErrorAfterReentrantDisconnectUsesNotC
                         orm::DatabaseErrorCode::NotConnected, "database operation");
 }
 
-TEST(DatabaseCoverageCompletionTest, relationEndpointCapabilityChecksDistinguishOwnerAndTargetTypes)
+TEST(DatabaseCoverageCompletionTest, relationEndpointCapabilityCheckRejectsUnsupportedTargetType)
 {
-    {
-        DatabaseBundle bundle;
-        removeSupportedType(bundle.backend->capabilitiesValue, orm::model::ColumnType::Int);
-        bundle.connect();
-        expectDatabaseError([&bundle]() { bundle.database->createRelationTables<IntOwner>(); },
-                            orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
-    }
-
-    {
-        DatabaseBundle bundle;
-        removeSupportedType(bundle.backend->capabilitiesValue, orm::model::ColumnType::String);
-        bundle.connect();
-        expectDatabaseError([&bundle]() { bundle.database->createRelationTables<IntOwner>(); },
-                            orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
-    }
+    DatabaseBundle bundle;
+    removeSupportedType(bundle.backend->capabilitiesValue, orm::model::ColumnType::String);
+    bundle.connect();
+    expectDatabaseError([&bundle]() { bundle.database->createRelationTables<IntOwner>(); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
 }
 
 TEST(DatabaseCoverageCompletionTest, relationEndpointValidationSkipsInverseMappingsBeforeOwnedMapping)
@@ -821,6 +883,47 @@ TEST(DatabaseCoverageCompletionTest, fullModelSelectTranslatesHydrationConversio
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::Conversion, "select");
+}
+
+TEST(DatabaseCoverageCompletionTest, failedSelectInvalidatesTransactionUntilRollback)
+{
+    auto scripts = CommandScripts{};
+    scripts.select.sql = "THIS IS NOT SQL;";
+    DatabaseBundle bundle{makeScriptedGenerator(std::move(scripts))};
+    bundle.backend->runtimeStrategy.invalidateTransactionAfterStatementError = true;
+    bundle.connect();
+    bundle.database->beginTransaction();
+    orm::Query<models::ModelWithOneField> query;
+
+    expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                        orm::DatabaseErrorCode::Statement, "select");
+    expectDatabaseError([&bundle]() { bundle.database->commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
+                        "commit transaction");
+    EXPECT_NO_THROW(bundle.database->rollbackTransaction());
+}
+
+TEST(DatabaseCoverageCompletionTest, modelIdentifierErrorsAreReportedAsUnsupportedFeatures)
+{
+    DatabaseBundle bundle;
+    bundle.backend->dialectStrategy.rejectedIdentifier =
+        orm::Model<models::ModelWithOneField>::getModelInfo().tableName;
+    bundle.connect();
+    orm::Query<models::ModelWithOneField> query;
+
+    expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select");
+}
+
+TEST(DatabaseCoverageCompletionTest, projectionAliasErrorsAreReportedAsUnsupportedFeatures)
+{
+    DatabaseBundle bundle;
+    bundle.backend->dialectStrategy.rejectedIdentifier = "value";
+    bundle.connect();
+    orm::ProjectionQuery<models::ModelWithOneField, ScalarProjection> query;
+    query.project(as("value", col("field1")));
+
+    expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
 }
 
 TEST(DatabaseCoverageCompletionTest, projectionSelectTranslatesDriverErrors)
