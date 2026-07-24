@@ -37,14 +37,14 @@ public:
     [[nodiscard]] virtual auto quoteIdentifier(std::string_view identifier) const -> std::string = 0;
     [[nodiscard]] virtual auto bindMarker(std::string_view logicalName) const -> std::string = 0;
     [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
-        -> std::string = 0;
+    [[nodiscard]] virtual auto renderCreateTablePrefix(std::string_view tableName,
+                                                       bool ifNotExists) const -> std::string = 0;
     [[nodiscard]] virtual auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string = 0;
     [[nodiscard]] virtual auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string = 0;
     [[nodiscard]] virtual auto renderPagination(const PaginationSpec& pagination) const -> std::string = 0;
     [[nodiscard]] virtual auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderAggregateResult(std::string_view expression, bool /*preserveExactNumeric*/) const
-        -> std::string
+    [[nodiscard]] virtual auto renderAggregateResult(std::string_view expression,
+                                                     bool /*preserveExactNumeric*/) const -> std::string
     {
         return std::string{expression};
     }

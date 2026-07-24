@@ -152,8 +152,8 @@ class StaticDeleteCommand final : public orm::db::commands::DeleteCommand
 public:
     explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto remove(const orm::model::ModelInfo& /*modelInfo*/, const orm::query::Predicate& /*predicate*/) const
-        -> orm::db::Statement override
+    auto remove(const orm::model::ModelInfo& /*modelInfo*/,
+                const orm::query::Predicate& /*predicate*/) const -> orm::db::Statement override
     {
         return statement;
     }
@@ -223,8 +223,8 @@ public:
         return delegate.toSqlType(type);
     }
 
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
-        -> std::string override
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
+                                               bool ifNotExists) const -> std::string override
     {
         return delegate.renderCreateTablePrefix(tableName, ifNotExists);
     }
@@ -249,8 +249,8 @@ public:
         return delegate.renderInsertIfAbsent(insert);
     }
 
-    [[nodiscard]] auto renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
-        -> std::string override
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression,
+                                             bool preserveExactNumeric) const -> std::string override
     {
         return delegate.renderAggregateResult(expression, preserveExactNumeric);
     }
@@ -336,8 +336,8 @@ public:
         throw std::logic_error{"unreachable normalization action"};
     }
 
-    [[nodiscard]] auto statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept
-        -> bool override
+    [[nodiscard]] auto
+    statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept -> bool override
     {
         return invalidateTransactionAfterStatementError;
     }
@@ -465,8 +465,8 @@ public:
 };
 
 template <typename Operation>
-auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code, std::string_view expectedOperation = {})
-    -> void
+auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code,
+                         std::string_view expectedOperation = {}) -> void
 {
     try
     {

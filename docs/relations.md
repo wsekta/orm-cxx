@@ -170,7 +170,7 @@ database.createRelationTables<User>();
 `createRelationTables<T>()` creates only owning many-to-many junction tables
 declared by `T`. A one-to-many relation needs no relation table, and calling the
 method for a model that has only inverse mappings is a no-op. Endpoint tables
-must already exist so SQLite can enforce the generated foreign keys.
+must already exist before junction-table DDL can reference them.
 
 Drop junction tables before endpoint tables:
 

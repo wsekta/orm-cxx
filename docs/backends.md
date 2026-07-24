@@ -22,6 +22,38 @@ development is **experimental** and must publish its known capability gaps. A
 name in `BackendType`, a SOCI driver, or SQL-rendering unit tests alone do not
 qualify as support.
 
+## Compatibility at a glance
+
+SQLite and PostgreSQL are first-class supported backends for the shared ORM
+contract. Supported does not mean that their native SQL semantics or every
+optional capability are identical. Applications can use the same model, CRUD,
+projection, transaction, and relation APIs; capability reporting exposes the
+intentional differences before SQL execution.
+
+| Contract area | SQLite | PostgreSQL |
+| --- | --- | --- |
+| Build mode | Default backend | Opt-in backend |
+| Scalar and nullable model fields | All currently documented portable fields | All currently documented portable fields |
+| Manual, composite, and generated integer keys | Supported | Supported |
+| CRUD and exact affected-row counts | Supported | Supported |
+| Projection and aggregate projection queries | Supported | Supported |
+| Full-model `GROUP BY` / `HAVING` | Supported with SQLite representative-row semantics | Rejected; use a grouped projection |
+| To-one, one-to-many, and many-to-many relations | Supported | Supported |
+| Foreign keys and junction-row cascade | Enabled per ORM session | Native PostgreSQL enforcement |
+| Explicit transactions | Supported | Supported; a statement error requires rollback |
+| ORM bind-parameter ceiling | 900 | 65,535 |
+| ORM identifier restriction | No additional byte limit; bind-backed physical columns use portable ASCII names | 63 bytes; bind-backed physical columns use portable ASCII names |
+| Default `LIKE` behavior | ASCII case-insensitive | Case-sensitive |
+| Native NULL ordering | `ASC`: first; `DESC`: last | `ASC`: last; `DESC`: first |
+| Namespace selection | SQLite database connection | Active PostgreSQL `search_path` |
+
+Raw SQL remains backend-specific. Code that needs portable behavior should use
+the typed API and inspect `getBackendCapabilities()` for optional operations.
+For both bundled adapters, a physical non-identity column name used as a SOCI
+bind name may contain only ASCII letters, digits, and `_`.
+Connection strings and identifiers containing an embedded NUL byte are rejected
+before they reach either database driver's C API.
+
 ## SQLite
 
 Connect with a SOCI SQLite connection string:
@@ -63,6 +95,10 @@ SQLite's SOCI transport exchanges integers as signed 64-bit values. Unsigned
 reported as `DatabaseErrorCode::Conversion` rather than wrapping. This bound is
 available as `getBackendCapabilities().valueLimits.maxUnsignedLongLong`.
 
+The ORM uses a conservative SQLite ceiling of 900 bind parameters per statement
+and batches collection loading accordingly. The runtime reports this value
+through `BackendRuntimeLimits`; applications should not hard-code it.
+
 SQLite does not have native UUID, date, or time column types. Those types are not
 part of the current portable model contract. Converter semantics will be defined
 only after a backend with meaningful native types is implemented.
@@ -89,6 +125,11 @@ strings are excluded from ORM diagnostics. The vendored SOCI parser cannot
 preserve whitespace inside keyword values, so connection values must not contain
 spaces. Prefer a PostgreSQL passfile/`PGPASSFILE` instead of embedding a complex
 password in the DSN.
+
+With examples enabled, the `postgresql-example` target reads
+`ORM_CXX_POSTGRESQL_EXAMPLE_DSN`, connects, reports selected capabilities, and
+disconnects without creating database objects. It is also built by the
+PostgreSQL CI profiles.
 
 The supported server range is PostgreSQL 15 through 18. CI verifies the lower
 boundary with GCC 13 and the upper boundary with Clang 18 and coverage. MSVC
@@ -119,18 +160,16 @@ There are deliberate v1 exclusions:
   choose an application schema through PostgreSQL `search_path`;
 - table, column, relation, and generated alias identifiers must fit PostgreSQL's
   63-byte identifier limit and are rejected instead of being silently truncated;
-- physical non-identity column names used as SOCI bind names may contain only
-  ASCII letters, digits, and `_`;
 - the maximum bind-parameter count is 65,535 and is checked before execution;
 - `unsigned long long` is exchanged through PostgreSQL `BIGINT` and is limited
   to `INT64_MAX`; a larger value produces `DatabaseErrorCode::Conversion`.
 - C++ `float` columns use `DOUBLE PRECISION` so a value first promoted by SOCI
   can round-trip without decimal-text narrowing; C++ `double` uses the same SQL
   type.
-- embedded NUL bytes in connection strings, identifiers, and bound `TEXT`
-  values are rejected instead of being silently truncated by C-string APIs;
-  projected PostgreSQL `SUM` and `AVG` values use an exact text transport before
-  conversion to the requested C++ numeric field.
+- embedded NUL bytes in bound `TEXT` values are rejected instead of being
+  silently truncated by C-string APIs; projected PostgreSQL `SUM` and `AVG`
+  values use an exact text transport before conversion to the requested C++
+  numeric field.
 
 PostgreSQL aborts an explicit transaction after a statement error. The ORM
 tracks that state: `commitTransaction()` returns
@@ -177,18 +216,27 @@ cmake -S . -B build/core-only \
 
 With a backend disabled, its implementation sources, SOCI driver link dependency,
 and factory registration are omitted; `soci_core` remains required. The legacy
-developer test suite and examples still exercise SQLite, so SQLite must stay
-enabled for those top-level targets. Parent-project consumers default tests and
-examples to `OFF` and may choose SQLite-only, PostgreSQL-only, both backends, or
-core-only.
+developer test suite still requires SQLite. Examples are selected according to
+the enabled backends. Parent-project consumers default tests and examples to
+`OFF` and may choose SQLite-only, PostgreSQL-only, both backends, or core-only.
 
 Linux PostgreSQL builds require the `libpq` development package. The repository
-vcpkg manifest keeps it in an optional feature:
+vcpkg manifest enables its `sqlite` feature by default and keeps `postgresql`
+optional:
 
 ```powershell
 .\externals\vcpkg\vcpkg.exe install --x-feature=postgresql
 cmake --workflow --preset msvc-postgresql-debug
 ```
+
+For a PostgreSQL-only dependency set, omit the default SQLite feature:
+
+```powershell
+.\externals\vcpkg\vcpkg.exe install --x-no-default-features --x-feature=postgresql
+```
+
+The vcpkg features provision native dependencies; the corresponding
+`ORM_CXX_ENABLE_*_BACKEND` CMake options still select which adapters are built.
 
 ## Capability reporting
 

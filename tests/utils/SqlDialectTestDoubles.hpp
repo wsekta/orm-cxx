@@ -26,8 +26,8 @@ public:
         return sqlite.toSqlType(type);
     }
 
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
-        -> std::string override
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
+                                               bool ifNotExists) const -> std::string override
     {
         return std::format("CREATE TABLE {}{} (", ifNotExists ? "IF NOT EXISTS " : "", tableName);
     }
@@ -74,8 +74,8 @@ public:
         return "PORTABLE_TYPE";
     }
 
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
-        -> std::string override
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
+                                               bool ifNotExists) const -> std::string override
     {
         return std::string{ifNotExists ? "CREATE_PORTABLE_IF_ABSENT " : "CREATE_PORTABLE "} +
                quoteIdentifier(tableName) + " (";
@@ -102,8 +102,8 @@ public:
         return "INSERT_PORTABLE_IF_ABSENT;";
     }
 
-    [[nodiscard]] auto renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
-        -> std::string override
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression,
+                                             bool preserveExactNumeric) const -> std::string override
     {
         if (preserveExactNumeric)
         {

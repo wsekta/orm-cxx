@@ -96,16 +96,13 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
     )
     add_test(
         NAME orm-cxx-postgresql-integration
-        COMMAND
-            orm-cxx-UT
-            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*
+        COMMAND orm-cxx-UT --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     set_tests_properties(
         orm-cxx-postgresql-conformance orm-cxx-postgresql-integration
-        PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_postgresql>"
-                   LABELS "integration;backend-postgresql"
-                   FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
+        PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_postgresql>" LABELS
+                   "integration;backend-postgresql" FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
     )
     set_tests_properties(orm-cxx-postgresql-conformance PROPERTIES LABELS "conformance;backend-postgresql")
 endif()
@@ -131,6 +128,15 @@ endif()
 if(CMAKE_GENERATOR_TOOLSET)
     list(APPEND orm_cxx_consumer_common_configure_arguments -T "${CMAKE_GENERATOR_TOOLSET}")
 endif()
+if(CMAKE_MAKE_PROGRAM)
+    list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
+endif()
+if(CMAKE_RC_COMPILER)
+    list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_RC_COMPILER:FILEPATH=${CMAKE_RC_COMPILER}")
+endif()
+if(CMAKE_MT)
+    list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_MT=${CMAKE_MT}")
+endif()
 if(CMAKE_TOOLCHAIN_FILE)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 endif()
@@ -150,16 +156,12 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled)
     set(run_test "orm-cxx-consumer-${profile}-run")
     set(configure_arguments
         ${orm_cxx_consumer_common_configure_arguments} -B "${binary_dir}"
-        "-DORM_CXX_ENABLE_SQLITE_BACKEND=${sqlite_enabled}"
-        "-DORM_CXX_ENABLE_POSTGRESQL_BACKEND=${postgresql_enabled}"
+        "-DORM_CXX_ENABLE_SQLITE_BACKEND=${sqlite_enabled}" "-DORM_CXX_ENABLE_POSTGRESQL_BACKEND=${postgresql_enabled}"
     )
 
     add_test(NAME "${configure_test}" COMMAND "${CMAKE_COMMAND}" ${configure_arguments})
     add_test(NAME "${build_test}" COMMAND "${CMAKE_COMMAND}" --build "${binary_dir}" --config Debug)
-    set_tests_properties(
-        "${configure_test}" "${build_test}"
-        PROPERTIES LABELS "consumer;${profile}"
-    )
+    set_tests_properties("${configure_test}" "${build_test}" PROPERTIES LABELS "consumer;${profile}")
     set_tests_properties("${build_test}" PROPERTIES DEPENDS "${configure_test}")
 
     add_test(
@@ -168,6 +170,17 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled)
         WORKING_DIRECTORY "${binary_dir}/bin"
     )
     set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "consumer;${profile}")
+    if(WIN32
+       AND VCPKG_INSTALLED_DIR
+       AND VCPKG_TARGET_TRIPLET
+    )
+        set(vcpkg_debug_bin_dir "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/debug/bin")
+        set_property(
+            TEST "${run_test}"
+            APPEND
+            PROPERTY ENVIRONMENT_MODIFICATION "PATH=path_list_prepend:${vcpkg_debug_bin_dir}"
+        )
+    endif()
 endfunction()
 
 orm_cxx_add_consumer_profile(sqlite-only ON OFF)

@@ -106,7 +106,8 @@
             "displayName": "Clang quality analysis database",
             "inherits": "linux-clang-debug",
             "cacheVariables": {
-                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true
             }
         },
         {

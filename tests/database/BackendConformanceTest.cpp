@@ -31,6 +31,11 @@ struct GroupedProjection
     long long users;
 };
 
+struct NullableAggregateProjection
+{
+    std::optional<double> averageValue;
+};
+
 struct ReservedIdentifierModel
 {
     inline static constexpr std::string_view table_name = "order";
@@ -53,6 +58,16 @@ struct MappedModel
 
     int id;
     std::string name;
+};
+
+struct NonPortableBindNameModel
+{
+    inline static const std::map<std::string, std::string> columns_names = {
+        {"value", "odd-name"},
+    };
+
+    int id;
+    std::string value;
 };
 } // namespace conformance_models
 
@@ -367,6 +382,19 @@ TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
     EXPECT_EQ(rows[0].name, "mapped");
 }
 
+TEST_P(BackendConformanceTest, createTableRejectsNonPortablePhysicalBindNames)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+
+    if (not supportsModelWithId(capabilities) or not capabilities.schema.createTableIfNotExists)
+    {
+        GTEST_SKIP() << "Schema/type rejection is covered by tableLifecycleIsIdempotent";
+    }
+
+    expectDatabaseError([this]() { database.createTable<conformance_models::NonPortableBindNameModel>(); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "create table");
+}
+
 TEST_P(BackendConformanceTest, reservedTableAndColumnNamesRoundTrip)
 {
     const auto& capabilities = database.getBackendCapabilities();
@@ -615,6 +643,25 @@ TEST_P(BackendConformanceTest, toOneRelationFollowsAdvertisedCapability)
     EXPECT_EQ(rows[0].field3.field2, target.field2);
 }
 
+TEST_P(BackendConformanceTest, toOneForeignKeyRejectsAMissingEndpoint)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+
+    if (not canPopulateModelWithId(capabilities) or not capabilities.schema.foreignKeys or
+        not capabilities.relations.toOne)
+    {
+        GTEST_SKIP() << "Schema/type/to-one rejection is covered by other conformance tests";
+    }
+
+    createTable<models::ModelWithId>();
+    createTable<models::ModelRelatedToOtherModel>();
+    const auto missingTarget = models::ModelWithId{999, 0, "missing"};
+
+    expectDatabaseError([this, &missingTarget]()
+                        { database.insert(models::ModelRelatedToOtherModel{1, 10, "owner", missingTarget}); },
+                        orm::DatabaseErrorCode::Constraint, GetParam().type, "insert");
+}
+
 TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabilities)
 {
     const auto& capabilities = database.getBackendCapabilities();
@@ -814,6 +861,78 @@ TEST_P(BackendConformanceTest, compositeRelationKeysFollowAdvertisedCapability)
     EXPECT_EQ(database.unlink(owner, "tags", tag), 0);
 }
 
+TEST_P(BackendConformanceTest, deletingManyToManyEndpointCascadesOnlyTheJunctionLink)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    const auto relationSchemaSupported = capabilities.schema.compositePrimaryKeys and
+                                         capabilities.schema.foreignKeys and capabilities.schema.onDeleteCascade and
+                                         capabilities.relations.junctionTables and capabilities.relations.manyToMany;
+
+    if (not canPopulateModelWithId(capabilities) or not relationSchemaSupported or
+        not capabilities.relations.collectionIncludes or not capabilities.mutations.atomicInsertIfAbsent or
+        not capabilities.mutations.remove or
+        capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable)
+    {
+        GTEST_SKIP()
+            << "Required schema, relation, mutation, or include behavior is covered by other conformance tests";
+    }
+
+    createTable<collection_models::User>();
+    createTable<collection_models::Role>();
+    createRelationTables<collection_models::User>();
+    const auto user = collection_models::User{1, "user", {}};
+    const auto role = collection_models::Role{2, "role", {}};
+    database.insert(user);
+    database.insert(role);
+    ASSERT_EQ(database.link(user, "roles", role), 1);
+
+    ASSERT_EQ(database.remove<collection_models::User>(col("id") == user.id), 1);
+
+    orm::Query<collection_models::Role> query;
+    query.where(col("id") == role.id).include("users");
+    const auto roles = database.select(query);
+
+    ASSERT_EQ(roles.size(), 1);
+    EXPECT_EQ(roles[0].id, role.id);
+    EXPECT_TRUE(roles[0].users.isLoaded());
+    EXPECT_TRUE(roles[0].users.empty());
+}
+
+TEST_P(BackendConformanceTest, relationMutationRollsBackWithExplicitTransaction)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+    const auto relationSchemaSupported = capabilities.schema.compositePrimaryKeys and
+                                         capabilities.schema.foreignKeys and capabilities.schema.onDeleteCascade and
+                                         capabilities.relations.junctionTables and capabilities.relations.manyToMany;
+
+    if (not canPopulateModelWithId(capabilities) or not relationSchemaSupported or
+        not capabilities.relations.collectionIncludes or not capabilities.mutations.atomicInsertIfAbsent or
+        capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable or not capabilities.transactions)
+    {
+        GTEST_SKIP() << "Required schema, relation, mutation, include, or transaction behavior is covered elsewhere";
+    }
+
+    createTable<collection_models::User>();
+    createTable<collection_models::Role>();
+    createRelationTables<collection_models::User>();
+    const auto user = collection_models::User{1, "user", {}};
+    const auto role = collection_models::Role{2, "role", {}};
+    database.insert(user);
+    database.insert(role);
+
+    database.beginTransaction();
+    ASSERT_EQ(database.link(user, "roles", role), 1);
+    database.rollbackTransaction();
+
+    orm::Query<collection_models::User> query;
+    query.where(col("id") == user.id).include("roles");
+    const auto users = database.select(query);
+
+    ASSERT_EQ(users.size(), 1);
+    EXPECT_TRUE(users[0].roles.isLoaded());
+    EXPECT_TRUE(users[0].roles.empty());
+}
+
 TEST_P(BackendConformanceTest, explicitTransactionRollbackRestoresPreviousState)
 {
     const auto& capabilities = database.getBackendCapabilities();
@@ -869,6 +988,33 @@ TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
 
     ASSERT_EQ(rows.size(), 1);
     EXPECT_EQ(rows[0].field2, "committed");
+}
+
+TEST_P(BackendConformanceTest, disconnectRollsBackActiveTransactionAndAllowsReconnect)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+
+    if (not capabilities.transactions or not canPopulateSomeDataModel(capabilities))
+    {
+        GTEST_SKIP() << "Transaction/schema/type/insert rejection is covered by other conformance tests";
+    }
+
+    createTable<models::SomeDataModel>();
+    database.beginTransaction();
+    database.insert(models::SomeDataModel{1, "uncommitted", 1.0});
+
+    ASSERT_NO_THROW(database.disconnect());
+    EXPECT_FALSE(database.isConnected());
+    ASSERT_NO_THROW(database.connect(GetParam().type, testConnectionString()));
+
+    // Recreate SQLite's in-memory table while remaining a no-op for persistent
+    // backends. In both cases the uncommitted row must be absent.
+    ASSERT_NO_THROW(database.createTable<models::SomeDataModel>());
+    orm::Query<models::SomeDataModel> query;
+    EXPECT_TRUE(database.select(query).empty());
+
+    ASSERT_NO_THROW(database.beginTransaction());
+    EXPECT_NO_THROW(database.rollbackTransaction());
 }
 
 TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
@@ -987,6 +1133,29 @@ TEST_P(BackendConformanceTest, groupedProjectionWorksIndependentlyOfFullModelGro
     EXPECT_EQ(rows[0].users, 2);
     EXPECT_EQ(rows[1].name, "beta");
     EXPECT_EQ(rows[1].users, 2);
+}
+
+TEST_P(BackendConformanceTest, nullableAverageProjectionReturnsNullForAnEmptyResult)
+{
+    const auto& capabilities = database.getBackendCapabilities();
+
+    if (not capabilities.query.projections)
+    {
+        GTEST_SKIP() << "Projection rejection is covered by projectionFollowsAdvertisedCapability";
+    }
+
+    if (not canCreateAndDropSomeDataModel(capabilities))
+    {
+        GTEST_SKIP() << "Schema/type rejection is covered by other conformance tests";
+    }
+
+    createTable<models::ModelWithOptional>();
+    orm::ProjectionQuery<models::ModelWithOptional, conformance_models::NullableAggregateProjection> query;
+    query.project(as("averageValue", avg(col("field3"))));
+    const auto rows = database.select(query);
+
+    ASSERT_EQ(rows.size(), 1);
+    EXPECT_FALSE(rows[0].averageValue.has_value());
 }
 
 TEST_P(BackendConformanceTest, orderedOffsetWithoutLimitReturnsRemainingRows)

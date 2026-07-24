@@ -84,8 +84,8 @@ auto uniqueAlias(std::string_view base, const std::unordered_set<std::string>& r
     return candidate;
 }
 
-auto findColumnInfo(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
-    -> const orm::model::ColumnInfo*
+auto findColumnInfo(const orm::model::ModelInfo& modelInfo,
+                    const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo*
 {
     const auto columnInfo =
         std::ranges::find_if(modelInfo.columnsInfo, [&fieldOrColumnName](const orm::model::ColumnInfo& column)
@@ -99,8 +99,8 @@ auto findColumnInfo(const orm::model::ModelInfo& modelInfo, const std::string& f
     return &*columnInfo;
 }
 
-auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo, const std::string& fieldOrColumnName)
-    -> const orm::model::ColumnInfo&
+auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo,
+                          const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo&
 {
     const auto* columnInfo = findColumnInfo(modelInfo, fieldOrColumnName);
 
@@ -112,8 +112,8 @@ auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo, const std::str
     return *columnInfo;
 }
 
-auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo, const orm::model::ColumnInfo& columnInfo)
-    -> const orm::model::ModelInfo&
+auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo,
+                                const orm::model::ColumnInfo& columnInfo) -> const orm::model::ModelInfo&
 {
     if (not columnInfo.isForeignModel)
     {
@@ -123,8 +123,8 @@ auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo, const or
     return modelInfo.foreignModelsInfo.at(columnInfo.name);
 }
 
-auto renderSelectColumn(const orm::query::Column& column, const orm::db::commands::RenderContext& context)
-    -> std::string
+auto renderSelectColumn(const orm::query::Column& column,
+                        const orm::db::commands::RenderContext& context) -> std::string
 {
     const auto parts = splitPath(column.getPath());
     const auto rootTable = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
@@ -220,8 +220,8 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
 }
 
 auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string;
-auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context)
-    -> std::string;
+auto renderPredicate(const orm::query::PredicateNodePtr& node,
+                     orm::db::commands::RenderContext& context) -> std::string;
 
 auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<const orm::model::ColumnInfo*>
 {
@@ -280,8 +280,8 @@ auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const orm::db::Sql
 }
 
 auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, const orm::model::ModelInfo& targetInfo,
-                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias)
-    -> std::string
+                           orm::db::commands::RenderContext& outerContext,
+                           const std::string& targetAlias) -> std::string
 {
     orm::db::commands::RenderContext targetContext{
         .modelInfo = targetInfo,

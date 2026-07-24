@@ -30,8 +30,8 @@ auto renderColumnForValidation(const orm::query::Column& column, const orm::quer
     return orm::db::commands::renderColumn(column, context);
 }
 
-auto serializedBoundValue(const soci::values& values, const std::string& name, orm::model::ColumnType type)
-    -> orm::db::BoundValue
+auto serializedBoundValue(const soci::values& values, const std::string& name,
+                          orm::model::ColumnType type) -> orm::db::BoundValue
 {
     if (values.get_indicator(name) == soci::i_null)
     {

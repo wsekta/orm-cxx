@@ -26,8 +26,8 @@ public:
     [[nodiscard]] virtual auto tableExists(soci::session& session, std::string_view tableName) const -> bool = 0;
     [[nodiscard]] virtual auto limits(soci::session& session) const -> BackendRuntimeLimits = 0;
     [[nodiscard]] virtual auto normalizeAffectedRows(long long affectedRows) const -> std::size_t = 0;
-    [[nodiscard]] virtual auto statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept
-        -> bool
+    [[nodiscard]] virtual auto
+    statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept -> bool
     {
         return false;
     }

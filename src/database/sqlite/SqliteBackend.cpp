@@ -16,12 +16,24 @@
 
 namespace
 {
+constexpr std::string_view connectionStringPrefix{"sqlite3://"};
+
 class SqliteRuntime final : public orm::db::BackendRuntime
 {
 public:
     auto open(soci::session& session, std::string_view connectionString) const -> void override
     {
-        session.open(std::string{connectionString});
+        if (connectionString.find('\0') != std::string_view::npos)
+        {
+            throw std::invalid_argument{"SQLite connection string must not contain an embedded NUL byte"};
+        }
+
+        if (not connectionString.starts_with(connectionStringPrefix))
+        {
+            throw std::invalid_argument{"SQLite connection string must start with sqlite3://"};
+        }
+
+        session.open(*soci::factory_sqlite3(), std::string{connectionString.substr(connectionStringPrefix.size())});
     }
 
     auto onConnect(soci::session& session) const -> void override
@@ -220,7 +232,7 @@ auto SqliteBackend::type() const noexcept -> BackendType
 
 auto SqliteBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
 {
-    return connectionString.starts_with("sqlite3://");
+    return connectionString.starts_with(connectionStringPrefix);
 }
 
 auto SqliteBackend::capabilities() const noexcept -> const BackendCapabilities&

@@ -32,7 +32,8 @@ Run the normal Clang build, tests, and quality checks from a clean checkout:
 docker compose run --build --rm dev bash ./scripts/check-fast.sh
 ```
 
-Reproduce all supported Linux build, test, coverage, and quality workflows:
+Reproduce the non-server Linux build, test, SQLite coverage, and quality
+workflows:
 
 ```bash
 docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
@@ -61,18 +62,23 @@ configures, builds, and tests its own directory under `build/`.
 | Clang 18 build and tests | `cmake --workflow --preset linux-clang-debug` | `build/linux-clang-debug` |
 | Clang 18 coverage | `cmake --workflow --preset linux-clang-coverage` | `build/linux-clang-coverage` |
 | Format and static analysis | `bash ./scripts/check-quality.sh` | `build/quality` |
-| Full Linux verification | `bash ./scripts/check-linux-ci.sh` | all Linux directories above |
+| Non-server Linux verification | `bash ./scripts/check-linux-ci.sh` | core Linux directories above |
 | MSVC build and tests | `./scripts/check-msvc.ps1` | `build/msvc-debug` |
-| PostgreSQL 15/18 profile | `cmake --workflow --preset linux-gcc-postgresql` or `linux-clang-postgresql-coverage` | matching preset directory |
+| PostgreSQL 15 profile | `cmake --workflow --preset linux-gcc-postgresql` | `build/linux-gcc-postgresql` |
+| PostgreSQL 18 coverage profile | `cmake --workflow --preset linux-clang-postgresql-coverage` | `build/linux-clang-postgresql-coverage` |
 
 The named presets own compiler paths, build options, warning policy, and
-coverage settings. Do not copy those flags into local scripts.
+coverage settings. The PostgreSQL profiles require
+`ORM_CXX_POSTGRESQL_TEST_DSN` and a live server; the Compose setup is documented
+in [Backends](docs/backends.md#postgresql). Do not copy preset flags into local
+scripts.
 
-Top-level debug presets build both example executables as well as the tests.
-The verification scripts compile the examples but intentionally do not run
-them, because the examples create SQLite files in their current directory. If
-you run one manually, use a temporary working directory so the source checkout
-stays clean:
+SQLite debug presets build the two SQLite examples; PostgreSQL-enabled profiles
+also build the non-destructive `postgresql-example` connection smoke test. The
+verification scripts compile examples but intentionally do not run them,
+because the SQLite examples create files in their current directory. If you run
+one manually, use a temporary working directory so the source checkout stays
+clean:
 
 ```bash
 repo_root="$PWD"
@@ -82,6 +88,8 @@ rm -rf "$example_dir"
 ```
 
 Run `relations-example` the same way if needed.
+`postgresql-example` instead requires `ORM_CXX_POSTGRESQL_EXAMPLE_DSN` and does
+not create database objects.
 
 ## Database backend work
 

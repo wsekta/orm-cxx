@@ -92,6 +92,17 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
     EXPECT_EQ(limits.maxBindParameters.value(), 900);
 }
 
+TEST(SqliteBackendTest, runtimeRejectsInvalidConnectionStringsBeforeOpeningADriver)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::session session;
+
+    EXPECT_THROW(backend.runtime().open(session, "postgresql://host=localhost"), std::invalid_argument);
+    EXPECT_THROW(backend.runtime().open(session, std::string{"sqlite3://safe.db"} + '\0' + "ignored.db"),
+                 std::invalid_argument);
+    EXPECT_FALSE(session.is_connected());
+}
+
 TEST(SqliteBackendTest, runtimeNormalizesAffectedRows)
 {
     const orm::db::sqlite::SqliteBackend backend;

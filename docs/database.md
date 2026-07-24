@@ -48,11 +48,12 @@ same `Database` object can then connect again. A `Database` is intentionally
 neither copyable nor movable because an active transaction is tied to its SOCI
 session.
 
-SQLite connections automatically enable `PRAGMA foreign_keys=ON`. Foreign-key
-violations therefore fail immediately, and deleting a many-to-many endpoint
-removes its junction rows through the generated `ON DELETE CASCADE` rules.
-PostgreSQL uses the session's active `search_path`; schema-qualified model names
-are not a public API in this release.
+Both supported backends enforce generated foreign keys. SQLite connections
+automatically enable `PRAGMA foreign_keys=ON`; PostgreSQL requires no equivalent
+session setup. Foreign-key violations therefore fail immediately, and deleting
+a many-to-many endpoint removes its junction rows through the generated
+`ON DELETE CASCADE` rules. PostgreSQL uses the session's active `search_path`;
+schema-qualified model names are not a public API in this release.
 
 ## Capabilities and errors
 
@@ -212,8 +213,8 @@ stored foreign key changed and `0` when it was already in the requested state.
 `link` and `unlink` read only endpoint primary keys. They do not persist either
 object, and all components of a simple or composite key must be present and
 non-null. A model with a database-generated key must be selected after insert
-before it is used as an endpoint. Missing endpoint rows are rejected by SQLite
-foreign-key enforcement.
+before it is used as an endpoint. Missing endpoint rows are rejected by
+foreign-key enforcement on both supported backends.
 
 See [Collection relations](relations.md) for mapping declarations, generated
 junction schemas, delete behavior, and self-referencing mappings.

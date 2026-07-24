@@ -166,8 +166,8 @@ auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Pr
     return join(selectFields, ", ");
 }
 
-auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source,
+                                                  RenderContext& context) -> std::string
 {
     return std::visit(Overloaded{[&context](const query::Column& column) { return renderColumn(column, context); },
                                  [&context](const query::AggregateExpression& aggregate)
@@ -181,8 +181,8 @@ auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource&
                       source);
 }
 
-auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate,
+                                           RenderContext& context) -> std::string
 {
     const auto functionName = aggregateFunctionToSql(aggregate.function);
 
@@ -201,8 +201,8 @@ auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& agg
 
 auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const std::string& foreignModelFieldName,
                                                        const model::ModelInfo& foreignModelInfo,
-                                                       const model::ModelInfo& modelInfo, const SqlDialect& dialect)
-    -> std::string
+                                                       const model::ModelInfo& modelInfo,
+                                                       const SqlDialect& dialect) -> std::string
 {
 
     std::string selectFields;
@@ -234,8 +234,8 @@ auto DefaultSelectCommand::getForeignModelSelectFields(bool shouldJoin, const st
     return selectFields;
 }
 
-auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& modelInfo, const SqlDialect& dialect)
-    -> std::string
+auto DefaultSelectCommand::getJoins(bool shouldJoin, const model::ModelInfo& modelInfo,
+                                    const SqlDialect& dialect) -> std::string
 {
     if (not shouldJoin)
     {
@@ -296,8 +296,8 @@ auto DefaultSelectCommand::getGroupBy(const query::QueryData& queryData, RenderC
     return " GROUP BY " + join(groupByClauses, ", ");
 }
 
-auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having,
+                                     RenderContext& context) -> std::string
 {
     if (not having.has_value())
     {
@@ -313,8 +313,8 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
     return renderAggregatePredicate(*node, context);
 }
 
-auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node, RenderContext& context)
-    -> std::string
+auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node,
+                                                    RenderContext& context) -> std::string
 {
     return std::visit(
         Overloaded{[&context](const query::AggregateComparisonExpression& expression)

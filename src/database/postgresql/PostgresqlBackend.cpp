@@ -63,8 +63,8 @@ public:
 
     auto onConnect(soci::session& /*session*/) const -> void override {}
 
-    [[nodiscard]] auto statementErrorInvalidatesTransaction(const soci::soci_error& error) const noexcept
-        -> bool override
+    [[nodiscard]] auto
+    statementErrorInvalidatesTransaction(const soci::soci_error& error) const noexcept -> bool override
     {
         return dynamic_cast<const soci::postgresql_soci_error*>(&error) != nullptr;
     }

@@ -33,9 +33,8 @@ add_library(orm-cxx::orm-cxx ALIAS orm-cxx)
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
 target_include_directories(orm-cxx PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>")
 target_compile_definitions(
-    orm-cxx
-    PUBLIC ORM_CXX_ENABLE_SQLITE_BACKEND=$<BOOL:${ORM_CXX_ENABLE_SQLITE_BACKEND}>
-           ORM_CXX_ENABLE_POSTGRESQL_BACKEND=$<BOOL:${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}>
+    orm-cxx PUBLIC ORM_CXX_ENABLE_SQLITE_BACKEND=$<BOOL:${ORM_CXX_ENABLE_SQLITE_BACKEND}>
+                   ORM_CXX_ENABLE_POSTGRESQL_BACKEND=$<BOOL:${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}>
 )
 target_link_libraries(
     orm-cxx

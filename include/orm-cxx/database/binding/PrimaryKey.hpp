@@ -106,8 +106,8 @@ auto getPrimaryKey(const T& object) -> PrimaryKey
     return key;
 }
 
-inline auto getPrimaryKeyValue(const soci::values& values, const std::string& name, model::ColumnType type)
-    -> query::QueryValue
+inline auto getPrimaryKeyValue(const soci::values& values, const std::string& name,
+                               model::ColumnType type) -> query::QueryValue
 {
     if (values.get_indicator(name) == soci::i_null)
     {

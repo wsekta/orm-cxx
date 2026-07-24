@@ -153,6 +153,18 @@ This format is intentionally not an RFC PostgreSQL URI. See the [backend
 matrix](docs/backends.md#postgresql) for supported behavior, limits, build
 dependencies, and test setup.
 
+When the adapter and examples are enabled, `postgresql-example` provides a
+non-destructive connection smoke test:
+
+```bash
+cmake -S . -B build/postgresql \
+  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON \
+  -DORM_CXX_BUILD_EXAMPLES=ON
+cmake --build build/postgresql --target postgresql-example
+ORM_CXX_POSTGRESQL_EXAMPLE_DSN='postgresql://host=localhost dbname=application user=application' \
+  ./build/postgresql/examples/postgresql-example
+```
+
 ### Auto-increment primary keys
 
 SQLite and PostgreSQL `int` primary keys can opt in to database-generated values:
@@ -233,11 +245,24 @@ docker compose run --build --rm dev bash ./scripts/check-fast.sh
 ```
 
 That command builds the library and examples, runs the test suite with Clang
-18, and runs the quality workflow. To reproduce all supported Linux checks,
-including GCC 13 and coverage, run:
+18, and runs the quality workflow. To reproduce the non-server Linux checks,
+including GCC 13 and SQLite coverage, run:
 
 ```bash
 docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
+```
+
+Live PostgreSQL verification needs the Compose database service and an explicit
+test DSN:
+
+```bash
+docker compose --profile postgresql up --detach --wait postgres
+docker compose run --build --rm \
+  -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
+  dev bash -lc \
+  'cmake --workflow --preset linux-gcc-postgresql &&
+   cmake --workflow --preset linux-clang-postgresql-coverage'
+docker compose --profile postgresql down
 ```
 
 The repository also includes a devcontainer backed by the same Dockerfile and
@@ -255,19 +280,25 @@ presets, and the CI-to-local command matrix.
 
 ## 📝 Consuming library with CMake (CMake 3.22 or newer)
 
-1. Add config to git submodules (execute in project root):
+The supported consumption model is source-based `add_subdirectory`; an installed
+`find_package(orm-cxx CONFIG)` package is not published yet.
+
+1. Add the repository and initialize its nested dependencies:
 
  ```bash
  mkdir externals
- cd externals
- git submodule add https://github.com/wsekta/orm-cxx.git
+ git submodule add https://github.com/wsekta/orm-cxx.git externals/orm-cxx
+ git submodule update --init --recursive
  ```
 
-2. Link with library:
+2. Select backend options before adding and linking the library. This example
+   enables both bundled backends:
 
  ```cmake
 set(ORM_CXX_BUILD_TESTS OFF CACHE BOOL "Build orm-cxx tests")
 set(ORM_CXX_BUILD_EXAMPLES OFF CACHE BOOL "Build orm-cxx examples")
+set(ORM_CXX_ENABLE_SQLITE_BACKEND ON CACHE BOOL "Build SQLite backend")
+set(ORM_CXX_ENABLE_POSTGRESQL_BACKEND ON CACHE BOOL "Build PostgreSQL backend")
 
 add_subdirectory(externals/orm-cxx)
 
@@ -275,6 +306,14 @@ add_executable(main Main.cpp)
 
 target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
  ```
+
+SQLite-only is the default. For PostgreSQL-only, set SQLite to `OFF` and
+PostgreSQL to `ON`; for the backend-neutral core, set both to `OFF`. PostgreSQL
+requires `libpq`, while SQLite requires its development library. When using this
+repository's vcpkg manifest, the `sqlite` feature is enabled by default:
+`vcpkg install --x-feature=postgresql` provisions both dependencies, while
+`vcpkg install --x-no-default-features --x-feature=postgresql` provisions only
+PostgreSQL.
 
 ## ⚒️ Compiler support
 

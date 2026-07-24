@@ -1,26 +1,14 @@
 #include "orm-cxx/database/postgresql/PostgresqlDialect.hpp"
 
-#include <algorithm>
 #include <format>
 #include <stdexcept>
 
+#include "orm-cxx/database/SqlNameValidation.hpp"
 #include "PostgresqlTypeTranslator.hpp"
 
 namespace
 {
 constexpr std::size_t maxPostgresqlIdentifierBytes = 63;
-
-auto isPortableBindName(std::string_view name) -> bool
-{
-    return not name.empty() and std::ranges::all_of(name,
-                                                    [](const char character)
-                                                    {
-                                                        return (character >= 'a' and character <= 'z') or
-                                                               (character >= 'A' and character <= 'Z') or
-                                                               (character >= '0' and character <= '9') or
-                                                               character == '_';
-                                                    });
-}
 
 auto join(const std::vector<std::string>& values, std::string_view separator) -> std::string
 {
@@ -80,7 +68,7 @@ auto PostgresqlDialect::quoteIdentifier(std::string_view identifier) const -> st
 
 auto PostgresqlDialect::bindMarker(std::string_view logicalName) const -> std::string
 {
-    if (not isPortableBindName(logicalName))
+    if (not detail::isPortableBindName(logicalName))
     {
         throw std::invalid_argument{"PostgreSQL bind parameter names may contain only ASCII letters, digits, and '_'"};
     }
@@ -167,8 +155,8 @@ auto PostgresqlDialect::renderInsertIfAbsent(const InsertIfAbsentSpec& insert) c
                        join(conflictColumns, ", "));
 }
 
-auto PostgresqlDialect::renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
-    -> std::string
+auto PostgresqlDialect::renderAggregateResult(std::string_view expression,
+                                              bool preserveExactNumeric) const -> std::string
 {
     if (preserveExactNumeric)
     {

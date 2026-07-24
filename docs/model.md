@@ -101,6 +101,13 @@ struct User {
 Query and update builders still use C++ field names such as `col("displayName")`;
 the renderer maps them to database column names.
 
+Physical non-identity column names are also used as prepared-statement bind
+names by the bundled adapters. Keep those mapped names to ASCII letters, digits,
+and `_`; unsupported names are rejected during model validation rather than
+being passed to a database driver. Table names and all identifiers must be
+non-empty and cannot contain an embedded NUL byte. PostgreSQL additionally
+enforces its 63-byte identifier limit.
+
 ## Primary key
 
 If a model has an `id` field, it is used as the default primary key.

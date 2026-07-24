@@ -6,13 +6,13 @@ ignore:
   - "src/**/*Test.cpp"
 
 coverage:
-  range: 50..90 # coverage lower than 50 is red, higher than 90 green, between color code
+  range: 90..100 # project code is expected to remain fully covered
 
   status:
-    project: # settings affecting project coverage
+    project:
       default:
-        target: auto # auto % coverage target
-        threshold: 5%  # allow for 5% reduction of coverage without failing
+        target: 100%
+        threshold: 0%
 
     # do not run coverage on patch nor changes
     patch: false

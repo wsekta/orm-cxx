@@ -87,9 +87,7 @@ TEST(StatementParameterBindingTest, backendRuntimeBoundNullShouldRoundTripThroug
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
-        orm::model::ColumnType::Unknown,
-        orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -124,9 +122,7 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedObjectFieldNullValueTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
-        orm::model::ColumnType::Unknown,
-        orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
