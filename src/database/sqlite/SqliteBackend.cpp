@@ -6,12 +6,7 @@
 #include <string>
 #include <utility>
 
-#include "../defaults/DefaultCreateTableCommand.hpp"
-#include "../defaults/DefaultDeleteCommand.hpp"
-#include "../defaults/DefaultDropTableCommand.hpp"
-#include "../defaults/DefaultInsertCommand.hpp"
-#include "../defaults/DefaultSelectCommand.hpp"
-#include "../defaults/DefaultUpdateCommand.hpp"
+#include "../defaults/DefaultCommandGeneratorFactory.hpp"
 #include "orm-cxx/database/BackendRuntime.hpp"
 #include "orm-cxx/database/binding/StatementBinding.hpp"
 #include "orm-cxx/database/CommandGenerator.hpp"
@@ -21,9 +16,26 @@
 
 namespace
 {
+constexpr std::string_view connectionStringPrefix{"sqlite3://"};
+
 class SqliteRuntime final : public orm::db::BackendRuntime
 {
 public:
+    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    {
+        if (connectionString.find('\0') != std::string_view::npos)
+        {
+            throw std::invalid_argument{"SQLite connection string must not contain an embedded NUL byte"};
+        }
+
+        if (not connectionString.starts_with(connectionStringPrefix))
+        {
+            throw std::invalid_argument{"SQLite connection string must start with sqlite3://"};
+        }
+
+        session.open(*soci::factory_sqlite3(), std::string{connectionString.substr(connectionStringPrefix.size())});
+    }
+
     auto onConnect(soci::session& session) const -> void override
     {
         session << "PRAGMA foreign_keys = ON;";
@@ -157,6 +169,7 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
                 .groupBy = true,
                 .having = true,
                 .collectionPredicates = true,
+                .fullModelGrouping = true,
             },
         .mutations =
             {
@@ -199,19 +212,6 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
     };
 }
 
-auto sqliteCommandGenerator(const orm::db::SqlDialect& dialect) -> std::unique_ptr<orm::db::CommandGenerator>
-{
-    auto createTableCommand = std::make_unique<orm::db::commands::DefaultCreateTableCommand>(dialect);
-    auto dropTableCommand = std::make_unique<orm::db::commands::DefaultDropTableCommand>(dialect);
-    auto insertCommand = std::make_unique<orm::db::commands::DefaultInsertCommand>(dialect);
-    auto selectCommand = std::make_unique<orm::db::commands::DefaultSelectCommand>(dialect);
-    auto updateCommand = std::make_unique<orm::db::commands::DefaultUpdateCommand>(dialect);
-    auto deleteCommand = std::make_unique<orm::db::commands::DefaultDeleteCommand>(dialect);
-
-    return std::make_unique<orm::db::CommandGenerator>(std::move(createTableCommand), std::move(dropTableCommand),
-                                                       std::move(insertCommand), std::move(selectCommand),
-                                                       std::move(updateCommand), std::move(deleteCommand));
-}
 } // namespace
 
 namespace orm::db::sqlite
@@ -219,7 +219,7 @@ namespace orm::db::sqlite
 SqliteBackend::SqliteBackend()
     : backendCapabilities{sqliteCapabilities()},
       backendRuntime{std::make_unique<SqliteRuntime>()},
-      sqliteCommandGenerator{::sqliteCommandGenerator(sqliteDialect)}
+      sqliteCommandGenerator{defaults::makeDefaultCommandGenerator(sqliteDialect)}
 {
 }
 
@@ -232,7 +232,7 @@ auto SqliteBackend::type() const noexcept -> BackendType
 
 auto SqliteBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
 {
-    return connectionString.starts_with("sqlite3://");
+    return connectionString.starts_with(connectionStringPrefix);
 }
 
 auto SqliteBackend::capabilities() const noexcept -> const BackendCapabilities&

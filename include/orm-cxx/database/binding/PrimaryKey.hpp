@@ -10,6 +10,7 @@
 
 #include "BindingPayload.hpp"
 #include "ConversionError.hpp"
+#include "NumericValue.hpp"
 #include "orm-cxx/query/QueryValue.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
 #include "orm-cxx/utils/DisableExternalsWarning.hpp"
@@ -133,15 +134,15 @@ inline auto getPrimaryKeyValue(const soci::values& values, const std::string& na
     case model::ColumnType::Short:
     case model::ColumnType::UnsignedShort:
     case model::ColumnType::Int:
-        return fromStorage(values.get<int>(name));
+        return fromStorage(getNumericValue<int>(values, name));
     case model::ColumnType::UnsignedInt:
     case model::ColumnType::UnsignedLongLong:
-        return fromStorage(values.get<unsigned long long>(name));
+        return fromStorage(getNumericValue<unsigned long long>(values, name));
     case model::ColumnType::LongLong:
-        return fromStorage(values.get<long long>(name));
+        return fromStorage(getNumericValue<long long>(values, name));
     case model::ColumnType::Float:
     case model::ColumnType::Double:
-        return fromStorage(values.get<double>(name));
+        return fromStorage(getNumericValue<double>(values, name));
     case model::ColumnType::String:
         return fromStorage(values.get<std::string>(name));
     case model::ColumnType::Uuid:

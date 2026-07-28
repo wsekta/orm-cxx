@@ -101,5 +101,16 @@ public:
     {
         return "INSERT_PORTABLE_IF_ABSENT;";
     }
+
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression,
+                                             bool preserveExactNumeric) const -> std::string override
+    {
+        if (preserveExactNumeric)
+        {
+            return "EXACT_RESULT(" + std::string{expression} + ")";
+        }
+
+        return std::string{expression};
+    }
 };
 } // namespace orm::tests

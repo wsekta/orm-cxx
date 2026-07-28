@@ -50,6 +50,7 @@ TEST(SqliteBackendTest, exposesSQLiteIdentityAndCapabilities)
     EXPECT_TRUE(capabilities.query.groupBy);
     EXPECT_TRUE(capabilities.query.having);
     EXPECT_TRUE(capabilities.query.collectionPredicates);
+    EXPECT_TRUE(capabilities.query.fullModelGrouping);
     EXPECT_TRUE(capabilities.mutations.insert);
     EXPECT_TRUE(capabilities.mutations.update);
     EXPECT_TRUE(capabilities.mutations.remove);
@@ -74,7 +75,7 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
 {
     const orm::db::sqlite::SqliteBackend backend;
     soci::session session;
-    session.open("sqlite3://:memory:");
+    backend.runtime().open(session, "sqlite3://:memory:");
 
     backend.runtime().onConnect(session);
 
@@ -89,6 +90,17 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
     const auto limits = backend.runtime().limits(session);
     ASSERT_TRUE(limits.maxBindParameters.has_value());
     EXPECT_EQ(limits.maxBindParameters.value(), 900);
+}
+
+TEST(SqliteBackendTest, runtimeRejectsInvalidConnectionStringsBeforeOpeningADriver)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::session session;
+
+    EXPECT_THROW(backend.runtime().open(session, "postgresql://host=localhost"), std::invalid_argument);
+    EXPECT_THROW(backend.runtime().open(session, std::string{"sqlite3://safe.db"} + '\0' + "ignored.db"),
+                 std::invalid_argument);
+    EXPECT_FALSE(session.is_connected());
 }
 
 TEST(SqliteBackendTest, runtimeNormalizesAffectedRows)

@@ -171,7 +171,13 @@ auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource&
 {
     return std::visit(Overloaded{[&context](const query::Column& column) { return renderColumn(column, context); },
                                  [&context](const query::AggregateExpression& aggregate)
-                                 { return renderAggregate(aggregate, context); }},
+                                 {
+                                     const auto expression = renderAggregate(aggregate, context);
+                                     const auto returnsExactNumeric =
+                                         aggregate.function == query::AggregateFunction::Sum or
+                                         aggregate.function == query::AggregateFunction::Avg;
+                                     return context.dialect.renderAggregateResult(expression, returnsExactNumeric);
+                                 }},
                       source);
 }
 

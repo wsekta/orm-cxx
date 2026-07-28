@@ -208,6 +208,8 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
             throw std::invalid_argument{"Raw query parameter cannot use reserved prefix orm_p: " + parameter.name};
         }
 
+        (void)context.dialect.bindMarker(parameter.name);
+
         if (not context.parameterNames.insert(parameter.name).second)
         {
             throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};

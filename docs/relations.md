@@ -170,7 +170,7 @@ database.createRelationTables<User>();
 `createRelationTables<T>()` creates only owning many-to-many junction tables
 declared by `T`. A one-to-many relation needs no relation table, and calling the
 method for a model that has only inverse mappings is a no-op. Endpoint tables
-must already exist so SQLite can enforce the generated foreign keys.
+must already exist before junction-table DDL can reference them.
 
 Drop junction tables before endpoint tables:
 
@@ -241,8 +241,8 @@ relation query per parent.
 
 `LIMIT`, `OFFSET`, `DISTINCT`, and parent ordering apply only to the main query,
 so each returned parent's collection is complete. Large primary-key sets are
-split into batches that respect SQLite's parameter limit. Element order inside
-a collection is not guaranteed.
+split into batches that respect the selected backend's parameter limit. Element
+order inside a collection is not guaranteed.
 
 Includes are available only on full-model `Query<T>`, not on flat
 `ProjectionQuery` results. Only one include level is supported: collection

@@ -72,7 +72,7 @@ The main query is executed first, followed by one or more parameter-bounded
 batched queries for each unique included field. Results are grouped by the
 complete parent primary key, so parents are not duplicated and the
 implementation never issues one query per parent. Large key sets are split to
-respect SQLite's parameter limit.
+respect the selected backend's parameter limit.
 
 Pagination, `DISTINCT`, and ordering apply to the parent query only. Included
 collections are complete for the selected parents, but their element order is
@@ -344,6 +344,13 @@ SQLite permits a full-model `SELECT` grouped by only some model fields. In that
 case each returned model is a representative row for its group, and values of
 fields outside `GROUP BY` are not deterministic. Group by every selected field
 when deterministic full-model values are required.
+
+PostgreSQL rejects full-model `GROUP BY` and `HAVING` through the backend
+capability check before executing SQL. Use an aggregate `ProjectionQuery`
+instead. PostgreSQL also requires every non-aggregate projected column and
+typed `ORDER BY` column in an aggregate projection to appear in `GROUP BY`.
+These rules keep the same typed query API while avoiding backend-dependent
+hydration of an incomplete model.
 
 ## Aggregate projection queries
 

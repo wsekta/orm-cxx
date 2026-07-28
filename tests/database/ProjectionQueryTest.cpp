@@ -235,6 +235,16 @@ TEST(ProjectionBindingTest, shouldRethrowLossyStoredNumericProjectionConversion)
                  orm::db::binding::ConversionError);
 }
 
+TEST(ProjectionBindingTest, shouldTryAnotherStoredNumericTypeAfterHolderMismatch)
+{
+    auto value = 0;
+    auto values = soci::values{};
+    values.set("value", std::string{"42"});
+
+    EXPECT_FALSE((orm::db::binding::tryGetNumericProjectionValue<int, int>(&value, "value", values)));
+    EXPECT_EQ(value, 0);
+}
+
 TEST(ProjectionBindingTest, shouldHydrateOptionalProjectionFields)
 {
     using Payload = orm::db::binding::ProjectionPayload<OptionalProjection>;

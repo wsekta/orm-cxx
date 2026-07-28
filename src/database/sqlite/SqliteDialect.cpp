@@ -3,6 +3,7 @@
 #include <format>
 #include <stdexcept>
 
+#include "orm-cxx/database/SqlNameValidation.hpp"
 #include "SqliteTypeTranslator.hpp"
 
 namespace
@@ -34,6 +35,11 @@ auto SqliteDialect::quoteIdentifier(std::string_view identifier) const -> std::s
         throw std::invalid_argument{"SQL identifier cannot be empty"};
     }
 
+    if (identifier.find('\0') != std::string_view::npos)
+    {
+        throw std::invalid_argument{"SQLite identifiers must not contain an embedded NUL byte"};
+    }
+
     std::string quoted{"\""};
 
     for (const auto character : identifier)
@@ -55,9 +61,9 @@ auto SqliteDialect::quoteIdentifier(std::string_view identifier) const -> std::s
 
 auto SqliteDialect::bindMarker(std::string_view logicalName) const -> std::string
 {
-    if (logicalName.empty() or logicalName.front() == ':')
+    if (not detail::isPortableBindName(logicalName))
     {
-        throw std::invalid_argument{"Bind parameter name must not be empty or include ':'"};
+        throw std::invalid_argument{"SQLite bind parameter names may contain only ASCII letters, digits, and '_'"};
     }
 
     return ":" + std::string{logicalName};

@@ -37,6 +37,9 @@ struct QueryCapabilities
     bool groupBy = false;
     bool having = false;
     bool collectionPredicates = false;
+    bool fullModelGrouping = false;
+    bool distinctOrderByRequiresProjectedColumn = false;
+    bool strictProjectionGrouping = false;
 
     auto operator==(const QueryCapabilities&) const -> bool = default;
 };

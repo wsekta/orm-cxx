@@ -12,6 +12,9 @@ TEST(BackendCapabilitiesTest, defaultsToNoOptionalBackendFeatures)
     EXPECT_FALSE(capabilities.query.groupBy);
     EXPECT_FALSE(capabilities.query.having);
     EXPECT_FALSE(capabilities.query.collectionPredicates);
+    EXPECT_FALSE(capabilities.query.fullModelGrouping);
+    EXPECT_FALSE(capabilities.query.distinctOrderByRequiresProjectedColumn);
+    EXPECT_FALSE(capabilities.query.strictProjectionGrouping);
     EXPECT_FALSE(capabilities.mutations.insert);
     EXPECT_FALSE(capabilities.mutations.update);
     EXPECT_FALSE(capabilities.mutations.remove);

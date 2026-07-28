@@ -19,12 +19,14 @@ RUN apt-get update \
         libc++-18-dev \
         libc++abi-18-dev \
         libsqlite3-dev \
+        libpq-dev \
         llvm-18 \
         ninja-build \
         pkg-config \
         python3 \
         python3-pip \
         python3-venv \
+        postgresql-client \
         sqlite3 \
     && ln -sf /usr/bin/clang-18 /usr/local/bin/clang \
     && ln -sf /usr/bin/clang++-18 /usr/local/bin/clang++ \

@@ -1,8 +1,8 @@
 # Backend portability
 
-`orm-cxx` is currently SQLite-first. Its portability layer prepares the library
-for additional databases without presenting an enum value or a generated SQL
-string as proof that a backend is supported.
+`orm-cxx` remains SQLite-first and also provides an optional PostgreSQL backend.
+Its portability layer requires live behavior verification instead of treating
+an enum value or a generated SQL string as proof of backend support.
 
 This document defines the portability boundary. See [Backends](backends.md) for
 the support status visible to users and [Backend extension
@@ -119,8 +119,9 @@ of every compiler and every database:
 | GCC core | Ubuntu, GCC 13, SQLite | Unit, SQLite conformance, consumer test |
 | Clang coverage | Ubuntu, Clang 18, SQLite | The core checks and coverage export |
 | MSVC core | Windows, MSVC, SQLite | Unit, SQLite conformance, consumer test |
-| Quality and docs | Ubuntu | Formatting, static analysis, documentation validation |
-| Backend-specific | Ubuntu, one supported compiler, real database service | Dialect tests and common conformance |
+| Quality and docs | Ubuntu, Clang 18, SQLite and PostgreSQL client libraries | Formatting, static analysis for both adapters, documentation validation |
+| PostgreSQL 15 | Ubuntu, GCC 13, real PostgreSQL service | Unit, dialect, common conformance, live integration |
+| PostgreSQL 18 | Ubuntu, Clang 18, real PostgreSQL service | Unit, dialect, common conformance, live integration, coverage |
 
 A backend receives additional operating-system or compiler jobs only when those
 combinations are publicly supported. A claimed server-version range must be

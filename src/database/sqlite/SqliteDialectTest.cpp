@@ -14,8 +14,13 @@ TEST(SqliteDialectTest, quotesIdentifiersAndBindMarkers)
     EXPECT_EQ(dialect.quoteIdentifier("odd\"name"), "\"odd\"\"name\"");
     EXPECT_EQ(dialect.bindMarker("value"), ":value");
     EXPECT_THROW((void)dialect.quoteIdentifier(""), std::invalid_argument);
+    EXPECT_THROW((void)dialect.quoteIdentifier(std::string{"before"} + '\0' + "after"), std::invalid_argument);
     EXPECT_THROW((void)dialect.bindMarker(""), std::invalid_argument);
     EXPECT_THROW((void)dialect.bindMarker(":value"), std::invalid_argument);
+    EXPECT_THROW((void)dialect.bindMarker("odd-name"), std::invalid_argument);
+    EXPECT_THROW((void)dialect.bindMarker("odd name"), std::invalid_argument);
+    EXPECT_THROW((void)dialect.bindMarker("odd:name"), std::invalid_argument);
+    EXPECT_THROW((void)dialect.bindMarker(std::string{"before"} + '\0' + "after"), std::invalid_argument);
 }
 
 TEST(SqliteDialectTest, rendersSqliteDdlPrimitives)

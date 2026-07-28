@@ -1,10 +1,23 @@
 #include "DefaultInsertCommand.hpp"
 
 #include <gtest/gtest.h>
+#include <string_view>
+#include <vector>
 
 #include "orm-cxx/model.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
+
+namespace default_insert_command_models
+{
+struct AutoOnlyModel
+{
+    inline static constexpr std::string_view table_name = "auto_only";
+    inline static const std::vector<std::string> auto_increment_columns = {"id"};
+
+    int id;
+};
+} // namespace default_insert_command_models
 
 namespace
 {
@@ -83,4 +96,11 @@ TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToAutoIncrementModel)
     orm::Model<models::ModelRelatedToAutoIncrementModel> model;
 
     EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToAutoIncrementModel);
+}
+
+TEST_F(DefaultInsertCommandTest, insertWithOnlyAutoIncrementIdUsesDefaultValues)
+{
+    const orm::Model<default_insert_command_models::AutoOnlyModel> model;
+
+    EXPECT_EQ(command.insert(model.getModelInfo()), "INSERT INTO auto_only DEFAULT VALUES;");
 }

@@ -6,12 +6,12 @@ contracts, then expand expressiveness and database support deliberately.
 
 ## Current State
 
-`orm-cxx` provides a usable SQLite-first foundation:
+`orm-cxx` provides a usable SQLite-first foundation with an optional PostgreSQL backend:
 
 - C++20 model metadata based on reflected struct fields.
-- A documented SQLite model contract for supported scalar fields, nullable
+- A documented portable model contract for supported scalar fields, nullable
   fields with `std::optional<T>`, table and column name mapping, default and
-  explicit primary keys, SQLite auto-increment primary keys, and one-level
+  explicit primary keys, generated integer primary keys, and one-level
   one-to-one relations.
 - Nullable one-to-one relations through `std::optional<RelatedModel>`, including
   nullable local foreign-key columns, SQL `NULL` inserts, joined selects, and
@@ -38,7 +38,7 @@ contracts, then expand expressiveness and database support deliberately.
   collection wrappers, lazy metadata target resolution, and validation for
   primary keys, inverse fields, junction names, and composite-key column
   counts.
-- SQLite junction-table DDL plus idempotent `link` and `unlink` mutations.
+- Backend-native junction-table DDL plus idempotent `link` and `unlink` mutations.
   Collection mutations never cascade-save endpoint models; junction rows use
   foreign keys and `ON DELETE CASCADE` without deleting the opposite endpoint.
 - One-level `Query<T>::include` loading with parameter-bounded batched relation
@@ -47,7 +47,7 @@ contracts, then expand expressiveness and database support deliberately.
 - Collection predicates through correlated `any`, `exists`, and `none`
   expressions without implicitly loading the matching collection.
 - Unit and integration tests across model metadata, command rendering, query
-  behavior, write operations, transactions, and SQLite execution.
+  behavior, write operations, transactions, and live SQLite/PostgreSQL execution.
 - Target-scoped CMake configuration with independent library, example, test,
   coverage, and dependency boundaries plus maintained GCC, Clang, coverage,
   MSVC, and quality presets.
@@ -63,24 +63,25 @@ contracts, then expand expressiveness and database support deliberately.
   translation.
 - Stable backend-neutral database errors for lifecycle, capability, connection,
   statement, constraint, transaction, conversion, and affected-row failures.
-- Reusable backend conformance configuration and tests, with SQLite exercising
-  the shared public behavior on GCC, Clang, and MSVC.
+- Reusable backend conformance configuration and tests, with SQLite and
+  PostgreSQL exercising the shared public behavior on their supported CI
+  profiles.
 - An optional SQLite build boundary: core-only consumers can omit SQLite
   sources, registration, and driver linkage while retaining the shared ORM and
   SOCI core.
 - A documented backend support matrix, portability policy, source extension
   contract, feature negotiation rules, and minimum CI requirements.
+- An optional PostgreSQL adapter with native dialect/runtime behavior, isolated
+  live conformance tests, PostgreSQL 15 and 18 CI boundaries, and SQLite-only,
+  PostgreSQL-only, combined, and core-only consumer builds.
 
 ## Long Term
 
-Once the SQLite API is stable, make database portability a real feature rather
-than just an enum-level intention.
+SQLite and PostgreSQL now exercise the backend portability contract. Continue
+expanding that contract only where another production backend needs it.
 
-- Add PostgreSQL as the first backend after SQLite.
 - Add MySQL, ODBC, Oracle, Firebird, and DB2 according to user demand and
   maintainer capacity.
-- Introduce backend-specific integration tests so supported databases are
-  verified by behavior, not only by SQL string generation.
 - Package the library for vcpkg and Conan once the public API has settled.
 - After adding non-SQLite backends with native date/time and UUID types, decide
   how custom field converters should work before supporting types such as

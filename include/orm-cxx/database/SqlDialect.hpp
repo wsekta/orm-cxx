@@ -43,5 +43,10 @@ public:
     [[nodiscard]] virtual auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string = 0;
     [[nodiscard]] virtual auto renderPagination(const PaginationSpec& pagination) const -> std::string = 0;
     [[nodiscard]] virtual auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string = 0;
+    [[nodiscard]] virtual auto renderAggregateResult(std::string_view expression,
+                                                     bool /*preserveExactNumeric*/) const -> std::string
+    {
+        return std::string{expression};
+    }
 };
 } // namespace orm::db
