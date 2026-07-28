@@ -121,7 +121,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2backe
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><a class="anchor" id="autotoc_md10"></a></p>
-<p><span class="tt">orm-cxx</span> is currently SQLite-first. Its portability layer prepares the library for additional databases without presenting an enum value or a generated SQL string as proof that a backend is supported.</p>
+<p><span class="tt">orm-cxx</span> remains SQLite-first and also provides an optional PostgreSQL backend. Its portability layer requires live behavior verification instead of treating an enum value or a generated SQL string as proof of backend support.</p>
 <p>This document defines the portability boundary. See <a class="el" href="md_docs_2backends.html" title="Backends">Backends</a> for the support status visible to users and <a class="el" href="md_docs_2backend-extension.html" title="Backend extension contract">Backend extensioncontract</a> for the contributor-facing implementation requirements.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md11"></a>
 Portability layers</h1>
@@ -199,9 +199,11 @@ Minimum CI matrix</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MSVC core  </td><td class="markdownTableBodyNone">Windows, MSVC, SQLite  </td><td class="markdownTableBodyNone">Unit, SQLite conformance, consumer test  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Quality and docs  </td><td class="markdownTableBodyNone">Ubuntu  </td><td class="markdownTableBodyNone">Formatting, static analysis, documentation validation  </td></tr>
+<td class="markdownTableBodyNone">Quality and docs  </td><td class="markdownTableBodyNone">Ubuntu, Clang 18, SQLite and PostgreSQL client libraries  </td><td class="markdownTableBodyNone">Formatting, static analysis for both adapters, documentation validation  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Backend-specific  </td><td class="markdownTableBodyNone">Ubuntu, one supported compiler, real database service  </td><td class="markdownTableBodyNone">Dialect tests and common conformance  </td></tr>
+<td class="markdownTableBodyNone">PostgreSQL 15  </td><td class="markdownTableBodyNone">Ubuntu, GCC 13, real PostgreSQL service  </td><td class="markdownTableBodyNone">Unit, dialect, common conformance, live integration  </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">PostgreSQL 18  </td><td class="markdownTableBodyNone">Ubuntu, Clang 18, real PostgreSQL service  </td><td class="markdownTableBodyNone">Unit, dialect, common conformance, live integration, coverage  </td></tr>
 </table>
 <p>A backend receives additional operating-system or compiler jobs only when those combinations are publicly supported. A claimed server-version range must be represented at its boundaries in CI; otherwise documentation must name only the version actually verified.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md18"></a>

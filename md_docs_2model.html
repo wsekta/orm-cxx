@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2model
   <div class="headertitle"><div class="title">Model </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md37"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md39"></a></p>
 <ol type="1">
 <li>Create a modelCreate a model</li>
 </ol>
@@ -151,18 +151,18 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2model
 <ol type="1">
 <li>Current limitationsCurrent limitations</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md38"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md40"></a>
 Create a model</h1>
-<p>A model is a reflected C++ struct whose fields can be mapped to SQLite columns.</p>
+<p>A model is a reflected C++ struct whose fields can be mapped to database columns.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">    std::string email;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>By default the table name is derived from the C++ type name and <span class="tt">::</span> is replaced with <span class="tt">_</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md39"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md41"></a>
 Supported field types</h1>
-<p>SQLite models currently support these scalar C++ field types:</p>
+<p>The bundled SQLite and PostgreSQL backends support these scalar C++ field types:</p>
 <ul>
 <li><span class="tt">bool</span></li>
 <li><span class="tt">char</span>, <span class="tt">signed char</span>, <span class="tt">unsigned char</span></li>
@@ -175,9 +175,9 @@ Supported field types</h1>
 <li><span class="tt">double</span></li>
 <li><span class="tt">std::string</span></li>
 </ul>
-<p>These types are mapped to SQLite storage classes by the SQLite backend. Types outside this list are not supported as scalar columns.</p>
-<p>SQLite and its SOCI driver exchange integer values through signed 64-bit storage. Consequently, <span class="tt">unsigned long long</span> and 64-bit <span class="tt">unsigned long</span> values are supported through <span class="tt">INT64_MAX</span>; larger values fail with <span class="tt">DatabaseErrorCode::Conversion</span> instead of being silently wrapped. The selected backend reports this bound in <span class="tt">BackendCapabilities::valueLimits</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md40"></a>
+<p>Each backend maps these types to its native SQL types. SQLite uses its integer, real, and text affinities. PostgreSQL uses <span class="tt">BOOLEAN</span>, width-appropriate <span class="tt">SMALLINT</span>/<span class="tt">INTEGER</span>/<span class="tt">BIGINT</span>, <span class="tt">DOUBLE PRECISION</span>, and <span class="tt">TEXT</span>. See the <a class="el" href="md_docs_2backends.html" title="Backends">backend matrix</a> for backend-specific limits and semantics. Types outside this list are not supported as scalar columns.</p>
+<p>Both bundled SOCI backends exchange the widest integer values through signed 64-bit storage. Consequently, <span class="tt">unsigned long long</span> and 64-bit <span class="tt">unsigned long</span> values are supported through <span class="tt">INT64_MAX</span>; larger values fail with <span class="tt">DatabaseErrorCode::Conversion</span> instead of being silently wrapped. The selected backend reports this bound in <span class="tt">BackendCapabilities::valueLimits</span>.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md42"></a>
 Optional fields</h1>
 <p>Wrap a supported scalar type in <span class="tt">std::optional&lt;T&gt;</span> to make the column nullable.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -185,7 +185,7 @@ Optional fields</h1>
 <div class="line">    std::optional&lt;std::string&gt; email;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>Non-optional fields are generated as <span class="tt">NOT NULL</span>. Optional fields are generated without <span class="tt">NOT NULL</span>, and <span class="tt">std::nullopt</span> is stored and read back as SQL <span class="tt">NULL</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md41"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md43"></a>
 Table name</h1>
 <p>Override the generated table name with a static <span class="tt">table_name</span> field:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -194,7 +194,7 @@ Table name</h1>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md42"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md44"></a>
 Column names</h1>
 <p>Override database column names with a static <span class="tt">columns_names</span> mapping. The mapping uses C++ field names as keys. Fields omitted from the mapping keep their C++ field names.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -207,7 +207,8 @@ Column names</h1>
 <div class="line">    std::string displayName;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>Query and update builders still use C++ field names such as <span class="tt">col("displayName")</span>; the renderer maps them to database column names.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md43"></a>
+<p>Physical non-identity column names are also used as prepared-statement bind names by the bundled adapters. Keep those mapped names to ASCII letters, digits, and <span class="tt">_</span>; unsupported names are rejected during model validation rather than being passed to a database driver. Table names and all identifiers must be non-empty and cannot contain an embedded NUL byte. PostgreSQL additionally enforces its 63-byte identifier limit.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md45"></a>
 Primary key</h1>
 <p>If a model has an <span class="tt">id</span> field, it is used as the default primary key.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -228,16 +229,16 @@ Primary key</h1>
 <div class="line"> </div>
 <div class="line">    std::string message;</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md44"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md46"></a>
 Auto-increment primary key</h1>
-<p>SQLite integer primary keys can be generated by the database. To enable this, define <span class="tt">auto_increment_columns</span> with the C++ field name of the primary-key field:</p>
+<p>Integer primary keys can be generated by either bundled database backend. To enable this, define <span class="tt">auto_increment_columns</span> with the C++ field name of the primary-key field:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; auto_increment_columns = {<span class="stringliteral">&quot;id&quot;</span>};</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>This creates <span class="tt">id INTEGER PRIMARY KEY AUTOINCREMENT</span> and omits the field from generated <span class="tt">INSERT</span> statements. Existing models are unchanged unless they define <span class="tt">auto_increment_columns</span>.</p>
+</div><!-- fragment --><p>SQLite creates <span class="tt">id INTEGER PRIMARY KEY AUTOINCREMENT</span>; PostgreSQL creates <span class="tt">id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY</span>. Both omit the field from generated <span class="tt">INSERT</span> statements. Existing models are unchanged unless they define <span class="tt">auto_increment_columns</span>.</p>
 <p>Auto-increment support has these limitations:</p>
 <ul>
 <li>The auto-increment column must be the only primary-key column.</li>
@@ -255,8 +256,8 @@ Auto-increment primary key</h1>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>This creates <span class="tt">user_id INTEGER PRIMARY KEY AUTOINCREMENT</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md45"></a>
+</div><!-- fragment --><p>This applies the mapped <span class="tt">user_id</span> name to the backend's corresponding auto-generated integer primary-key declaration.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md47"></a>
 One-to-one relations</h1>
 <p>A field whose type is another model with a primary key is treated as a one-to-one relation. The owning table stores the related model primary key as local foreign key column(s).</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Profile {</div>
@@ -276,7 +277,7 @@ One-to-one relations</h1>
 <div class="line">};</div>
 </div><!-- fragment --><p>Nullable relations generate nullable foreign-key columns, store <span class="tt">std::nullopt</span> as SQL <span class="tt">NULL</span>, and read SQL <span class="tt">NULL</span> back as <span class="tt">std::nullopt</span>.</p>
 <p>These existing fields are represented as to-one relation metadata. Their database layout and <span class="tt">ColumnType::OneToOne</span> classification remain compatible with earlier releases; the ORM does not add a <span class="tt">UNIQUE</span> constraint to their foreign-key columns.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md46"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md48"></a>
 Collection relations</h1>
 <p>Use <span class="tt"><a class="el" href="classorm_1_1OneToMany.html">orm::OneToMany</a>&lt;T&gt;</span> and <span class="tt"><a class="el" href="classorm_1_1ManyToMany.html">orm::ManyToMany</a>&lt;T&gt;</span> for fields that contain multiple related models. A collection field must have exactly one matching entry in the model's static <span class="tt">relations</span> metadata:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Book;</div>
@@ -326,7 +327,7 @@ Collection relations</h1>
 <div class="ttc" id="aclassorm_1_1ManyToMany_html"><div class="ttname"><a href="classorm_1_1ManyToMany.html">orm::ManyToMany</a></div><div class="ttdef"><b>Definition</b> relations.hpp:168</div></div>
 </div><!-- fragment --><p>The inverse <span class="tt">mappedBy</span> side is optional. Endpoint models must have non-empty primary keys. <span class="tt">optional&lt;OneToMany&lt;T&gt;&gt;</span> and <span class="tt">optional&lt;ManyToMany&lt;T&gt;&gt;</span> are not valid mappings; the wrapper already represents an unloaded or loaded-empty collection.</p>
 <p>Collection fields are omitted from base-table DDL, insert statements, and ordinary row binding. Inserting a model never traverses or saves a collection. See <a class="el" href="md_docs_2relations.html" title="Collection relations">Collection relations</a> for wrapper behavior, junction naming, schema lifecycle, explicit mutations, includes, predicates, composite keys, and validation rules.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md47"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md49"></a>
 Current limitations</h1>
 <p>Model metadata supports to-one fields and explicitly mapped <span class="tt">OneToMany</span> and <span class="tt">ManyToMany</span> collection fields. It does not support nested collection loading, junction models with payload fields, ordered relations, custom converters, date/time fields, UUID fields, or <span class="tt">boost::optional</span>. </p>
 </div></div><!-- contents -->
