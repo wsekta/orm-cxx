@@ -243,7 +243,11 @@ struct PrimaryKey
         }
         else
         {
-            return ((detail::reflectedMemberName<Members>().view() == memberName) || ...);
+            return ((([&memberName] {
+                        const auto name = detail::reflectedMemberName<Members>();
+                        return name.view() == memberName;
+                    })() ||
+                    ...));
         }
     }
 
@@ -294,7 +298,11 @@ struct AutoIncrement
         }
         else
         {
-            return ((detail::reflectedMemberName<Members>().view() == memberName) || ...);
+            return ((([&memberName] {
+                        const auto name = detail::reflectedMemberName<Members>();
+                        return name.view() == memberName;
+                    })() ||
+                    ...));
         }
     }
 };

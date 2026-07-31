@@ -50,7 +50,7 @@ struct FixedString
 
     [[nodiscard]] constexpr auto view() const& noexcept -> std::string_view
     {
-        return {value, N};
+        return {value, N}; // NOLINT(bugprone-string-constructor)
     }
     auto view() const&& -> std::string_view = delete;
 

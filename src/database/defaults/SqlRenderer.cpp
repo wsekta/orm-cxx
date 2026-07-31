@@ -207,7 +207,7 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
             throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};
         }
 
-        context.parameters.push_back(orm::db::StatementParameter{.name = parameter.name, .value = parameter.value});
+        context.parameters.push_back(orm::db::StatementParameter{.name = parameter.name, .value = parameter.value, .nullType = std::nullopt});
     }
 }
 
@@ -568,7 +568,7 @@ auto addAutomaticParameter(RenderContext& context, const query::QueryValue& valu
     } while (context.parameterNames.contains(parameterName));
 
     context.parameterNames.insert(parameterName);
-    context.parameters.push_back(StatementParameter{.name = parameterName, .value = value});
+    context.parameters.push_back(StatementParameter{.name = parameterName, .value = value, .nullType = std::nullopt});
 
     return context.dialect.bindMarker(parameterName);
 }

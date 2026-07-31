@@ -51,7 +51,7 @@ auto addValueParameter(const orm::db::SqlDialect& dialect, orm::db::Statement& s
                        const orm::query::QueryValue& value) -> std::string
 {
     statement.parameters.push_back(
-        orm::db::StatementParameter{.name = name, .value = orm::db::binding::toQueryValue(value)});
+        orm::db::StatementParameter{.name = name, .value = orm::db::binding::toQueryValue(value), .nullType = std::nullopt});
 
     return dialect.bindMarker(name);
 }

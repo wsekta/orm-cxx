@@ -28,19 +28,19 @@ struct StaticSchemaTraits<Schema<Models...>>
     template <typename Model>
     inline static constexpr bool contains = (std::same_as<Model, Models> || ...);
 
+    template <typename Model, std::size_t... Is>
+    [[nodiscard]] static consteval auto indexOfImpl(std::index_sequence<Is...>) -> std::size_t
+    {
+        std::size_t result = 0;
+        (((std::same_as<Model, Models>) ? (result = Is, true) : false) || ...);
+        return result;
+    }
+
     template <typename Model>
     [[nodiscard]] static consteval auto indexOf() -> std::size_t
     {
         static_assert(contains<Model>, "ORM_SCHEMA_MODEL_MISSING: requested model type does not belong to this schema");
-        constexpr std::array<bool, sizeof...(Models)> matches{std::same_as<Model, Models>...};
-        for (std::size_t index = 0; index < matches.size(); ++index)
-        {
-            if (matches[index])
-            {
-                return index;
-            }
-        }
-        return 0;
+        return indexOfImpl<Model>(std::make_index_sequence<sizeof...(Models)>{});
     }
 };
 

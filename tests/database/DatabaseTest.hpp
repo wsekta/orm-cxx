@@ -159,15 +159,15 @@ public:
     template <typename T>
     auto createTable() -> void
     {
-        database.createTable<T>();
-        tearDownFunctions.emplace_back([this]() { database.deleteTable<T>(); });
+        database.template createTable<T>();
+        tearDownFunctions.emplace_back([this]() { database.template deleteTable<T>(); });
     }
 
     template <typename T>
     auto createRelationTables() -> void
     {
-        database.createRelationTables<T>();
-        tearDownFunctions.emplace_back([this]() { database.deleteRelationTables<T>(); });
+        database.template createRelationTables<T>();
+        tearDownFunctions.emplace_back([this]() { database.template deleteRelationTables<T>(); });
     }
 
     [[nodiscard]] auto testConnectionString() const noexcept -> const std::string&
