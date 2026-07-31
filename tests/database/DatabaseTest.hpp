@@ -71,10 +71,11 @@ auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) ->
 
 using orm::generateSomeDataModels;
 
+template <typename SchemaType = models::Schema>
 class DatabaseTest : public ::testing::TestWithParam<BackendTestConfig>
 {
 public:
-    orm::Database database;
+    orm::Database<SchemaType> database;
 
     auto SetUp() -> void override
     {

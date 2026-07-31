@@ -5,25 +5,27 @@
 
 #include "DatabaseTest.hpp"
 
-static_assert(not std::is_copy_constructible_v<orm::Database>);
-static_assert(not std::is_copy_assignable_v<orm::Database>);
-static_assert(not std::is_move_constructible_v<orm::Database>);
-static_assert(not std::is_move_assignable_v<orm::Database>);
-
 namespace base_operations_models
 {
 struct ReservedIdentifierModel
 {
-    inline static constexpr std::string_view table_name = "order";
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"id", "select"},
-        {"value", "group"},
-    };
-
     int id;
     std::string value;
+
+    inline static constexpr orm::reflection::FixedString table_name{"order"};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&ReservedIdentifierModel::id, "select">(),
+                         orm::columnName<&ReservedIdentifierModel::value, "group">());
 };
+
+using Schema = orm::Schema<models::SomeDataModel, ReservedIdentifierModel>;
 } // namespace base_operations_models
+
+using BaseOperationsDatabase = orm::Database<base_operations_models::Schema>;
+static_assert(not std::is_copy_constructible_v<BaseOperationsDatabase>);
+static_assert(not std::is_copy_assignable_v<BaseOperationsDatabase>);
+static_assert(not std::is_move_constructible_v<BaseOperationsDatabase>);
+static_assert(not std::is_move_assignable_v<BaseOperationsDatabase>);
 
 namespace
 {
@@ -45,13 +47,13 @@ auto expectDatabaseError(Operation operation, orm::DatabaseErrorCode expectedCod
 }
 } // namespace
 
-class BaseOperationsTest : public DatabaseTest
+class BaseOperationsTest : public DatabaseTest<base_operations_models::Schema>
 {
 };
 
 TEST(DatabaseConnectionLifecycleTest, shouldAutoDetectBackendFromConnectionString)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     database.connect("sqlite3://:memory:");
 
@@ -62,7 +64,7 @@ TEST(DatabaseConnectionLifecycleTest, shouldAutoDetectBackendFromConnectionStrin
 
 TEST(DatabaseConnectionLifecycleTest, explicitBackendShouldRejectMismatchedConnectionString)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     expectDatabaseError([&database]()
                         { database.connect(orm::db::BackendType::Sqlite, "postgresql://localhost/test"); },
@@ -74,7 +76,7 @@ TEST(DatabaseConnectionLifecycleTest, explicitBackendShouldRejectMismatchedConne
 
 TEST(DatabaseConnectionLifecycleTest, unknownConnectionSchemeShouldReportUnsupportedBackend)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     expectDatabaseError([&database]() { database.connect("unknown://database"); },
                         orm::DatabaseErrorCode::UnsupportedBackend, orm::db::BackendType::Empty, "connect");
@@ -82,7 +84,7 @@ TEST(DatabaseConnectionLifecycleTest, unknownConnectionSchemeShouldReportUnsuppo
 
 TEST(DatabaseConnectionLifecycleTest, unimplementedExplicitBackendShouldReportUnsupportedBackend)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     expectDatabaseError([&database]() { database.connect(orm::db::BackendType::Mysql, "mysql://localhost/test"); },
                         orm::DatabaseErrorCode::UnsupportedBackend, orm::db::BackendType::Mysql, "connect");
@@ -90,7 +92,7 @@ TEST(DatabaseConnectionLifecycleTest, unimplementedExplicitBackendShouldReportUn
 
 TEST(DatabaseConnectionLifecycleTest, secondConnectShouldReportAlreadyConnected)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
     database.connect("sqlite3://:memory:");
 
     expectDatabaseError([&database]() { database.connect("sqlite3://:memory:"); },
@@ -102,7 +104,7 @@ TEST(DatabaseConnectionLifecycleTest, secondConnectShouldReportAlreadyConnected)
 
 TEST(DatabaseConnectionLifecycleTest, capabilitiesWithoutConnectionShouldReportNotConnected)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     expectDatabaseError([&database]() { (void)database.getBackendCapabilities(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");
@@ -110,7 +112,7 @@ TEST(DatabaseConnectionLifecycleTest, capabilitiesWithoutConnectionShouldReportN
 
 TEST(DatabaseConnectionLifecycleTest, operationWithoutConnectionShouldReportNotConnected)
 {
-    orm::Database database;
+    BaseOperationsDatabase database;
 
     expectDatabaseError([&database]() { database.createTable<models::SomeDataModel>(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");

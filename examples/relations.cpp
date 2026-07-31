@@ -12,7 +12,7 @@ struct Author
     std::string name;
     orm::OneToMany<Book> books;
 
-    inline static const auto relations = orm::relations(orm::oneToMany("books").mappedBy("author"));
+    inline static constexpr auto relations = orm::relations(orm::oneToMany<&Author::books>().mappedBy<"author">());
 };
 
 struct Book
@@ -30,8 +30,8 @@ struct User
     std::string name;
     orm::ManyToMany<Role> roles;
 
-    inline static const auto relations = orm::relations(
-        orm::manyToMany("roles").through("user_roles").ownerColumns({"user_id"}).targetColumns({"role_id"}));
+    inline static constexpr auto relations = orm::relations(
+        orm::manyToMany<&User::roles>().through<"user_roles">().ownerColumns<"user_id">().targetColumns<"role_id">());
 };
 
 struct Role
@@ -40,14 +40,15 @@ struct Role
     std::string name;
     orm::ManyToMany<User> users;
 
-    inline static const auto relations = orm::relations(orm::manyToMany("users").mappedBy("roles"));
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&Role::users>().mappedBy<&User::roles>());
 };
 
 int main() // NOLINT(bugprone-exception-escape)
 {
     using namespace orm::query;
 
-    orm::Database database;
+    using AppSchema = orm::Schema<Author, Book, User, Role>;
+    orm::Database<AppSchema> database;
     database.connect("sqlite3://relations-example.db");
 
     // Junction tables are dropped before either endpoint table.

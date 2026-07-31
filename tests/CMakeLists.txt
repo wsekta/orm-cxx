@@ -17,11 +17,11 @@ set(ORM_CXX_TEST_SOURCES
     ../src/query/ProjectionQueryTest.cpp
     ../src/query/QueryTest.cpp
     ../src/query/QueryValueTest.cpp
-    ModelTest.cpp
     CollectionRelationCoverageTest.cpp
     database/BackendConformanceTest.cpp
     database/DatabaseCoverageCompletionTest.cpp
     database/DatabaseErrorTest.cpp
+    database/StaticDatabaseApiCompileTest.cpp
     database/StatementParameterBindingTest.cpp
     database/ProjectionQueryTest.cpp
     database/TransactionsTest.cpp
@@ -33,12 +33,10 @@ set(ORM_CXX_TEST_SOURCES
     database/CollectionRelationAcceptanceTest.cpp
     database/QueryLanguageTest.cpp
     database/BaseOperationsTest.cpp
-    model/CollectionRelationTest.cpp
-    model/IdInfoTest.cpp
-    model/TableInfoTest.cpp
+    model/StaticMetadataTest.cpp
+    reflection/MemberNameHeaderTest.cpp
     reflection/TypeNameTest.cpp
     utils/ConstexprForTest.cpp
-    utils/ConstexprStringViewTest.cpp
 )
 
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
@@ -112,6 +110,30 @@ set_tests_properties(
                FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
 )
 
+set(orm_cxx_make_program "${CMAKE_MAKE_PROGRAM}")
+if(orm_cxx_make_program AND NOT IS_ABSOLUTE "${orm_cxx_make_program}")
+    find_program(orm_cxx_make_program_absolute NAMES "${orm_cxx_make_program}")
+    if(orm_cxx_make_program_absolute)
+        set(orm_cxx_make_program "${orm_cxx_make_program_absolute}")
+    endif()
+endif()
+
+set(orm_cxx_compile_fail_arguments
+    -S
+    "${CMAKE_CURRENT_SOURCE_DIR}/compile_fail"
+    -B
+    "${PROJECT_BINARY_DIR}/compile-fail-test"
+    -G
+    "${CMAKE_GENERATOR}"
+    "-DORM_CXX_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+)
+if(orm_cxx_make_program)
+    list(APPEND orm_cxx_compile_fail_arguments "-DCMAKE_MAKE_PROGRAM=${orm_cxx_make_program}")
+endif()
+add_test(NAME orm-cxx-compile-fail COMMAND "${CMAKE_COMMAND}" ${orm_cxx_compile_fail_arguments})
+set_tests_properties(orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema")
+
 set(orm_cxx_consumer_common_configure_arguments
     -S
     "${CMAKE_CURRENT_SOURCE_DIR}/consumer"
@@ -128,8 +150,8 @@ endif()
 if(CMAKE_GENERATOR_TOOLSET)
     list(APPEND orm_cxx_consumer_common_configure_arguments -T "${CMAKE_GENERATOR_TOOLSET}")
 endif()
-if(CMAKE_MAKE_PROGRAM)
-    list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_MAKE_PROGRAM=${CMAKE_MAKE_PROGRAM}")
+if(orm_cxx_make_program)
+    list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_MAKE_PROGRAM=${orm_cxx_make_program}")
 endif()
 if(CMAKE_RC_COMPILER)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_RC_COMPILER:FILEPATH=${CMAKE_RC_COMPILER}")

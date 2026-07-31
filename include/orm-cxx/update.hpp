@@ -3,18 +3,19 @@
 #include <optional>
 #include <utility>
 
-#include "model.hpp"
-#include "query/UpdateData.hpp"
+#include "query/UpdateSpec.hpp"
 
 namespace orm
 {
+class DatabaseCore;
+template <typename SchemaType>
 class Database;
 
 template <typename T>
 class Update
 {
 public:
-    Update() : data{.modelInfo = Model<T>::getModelInfo()} {}
+    Update() = default;
 
     template <typename Value>
     auto set(query::Column column, Value value) -> Update<T>&
@@ -70,13 +71,15 @@ public:
     }
 
 private:
+    template <typename>
     friend class orm::Database;
+    friend class orm::DatabaseCore;
 
-    [[nodiscard]] auto getData() const -> const query::UpdateData&
+    [[nodiscard]] auto getData() const -> const query::UpdateSpec&
     {
         return data;
     }
 
-    query::UpdateData data;
+    query::UpdateSpec data;
 };
 } // namespace orm

@@ -1,10 +1,7 @@
 #include "DefaultInsertCommand.hpp"
 
 #include <gtest/gtest.h>
-#include <string_view>
-#include <vector>
 
-#include "orm-cxx/model.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
 
@@ -12,11 +9,13 @@ namespace default_insert_command_models
 {
 struct AutoOnlyModel
 {
-    inline static constexpr std::string_view table_name = "auto_only";
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
+
+    inline static constexpr orm::reflection::FixedString table_name{"auto_only"};
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&AutoOnlyModel::id>();
 };
+
+using Schema = orm::Schema<AutoOnlyModel>;
 } // namespace default_insert_command_models
 
 namespace
@@ -36,6 +35,12 @@ const std::string insertSqlWithMappedAutoIncrementId =
     "VALUES (:some_field1_name, :some_field2_name);";
 const std::string insertSqlWithModelRelatedToAutoIncrementModel =
     "INSERT INTO models_ModelRelatedToAutoIncrementModel (id, field1, field3_id) VALUES (:id, :field1, :field3_id);";
+
+template <typename T>
+constexpr auto modelView() -> orm::model::ModelView
+{
+    return orm::modelView<models::Schema, T>();
+}
 } // namespace
 
 class DefaultInsertCommandTest : public ::testing::Test
@@ -43,64 +48,54 @@ class DefaultInsertCommandTest : public ::testing::Test
 public:
     orm::tests::SnapshotSqliteDialect dialect;
     orm::db::commands::DefaultInsertCommand command{dialect};
-
-    orm::Model<models::ModelWithFloat> model;
 };
 
 TEST_F(DefaultInsertCommandTest, insert)
 {
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSql);
+    EXPECT_EQ(command.insert(modelView<models::ModelWithFloat>()), insertSql);
 }
 
 TEST(DefaultInsertCommandDialectTest, delegatesIdentifiersAndBindMarkersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
     orm::db::commands::DefaultInsertCommand command{dialect};
-    const orm::Model<models::ModelWithFloat> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()),
+    EXPECT_EQ(command.insert(modelView<models::ModelWithFloat>()),
               "INSERT INTO [models_ModelWithFloat] ([field1], [field2], [field3]) "
               "VALUES ($field1, $field2, $field3);");
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToOtherModel)
 {
-    orm::Model<models::ModelRelatedToOtherModel> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToOtherModel);
+    EXPECT_EQ(command.insert(modelView<models::ModelRelatedToOtherModel>()), insertSqlWithModelRelatedToOtherModel);
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToCompositeIdModel)
 {
-    orm::Model<models::ModelRelatedToCompositeIdModel> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToCompositeIdModel);
+    EXPECT_EQ(command.insert(modelView<models::ModelRelatedToCompositeIdModel>()),
+              insertSqlWithModelRelatedToCompositeIdModel);
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithAutoIncrementId)
 {
-    orm::Model<models::ModelWithAutoIncrementId> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithAutoIncrementId);
+    EXPECT_EQ(command.insert(modelView<models::ModelWithAutoIncrementId>()), insertSqlWithAutoIncrementId);
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithMappedAutoIncrementId)
 {
-    orm::Model<models::ModelWithAutoIncrementIdAndNamesMapping> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithMappedAutoIncrementId);
+    EXPECT_EQ(command.insert(modelView<models::ModelWithAutoIncrementIdAndNamesMapping>()),
+              insertSqlWithMappedAutoIncrementId);
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithModelRelatedToAutoIncrementModel)
 {
-    orm::Model<models::ModelRelatedToAutoIncrementModel> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), insertSqlWithModelRelatedToAutoIncrementModel);
+    EXPECT_EQ(command.insert(modelView<models::ModelRelatedToAutoIncrementModel>()),
+              insertSqlWithModelRelatedToAutoIncrementModel);
 }
 
 TEST_F(DefaultInsertCommandTest, insertWithOnlyAutoIncrementIdUsesDefaultValues)
 {
-    const orm::Model<default_insert_command_models::AutoOnlyModel> model;
-
-    EXPECT_EQ(command.insert(model.getModelInfo()), "INSERT INTO auto_only DEFAULT VALUES;");
+    EXPECT_EQ(
+        command.insert(
+            orm::modelView<default_insert_command_models::Schema, default_insert_command_models::AutoOnlyModel>()),
+        "INSERT INTO auto_only DEFAULT VALUES;");
 }

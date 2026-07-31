@@ -27,22 +27,18 @@ auto join(const std::vector<std::string>& values, std::string_view separator) ->
     return result;
 }
 
-auto findRelation(const orm::model::ModelInfo& modelInfo,
-                  const std::string& fieldName) -> const orm::model::RelationInfo&
+auto findRelation(orm::model::ModelView model, std::string_view fieldName) -> const orm::model::RelationView&
 {
-    const auto relation =
-        std::ranges::find_if(modelInfo.relationsInfo, [&fieldName](const auto& candidate)
-                             { return candidate.fieldName == fieldName or candidate.columnName == fieldName; });
-
-    if (relation == modelInfo.relationsInfo.end())
+    const auto* relation = model.findRelation(fieldName);
+    if (relation == nullptr)
     {
-        throw std::invalid_argument{"Unknown relation field: " + fieldName};
+        throw std::invalid_argument{"Unknown relation field: " + std::string{fieldName}};
     }
 
     return *relation;
 }
 
-auto requireKeySize(const orm::db::binding::PrimaryKey& key, const std::vector<const orm::model::ColumnInfo*>& columns,
+auto requireKeySize(const orm::db::binding::PrimaryKey& key, const std::vector<const orm::model::ColumnView*>& columns,
                     std::string_view endpoint) -> void
 {
     if (key.size() != columns.size())
@@ -96,7 +92,7 @@ auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement
 }
 
 auto quoteIdentifiers(const orm::db::SqlDialect& dialect,
-                      const std::vector<std::string>& identifiers) -> std::vector<std::string>
+                      std::span<const std::string_view> identifiers) -> std::vector<std::string>
 {
     std::vector<std::string> quoted;
     quoted.reserve(identifiers.size());
@@ -122,28 +118,32 @@ auto stripTerminator(std::string sql) -> std::string
 
 namespace orm::db::relations
 {
-auto createTableStatements(const SqlDialect& dialect, const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>
 {
-    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
+    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
     std::vector<std::string> statements;
 
-    for (const auto& relation : ownerInfo.relationsInfo)
+    for (const auto& relation : owner->relations)
     {
-        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.has_value() or
-            not relation.junction->owningSide)
+        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.isConfigured() or
+            not relation.junction.owningSide)
         {
             continue;
         }
 
-        const auto& junction = relation.junction.value();
-        const auto& targetInfo = relation.targetModel();
-        const auto targetPrimaryKey = binding::getPrimaryKeyColumns(targetInfo);
+        const auto& junction = relation.junction;
+        const auto target = owner.resolveTarget(relation);
+        if (target == nullptr)
+        {
+            throw std::logic_error{"Collection relation target is not available in the schema"};
+        }
+        const auto targetPrimaryKey = binding::getPrimaryKeyColumns(target);
 
         if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
             junction.targetColumns.size() != targetPrimaryKey.size())
         {
             throw std::invalid_argument{"Junction column count does not match endpoint primary keys: " +
-                                        junction.tableName};
+                                        std::string{junction.tableName}};
         }
 
         std::vector<std::string> definitions;
@@ -151,16 +151,16 @@ auto createTableStatements(const SqlDialect& dialect, const model::ModelInfo& ow
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
         {
             definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.ownerColumns[i]),
-                                              dialect.toSqlType(ownerPrimaryKey[i]->type)));
+                                              dialect.toSqlType(ownerPrimaryKey[i]->type.value())));
         }
 
         for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
         {
             definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.targetColumns[i]),
-                                              dialect.toSqlType(targetPrimaryKey[i]->type)));
+                                              dialect.toSqlType(targetPrimaryKey[i]->type.value())));
         }
 
-        auto allJunctionColumns = junction.ownerColumns;
+        std::vector<std::string_view> allJunctionColumns{junction.ownerColumns.begin(), junction.ownerColumns.end()};
         allJunctionColumns.insert(allJunctionColumns.end(), junction.targetColumns.begin(),
                                   junction.targetColumns.end());
         definitions.push_back(
@@ -183,11 +183,10 @@ auto createTableStatements(const SqlDialect& dialect, const model::ModelInfo& ow
 
         definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
                                           join(quoteIdentifiers(dialect, junction.ownerColumns), ", "),
-                                          dialect.quoteIdentifier(ownerInfo.tableName), join(ownerColumnNames, ", ")));
+                                          dialect.quoteIdentifier(owner->tableName), join(ownerColumnNames, ", ")));
         definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
                                           join(quoteIdentifiers(dialect, junction.targetColumns), ", "),
-                                          dialect.quoteIdentifier(targetInfo.tableName),
-                                          join(targetColumnNames, ", ")));
+                                          dialect.quoteIdentifier(target->tableName), join(targetColumnNames, ", ")));
 
         statements.push_back(std::format("{}\n{}\n);", dialect.renderCreateTablePrefix(junction.tableName, true),
                                          join(definitions, ",\n")));
@@ -196,40 +195,45 @@ auto createTableStatements(const SqlDialect& dialect, const model::ModelInfo& ow
     return statements;
 }
 
-auto dropTableStatements(const SqlDialect& dialect, const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto dropTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>
 {
     std::vector<std::string> statements;
 
-    for (auto relation = ownerInfo.relationsInfo.rbegin(); relation != ownerInfo.relationsInfo.rend(); ++relation)
+    for (auto relation = owner->relations.rbegin(); relation != owner->relations.rend(); ++relation)
     {
-        if (relation->kind == model::RelationKind::ManyToMany and relation->junction.has_value() and
-            relation->junction->owningSide)
+        if (relation->kind == model::RelationKind::ManyToMany and relation->junction.isConfigured() and
+            relation->junction.owningSide)
         {
-            statements.push_back(dialect.renderDropTable(relation->junction->tableName, true));
+            statements.push_back(dialect.renderDropTable(relation->junction.tableName, true));
         }
     }
 
     return statements;
 }
 
-auto linkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
+auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
                    const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
 {
-    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
-    const auto& targetInfo = relation.targetModel();
-    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(targetInfo);
+    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw std::logic_error{"Collection relation target is not available in the schema"};
+    }
+    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(target);
     requireKeySize(ownerKey, ownerPrimaryKey, "owner");
     requireKeySize(targetKey, targetPrimaryKey, "target");
     Statement statement;
 
     if (relation.kind == model::RelationKind::ManyToMany)
     {
-        if (not relation.junction.has_value())
+        const auto junction = owner.resolveJunction(relation);
+        if (not junction.isConfigured())
         {
-            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " + relation.fieldName};
+            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " +
+                                        std::string{relation.fieldName}};
         }
 
-        const auto& junction = relation.junction.value();
         std::vector<std::string> placeholders;
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
@@ -244,10 +248,14 @@ auto linkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo,
                 addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]));
         }
 
-        auto allColumns = junction.ownerColumns;
-        allColumns.insert(allColumns.end(), junction.targetColumns.begin(), junction.targetColumns.end());
+        std::vector<std::string> allColumns;
+        allColumns.reserve(junction.ownerColumns.size() + junction.targetColumns.size());
+        std::ranges::transform(junction.ownerColumns, std::back_inserter(allColumns),
+                               [](std::string_view column) { return std::string{column}; });
+        std::ranges::transform(junction.targetColumns, std::back_inserter(allColumns),
+                               [](std::string_view column) { return std::string{column}; });
         statement.sql = dialect.renderInsertIfAbsent(InsertIfAbsentSpec{
-            .tableName = junction.tableName,
+            .tableName = std::string{junction.tableName},
             .columns = allColumns,
             .valueExpressions = placeholders,
             .conflictColumns = allColumns,
@@ -258,10 +266,10 @@ auto linkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo,
 
     if (relation.kind != model::RelationKind::OneToMany)
     {
-        throw std::invalid_argument{"link requires a collection relation: " + relation.fieldName};
+        throw std::invalid_argument{"link requires a collection relation: " + std::string{relation.fieldName}};
     }
 
-    const auto& mappedRelation = findRelation(targetInfo, relation.mappedBy);
+    const auto& mappedRelation = findRelation(target, relation.mappedBy);
     std::vector<std::string> assignments;
     std::vector<std::string> changedPredicates;
     std::vector<std::string> targetPredicates;
@@ -283,30 +291,35 @@ auto linkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo,
     }
 
     statement.sql =
-        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(targetInfo.tableName),
+        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(target->tableName),
                     join(assignments, ", "), join(targetPredicates, " AND "), join(changedPredicates, " OR "));
 
     return statement;
 }
 
-auto unlinkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
+auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
                      const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
 {
-    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
-    const auto& targetInfo = relation.targetModel();
-    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(targetInfo);
+    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw std::logic_error{"Collection relation target is not available in the schema"};
+    }
+    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(target);
     requireKeySize(ownerKey, ownerPrimaryKey, "owner");
     requireKeySize(targetKey, targetPrimaryKey, "target");
     Statement statement;
 
     if (relation.kind == model::RelationKind::ManyToMany)
     {
-        if (not relation.junction.has_value())
+        const auto junction = owner.resolveJunction(relation);
+        if (not junction.isConfigured())
         {
-            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " + relation.fieldName};
+            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " +
+                                        std::string{relation.fieldName}};
         }
 
-        const auto& junction = relation.junction.value();
         std::vector<std::string> predicates;
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
@@ -331,14 +344,15 @@ auto unlinkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInf
 
     if (relation.kind != model::RelationKind::OneToMany)
     {
-        throw std::invalid_argument{"unlink requires a collection relation: " + relation.fieldName};
+        throw std::invalid_argument{"unlink requires a collection relation: " + std::string{relation.fieldName}};
     }
 
-    const auto& mappedRelation = findRelation(targetInfo, relation.mappedBy);
+    const auto& mappedRelation = findRelation(target, relation.mappedBy);
 
     if (not mappedRelation.nullable)
     {
-        throw std::invalid_argument{"Cannot unlink a non-nullable OneToMany relation: " + relation.fieldName};
+        throw std::invalid_argument{"Cannot unlink a non-nullable OneToMany relation: " +
+                                    std::string{relation.fieldName}};
     }
 
     std::vector<std::string> assignments;
@@ -350,8 +364,8 @@ auto unlinkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInf
         const auto localColumn = std::format("{}_{}", mappedRelation.columnName, ownerPrimaryKey[i]->name);
         const auto quotedLocalColumn = dialect.quoteIdentifier(localColumn);
         const auto nullParameterName = std::format("orm_rel_null_{}", i);
-        statement.parameters.push_back(
-            StatementParameter{.name = nullParameterName, .value = std::nullopt, .nullType = ownerPrimaryKey[i]->type});
+        statement.parameters.push_back(StatementParameter{
+            .name = nullParameterName, .value = std::nullopt, .nullType = ownerPrimaryKey[i]->type.value()});
         assignments.push_back(std::format("{} = {}", quotedLocalColumn, dialect.bindMarker(nullParameterName)));
         const auto ownerParameter =
             addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
@@ -367,19 +381,23 @@ auto unlinkStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInf
     }
 
     statement.sql =
-        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(targetInfo.tableName),
+        std::format("UPDATE {} SET {} WHERE ({}) AND ({});", dialect.quoteIdentifier(target->tableName),
                     join(assignments, ", "), join(targetPredicates, " AND "), join(ownerPredicates, " AND "));
 
     return statement;
 }
 
-auto collectionSelectStatement(const SqlDialect& dialect, const model::ModelInfo& ownerInfo,
-                               const model::RelationInfo& relation, std::string targetSelectSql,
-                               const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues) -> Statement
+auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
+                               std::string targetSelectSql, const std::vector<binding::PrimaryKey>& ownerKeys,
+                               bool joinedValues) -> Statement
 {
-    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(ownerInfo);
-    const auto& targetInfo = relation.targetModel();
-    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(targetInfo);
+    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw std::logic_error{"Collection relation target is not available in the schema"};
+    }
+    const auto targetPrimaryKey = binding::getPrimaryKeyColumns(target);
     targetSelectSql = stripTerminator(std::move(targetSelectSql));
     Statement statement;
     std::vector<std::string> ownerExpressions;
@@ -391,14 +409,14 @@ auto collectionSelectStatement(const SqlDialect& dialect, const model::ModelInfo
 
     if (relation.kind == model::RelationKind::OneToMany)
     {
-        const auto& mappedRelation = findRelation(targetInfo, relation.mappedBy);
+        const auto& mappedRelation = findRelation(target, relation.mappedBy);
 
         for (const auto* ownerColumn : ownerPrimaryKey)
         {
             const auto mappedAlias =
                 joinedValues ?
                     aliases::joinedRelationColumn(mappedRelation.columnName, ownerColumn->name) :
-                    aliases::unjoinedRelationColumn(targetInfo.tableName, mappedRelation.columnName, ownerColumn->name);
+                    aliases::unjoinedRelationColumn(target->tableName, mappedRelation.columnName, ownerColumn->name);
             const auto expression = aliases::qualifiedIdentifier(dialect, targetAlias, mappedAlias);
             ownerExpressions.push_back(expression);
             selectedOwnerFields.push_back(std::format(
@@ -412,18 +430,17 @@ auto collectionSelectStatement(const SqlDialect& dialect, const model::ModelInfo
         return statement;
     }
 
-    if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.has_value())
+    const auto junction = owner.resolveJunction(relation);
+    if (relation.kind != model::RelationKind::ManyToMany or not junction.isConfigured())
     {
-        throw std::invalid_argument{"include requires a collection relation: " + relation.fieldName};
+        throw std::invalid_argument{"include requires a collection relation: " + std::string{relation.fieldName}};
     }
-
-    const auto& junction = relation.junction.value();
 
     if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
         junction.targetColumns.size() != targetPrimaryKey.size())
     {
         throw std::invalid_argument{"Junction column count does not match endpoint primary keys: " +
-                                    junction.tableName};
+                                    std::string{junction.tableName}};
     }
 
     std::vector<std::string> joinPredicates;
@@ -438,7 +455,7 @@ auto collectionSelectStatement(const SqlDialect& dialect, const model::ModelInfo
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        const auto targetOutputColumn = aliases::modelColumn(targetInfo.tableName, targetPrimaryKey[i]->name);
+        const auto targetOutputColumn = aliases::modelColumn(target->tableName, targetPrimaryKey[i]->name);
         joinPredicates.push_back(
             std::format("{} = {}", aliases::qualifiedIdentifier(dialect, targetAlias, targetOutputColumn),
                         aliases::qualifiedIdentifier(dialect, junctionAlias, junction.targetColumns[i])));

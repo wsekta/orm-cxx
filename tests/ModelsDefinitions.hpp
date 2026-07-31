@@ -1,9 +1,10 @@
 #pragma once
 
-#include <map>
 #include <optional>
 #include <string>
-#include <vector>
+
+#include "orm-cxx/model/Mapping.hpp"
+#include "orm-cxx/model/Schema.hpp"
 
 namespace models
 {
@@ -14,9 +15,9 @@ struct ModelWithOneField
 
 struct ModelWithTableName
 {
-    inline static constexpr std::string_view table_name = "some_table_name";
-
     [[maybe_unused]] int field1;
+
+    inline static constexpr orm::reflection::FixedString table_name{"some_table_name"};
 };
 
 struct SomeDataModel
@@ -42,11 +43,11 @@ struct ModelWithFloat
 
 struct ModelWithOptionalFloat
 {
-    inline static constexpr std::string_view table_name{"models_ModelWithFloat"};
-
     std::optional<int> field1;
     std::optional<std::string> field2;
     std::optional<float> field3;
+
+    inline static constexpr orm::reflection::FixedString table_name{"models_ModelWithOptionalFloat"};
 };
 
 struct ModelWithId
@@ -58,22 +59,25 @@ struct ModelWithId
 
 struct ModelWithAutoIncrementId
 {
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
     int field1;
     std::string field2;
+
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&ModelWithAutoIncrementId::id>();
 };
 
 struct ModelWithAutoIncrementIdAndNamesMapping
 {
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
-
     int id;
     int field1;
     std::string field2;
+
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&ModelWithAutoIncrementIdAndNamesMapping::id>();
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&ModelWithAutoIncrementIdAndNamesMapping::field1, "some_field1_name">(),
+                         orm::columnName<&ModelWithAutoIncrementIdAndNamesMapping::field2, "some_field2_name">(),
+                         orm::columnName<&ModelWithAutoIncrementIdAndNamesMapping::id, "some_id_name">());
 };
 
 struct ModelWithOverwrittenId
@@ -82,7 +86,8 @@ struct ModelWithOverwrittenId
     [[maybe_unused]] int field1;
     std::string field2;
 
-    inline static const std::vector<std::string> id_columns = {"field1", "field2"};
+    inline static constexpr auto id_columns =
+        orm::primaryKey<&ModelWithOverwrittenId::field1, &ModelWithOverwrittenId::field2>();
 };
 
 struct ModelWithIdAndNamesMapping
@@ -91,8 +96,10 @@ struct ModelWithIdAndNamesMapping
     int field1;
     std::string field2;
 
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"field1", "some_field1_name"}, {"field2", "some_field2_name"}, {"id", "some_id_name"}};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&ModelWithIdAndNamesMapping::field1, "some_field1_name">(),
+                         orm::columnName<&ModelWithIdAndNamesMapping::field2, "some_field2_name">(),
+                         orm::columnName<&ModelWithIdAndNamesMapping::id, "some_id_name">());
 };
 
 struct ModelRelatedToOtherModel
@@ -127,8 +134,6 @@ struct ModelOptionallyRelatedToOtherModel
 
 struct ModelWithAllBasicTypes
 {
-    inline static constexpr std::string_view table_name = "all_types";
-
     int id;
     bool field1;
     char field2;
@@ -144,12 +149,12 @@ struct ModelWithAllBasicTypes
     float field12;
     double field13;
     std::string field14;
+
+    inline static constexpr orm::reflection::FixedString table_name{"all_types"};
 };
 
 struct ModelWithAllInts
 {
-    inline static constexpr std::string_view table_name = "all_ints";
-
     int8_t field1;
     uint8_t field2;
     int16_t field3;
@@ -159,64 +164,72 @@ struct ModelWithAllInts
     int64_t field7;
     uint64_t field8;
     size_t field9;
+
+    inline static constexpr orm::reflection::FixedString table_name{"all_ints"};
 };
 
 struct ModelWithAutoIncrementNonPrimaryKey
 {
-    inline static const std::vector<std::string> auto_increment_columns = {"field1"};
-
     int id;
     int field1;
+
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&ModelWithAutoIncrementNonPrimaryKey::field1>();
 };
 
 struct ModelWithAutoIncrementCompositeId
 {
-    inline static const std::vector<std::string> id_columns = {"id", "field1"};
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
     int field1;
+
+    inline static constexpr auto id_columns =
+        orm::primaryKey<&ModelWithAutoIncrementCompositeId::id, &ModelWithAutoIncrementCompositeId::field1>();
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&ModelWithAutoIncrementCompositeId::id>();
 };
 
 struct ModelWithMultipleAutoIncrementColumns
 {
-    inline static const std::vector<std::string> id_columns = {"id", "field1"};
-    inline static const std::vector<std::string> auto_increment_columns = {"id", "field1"};
-
     int id;
     int field1;
+
+    inline static constexpr auto id_columns =
+        orm::primaryKey<&ModelWithMultipleAutoIncrementColumns::id, &ModelWithMultipleAutoIncrementColumns::field1>();
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&ModelWithMultipleAutoIncrementColumns::id,
+                           &ModelWithMultipleAutoIncrementColumns::field1>();
 };
 
 struct ModelWithAutoIncrementOptionalId
 {
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     std::optional<int> id;
     int field1;
-};
 
-struct ModelWithAutoIncrementMissingColumn
-{
-    inline static const std::vector<std::string> auto_increment_columns = {"missing"};
-
-    int id;
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&ModelWithAutoIncrementOptionalId::id>();
 };
 
 struct ModelWithAutoIncrementForeignModel
 {
-    inline static const std::vector<std::string> id_columns = {"field3"};
-    inline static const std::vector<std::string> auto_increment_columns = {"field3"};
-
     int id;
     ModelWithId field3;
+
+    inline static constexpr auto id_columns = orm::primaryKey<&ModelWithAutoIncrementForeignModel::field3>();
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&ModelWithAutoIncrementForeignModel::field3>();
 };
 
 struct ModelWithAutoIncrementWrongType
 {
-    inline static const std::vector<std::string> id_columns = {"field2"};
-    inline static const std::vector<std::string> auto_increment_columns = {"field2"};
-
     int id;
     std::string field2;
+
+    inline static constexpr auto id_columns = orm::primaryKey<&ModelWithAutoIncrementWrongType::field2>();
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&ModelWithAutoIncrementWrongType::field2>();
 };
+
+using Schema = orm::Schema<ModelWithOneField, ModelWithTableName, SomeDataModel, ModelWithOptional, ModelWithFloat,
+                           ModelWithOptionalFloat, ModelWithId, ModelWithAutoIncrementId,
+                           ModelWithAutoIncrementIdAndNamesMapping, ModelWithOverwrittenId, ModelWithIdAndNamesMapping,
+                           ModelRelatedToOtherModel, ModelRelatedToAutoIncrementModel, ModelRelatedToCompositeIdModel,
+                           ModelOptionallyRelatedToOtherModel, ModelWithAllBasicTypes, ModelWithAllInts>;
 } // namespace models

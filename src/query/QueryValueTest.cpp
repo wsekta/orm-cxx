@@ -87,7 +87,7 @@ TEST(QueryValueTest, shouldStoreStringInputsAsString)
 
 TEST(QueryValueTest, shouldPreserveOptionalValueLogicalType)
 {
-    const auto value = std::optional<unsigned short>{42};
+    const auto value = std::optional<unsigned short>{static_cast<unsigned short>(42)};
 
     expectValue(QueryValue{value}, 42, orm::model::ColumnType::UnsignedShort);
 }
@@ -135,13 +135,11 @@ TEST(QueryValueTest, shouldAcceptCanonicalStorageAtLogicalBoundaries)
         (void)QueryValue::fromStorage(orm::model::ColumnType::Float, QueryValue::Value{static_cast<double>(0.1F)}));
 }
 
-TEST(QueryValueTest, unsupportedAndInvalidLogicalTypesShouldHaveNoCompatibleStorage)
+TEST(QueryValueTest, unsupportedAndInvalidEnumValuesShouldHaveNoCompatibleStorage)
 {
     const auto storedValue = QueryValue::Value{0};
 
     EXPECT_FALSE(QueryValue::isCompatibleStorage(orm::model::ColumnType::Uuid, storedValue));
-    EXPECT_FALSE(QueryValue::isCompatibleStorage(orm::model::ColumnType::Unknown, storedValue));
-    EXPECT_FALSE(QueryValue::isCompatibleStorage(orm::model::ColumnType::OneToOne, storedValue));
     EXPECT_FALSE(QueryValue::isCompatibleStorage(
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
         storedValue));

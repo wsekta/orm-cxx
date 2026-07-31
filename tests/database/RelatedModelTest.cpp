@@ -1,6 +1,6 @@
 #include "DatabaseTest.hpp"
 
-class RelatedModelTest : public DatabaseTest
+class RelatedModelTest : public DatabaseTest<models::Schema>
 {
 };
 

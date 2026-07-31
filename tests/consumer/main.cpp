@@ -6,6 +6,7 @@ struct ConsumerModel
 {
     int id;
 };
+using Schema = orm::Schema<ConsumerModel>;
 } // namespace consumer_models
 
 namespace
@@ -57,7 +58,10 @@ public:
 
 int main()
 {
-    orm::Database database;
+    static_assert(orm::reflection::fieldCount<consumer_models::ConsumerModel> == 1);
+    static_assert(orm::reflection::fieldName<consumer_models::ConsumerModel, 0>() == "id");
+
+    orm::Database<consumer_models::Schema> database;
 
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
@@ -89,8 +93,8 @@ int main()
 
     const ConsumerDialect dialect;
 
-    if (not orm::db::relations::createTableStatements(dialect,
-                                                      orm::Model<consumer_models::ConsumerModel>::getModelInfo())
+    if (not orm::db::relations::createTableStatements(
+                dialect, orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>())
                 .empty())
     {
         return 3;

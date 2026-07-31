@@ -15,29 +15,28 @@ struct AutoRole;
 
 struct AutoUser
 {
-    inline static constexpr std::string_view table_name = "collection_auto_users";
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
     std::string name;
     orm::ManyToMany<AutoRole> roles;
 
-    inline static const auto relations = orm::relations(orm::manyToMany("roles")
-                                                            .through("collection_auto_user_roles")
-                                                            .ownerColumns({"user_id"})
-                                                            .targetColumns({"role_id"}));
+    inline static constexpr orm::reflection::FixedString table_name{"collection_auto_users"};
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&AutoUser::id>();
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&AutoUser::roles>()
+                                                                .through<"collection_auto_user_roles">()
+                                                                .ownerColumns<"user_id">()
+                                                                .targetColumns<"role_id">());
 };
 
 struct AutoRole
 {
-    inline static constexpr std::string_view table_name = "collection_auto_roles";
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
     std::string name;
     orm::ManyToMany<AutoUser> users;
 
-    inline static const auto relations = orm::relations(orm::manyToMany("users").mappedBy("roles"));
+    inline static constexpr orm::reflection::FixedString table_name{"collection_auto_roles"};
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&AutoRole::id>();
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&AutoRole::users>().mappedBy<&AutoUser::roles>());
 };
 } // namespace acceptance_models
 
@@ -47,30 +46,33 @@ struct Target;
 
 struct Owner
 {
-    inline static constexpr std::string_view table_name = "collection_long_key_owners";
-
     long id;
     std::string name;
     orm::ManyToMany<Target> targets;
 
-    inline static const auto relations =
-        orm::relations(orm::manyToMany("targets").through("collection_long_key_owner_targets"));
+    inline static constexpr orm::reflection::FixedString table_name{"collection_long_key_owners"};
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&Owner::targets>().through<"collection_long_key_owner_targets">());
 };
 
 struct Target
 {
-    inline static constexpr std::string_view table_name = "collection_long_key_targets";
-
     int id;
     std::string name;
+
+    inline static constexpr orm::reflection::FixedString table_name{"collection_long_key_targets"};
 };
 } // namespace long_key_models
+
+using AcceptanceSchema = orm::Schema<collection_models::User, collection_models::Role, acceptance_models::AutoUser,
+                                     acceptance_models::AutoRole, long_key_models::Owner, long_key_models::Target>;
+using AcceptanceDatabase = orm::Database<AcceptanceSchema>;
 
 namespace
 {
 struct DatabaseSqlMember
 {
-    using type = soci::session orm::Database::*;
+    using type = soci::session orm::DatabaseCore::*;
 
     friend auto get(DatabaseSqlMember) -> type;
 };
@@ -84,9 +86,9 @@ struct PrivateMemberAccess
     }
 };
 
-template struct PrivateMemberAccess<DatabaseSqlMember, &orm::Database::sql>;
+template struct PrivateMemberAccess<DatabaseSqlMember, &orm::DatabaseCore::sql>;
 
-auto sqlSession(orm::Database& database) -> soci::session&
+auto sqlSession(AcceptanceDatabase& database) -> soci::session&
 {
     return database.*get(DatabaseSqlMember{});
 }
@@ -111,7 +113,7 @@ private:
 };
 } // namespace
 
-class CollectionRelationAcceptanceDatabaseTest : public DatabaseTest
+class CollectionRelationAcceptanceDatabaseTest : public DatabaseTest<AcceptanceSchema>
 {
 protected:
     auto createUserRoleSchema() -> void
@@ -124,8 +126,8 @@ protected:
 
 TEST(SqliteCollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAndConstraints)
 {
-    const auto statements =
-        orm::db::relations::createTableStatements(orm::Model<collection_models::CompositeOwner>::getModelInfo());
+    const auto statements = orm::db::relations::createTableStatements(
+        orm::modelView<collection_models::Schema, collection_models::CompositeOwner>());
 
     ASSERT_EQ(statements.size(), 1);
     EXPECT_EQ(statements.front(),

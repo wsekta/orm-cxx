@@ -59,13 +59,6 @@ function(orm_cxx_add_runtime_dependencies source_dir)
             )
         endif()
     endif()
-
-    if(NOT TARGET orm-cxx-reflect-cpp)
-        add_library(orm-cxx-reflect-cpp INTERFACE)
-        target_include_directories(
-            orm-cxx-reflect-cpp SYSTEM INTERFACE "$<BUILD_INTERFACE:${source_dir}/externals/reflect-cpp/include>"
-        )
-    endif()
 endfunction()
 
 function(orm_cxx_add_test_dependencies source_dir)

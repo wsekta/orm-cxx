@@ -1,7 +1,5 @@
-#include <map>
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
 
 #include "orm-cxx/orm.hpp"
@@ -14,19 +12,19 @@ struct ObjectModel
     // TEXT NOT NULL
     std::string field2;
 
-    // defining id_columns is optional
-    inline static const std::vector<std::string> id_columns = {"field1", "field2"};
+    // Defining id_columns is optional.
+    inline static constexpr auto id_columns = orm::primaryKey<&ObjectModel::field2>();
 
-    // other way to define id column - will be over writen by using id_columns
+    // Another way to define the default primary key is an `int id` field.
     // int id;
 
-    // defining table_name is optional, adding it will overwrite default table name
-    inline static constexpr std::string_view table_name = "object_model";
+    // FixedString keeps mapping metadata available during constant evaluation.
+    inline static constexpr orm::reflection::FixedString table_name{"object_model"};
 
-    // defining columns_names is optional, adding it will overwrite default columns names
-    // not all columns have to be defined, others will get default names
-    inline static const std::map<std::string, std::string> columns_names = {{"field1", "some_field1_name"},
-                                                                            {"field2", "some_field2_name"}};
+    // Unlisted fields retain their reflected names.
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&ObjectModel::field1, "some_field1_name">(),
+                         orm::columnName<&ObjectModel::field2, "some_field2_name">());
 };
 
 struct ObjectSummary
@@ -47,7 +45,8 @@ int main() // NOLINT(bugprone-exception-escape)
     using namespace orm::query;
 
     // connect with standard connection string
-    orm::Database database;
+    using AppSchema = orm::Schema<ObjectModel>;
+    orm::Database<AppSchema> database;
     database.connect("sqlite3://test.db");
 
     // drop table if exists
@@ -57,7 +56,7 @@ int main() // NOLINT(bugprone-exception-escape)
     database.createTable<ObjectModel>();
 
     // create objects and insert them into table
-    std::vector<ObjectModel> objects{{1, "test"}, {2, "test"}, {std::nullopt, "text"}};
+    std::vector<ObjectModel> objects{{1, "test-1"}, {2, "test-2"}, {std::nullopt, "text"}};
     database.insert(objects);
 
     // full-model select returns std::vector<ObjectModel>

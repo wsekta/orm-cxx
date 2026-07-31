@@ -14,7 +14,8 @@ int main() // NOLINT(bugprone-exception-escape)
         return 2;
     }
 
-    orm::Database database;
+    using AppSchema = orm::Schema<>;
+    orm::Database<AppSchema> database;
     database.connect(orm::db::BackendType::Postgres, connectionString);
 
     const auto& capabilities = database.getBackendCapabilities();

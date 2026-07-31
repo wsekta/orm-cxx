@@ -75,13 +75,26 @@ auto expectedModelWithFloatWhereSql(const std::string& predicateSql) -> std::str
            predicateSql + ";";
 }
 
+template <typename T>
+auto select(orm::db::commands::DefaultSelectCommand& command, orm::Query<T>& query) -> orm::db::SelectStatement
+{
+    return command.select(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getSelectSpec(query));
+}
+
+template <typename Source, typename Result>
+auto select(orm::db::commands::DefaultSelectCommand& command,
+            orm::ProjectionQuery<Source, Result>& query) -> orm::db::SelectStatement
+{
+    return command.select(orm::modelView<models::Schema, Source>(), orm::FakeDatabase::getSelectSpec(query));
+}
+
 auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& command,
                                   const orm::query::Predicate& predicate) -> std::string
 {
     orm::Query<models::ModelWithFloat> query;
     query.where(predicate);
 
-    return command.select(orm::Database::getQueryData(query)).sql;
+    return select(command, query).sql;
 }
 
 } // namespace
@@ -149,7 +162,7 @@ TEST_F(DefaultSelectCommandTest, select)
 {
     orm::Query<models::ModelWithFloat> query;
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSql);
+    EXPECT_EQ(select(command, query).sql, selectSql);
 }
 
 TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBindMarkersToDialect)
@@ -159,7 +172,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBin
     orm::Query<models::ModelWithFloat> query;
     query.where(col("field1") == 5);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT [models_ModelWithFloat].[field1] AS [models_ModelWithFloat_field1], "
                              "[models_ModelWithFloat].[field2] AS [models_ModelWithFloat_field2], "
@@ -176,7 +189,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesOnlyProjectedNumericAggregateResu
     orm::ProjectionQuery<models::ModelWithId, ExactNumericAggregateProjection> query;
     query.project(as("total", sum(col("field1"))), as("average", avg(col("field1")))).having(avg(col("field1")) > 0.0);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT EXACT_RESULT(SUM([models_ModelWithId].[field1])) AS [total], "
                              "EXACT_RESULT(AVG([models_ModelWithId].[field1])) AS [average] FROM [models_ModelWithId] "
@@ -191,7 +204,7 @@ TEST_F(DefaultSelectCommandTest, selectWithLimit)
 
     query.limit(10);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSqlWithLimit);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithLimit);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithOffset)
@@ -200,7 +213,7 @@ TEST_F(DefaultSelectCommandTest, selectWithOffset)
 
     query.offset(10);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSqlWithOffset);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithOffset);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLimitAndOffset)
@@ -209,13 +222,13 @@ TEST_F(DefaultSelectCommandTest, selectWithLimitAndOffset)
 
     query.limit(10).offset(10);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSqlWithLimitAndOffset);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithLimitAndOffset);
 
     orm::Query<models::ModelWithFloat> query2;
 
     query2.offset(10).limit(10);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query2)).sql, selectSqlWithLimitAndOffset);
+    EXPECT_EQ(select(command, query2).sql, selectSqlWithLimitAndOffset);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithDistinct)
@@ -224,7 +237,7 @@ TEST_F(DefaultSelectCommandTest, selectWithDistinct)
 
     query.distinct();
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT DISTINCT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
               "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
               "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 FROM models_ModelWithFloat;");
@@ -242,7 +255,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithGroupByHavingAndClauseOrder)
         .limit(5)
         .offset(2);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
                              "models_ModelWithId.field1 AS models_ModelWithId_field1, "
@@ -264,7 +277,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithAllAggregateFunctionsInHavin
         .having((count(col("field2")) == 2) && (sum(col("field1")) != 30) && (min(col("id")) < 5) &&
                 (max(col("id")) <= 4));
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql,
               "SELECT models_ModelWithId.id AS models_ModelWithId_id, "
@@ -286,7 +299,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithMappedGroupByAndHavingColumn
 
     query.groupBy(col("field2")).having(count(col("field1")) > 1);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(
         statement.sql,
@@ -307,7 +320,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedGroupByAndHavingPath)
 
     query.groupBy(col("field3.field2")).having(count(col("field3.id")) > 1);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql,
               "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
@@ -327,7 +340,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedPrimaryKeyGroupingWit
 
     query.groupBy(col("field3.id")).having(count(col("field3.id")) > 1).disableJoining();
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
                              "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
@@ -345,7 +358,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedNonPrimaryKeyGrouping
 
     query.groupBy(col("field3.field2")).having(count(col("field3.field1")) > 1).disableJoining();
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjection)
@@ -354,7 +367,7 @@ TEST_F(DefaultSelectCommandTest, selectProjection)
 
     query.project(as("id", col("id")), as("name", col("field2")));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name FROM models_ModelWithId;");
 }
 
@@ -364,10 +377,9 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithMappedFieldName)
 
     query.project(as("id", col("id")), as("name", col("field2")));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
-              "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS id, "
-              "models_ModelWithIdAndNamesMapping.some_field2_name AS name "
-              "FROM models_ModelWithIdAndNamesMapping;");
+    EXPECT_EQ(select(command, query).sql, "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS id, "
+                                          "models_ModelWithIdAndNamesMapping.some_field2_name AS name "
+                                          "FROM models_ModelWithIdAndNamesMapping;");
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedFieldPath)
@@ -376,7 +388,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedFieldPath)
 
     query.project(as("id", col("id")), as("name", col("field3.field2")));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT models_ModelRelatedToOtherModel.id AS id, field3.field2 AS name "
               "FROM models_ModelRelatedToOtherModel "
               "LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id;");
@@ -388,7 +400,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyWithoutJoi
 
     query.project(as("id", col("id")), as("relatedId", col("field3.id"))).disableJoining();
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT models_ModelRelatedToOtherModel.id AS id, "
               "models_ModelRelatedToOtherModel.field3_id AS relatedId FROM models_ModelRelatedToOtherModel;");
 }
@@ -399,7 +411,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyWithout
 
     query.project(as("id", col("id")), as("name", col("field3.field2"))).disableJoining();
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffset)
@@ -413,7 +425,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffs
         .limit(1)
         .offset(2);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT DISTINCT models_ModelWithId.id AS id, models_ModelWithId.field2 AS name "
                              "FROM models_ModelWithId WHERE models_ModelWithId.field1 >= :orm_p0 "
@@ -430,7 +442,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateFunctions)
                   as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
                   as("minField1", min(col("field1"))), as("maxField1", max(col("field1"))));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT COUNT(*) AS allRows, COUNT(models_ModelWithId.field2) AS countedNames, "
               "SUM(models_ModelWithId.field1) AS totalField1, AVG(models_ModelWithId.field1) AS averageField1, "
               "MIN(models_ModelWithId.field1) AS minField1, MAX(models_ModelWithId.field1) AS maxField1 "
@@ -445,7 +457,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateMappedFieldName)
                   as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
                   as("minField1", min(col("field1"))), as("maxField1", max(col("field1"))));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT COUNT(*) AS allRows, COUNT(models_ModelWithIdAndNamesMapping.some_field2_name) AS countedNames, "
               "SUM(models_ModelWithIdAndNamesMapping.some_field1_name) AS totalField1, "
               "AVG(models_ModelWithIdAndNamesMapping.some_field1_name) AS averageField1, "
@@ -467,7 +479,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithGroupByHavingAndClauseOrder
         .limit(5)
         .offset(2);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
                              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
@@ -489,7 +501,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithOrAndNotHaving)
         .having(countAll() > 1)
         .orHaving(!(max(col("id")) <= 3));
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
                              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
@@ -508,7 +520,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRemainingHavingComparisonOp
         .groupBy(col("field2"))
         .having((countAll() == 2) && (sum(col("field1")) != 30) && (min(col("id")) < 5));
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithId.field2 AS name, COUNT(*) AS users, "
                              "AVG(models_ModelWithId.field1) AS averageField1 FROM models_ModelWithId "
@@ -526,7 +538,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedGroupByPath)
 
     query.project(as("relatedName", col("field3.field2")), as("users", countAll())).groupBy(col("field3.field2"));
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT field3.field2 AS relatedName, COUNT(*) AS users FROM models_ModelRelatedToOtherModel "
               "LEFT JOIN models_ModelWithId AS field3 ON field3.id = models_ModelRelatedToOtherModel.field3_id "
               "GROUP BY field3.field2;");
@@ -540,7 +552,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyGroupByWit
         .groupBy(col("field3.id"))
         .disableJoining();
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT models_ModelRelatedToOtherModel.field3_id AS relatedId, COUNT(*) AS users "
               "FROM models_ModelRelatedToOtherModel GROUP BY models_ModelRelatedToOtherModel.field3_id;");
 }
@@ -553,7 +565,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyGroupBy
         .groupBy(col("field3.field2"))
         .disableJoining();
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithInvalidAggregateSource_shouldThrow)
@@ -562,7 +574,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithInvalidAggregateSource_shou
 
     query.project(as("id", col("id")), as("name", count(col("missing"))));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateWithoutSourceColumn_shouldThrow)
@@ -572,7 +584,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateWithoutSourceColum
     query.project(as("id", col("id")),
                   as("name", AggregateExpression{.function = AggregateFunction::Sum, .column = std::nullopt}));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunction_shouldThrow)
@@ -582,7 +594,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunctio
     query.project(as("id", col("id")), as("name", AggregateExpression{.function = static_cast<AggregateFunction>(999),
                                                                       .column = col("field1")}));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedHavingOperator_shouldThrow)
@@ -595,7 +607,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedHavingOperator_s
         .groupBy(col("field2"))
         .having(having);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldThrow)
@@ -604,7 +616,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldT
 
     query.project(as("id", col("id")), as("name", col("missing")));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithComparisonPredicate_shouldUseBindParameter)
@@ -613,7 +625,7 @@ TEST_F(DefaultSelectCommandTest, selectWithComparisonPredicate_shouldUseBindPara
 
     query.where(col("field1") == 5);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
                              "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
@@ -649,7 +661,7 @@ TEST_F(DefaultSelectCommandTest, selectWithUnsupportedComparisonOperator_shouldT
         .value = orm::query::QueryValue{1},
     }}});
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLogicalPredicates)
@@ -658,7 +670,7 @@ TEST_F(DefaultSelectCommandTest, selectWithLogicalPredicates)
 
     query.where((col("field1") >= 2 && col("field2").like("%abc%")) || !col("field3").isNull());
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql,
               "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
@@ -677,7 +689,7 @@ TEST_F(DefaultSelectCommandTest, selectWithInAndBetweenPredicates)
 
     query.where(col("field1").in({1, 2, 3}) && col("field3").between(1.0, 3.5));
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql,
               "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
@@ -699,12 +711,11 @@ TEST_F(DefaultSelectCommandTest, selectWithOrderBy)
 
     query.orderBy(desc(col("field2")), asc(col("field1"))).limit(10);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
-              "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
-              "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
-              "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
-              "FROM models_ModelWithFloat ORDER BY models_ModelWithFloat.field2 DESC, "
-              "models_ModelWithFloat.field1 ASC LIMIT 10;");
+    EXPECT_EQ(select(command, query).sql, "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
+                                          "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
+                                          "models_ModelWithFloat.field3 AS models_ModelWithFloat_field3 "
+                                          "FROM models_ModelWithFloat ORDER BY models_ModelWithFloat.field2 DESC, "
+                                          "models_ModelWithFloat.field1 ASC LIMIT 10;");
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
@@ -714,7 +725,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
     query.where(raw("LOWER(models_ModelWithFloat.field2) = :name", param("name", "wojtek")))
         .orderBy(rawOrder("LOWER(models_ModelWithFloat.field2) ASC"));
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql, "SELECT models_ModelWithFloat.field1 AS models_ModelWithFloat_field1, "
                              "models_ModelWithFloat.field2 AS models_ModelWithFloat_field2, "
@@ -732,15 +743,14 @@ TEST_F(DefaultSelectCommandTest, selectWithMappedFieldName)
 
     query.where(col("field1") == 7);
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
-              "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS "
-              "models_ModelWithIdAndNamesMapping_some_id_name, "
-              "models_ModelWithIdAndNamesMapping.some_field1_name AS "
-              "models_ModelWithIdAndNamesMapping_some_field1_name, "
-              "models_ModelWithIdAndNamesMapping.some_field2_name AS "
-              "models_ModelWithIdAndNamesMapping_some_field2_name "
-              "FROM models_ModelWithIdAndNamesMapping WHERE "
-              "models_ModelWithIdAndNamesMapping.some_field1_name = :orm_p0;");
+    EXPECT_EQ(select(command, query).sql, "SELECT models_ModelWithIdAndNamesMapping.some_id_name AS "
+                                          "models_ModelWithIdAndNamesMapping_some_id_name, "
+                                          "models_ModelWithIdAndNamesMapping.some_field1_name AS "
+                                          "models_ModelWithIdAndNamesMapping_some_field1_name, "
+                                          "models_ModelWithIdAndNamesMapping.some_field2_name AS "
+                                          "models_ModelWithIdAndNamesMapping_some_field2_name "
+                                          "FROM models_ModelWithIdAndNamesMapping WHERE "
+                                          "models_ModelWithIdAndNamesMapping.some_field1_name = :orm_p0;");
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedFieldPath)
@@ -749,7 +759,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedFieldPath)
 
     query.where(col("field3.field2") == "test");
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
+    EXPECT_EQ(select(command, query).sql,
               "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
               "models_ModelRelatedToOtherModel.field1 AS models_ModelRelatedToOtherModel_field1, "
               "models_ModelRelatedToOtherModel.field2 AS models_ModelRelatedToOtherModel_field2, "
@@ -765,7 +775,7 @@ TEST_F(DefaultSelectCommandTest, selectWithEmptyColumnPath_shouldThrow)
 
     query.where(col("") == 1);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithScalarUsedAsRelatedPath_shouldThrow)
@@ -774,7 +784,7 @@ TEST_F(DefaultSelectCommandTest, selectWithScalarUsedAsRelatedPath_shouldThrow)
 
     query.where(col("field1.field2") == 1);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedModelColumn_shouldThrow)
@@ -783,7 +793,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedModelColumn_shouldThrow)
 
     query.where(col("field3") == 1);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedNonPrimaryKeyWithoutJoining_shouldThrow)
@@ -792,7 +802,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedNonPrimaryKeyWithoutJoining_sh
 
     query.disableJoining().where(col("field3.field2") == "target");
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedPrimaryKeyWithoutJoining_shouldUseForeignKeyColumn)
@@ -801,7 +811,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedPrimaryKeyWithoutJoining_shoul
 
     query.disableJoining().where(col("field3.id") == 2);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_EQ(statement.sql,
               "SELECT models_ModelRelatedToOtherModel.id AS models_ModelRelatedToOtherModel_id, "
@@ -819,7 +829,7 @@ TEST_F(DefaultSelectCommandTest, selectWithTooDeepRelatedPath_shouldThrow)
 
     query.where(col("field3.id.extra") == 1);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoining)
@@ -828,23 +838,21 @@ TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoinin
 
     query.disableJoining();
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
-              selectSqlWithModelRelatedToOtherModelWithoutJoining);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithModelRelatedToOtherModelWithoutJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithJoining)
 {
     orm::Query<models::ModelRelatedToOtherModel> query;
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql, selectSqlWithModelRelatedToOtherModelWithJoining);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithModelRelatedToOtherModelWithJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToCompositeIdModelWithJoining)
 {
     orm::Query<models::ModelRelatedToCompositeIdModel> query;
 
-    EXPECT_EQ(command.select(orm::Database::getQueryData(query)).sql,
-              selectSqlWithModelRelatedToCompositeIdModelWithJoining);
+    EXPECT_EQ(select(command, query).sql, selectSqlWithModelRelatedToCompositeIdModelWithJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithUnknownColumn_shouldThrow)
@@ -853,7 +861,7 @@ TEST_F(DefaultSelectCommandTest, selectWithUnknownColumn_shouldThrow)
 
     query.where(col("missing") == 1);
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
@@ -862,7 +870,7 @@ TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
 
     query.where(raw("field1 = :orm_p0", param("orm_p0", 1)));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
@@ -871,7 +879,7 @@ TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
 
     query.where(raw("field1 = :value OR field2 = :value", param("value", 1), param("value", 2)));
 
-    EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+    EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithInvalidRawParameterName_shouldThrow)
@@ -880,14 +888,14 @@ TEST_F(DefaultSelectCommandTest, selectWithInvalidRawParameterName_shouldThrow)
         orm::Query<models::ModelWithFloat> query;
         query.where(raw("field1 = :value", param("", 1)));
 
-        EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+        EXPECT_THROW((void)select(command, query), std::invalid_argument);
     }
 
     {
         orm::Query<models::ModelWithFloat> query;
         query.where(raw("field1 = :value", param(":value", 1)));
 
-        EXPECT_THROW((void)command.select(orm::Database::getQueryData(query)), std::invalid_argument);
+        EXPECT_THROW((void)select(command, query), std::invalid_argument);
     }
 }
 
@@ -906,7 +914,7 @@ TEST_F(DefaultSelectCommandTest, manuallyConstructedEmptyListPredicatesRenderPor
     orm::Query<models::ModelWithFloat> query;
     query.where(emptyIn && emptyNotIn);
 
-    const auto statement = command.select(orm::Database::getQueryData(query));
+    const auto statement = select(command, query);
 
     EXPECT_NE(statement.sql.find("WHERE ((1 = 0) AND (1 = 1))"), std::string::npos);
     EXPECT_TRUE(statement.parameters.empty());
@@ -915,7 +923,7 @@ TEST_F(DefaultSelectCommandTest, manuallyConstructedEmptyListPredicatesRenderPor
 TEST_F(DefaultSelectCommandTest, collectionPredicateAliasesDoNotShadowOuterCorrelationAlias)
 {
     auto context = orm::db::commands::RenderContext{
-        .modelInfo = orm::Model<collection_models::User>::getModelInfo(),
+        .model = orm::modelView<collection_models::Schema, collection_models::User>(),
         .dialect = dialect,
         .tableAlias = "orm_relation_target",
     };
@@ -929,7 +937,7 @@ TEST_F(DefaultSelectCommandTest, collectionPredicateAliasesDoNotShadowOuterCorre
 TEST_F(DefaultSelectCommandTest, collectionPredicateJunctionAliasDoesNotShadowOuterCorrelationAlias)
 {
     auto context = orm::db::commands::RenderContext{
-        .modelInfo = orm::Model<collection_models::User>::getModelInfo(),
+        .model = orm::modelView<collection_models::Schema, collection_models::User>(),
         .dialect = dialect,
         .tableAlias = "orm_relation_junction",
     };
@@ -938,4 +946,18 @@ TEST_F(DefaultSelectCommandTest, collectionPredicateJunctionAliasDoesNotShadowOu
 
     EXPECT_NE(sql.find("collection_user_roles AS orm_relation_junction_1"), std::string::npos);
     EXPECT_NE(sql.find("orm_relation_junction_1.user_id = orm_relation_junction.id"), std::string::npos);
+}
+
+TEST_F(DefaultSelectCommandTest, inverseManyToManyPredicateResolvesAndSwapsOwningJunctionColumns)
+{
+    auto context = orm::db::commands::RenderContext{
+        .model = orm::modelView<collection_models::Schema, collection_models::Role>(),
+        .dialect = dialect,
+    };
+
+    const auto sql = orm::db::commands::renderWhere(exists("users"), context);
+
+    EXPECT_NE(sql.find("collection_user_roles AS orm_relation_junction"), std::string::npos);
+    EXPECT_NE(sql.find("orm_relation_junction.role_id = collection_roles.id"), std::string::npos);
+    EXPECT_NE(sql.find("orm_relation_target.id = orm_relation_junction.user_id"), std::string::npos);
 }

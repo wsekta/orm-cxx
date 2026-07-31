@@ -22,10 +22,10 @@ namespace postgresql_integration_models
 {
 struct AutoOnly
 {
-    inline static constexpr std::string_view table_name = "postgresql_auto_only";
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
+
+    inline static constexpr orm::reflection::FixedString table_name{"postgresql_auto_only"};
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&AutoOnly::id>();
 };
 
 struct NameProjection
@@ -46,18 +46,23 @@ struct ExactSumProjection
 
 struct LongGeneratedAlias
 {
-    inline static constexpr std::string_view table_name = "tttttttttttttttttttttttttttttttttttttttt";
-    inline static constexpr std::string_view column_name = "cccccccccccccccccccccccc";
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"value", std::string{column_name}},
-    };
-
     int value;
+
+    inline static constexpr orm::reflection::FixedString table_name{"tttttttttttttttttttttttttttttttttttttttt"};
+    inline static constexpr orm::reflection::FixedString column_name{"cccccccccccccccccccccccc"};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&LongGeneratedAlias::value, column_name>());
 };
 
 static_assert(LongGeneratedAlias::table_name.size() == 40);
 static_assert(LongGeneratedAlias::column_name.size() == 24);
 } // namespace postgresql_integration_models
+
+using PostgresqlIntegrationSchema =
+    orm::Schema<models::ModelWithOneField, models::ModelWithOptional, models::ModelWithFloat, models::ModelWithAllInts,
+                models::ModelWithAutoIncrementId, models::ModelWithId, models::ModelRelatedToOtherModel,
+                collection_models::User, collection_models::Role, postgresql_integration_models::AutoOnly,
+                postgresql_integration_models::LongGeneratedAlias>;
 
 namespace
 {
@@ -94,7 +99,7 @@ auto utf8TestValue() -> std::string
 }
 } // namespace
 
-class PostgresqlIntegrationTest : public DatabaseTest
+class PostgresqlIntegrationTest : public DatabaseTest<PostgresqlIntegrationSchema>
 {
 };
 
@@ -151,7 +156,8 @@ TEST_P(PostgresqlIntegrationTest, isolatedSearchPathDrivesRuntimeTableInspection
     inspectionSession << "SELECT current_schema()", soci::into(currentSchema);
     EXPECT_EQ(currentSchema, schema->schemaName());
 
-    const auto tableName = orm::Model<models::ModelWithOneField>().getModelInfo().tableName;
+    constexpr auto tableName =
+        orm::model::modelView<PostgresqlIntegrationSchema, models::ModelWithOneField>()->tableName;
     EXPECT_FALSE(backend.runtime().tableExists(inspectionSession, tableName));
     createTable<models::ModelWithOneField>();
     EXPECT_TRUE(backend.runtime().tableExists(inspectionSession, tableName));

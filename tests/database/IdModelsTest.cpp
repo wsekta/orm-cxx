@@ -2,7 +2,7 @@
 
 using namespace orm::query;
 
-class IdModelsTest : public DatabaseTest
+class IdModelsTest : public DatabaseTest<models::Schema>
 {
 };
 

@@ -7,11 +7,12 @@
 #include <string>
 #include <utility>
 
-#include "model.hpp"
-#include "query/QueryData.hpp"
+#include "query/SelectSpec.hpp"
 
 namespace orm
 {
+class DatabaseCore;
+template <typename SchemaType>
 class Database;
 /**
  * @brief A template class representing a select query in the ORM framework.
@@ -27,7 +28,7 @@ public:
     /**
      * @brief Constructs a Query object.
      */
-    Query() : data{.modelInfo = Model<T>().getModelInfo()} {}
+    Query() = default;
 
     /**
      * @brief Replaces the WHERE predicate.
@@ -203,17 +204,19 @@ private:
     /**
      * @brief Database class is a friend class of Query for access to the query data.
      */
+    template <typename>
     friend class orm::Database;
+    friend class orm::DatabaseCore;
 
     /**
      * @brief Gets the query data.
      * @return The query data.
      */
-    [[nodiscard]] inline auto getData() const -> const query::QueryData&
+    [[nodiscard]] inline auto getData() const -> const query::SelectSpec&
     {
         return data;
     }
 
-    query::QueryData data; /**< The query data. */
+    query::SelectSpec data; /**< Runtime query options; model metadata comes from Database<Schema>. */
 };
 } // namespace orm

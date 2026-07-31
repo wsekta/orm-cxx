@@ -1,6 +1,7 @@
 #include "DefaultInsertCommand.hpp"
 
 #include <format>
+#include <stdexcept>
 
 #include "orm-cxx/utils/StringUtils.hpp"
 
@@ -8,16 +9,16 @@ namespace orm::db::commands
 {
 DefaultInsertCommand::DefaultInsertCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultInsertCommand::insert(const model::ModelInfo& modelInfo) const -> std::string
+auto DefaultInsertCommand::insert(model::ModelView model) const -> std::string
 {
-    auto fieldsNames = getFieldsNames(modelInfo);
+    auto fieldsNames = getFieldsNames(model);
 
     if (fieldsNames.empty())
     {
-        return std::format("INSERT INTO {} DEFAULT VALUES;", dialect.quoteIdentifier(modelInfo.tableName));
+        return std::format("INSERT INTO {} DEFAULT VALUES;", dialect.quoteIdentifier(model->tableName));
     }
 
-    return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(modelInfo.tableName),
+    return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(model->tableName),
                        getInsertFields(fieldsNames), getInsertValues(fieldsNames));
 }
 
@@ -49,44 +50,48 @@ auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& field
     return insertValues;
 }
 
-auto DefaultInsertCommand::getFieldsNames(const model::ModelInfo& modelInfo) -> std::vector<std::string>
+auto DefaultInsertCommand::getFieldsNames(model::ModelView model) -> std::vector<std::string>
 {
     std::vector<std::string> fieldsNames;
 
-    for (const auto& columnInfo : modelInfo.columnsInfo)
+    for (const auto& column : model->columns)
     {
-        if (columnInfo.isForeignModel)
+        if (column.kind == model::FieldKind::ToOne)
         {
-            const auto& foreignModelInfo = modelInfo.foreignModelsInfo.at(columnInfo.name);
+            const auto target = model.resolveTarget(column);
+            if (target == nullptr)
+            {
+                throw std::logic_error{"To-one relation target is not available in the schema"};
+            }
 
-            const auto foreignModelIdsNames = getForeginModelIdsNames(columnInfo.name, foreignModelInfo);
+            const auto foreignModelIdsNames = getForeignModelIdsNames(column.name, *target);
 
             fieldsNames.insert(fieldsNames.end(), foreignModelIdsNames.begin(), foreignModelIdsNames.end());
         }
         else
         {
-            if (columnInfo.isAutoIncrement)
+            if (column.isAutoIncrement)
             {
                 continue;
             }
 
-            fieldsNames.push_back(columnInfo.name);
+            fieldsNames.emplace_back(column.name);
         }
     }
 
     return fieldsNames;
 }
 
-auto DefaultInsertCommand::getForeginModelIdsNames(const std::string& foreginModelFieldName,
-                                                   const model::ModelInfo& modelInfo) -> std::vector<std::string>
+auto DefaultInsertCommand::getForeignModelIdsNames(std::string_view foreignModelFieldName,
+                                                   model::ModelView target) -> std::vector<std::string>
 {
     std::vector<std::string> foreignModelIdsNames;
 
-    for (const auto& columnInfo : modelInfo.columnsInfo)
+    for (const auto& column : target->columns)
     {
-        if (columnInfo.isPrimaryKey)
+        if (column.isPrimaryKey)
         {
-            foreignModelIdsNames.push_back(std::format("{}_{}", foreginModelFieldName, columnInfo.name));
+            foreignModelIdsNames.push_back(std::format("{}_{}", foreignModelFieldName, column.name));
         }
     }
 

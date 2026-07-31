@@ -1,18 +1,22 @@
 #pragma once
 
+#include <array>
+#include <concepts>
 #include <cstddef>
-#include <initializer_list>
 #include <memory>
 #include <optional>
-#include <string>
 #include <string_view>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <vector>
 
+#include "orm-cxx/reflection/Reflection.hpp"
+
 namespace orm
 {
+class DatabaseCore;
+template <typename SchemaType>
 class Database;
 
 namespace detail
@@ -123,6 +127,8 @@ public:
     }
 
 private:
+    friend class orm::DatabaseCore;
+    template <typename>
     friend class orm::Database;
 
     auto setLoaded(container_type values) -> void
@@ -228,140 +234,211 @@ template <typename T>
 inline constexpr bool is_one_to_many_v =
     is_relation_collection_v<T> && detail::RelationCollectionTraits<std::remove_cvref_t<T>>::isOneToMany;
 
-class OneToManyDescriptor
+namespace detail
 {
-public:
-    explicit OneToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName) {}
+inline constexpr reflection::FixedString emptyRelationName{""};
 
-    [[nodiscard]] auto mappedBy(std::string_view fieldName) const -> OneToManyDescriptor
-    {
-        auto result = *this;
-        result.mappedBy_ = fieldName;
-        return result;
-    }
+template <typename>
+struct RelationMemberPointerTraits;
 
-    [[nodiscard]] auto fieldName() const noexcept -> const std::string&
-    {
-        return fieldName_;
-    }
-
-    [[nodiscard]] auto mappedByField() const noexcept -> const std::string&
-    {
-        return mappedBy_;
-    }
-
-private:
-    std::string fieldName_;
-    std::string mappedBy_;
+template <typename Value, typename Owner>
+struct RelationMemberPointerTraits<Value Owner::*>
+{
+    using OwnerType = Owner;
+    using ValueType = Value;
 };
 
-class ManyToManyDescriptor
+template <auto Member>
+using relation_member_owner_t = typename RelationMemberPointerTraits<std::remove_cv_t<decltype(Member)>>::OwnerType;
+
+template <auto Member>
+using relation_member_value_t = typename RelationMemberPointerTraits<std::remove_cv_t<decltype(Member)>>::ValueType;
+
+template <reflection::FixedString... Names>
+struct RelationColumnNames
 {
-public:
-    explicit ManyToManyDescriptor(std::string_view fieldName) : fieldName_(fieldName) {}
-
-    [[nodiscard]] auto through(std::string_view tableName) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.through_ = tableName;
-        return result;
-    }
-
-    [[nodiscard]] auto mappedBy(std::string_view fieldName) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.mappedBy_ = fieldName;
-        return result;
-    }
-
-    [[nodiscard]] auto ownerColumns(std::initializer_list<std::string_view> columns) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.ownerColumns_.clear();
-        result.ownerColumns_.reserve(columns.size());
-        for (const auto column : columns)
-        {
-            result.ownerColumns_.emplace_back(column);
-        }
-        return result;
-    }
-
-    [[nodiscard]] auto ownerColumns(std::vector<std::string> columns) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.ownerColumns_ = std::move(columns);
-        return result;
-    }
-
-    [[nodiscard]] auto targetColumns(std::initializer_list<std::string_view> columns) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.targetColumns_.clear();
-        result.targetColumns_.reserve(columns.size());
-        for (const auto column : columns)
-        {
-            result.targetColumns_.emplace_back(column);
-        }
-        return result;
-    }
-
-    [[nodiscard]] auto targetColumns(std::vector<std::string> columns) const -> ManyToManyDescriptor
-    {
-        auto result = *this;
-        result.targetColumns_ = std::move(columns);
-        return result;
-    }
-
-    [[nodiscard]] auto fieldName() const noexcept -> const std::string&
-    {
-        return fieldName_;
-    }
-
-    [[nodiscard]] auto throughTable() const noexcept -> const std::string&
-    {
-        return through_;
-    }
-
-    [[nodiscard]] auto mappedByField() const noexcept -> const std::string&
-    {
-        return mappedBy_;
-    }
-
-    [[nodiscard]] auto ownerColumnNames() const noexcept -> const std::vector<std::string>&
-    {
-        return ownerColumns_;
-    }
-
-    [[nodiscard]] auto targetColumnNames() const noexcept -> const std::vector<std::string>&
-    {
-        return targetColumns_;
-    }
-
-private:
-    std::string fieldName_;
-    std::string through_;
-    std::string mappedBy_;
-    std::vector<std::string> ownerColumns_;
-    std::vector<std::string> targetColumns_;
+    inline static constexpr std::size_t size = sizeof...(Names);
+    inline static constexpr std::array<std::string_view, sizeof...(Names)> values{Names.view()...};
 };
 
-[[nodiscard]] inline auto oneToMany(std::string_view fieldName) -> OneToManyDescriptor
+template <typename T>
+struct IsRelationDescriptor : std::false_type
 {
-    return OneToManyDescriptor{fieldName};
+};
+
+template <typename T>
+struct IsOneToManyDescriptor : std::false_type
+{
+};
+
+template <typename T>
+struct IsManyToManyDescriptor : std::false_type
+{
+};
+} // namespace detail
+
+/**
+ * @brief Typed one-to-many mapping. The descriptor stores no runtime strings:
+ * every member and fallback name is encoded in its type.
+ */
+template <auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName>
+    requires std::is_member_object_pointer_v<decltype(Member)>
+struct OneToManyDescriptor
+{
+    inline static constexpr auto member = Member;
+    inline static constexpr auto mappedByMember = MappedByMember;
+    inline static constexpr auto mappedByName = MappedByName;
+
+    template <auto TargetMember>
+        requires std::is_member_object_pointer_v<decltype(TargetMember)>
+    [[nodiscard]] consteval auto
+    mappedBy() const -> OneToManyDescriptor<Member, TargetMember, detail::emptyRelationName>
+    {
+        using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+        using target_t = relation_target_t<collection_t>;
+        static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
+                      "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
+        return {};
+    }
+
+    template <reflection::FixedString TargetField>
+    [[nodiscard]] consteval auto mappedBy() const -> OneToManyDescriptor<Member, nullptr, TargetField>
+    {
+        static_assert(not TargetField.view().empty(),
+                      "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
+        return {};
+    }
+};
+
+namespace detail
+{
+template <auto Member, auto MappedByMember, reflection::FixedString MappedByName>
+struct IsRelationDescriptor<OneToManyDescriptor<Member, MappedByMember, MappedByName>> : std::true_type
+{
+};
+
+template <auto Member, auto MappedByMember, reflection::FixedString MappedByName>
+struct IsOneToManyDescriptor<OneToManyDescriptor<Member, MappedByMember, MappedByName>> : std::true_type
+{
+};
+} // namespace detail
+
+/**
+ * @brief Typed many-to-many mapping and its compile-time builder.
+ */
+template <auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName,
+          reflection::FixedString ThroughTable = detail::emptyRelationName,
+          typename OwnerColumnNames = detail::RelationColumnNames<>,
+          typename TargetColumnNames = detail::RelationColumnNames<>>
+    requires std::is_member_object_pointer_v<decltype(Member)>
+struct ManyToManyDescriptor
+{
+    inline static constexpr auto member = Member;
+    inline static constexpr auto mappedByMember = MappedByMember;
+    inline static constexpr auto mappedByName = MappedByName;
+    inline static constexpr auto throughTable = ThroughTable;
+    using OwnerColumns = OwnerColumnNames;
+    using TargetColumns = TargetColumnNames;
+
+    template <reflection::FixedString TableName>
+    [[nodiscard]] consteval auto through() const
+        -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, TableName, OwnerColumnNames, TargetColumnNames>
+    {
+        static_assert(not TableName.view().empty(),
+                      "ORM_RELATION_JUNCTION_EMPTY: junction table name must not be empty");
+        return {};
+    }
+
+    template <auto TargetMember>
+        requires std::is_member_object_pointer_v<decltype(TargetMember)>
+    [[nodiscard]] consteval auto
+    mappedBy() const -> ManyToManyDescriptor<Member, TargetMember, detail::emptyRelationName, ThroughTable,
+                                             OwnerColumnNames, TargetColumnNames>
+    {
+        using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+        using target_t = relation_target_t<collection_t>;
+        static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
+                      "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
+        return {};
+    }
+
+    template <reflection::FixedString TargetField>
+    [[nodiscard]] consteval auto mappedBy() const
+        -> ManyToManyDescriptor<Member, nullptr, TargetField, ThroughTable, OwnerColumnNames, TargetColumnNames>
+    {
+        static_assert(not TargetField.view().empty(),
+                      "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
+        return {};
+    }
+
+    template <reflection::FixedString... Names>
+    [[nodiscard]] consteval auto
+    ownerColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable,
+                                                 detail::RelationColumnNames<Names...>, TargetColumnNames>
+    {
+        static_assert(sizeof...(Names) > 0,
+                      "ORM_RELATION_OWNER_COLUMNS_EMPTY: owner junction columns must not be empty");
+        static_assert((not Names.view().empty() && ...),
+                      "ORM_RELATION_OWNER_COLUMN_EMPTY: junction column name must not be empty");
+        return {};
+    }
+
+    template <reflection::FixedString... Names>
+    [[nodiscard]] consteval auto
+    targetColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames,
+                                                  detail::RelationColumnNames<Names...>>
+    {
+        static_assert(sizeof...(Names) > 0,
+                      "ORM_RELATION_TARGET_COLUMNS_EMPTY: target junction columns must not be empty");
+        static_assert((not Names.view().empty() && ...),
+                      "ORM_RELATION_TARGET_COLUMN_EMPTY: junction column name must not be empty");
+        return {};
+    }
+};
+
+namespace detail
+{
+template <auto Member, auto MappedByMember, reflection::FixedString MappedByName, reflection::FixedString ThroughTable,
+          typename OwnerColumnNames, typename TargetColumnNames>
+struct IsRelationDescriptor<
+    ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames>>
+    : std::true_type
+{
+};
+
+template <auto Member, auto MappedByMember, reflection::FixedString MappedByName, reflection::FixedString ThroughTable,
+          typename OwnerColumnNames, typename TargetColumnNames>
+struct IsManyToManyDescriptor<
+    ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames>>
+    : std::true_type
+{
+};
+} // namespace detail
+
+template <auto Member>
+    requires std::is_member_object_pointer_v<decltype(Member)>
+[[nodiscard]] consteval auto oneToMany() -> OneToManyDescriptor<Member>
+{
+    using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+    static_assert(is_one_to_many_v<field_t>, "ORM_RELATION_KIND: oneToMany<Member>() requires an OneToMany<T> member");
+    return {};
 }
 
-[[nodiscard]] inline auto manyToMany(std::string_view fieldName) -> ManyToManyDescriptor
+template <auto Member>
+    requires std::is_member_object_pointer_v<decltype(Member)>
+[[nodiscard]] consteval auto manyToMany() -> ManyToManyDescriptor<Member>
 {
-    return ManyToManyDescriptor{fieldName};
+    using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+    static_assert(is_relation_collection_v<field_t> && not is_one_to_many_v<field_t>,
+                  "ORM_RELATION_KIND: manyToMany<Member>() requires a ManyToMany<T> member");
+    return {};
 }
 
 template <typename... Descriptors>
-[[nodiscard]] auto relations(Descriptors&&... descriptors)
+[[nodiscard]] consteval auto relations(Descriptors... descriptors)
 {
-    static_assert(((std::is_same_v<std::decay_t<Descriptors>, OneToManyDescriptor> ||
-                    std::is_same_v<std::decay_t<Descriptors>, ManyToManyDescriptor>) &&
-                   ...),
-                  "orm::relations accepts only relation descriptors");
-    return std::make_tuple(std::forward<Descriptors>(descriptors)...);
+    static_assert((detail::IsRelationDescriptor<std::remove_cvref_t<Descriptors>>::value && ...),
+                  "ORM_MODEL_RELATIONS_DEFINITION: orm::relations accepts only typed relation descriptors");
+    return std::tuple<Descriptors...>{descriptors...};
 }
 } // namespace orm

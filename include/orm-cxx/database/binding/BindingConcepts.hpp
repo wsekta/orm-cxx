@@ -1,10 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <type_traits>
-
-#include "orm-cxx/model/IdInfo.hpp"
 
 namespace orm::db::binding
 {
@@ -28,6 +27,21 @@ concept SociConvertableToDouble = IsOneOfTypes<ModelField, float>;
 template <typename ModelField>
 concept SociDefaultSupported = IsOneOfTypes<ModelField, int, long long, unsigned long long, double, std::string>;
 
-template <typename ModelField>
-concept ModelWithId = orm::model::hasIdDefinition<ModelField>();
+template <typename T>
+struct OptionalValue
+{
+    using Type = T;
+};
+
+template <typename T>
+struct OptionalValue<std::optional<T>>
+{
+    using Type = T;
+};
+
+template <typename T>
+using optional_value_t = typename OptionalValue<std::remove_cv_t<T>>::Type;
+
+template <typename SchemaType, typename ModelField>
+concept SchemaModel = SchemaType::template contains<std::remove_cv_t<optional_value_t<ModelField>>>;
 } // namespace orm::db::binding

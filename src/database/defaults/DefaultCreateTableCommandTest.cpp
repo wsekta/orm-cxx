@@ -2,7 +2,6 @@
 
 #include <gtest/gtest.h>
 
-#include "orm-cxx/model.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
 
@@ -73,6 +72,12 @@ const std::string createTableSqlWithReferringToAutoIncrementModel =
     "\tPRIMARY KEY (id),\n"
     "\tFOREIGN KEY (field3_id) REFERENCES models_ModelWithAutoIncrementId (id)\n"
     ");";
+
+template <typename T>
+constexpr auto modelView() -> orm::model::ModelView
+{
+    return orm::modelView<models::Schema, T>();
+}
 } // namespace
 
 class DefaultCreateTableCommandTest : public ::testing::Test
@@ -80,71 +85,58 @@ class DefaultCreateTableCommandTest : public ::testing::Test
 public:
     orm::tests::SnapshotSqliteDialect dialect;
     orm::db::commands::DefaultCreateTableCommand command{dialect};
-
-    orm::Model<models::ModelWithFloat> model;
 };
 
 TEST_F(DefaultCreateTableCommandTest, createTable)
 {
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSql);
+    EXPECT_EQ(command.createTable(modelView<models::ModelWithFloat>()), createTableSql);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToSimpleModel)
 {
-    orm::Model<models::ModelRelatedToOtherModel> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToSimpleModel);
+    EXPECT_EQ(command.createTable(modelView<models::ModelRelatedToOtherModel>()),
+              createTableSqlWithReferringToSimpleModel);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithOptionalFields)
 {
-    orm::Model<models::ModelWithOptional> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithOptionalFields);
+    EXPECT_EQ(command.createTable(modelView<models::ModelWithOptional>()), createTableSqlWithOptionalFields);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithOptionalRelation)
 {
-    orm::Model<models::ModelOptionallyRelatedToOtherModel> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithOptionalRelation);
+    EXPECT_EQ(command.createTable(modelView<models::ModelOptionallyRelatedToOtherModel>()),
+              createTableSqlWithOptionalRelation);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToCompositeIdModel)
 {
-    orm::Model<models::ModelRelatedToCompositeIdModel> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToCompositeIdModel);
+    EXPECT_EQ(command.createTable(modelView<models::ModelRelatedToCompositeIdModel>()),
+              createTableSqlWithReferringToCompositeIdModel);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithAutoIncrementId)
 {
-    orm::Model<models::ModelWithAutoIncrementId> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithAutoIncrementId);
+    EXPECT_EQ(command.createTable(modelView<models::ModelWithAutoIncrementId>()), createTableSqlWithAutoIncrementId);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithMappedAutoIncrementId)
 {
-    orm::Model<models::ModelWithAutoIncrementIdAndNamesMapping> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithMappedAutoIncrementId);
+    EXPECT_EQ(command.createTable(modelView<models::ModelWithAutoIncrementIdAndNamesMapping>()),
+              createTableSqlWithMappedAutoIncrementId);
 }
 
 TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToAutoIncrementModel)
 {
-    orm::Model<models::ModelRelatedToAutoIncrementModel> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()), createTableSqlWithReferringToAutoIncrementModel);
+    EXPECT_EQ(command.createTable(modelView<models::ModelRelatedToAutoIncrementModel>()),
+              createTableSqlWithReferringToAutoIncrementModel);
 }
 
 TEST(DefaultCreateTableCommandDialectTest, delegatesDdlTypesAutoincrementAndIdentifiersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
     orm::db::commands::DefaultCreateTableCommand command{dialect};
-    const orm::Model<models::ModelWithAutoIncrementId> model;
-
-    EXPECT_EQ(command.createTable(model.getModelInfo()),
+    EXPECT_EQ(command.createTable(modelView<models::ModelWithAutoIncrementId>()),
               "CREATE_PORTABLE_IF_ABSENT [models_ModelWithAutoIncrementId] (\n"
               "\tPORTABLE_AUTO [id],\n"
               "\t[field1] PORTABLE_TYPE NOT NULL,\n"

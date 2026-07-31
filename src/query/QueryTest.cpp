@@ -17,7 +17,7 @@ TEST(QueryTest, shouldStoreGroupByAndCombinedHavingPredicates)
         .andHaving(avg(col("field1")) >= 10.0)
         .orHaving(!(max(col("id")) <= 3));
 
-    const auto& data = orm::Database::getQueryData(query);
+    const auto& data = orm::FakeDatabase::getSelectSpec(query);
 
     ASSERT_EQ(data.groupBy.size(), 2);
     EXPECT_EQ(data.groupBy[0].getPath(), "field2");
@@ -34,14 +34,14 @@ TEST(QueryTest, shouldInitializeHavingWithAndHavingOrOrHaving)
     orm::Query<models::ModelWithId> andQuery;
     andQuery.andHaving(count(col("id")) > 0);
 
-    const auto& andData = orm::Database::getQueryData(andQuery);
+    const auto& andData = orm::FakeDatabase::getSelectSpec(andQuery);
     ASSERT_TRUE(andData.having.has_value());
     EXPECT_TRUE(std::holds_alternative<AggregateComparisonExpression>(andData.having->getNode().expression));
 
     orm::Query<models::ModelWithId> orQuery;
     orQuery.orHaving(sum(col("field1")) > 0);
 
-    const auto& orData = orm::Database::getQueryData(orQuery);
+    const auto& orData = orm::FakeDatabase::getSelectSpec(orQuery);
     ASSERT_TRUE(orData.having.has_value());
     EXPECT_TRUE(std::holds_alternative<AggregateComparisonExpression>(orData.having->getNode().expression));
 }

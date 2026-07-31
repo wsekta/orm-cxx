@@ -10,7 +10,7 @@ class DefaultDropTableCommand : public DropTableCommand
 public:
     explicit DefaultDropTableCommand(const SqlDialect& dialect);
 
-    [[nodiscard]] auto dropTable(const model::ModelInfo& modelInfo) const -> std::string override;
+    [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string override;
 
 private:
     const SqlDialect& dialect;

@@ -31,7 +31,8 @@ struct User
     int age;
 };
 
-orm::Database database;
+using AppSchema = orm::Schema<User>;
+orm::Database<AppSchema> database;
 database.connect("sqlite3://test.db");
 
 orm::Query<User> query;
@@ -168,9 +169,9 @@ struct User
     int id;
     std::string displayName;
 
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"displayName", "display_name"},
-    };
+    inline static constexpr auto columns_names =
+        orm::columnNames(
+            orm::columnName<&User::displayName, "display_name">());
 };
 
 orm::Query<User> query;
@@ -210,13 +211,17 @@ helpers instead of `col("books.title")`; such paths are rejected. Collections
 also cannot be used as `ORDER BY` or `GROUP BY` expressions, projection fields,
 aggregate arguments, or update targets.
 
-The typed helper is also available when you want to document the expected field type at the call site:
+The typed helper is also available when you want to document the expected
+field type at the call site:
 
 ```cpp
 query.where(orm::query::field<User, int>("age") >= 18);
 ```
 
-The typed helper still takes the field name as a string. It does not infer field names from member pointers.
+The typed helper still takes the field name as a string. It does not infer
+field names from member pointers. Model mappings and schema membership are
+compile-time checked, but query paths remain runtime strings in this release.
+A compile-time query/path DSL is the next validation milestone.
 
 ## Ordering
 
@@ -427,4 +432,6 @@ The query language currently covers ORM-style `SELECT` returning full model obje
 It supports the dedicated correlated `EXISTS` forms exposed by `any`, `exists`,
 and `none`, but not general subqueries or nested collection predicates. It also
 does not support nested includes, collection ordering, raw aggregate
-expressions, aggregate `ORDER BY`, or `COUNT(DISTINCT ...)`.
+expressions, aggregate `ORDER BY`, or `COUNT(DISTINCT ...)`. Field, relation,
+projection-alias, and update paths are validated when the query is rendered,
+not when the C++ source is compiled.

@@ -6,7 +6,7 @@
 
 using namespace orm::query;
 
-class QueryLanguageTest : public DatabaseTest
+class QueryLanguageTest : public DatabaseTest<models::Schema>
 {
 };
 

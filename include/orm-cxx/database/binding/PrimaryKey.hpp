@@ -11,15 +11,11 @@
 #include "BindingPayload.hpp"
 #include "ConversionError.hpp"
 #include "NumericValue.hpp"
+#include "orm-cxx/model/Schema.hpp"
 #include "orm-cxx/query/QueryValue.hpp"
+#include "orm-cxx/reflection/Reflection.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/values.h"
-
-DISABLE_WARNING_PUSH
-DISABLE_EXTERNAL_WARNINGS
-#include "rfl/to_view.hpp"
-DISABLE_WARNING_POP
 
 namespace orm::db::binding
 {
@@ -67,17 +63,17 @@ auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::Q
     }
 }
 
-template <typename T>
+template <typename SchemaType, typename T>
 auto getPrimaryKey(const T& object) -> PrimaryKey
 {
-    const auto& modelInfo = Model<T>::getModelInfo();
-    auto& mutableObject = const_cast<T&>(object);
-    const auto objectAsTuple = rfl::to_view(mutableObject).values();
+    static_assert(SchemaType::template contains<std::remove_cv_t<T>>,
+                  "A primary key can be read only from a model in the selected Schema");
+    constexpr auto descriptor = model::modelView<SchemaType, std::remove_cv_t<T>>();
+    const auto objectAsTuple = reflection::fieldPointers(object);
     PrimaryKey key;
-    key.reserve(modelInfo.idColumnsNames.size());
-    std::size_t columnIndex = 0;
+    key.reserve(descriptor->primaryKeyIndices.size());
 
-    auto appendPrimaryKeyField = [&modelInfo, &key, &columnIndex](auto /*fieldIndex*/, const auto* field)
+    auto appendPrimaryKeyField = [&key]<typename Index>(Index, const auto* field)
     {
         using field_t = std::decay_t<decltype(*field)>;
 
@@ -87,11 +83,13 @@ auto getPrimaryKey(const T& object) -> PrimaryKey
         }
         else
         {
-            const auto& columnInfo = modelInfo.columnsInfo[columnIndex++];
-
-            if (columnInfo.isPrimaryKey)
+            constexpr auto* column = detail::mappedColumn<std::remove_cv_t<T>, SchemaType, Index::value>;
+            if constexpr (column != nullptr)
             {
-                key.push_back(toPrimaryKeyValue(*field, columnInfo.fieldName));
+                if (column->isPrimaryKey)
+                {
+                    key.push_back(toPrimaryKeyValue(*field, std::string{column->fieldName}));
+                }
             }
         }
     };
@@ -146,30 +144,30 @@ inline auto getPrimaryKeyValue(const soci::values& values, const std::string& na
     case model::ColumnType::String:
         return fromStorage(values.get<std::string>(name));
     case model::ColumnType::Uuid:
-    case model::ColumnType::Unknown:
-    case model::ColumnType::OneToOne:
         break;
     }
 
     throw std::invalid_argument{"Unsupported relation primary-key column: " + name};
 }
 
-inline auto getPrimaryKeyColumns(const model::ModelInfo& modelInfo) -> std::vector<const model::ColumnInfo*>
+inline auto getPrimaryKeyColumns(const model::ModelView& model) -> std::vector<const model::ColumnView*>
 {
-    std::vector<const model::ColumnInfo*> columns;
-    columns.reserve(modelInfo.idColumnsNames.size());
+    std::vector<const model::ColumnView*> columns;
+    columns.reserve(model->primaryKeyIndices.size());
 
-    for (const auto& column : modelInfo.columnsInfo)
+    for (const auto columnIndex : model->primaryKeyIndices)
     {
-        if (column.isPrimaryKey)
+        if (columnIndex >= model->columns.size())
         {
-            if (column.isForeignModel)
-            {
-                throw std::invalid_argument{"Relations with model-valued primary-key fields are not supported"};
-            }
-
-            columns.push_back(&column);
+            throw std::invalid_argument{"Primary-key descriptor points outside the model columns"};
         }
+
+        const auto& column = model->columns[columnIndex];
+        if (column.kind != model::FieldKind::Scalar)
+        {
+            throw std::invalid_argument{"Relations with model-valued primary-key fields are not supported"};
+        }
+        columns.push_back(&column);
     }
 
     if (columns.empty())
@@ -180,7 +178,7 @@ inline auto getPrimaryKeyColumns(const model::ModelInfo& modelInfo) -> std::vect
     return columns;
 }
 
-inline auto relationOwnerAlias(const model::ColumnInfo& column) -> std::string
+inline auto relationOwnerAlias(const model::ColumnView& column) -> std::string
 {
     return std::format("__orm_owner_{}", column.name);
 }

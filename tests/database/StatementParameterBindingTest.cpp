@@ -32,6 +32,11 @@ struct ModelRelatedToLongId
     int id;
     ModelWithLongId relation;
 };
+
+using Schema = orm::Schema<models::ModelWithId, models::ModelRelatedToOtherModel, models::ModelWithOverwrittenId,
+                           models::ModelWithAllInts, models::ModelWithOptional, models::ModelWithAllBasicTypes,
+                           models::ModelOptionallyRelatedToOtherModel, ModelOptionallyRelatedToCompositeIdModel,
+                           ModelWithLongId, ModelRelatedToLongId>;
 } // namespace binding_test_models
 
 namespace
@@ -87,7 +92,7 @@ TEST(StatementParameterBindingTest, backendRuntimeBoundNullShouldRoundTripThroug
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -97,6 +102,14 @@ TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 
         EXPECT_THROW(orm::db::binding::bindStatementParameter(values, nullParameter(type)), std::invalid_argument);
     }
+}
+
+TEST(StatementParameterBindingTest, shouldRequireLogicalTypeForNullParameter)
+{
+    const auto parameter =
+        orm::db::StatementParameter{.name = "value", .value = std::nullopt, .nullType = std::nullopt};
+
+    EXPECT_THROW((void)parameter.getBoundValue(), std::invalid_argument);
 }
 
 TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes)
@@ -122,7 +135,7 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedObjectFieldNullValueTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -208,7 +221,7 @@ TEST(StatementParameterBindingTest, nullParameterShouldExposeBoundValueWithItsDe
 TEST(StatementParameterBindingTest, nullBoundValueShouldAlwaysHaveCompatibleStorage)
 {
     const auto value = orm::db::BoundValue{
-        .logicalType = orm::model::ColumnType::Unknown,
+        .logicalType = orm::model::ColumnType::Uuid,
         .value = std::nullopt,
     };
 
@@ -234,7 +247,7 @@ TEST(StatementParameterBindingTest, shouldBindAllPresentParameterValueVariants)
 
 TEST(StatementParameterBindingTest, shouldBindModelFieldsAndRelatedModelPrimaryKey)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelRelatedToOtherModel>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelRelatedToOtherModel, binding_test_models::Schema>;
 
     const auto model = models::ModelRelatedToOtherModel{.id = 1,
                                                         .field1 = 2,
@@ -259,7 +272,7 @@ TEST(StatementParameterBindingTest, shouldBindModelFieldsAndRelatedModelPrimaryK
 
 TEST(StatementParameterBindingTest, shouldBindModelWithOverwrittenIdFields)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId, binding_test_models::Schema>;
 
     const auto model = models::ModelWithOverwrittenId{.id = 1, .field1 = 2, .field2 = "composite"};
     const auto payload = Payload{.value = model};
@@ -276,7 +289,7 @@ TEST(StatementParameterBindingTest, shouldBindModelWithOverwrittenIdFields)
 
 TEST(StatementParameterBindingTest, shouldHydrateModelWithOverwrittenIdFields)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOverwrittenId, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     auto values = soci::values{};
@@ -299,7 +312,7 @@ TEST(StatementParameterBindingTest, shouldHydrateModelWithOverwrittenIdFields)
 
 TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongConvertedModelField)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     auto values = soci::values{};
@@ -314,7 +327,7 @@ TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongConvertedModelF
 
 TEST(StatementParameterBindingTest, shouldHydrateUnsignedLongLongFieldFromSignedDriverStorage)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     auto values = soci::values{};
@@ -365,7 +378,7 @@ TEST(StatementParameterBindingTest, numericHydrationRejectsNonNumericDriverDescr
 
 TEST(StatementParameterBindingTest, shouldHydrateOptionalScalarFromWiderDriverStorage)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     auto values = soci::values{};
@@ -380,7 +393,7 @@ TEST(StatementParameterBindingTest, shouldHydrateOptionalScalarFromWiderDriverSt
 
 TEST(StatementParameterBindingTest, shouldRejectNonFiniteFullModelField)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     auto values = soci::values{};
@@ -414,7 +427,7 @@ TEST(StatementParameterBindingTest, shouldHydrateUnsignedRelationPrimaryKeyFromS
 
 TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongWithoutNarrowing)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     const auto input = std::numeric_limits<long>::max();
@@ -428,13 +441,13 @@ TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongWithoutNarrowing)
     {
         EXPECT_EQ(boundValues.get<long long>("field8"), static_cast<long long>(input));
         selectedValues.set("all_types_field8", static_cast<long long>(input));
-        EXPECT_EQ(payload.getModelInfo().columnsInfo[8].type, orm::model::ColumnType::LongLong);
+        EXPECT_EQ(payload.columnDescriptor(8).type, orm::model::ColumnType::LongLong);
     }
     else
     {
         EXPECT_EQ(boundValues.get<int>("field8"), static_cast<int>(input));
         selectedValues.set("all_types_field8", static_cast<int>(input));
-        EXPECT_EQ(payload.getModelInfo().columnsInfo[8].type, orm::model::ColumnType::Int);
+        EXPECT_EQ(payload.columnDescriptor(8).type, orm::model::ColumnType::Int);
     }
 
     auto output = long{};
@@ -445,16 +458,17 @@ TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongWithoutNarrowing)
 TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongInRelatedModelWithoutNarrowing)
 {
     using Model = binding_test_models::ModelRelatedToLongId;
-    using Payload = orm::db::binding::BindingPayload<Model>;
-    using JoinedPayload = orm::db::binding::BindingPayload<Model, true>;
+    using Payload = orm::db::binding::BindingPayload<Model, binding_test_models::Schema>;
+    using JoinedPayload = orm::db::binding::BindingPayload<Model, binding_test_models::Schema, true>;
 
     const auto input = std::numeric_limits<long>::max();
     const auto payload = Payload{.value = Model{.id = 1, .relation = {.id = input, .value = input}}};
-    const auto& modelInfo = payload.getModelInfo();
-    const auto& relationColumn = modelInfo.columnsInfo[1];
-    const auto& relatedModelInfo = modelInfo.foreignModelsInfo.at(relationColumn.name);
-    const auto& idColumn = relatedModelInfo.columnsInfo[0];
-    const auto& valueColumn = relatedModelInfo.columnsInfo[1];
+    const auto& modelDescriptor = payload.modelDescriptor();
+    const auto& relationColumn = payload.columnDescriptor(1);
+    const auto relatedModelDescriptor = modelDescriptor.resolveTarget(relationColumn);
+    ASSERT_NE(relatedModelDescriptor, nullptr);
+    const auto& idColumn = relatedModelDescriptor->columns[0];
+    const auto& valueColumn = relatedModelDescriptor->columns[1];
     auto boundValues = soci::values{};
 
     orm::db::binding::ObjectFieldToValues<binding_test_models::ModelWithLongId>::set(&payload.value.relation, payload,
@@ -484,7 +498,8 @@ TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongInRelatedModelWit
     };
 
     auto selectedValues = soci::values{};
-    setLongValue(selectedValues, std::format("{}_{}_{}", modelInfo.tableName, relationColumn.name, idColumn.name));
+    setLongValue(selectedValues,
+                 std::format("{}_{}_{}", modelDescriptor->tableName, relationColumn.name, idColumn.name));
     auto relatedModel = binding_test_models::ModelWithLongId{};
     orm::db::binding::ObjectFieldFromValues<binding_test_models::ModelWithLongId>::get(&relatedModel, payload, 1,
                                                                                        selectedValues);
@@ -503,7 +518,7 @@ TEST(StatementParameterBindingTest, shouldRoundTripPlatformLongInRelatedModelWit
 
 TEST(StatementParameterBindingTest, shouldRoundTripPlatformUnsignedLongWithoutNarrowing)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllBasicTypes, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     const auto input = std::numeric_limits<unsigned long>::max();
@@ -519,13 +534,13 @@ TEST(StatementParameterBindingTest, shouldRoundTripPlatformUnsignedLongWithoutNa
 
     const auto expectedType = sizeof(unsigned long) > sizeof(unsigned int) ? orm::model::ColumnType::UnsignedLongLong :
                                                                              orm::model::ColumnType::UnsignedInt;
-    EXPECT_EQ(payload.getModelInfo().columnsInfo[9].type, expectedType);
+    EXPECT_EQ(payload.columnDescriptor(9).type, expectedType);
     EXPECT_EQ(output, input);
 }
 
 TEST(StatementParameterBindingTest, fixedWidth64BitFieldsUse64BitSociStorage)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithAllInts, binding_test_models::Schema>;
 
     const auto payload = Payload{};
     const auto signedInput = std::numeric_limits<std::int64_t>::max();
@@ -537,8 +552,8 @@ TEST(StatementParameterBindingTest, fixedWidth64BitFieldsUse64BitSociStorage)
 
     EXPECT_EQ(boundValues.get<long long>("field7"), static_cast<long long>(signedInput));
     EXPECT_EQ(boundValues.get<unsigned long long>("field8"), static_cast<unsigned long long>(unsignedInput));
-    EXPECT_EQ(payload.getModelInfo().columnsInfo[6].type, orm::model::ColumnType::LongLong);
-    EXPECT_EQ(payload.getModelInfo().columnsInfo[7].type, orm::model::ColumnType::UnsignedLongLong);
+    EXPECT_EQ(payload.columnDescriptor(6).type, orm::model::ColumnType::LongLong);
+    EXPECT_EQ(payload.columnDescriptor(7).type, orm::model::ColumnType::UnsignedLongLong);
 
     auto selectedValues = soci::values{};
     selectedValues.set("all_ints_field7", static_cast<long long>(signedInput));
@@ -555,7 +570,7 @@ TEST(StatementParameterBindingTest, fixedWidth64BitFieldsUse64BitSociStorage)
 
 TEST(StatementParameterBindingTest, shouldBindNullOptionalScalarFields)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional>;
+    using Payload = orm::db::binding::BindingPayload<models::ModelWithOptional, binding_test_models::Schema>;
 
     const auto model =
         models::ModelWithOptional{.field1 = std::nullopt, .field2 = std::nullopt, .field3 = std::nullopt};
@@ -573,7 +588,8 @@ TEST(StatementParameterBindingTest, shouldBindNullOptionalScalarFields)
 
 TEST(StatementParameterBindingTest, shouldBindNullOptionalRelationPrimaryKey)
 {
-    using Payload = orm::db::binding::BindingPayload<models::ModelOptionallyRelatedToOtherModel>;
+    using Payload =
+        orm::db::binding::BindingPayload<models::ModelOptionallyRelatedToOtherModel, binding_test_models::Schema>;
 
     const auto model = models::ModelOptionallyRelatedToOtherModel{
         .id = 1, .field1 = 2, .field2 = "without-relation", .field3 = std::nullopt};
@@ -589,16 +605,17 @@ TEST(StatementParameterBindingTest, shouldBindNullOptionalRelationPrimaryKey)
 
 TEST(StatementParameterBindingTest, shouldHydratePresentOptionalCompositeRelation)
 {
-    using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel>;
+    using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel,
+                                                     binding_test_models::Schema>;
 
     auto payload = Payload{};
     auto values = soci::values{};
     auto relation = std::optional<models::ModelWithOverwrittenId>{};
-    const auto& modelInfo = payload.getModelInfo();
-    const auto& relationInfo = modelInfo.columnsInfo[1];
+    const auto& modelDescriptor = payload.modelDescriptor();
+    const auto& relationInfo = payload.columnDescriptor(1);
 
-    values.set(std::format("{}_{}_field1", modelInfo.tableName, relationInfo.name), static_cast<long long>(7));
-    values.set(std::format("{}_{}_field2", modelInfo.tableName, relationInfo.name), std::string{"composite"});
+    values.set(std::format("{}_{}_field1", modelDescriptor->tableName, relationInfo.name), static_cast<long long>(7));
+    values.set(std::format("{}_{}_field2", modelDescriptor->tableName, relationInfo.name), std::string{"composite"});
 
     orm::db::binding::ObjectFieldFromValues<std::optional<models::ModelWithOverwrittenId>>::get(&relation, payload, 1,
                                                                                                 values);
@@ -611,16 +628,17 @@ TEST(StatementParameterBindingTest, shouldHydratePresentOptionalCompositeRelatio
 
 TEST(StatementParameterBindingTest, shouldRejectPartiallyNullOptionalCompositeRelation)
 {
-    using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel>;
+    using Payload = orm::db::binding::BindingPayload<binding_test_models::ModelOptionallyRelatedToCompositeIdModel,
+                                                     binding_test_models::Schema>;
 
     auto payload = Payload{};
     auto values = soci::values{};
     auto relation = std::optional<models::ModelWithOverwrittenId>{};
-    const auto& modelInfo = payload.getModelInfo();
-    const auto& relationInfo = modelInfo.columnsInfo[1];
-    const auto nullCompositeIdFieldName = std::format("{}_{}_field2", modelInfo.tableName, relationInfo.name);
+    const auto& modelDescriptor = payload.modelDescriptor();
+    const auto& relationInfo = payload.columnDescriptor(1);
+    const auto nullCompositeIdFieldName = std::format("{}_{}_field2", modelDescriptor->tableName, relationInfo.name);
 
-    values.set(std::format("{}_{}_field1", modelInfo.tableName, relationInfo.name), 7);
+    values.set(std::format("{}_{}_field1", modelDescriptor->tableName, relationInfo.name), 7);
     values.set(nullCompositeIdFieldName, std::string{});
     values.set(nullCompositeIdFieldName, std::string{}, soci::i_null);
 

@@ -11,6 +11,8 @@
 
 namespace
 {
+using EmptyDatabase = orm::Database<orm::Schema<>>;
+
 class ThrowingConnectRuntime final : public orm::db::BackendRuntime
 {
 public:
@@ -156,7 +158,7 @@ TEST(DatabaseErrorTest, nonDriverConnectHookFailureClosesSessionAndAllowsReconne
 {
     auto factory = orm::db::CommandGeneratorFactory{};
     factory.registerBackend(std::make_unique<ThrowingConnectBackend>());
-    auto database = orm::Database{std::move(factory)};
+    auto database = EmptyDatabase{std::move(factory)};
 
     try
     {

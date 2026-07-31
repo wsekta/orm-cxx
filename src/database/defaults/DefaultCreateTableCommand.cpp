@@ -1,6 +1,8 @@
 #include "DefaultCreateTableCommand.hpp"
 
+#include <algorithm>
 #include <format>
+#include <stdexcept>
 
 #include "orm-cxx/utils/StringUtils.hpp"
 
@@ -8,17 +10,20 @@ namespace orm::db::commands
 {
 DefaultCreateTableCommand::DefaultCreateTableCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) const -> std::string
+auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std::string
 {
-    std::string command = dialect.renderCreateTablePrefix(modelInfo.tableName, true) + "\n";
+    std::string command = dialect.renderCreateTablePrefix(model->tableName, true) + "\n";
 
-    const auto& columns = modelInfo.columnsInfo;
-
-    for (const auto& column : columns)
+    for (const auto& column : model->columns)
     {
-        if (column.isForeignModel)
+        if (column.kind == model::FieldKind::ToOne)
         {
-            command.append(addColumnsForForeignIds(modelInfo.foreignModelsInfo.at(column.name), column));
+            const auto target = model.resolveTarget(column);
+            if (target == nullptr)
+            {
+                throw std::logic_error{"To-one relation target is not available in the schema"};
+            }
+            command.append(addColumnsForForeignIds(*target, column));
 
             continue;
         }
@@ -30,11 +35,11 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
             continue;
         }
 
-        command.append(std::format("\t{} {}{},\n", dialect.quoteIdentifier(column.name), dialect.toSqlType(column.type),
-                                   column.isNotNull ? " NOT NULL" : ""));
+        command.append(std::format("\t{} {}{},\n", dialect.quoteIdentifier(column.name),
+                                   dialect.toSqlType(column.type.value()), column.isNotNull ? " NOT NULL" : ""));
     }
 
-    if (modelInfo.idColumnsNames.empty() or hasAutoIncrementPrimaryKey(modelInfo))
+    if (model->primaryKeyIndices.empty() or hasAutoIncrementPrimaryKey(model))
     {
         utils::removeLastComma(command);
     }
@@ -42,11 +47,11 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
     {
         command.append("\tPRIMARY KEY (");
 
-        for (const auto& columnInfo : modelInfo.columnsInfo)
+        for (const auto& column : model->columns)
         {
-            if (columnInfo.isPrimaryKey)
+            if (column.isPrimaryKey)
             {
-                command.append(std::format("{}, ", dialect.quoteIdentifier(columnInfo.name)));
+                command.append(std::format("{}, ", dialect.quoteIdentifier(column.name)));
             }
         }
 
@@ -55,9 +60,11 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
         command.append(")");
     }
 
-    if (not modelInfo.foreignModelsInfo.empty())
+    const auto hasToOne = std::ranges::any_of(model->columns, [](const model::ColumnView& column)
+                                              { return column.kind == model::FieldKind::ToOne; });
+    if (hasToOne)
     {
-        command.append(std::format(",\n{}", addForeignIds(modelInfo)));
+        command.append(std::format(",\n{}", addForeignIds(model)));
     }
 
     command.append("\n);");
@@ -65,11 +72,11 @@ auto DefaultCreateTableCommand::createTable(const model::ModelInfo& modelInfo) c
     return command;
 }
 
-auto DefaultCreateTableCommand::hasAutoIncrementPrimaryKey(const model::ModelInfo& modelInfo) -> bool
+auto DefaultCreateTableCommand::hasAutoIncrementPrimaryKey(model::ModelView model) -> bool
 {
-    for (const auto& columnInfo : modelInfo.columnsInfo)
+    for (const auto& column : model->columns)
     {
-        if (columnInfo.isAutoIncrement)
+        if (column.isAutoIncrement)
         {
             return true;
         }
@@ -78,52 +85,63 @@ auto DefaultCreateTableCommand::hasAutoIncrementPrimaryKey(const model::ModelInf
     return false;
 }
 
-auto DefaultCreateTableCommand::addColumnsForForeignIds(const model::ModelInfo& modelInfo,
-                                                        const model::ColumnInfo& columnInfo) const -> std::string
+auto DefaultCreateTableCommand::addColumnsForForeignIds(model::ModelView target,
+                                                        const model::ColumnView& column) const -> std::string
 {
     std::string command{};
 
-    const auto& fieldName = columnInfo.name;
-    const auto* const isNullable = columnInfo.isNotNull ? " NOT NULL" : "";
+    const auto fieldName = column.name;
+    const auto* const isNullable = column.isNotNull ? " NOT NULL" : "";
 
-    for (const auto& foreignColumnInfo : modelInfo.columnsInfo)
+    for (const auto& targetColumn : target->columns)
     {
-        if (foreignColumnInfo.isPrimaryKey)
+        if (targetColumn.isPrimaryKey)
         {
             command.append(std::format("\t{} {}{},\n",
-                                       dialect.quoteIdentifier(std::format("{}_{}", fieldName, foreignColumnInfo.name)),
-                                       dialect.toSqlType(foreignColumnInfo.type), isNullable));
+                                       dialect.quoteIdentifier(std::format("{}_{}", fieldName, targetColumn.name)),
+                                       dialect.toSqlType(targetColumn.type.value()), isNullable));
         }
     }
 
     return command;
 }
 
-auto DefaultCreateTableCommand::addForeignIds(const model::ModelInfo& modelInfo) const -> std::string
+auto DefaultCreateTableCommand::addForeignIds(model::ModelView model) const -> std::string
 {
     std::string command{};
 
-    for (const auto& [fieldName, foreignModelInfo] : modelInfo.foreignModelsInfo)
+    for (const auto& relationColumn : model->columns)
     {
-        std::string foreignKeyCommand{"\tFOREIGN KEY ("};
-        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
+        if (relationColumn.kind != model::FieldKind::ToOne)
         {
-            if (foreignColumnInfo.isPrimaryKey)
+            continue;
+        }
+
+        const auto target = model.resolveTarget(relationColumn);
+        if (target == nullptr)
+        {
+            throw std::logic_error{"To-one relation target is not available in the schema"};
+        }
+
+        std::string foreignKeyCommand{"\tFOREIGN KEY ("};
+        for (const auto& targetColumn : target->columns)
+        {
+            if (targetColumn.isPrimaryKey)
             {
                 foreignKeyCommand.append(std::format(
-                    "{}, ", dialect.quoteIdentifier(std::format("{}_{}", fieldName, foreignColumnInfo.name))));
+                    "{}, ", dialect.quoteIdentifier(std::format("{}_{}", relationColumn.name, targetColumn.name))));
             }
         }
 
         utils::removeLastComma(foreignKeyCommand);
 
-        foreignKeyCommand.append(std::format(") REFERENCES {} (", dialect.quoteIdentifier(foreignModelInfo.tableName)));
+        foreignKeyCommand.append(std::format(") REFERENCES {} (", dialect.quoteIdentifier(target->tableName)));
 
-        for (const auto& foreignColumnInfo : foreignModelInfo.columnsInfo)
+        for (const auto& targetColumn : target->columns)
         {
-            if (foreignColumnInfo.isPrimaryKey)
+            if (targetColumn.isPrimaryKey)
             {
-                foreignKeyCommand.append(std::format("{}, ", dialect.quoteIdentifier(foreignColumnInfo.name)));
+                foreignKeyCommand.append(std::format("{}, ", dialect.quoteIdentifier(targetColumn.name)));
             }
         }
 

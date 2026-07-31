@@ -30,41 +30,41 @@ namespace orm::db::commands
 {
 DefaultUpdateCommand::DefaultUpdateCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultUpdateCommand::update(const query::UpdateData& updateData) const -> Statement
+auto DefaultUpdateCommand::update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement
 {
-    if (updateData.assignments.empty())
+    if (spec.assignments.empty())
     {
         throw std::invalid_argument{"UPDATE requires at least one assignment"};
     }
 
-    if (not updateData.predicate.has_value())
+    if (not spec.predicate.has_value())
     {
         throw std::invalid_argument{"UPDATE requires a WHERE predicate"};
     }
 
     RenderContext context{
-        .modelInfo = updateData.modelInfo,
+        .model = model,
         .dialect = dialect,
         .shouldJoin = false,
         .columnRenderMode = ColumnRenderMode::WritePredicate,
     };
 
-    const auto assignments = getAssignments(updateData, context);
-    const auto where = renderWhere(updateData.predicate, context);
-    const auto sql =
-        std::format("UPDATE {} SET {}{};", dialect.quoteIdentifier(updateData.modelInfo.tableName), assignments, where);
+    const auto assignments = getAssignments(model, spec, context);
+    const auto where = renderWhere(spec.predicate, context);
+    const auto sql = std::format("UPDATE {} SET {}{};", dialect.quoteIdentifier(model->tableName), assignments, where);
 
     return Statement{.sql = sql, .parameters = std::move(context.parameters)};
 }
 
-auto DefaultUpdateCommand::getAssignments(const query::UpdateData& updateData, RenderContext& context) -> std::string
+auto DefaultUpdateCommand::getAssignments(model::ModelView model, const query::UpdateSpec& spec,
+                                          RenderContext& context) -> std::string
 {
     std::vector<std::string> assignments;
-    assignments.reserve(updateData.assignments.size());
+    assignments.reserve(spec.assignments.size());
 
-    for (const auto& assignment : updateData.assignments)
+    for (const auto& assignment : spec.assignments)
     {
-        const auto column = renderWriteColumn(assignment.column, updateData.modelInfo, context.dialect, false);
+        const auto column = renderWriteColumn(assignment.column, model, context.dialect, false);
         std::string parameter;
 
         if (assignment.value.value.has_value())

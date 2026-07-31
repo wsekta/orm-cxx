@@ -33,8 +33,6 @@ auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type) const -> std::s
         return "TEXT";
 
     case model::ColumnType::Uuid:
-    case model::ColumnType::Unknown:
-    case model::ColumnType::OneToOne:
         break;
     }
 

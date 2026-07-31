@@ -38,37 +38,41 @@ struct NullableAggregateProjection
 
 struct ReservedIdentifierModel
 {
-    inline static constexpr std::string_view table_name = "order";
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"id", "select"},
-        {"value", "group"},
-    };
-
     int id;
     std::string value;
+
+    inline static constexpr orm::reflection::FixedString table_name{"order"};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&ReservedIdentifierModel::id, "select">(),
+                         orm::columnName<&ReservedIdentifierModel::value, "group">());
 };
 
 struct MappedModel
 {
-    inline static constexpr std::string_view table_name = "conformance_mapped_table";
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"id", "mapped_id"},
-        {"name", "mapped_name"},
-    };
-
     int id;
     std::string name;
+
+    inline static constexpr orm::reflection::FixedString table_name{"conformance_mapped_table"};
+    inline static constexpr auto columns_names = orm::columnNames(orm::columnName<&MappedModel::id, "mapped_id">(),
+                                                                  orm::columnName<&MappedModel::name, "mapped_name">());
 };
 
 struct NonPortableBindNameModel
 {
-    inline static const std::map<std::string, std::string> columns_names = {
-        {"value", "odd-name"},
-    };
-
     int id;
     std::string value;
+
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&NonPortableBindNameModel::value, "odd-name">());
 };
+
+using Schema =
+    orm::Schema<models::SomeDataModel, models::ModelWithOptional, models::ModelWithId, models::ModelWithAutoIncrementId,
+                models::ModelWithOverwrittenId, models::ModelRelatedToOtherModel,
+                models::ModelOptionallyRelatedToOtherModel, models::ModelWithAllBasicTypes, collection_models::Author,
+                collection_models::Book, collection_models::User, collection_models::Role,
+                collection_models::CompositeOwner, collection_models::CompositeTag, ReservedIdentifierModel,
+                MappedModel, NonPortableBindNameModel>;
 } // namespace conformance_models
 
 namespace
@@ -142,7 +146,7 @@ auto canPopulateModelWithId(const orm::db::BackendCapabilities& capabilities) ->
 }
 } // namespace
 
-class BackendConformanceTest : public DatabaseTest
+class BackendConformanceTest : public DatabaseTest<conformance_models::Schema>
 {
 };
 
@@ -178,7 +182,7 @@ TEST_P(BackendConformanceTest, supportedBackendAdvertisesRequiredCoreCapabilitie
 
 TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBackend)
 {
-    orm::Database detectedDatabase;
+    orm::Database<conformance_models::Schema> detectedDatabase;
 
     detectedDatabase.connect(testConnectionString());
 
@@ -196,7 +200,7 @@ TEST_P(BackendConformanceTest, connectedDatabaseRejectsSecondConnect)
 
 TEST_P(BackendConformanceTest, disconnectedDatabaseRejectsCapabilitiesAndOperations)
 {
-    orm::Database disconnectedDatabase;
+    orm::Database<conformance_models::Schema> disconnectedDatabase;
 
     expectDatabaseError([&disconnectedDatabase]() { (void)disconnectedDatabase.getBackendCapabilities(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");

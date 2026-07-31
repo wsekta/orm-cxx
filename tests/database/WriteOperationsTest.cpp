@@ -6,7 +6,7 @@
 
 using namespace orm::query;
 
-class WriteOperationsTest : public DatabaseTest
+class WriteOperationsTest : public DatabaseTest<models::Schema>
 {
 };
 

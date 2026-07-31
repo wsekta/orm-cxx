@@ -88,7 +88,7 @@ struct NarrowIntegralProjection
 
 using namespace projection_query_database_test_models;
 
-class ProjectionQueryDatabaseTest : public DatabaseTest
+class ProjectionQueryDatabaseTest : public DatabaseTest<models::Schema>
 {
 };
 
