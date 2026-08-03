@@ -342,7 +342,6 @@ PostgreSQL.
 ## 📦 Dependencies
 
 - [GTest](https://github.com/google/googletest) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
-- [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
 - [SOCI](https://github.com/SOCI/soci)
 - SQLite development libraries (when `ORM_CXX_ENABLE_SQLITE_BACKEND=ON`)
 - PostgreSQL `libpq` development libraries (when `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON`)
