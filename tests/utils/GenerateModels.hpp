@@ -29,12 +29,10 @@ auto fillField(T& field) -> void
 template <>
 inline auto fillField<std::string>(std::string& field) -> void
 {
-    static constexpr const char* words[] = {
-        "alpha",   "bravo",   "charlie", "delta",    "echo",     "foxtrot", "gamma",   "hotel",
-        "india",   "juliet",  "kilo",    "lima",     "mike",     "november", "oscar",  "papa",
-        "quebec",  "romeo",   "sierra",  "tango",    "uniform",  "victor",   "whiskey", "xray",
-        "yankee",  "zulu"
-    };
+    static constexpr const char* words[] = {"alpha",  "bravo",   "charlie", "delta",  "echo",   "foxtrot", "gamma",
+                                            "hotel",  "india",   "juliet",  "kilo",   "lima",   "mike",    "november",
+                                            "oscar",  "papa",    "quebec",  "romeo",  "sierra", "tango",   "uniform",
+                                            "victor", "whiskey", "xray",    "yankee", "zulu"};
     static std::uniform_int_distribution<int> dist(0, 25);
     field = words[dist(testRng())];
 }
