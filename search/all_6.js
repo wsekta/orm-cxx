@@ -6,11 +6,11 @@ var searchData=
   ['backend_20responsibilities_3',['Required backend responsibilities',['../md_docs_2backend-extension.html#autotoc_md2',1,'']]],
   ['backends_4',['Backends',['../md_docs_2backends.html',1,'']]],
   ['begintransaction_5',['beginTransaction',['../classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa',1,'orm::DatabaseCore']]],
-  ['behavior_6',['behavior',['../md_docs_2backend-portability.html#autotoc_md12',1,'Portable behavior'],['../md_docs_2partial-result-queries.html#autotoc_md61',1,'Query behavior']]],
+  ['behavior_6',['behavior',['../md_docs_2backend-portability.html#autotoc_md12',1,'Portable behavior'],['../md_docs_2partial-result-queries.html#autotoc_md71',1,'Query behavior']]],
   ['binding_20and_20soci_7',['Binding and SOCI',['../md_docs_2backend-portability.html#autotoc_md14',1,'']]],
   ['boundary_8',['SOCI boundary',['../md_docs_2backend-extension.html#autotoc_md4',1,'']]],
   ['build_20and_20ci_20integration_9',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
   ['build_20configuration_10',['Build configuration',['../md_docs_2backends.html#autotoc_md24',1,'']]],
-  ['build_20select_11',['Build select',['../md_docs_2query.html#autotoc_md66',1,'']]],
-  ['by_20collections_12',['Filtering by collections',['../md_docs_2relations.html#autotoc_md88',1,'']]]
+  ['build_20select_11',['Build select',['../md_docs_2query.html#autotoc_md76',1,'']]],
+  ['by_20collections_12',['Filtering by collections',['../md_docs_2relations.html#autotoc_md98',1,'']]]
 ];

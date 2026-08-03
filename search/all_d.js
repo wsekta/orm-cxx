@@ -1,8 +1,8 @@
 var searchData=
 [
   ['include_0',['include',['../classorm_1_1Query.html#aa297c86fc264e9a169d8b05ab54dc7f1',1,'orm::Query']]],
-  ['increment_20primary_20key_1',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md55',1,'']]],
-  ['insert_20objects_2',['Insert objects',['../md_docs_2database.html#autotoc_md33',1,'']]],
+  ['increment_20primary_20key_1',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md65',1,'']]],
+  ['insert_20objects_2',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
   ['insertimpl_3',['insertImpl',['../classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254',1,'orm::DatabaseCore::insertImpl(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944',1,'orm::DatabaseCore::insertImpl(T object) -&gt; void']]],
   ['integration_4',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
   ['isconnected_5',['isConnected',['../classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb',1,'orm::DatabaseCore']]],

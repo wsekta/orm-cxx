@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2query
   <div class="headertitle"><div class="title">Query </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md65"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md75"></a></p>
 <ol type="1">
 <li>Build selectBuild select</li>
 </ol>
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2query
 <ol type="1">
 <li>Current limitationsCurrent limitations</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md66"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md76"></a>
 Build select</h1>
 <p>To query objects from a table use <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;Model&gt;</span> and pass it to <span class="tt">orm::Database::select</span>. The result is always <span class="tt">std::vector&lt;Model&gt;</span>.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &quot;orm-cxx/orm.hpp&quot;</span></div>
@@ -194,7 +194,7 @@ Build select</h1>
 <div class="line">     .limit(10)</div>
 <div class="line">     .offset(20);</div>
 <div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:37</div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md67"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md77"></a>
 Loading collections</h1>
 <p><span class="tt">OneToMany</span> and <span class="tt">ManyToMany</span> fields are unloaded by default. Request a collection explicitly on a full-model query:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> query;</div>
@@ -208,7 +208,7 @@ Loading collections</h1>
 <p>The main query is executed first, followed by one or more parameter-bounded batched queries for each unique included field. Results are grouped by the complete parent primary key, so parents are not duplicated and the implementation never issues one query per parent. Large key sets are split to respect the selected backend's parameter limit.</p>
 <p>Pagination, <span class="tt">DISTINCT</span>, and ordering apply to the parent query only. Included collections are complete for the selected parents, but their element order is not guaranteed. Includes support one level; collection wrappers within loaded elements stay unloaded.</p>
 <p><span class="tt">disableJoining()</span> controls existing to-one joins and is propagated while hydrating collection elements. It does not disable an explicit include. <span class="tt">ProjectionQuery</span> has no <span class="tt">include</span> method because its result is a flat DTO.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md68"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md78"></a>
 Where predicates</h1>
 <p>Use helpers from <span class="tt">orm::query</span> to build a predicate tree.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -255,7 +255,7 @@ Where predicates</h1>
 <div class="line">     .andWhere(col(<span class="stringliteral">&quot;email&quot;</span>).isNotNull())</div>
 <div class="line">     .orWhere(col(<span class="stringliteral">&quot;name&quot;</span>) == <span class="stringliteral">&quot;admin&quot;</span>);</div>
 </div><!-- fragment --><p>All comparison values are sent to the database as SOCI bind parameters. They are not interpolated into SQL strings.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md69"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md79"></a>
 Collection predicates</h1>
 <p>Use <span class="tt">any</span>, <span class="tt">exists</span>, and <span class="tt">none</span> to filter a model by a mapped collection:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -269,7 +269,7 @@ Collection predicates</h1>
 </div><!-- fragment --><p><span class="tt">any("books", predicate)</span> renders a correlated <span class="tt">EXISTS</span> subquery. <span class="tt">none("books", predicate)</span> renders <span class="tt">NOT EXISTS</span>, and <span class="tt">exists("books")</span> checks only whether at least one related row exists. They work for both <span class="tt">OneToMany</span> and <span class="tt">ManyToMany</span>, including inverse many-to-many mappings.</p>
 <p>The element predicate is resolved relative to the target model. It may contain target scalar fields and that model's existing one-level to-one paths. Values are bound normally; they are never interpolated into SQL. Nested collection predicates are rejected.</p>
 <p>A collection predicate filters only. It does not mark the wrapper loaded or fetch its elements; combine it with <span class="tt">include("books")</span> when both behaviors are needed.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md70"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md80"></a>
 Column names and relations</h1>
 <p><span class="tt">col("field")</span> uses the C++ model field name. If the model defines <span class="tt">columns_names</span>, the query renderer maps the field name to the configured database column name.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
@@ -306,7 +306,7 @@ Column names and relations</h1>
 <p>The typed helper is also available when you want to document the expected field type at the call site:</p>
 <div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">where</a>(orm::query::field&lt;User, int&gt;(<span class="stringliteral">&quot;age&quot;</span>) &gt;= 18);</div>
 </div><!-- fragment --><p>The typed helper still takes the field name as a string. It does not infer field names from member pointers. Model mappings and schema membership are compile-time checked, but query paths remain runtime strings in this release. A compile-time query/path DSL is the next validation milestone.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md71"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md81"></a>
 Ordering</h1>
 <p>Use <span class="tt">asc</span> and <span class="tt">desc</span> to add <span class="tt">ORDER BY</span> clauses:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -316,13 +316,13 @@ Ordering</h1>
 <div class="ttc" id="aclassorm_1_1Query_html_a0e4c45fc5b506b7dfb03f96d995fe65c"><div class="ttname"><a href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orm::Query::orderBy</a></div><div class="ttdeci">auto orderBy(Orders... orders) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the ORDER BY clauses for the select query.</div><div class="ttdef"><b>Definition</b> query.hpp:73</div></div>
 </div><!-- fragment --><p>Ordering can also use related field paths:</p>
 <div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a>(asc(col(<span class="stringliteral">&quot;profile.city&quot;</span>)));</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md72"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md82"></a>
 Distinct</h1>
 <p>Use <span class="tt">distinct()</span> to render <span class="tt">SELECT DISTINCT</span>:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
 <div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a>();</div>
 <div class="ttc" id="aclassorm_1_1Query_html_a6b9e97270d5af0c1aebfcc6c408cf9e2"><div class="ttname"><a href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">orm::Query::distinct</a></div><div class="ttdeci">auto distinct() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Select distinct rows.</div><div class="ttdef"><b>Definition</b> query.hpp:137</div></div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md73"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md83"></a>
 Limit and offset</h1>
 <p>Use <span class="tt">limit</span> and <span class="tt">offset</span> to page through results:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
@@ -331,7 +331,7 @@ Limit and offset</h1>
 <div class="line">     .offset(50);</div>
 </div><!-- fragment --><p>SQL clauses are rendered in this order:</p>
 <div class="fragment"><div class="line"><span class="keyword">WHERE</span> ... <span class="keyword">GROUP</span> <span class="keyword">BY</span> ... <span class="keyword">HAVING</span> ... <span class="keyword">ORDER</span> <span class="keyword">BY</span> ... LIMIT ... OFFSET ...</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md74"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md84"></a>
 Raw SQL fragments</h1>
 <p>Raw predicates and raw ordering are available for cases not covered by the ORM DSL.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -347,7 +347,7 @@ Raw SQL fragments</h1>
 <li>must be unique within the query,</li>
 <li>must not use the reserved <span class="tt">orm_p</span> prefix.</li>
 </ul>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md75"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md85"></a>
 Partial-result queries</h1>
 <p>Use <span class="tt"><a class="el" href="classorm_1_1ProjectionQuery.html" title="A select query that returns a user-defined DTO instead of the full source model.">orm::ProjectionQuery</a>&lt;Source, Result&gt;</span> to select a subset of fields into a flat DTO:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -367,7 +367,7 @@ Partial-result queries</h1>
 <div class="line">std::vector&lt;UserSummary&gt; users = database.select(query);</div>
 <div class="ttc" id="aclassorm_1_1ProjectionQuery_html"><div class="ttname"><a href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery</a></div><div class="ttdoc">A select query that returns a user-defined DTO instead of the full source model.</div><div class="ttdef"><b>Definition</b> projection_query.hpp:149</div></div>
 </div><!-- fragment --><p>Projection aliases must match the DTO field names. See <a class="el" href="md_docs_2partial-result-queries.html" title="Partial-result queries">Partial-result queries</a> for the full contract and validation rules.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md76"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md86"></a>
 Full-model grouping and HAVING</h1>
 <p><span class="tt">Query&lt;Model&gt;</span> supports <span class="tt">GROUP BY</span> and aggregate <span class="tt">HAVING</span> predicates without changing its result type:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -385,7 +385,7 @@ Full-model grouping and HAVING</h1>
 <p>Column mappings, one-level relation paths, and <span class="tt">disableJoining()</span> follow the same rules as <span class="tt">WHERE</span> and <span class="tt">ORDER BY</span>. Without joins, only related primary-key paths are available.</p>
 <p>SQLite permits a full-model <span class="tt">SELECT</span> grouped by only some model fields. In that case each returned model is a representative row for its group, and values of fields outside <span class="tt">GROUP BY</span> are not deterministic. Group by every selected field when deterministic full-model values are required.</p>
 <p>PostgreSQL rejects full-model <span class="tt">GROUP BY</span> and <span class="tt">HAVING</span> through the backend capability check before executing SQL. Use an aggregate <span class="tt">ProjectionQuery</span> instead. PostgreSQL also requires every non-aggregate projected column and typed <span class="tt">ORDER BY</span> column in an aggregate projection to appear in <span class="tt">GROUP BY</span>. These rules keep the same typed query API while avoiding backend-dependent hydration of an incomplete model.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md77"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md87"></a>
 Aggregate projection queries</h1>
 <p>Aggregate queries use <span class="tt">ProjectionQuery&lt;Source, Result&gt;</span> and hydrate flat DTOs through explicit aliases:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -410,7 +410,7 @@ Aggregate projection queries</h1>
 <p><span class="tt">GROUP BY</span> and aggregate column paths follow the same one-level relation rules as <span class="tt">WHERE</span>, <span class="tt">ORDER BY</span>, and column projections. With <span class="tt">disableJoining()</span>, related paths are limited to related primary-key fields.</p>
 <p>The aggregate predicate DSL is shared with full-model <span class="tt">Query&lt;Model&gt;</span>. Use a projection query only when aggregate values themselves must be returned.</p>
 <p><span class="tt">count</span> and <span class="tt">countAll</span> are usually represented as <span class="tt">long long</span> DTO fields, while <span class="tt">avg</span> is usually represented as <span class="tt">double</span>. Use <span class="tt">std::optional&lt;T&gt;</span> for aggregate results that may be SQL <span class="tt">NULL</span>.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md78"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md88"></a>
 Write predicates</h1>
 <p>The same predicate DSL is used by <span class="tt"><a class="el" href="classorm_1_1Update.html">orm::Update</a>&lt;Model&gt;</span> and <span class="tt">orm::Database::remove&lt;Model&gt;</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -425,7 +425,7 @@ Write predicates</h1>
 </div><!-- fragment --><p>Write predicates do not generate joins. They support direct model fields and related primary-key paths that can be mapped to local foreign-key columns:</p>
 <div class="fragment"><div class="line">update.where(col(<span class="stringliteral">&quot;profile.id&quot;</span>) == 10);</div>
 </div><!-- fragment --><p>Non-primary-key related paths in write predicates, such as <span class="tt">col("profile.city")</span>, throw <span class="tt">std::invalid_argument</span>. Assignments use the same rule: direct fields are supported, and related primary-key assignments update the local foreign-key column.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md79"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md89"></a>
 Limitations</h1>
 <p>The query language currently covers ORM-style <span class="tt">SELECT</span> returning full model objects plus predicate-based <span class="tt">UPDATE</span> and <span class="tt">DELETE</span> operations. It supports the dedicated correlated <span class="tt">EXISTS</span> forms exposed by <span class="tt">any</span>, <span class="tt">exists</span>, and <span class="tt">none</span>, but not general subqueries or nested collection predicates. It also does not support nested includes, collection ordering, raw aggregate expressions, aggregate <span class="tt">ORDER BY</span>, or <span class="tt">COUNT(DISTINCT ...)</span>. Field, relation, projection-alias, and update paths are validated when the query is rendered, not when the C++ source is compiled. </p>
 </div></div><!-- contents -->

@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2datab
   <div class="headertitle"><div class="title">Database </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md27"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md37"></a></p>
 <ol type="1">
 <li>ConnectConnect</li>
 </ol>
@@ -154,7 +154,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2datab
 <ol type="1">
 <li>TransactionsTransactions</li>
 </ol>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md38"></a>
 Connect</h1>
 <p>Bind each database to a closed compile-time schema after declaring its model types, then connect it with a standard connection string:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
@@ -178,11 +178,11 @@ Connect</h1>
 </div><!-- fragment --><p>This is not an RFC-style <span class="tt">postgresql://user@host/database</span> URI. Connection strings are never copied into <span class="tt">DatabaseError</span> diagnostics. Keyword values with whitespace are not supported by the vendored SOCI parser; use a PostgreSQL passfile/<span class="tt">PGPASSFILE</span> for credentials that cannot be represented safely.</p>
 <p>Use <span class="tt">isConnected()</span> and <span class="tt">getBackendType()</span> to inspect lifecycle state. Calling <span class="tt">disconnect()</span> rolls back an active transaction before closing the session; the same <span class="tt">Database</span> object can then connect again. A <span class="tt">Database</span> is intentionally neither copyable nor movable because an active transaction is tied to its SOCI session.</p>
 <p>Both supported backends enforce generated foreign keys. SQLite connections automatically enable <span class="tt">PRAGMA foreign_keys=ON</span>; PostgreSQL requires no equivalent session setup. Foreign-key violations therefore fail immediately, and deleting a many-to-many endpoint removes its junction rows through the generated <span class="tt">ON DELETE CASCADE</span> rules. PostgreSQL uses the session's active <span class="tt">search_path</span>; schema-qualified model names are not a public API in this release.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md39"></a>
 Capabilities and errors</h1>
 <p><span class="tt">getBackendCapabilities()</span> returns the selected backend's centralized schema, query, mutation, relation, type, value-limit, and transaction feature profile. Unsupported optional behavior is rejected before SQL execution with <span class="tt">DatabaseErrorCode::UnsupportedFeature</span>.</p>
 <p>Operations crossing the backend boundary throw <span class="tt">orm::DatabaseError</span>. Inspect <span class="tt">getCode()</span>, <span class="tt">getBackendType()</span>, <span class="tt">getOperation()</span>, and the optional <span class="tt">getNativeCode()</span> instead of parsing vendor message text. Diagnostics are sanitized and do not contain connection strings or bound values.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md40"></a>
 Create table</h1>
 <p>To create a table in the database, use <span class="tt">createTable</span> method and pass model as template argument:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>ObjectModel</div>
@@ -196,11 +196,11 @@ Create table</h1>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line">database.createTable&lt;ObjectModel&gt;();</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md41"></a>
 Delete table</h1>
 <p>To delete a table from the database, use <span class="tt">deleteTable</span> method and pass model as template argument:</p>
 <div class="fragment"><div class="line">database.deleteTable&lt;ObjectModel&gt;();</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md42"></a>
 Create and delete relation tables</h1>
 <p>Base model tables and many-to-many junction tables have an explicit lifecycle. Create both endpoint tables first, then create junction tables from the owning model:</p>
 <div class="fragment"><div class="line">database.createTable&lt;User&gt;();</div>
@@ -212,7 +212,7 @@ Create and delete relation tables</h1>
 <div class="line">database.deleteTable&lt;Role&gt;();</div>
 <div class="line">database.deleteTable&lt;User&gt;();</div>
 </div><!-- fragment --><p><span class="tt">deleteRelationTables&lt;T&gt;()</span> is also idempotent and affects only junction tables owned by <span class="tt">T</span>. <span class="tt">createTable</span>, <span class="tt">deleteTable</span>, <span class="tt">insert</span>, and row deletion never recursively create, drop, or synchronize relation tables.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md43"></a>
 Insert objects</h1>
 <p>To insert objects into the database, use <span class="tt">insert</span> method and pass vector of objects as argument:</p>
 <div class="fragment"><div class="line">std::vector&lt;ObjectModel&gt; objects{</div>
@@ -253,7 +253,7 @@ Insert objects</h1>
 <div class="line"> </div>
 <div class="line">database.insert(User{1, std::nullopt});</div>
 </div><!-- fragment --><p><span class="tt">OneToMany</span> and <span class="tt">ManyToMany</span> wrapper fields are ignored by <span class="tt">insert</span>. Endpoint objects must be inserted separately, followed by explicit <span class="tt">link</span> calls where a stored relation is needed. There is no cascade-save.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md44"></a>
 Link and unlink relations</h1>
 <p>Many-to-many mutations add or remove one junction row:</p>
 <div class="fragment"><div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
@@ -268,7 +268,7 @@ Link and unlink relations</h1>
 </div><!-- fragment --><p><span class="tt">link</span> updates the child's mapped foreign key, including moving it from another parent. <span class="tt">unlink</span> writes SQL <span class="tt">NULL</span>; it throws <span class="tt">std::invalid_argument</span> when the child's mapped to-one field is not optional. They return <span class="tt">1</span> only when the stored foreign key changed and <span class="tt">0</span> when it was already in the requested state.</p>
 <p><span class="tt">link</span> and <span class="tt">unlink</span> read only endpoint primary keys. They do not persist either object, and all components of a simple or composite key must be present and non-null. A model with a database-generated key must be selected after insert before it is used as an endpoint. Missing endpoint rows are rejected by foreign-key enforcement on both supported backends.</p>
 <p>See <a class="el" href="md_docs_2relations.html" title="Collection relations">Collection relations</a> for mapping declarations, generated junction schemas, delete behavior, and self-referencing mappings.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md35"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md45"></a>
 Query objects</h1>
 <p>To select objects from database use <span class="tt">select</span> method and pass <a class="el" href="md_docs_2query.html" title="Query">query</a> as argument:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -282,7 +282,7 @@ Query objects</h1>
 <div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:26</div></div>
 <div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:37</div></div>
 </div><!-- fragment --><p>PostgreSQL rejects full-model <span class="tt">GROUP BY</span>/<span class="tt">HAVING</span> queries before SQL execution, because selecting arbitrary non-grouped model fields has no portable meaning. Use <span class="tt">ProjectionQuery</span> and explicitly project grouped columns and aggregates.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md36"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md46"></a>
 Update objects</h1>
 <p>To update rows, build an <span class="tt"><a class="el" href="classorm_1_1Update.html">orm::Update</a>&lt;Model&gt;</span> with one or more assignments and a required predicate:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -299,14 +299,14 @@ Update objects</h1>
 <div class="line">clearEmail.set(col(<span class="stringliteral">&quot;email&quot;</span>), std::nullopt)</div>
 <div class="line">          .where(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
 </div><!-- fragment --><p><span class="tt">update</span> returns the number of affected rows. Calling it without a <span class="tt">where</span> predicate, or without assignments throws <span class="tt">std::invalid_argument</span>. Assigning <span class="tt">NULL</span> to a non-nullable column also throws before executing SQL.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md37"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md47"></a>
 Remove objects</h1>
 <p>To delete rows, call <span class="tt">remove</span> with the model type and a required predicate:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
 <div class="line">std::size_t removedRows = database.remove&lt;ObjectModel&gt;(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
 </div><!-- fragment --><p><span class="tt">remove</span> returns the number of affected rows. There is no unfiltered public delete-row API.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md38"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md48"></a>
 Transactions</h1>
 <p>Start a transaction with <span class="tt">beginTransaction</span>, then call <span class="tt">commitTransaction</span> or <span class="tt">rollbackTransaction</span>:</p>
 <div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa">beginTransaction</a>();</div>
