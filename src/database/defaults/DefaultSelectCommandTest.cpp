@@ -591,8 +591,9 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunctio
 {
     orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
-    query.project(as("id", col("id")), as("name", AggregateExpression{.function = static_cast<AggregateFunction>(999),
-                                                                      .column = col("field1")}));
+    query.project(as("id", col("id")), as("name",
+                                          AggregateExpression{.function = static_cast<AggregateFunction>(999), // NOLINT
+                                                              .column = col("field1")}));
 
     EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
@@ -657,7 +658,7 @@ TEST_F(DefaultSelectCommandTest, selectWithUnsupportedComparisonOperator_shouldT
     orm::Query<models::ModelWithFloat> query;
     query.where(orm::query::Predicate{orm::query::PredicateNode{orm::query::ComparisonExpression{
         .column = col("field1"),
-        .comparisonOperator = static_cast<orm::query::ComparisonOperator>(999),
+        .comparisonOperator = static_cast<orm::query::ComparisonOperator>(999), // NOLINT
         .value = orm::query::QueryValue{1},
     }}});
 

@@ -566,8 +566,8 @@ auto DatabaseCore::relationEndpointExists(model::ModelView model, const db::bind
         const auto parameterName = std::format("orm_endpoint_{}", i);
         where += std::format("{} = {}", dialect.quoteIdentifier(primaryKeyColumns[i]->name),
                              dialect.bindMarker(parameterName));
-        statement.parameters.push_back(
-            db::StatementParameter{.name = parameterName, .value = db::binding::toQueryValue(key[i]), .nullType = std::nullopt});
+        statement.parameters.push_back(db::StatementParameter{
+            .name = parameterName, .value = db::binding::toQueryValue(key[i]), .nullType = std::nullopt});
     }
 
     statement.sql = std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(model->tableName), where);

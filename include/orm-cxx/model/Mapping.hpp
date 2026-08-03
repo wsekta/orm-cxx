@@ -243,11 +243,9 @@ struct PrimaryKey
         }
         else
         {
-            return ((([&memberName] {
-                        const auto name = detail::reflectedMemberName<Members>();
-                        return name.view() == memberName;
-                    })() ||
-                    ...));
+            const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
+            return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
+                              nameStorage);
         }
     }
 
@@ -298,11 +296,9 @@ struct AutoIncrement
         }
         else
         {
-            return ((([&memberName] {
-                        const auto name = detail::reflectedMemberName<Members>();
-                        return name.view() == memberName;
-                    })() ||
-                    ...));
+            const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
+            return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
+                              nameStorage);
         }
     }
 };
