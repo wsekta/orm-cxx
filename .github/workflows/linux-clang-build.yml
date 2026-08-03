@@ -10,9 +10,27 @@ permissions:
   contents: read
 
 jobs:
-  coverage:
+  build:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Clang 18 (coverage)
+            preset: linux-clang-coverage
+            packages: clang-18 clang-tools-18 libclang-rt-18-dev llvm-18
+            coverage: true
+          - name: Clang 19
+            preset: linux-clang-19-debug
+            packages: clang-19 clang-tools-19 libclang-rt-19-dev llvm-19
+            coverage: false
+          - name: Clang 20
+            preset: linux-clang-20-debug
+            packages: clang-20 clang-tools-20 libclang-rt-20-dev llvm-20
+            coverage: false
+
+    name: ${{ matrix.name }}
 
     steps:
       - name: Checkout
@@ -20,35 +38,42 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Clang 18 dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
-            clang-18 \
-            clang-tools-18 \
-            libclang-rt-18-dev \
-            llvm-18 \
+            ${{ matrix.packages }} \
             lcov \
             ninja-build \
             sqlite3 \
             libsqlite3-dev
 
-      - name: Configure coverage
-        run: cmake --preset linux-clang-coverage
+      - name: Configure
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Run tests
+        if: ${{ !matrix.coverage }}
+        run: ctest --preset ${{ matrix.preset }}
 
       - name: Run tests and generate coverage
-        run: cmake --build --preset linux-clang-coverage --target orm-cxx-coverage
+        if: ${{ matrix.coverage }}
+        run: cmake --build --preset ${{ matrix.preset }} --target orm-cxx-coverage
 
       - name: Run full portability profile
-        run: ctest --preset linux-clang-coverage
+        if: ${{ matrix.coverage }}
+        run: ctest --preset ${{ matrix.preset }}
 
       - name: Upload coverage to Codecov
+        if: ${{ matrix.coverage }}
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
-          files: ${{ github.workspace }}/build/linux-clang-coverage/coverage.lcov
-          flags: clang
-          name: clang
+          files: ${{ github.workspace }}/build/${{ matrix.preset }}/coverage.lcov
+          flags: ${{ matrix.preset }}
+          name: ${{ matrix.name }}
           disable_search: true
           fail_ci_if_error: true
           verbose: true
