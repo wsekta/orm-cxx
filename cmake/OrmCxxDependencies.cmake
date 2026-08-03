@@ -62,14 +62,6 @@ function(orm_cxx_add_runtime_dependencies source_dir)
 endfunction()
 
 function(orm_cxx_add_test_dependencies source_dir)
-    if(NOT TARGET faker-cxx)
-        set(BUILD_FAKER_TESTS OFF)
-        set(BUILD_SHARED_LIBS OFF)
-        add_subdirectory(
-            "${source_dir}/externals/faker-cxx" "${CMAKE_CURRENT_BINARY_DIR}/externals/faker-cxx" EXCLUDE_FROM_ALL
-        )
-    endif()
-
     if(NOT TARGET gtest_main OR NOT TARGET gmock_main)
         if(TARGET gtest_main OR TARGET gmock_main)
             message(

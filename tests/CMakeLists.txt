@@ -52,7 +52,7 @@ endif()
 
 add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})
 set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx faker-cxx)
+target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
 target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}")
 target_compile_definitions(
     orm-cxx-UT
