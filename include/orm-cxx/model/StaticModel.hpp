@@ -373,18 +373,20 @@ consteval auto columnFieldIndex(std::index_sequence<FieldIndices...>) -> std::si
         (not is_relation_collection_v<reflection::field_type_t<Model, FieldIndices>> &&
          not is_optional_relation_collection_v<reflection::field_type_t<Model, FieldIndices>>)...};
     std::size_t output{};
+    std::size_t result = reflection::fieldCount<Model>;
     for (std::size_t index = 0; index < included.size(); ++index)
     {
         if (included[index])
         {
             if (output == OutputIndex)
             {
-                return fieldIndices[index];
+                result = fieldIndices[index];
+                break;
             }
             ++output;
         }
     }
-    return reflection::fieldCount<Model>;
+    return result;
 }
 
 template <typename Model, typename SchemaType, std::size_t... FieldIndices, std::size_t... OutputIndices>
@@ -408,35 +410,40 @@ consteval auto makeColumns(std::index_sequence<Indices...> fields)
 template <std::size_t Size>
 consteval auto hasValidColumnNames(const std::array<ColumnView, Size>& columns) -> bool
 {
-    for (std::size_t left = 0; left < columns.size(); ++left)
+    bool valid = true;
+    for (std::size_t left = 0; left < columns.size() && valid; ++left)
     {
         if (columns[left].fieldName.empty() || columns[left].name.empty())
         {
-            return false;
+            valid = false;
+            break;
         }
-        for (std::size_t right = left + 1; right < columns.size(); ++right)
+        for (std::size_t right = left + 1; right < columns.size() && valid; ++right)
         {
             if (columns[left].fieldName == columns[right].fieldName || columns[left].name == columns[right].name ||
                 columns[left].fieldName == columns[right].name || columns[left].name == columns[right].fieldName)
             {
-                return false;
+                valid = false;
+                break;
             }
         }
     }
-    return true;
+    return valid;
 }
 
 template <std::size_t Size>
 consteval auto hasValidPrimaryKey(const std::array<ColumnView, Size>& columns) -> bool
 {
+    bool valid = true;
     for (const auto& column : columns)
     {
         if (column.isPrimaryKey && (not column.isNotNull || column.kind != FieldKind::Scalar))
         {
-            return false;
+            valid = false;
+            break;
         }
     }
-    return true;
+    return valid;
 }
 
 template <std::size_t Size>
@@ -637,17 +644,18 @@ consteval auto hasUniqueValidRelationDescriptors(std::tuple<Descriptors...>) -> 
     else
     {
         constexpr std::array<std::string_view, sizeof...(Descriptors)> names{relationFieldName<Descriptors>()...};
-        for (std::size_t left = 0; left < names.size(); ++left)
+        bool unique = true;
+        for (std::size_t left = 0; left < names.size() && unique; ++left)
         {
-            for (std::size_t right = left + 1; right < names.size(); ++right)
+            for (std::size_t right = left + 1; right < names.size() && unique; ++right)
             {
                 if (names[left] == names[right])
                 {
-                    return false;
+                    unique = false;
                 }
             }
         }
-        return true;
+        return unique;
     }
 }
 
@@ -907,17 +915,18 @@ template <typename... Models>
 consteval auto hasUniqueTypes() -> bool
 {
     constexpr std::array<TypeId, sizeof...(Models)> ids{typeId<Models>()...};
-    for (std::size_t left = 0; left < ids.size(); ++left)
+    bool unique = true;
+    for (std::size_t left = 0; left < ids.size() && unique; ++left)
     {
-        for (std::size_t right = left + 1; right < ids.size(); ++right)
+        for (std::size_t right = left + 1; right < ids.size() && unique; ++right)
         {
             if (ids[left] == ids[right])
             {
-                return false;
+                unique = false;
             }
         }
     }
-    return true;
+    return unique;
 }
 } // namespace detail
 
