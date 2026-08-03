@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ORM C++: orm::Model&lt; T &gt; Class Template Reference</title>
+<title>ORM C++: orm::detail::RelationColumnNames&lt; Names &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="codefolding.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <script type="text/javascript">
-document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Model.html','','classorm_1_1Model-members'); });
+document.addEventListener('DOMContentLoaded',() => { initNavTree('structorm_1_1detail_1_1RelationColumnNames.html','','structorm_1_1detail_1_1RelationColumnNames-members'); });
 </script>
 <div id="container">
 <div id="doc-content">
@@ -117,63 +117,19 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Mo
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::Model&lt; T &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">orm::detail::RelationColumnNames&lt; Names &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p>A template class representing a model in the ORM framework.  
- <a href="#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="model_8hpp_source.html">model.hpp</a>&gt;</code></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
-Static Public Member Functions</h2></td></tr>
-<tr class="memitem:a5ca625ab1bf6b9fb81d6391407332537" id="r_a5ca625ab1bf6b9fb81d6391407332537"><td class="memItemLeft">static auto&#160;</td><td class="memItemRight"><a class="el" href="#a5ca625ab1bf6b9fb81d6391407332537">getModelInfo</a> (bool force=false) -&gt; model::ModelInfo &amp;</td></tr>
-<tr class="memdesc:a5ca625ab1bf6b9fb81d6391407332537"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the model info for the model.  <br /></td></tr>
+<tr class="heading"><td colspan="2"><h2 id="header-pub-static-attribs" class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
+Static Public Attributes</h2></td></tr>
+<tr class="memitem:a7706104882d1f886ea8e5ff9fb7ef447" id="r_a7706104882d1f886ea8e5ff9fb7ef447"><td class="memItemLeft"><a id="a7706104882d1f886ea8e5ff9fb7ef447" name="a7706104882d1f886ea8e5ff9fb7ef447"></a>
+static constexpr std::size_t&#160;</td><td class="memItemRight"><b>size</b> = sizeof...(Names)</td></tr>
+<tr class="memitem:addadbb4ebae5ee367f16d557ceb81a65" id="r_addadbb4ebae5ee367f16d557ceb81a65"><td class="memItemLeft"><a id="addadbb4ebae5ee367f16d557ceb81a65" name="addadbb4ebae5ee367f16d557ceb81a65"></a>
+static constexpr std::array&lt; std::string_view, sizeof...(Names)&gt;&#160;</td><td class="memItemRight"><b>values</b> {Names.view()...}</td></tr>
 </table>
-<a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
-class orm::Model&lt; T &gt;</div><p>A template class representing a model in the ORM framework. </p>
-<p>This class provides functionality for defining and accessing columns in a model. It is a base class that can be inherited by specific model classes.</p>
-<dl class="tparams"><dt>Template Parameters</dt><dd>
-  <table class="tparams">
-    <tr><td class="paramname">T</td><td>The type of the model. </td></tr>
-  </table>
-  </dd>
-</dl>
-</div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a5ca625ab1bf6b9fb81d6391407332537" name="a5ca625ab1bf6b9fb81d6391407332537"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5ca625ab1bf6b9fb81d6391407332537">&#9670;&#160;</a></span>getModelInfo()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto <a class="el" href="classorm_1_1Model.html">orm::Model</a>&lt; T &gt;::getModelInfo </td>
-          <td>(</td>
-          <td class="paramtype">bool</td>          <td class="paramname"><span class="paramname"><em>force</em></span><span class="paramdefsep"> = </span><span class="paramdefval">false</span></td><td>)</td>
-          <td> -&gt; model::ModelInfo &amp;</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel static">static</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Get the model info for the model. </p>
-<dl class="section return"><dt>Returns</dt><dd>A reference to the model info. </dd></dl>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/orm-cxx/<a class="el" href="model_8hpp_source.html">model.hpp</a></li>
+<hr/>The documentation for this struct was generated from the following file:<ul>
+<li>include/orm-cxx/<a class="el" href="relations_8hpp_source.html">relations.hpp</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -188,7 +144,7 @@ template&lt;typename T&gt; </div>
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>orm</b></li><li class="navelem"><a href="classorm_1_1Model.html">Model</a></li>
+    <li class="navelem"><b>orm</b></li><li class="navelem"><b>detail</b></li><li class="navelem"><a href="structorm_1_1detail_1_1RelationColumnNames.html">RelationColumnNames</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>

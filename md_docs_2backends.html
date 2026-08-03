@@ -182,20 +182,20 @@ Compatibility at a glance</h1>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md22"></a>
 SQLite</h1>
 <p>Connect with a SOCI SQLite connection string:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:66</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database;  <span class="comment">// empty schema suffices for connection probing</span></div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(<span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a4fd6a2b78915e33468c808e3e14f8319"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">orm::DatabaseCore::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:704</div></div>
 </div><!-- fragment --><p>Applications that already know the backend may select it explicitly and inspect the negotiated capability profile:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(orm::db::BackendType::Sqlite, <span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database;</div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(orm::db::BackendType::Sqlite, <span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span>&amp; capabilities = database.<a class="code hl_function" href="classorm_1_1Database.html#a083686788355dbaed24c690ca1be27e9">getBackendCapabilities</a>();</div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span>&amp; capabilities = database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3">getBackendCapabilities</a>();</div>
 <div class="line"><span class="keywordflow">if</span> (capabilities.query.groupBy)</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// The typed GROUP BY API is available for this connection.</span></div>
 <div class="line">}</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a083686788355dbaed24c690ca1be27e9"><div class="ttname"><a href="classorm_1_1Database.html#a083686788355dbaed24c690ca1be27e9">orm::Database::getBackendCapabilities</a></div><div class="ttdeci">auto getBackendCapabilities() const -&gt; const db::BackendCapabilities &amp;</div><div class="ttdoc">Returns the capabilities advertised by the connected backend.</div></div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a64475066f3a5cbee97fa3149bbf497b3"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3">orm::DatabaseCore::getBackendCapabilities</a></div><div class="ttdeci">auto getBackendCapabilities() const -&gt; const db::BackendCapabilities &amp;</div><div class="ttdoc">Returns the capabilities advertised by the connected backend.</div></div>
 </div><!-- fragment --><p>Failures that cross the backend boundary use <span class="tt">orm::DatabaseError</span>. Its code, backend type, logical operation, and optional native code are stable structured fields; diagnostic messages never include connection strings or bound values.</p>
 <p>SQLite is the reference backend for the current public model, query, mutation, transaction, and relation behavior. Its session enables foreign-key enforcement for ORM-managed connections.</p>
 <p>SQLite supports the current scalar and nullable model fields, manual and composite primary keys, SQLite integer auto-increment keys, full-model and projection queries, affected-row reporting, transactions, to-one relations, and the documented collection relations.</p>
@@ -207,8 +207,8 @@ PostgreSQL</h1>
 <p>Enable the adapter at configure time and connect with a <span class="tt">postgresql://</span> selector followed by SOCI's keyword/value connection payload:</p>
 <div class="fragment"><div class="line">cmake -S . -B build/postgresql \</div>
 <div class="line">  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON</div>
-</div><!-- fragment --><div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(</div>
+</div><!-- fragment --><div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database;</div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(</div>
 <div class="line">    <span class="stringliteral">&quot;postgresql://host=localhost port=5432 dbname=application user=application password=secret&quot;</span>);</div>
 </div><!-- fragment --><p>The payload is passed to the SOCI PostgreSQL backend. It is not the RFC-style <span class="tt">postgresql://user@host/database</span> URI syntax. Passwords and complete connection strings are excluded from ORM diagnostics. The vendored SOCI parser cannot preserve whitespace inside keyword values, so connection values must not contain spaces. Prefer a PostgreSQL passfile/<span class="tt">PGPASSFILE</span> instead of embedding a complex password in the DSN.</p>
 <p>With examples enabled, the <span class="tt">postgresql-example</span> target reads <span class="tt">ORM_CXX_POSTGRESQL_EXAMPLE_DSN</span>, connects, reports selected capabilities, and disconnects without creating database objects. It is also built by the PostgreSQL CI profiles.</p>

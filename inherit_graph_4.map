@@ -1,7 +1,7 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
 <area shape="rect" id="Node000000" href="$classorm_1_1detail_1_1RelationCollection.html" title=" " alt="" coords="5,31,226,56"/>
 <area shape="rect" id="Node000001" href="$classorm_1_1ManyToMany.html" title=" " alt="" coords="274,5,430,31"/>
-<area shape="poly" id="edge1_Node000000_Node000001" title=" " alt="" coords="241,27,273,24,274,29,241,33"/>
+<area shape="poly" id="edge2_Node000000_Node000001" title=" " alt="" coords="241,27,273,24,274,29,241,33"/>
 <area shape="rect" id="Node000002" href="$classorm_1_1OneToMany.html" title=" " alt="" coords="277,55,426,80"/>
-<area shape="poly" id="edge2_Node000000_Node000002" title=" " alt="" coords="242,54,277,57,276,63,241,59"/>
+<area shape="poly" id="edge3_Node000000_Node000002" title=" " alt="" coords="242,54,277,57,276,63,241,59"/>
 </map>

@@ -1,0 +1,26 @@
+var classorm_1_1DatabaseCore =
+[
+    [ "DatabaseCore", "classorm_1_1DatabaseCore.html#a918187290120417d85097a787b05153f", null ],
+    [ "DatabaseCore", "classorm_1_1DatabaseCore.html#a454c22e6671a38b7a93ed091f4c5f79f", null ],
+    [ "beginTransaction", "classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa", null ],
+    [ "commitTransaction", "classorm_1_1DatabaseCore.html#ab867a949d0b37aeb452955c28dcee72c", null ],
+    [ "connect", "classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319", null ],
+    [ "connect", "classorm_1_1DatabaseCore.html#a9089cbdeb18b77659c89517f7df8c14e", null ],
+    [ "createRelationTablesImpl", "classorm_1_1DatabaseCore.html#ac278df3368bf370aedaa35d1da0f789a", null ],
+    [ "createTableImpl", "classorm_1_1DatabaseCore.html#ad7cb162365dcbcfc96a39a6146d5958f", null ],
+    [ "deleteRelationTablesImpl", "classorm_1_1DatabaseCore.html#ac07741bddeeb1fe565c9b602bb85fc95", null ],
+    [ "deleteTableImpl", "classorm_1_1DatabaseCore.html#a2c03d81186257bee78003f51be24ff14", null ],
+    [ "disconnect", "classorm_1_1DatabaseCore.html#a2c1f18188748bf3717d28444e4f46520", null ],
+    [ "getBackendCapabilities", "classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3", null ],
+    [ "getBackendType", "classorm_1_1DatabaseCore.html#acebe4fa46933e2610fe83ea2a7b37a45", null ],
+    [ "insertImpl", "classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254", null ],
+    [ "insertImpl", "classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944", null ],
+    [ "isConnected", "classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb", null ],
+    [ "linkImpl", "classorm_1_1DatabaseCore.html#ac79c01ec161840a63a1a189202a92944", null ],
+    [ "removeImpl", "classorm_1_1DatabaseCore.html#a1bbe06e369f085c3c4cdbb662da4501b", null ],
+    [ "rollbackTransaction", "classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442", null ],
+    [ "selectImpl", "classorm_1_1DatabaseCore.html#a71fd9763cb799bf21a58b255016aac01", null ],
+    [ "selectImpl", "classorm_1_1DatabaseCore.html#a0620afc10145bf024748c71ee7cefb75", null ],
+    [ "unlinkImpl", "classorm_1_1DatabaseCore.html#a1284e1a622ebbb8ec1c7357e94189875", null ],
+    [ "updateImpl", "classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699", null ]
+];

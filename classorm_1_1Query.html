@@ -128,43 +128,46 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Qu
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:abde0572a94dd2d8cfb471bf85c470f9b" id="r_abde0572a94dd2d8cfb471bf85c470f9b"><td class="memItemLeft"><a id="abde0572a94dd2d8cfb471bf85c470f9b" name="abde0572a94dd2d8cfb471bf85c470f9b"></a>
-&#160;</td><td class="memItemRight"><b>Query</b> ()</td></tr>
-<tr class="memdesc:abde0572a94dd2d8cfb471bf85c470f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> object. <br /></td></tr>
-<tr class="memitem:a647ab4edeee5a6529dd3430cb3f99d38" id="r_a647ab4edeee5a6529dd3430cb3f99d38"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a647ab4edeee5a6529dd3430cb3f99d38">where</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a50d327c6dd8f7900418c2495e4d624d0" id="r_a50d327c6dd8f7900418c2495e4d624d0"><td class="memItemLeft"><a id="a50d327c6dd8f7900418c2495e4d624d0" name="a50d327c6dd8f7900418c2495e4d624d0"></a>
+&#160;</td><td class="memItemRight"><b>Query</b> ()=default</td></tr>
+<tr class="memdesc:a50d327c6dd8f7900418c2495e4d624d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> object. <br /></td></tr>
+<tr class="memitem:a647ab4edeee5a6529dd3430cb3f99d38" id="r_a647ab4edeee5a6529dd3430cb3f99d38"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a647ab4edeee5a6529dd3430cb3f99d38">where</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a647ab4edeee5a6529dd3430cb3f99d38"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the WHERE predicate.  <br /></td></tr>
-<tr class="memitem:a1e2944880e1d93c88d9d69f5d884bde0" id="r_a1e2944880e1d93c88d9d69f5d884bde0"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1e2944880e1d93c88d9d69f5d884bde0">andWhere</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a1e2944880e1d93c88d9d69f5d884bde0" id="r_a1e2944880e1d93c88d9d69f5d884bde0"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1e2944880e1d93c88d9d69f5d884bde0">andWhere</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a1e2944880e1d93c88d9d69f5d884bde0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a predicate with AND.  <br /></td></tr>
-<tr class="memitem:a26c4f45217d1bfff2a86421c5d40e4d6" id="r_a26c4f45217d1bfff2a86421c5d40e4d6"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a26c4f45217d1bfff2a86421c5d40e4d6">orWhere</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a26c4f45217d1bfff2a86421c5d40e4d6" id="r_a26c4f45217d1bfff2a86421c5d40e4d6"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a26c4f45217d1bfff2a86421c5d40e4d6">orWhere</a> (const query::Predicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a26c4f45217d1bfff2a86421c5d40e4d6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a predicate with OR.  <br /></td></tr>
 <tr class="memitem:a0e4c45fc5b506b7dfb03f96d995fe65c" id="r_a0e4c45fc5b506b7dfb03f96d995fe65c"><td class="memTemplParams" colspan="2">template&lt;typename... Orders&gt; </td></tr>
-<tr class="memitem:a0e4c45fc5b506b7dfb03f96d995fe65c template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a> (Orders... orders) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a0e4c45fc5b506b7dfb03f96d995fe65c template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a0e4c45fc5b506b7dfb03f96d995fe65c">orderBy</a> (Orders... orders) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a0e4c45fc5b506b7dfb03f96d995fe65c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the ORDER BY clauses for the select query.  <br /></td></tr>
 <tr class="memitem:a1df7eac703bed39ca665ca533b21a023" id="r_a1df7eac703bed39ca665ca533b21a023"><td class="memTemplParams" colspan="2">template&lt;typename... Columns&gt; </td></tr>
-<tr class="memitem:a1df7eac703bed39ca665ca533b21a023 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1df7eac703bed39ca665ca533b21a023">groupBy</a> (Columns... columns) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a1df7eac703bed39ca665ca533b21a023 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1df7eac703bed39ca665ca533b21a023">groupBy</a> (Columns... columns) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a1df7eac703bed39ca665ca533b21a023"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the GROUP BY columns for the select query.  <br /></td></tr>
-<tr class="memitem:a579fda84fbd3ca429c2fb216aa290362" id="r_a579fda84fbd3ca429c2fb216aa290362"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a579fda84fbd3ca429c2fb216aa290362">having</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a579fda84fbd3ca429c2fb216aa290362" id="r_a579fda84fbd3ca429c2fb216aa290362"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a579fda84fbd3ca429c2fb216aa290362">having</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a579fda84fbd3ca429c2fb216aa290362"><td class="mdescLeft">&#160;</td><td class="mdescRight">Replaces the HAVING predicate.  <br /></td></tr>
-<tr class="memitem:a601ca839d3168f1dba6f6c79dea3a207" id="r_a601ca839d3168f1dba6f6c79dea3a207"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a601ca839d3168f1dba6f6c79dea3a207">andHaving</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a601ca839d3168f1dba6f6c79dea3a207" id="r_a601ca839d3168f1dba6f6c79dea3a207"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a601ca839d3168f1dba6f6c79dea3a207">andHaving</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a601ca839d3168f1dba6f6c79dea3a207"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an aggregate predicate with AND.  <br /></td></tr>
-<tr class="memitem:af3629afe58473bd3dc8deeca9d96ec3a" id="r_af3629afe58473bd3dc8deeca9d96ec3a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#af3629afe58473bd3dc8deeca9d96ec3a">orHaving</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:af3629afe58473bd3dc8deeca9d96ec3a" id="r_af3629afe58473bd3dc8deeca9d96ec3a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#af3629afe58473bd3dc8deeca9d96ec3a">orHaving</a> (const query::AggregatePredicate &amp;predicate) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:af3629afe58473bd3dc8deeca9d96ec3a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds an aggregate predicate with OR.  <br /></td></tr>
-<tr class="memitem:a6b9e97270d5af0c1aebfcc6c408cf9e2" id="r_a6b9e97270d5af0c1aebfcc6c408cf9e2"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a> () -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a6b9e97270d5af0c1aebfcc6c408cf9e2" id="r_a6b9e97270d5af0c1aebfcc6c408cf9e2"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a> () -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a6b9e97270d5af0c1aebfcc6c408cf9e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Select distinct rows.  <br /></td></tr>
-<tr class="memitem:ad277561652627e31187604dd6487fec8" id="r_ad277561652627e31187604dd6487fec8"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ad277561652627e31187604dd6487fec8">offset</a> (std::size_t offset) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:ad277561652627e31187604dd6487fec8" id="r_ad277561652627e31187604dd6487fec8"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ad277561652627e31187604dd6487fec8">offset</a> (std::size_t offset) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:ad277561652627e31187604dd6487fec8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the OFFSET clause for the select query.  <br /></td></tr>
-<tr class="memitem:a73f6efaddec024eed6b8dcd1e71dd4d4" id="r_a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a73f6efaddec024eed6b8dcd1e71dd4d4">limit</a> (std::size_t limit) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:a73f6efaddec024eed6b8dcd1e71dd4d4" id="r_a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a73f6efaddec024eed6b8dcd1e71dd4d4">limit</a> (std::size_t limit) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:a73f6efaddec024eed6b8dcd1e71dd4d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the LIMIT clause for the select query.  <br /></td></tr>
-<tr class="memitem:ab7a1cc60776eeb29212199765e4eaaba" id="r_ab7a1cc60776eeb29212199765e4eaaba"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ab7a1cc60776eeb29212199765e4eaaba">disableJoining</a> () -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:ab7a1cc60776eeb29212199765e4eaaba" id="r_ab7a1cc60776eeb29212199765e4eaaba"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ab7a1cc60776eeb29212199765e4eaaba">disableJoining</a> () -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:ab7a1cc60776eeb29212199765e4eaaba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disables joining for the select query.  <br /></td></tr>
-<tr class="memitem:aa297c86fc264e9a169d8b05ab54dc7f1" id="r_aa297c86fc264e9a169d8b05ab54dc7f1"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa297c86fc264e9a169d8b05ab54dc7f1">include</a> (std::string relation) -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td></tr>
+<tr class="memitem:aa297c86fc264e9a169d8b05ab54dc7f1" id="r_aa297c86fc264e9a169d8b05ab54dc7f1"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa297c86fc264e9a169d8b05ab54dc7f1">include</a> (std::string relation) -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td></tr>
 <tr class="memdesc:aa297c86fc264e9a169d8b05ab54dc7f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Explicitly loads a mapped <a class="el" href="classorm_1_1OneToMany.html">OneToMany</a> or <a class="el" href="classorm_1_1ManyToMany.html">ManyToMany</a> collection.  <br /></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-friends" class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
-<tr class="memitem:a2899a70f009c4e51d27af81f1acea47d" id="r_a2899a70f009c4e51d27af81f1acea47d"><td class="memItemLeft"><a id="a2899a70f009c4e51d27af81f1acea47d" name="a2899a70f009c4e51d27af81f1acea47d"></a>
-class&#160;</td><td class="memItemRight"><a class="el" href="#a2899a70f009c4e51d27af81f1acea47d">orm::Database</a></td></tr>
-<tr class="memdesc:a2899a70f009c4e51d27af81f1acea47d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classorm_1_1Database.html" title="A class representing a database in the ORM framework.">Database</a> class is a friend class of <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> for access to the query data. <br /></td></tr>
+<tr class="memitem:ae0f742b2920b17d9a95c91c6239abc24" id="r_ae0f742b2920b17d9a95c91c6239abc24"><td class="memTemplParams" colspan="2"><a id="ae0f742b2920b17d9a95c91c6239abc24" name="ae0f742b2920b17d9a95c91c6239abc24"></a>
+template&lt;typename&gt; </td></tr>
+<tr class="memitem:ae0f742b2920b17d9a95c91c6239abc24 template"><td class="memItemLeft">class&#160;</td><td class="memItemRight"><a class="el" href="#ae0f742b2920b17d9a95c91c6239abc24">orm::Database</a></td></tr>
+<tr class="memdesc:ae0f742b2920b17d9a95c91c6239abc24"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> class is a friend class of <a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">Query</a> for access to the query data. <br /></td></tr>
+<tr class="memitem:acde63d86ac22191af8356356a7177a23" id="r_acde63d86ac22191af8356356a7177a23"><td class="memItemLeft"><a id="acde63d86ac22191af8356356a7177a23" name="acde63d86ac22191af8356356a7177a23"></a>
+class&#160;</td><td class="memItemRight"><b>orm::DatabaseCore</b></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename T&gt;<br />
@@ -192,7 +195,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::andHaving </td>
           <td>(</td>
           <td class="paramtype">const query::AggregatePredicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -228,7 +231,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::andWhere </td>
           <td>(</td>
           <td class="paramtype">const query::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -263,7 +266,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::disableJoining </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -294,7 +297,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::distinct </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -326,7 +329,7 @@ template&lt;typename... Columns&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::groupBy </td>
           <td>(</td>
           <td class="paramtype">Columns...</td>          <td class="paramname"><span class="paramname"><em>columns</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -362,7 +365,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::having </td>
           <td>(</td>
           <td class="paramtype">const query::AggregatePredicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -398,7 +401,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::include </td>
           <td>(</td>
           <td class="paramtype">std::string</td>          <td class="paramname"><span class="paramname"><em>relation</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -428,7 +431,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::limit </td>
           <td>(</td>
           <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>limit</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -464,7 +467,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::offset </td>
           <td>(</td>
           <td class="paramtype">std::size_t</td>          <td class="paramname"><span class="paramname"><em>offset</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -502,7 +505,7 @@ template&lt;typename... Orders&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::orderBy </td>
           <td>(</td>
           <td class="paramtype">Orders...</td>          <td class="paramname"><span class="paramname"><em>orders</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -538,7 +541,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::orHaving </td>
           <td>(</td>
           <td class="paramtype">const query::AggregatePredicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -574,7 +577,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::orWhere </td>
           <td>(</td>
           <td class="paramtype">const query::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>
@@ -609,7 +612,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto <a class="el" href="classorm_1_1Query.html">orm::Query</a>&lt; T &gt;::where </td>
           <td>(</td>
           <td class="paramtype">const query::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
-          <td> -&gt; <a class="el" href="#abde0572a94dd2d8cfb471bf85c470f9b">Query</a>&lt; T &gt; &amp;</td>
+          <td> -&gt; <a class="el" href="#a50d327c6dd8f7900418c2495e4d624d0">Query</a>&lt; T &gt; &amp;</td>
         </tr>
       </table>
   </td>

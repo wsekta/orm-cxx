@@ -137,8 +137,8 @@ Concrete extension points</h1>
 <p>Applications embedding an additional source-level provider pass an owned registry into <span class="tt">Database</span>:</p>
 <div class="fragment"><div class="line">orm::db::CommandGeneratorFactory backends;</div>
 <div class="line">backends.registerBackend(std::make_unique&lt;MyBackend&gt;());</div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database{std::move(backends)};</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:66</div></div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database{std::move(backends)};</div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:704</div></div>
 </div><!-- fragment --><p>The registry and its providers become owned by the database object. In-tree backends may also be registered by the factory's default construction path.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 Required backend responsibilities</h1>
@@ -214,14 +214,16 @@ Raw SQL</h1>
 Error contract</h1>
 <p>Backend work must preserve the <span class="tt">DatabaseErrorCode</span> categories:</p>
 <ul>
-<li>unsupported or unavailable backend;</li>
-<li>unsupported backend feature;</li>
-<li>connection failure;</li>
-<li>statement execution failure;</li>
-<li>constraint violation;</li>
-<li>invalid transaction state;</li>
-<li>conversion or hydration failure;</li>
-<li>unavailable affected-row count.</li>
+<li><span class="tt">NotConnected</span> — operation requires an active connection;</li>
+<li><span class="tt">AlreadyConnected</span> — duplicate <span class="tt">connect</span> call;</li>
+<li><span class="tt">UnsupportedBackend</span> — requested backend type is not registered;</li>
+<li><span class="tt">UnsupportedFeature</span> — the backend does not implement the requested capability;</li>
+<li><span class="tt">Connection</span> — connection failure;</li>
+<li><span class="tt">Statement</span> — statement execution failure;</li>
+<li><span class="tt">Constraint</span> — constraint violation;</li>
+<li><span class="tt">Transaction</span> — invalid transaction state;</li>
+<li><span class="tt">Conversion</span> — type conversion or hydration failure;</li>
+<li><span class="tt">AffectedRowsUnavailable</span> — affected-row count is not supported.</li>
 </ul>
 <p>Errors should identify the backend and logical operation. Native codes may be attached, and the driver exception may be retained as a nested cause. Tests must assert categories and state changes rather than vendor-specific English text. Connection strings, passwords, and tokens must not be included in diagnostics.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md7"></a>

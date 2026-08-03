@@ -1,0 +1,5 @@
+<map id="orm::DatabaseCore" name="orm::DatabaseCore">
+<area shape="rect" id="Node000001" title="A class representing a database in the ORM framework." alt="" coords="41,5,172,31"/>
+<area shape="rect" id="Node000002" href="$classorm_1_1Database.html" title="Database facade bound to one closed compile&#45;time model schema." alt="" coords="5,79,208,105"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="109,46,109,79,104,79,104,46"/>
+</map>

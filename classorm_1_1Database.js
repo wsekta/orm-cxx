@@ -1,26 +1,5 @@
 var classorm_1_1Database =
 [
-    [ "Database", "classorm_1_1Database.html#a0cf947c50ac4c47b8478d66ec49a104b", null ],
-    [ "Database", "classorm_1_1Database.html#a48021088c2e868b668340280e04c20b5", null ],
-    [ "beginTransaction", "classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c", null ],
-    [ "commitTransaction", "classorm_1_1Database.html#a8e53db9a678a64b874158b175c02ff24", null ],
-    [ "connect", "classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2", null ],
-    [ "connect", "classorm_1_1Database.html#a838dec6f6358add79205f223cd164e04", null ],
-    [ "createRelationTables", "classorm_1_1Database.html#a56193616d588084845aeef03a2c44615", null ],
-    [ "createTable", "classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d", null ],
-    [ "deleteRelationTables", "classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e", null ],
-    [ "deleteTable", "classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604", null ],
-    [ "disconnect", "classorm_1_1Database.html#aed77524f1815ead26234adf09898f469", null ],
-    [ "getBackendCapabilities", "classorm_1_1Database.html#a083686788355dbaed24c690ca1be27e9", null ],
-    [ "getBackendType", "classorm_1_1Database.html#aa59f20483f628b4d0d73ebc4ec7bc57d", null ],
-    [ "insert", "classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2", null ],
-    [ "insert", "classorm_1_1Database.html#acbc75aba074b7474bc0c2ee6445a1c0e", null ],
-    [ "isConnected", "classorm_1_1Database.html#a64d431e5f73bc213b6e16406d6c4516e", null ],
-    [ "link", "classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3", null ],
-    [ "remove", "classorm_1_1Database.html#a2321eb9d51932ca7d6278142a3dbac9e", null ],
-    [ "rollbackTransaction", "classorm_1_1Database.html#ad51f3e557f8d8dce0c78ab8fb56a60cf", null ],
-    [ "select", "classorm_1_1Database.html#a3a3433a5e24e248ae9ad344fd443533b", null ],
-    [ "select", "classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7", null ],
-    [ "unlink", "classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e", null ],
-    [ "update", "classorm_1_1Database.html#a221678fa744bb78b0ecd6a6610231433", null ]
+    [ "DatabaseCore", "classorm_1_1Database.html#a918187290120417d85097a787b05153f", null ],
+    [ "DatabaseCore", "classorm_1_1Database.html#a454c22e6671a38b7a93ed091f4c5f79f", null ]
 ];

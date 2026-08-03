@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.17.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ORM C++: orm::ManyToManyDescriptor Class Reference</title>
+<title>ORM C++: orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt; Struct Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="codefolding.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
   </div>
 </div>
 <script type="text/javascript">
-document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1ManyToManyDescriptor.html','','classorm_1_1ManyToManyDescriptor-members'); });
+document.addEventListener('DOMContentLoaded',() => { initNavTree('structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMfa910bcc35e07f6cd9a576dac2955950.html','',''); });
 </script>
 <div id="container">
 <div id="doc-content">
@@ -117,38 +117,34 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Ma
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::ManyToManyDescriptor Class Reference</div></div>
+  <div class="headertitle"><div class="title">orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt; Struct Template Reference</div></div>
 </div><!--header-->
 <div class="contents">
-<table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
-Public Member Functions</h2></td></tr>
-<tr class="memitem:a6318c888c17bbd59f253daf77ef4f6d6" id="r_a6318c888c17bbd59f253daf77ef4f6d6"><td class="memItemLeft"><a id="a6318c888c17bbd59f253daf77ef4f6d6" name="a6318c888c17bbd59f253daf77ef4f6d6"></a>
-&#160;</td><td class="memItemRight"><b>ManyToManyDescriptor</b> (std::string_view fieldName)</td></tr>
-<tr class="memitem:a306f13fb8362e0bcd5541c7f9cf9f839" id="r_a306f13fb8362e0bcd5541c7f9cf9f839"><td class="memItemLeft"><a id="a306f13fb8362e0bcd5541c7f9cf9f839" name="a306f13fb8362e0bcd5541c7f9cf9f839"></a>
-auto&#160;</td><td class="memItemRight"><b>through</b> (std::string_view tableName) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:ade43c78e06e0a2fd2076c84ffa4fa832" id="r_ade43c78e06e0a2fd2076c84ffa4fa832"><td class="memItemLeft"><a id="ade43c78e06e0a2fd2076c84ffa4fa832" name="ade43c78e06e0a2fd2076c84ffa4fa832"></a>
-auto&#160;</td><td class="memItemRight"><b>mappedBy</b> (std::string_view fieldName) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:a1a2126843c276915b644c212107fba4c" id="r_a1a2126843c276915b644c212107fba4c"><td class="memItemLeft"><a id="a1a2126843c276915b644c212107fba4c" name="a1a2126843c276915b644c212107fba4c"></a>
-auto&#160;</td><td class="memItemRight"><b>ownerColumns</b> (std::initializer_list&lt; std::string_view &gt; columns) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:a125e67ba4986ede09edd812bcf391251" id="r_a125e67ba4986ede09edd812bcf391251"><td class="memItemLeft"><a id="a125e67ba4986ede09edd812bcf391251" name="a125e67ba4986ede09edd812bcf391251"></a>
-auto&#160;</td><td class="memItemRight"><b>ownerColumns</b> (std::vector&lt; std::string &gt; columns) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:a009dc3fd8eb60c4bd0b173b12cd331e6" id="r_a009dc3fd8eb60c4bd0b173b12cd331e6"><td class="memItemLeft"><a id="a009dc3fd8eb60c4bd0b173b12cd331e6" name="a009dc3fd8eb60c4bd0b173b12cd331e6"></a>
-auto&#160;</td><td class="memItemRight"><b>targetColumns</b> (std::initializer_list&lt; std::string_view &gt; columns) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:a35e1cca86cde62b07b2b69677cfde86a" id="r_a35e1cca86cde62b07b2b69677cfde86a"><td class="memItemLeft"><a id="a35e1cca86cde62b07b2b69677cfde86a" name="a35e1cca86cde62b07b2b69677cfde86a"></a>
-auto&#160;</td><td class="memItemRight"><b>targetColumns</b> (std::vector&lt; std::string &gt; columns) const -&gt; ManyToManyDescriptor</td></tr>
-<tr class="memitem:ad3c4f20de527b049e37ca0913948b302" id="r_ad3c4f20de527b049e37ca0913948b302"><td class="memItemLeft"><a id="ad3c4f20de527b049e37ca0913948b302" name="ad3c4f20de527b049e37ca0913948b302"></a>
-auto&#160;</td><td class="memItemRight"><b>fieldName</b> () const noexcept -&gt; const std::string &amp;</td></tr>
-<tr class="memitem:aa8a93c72814e86600c6d8d37bcc6356b" id="r_aa8a93c72814e86600c6d8d37bcc6356b"><td class="memItemLeft"><a id="aa8a93c72814e86600c6d8d37bcc6356b" name="aa8a93c72814e86600c6d8d37bcc6356b"></a>
-auto&#160;</td><td class="memItemRight"><b>throughTable</b> () const noexcept -&gt; const std::string &amp;</td></tr>
-<tr class="memitem:aad7eb4fc7e846a0a45fd2446dc7e48fb" id="r_aad7eb4fc7e846a0a45fd2446dc7e48fb"><td class="memItemLeft"><a id="aad7eb4fc7e846a0a45fd2446dc7e48fb" name="aad7eb4fc7e846a0a45fd2446dc7e48fb"></a>
-auto&#160;</td><td class="memItemRight"><b>mappedByField</b> () const noexcept -&gt; const std::string &amp;</td></tr>
-<tr class="memitem:a669b32ca858cc2a1cba1b08e5baf30b9" id="r_a669b32ca858cc2a1cba1b08e5baf30b9"><td class="memItemLeft"><a id="a669b32ca858cc2a1cba1b08e5baf30b9" name="a669b32ca858cc2a1cba1b08e5baf30b9"></a>
-auto&#160;</td><td class="memItemRight"><b>ownerColumnNames</b> () const noexcept -&gt; const std::vector&lt; std::string &gt; &amp;</td></tr>
-<tr class="memitem:aef26ac762fa9edfe2e390c4fae1e2a49" id="r_aef26ac762fa9edfe2e390c4fae1e2a49"><td class="memItemLeft"><a id="aef26ac762fa9edfe2e390c4fae1e2a49" name="aef26ac762fa9edfe2e390c4fae1e2a49"></a>
-auto&#160;</td><td class="memItemRight"><b>targetColumnNames</b> () const noexcept -&gt; const std::vector&lt; std::string &gt; &amp;</td></tr>
-</table>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<div class="dynheader">
+Inheritance diagram for orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByM4e4966a23a009079c049df57119869ef.png" border="0" usemap="#aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_inherit__map" loading="lazy" alt="Inheritance graph"/></div>
+<map name="aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_inherit__map" id="aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_inherit__map">
+<area shape="rect" title=" " alt="" coords="5,79,392,150"/>
+<area shape="rect" title=" " alt="" coords="84,5,188,31"/>
+<area shape="poly" title=" " alt="" coords="154,42,177,77,173,80,150,45"/>
+<area shape="rect" title=" " alt="" coords="212,5,310,31"/>
+<area shape="poly" title=" " alt="" coords="247,45,224,80,220,77,243,42"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<div class="dynheader">
+Collaboration diagram for orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;:</div>
+<div class="dyncontent">
+<div class="center"><img src="structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMe96d1a188c71a92604bea7823adabd3f.png" border="0" usemap="#aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_coll__map" loading="lazy" alt="Collaboration graph"/></div>
+<map name="aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_coll__map" id="aorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_00_01ThroughTable_00_01OwnerColumnNames_00_01TargetColumnNames_01_4_01_4_coll__map">
+<area shape="rect" title=" " alt="" coords="5,79,392,150"/>
+<area shape="rect" title=" " alt="" coords="84,5,188,31"/>
+<area shape="poly" title=" " alt="" coords="154,42,177,77,173,80,150,45"/>
+<area shape="rect" title=" " alt="" coords="212,5,310,31"/>
+<area shape="poly" title=" " alt="" coords="247,45,224,80,220,77,243,42"/>
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>include/orm-cxx/<a class="el" href="relations_8hpp_source.html">relations.hpp</a></li>
 </ul>
 </div><!-- contents -->
@@ -164,7 +160,7 @@ auto&#160;</td><td class="memItemRight"><b>targetColumnNames</b> () const noexce
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><b>orm</b></li><li class="navelem"><a href="classorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a></li>
+    <li class="navelem"><b>orm</b></li><li class="navelem"><b>detail</b></li><li class="navelem"><a href="structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMfa910bcc35e07f6cd9a576dac2955950.html">IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.17.0 </li>
   </ul>
 </div>

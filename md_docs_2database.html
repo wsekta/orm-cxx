@@ -156,15 +156,23 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2datab
 </ol>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md28"></a>
 Connect</h1>
-<p>To connect to database create its object and connect it with standard connection string:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">A class representing a database in the ORM framework.</div><div class="ttdef"><b>Definition</b> database.hpp:66</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
-</div><!-- fragment --><p>Automatic selection requires exactly one registered backend to accept the connection string. Select a known backend explicitly when desired:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(orm::db::BackendType::Sqlite, <span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
+<p>Bind each database to a closed compile-time schema after declaring its model types, then connect it with a standard connection string:</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">using </span>AppSchema = orm::Schema&lt;User&gt;;</div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;AppSchema&gt;</a> database;</div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(<span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a4fd6a2b78915e33468c808e3e14f8319"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">orm::DatabaseCore::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:704</div></div>
+</div><!-- fragment --><p>Every model used by <span class="tt">select</span>, <span class="tt">insert</span>, schema operations, or relation operations must belong to <span class="tt">AppSchema</span>. All relation targets must be listed as well. Missing models and invalid mappings fail during compilation. The former untyped <span class="tt"><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">orm::Database</a></span> declaration is no longer supported; see <a class="el" href="md_docs_2migration-static-schema.html" title="Migrating to compile-time mappings and static schemas">Migrating to static schemas</a>.</p>
+<p>The remaining fragments are independent examples. In each case, the <span class="tt">database</span> object's schema must contain every model named by that operation.</p>
+<p>Automatic selection requires exactly one registered backend to accept the connection string. Select a known backend explicitly when desired:</p>
+<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(orm::db::BackendType::Sqlite, <span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
 </div><!-- fragment --><p>PostgreSQL uses a <span class="tt">postgresql://</span> backend selector followed by SOCI's keyword/value connection payload:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(</div>
+<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(</div>
 <div class="line">    orm::db::BackendType::Postgres,</div>
 <div class="line">    <span class="stringliteral">&quot;postgresql://host=localhost port=5432 dbname=application user=application password=secret&quot;</span>);</div>
 </div><!-- fragment --><p>This is not an RFC-style <span class="tt">postgresql://user@host/database</span> URI. Connection strings are never copied into <span class="tt">DatabaseError</span> diagnostics. Keyword values with whitespace are not supported by the vendored SOCI parser; use a PostgreSQL passfile/<span class="tt">PGPASSFILE</span> for credentials that cannot be represented safely.</p>
@@ -176,7 +184,7 @@ Capabilities and errors</h1>
 <p>Operations crossing the backend boundary throw <span class="tt">orm::DatabaseError</span>. Inspect <span class="tt">getCode()</span>, <span class="tt">getBackendType()</span>, <span class="tt">getOperation()</span>, and the optional <span class="tt">getNativeCode()</span> instead of parsing vendor message text. Diagnostics are sanitized and do not contain connection strings or bound values.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
 Create table</h1>
-<p>To create table in database use <span class="tt">createTable</span> method and pass model as template argument:</p>
+<p>To create a table in the database, use <span class="tt">createTable</span> method and pass model as template argument:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>ObjectModel</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
@@ -187,52 +195,48 @@ Create table</h1>
 <div class="line">    std::string updated_at;</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a>&lt;ObjectModel&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a5dc553baa29a3ec7fd46b81e412ffa5d"><div class="ttname"><a href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">orm::Database::createTable</a></div><div class="ttdeci">auto createTable() -&gt; void</div><div class="ttdoc">Execute a create table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:307</div></div>
+<div class="line">database.createTable&lt;ObjectModel&gt;();</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
 Delete table</h1>
-<p>To delete table from database use <span class="tt">deleteTable</span> method and pass model as template argument:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;ObjectModel&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_adc8f4be2035069fa45881dfb498f2604"><div class="ttname"><a href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">orm::Database::deleteTable</a></div><div class="ttdeci">auto deleteTable() -&gt; void</div><div class="ttdoc">Execute a delete table query for a model.</div><div class="ttdef"><b>Definition</b> database.hpp:323</div></div>
+<p>To delete a table from the database, use <span class="tt">deleteTable</span> method and pass model as template argument:</p>
+<div class="fragment"><div class="line">database.deleteTable&lt;ObjectModel&gt;();</div>
 </div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md32"></a>
 Create and delete relation tables</h1>
 <p>Base model tables and many-to-many junction tables have an explicit lifecycle. Create both endpoint tables first, then create junction tables from the owning model:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a>&lt;User&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a>&lt;Role&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a56193616d588084845aeef03a2c44615">createRelationTables</a>&lt;User&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a56193616d588084845aeef03a2c44615"><div class="ttname"><a href="classorm_1_1Database.html#a56193616d588084845aeef03a2c44615">orm::Database::createRelationTables</a></div><div class="ttdeci">auto createRelationTables() -&gt; void</div><div class="ttdoc">Creates junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:340</div></div>
+<div class="fragment"><div class="line">database.createTable&lt;User&gt;();</div>
+<div class="line">database.createTable&lt;Role&gt;();</div>
+<div class="line">database.createRelationTables&lt;User&gt;();</div>
 </div><!-- fragment --><p><span class="tt">createRelationTables&lt;T&gt;()</span> creates only junction tables owned by <span class="tt">T</span>. It is a no-op for one-to-many mappings and inverse many-to-many mappings. Repeated calls are safe. Endpoint tables must already exist.</p>
 <p>Drop junction tables before either endpoint table:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e">deleteRelationTables</a>&lt;User&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;Role&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#adc8f4be2035069fa45881dfb498f2604">deleteTable</a>&lt;User&gt;();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a28707f3e8fdbe3c755820d0b51f8fb4e"><div class="ttname"><a href="classorm_1_1Database.html#a28707f3e8fdbe3c755820d0b51f8fb4e">orm::Database::deleteRelationTables</a></div><div class="ttdeci">auto deleteRelationTables() -&gt; void</div><div class="ttdoc">Drops junction tables owned by a model&#39;s ManyToMany mappings.</div><div class="ttdef"><b>Definition</b> database.hpp:369</div></div>
+<div class="fragment"><div class="line">database.deleteRelationTables&lt;User&gt;();</div>
+<div class="line">database.deleteTable&lt;Role&gt;();</div>
+<div class="line">database.deleteTable&lt;User&gt;();</div>
 </div><!-- fragment --><p><span class="tt">deleteRelationTables&lt;T&gt;()</span> is also idempotent and affects only junction tables owned by <span class="tt">T</span>. <span class="tt">createTable</span>, <span class="tt">deleteTable</span>, <span class="tt">insert</span>, and row deletion never recursively create, drop, or synchronize relation tables.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
 Insert objects</h1>
-<p>To insert objects into database use <span class="tt">insert</span> method and pass vector of objects as argument:</p>
+<p>To insert objects into the database, use <span class="tt">insert</span> method and pass vector of objects as argument:</p>
 <div class="fragment"><div class="line">std::vector&lt;ObjectModel&gt; objects{</div>
 <div class="line">    {1, <span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;email&quot;</span>, <span class="stringliteral">&quot;password&quot;</span>, <span class="stringliteral">&quot;created_at&quot;</span>, <span class="stringliteral">&quot;updated_at&quot;</span>}, </div>
 <div class="line">    {2, <span class="stringliteral">&quot;name2&quot;</span>, <span class="stringliteral">&quot;email2&quot;</span>, <span class="stringliteral">&quot;password2&quot;</span>, <span class="stringliteral">&quot;created_at2&quot;</span>, <span class="stringliteral">&quot;updated_at2&quot;</span>}</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_acaaa43ce08ccb8b9b686d45a5d8e10e2"><div class="ttname"><a href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">orm::Database::insert</a></div><div class="ttdeci">auto insert(const std::vector&lt; T &gt; &amp;objects) -&gt; void</div><div class="ttdoc">Executes a insert query for multiple objects.</div><div class="ttdef"><b>Definition</b> database.hpp:209</div></div>
+<div class="line">database.insert(objects);</div>
 </div><!-- fragment --><p>You can also insert single object:</p>
 <div class="fragment"><div class="line">ObjectModel <span class="keywordtype">object</span>{1, <span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;email&quot;</span>, <span class="stringliteral">&quot;password&quot;</span>, <span class="stringliteral">&quot;created_at&quot;</span>, <span class="stringliteral">&quot;updated_at&quot;</span>};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(<span class="keywordtype">object</span>);</div>
+<div class="line">database.insert(<span class="keywordtype">object</span>);</div>
 </div><!-- fragment --><p>For models with an auto-increment primary key, the generated <span class="tt">INSERT</span> statement omits that primary-key column and the selected database assigns the value:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User</div>
 <div class="line">{</div>
-<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">const</span> std::vector&lt;std::string&gt; auto_increment_columns = {<span class="stringliteral">&quot;id&quot;</span>};</div>
-<div class="line"> </div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> auto_increment_columns =</div>
+<div class="line">        orm::autoIncrement&lt;&amp;User::id&gt;();</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a5dc553baa29a3ec7fd46b81e412ffa5d">createTable</a>&lt;User&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(User{0, <span class="stringliteral">&quot;Ann&quot;</span>});</div>
+<div class="line">database.createTable&lt;User&gt;();</div>
+<div class="line">database.insert(User{0, <span class="stringliteral">&quot;Ann&quot;</span>});</div>
 </div><!-- fragment --><p><span class="tt">insert</span> does not mutate the passed object. Select the row after insertion if you need the generated id.</p>
 <p>Optional fields and optional one-to-one relations store <span class="tt">std::nullopt</span> as SQL <span class="tt">NULL</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Profile</div>
@@ -247,7 +251,7 @@ Insert objects</h1>
 <div class="line">    std::optional&lt;Profile&gt; profile;</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(User{1, std::nullopt});</div>
+<div class="line">database.insert(User{1, std::nullopt});</div>
 </div><!-- fragment --><p><span class="tt">OneToMany</span> and <span class="tt">ManyToMany</span> wrapper fields are ignored by <span class="tt">insert</span>. Endpoint objects must be inserted separately, followed by explicit <span class="tt">link</span> calls where a stored relation is needed. There is no cascade-save.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
 Link and unlink relations</h1>
@@ -255,14 +259,12 @@ Link and unlink relations</h1>
 <div class="fragment"><div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
 <div class="line">Role admin{10, <span class="stringliteral">&quot;admin&quot;</span>};</div>
 <div class="line"> </div>
-<div class="line">std::size_t linked = database.<a class="code hl_function" href="classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3">link</a>(user, <span class="stringliteral">&quot;roles&quot;</span>, admin);</div>
-<div class="line">std::size_t unlinked = database.<a class="code hl_function" href="classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e">unlink</a>(user, <span class="stringliteral">&quot;roles&quot;</span>, admin);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a460eed600ff934216d4c30f388e808c3"><div class="ttname"><a href="classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3">orm::Database::link</a></div><div class="ttdeci">auto link(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Creates or changes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:402</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_aae9e59f0fa15ab44830a10ef0b9bc13e"><div class="ttname"><a href="classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e">orm::Database::unlink</a></div><div class="ttdeci">auto unlink(const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</div><div class="ttdoc">Removes a OneToMany/ManyToMany association.</div><div class="ttdef"><b>Definition</b> database.hpp:455</div></div>
+<div class="line">std::size_t linked = database.link(user, <span class="stringliteral">&quot;roles&quot;</span>, admin);</div>
+<div class="line">std::size_t unlinked = database.unlink(user, <span class="stringliteral">&quot;roles&quot;</span>, admin);</div>
 </div><!-- fragment --><p>Each operation is idempotent: it returns <span class="tt">1</span> when the relation changed and <span class="tt">0</span> when the database was already in the requested state. The same operations can be called through an inverse many-to-many field.</p>
 <p>For one-to-many, pass the parent, collection field name, and child:</p>
-<div class="fragment"><div class="line">std::size_t assigned = database.<a class="code hl_function" href="classorm_1_1Database.html#a460eed600ff934216d4c30f388e808c3">link</a>(author, <span class="stringliteral">&quot;books&quot;</span>, book);</div>
-<div class="line">std::size_t detached = database.<a class="code hl_function" href="classorm_1_1Database.html#aae9e59f0fa15ab44830a10ef0b9bc13e">unlink</a>(author, <span class="stringliteral">&quot;books&quot;</span>, book);</div>
+<div class="fragment"><div class="line">std::size_t assigned = database.link(author, <span class="stringliteral">&quot;books&quot;</span>, book);</div>
+<div class="line">std::size_t detached = database.unlink(author, <span class="stringliteral">&quot;books&quot;</span>, book);</div>
 </div><!-- fragment --><p><span class="tt">link</span> updates the child's mapped foreign key, including moving it from another parent. <span class="tt">unlink</span> writes SQL <span class="tt">NULL</span>; it throws <span class="tt">std::invalid_argument</span> when the child's mapped to-one field is not optional. They return <span class="tt">1</span> only when the stored foreign key changed and <span class="tt">0</span> when it was already in the requested state.</p>
 <p><span class="tt">link</span> and <span class="tt">unlink</span> read only endpoint primary keys. They do not persist either object, and all components of a simple or composite key must be present and non-null. A model with a database-generated key must be selected after insert before it is used as an endpoint. Missing endpoint rows are rejected by foreign-key enforcement on both supported backends.</p>
 <p>See <a class="el" href="md_docs_2relations.html" title="Collection relations">Collection relations</a> for mapping declarations, generated junction schemas, delete behavior, and self-referencing mappings.</p>
@@ -276,10 +278,9 @@ Query objects</h1>
 <div class="line">     .orderBy(asc(col(<span class="stringliteral">&quot;id&quot;</span>)))</div>
 <div class="line">     .limit(10);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> queriedObjects = database.<a class="code hl_function" href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">select</a>(query);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_aae29e5eab83e887cac4f2a230670fdc7"><div class="ttname"><a href="classorm_1_1Database.html#aae29e5eab83e887cac4f2a230670fdc7">orm::Database::select</a></div><div class="ttdeci">auto select(Query&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</div><div class="ttdoc">Executes a select query and returns the result.</div><div class="ttdef"><b>Definition</b> database.hpp:113</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:25</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:36</div></div>
+<div class="line"><span class="keyword">auto</span> queriedObjects = database.select(query);</div>
+<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> query.hpp:26</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_a647ab4edeee5a6529dd3430cb3f99d38"><div class="ttname"><a href="classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38">orm::Query::where</a></div><div class="ttdeci">auto where(const query::Predicate &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> query.hpp:37</div></div>
 </div><!-- fragment --><p>PostgreSQL rejects full-model <span class="tt">GROUP BY</span>/<span class="tt">HAVING</span> queries before SQL execution, because selecting arbitrary non-grouped model fields has no portable meaning. Use <span class="tt">ProjectionQuery</span> and explicitly project grouped columns and aggregates.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md36"></a>
 Update objects</h1>
@@ -291,39 +292,37 @@ Update objects</h1>
 <div class="line">      .set(col(<span class="stringliteral">&quot;updated_at&quot;</span>), <span class="stringliteral">&quot;updated_at&quot;</span>)</div>
 <div class="line">      .where(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
 <div class="line"> </div>
-<div class="line">std::size_t updatedRows = database.<a class="code hl_function" href="classorm_1_1Database.html#a221678fa744bb78b0ecd6a6610231433">update</a>(update);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a221678fa744bb78b0ecd6a6610231433"><div class="ttname"><a href="classorm_1_1Database.html#a221678fa744bb78b0ecd6a6610231433">orm::Database::update</a></div><div class="ttdeci">auto update(const Update&lt; T &gt; &amp;update) -&gt; std::size_t</div><div class="ttdoc">Executes an update query.</div><div class="ttdef"><b>Definition</b> database.hpp:274</div></div>
-<div class="ttc" id="aclassorm_1_1Update_html"><div class="ttname"><a href="classorm_1_1Update.html">orm::Update</a></div><div class="ttdef"><b>Definition</b> update.hpp:15</div></div>
+<div class="line">std::size_t updatedRows = database.update(update);</div>
+<div class="ttc" id="aclassorm_1_1Update_html"><div class="ttname"><a href="classorm_1_1Update.html">orm::Update</a></div><div class="ttdef"><b>Definition</b> update.hpp:16</div></div>
 </div><!-- fragment --><p>Use <span class="tt">std::nullopt</span> to store <span class="tt">NULL</span> in nullable columns:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Update.html">orm::Update&lt;ObjectModel&gt;</a> clearEmail;</div>
 <div class="line">clearEmail.set(col(<span class="stringliteral">&quot;email&quot;</span>), std::nullopt)</div>
 <div class="line">          .where(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
-</div><!-- fragment --><p><span class="tt">update</span> returns the number of affected rows. Calling it without a <span class="tt">where</span> predicate or without assignments throws <span class="tt">std::invalid_argument</span>. Assigning <span class="tt">NULL</span> to a non-nullable column also throws before executing SQL.</p>
+</div><!-- fragment --><p><span class="tt">update</span> returns the number of affected rows. Calling it without a <span class="tt">where</span> predicate, or without assignments throws <span class="tt">std::invalid_argument</span>. Assigning <span class="tt">NULL</span> to a non-nullable column also throws before executing SQL.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md37"></a>
 Remove objects</h1>
 <p>To delete rows, call <span class="tt">remove</span> with the model type and a required predicate:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line">std::size_t removedRows = database.<a class="code hl_function" href="classorm_1_1Database.html#a2321eb9d51932ca7d6278142a3dbac9e">remove</a>&lt;ObjectModel&gt;(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a2321eb9d51932ca7d6278142a3dbac9e"><div class="ttname"><a href="classorm_1_1Database.html#a2321eb9d51932ca7d6278142a3dbac9e">orm::Database::remove</a></div><div class="ttdeci">auto remove(const query::Predicate &amp;predicate) -&gt; std::size_t</div><div class="ttdoc">Executes a delete query for rows matching a predicate.</div><div class="ttdef"><b>Definition</b> database.hpp:291</div></div>
+<div class="line">std::size_t removedRows = database.remove&lt;ObjectModel&gt;(col(<span class="stringliteral">&quot;id&quot;</span>) == 1);</div>
 </div><!-- fragment --><p><span class="tt">remove</span> returns the number of affected rows. There is no unfiltered public delete-row API.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md38"></a>
 Transactions</h1>
 <p>Start a transaction with <span class="tt">beginTransaction</span>, then call <span class="tt">commitTransaction</span> or <span class="tt">rollbackTransaction</span>:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c">beginTransaction</a>();</div>
+<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa">beginTransaction</a>();</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
+<div class="line">database.insert(objects);</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a8e53db9a678a64b874158b175c02ff24">commitTransaction</a>();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_a56318393652ad4c68c2bc71b5474b03c"><div class="ttname"><a href="classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c">orm::Database::beginTransaction</a></div><div class="ttdeci">auto beginTransaction() -&gt; void</div><div class="ttdoc">Starts a transaction.</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a8e53db9a678a64b874158b175c02ff24"><div class="ttname"><a href="classorm_1_1Database.html#a8e53db9a678a64b874158b175c02ff24">orm::Database::commitTransaction</a></div><div class="ttdeci">auto commitTransaction() -&gt; void</div><div class="ttdoc">Commits a transaction.</div></div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#ab867a949d0b37aeb452955c28dcee72c">commitTransaction</a>();</div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a97f7b62ddae43ba47fb43bce0d420cfa"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa">orm::DatabaseCore::beginTransaction</a></div><div class="ttdeci">auto beginTransaction() -&gt; void</div><div class="ttdoc">Starts a transaction.</div></div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_ab867a949d0b37aeb452955c28dcee72c"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#ab867a949d0b37aeb452955c28dcee72c">orm::DatabaseCore::commitTransaction</a></div><div class="ttdeci">auto commitTransaction() -&gt; void</div><div class="ttdoc">Commits a transaction.</div></div>
 </div><!-- fragment --><p>or:</p>
-<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c">beginTransaction</a>();</div>
+<div class="fragment"><div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa">beginTransaction</a>();</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#acaaa43ce08ccb8b9b686d45a5d8e10e2">insert</a>(objects);</div>
+<div class="line">database.insert(objects);</div>
 <div class="line"> </div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#ad51f3e557f8d8dce0c78ab8fb56a60cf">rollbackTransaction</a>();</div>
-<div class="ttc" id="aclassorm_1_1Database_html_ad51f3e557f8d8dce0c78ab8fb56a60cf"><div class="ttname"><a href="classorm_1_1Database.html#ad51f3e557f8d8dce0c78ab8fb56a60cf">orm::Database::rollbackTransaction</a></div><div class="ttdeci">auto rollbackTransaction() -&gt; void</div><div class="ttdoc">Rollbacks a transaction.</div></div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442">rollbackTransaction</a>();</div>
+<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a5ca1f8fd77ea6d27226a2cb2e4451442"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442">orm::DatabaseCore::rollbackTransaction</a></div><div class="ttdeci">auto rollbackTransaction() -&gt; void</div><div class="ttdoc">Rollbacks a transaction.</div></div>
 </div><!-- fragment --><p>PostgreSQL marks a transaction failed after a statement error. <span class="tt">commitTransaction()</span> then returns <span class="tt">DatabaseErrorCode::Transaction</span> without sending a misleading commit; call <span class="tt">rollbackTransaction()</span> before starting another transaction.</p>
 <p>Relation-table operations, <span class="tt">link</span>, <span class="tt">unlink</span>, and included selects participate in the current explicit transaction and never start a private transaction. Because an included select uses the parent query plus one or more batched queries per included collection, wrap it in a transaction when those statements must observe a single consistent application-level snapshot. </p>
 </div></div><!-- contents -->

@@ -1,15 +1,7 @@
 var searchData=
 [
-  ['schema_0',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md84',1,'']]],
-  ['schema_20lifecycle_1',['Schema lifecycle',['../md_docs_2relations.html#autotoc_md76',1,'']]],
-  ['select_2',['Build select',['../md_docs_2query.html#autotoc_md57',1,'']]],
-  ['soci_3',['Binding and SOCI',['../md_docs_2backend-portability.html#autotoc_md14',1,'']]],
-  ['soci_20boundary_4',['SOCI boundary',['../md_docs_2backend-extension.html#autotoc_md4',1,'']]],
-  ['sql_5',['SQL',['../md_docs_2backend-extension.html#autotoc_md5',1,'Raw SQL'],['../md_docs_2backend-portability.html#autotoc_md15',1,'Raw SQL']]],
-  ['sql_20fragments_6',['Raw SQL fragments',['../md_docs_2query.html#autotoc_md65',1,'']]],
-  ['sql_20portability_7',['Raw SQL portability',['../md_docs_2backends.html#autotoc_md26',1,'']]],
-  ['sqlite_8',['SQLite',['../md_docs_2backends.html#autotoc_md22',1,'']]],
-  ['status_9',['Support status',['../md_docs_2backends.html#autotoc_md20',1,'']]],
-  ['support_20status_10',['Support status',['../md_docs_2backends.html#autotoc_md20',1,'']]],
-  ['supported_20field_20types_11',['Supported field types',['../md_docs_2model.html#autotoc_md41',1,'']]]
+  ['name_0',['Table name',['../md_docs_2model.html#autotoc_md52',1,'']]],
+  ['names_1',['names',['../md_docs_2model.html#autotoc_md53',1,'Column names'],['../md_docs_2relations.html#autotoc_md84',1,'Junction column names']]],
+  ['names_20and_20relations_2',['Column names and relations',['../md_docs_2query.html#autotoc_md70',1,'']]],
+  ['now_3',['5. Keep query paths unchanged for now',['../md_docs_2migration-static-schema.html#autotoc_md45',1,'']]]
 ];

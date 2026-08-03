@@ -1,8 +1,28 @@
 var searchData=
 [
-  ['where_0',['where',['../classorm_1_1Query.html#a647ab4edeee5a6529dd3430cb3f99d38',1,'orm::Query']]],
-  ['where_20predicates_1',['Where predicates',['../md_docs_2query.html#autotoc_md59',1,'']]],
-  ['workflow_2',['End-to-end workflow',['../md_docs_2relations.html#autotoc_md80',1,'']]],
-  ['wrappers_3',['Collection wrappers',['../md_docs_2relations.html#autotoc_md72',1,'']]],
-  ['write_20predicates_4',['Write predicates',['../md_docs_2query.html#autotoc_md69',1,'']]]
+  ['raw_20sql_0',['Raw SQL',['../md_docs_2backend-extension.html#autotoc_md5',1,'Raw SQL'],['../md_docs_2backend-portability.html#autotoc_md15',1,'Raw SQL']]],
+  ['raw_20sql_20fragments_1',['Raw SQL fragments',['../md_docs_2query.html#autotoc_md74',1,'']]],
+  ['raw_20sql_20portability_2',['Raw SQL portability',['../md_docs_2backends.html#autotoc_md26',1,'']]],
+  ['reflectable_3',['1. Keep models reflectable',['../md_docs_2migration-static-schema.html#autotoc_md41',1,'']]],
+  ['relation_20tables_4',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md32',1,'']]],
+  ['relationcollection_5',['RelationCollection',['../classorm_1_1detail_1_1RelationCollection.html',1,'orm::detail']]],
+  ['relationcollectiontraits_6',['RelationCollectionTraits',['../structorm_1_1detail_1_1RelationCollectionTraits.html',1,'orm::detail']]],
+  ['relationcollectiontraits_3c_20manytomany_3c_20t_20_3e_20_3e_7',['RelationCollectionTraits&lt; ManyToMany&lt; T &gt; &gt;',['../structorm_1_1detail_1_1RelationCollectionTraits_3_01ManyToMany_3_01T_01_4_01_4.html',1,'orm::detail']]],
+  ['relationcollectiontraits_3c_20onetomany_3c_20t_20_3e_20_3e_8',['RelationCollectionTraits&lt; OneToMany&lt; T &gt; &gt;',['../structorm_1_1detail_1_1RelationCollectionTraits_3_01OneToMany_3_01T_01_4_01_4.html',1,'orm::detail']]],
+  ['relationcolumnnames_9',['RelationColumnNames',['../structorm_1_1detail_1_1RelationColumnNames.html',1,'orm::detail']]],
+  ['relationmemberpointertraits_10',['RelationMemberPointerTraits',['../structorm_1_1detail_1_1RelationMemberPointerTraits.html',1,'orm::detail']]],
+  ['relationmemberpointertraits_3c_20value_20owner_3a_3a_2a_20_3e_11',['RelationMemberPointerTraits&lt; Value Owner::* &gt;',['../structorm_1_1detail_1_1RelationMemberPointerTraits_3_01Value_01Owner_1_1_5_01_4.html',1,'orm::detail']]],
+  ['relations_12',['relations',['../md_docs_2relations.html',1,'Collection relations'],['../md_docs_2model.html#autotoc_md57',1,'Collection relations'],['../md_docs_2query.html#autotoc_md70',1,'Column names and relations'],['../md_docs_2database.html#autotoc_md34',1,'Link and unlink relations'],['../md_docs_2model.html#autotoc_md56',1,'One-to-one relations']]],
+  ['remove_20objects_13',['Remove objects',['../md_docs_2database.html#autotoc_md37',1,'']]],
+  ['removeimpl_14',['removeImpl',['../classorm_1_1DatabaseCore.html#a1bbe06e369f085c3c4cdbb662da4501b',1,'orm::DatabaseCore']]],
+  ['replace_20runtime_20model_20configuration_15',['2. Replace runtime model configuration',['../md_docs_2migration-static-schema.html#autotoc_md42',1,'']]],
+  ['reporting_16',['Capability reporting',['../md_docs_2backends.html#autotoc_md25',1,'']]],
+  ['required_20backend_20responsibilities_17',['Required backend responsibilities',['../md_docs_2backend-extension.html#autotoc_md2',1,'']]],
+  ['responsibilities_18',['Required backend responsibilities',['../md_docs_2backend-extension.html#autotoc_md2',1,'']]],
+  ['result_20dto_20rules_19',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md63',1,'']]],
+  ['result_20queries_20',['result queries',['../md_docs_2partial-result-queries.html#autotoc_md62',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md75',1,'Partial-result queries']]],
+  ['rollbacktransaction_21',['rollbackTransaction',['../classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442',1,'orm::DatabaseCore']]],
+  ['rollout_22',['Suggested rollout',['../md_docs_2migration-static-schema.html#autotoc_md46',1,'']]],
+  ['rules_23',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md63',1,'']]],
+  ['runtime_20model_20configuration_24',['2. Replace runtime model configuration',['../md_docs_2migration-static-schema.html#autotoc_md42',1,'']]]
 ];

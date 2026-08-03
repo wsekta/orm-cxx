@@ -1,6 +1,10 @@
 var searchData=
 [
-  ['manytomany_0',['ManyToMany',['../classorm_1_1ManyToMany.html',1,'orm']]],
-  ['manytomanydescriptor_1',['ManyToManyDescriptor',['../classorm_1_1ManyToManyDescriptor.html',1,'orm']]],
-  ['model_2',['Model',['../classorm_1_1Model.html',1,'orm']]]
+  ['ismanytomanydescriptor_0',['IsManyToManyDescriptor',['../structorm_1_1detail_1_1IsManyToManyDescriptor.html',1,'orm::detail']]],
+  ['ismanytomanydescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_1',['IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMfa910bcc35e07f6cd9a576dac2955950.html',1,'orm::detail']]],
+  ['isonetomanydescriptor_2',['IsOneToManyDescriptor',['../structorm_1_1detail_1_1IsOneToManyDescriptor.html',1,'orm::detail']]],
+  ['isonetomanydescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_3',['IsOneToManyDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsOneToManyDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]],
+  ['isrelationdescriptor_4',['IsRelationDescriptor',['../structorm_1_1detail_1_1IsRelationDescriptor.html',1,'orm::detail']]],
+  ['isrelationdescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_5',['IsRelationDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMemdc34019d2abea938502bc7c526da741a.html',1,'orm::detail']]],
+  ['isrelationdescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_6',['IsRelationDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]]
 ];
