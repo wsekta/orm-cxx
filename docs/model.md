@@ -36,6 +36,8 @@ and `::` is replaced with `_`.
 Every database is bound to a closed set of complete model types:
 
 ```cpp
+#include "orm-cxx/model.hpp"
+
 using AppSchema = orm::Schema<User>;
 orm::Database<AppSchema> database;
 ```
@@ -54,8 +56,8 @@ The bundled SQLite and PostgreSQL backends support these scalar C++ field types:
 * `short`, `short int`, `unsigned short`, `short unsigned int`
 * `int`
 * `long`, `long int`, `unsigned int`, `unsigned long`, `long unsigned int`
-* `long long`, `long long int`, `__int64`
-* `unsigned long long`, `long long unsigned int`, `unsigned __int64`
+* `long long`, `long long int`, `__int64` *(MSVC)*
+* `unsigned long long`, `long long unsigned int`, `unsigned __int64` *(MSVC)*
 * `float`
 * `double`
 * `std::string`
@@ -118,7 +120,7 @@ struct User {
 };
 ```
 
-Query and update builders still use C++ field names such as `col("displayName")`;
+Query and update builders still use C++ field names such as `orm::query::col("displayName")`;
 the renderer maps them to database column names.
 
 Physical non-identity column names are also used as prepared-statement bind
@@ -229,7 +231,7 @@ struct User {
 
 For this model, `User` stores `profile_id` and references `Profile(id)`.
 Selecting a model joins one-to-one relations by default. Use
-`Query<T>::disableJoining()` to read only related primary-key values.
+call `disableJoining()` on the query object to read only related primary-key values.
 
 Relations can also be nullable:
 

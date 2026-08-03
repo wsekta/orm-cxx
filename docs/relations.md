@@ -35,6 +35,7 @@ Both wrappers expose:
 * `isLoaded()`
 * `values()`
 * `begin()` and `end()`
+* `cbegin()` and `cend()`
 * `size()` and `empty()`
 * `operator[]`
 
@@ -215,10 +216,10 @@ Use endpoint objects with complete, non-null primary-key values:
 
 ```cpp
 User user{1, "Ada"};
-Role admin{10, "admin"};
+Role role{10, "admin"};
 
-std::size_t inserted = database.link(user, "roles", admin);
-std::size_t removed = database.unlink(user, "roles", admin);
+std::size_t inserted = database.link(user, "roles", role);
+std::size_t removed = database.unlink(user, "roles", role);
 ```
 
 For many-to-many, `link` inserts one junction row and `unlink` deletes it. Both
@@ -328,19 +329,19 @@ database.createRelationTables<User>();
 Author author{1, "Octavia Butler"};
 Book book{10, "Kindred", std::nullopt};
 User user{1, "Ada"};
-Role admin{10, "admin"};
+Role role{10, "admin"};
 
 database.insert(author);
 database.insert(book);
 database.insert(user);
-database.insert(admin);
+database.insert(role);
 
 // 3. Persist associations explicitly.
 database.link(author, "books", book); // updates Book::author
-database.link(user, "roles", admin);  // inserts into user_roles
+database.link(user, "roles", role);   // inserts into user_roles
 
 // The inverse many-to-many side is equivalent for mutations:
-database.link(admin, "users", user);  // returns 0: the link already exists
+database.link(role, "users", user);  // returns 0: the link already exists
 
 // 4. Load collections explicitly.
 orm::Query<Author> authorQuery;
@@ -357,7 +358,7 @@ if (!authors.empty() && authors[0].books.isLoaded())
 
 // 5. Detach links before removing rows when application rules require it.
 database.unlink(author, "books", book);
-database.unlink(user, "roles", admin);
+database.unlink(user, "roles", role);
 
 // 6. Drop owning junction tables before endpoint tables.
 database.deleteRelationTables<User>();

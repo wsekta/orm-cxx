@@ -85,7 +85,7 @@ sanitized and do not contain connection strings or bound values.
 
 ## Create table
 
-To create table in database use `createTable` method and pass model as template argument:
+To create a table in the database, use `createTable` method and pass model as template argument:
 
 ```cpp
 struct ObjectModel
@@ -103,7 +103,7 @@ database.createTable<ObjectModel>();
 
 ## Delete table
 
-To delete table from database use `deleteTable` method and pass model as template argument:
+To delete a table from the database, use `deleteTable` method and pass model as template argument:
 
 ```cpp
 database.deleteTable<ObjectModel>();
@@ -139,7 +139,7 @@ recursively create, drop, or synchronize relation tables.
 
 ## Insert objects
 
-To insert objects into database use `insert` method and pass vector of objects as argument:
+To insert objects into the database, use `insert` method and pass vector of objects as argument:
 
 ```cpp
 std::vector<ObjectModel> objects{
@@ -278,7 +278,7 @@ clearEmail.set(col("email"), std::nullopt)
           .where(col("id") == 1);
 ```
 
-`update` returns the number of affected rows. Calling it without a `where` predicate or without assignments throws
+`update` returns the number of affected rows. Calling it without a `where` predicate, or without assignments throws
 `std::invalid_argument`. Assigning `NULL` to a non-nullable column also throws before executing SQL.
 
 ## Remove objects

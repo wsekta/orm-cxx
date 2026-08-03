@@ -59,7 +59,7 @@ before they reach either database driver's C API.
 Connect with a SOCI SQLite connection string:
 
 ```cpp
-orm::Database database;
+orm::Database<orm::Schema<>> database;  // empty schema suffices for connection probing
 database.connect("sqlite3://application.db");
 ```
 
@@ -67,7 +67,7 @@ Applications that already know the backend may select it explicitly and inspect
 the negotiated capability profile:
 
 ```cpp
-orm::Database database;
+orm::Database<orm::Schema<>> database;
 database.connect(orm::db::BackendType::Sqlite, "sqlite3://application.db");
 
 const auto& capabilities = database.getBackendCapabilities();
@@ -114,7 +114,7 @@ cmake -S . -B build/postgresql \
 ```
 
 ```cpp
-orm::Database database;
+orm::Database<orm::Schema<>> database;
 database.connect(
     "postgresql://host=localhost port=5432 dbname=application user=application password=secret");
 ```

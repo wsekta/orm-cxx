@@ -37,7 +37,7 @@ registry into `Database`:
 ```cpp
 orm::db::CommandGeneratorFactory backends;
 backends.registerBackend(std::make_unique<MyBackend>());
-orm::Database database{std::move(backends)};
+orm::Database<orm::Schema<>> database{std::move(backends)};
 ```
 
 The registry and its providers become owned by the database object. In-tree
@@ -128,14 +128,16 @@ describe a raw fragment as portable unless the relevant dialects are verified.
 
 Backend work must preserve the `DatabaseErrorCode` categories:
 
-- unsupported or unavailable backend;
-- unsupported backend feature;
-- connection failure;
-- statement execution failure;
-- constraint violation;
-- invalid transaction state;
-- conversion or hydration failure;
-- unavailable affected-row count.
+- `NotConnected` — operation requires an active connection;
+- `AlreadyConnected` — duplicate `connect` call;
+- `UnsupportedBackend` — requested backend type is not registered;
+- `UnsupportedFeature` — the backend does not implement the requested capability;
+- `Connection` — connection failure;
+- `Statement` — statement execution failure;
+- `Constraint` — constraint violation;
+- `Transaction` — invalid transaction state;
+- `Conversion` — type conversion or hydration failure;
+- `AffectedRowsUnavailable` — affected-row count is not supported.
 
 Errors should identify the backend and logical operation. Native codes may be
 attached, and the driver exception may be retained as a nested cause. Tests must

@@ -425,7 +425,7 @@ Non-primary-key related paths in write predicates, such as `col("profile.city")`
 Assignments use the same rule: direct fields are supported, and related primary-key assignments update the local
 foreign-key column.
 
-## Current limitations
+## Limitations
 
 The query language currently covers ORM-style `SELECT` returning full model objects plus predicate-based `UPDATE` and
 `DELETE` operations.
