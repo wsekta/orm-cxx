@@ -212,7 +212,7 @@ Alias validation is part of the public contract:
 Alias validation failures throw `std::invalid_argument` before executing
 SQL.
 
-## V1 limitations
+## Limitations
 
 Projection DTOs are flat. Relation fields must be flattened through aliases,
 for example `as("city", col("profile.city"))`.

@@ -130,8 +130,6 @@ public:
         case model::ColumnType::String:
             return std::holds_alternative<std::string>(storedValue);
         case model::ColumnType::Uuid:
-        case model::ColumnType::Unknown:
-        case model::ColumnType::OneToOne:
             return false;
         }
 

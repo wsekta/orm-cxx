@@ -8,15 +8,10 @@
 #include "BindingConcepts.hpp"
 #include "ConversionError.hpp"
 #include "NumericValue.hpp"
+#include "orm-cxx/reflection/Reflection.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/type-conversion.h"
 #include "soci/values.h"
-
-DISABLE_WARNING_PUSH
-DISABLE_EXTERNAL_WARNINGS
-#include "rfl/to_view.hpp"
-DISABLE_WARNING_POP
 
 namespace orm::db::binding
 {
@@ -144,13 +139,13 @@ struct type_conversion<ProjectionPayload<T>>
 
     [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/, ProjectionPayload<T>& payload)
     {
-        auto resultAsTuple = rfl::to_view(payload.value).values();
-        const auto fields = rfl::fields<T>();
+        auto resultAsTuple = orm::reflection::fieldPointers(payload.value);
+        constexpr auto fields = orm::reflection::fields<T>();
 
         auto getObjectFromValues = [&fields, &values](auto index, auto* field)
         {
             using field_t = std::decay_t<decltype(*field)>;
-            orm::db::binding::ObjectFieldFromProjectionValues<field_t>::get(field, std::string{fields[index].name()},
+            orm::db::binding::ObjectFieldFromProjectionValues<field_t>::get(field, std::string{fields[index].name},
                                                                             values);
         };
 

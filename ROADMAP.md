@@ -8,7 +8,11 @@ contracts, then expand expressiveness and database support deliberately.
 
 `orm-cxx` provides a usable SQLite-first foundation with an optional PostgreSQL backend:
 
-- C++20 model metadata based on reflected struct fields.
+- A dedicated local C++20 aggregate-reflection layer with structural
+  `FixedString` names, generated field access for aggregates with up to 128
+  fields, and no runtime reflection dependency.
+- Closed `orm::Schema<Models...>` definitions, typed member-pointer mappings,
+  and compile-time validation for model metadata and relation graphs.
 - A documented portable model contract for supported scalar fields, nullable
   fields with `std::optional<T>`, table and column name mapping, default and
   explicit primary keys, generated integer primary keys, and one-level
@@ -93,9 +97,10 @@ expanding that contract only where another production backend needs it.
 
 These items are valuable, but they should not block the core ORM experience.
 
-- Reduce dependency risk around `reflect-cpp`, or replace it with a dedicated
-  reflection layer if that becomes practical.
-- Move more metadata and query validation work to compile time.
+- Replace runtime query field and relation-path strings with a compile-time
+  query DSL that validates direct fields, one-level to-one paths, collection
+  paths, projection aliases, and update targets against the selected schema.
+  SQL values and backend capability negotiation remain runtime concerns.
 - Define and document thread-safety guarantees.
 - Add structured logging hooks.
 - Explore coroutine-based APIs for asynchronous or pipelined database work.

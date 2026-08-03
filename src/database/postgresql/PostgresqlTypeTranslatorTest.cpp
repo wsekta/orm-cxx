@@ -29,8 +29,6 @@ TEST(PostgresqlTypeTranslatorTest, translatesEverySupportedColumnType)
 TEST(PostgresqlTypeTranslatorTest, rejectsUnsupportedColumnTypes)
 {
     EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Uuid), std::runtime_error);
-    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Unknown), std::runtime_error);
-    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::OneToOne), std::runtime_error);
 
     const auto invalidColumnType =
         static_cast<orm::model::ColumnType>(999); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)

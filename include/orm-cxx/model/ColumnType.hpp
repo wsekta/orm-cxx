@@ -18,11 +18,8 @@ enum class ColumnType
     Float,
     Double,
     String,
-    Uuid [[maybe_unused]],
-    Unknown,
-    OneToOne,
+    Uuid,
 };
 
-auto toColumnType(const std::string& type) -> std::pair<ColumnType, bool>;
 auto toString(ColumnType type) -> std::string;
 } // namespace orm::model

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace orm::db
 {
 struct BoundValue
 {
-    model::ColumnType logicalType = model::ColumnType::Unknown;
+    model::ColumnType logicalType;
     std::optional<query::QueryValue::Value> value;
 
     [[nodiscard]] auto isNull() const noexcept -> bool
@@ -24,11 +25,19 @@ struct StatementParameter
 {
     std::string name;
     std::optional<query::QueryValue> value;
-    model::ColumnType nullType = model::ColumnType::Unknown;
+    std::optional<model::ColumnType> nullType;
 
-    [[nodiscard]] auto getLogicalType() const noexcept -> model::ColumnType
+    [[nodiscard]] auto getLogicalType() const -> model::ColumnType
     {
-        return value.has_value() ? value->getLogicalType() : nullType;
+        if (value.has_value())
+        {
+            return value->getLogicalType();
+        }
+        if (nullType.has_value())
+        {
+            return nullType.value();
+        }
+        throw std::invalid_argument{"A NULL statement parameter requires an explicit logical type"};
     }
 
     [[nodiscard]] auto getBoundValue() const -> BoundValue
@@ -38,7 +47,7 @@ struct StatementParameter
             return BoundValue{.logicalType = value->getLogicalType(), .value = value->get()};
         }
 
-        return BoundValue{.logicalType = nullType, .value = std::nullopt};
+        return BoundValue{.logicalType = getLogicalType(), .value = std::nullopt};
     }
 };
 

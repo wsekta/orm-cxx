@@ -22,7 +22,7 @@ auto sortedIds(const Collection& collection) -> std::vector<int>
 }
 } // namespace
 
-class CollectionRelationDatabaseTest : public DatabaseTest
+class CollectionRelationDatabaseTest : public DatabaseTest<collection_models::Schema>
 {
 protected:
     auto createAuthorBookSchema() -> void
@@ -513,25 +513,17 @@ TEST_P(CollectionRelationDatabaseTest, includeOneOfSeveralCollections_shouldLeav
     EXPECT_FALSE(members[0].teams.isLoaded());
 }
 
-TEST_P(CollectionRelationDatabaseTest, relationEndpointValidation_shouldRejectMetadataKeySizeMismatch)
+TEST_P(CollectionRelationDatabaseTest, relationEndpointMetadata_shouldMatchStaticPrimaryKeyShape)
 {
-    auto& userInfo = orm::Model<collection_models::User>::getModelInfo();
-    const auto savedInfo = userInfo;
-    userInfo.columnsInfo.push_back(orm::model::ColumnInfo{.fieldName = "second_id",
-                                                          .name = "second_id",
-                                                          .type = orm::model::ColumnType::Int,
-                                                          .isPrimaryKey = true,
-                                                          .isForeignModel = false,
-                                                          .isAutoIncrement = false,
-                                                          .isUnique = false,
-                                                          .isNotNull = true});
-    userInfo.idColumnsNames.insert("second_id");
+    constexpr auto user = orm::model::modelView<collection_models::Schema, collection_models::User>();
+    constexpr auto* relation = user.findRelation("roles");
+    static_assert(relation != nullptr);
+    constexpr auto role = user.resolveTarget(*relation);
+    static_assert(role != nullptr);
+    constexpr auto junction = user.resolveJunction(*relation);
 
-    const collection_models::User user{1, "user", {}};
-    const collection_models::Role role{10, "role", {}};
-    EXPECT_THROW((void)database.link(user, "roles", role), std::invalid_argument);
-
-    userInfo = savedInfo;
+    EXPECT_EQ(user->primaryKeyIndices.size(), junction.ownerColumns.size());
+    EXPECT_EQ(role->primaryKeyIndices.size(), junction.targetColumns.size());
 }
 
 TEST_P(CollectionRelationDatabaseTest, relationTableCreationForInverseMapping_shouldBeNoOp)
@@ -539,25 +531,24 @@ TEST_P(CollectionRelationDatabaseTest, relationTableCreationForInverseMapping_sh
     EXPECT_NO_THROW(database.createRelationTables<collection_models::Role>());
 }
 
-TEST_P(CollectionRelationDatabaseTest, include_shouldRejectWrapperTargetMetadataMismatch)
+TEST_P(CollectionRelationDatabaseTest, includeMetadata_shouldMatchCollectionWrapperTarget)
 {
-    database.createTable<collection_models::User>();
-    database.insert(collection_models::User{1, "user", {}});
+    using collection_t = decltype(collection_models::User::roles);
+    using target_t = orm::relation_target_t<collection_t>;
 
-    auto& userInfo = orm::Model<collection_models::User>::getModelInfo();
-    const auto savedType = userInfo.relationsInfo.front().targetType;
-    userInfo.relationsInfo.front().targetType = typeid(collection_models::Book);
+    constexpr auto user = orm::model::modelView<collection_models::Schema, collection_models::User>();
+    constexpr auto* relation = user.findRelation("roles");
+    static_assert(relation != nullptr);
+    constexpr auto target = user.resolveTarget(*relation);
+    static_assert(target != nullptr);
+    static_assert(target->type == orm::model::typeId<target_t>());
 
-    orm::Query<collection_models::User> query;
-    query.include("roles");
-    EXPECT_THROW((void)database.select(query), std::invalid_argument);
-
-    userInfo.relationsInfo.front().targetType = savedType;
+    EXPECT_EQ(target->type, orm::model::typeId<target_t>());
 }
 
 TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnection_shouldReportNotConnected)
 {
-    orm::Database disconnected;
+    orm::Database<collection_models::Schema> disconnected;
 
     try
     {
@@ -573,7 +564,7 @@ TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnec
 
 TEST(CollectionRelationDatabaseStandaloneTest, relationTableLifecycleWithoutOwnedJunctionShouldBeNoOp)
 {
-    orm::Database disconnected;
+    orm::Database<collection_models::Schema> disconnected;
 
     EXPECT_NO_THROW(disconnected.createRelationTables<collection_models::Role>());
     EXPECT_NO_THROW(disconnected.deleteRelationTables<collection_models::Role>());

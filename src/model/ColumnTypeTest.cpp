@@ -1,257 +1,61 @@
-#include "orm-cxx/model/ColumnType.hpp"
-
 #include <gtest/gtest.h>
+#include <optional>
+#include <string>
+
+#include "orm-cxx/model/Mapping.hpp"
 
 using namespace orm::model;
 
-namespace
-{
-const std::string charType{"char"};
-const std::string signedCharType{"signed char"};
-const std::string unsignedCharType{"unsigned char"};
-const std::string shortType{"short"};
-const std::string shortIntType{"short int"};
-const std::string unsignedShortType{"unsigned short"};
-const std::string shortUnsignedIntType{"short unsigned int"};
-const std::string longType{"long"};
-const std::string longIntType{"long int"};
-const std::string unsignedLongType{"unsigned long"};
-const std::string longUnsignedIntType{"long unsigned int"};
-const std::string longLongType{"long long"};
-const std::string longLongIntType{"long long int"};
-const std::string int64Type{"__int64"};
-const std::string unsignedLongLongType{"unsigned long long"};
-const std::string longLongUnsignedIntType{"long long unsigned int"};
-const std::string unsignedInt64Type{"unsigned __int64"};
-const std::string boolType{"bool"};
-const std::string intType{"int"};
-const std::string floatType{"float"};
-const std::string doubleType{"double"};
-const std::string stringType{"std::string"};
-const std::string stringTypeVisualStudioStyle{
-    "class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> >"};
-const std::string stringTypeClangStyle{"std::basic_string<char, std::char_traits<char>, std::allocator<char>>"};
-const std::string stringTypeGxxStyle{"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"};
-const std::string optionalIntTypeVisualStudioStyle{"class std::optional<int>"};
-const std::string optionalIntTypeClangStyle{"std::optional<int>"};
-const std::string optionalStringTypeVisualStudioStyle{
-    "class std::optional<class std::basic_string<char,struct std::char_traits<char>,class std::allocator<char> > >"};
-const std::string optionalStringTypeClangStyle{
-    "std::optional<std::basic_string<char, std::char_traits<char>, std::allocator<char>>>"};
-} // namespace
+static_assert(logicalType<bool>() == ColumnType::Bool);
+static_assert(logicalType<char>() == ColumnType::Char);
+static_assert(logicalType<signed char>() == ColumnType::Char);
+static_assert(logicalType<unsigned char>() == ColumnType::UnsignedChar);
+static_assert(logicalType<short>() == ColumnType::Short);
+static_assert(logicalType<unsigned short>() == ColumnType::UnsignedShort);
+static_assert(logicalType<int>() == ColumnType::Int);
+static_assert(logicalType<unsigned int>() == ColumnType::UnsignedInt);
+static_assert(logicalType<long>() == (sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int));
+static_assert(logicalType<unsigned long>() ==
+              (sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt));
+static_assert(logicalType<long long>() == ColumnType::LongLong);
+static_assert(logicalType<unsigned long long>() == ColumnType::UnsignedLongLong);
+static_assert(logicalType<float>() == ColumnType::Float);
+static_assert(logicalType<double>() == ColumnType::Double);
+static_assert(logicalType<std::string>() == ColumnType::String);
+static_assert(logicalType<std::optional<int>>() == ColumnType::Int);
+static_assert(logicalType<std::optional<std::string>>() == ColumnType::String);
+static_assert(not isNullable<int>);
+static_assert(isNullable<std::optional<int>>);
 
-TEST(ColumnTypeTests, shouldTranslateInt)
+TEST(ColumnTypeTest, compileTimeLogicalTypesCoverEverySupportedStorageCategory)
 {
-    auto [columnType, isNotNull] = toColumnType(intType);
-    EXPECT_EQ(columnType, ColumnType::Int);
-    EXPECT_TRUE(isNotNull);
+    EXPECT_EQ(logicalType<bool>(), ColumnType::Bool);
+    EXPECT_EQ(logicalType<unsigned int>(), ColumnType::UnsignedInt);
+    EXPECT_EQ(logicalType<long long>(), ColumnType::LongLong);
+    EXPECT_EQ(logicalType<double>(), ColumnType::Double);
+    EXPECT_EQ(logicalType<std::optional<std::string>>(), ColumnType::String);
 }
 
-TEST(ColumnTypeTests, shouldTranslateFloat)
+TEST(ColumnTypeTest, toStringCoversEveryColumnType)
 {
-    auto [columnType, isNotNull] = toColumnType(floatType);
-    EXPECT_EQ(columnType, ColumnType::Float);
-    EXPECT_TRUE(isNotNull);
+    EXPECT_EQ(toString(ColumnType::Bool), "bool");
+    EXPECT_EQ(toString(ColumnType::Char), "char");
+    EXPECT_EQ(toString(ColumnType::UnsignedChar), "unsigned char");
+    EXPECT_EQ(toString(ColumnType::Short), "short");
+    EXPECT_EQ(toString(ColumnType::UnsignedShort), "unsigned short");
+    EXPECT_EQ(toString(ColumnType::Int), "int");
+    EXPECT_EQ(toString(ColumnType::UnsignedInt), "unsigned int");
+    EXPECT_EQ(toString(ColumnType::LongLong), "long long");
+    EXPECT_EQ(toString(ColumnType::UnsignedLongLong), "unsigned long long");
+    EXPECT_EQ(toString(ColumnType::Float), "float");
+    EXPECT_EQ(toString(ColumnType::Double), "double");
+    EXPECT_EQ(toString(ColumnType::String), "std::string");
+    EXPECT_EQ(toString(ColumnType::Uuid), "uuid");
 }
 
-TEST(ColumnTypeTests, shouldTranslateDouble)
+TEST(ColumnTypeTest, toStringLabelsInvalidEnumValues)
 {
-    auto [columnType, isNotNull] = toColumnType(doubleType);
-    EXPECT_EQ(columnType, ColumnType::Double);
-    EXPECT_TRUE(isNotNull);
-}
+    const auto invalidType = static_cast<ColumnType>(999); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
 
-TEST(ColumnTypeTests, shouldTranslateStringVisualStudioStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(stringTypeVisualStudioStyle);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateString)
-{
-    auto [columnType, isNotNull] = toColumnType(stringType);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateStringClangStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(stringTypeClangStyle);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateStringGxxStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(stringTypeGxxStyle);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateOptionalIntVisualStudioStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(optionalIntTypeVisualStudioStyle);
-    EXPECT_EQ(columnType, ColumnType::Int);
-    EXPECT_FALSE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateOptionalIntClangStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(optionalIntTypeClangStyle);
-    EXPECT_EQ(columnType, ColumnType::Int);
-    EXPECT_FALSE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateOptionalStringVisualStudioStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(optionalStringTypeVisualStudioStyle);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_FALSE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateOptionalStringClangStyle)
-{
-    auto [columnType, isNotNull] = toColumnType(optionalStringTypeClangStyle);
-    EXPECT_EQ(columnType, ColumnType::String);
-    EXPECT_FALSE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnknownType)
-{
-    auto [columnType, isNotNull] = toColumnType("unknown");
-    EXPECT_EQ(columnType, ColumnType::Unknown);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateChar)
-{
-    auto [columnType, isNotNull] = toColumnType(charType);
-    EXPECT_EQ(columnType, ColumnType::Char);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateSignedChar)
-{
-    auto [columnType, isNotNull] = toColumnType(signedCharType);
-    EXPECT_EQ(columnType, ColumnType::Char);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnsignedChar)
-{
-    auto [columnType, isNotNull] = toColumnType(unsignedCharType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedChar);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateShort)
-{
-    auto [columnType, isNotNull] = toColumnType(shortType);
-    EXPECT_EQ(columnType, ColumnType::Short);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateShortInt)
-{
-    auto [columnType, isNotNull] = toColumnType(shortIntType);
-    EXPECT_EQ(columnType, ColumnType::Short);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnsignedShort)
-{
-    auto [columnType, isNotNull] = toColumnType(unsignedShortType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedShort);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateShortUnsignedInt)
-{
-    auto [columnType, isNotNull] = toColumnType(shortUnsignedIntType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedShort);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLongLong)
-{
-    auto [columnType, isNotNull] = toColumnType(longLongType);
-    EXPECT_EQ(columnType, ColumnType::LongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLongLongInt)
-{
-    auto [columnType, isNotNull] = toColumnType(longLongIntType);
-    EXPECT_EQ(columnType, ColumnType::LongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateInt64)
-{
-    auto [columnType, isNotNull] = toColumnType(int64Type);
-    EXPECT_EQ(columnType, ColumnType::LongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLong)
-{
-    auto [columnType, isNotNull] = toColumnType(longType);
-    const auto expectedType = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
-    EXPECT_EQ(columnType, expectedType);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLongInt)
-{
-    auto [columnType, isNotNull] = toColumnType(longIntType);
-    const auto expectedType = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
-    EXPECT_EQ(columnType, expectedType);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnsignedLong)
-{
-    auto [columnType, isNotNull] = toColumnType(unsignedLongType);
-    const auto expectedType =
-        sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
-    EXPECT_EQ(columnType, expectedType);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLongUnsignedInt)
-{
-    auto [columnType, isNotNull] = toColumnType(longUnsignedIntType);
-    const auto expectedType =
-        sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
-    EXPECT_EQ(columnType, expectedType);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnsignedLongLong)
-{
-    auto [columnType, isNotNull] = toColumnType(unsignedLongLongType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateLongLongUnsignedInt)
-{
-    auto [columnType, isNotNull] = toColumnType(longLongUnsignedIntType);
-    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateUnsignedInt64)
-{
-    auto [columnType, isNotNull] = toColumnType(unsignedInt64Type);
-    EXPECT_EQ(columnType, ColumnType::UnsignedLongLong);
-    EXPECT_TRUE(isNotNull);
-}
-
-TEST(ColumnTypeTests, shouldTranslateBool)
-{
-    auto [columnType, isNotNull] = toColumnType(boolType);
-    EXPECT_EQ(columnType, ColumnType::Bool);
-    EXPECT_TRUE(isNotNull);
+    EXPECT_EQ(toString(invalidType), "unknown");
 }

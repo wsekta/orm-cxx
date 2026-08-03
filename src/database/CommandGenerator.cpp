@@ -17,33 +17,33 @@ CommandGenerator::CommandGenerator(std::unique_ptr<commands::CreateTableCommand>
 {
 }
 
-auto CommandGenerator::createTable(const model::ModelInfo& modelInfo) const -> std::string
+auto CommandGenerator::createTable(model::ModelView model) const -> std::string
 {
-    return createTableCommand->createTable(modelInfo);
+    return createTableCommand->createTable(model);
 }
 
-auto CommandGenerator::dropTable(const model::ModelInfo& modelInfo) const -> std::string
+auto CommandGenerator::dropTable(model::ModelView model) const -> std::string
 {
-    return dropTableCommand->dropTable(modelInfo);
+    return dropTableCommand->dropTable(model);
 }
 
-auto CommandGenerator::insert(const model::ModelInfo& modelInfo) const -> std::string
+auto CommandGenerator::insert(model::ModelView model) const -> std::string
 {
-    return insertCommand->insert(modelInfo);
+    return insertCommand->insert(model);
 }
 
-auto CommandGenerator::select(const query::QueryData& queryData) const -> SelectStatement
+auto CommandGenerator::select(model::ModelView model, const query::SelectSpec& spec) const -> SelectStatement
 {
-    return selectCommand->select(queryData);
+    return selectCommand->select(model, spec);
 }
 
-auto CommandGenerator::update(const query::UpdateData& updateData) const -> Statement
+auto CommandGenerator::update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement
 {
-    return updateCommand->update(updateData);
+    return updateCommand->update(model, spec);
 }
 
-auto CommandGenerator::remove(const model::ModelInfo& modelInfo, const query::Predicate& predicate) const -> Statement
+auto CommandGenerator::remove(model::ModelView model, const query::Predicate& predicate) const -> Statement
 {
-    return deleteCommand->remove(modelInfo, predicate);
+    return deleteCommand->remove(model, predicate);
 }
 } // namespace orm::db

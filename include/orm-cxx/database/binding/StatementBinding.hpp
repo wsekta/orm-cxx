@@ -38,8 +38,6 @@ inline auto bindNull(soci::values& values, std::string_view name, model::ColumnT
         bindTypedNull(values, name, std::string{});
         return;
     case model::ColumnType::Uuid:
-    case model::ColumnType::Unknown:
-    case model::ColumnType::OneToOne:
         break;
     }
 

@@ -18,17 +18,17 @@ namespace database_coverage_completion_models
 {
 struct AutoOnly
 {
-    inline static constexpr std::string_view table_name = "coverage_auto_only";
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_auto_only"};
+    inline static constexpr auto auto_increment_columns = orm::autoIncrement<&AutoOnly::id>();
 };
 
 struct NarrowModel
 {
-    inline static constexpr std::string_view table_name = "coverage_narrow";
-
     std::optional<std::uint8_t> value;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_narrow"};
 };
 
 struct ScalarProjection
@@ -36,40 +36,51 @@ struct ScalarProjection
     int value;
 };
 
+struct BoolBindingModel
+{
+    bool flag;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_binding"};
+};
+
 struct StringTarget
 {
-    inline static constexpr std::string_view table_name = "coverage_string_targets";
-
     std::string id;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_string_targets"};
 };
 
 struct IntOwner
 {
-    inline static constexpr std::string_view table_name = "coverage_int_owners";
-
     int id;
     orm::ManyToMany<StringTarget> targets;
 
-    inline static const auto relations = orm::relations(orm::manyToMany("targets")
-                                                            .through("coverage_int_owner_targets")
-                                                            .ownerColumns({"owner_id"})
-                                                            .targetColumns({"target_id"}));
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_int_owners"};
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&IntOwner::targets>()
+                                                                .through<"coverage_int_owner_targets">()
+                                                                .ownerColumns<"owner_id">()
+                                                                .targetColumns<"target_id">());
 };
 
 struct WideTarget
 {
-    inline static constexpr std::string_view table_name = "coverage_wide_targets";
-
     unsigned long long id;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_wide_targets"};
 };
 
 struct RelatedToWideTarget
 {
-    inline static constexpr std::string_view table_name = "coverage_related_to_wide_target";
-
     std::string id;
     WideTarget target;
+
+    inline static constexpr orm::reflection::FixedString table_name{"coverage_related_to_wide_target"};
 };
+
+using Schema = orm::Schema<models::ModelWithOneField, models::SomeDataModel, models::ModelWithId,
+                           models::ModelWithIdAndNamesMapping, collection_models::Author, collection_models::Book,
+                           collection_models::User, collection_models::Role, AutoOnly, NarrowModel, StringTarget,
+                           IntOwner, WideTarget, RelatedToWideTarget, BoolBindingModel>;
 } // namespace database_coverage_completion_models
 
 namespace
@@ -82,7 +93,7 @@ class StaticCreateTableCommand final : public orm::db::commands::CreateTableComm
 public:
     explicit StaticCreateTableCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
 
-    auto createTable(const orm::model::ModelInfo& /*modelInfo*/) const -> std::string override
+    auto createTable(orm::model::ModelView /*model*/) const -> std::string override
     {
         return sql;
     }
@@ -96,7 +107,7 @@ class StaticDropTableCommand final : public orm::db::commands::DropTableCommand
 public:
     explicit StaticDropTableCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
 
-    auto dropTable(const orm::model::ModelInfo& /*modelInfo*/) const -> std::string override
+    auto dropTable(orm::model::ModelView /*model*/) const -> std::string override
     {
         return sql;
     }
@@ -110,7 +121,7 @@ class StaticInsertCommand final : public orm::db::commands::InsertCommand
 public:
     explicit StaticInsertCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
 
-    auto insert(const orm::model::ModelInfo& /*modelInfo*/) const -> std::string override
+    auto insert(orm::model::ModelView /*model*/) const -> std::string override
     {
         return sql;
     }
@@ -124,7 +135,8 @@ class StaticSelectCommand final : public orm::db::commands::SelectCommand
 public:
     explicit StaticSelectCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto select(const orm::query::QueryData& /*queryData*/) const -> orm::db::SelectStatement override
+    auto select(orm::model::ModelView /*model*/,
+                const orm::query::SelectSpec& /*spec*/) const -> orm::db::SelectStatement override
     {
         return statement;
     }
@@ -138,7 +150,8 @@ class StaticUpdateCommand final : public orm::db::commands::UpdateCommand
 public:
     explicit StaticUpdateCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto update(const orm::query::UpdateData& /*updateData*/) const -> orm::db::Statement override
+    auto update(orm::model::ModelView /*model*/,
+                const orm::query::UpdateSpec& /*spec*/) const -> orm::db::Statement override
     {
         return statement;
     }
@@ -152,7 +165,7 @@ class StaticDeleteCommand final : public orm::db::commands::DeleteCommand
 public:
     explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
-    auto remove(const orm::model::ModelInfo& /*modelInfo*/,
+    auto remove(orm::model::ModelView /*model*/,
                 const orm::query::Predicate& /*predicate*/) const -> orm::db::Statement override
     {
         return statement;
@@ -425,24 +438,6 @@ private:
     std::unique_ptr<orm::db::CommandGenerator> customGenerator;
 };
 
-class ModelInfoRestore
-{
-public:
-    explicit ModelInfoRestore(orm::model::ModelInfo& targetInit) : target{targetInit}, original{targetInit} {}
-
-    ~ModelInfoRestore()
-    {
-        target = std::move(original);
-    }
-
-    ModelInfoRestore(const ModelInfoRestore&) = delete;
-    auto operator=(const ModelInfoRestore&) -> ModelInfoRestore& = delete;
-
-private:
-    orm::model::ModelInfo& target;
-    orm::model::ModelInfo original;
-};
-
 class DatabaseBundle
 {
 public:
@@ -452,7 +447,7 @@ public:
         auto provider = std::make_unique<ConfigurableBackend>(std::move(generator));
         backend = provider.get();
         factory.registerBackend(std::move(provider));
-        database = std::make_unique<orm::Database>(std::move(factory));
+        database = std::make_unique<orm::Database<Schema>>(std::move(factory));
     }
 
     auto connect() -> void
@@ -461,7 +456,7 @@ public:
     }
 
     ConfigurableBackend* backend{};
-    std::unique_ptr<orm::Database> database;
+    std::unique_ptr<orm::Database<Schema>> database;
 };
 
 template <typename Operation>
@@ -483,44 +478,22 @@ auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code,
     }
 }
 
-auto column(std::string name, orm::model::ColumnType type) -> orm::model::ColumnInfo
-{
-    return orm::model::ColumnInfo{.fieldName = name,
-                                  .name = std::move(name),
-                                  .type = type,
-                                  .isPrimaryKey = false,
-                                  .isForeignModel = false,
-                                  .isAutoIncrement = false,
-                                  .isUnique = false,
-                                  .isNotNull = true};
-}
-
 auto removeSupportedType(orm::db::BackendCapabilities& capabilities, orm::model::ColumnType type) -> void
 {
     std::erase(capabilities.supportedColumnTypes, type);
 }
 } // namespace
 
-TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsIncompatibleAndUnsupportedLogicalTypes)
+TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsIncompatibleLogicalStorage)
 {
     const orm::db::sqlite::SqliteBackend sqlite;
     soci::values serialized;
     soci::values target;
     serialized.set("flag", 2);
 
-    const auto incompatible = orm::model::ModelInfo{.tableName = "coverage_binding",
-                                                    .columnsInfo = {column("flag", orm::model::ColumnType::Bool)}};
-    EXPECT_THROW(orm::detail::bindModelParameters(sqlite.runtime(), target, serialized, incompatible),
+    constexpr auto descriptor = orm::modelView<Schema, BoolBindingModel>();
+    EXPECT_THROW(orm::detail::bindModelParameters(sqlite.runtime(), target, serialized, descriptor),
                  orm::db::binding::ConversionError);
-
-    for (const auto unsupported :
-         {orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne})
-    {
-        const auto modelInfo =
-            orm::model::ModelInfo{.tableName = "coverage_binding", .columnsInfo = {column("flag", unsupported)}};
-        EXPECT_THROW(orm::detail::bindModelParameters(sqlite.runtime(), target, serialized, modelInfo),
-                     std::invalid_argument);
-    }
 }
 
 TEST(DatabaseCoverageCompletionTest, typedConnectRejectsAlreadyConnectedDatabase)
@@ -558,7 +531,7 @@ TEST(DatabaseCoverageCompletionTest, unknownConnectFailureClosesTheOpenedSession
 
 TEST(DatabaseCoverageCompletionTest, disconnectWithoutBackendIsIdempotent)
 {
-    orm::Database database;
+    orm::Database<Schema> database;
 
     EXPECT_NO_THROW(database.disconnect());
     EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Empty);
@@ -691,21 +664,6 @@ TEST(DatabaseCoverageCompletionTest, relationEndpointCapabilityCheckRejectsUnsup
     bundle.connect();
     expectDatabaseError([&bundle]() { bundle.database->createRelationTables<IntOwner>(); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
-}
-
-TEST(DatabaseCoverageCompletionTest, relationEndpointValidationSkipsInverseMappingsBeforeOwnedMapping)
-{
-    DatabaseBundle bundle;
-    bundle.connect();
-    bundle.database->createTable<collection_models::User>();
-    bundle.database->createTable<collection_models::Role>();
-
-    auto& userInfo = orm::Model<collection_models::User>::getModelInfo();
-    const ModelInfoRestore restore{userInfo};
-    const auto& roleInfo = orm::Model<collection_models::Role>::getModelInfo();
-    userInfo.relationsInfo.insert(userInfo.relationsInfo.begin(), roleInfo.relationsInfo.front());
-
-    EXPECT_NO_THROW(bundle.database->createRelationTables<collection_models::User>());
 }
 
 TEST(DatabaseCoverageCompletionTest, includeTranslatesRuntimeLimitErrorsAndRejectsAnInsufficientBudget)
@@ -905,8 +863,7 @@ TEST(DatabaseCoverageCompletionTest, failedSelectInvalidatesTransactionUntilRoll
 TEST(DatabaseCoverageCompletionTest, modelIdentifierErrorsAreReportedAsUnsupportedFeatures)
 {
     DatabaseBundle bundle;
-    bundle.backend->dialectStrategy.rejectedIdentifier =
-        orm::Model<models::ModelWithOneField>::getModelInfo().tableName;
+    bundle.backend->dialectStrategy.rejectedIdentifier = orm::modelView<Schema, models::ModelWithOneField>()->tableName;
     bundle.connect();
     orm::Query<models::ModelWithOneField> query;
 

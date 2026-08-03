@@ -15,33 +15,32 @@ auto sqliteDialect() -> const orm::db::SqlDialect&
 
 namespace orm::db::relations
 {
-auto createTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto createTableStatements(model::ModelView owner) -> std::vector<std::string>
 {
-    return createTableStatements(sqliteDialect(), ownerInfo);
+    return createTableStatements(sqliteDialect(), owner);
 }
 
-auto dropTableStatements(const model::ModelInfo& ownerInfo) -> std::vector<std::string>
+auto dropTableStatements(model::ModelView owner) -> std::vector<std::string>
 {
-    return dropTableStatements(sqliteDialect(), ownerInfo);
+    return dropTableStatements(sqliteDialect(), owner);
 }
 
-auto linkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
-                   const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
+auto linkStatement(model::ModelView owner, model::RelationView relation, const binding::PrimaryKey& ownerKey,
+                   const binding::PrimaryKey& targetKey) -> Statement
 {
-    return linkStatement(sqliteDialect(), ownerInfo, relation, ownerKey, targetKey);
+    return linkStatement(sqliteDialect(), owner, relation, ownerKey, targetKey);
 }
 
-auto unlinkStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
-                     const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
+auto unlinkStatement(model::ModelView owner, model::RelationView relation, const binding::PrimaryKey& ownerKey,
+                     const binding::PrimaryKey& targetKey) -> Statement
 {
-    return unlinkStatement(sqliteDialect(), ownerInfo, relation, ownerKey, targetKey);
+    return unlinkStatement(sqliteDialect(), owner, relation, ownerKey, targetKey);
 }
 
-auto collectionSelectStatement(const model::ModelInfo& ownerInfo, const model::RelationInfo& relation,
-                               std::string targetSelectSql, const std::vector<binding::PrimaryKey>& ownerKeys,
-                               bool joinedValues) -> Statement
+auto collectionSelectStatement(model::ModelView owner, model::RelationView relation, std::string targetSelectSql,
+                               const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues) -> Statement
 {
-    return collectionSelectStatement(sqliteDialect(), ownerInfo, relation, std::move(targetSelectSql), ownerKeys,
+    return collectionSelectStatement(sqliteDialect(), owner, relation, std::move(targetSelectSql), ownerKeys,
                                      joinedValues);
 }
 } // namespace orm::db::relations

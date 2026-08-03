@@ -3,7 +3,9 @@
 `orm-cxx` supports explicit one-level collection relations with
 `orm::OneToMany<T>` and `orm::ManyToMany<T>`. Collection fields are model
 metadata: they are not columns of the model's base table, are never written by
-`insert`, and are loaded only when a query explicitly requests them.
+`insert`, and are loaded only when a query explicitly requests them. Mapping
+descriptors use compile-time member pointers and `FixedString` names, and the
+complete relation graph is validated by `orm::Schema<Models...>`.
 
 1. [Collection wrappers](#collection-wrappers)
 2. [One-to-many](#one-to-many)
@@ -33,6 +35,7 @@ Both wrappers expose:
 * `isLoaded()`
 * `values()`
 * `begin()` and `end()`
+* `cbegin()` and `cend()`
 * `size()` and `empty()`
 * `operator[]`
 
@@ -61,8 +64,8 @@ struct Author
     std::string name;
     orm::OneToMany<Book> books;
 
-    inline static const auto relations =
-        orm::relations(orm::oneToMany("books").mappedBy("author"));
+    inline static constexpr auto relations =
+        orm::relations(orm::oneToMany<&Author::books>().mappedBy<"author">());
 };
 
 struct Book
@@ -73,10 +76,15 @@ struct Book
 };
 ```
 
-`mappedBy("author")` is required. The field must be a compatible to-one field
-whose target is `Author`. The `Book` table owns the foreign-key columns already
-generated for `Book::author`; no hidden column or additional relation table is
-created for `Author::books`.
+`mappedBy` is required. The collection side is always selected by the typed
+member pointer `&Author::books`. When the target type is complete, prefer
+`.mappedBy<&Book::author>()`. The `FixedString` fallback
+`.mappedBy<"author">()` is necessary in the common layout above because
+`Book` is still incomplete when `Author::relations` is defined. In either form
+the field must be a compatible to-one relation whose target is `Author`. The
+`Book` table owns the foreign-key columns already generated for
+`Book::author`; no hidden column or additional relation table is created for
+`Author::books`.
 
 Use `std::optional<Author>` for the child field when the relation must be
 nullable:
@@ -105,12 +113,11 @@ struct User
     std::string name;
     orm::ManyToMany<Role> roles;
 
-    inline static const auto relations =
-        orm::relations(
-            orm::manyToMany("roles")
-                .through("user_roles")
-                .ownerColumns({"user_id"})
-                .targetColumns({"role_id"}));
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&User::roles>()
+                           .through<"user_roles">()
+                           .ownerColumns<"user_id">()
+                           .targetColumns<"role_id">());
 };
 
 struct Role
@@ -119,14 +126,23 @@ struct Role
     std::string name;
     orm::ManyToMany<User> users;
 
-    inline static const auto relations =
-        orm::relations(orm::manyToMany("users").mappedBy("roles"));
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&Role::users>().mappedBy<&User::roles>());
 };
 ```
 
-`through("user_roles")` is required on the owning side. The inverse side is
-optional; when present, `mappedBy("roles")` names the owning collection field.
+`through<"user_roles">()` is required on the owning side. The inverse side is
+optional; when present, `mappedBy<&User::roles>()` points to the owning
+collection field.
 Both sides support `include`, collection predicates, `link`, and `unlink`.
+
+Both endpoints and every other relation target must belong to the database's
+closed schema:
+
+```cpp
+using AppSchema = orm::Schema<Author, Book, User, Role>;
+orm::Database<AppSchema> database;
+```
 
 The junction table contains only the complete primary keys of both endpoints.
 Every junction column is `NOT NULL`; all columns together form its composite
@@ -145,12 +161,22 @@ For a composite primary key there must be exactly one junction column name per
 primary-key column, in primary-key order:
 
 ```cpp
-inline static const auto relations =
-    orm::relations(
-        orm::manyToMany("tags")
-            .through("document_tags")
-            .ownerColumns({"document_tenant_id", "document_id"})
-            .targetColumns({"tag_tenant_id", "tag_id"}));
+struct Tag;
+
+struct Document
+{
+    std::string tenant;
+    int id;
+    orm::ManyToMany<Tag> tags;
+
+    inline static constexpr auto id_columns =
+        orm::primaryKey<&Document::tenant, &Document::id>();
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&Document::tags>()
+                           .through<"document_tags">()
+                           .ownerColumns<"document_tenant_id", "document_id">()
+                           .targetColumns<"tag_tenant_id", "tag_id">());
+};
 ```
 
 Self-referencing many-to-many mappings must specify distinct owner and target
@@ -190,10 +216,10 @@ Use endpoint objects with complete, non-null primary-key values:
 
 ```cpp
 User user{1, "Ada"};
-Role admin{10, "admin"};
+Role role{10, "admin"};
 
-std::size_t inserted = database.link(user, "roles", admin);
-std::size_t removed = database.unlink(user, "roles", admin);
+std::size_t inserted = database.link(user, "roles", role);
+std::size_t removed = database.unlink(user, "roles", role);
 ```
 
 For many-to-many, `link` inserts one junction row and `unlink` deletes it. Both
@@ -288,7 +314,8 @@ inserted first, links are written explicitly, and collection values are loaded
 only by `include`:
 
 ```cpp
-orm::Database database;
+using AppSchema = orm::Schema<Author, Book, User, Role>;
+orm::Database<AppSchema> database;
 database.connect("sqlite3://application.db");
 
 // 1. Create base tables before the owning many-to-many junction table.
@@ -302,19 +329,19 @@ database.createRelationTables<User>();
 Author author{1, "Octavia Butler"};
 Book book{10, "Kindred", std::nullopt};
 User user{1, "Ada"};
-Role admin{10, "admin"};
+Role role{10, "admin"};
 
 database.insert(author);
 database.insert(book);
 database.insert(user);
-database.insert(admin);
+database.insert(role);
 
 // 3. Persist associations explicitly.
 database.link(author, "books", book); // updates Book::author
-database.link(user, "roles", admin);  // inserts into user_roles
+database.link(user, "roles", role);   // inserts into user_roles
 
 // The inverse many-to-many side is equivalent for mutations:
-database.link(admin, "users", user);  // returns 0: the link already exists
+database.link(role, "users", user);  // returns 0: the link already exists
 
 // 4. Load collections explicitly.
 orm::Query<Author> authorQuery;
@@ -331,7 +358,7 @@ if (!authors.empty() && authors[0].books.isLoaded())
 
 // 5. Detach links before removing rows when application rules require it.
 database.unlink(author, "books", book);
-database.unlink(user, "roles", admin);
+database.unlink(user, "roles", role);
 
 // 6. Drop owning junction tables before endpoint tables.
 database.deleteRelationTables<User>();
@@ -365,7 +392,8 @@ cascade deletion for child rows.
 
 ## Validation and unsupported mappings
 
-Metadata construction rejects invalid collection mappings, including:
+Instantiating `orm::Schema<Models...>` rejects invalid collection mappings at
+compile time, including:
 
 * a wrapper without exactly one matching descriptor,
 * a missing or incompatible `mappedBy` field,
@@ -385,8 +413,12 @@ payload models, and schema migrations are outside the current contract.
 
 ## Common mistakes
 
-* `oneToMany("books")`, `manyToMany("roles")`, and `mappedBy("author")`
-  refer to C++ model field names, not SQL table or column names.
+* `oneToMany<&Author::books>()` and `manyToMany<&User::roles>()` require
+  collection member pointers. Prefer a target member pointer for `mappedBy`;
+  its `FixedString` fallback names a C++ field, not a SQL column.
+* Runtime query and mutation calls such as `include("roles")`,
+  `exists("roles")`, and `link(user, "roles", role)` still use reflected C++
+  field names. Compile-time query-path validation is planned separately.
 * Adding an element with `model.roles.values().push_back(role)` changes only
   that in-memory wrapper. Call `database.link(model, "roles", role)` to persist
   the association.

@@ -71,10 +71,11 @@ auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) ->
 
 using orm::generateSomeDataModels;
 
+template <typename SchemaType = models::Schema>
 class DatabaseTest : public ::testing::TestWithParam<BackendTestConfig>
 {
 public:
-    orm::Database database;
+    orm::Database<SchemaType> database;
 
     auto SetUp() -> void override
     {
@@ -158,15 +159,15 @@ public:
     template <typename T>
     auto createTable() -> void
     {
-        database.createTable<T>();
-        tearDownFunctions.emplace_back([this]() { database.deleteTable<T>(); });
+        database.template createTable<T>();
+        tearDownFunctions.emplace_back([this]() { database.template deleteTable<T>(); });
     }
 
     template <typename T>
     auto createRelationTables() -> void
     {
-        database.createRelationTables<T>();
-        tearDownFunctions.emplace_back([this]() { database.deleteRelationTables<T>(); });
+        database.template createRelationTables<T>();
+        tearDownFunctions.emplace_back([this]() { database.template deleteRelationTables<T>(); });
     }
 
     [[nodiscard]] auto testConnectionString() const noexcept -> const std::string&

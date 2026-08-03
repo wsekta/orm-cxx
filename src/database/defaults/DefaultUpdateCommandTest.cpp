@@ -20,6 +20,12 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 {
     return std::get<T>(parameter.value->get());
 }
+
+template <typename T>
+auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command, orm::Update<T>& update) -> orm::db::Statement
+{
+    return command.update(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getUpdateSpec(update));
+}
 } // namespace
 
 class DefaultUpdateCommandTest : public ::testing::Test
@@ -35,7 +41,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithComparisonPredicate)
 
     update.set(col("field2"), "updated").where(col("field1") == 5);
 
-    const auto statement = command.update(orm::Database::getUpdateData(update));
+    const auto statement = renderUpdate(command, update);
 
     EXPECT_EQ(statement.sql,
               "UPDATE models_ModelWithFloat SET field2 = :orm_p0 WHERE models_ModelWithFloat.field1 = :orm_p1;");
@@ -52,7 +58,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithNullAssignment)
 
     update.set(col("field1"), std::nullopt).where(col("field2") == "target");
 
-    const auto statement = command.update(orm::Database::getUpdateData(update));
+    const auto statement = renderUpdate(command, update);
 
     EXPECT_EQ(statement.sql,
               "UPDATE models_ModelWithOptional SET field1 = :orm_p0 WHERE models_ModelWithOptional.field2 = :orm_p1;");
@@ -70,7 +76,7 @@ TEST(DefaultUpdateCommandDialectTest, delegatesIdentifiersAndPresentAndNullBindM
     orm::Update<models::ModelWithOptional> update;
     update.set(col("field1"), std::nullopt).set(col("field2"), "updated").where(col("field3") >= 1.0);
 
-    const auto statement = command.update(orm::Database::getUpdateData(update));
+    const auto statement = renderUpdate(command, update);
 
     EXPECT_EQ(statement.sql, "UPDATE [models_ModelWithOptional] SET [field1] = $orm_p0, [field2] = $orm_p1 "
                              "WHERE [models_ModelWithOptional].[field3] >= $orm_p2;");
@@ -84,7 +90,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithNullAssignmentToNotNullColumn_shouldT
 
     update.set(col("field2"), std::nullopt).where(col("field1") == 5);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithMappedFieldName)
@@ -93,7 +99,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithMappedFieldName)
 
     update.set(col("field2"), "updated").where(col("field1") == 7);
 
-    EXPECT_EQ(command.update(orm::Database::getUpdateData(update)).sql,
+    EXPECT_EQ(renderUpdate(command, update).sql,
               "UPDATE models_ModelWithIdAndNamesMapping SET some_field2_name = :orm_p0 WHERE "
               "models_ModelWithIdAndNamesMapping.some_field1_name = :orm_p1;");
 }
@@ -104,7 +110,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithPrimaryKeyAssignment)
 
     update.set(col("id"), 9).where(col("field1") == 1);
 
-    EXPECT_EQ(command.update(orm::Database::getUpdateData(update)).sql,
+    EXPECT_EQ(renderUpdate(command, update).sql,
               "UPDATE models_ModelWithId SET id = :orm_p0 WHERE models_ModelWithId.field1 = :orm_p1;");
 }
 
@@ -114,9 +120,8 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedPrimaryKeyAssignment)
 
     update.set(col("field3.id"), 2).where(col("id") == 1);
 
-    EXPECT_EQ(command.update(orm::Database::getUpdateData(update)).sql,
-              "UPDATE models_ModelRelatedToOtherModel SET field3_id = :orm_p0 WHERE "
-              "models_ModelRelatedToOtherModel.id = :orm_p1;");
+    EXPECT_EQ(renderUpdate(command, update).sql, "UPDATE models_ModelRelatedToOtherModel SET field3_id = :orm_p0 WHERE "
+                                                 "models_ModelRelatedToOtherModel.id = :orm_p1;");
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithRelatedNonPrimaryKeyAssignment_shouldThrow)
@@ -125,7 +130,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedNonPrimaryKeyAssignment_should
 
     update.set(col("field3.field2"), "updated").where(col("id") == 1);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithRelatedModelAssignment_shouldThrow)
@@ -134,7 +139,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedModelAssignment_shouldThrow)
 
     update.set(col("field3"), 2).where(col("id") == 1);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithTooDeepRelatedAssignment_shouldThrow)
@@ -143,7 +148,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithTooDeepRelatedAssignment_shouldThrow)
 
     update.set(col("field3.id.extra"), 2).where(col("id") == 1);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithoutPredicate_shouldThrow)
@@ -152,7 +157,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithoutPredicate_shouldThrow)
 
     update.set(col("field2"), "updated");
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithoutAssignments_shouldThrow)
@@ -161,7 +166,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithoutAssignments_shouldThrow)
 
     update.where(col("field1") == 1);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithUnknownColumn_shouldThrow)
@@ -170,7 +175,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithUnknownColumn_shouldThrow)
 
     update.set(col("missing"), 1).where(col("field1") == 1);
 
-    EXPECT_THROW((void)command.update(orm::Database::getUpdateData(update)), std::invalid_argument);
+    EXPECT_THROW((void)renderUpdate(command, update), std::invalid_argument);
 }
 
 TEST_F(DefaultUpdateCommandTest, updateWithRawPredicate)
@@ -179,7 +184,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRawPredicate)
 
     update.set(col("field2"), "updated").where(raw("models_ModelWithFloat.field1 = :value", param("value", 1)));
 
-    const auto statement = command.update(orm::Database::getUpdateData(update));
+    const auto statement = renderUpdate(command, update);
 
     EXPECT_EQ(statement.sql,
               "UPDATE models_ModelWithFloat SET field2 = :orm_p0 WHERE models_ModelWithFloat.field1 = :value;");

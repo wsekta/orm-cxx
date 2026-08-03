@@ -106,7 +106,7 @@ TEST(ProjectionQueryTest, shouldIdentifySupportedProjectionResultTypes)
     }
 
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid, orm::model::ColumnType::Unknown, orm::model::ColumnType::OneToOne,
+        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -128,7 +128,7 @@ TEST(ProjectionQueryTest, shouldStoreProjectionDataAndSupportChaining)
         .offset(5)
         .disableJoining();
 
-    const auto& data = orm::Database::getQueryData(query);
+    const auto& data = orm::FakeDatabase::getSelectSpec(query);
 
     ASSERT_EQ(data.projections.size(), 2);
     EXPECT_EQ(data.projections[0].resultField, "id");
@@ -155,7 +155,7 @@ TEST(ProjectionQueryTest, shouldStoreGroupByAndHavingData)
         .andHaving(avg(col("field1")) >= 10.0)
         .orHaving(max(col("id")) == 3);
 
-    const auto& data = orm::Database::getQueryData(query);
+    const auto& data = orm::FakeDatabase::getSelectSpec(query);
 
     ASSERT_EQ(data.groupBy.size(), 1);
     EXPECT_EQ(data.groupBy[0].getPath(), "field2");

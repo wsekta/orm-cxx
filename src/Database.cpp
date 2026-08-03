@@ -18,13 +18,13 @@ namespace
 {
 auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool;
 
-auto renderColumnForValidation(const orm::query::Column& column, const orm::query::QueryData& queryData,
-                               const orm::db::SqlDialect& dialect) -> std::string
+auto renderColumnForValidation(const orm::query::Column& column, orm::model::ModelView model,
+                               const orm::query::SelectSpec& spec, const orm::db::SqlDialect& dialect) -> std::string
 {
     const orm::db::commands::RenderContext context{
-        .modelInfo = queryData.modelInfo,
+        .model = model,
         .dialect = dialect,
-        .shouldJoin = queryData.shouldJoin,
+        .shouldJoin = spec.shouldJoin,
     };
 
     return orm::db::commands::renderColumn(column, context);
@@ -69,8 +69,6 @@ auto serializedBoundValue(const soci::values& values, const std::string& name,
     case orm::model::ColumnType::String:
         return makeValue(values.get<std::string>(name));
     case orm::model::ColumnType::Uuid:
-    case orm::model::ColumnType::Unknown:
-    case orm::model::ColumnType::OneToOne:
         break;
     }
 
@@ -104,23 +102,23 @@ auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool
         node.expression);
 }
 
-auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelInfo& modelInfo,
-                              std::unordered_set<const orm::model::ModelInfo*>& visited) -> void
+auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelView& model,
+                              std::unordered_set<std::size_t>& visited) -> void
 {
-    if (not visited.insert(&modelInfo).second)
+    if (not visited.insert(model.modelIndex).second)
     {
         return;
     }
 
-    (void)dialect.quoteIdentifier(modelInfo.tableName);
+    (void)dialect.quoteIdentifier(model->tableName);
 
-    for (const auto& column : modelInfo.columnsInfo)
+    for (const auto& column : model->columns)
     {
         (void)dialect.quoteIdentifier(column.name);
 
-        if (not column.isForeignModel)
+        if (column.kind == orm::model::FieldKind::Scalar)
         {
-            (void)dialect.quoteIdentifier(orm::db::aliases::modelColumn(modelInfo.tableName, column.name));
+            (void)dialect.quoteIdentifier(orm::db::aliases::modelColumn(model->tableName, column.name));
 
             if (column.isPrimaryKey)
             {
@@ -135,10 +133,14 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
             continue;
         }
 
-        const auto& relatedModel = modelInfo.foreignModelsInfo.at(column.name);
-        (void)dialect.quoteIdentifier(relatedModel.tableName);
+        const auto relatedModel = model.resolveTarget(column);
+        if (relatedModel == nullptr)
+        {
+            throw std::invalid_argument{"To-one column has no target model in the schema"};
+        }
+        (void)dialect.quoteIdentifier(relatedModel->tableName);
 
-        for (const auto& relatedColumn : relatedModel.columnsInfo)
+        for (const auto& relatedColumn : relatedModel->columns)
         {
             (void)dialect.quoteIdentifier(relatedColumn.name);
             (void)dialect.quoteIdentifier(orm::db::aliases::joinedRelationColumn(column.name, relatedColumn.name));
@@ -149,20 +151,24 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
                 (void)dialect.quoteIdentifier(localColumn);
                 (void)dialect.bindMarker(localColumn);
                 (void)dialect.quoteIdentifier(
-                    orm::db::aliases::unjoinedRelationColumn(modelInfo.tableName, column.name, relatedColumn.name));
+                    orm::db::aliases::unjoinedRelationColumn(model->tableName, column.name, relatedColumn.name));
             }
         }
 
-        validateModelIdentifiers(dialect, relatedModel, visited);
+        validateModelIdentifiers(dialect, *relatedModel, visited);
     }
 
-    for (const auto& relation : modelInfo.relationsInfo)
+    for (const auto& relation : model->relations)
     {
         (void)dialect.quoteIdentifier(relation.columnName);
-        const auto& targetModel = relation.targetModel();
-        (void)dialect.quoteIdentifier(targetModel.tableName);
+        const auto targetModel = model.resolveTarget(relation);
+        if (targetModel == nullptr)
+        {
+            throw std::invalid_argument{"Collection relation has no target model in the schema"};
+        }
+        (void)dialect.quoteIdentifier(targetModel->tableName);
 
-        for (const auto& targetColumn : targetModel.columnsInfo)
+        for (const auto& targetColumn : targetModel->columns)
         {
             (void)dialect.quoteIdentifier(targetColumn.name);
 
@@ -173,9 +179,9 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
             }
         }
 
-        if (relation.junction.has_value())
+        if (relation.junction.isConfigured())
         {
-            const auto& junction = relation.junction.value();
+            const auto& junction = relation.junction;
             (void)dialect.quoteIdentifier(junction.tableName);
 
             for (const auto& column : junction.ownerColumns)
@@ -189,36 +195,40 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
             }
         }
 
-        validateModelIdentifiers(dialect, targetModel, visited);
+        validateModelIdentifiers(dialect, *targetModel, visited);
     }
 }
 
-auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelInfo& modelInfo) -> void
+auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::model::ModelView& model) -> void
 {
-    std::unordered_set<const orm::model::ModelInfo*> visited;
-    validateModelIdentifiers(dialect, modelInfo, visited);
+    std::unordered_set<std::size_t> visited;
+    validateModelIdentifiers(dialect, model, visited);
 }
 } // namespace
 
 namespace orm
 {
 auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
-                                 const soci::values& serializedModel, const model::ModelInfo& modelInfo) -> std::size_t
+                                 const soci::values& serializedModel, model::ModelView descriptor) -> std::size_t
 {
     std::size_t parameterCount{};
 
-    for (const auto& column : modelInfo.columnsInfo)
+    for (const auto& column : descriptor->columns)
     {
         if (column.isAutoIncrement)
         {
             continue;
         }
 
-        if (column.isForeignModel)
+        if (column.kind == model::FieldKind::ToOne)
         {
-            const auto& relatedModel = modelInfo.foreignModelsInfo.at(column.name);
+            const auto relatedModel = descriptor.resolveTarget(column);
+            if (relatedModel == nullptr)
+            {
+                throw std::invalid_argument{"To-one column has no target model in the schema"};
+            }
 
-            for (const auto& relatedColumn : relatedModel.columnsInfo)
+            for (const auto& relatedColumn : relatedModel->columns)
             {
                 if (not relatedColumn.isPrimaryKey)
                 {
@@ -227,14 +237,15 @@ auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values
 
                 const auto parameterName = std::format("{}_{}", column.name, relatedColumn.name);
                 runtime.bind(targetValues, parameterName,
-                             serializedBoundValue(serializedModel, parameterName, relatedColumn.type));
+                             serializedBoundValue(serializedModel, parameterName, relatedColumn.type.value()));
                 ++parameterCount;
             }
 
             continue;
         }
 
-        runtime.bind(targetValues, column.name, serializedBoundValue(serializedModel, column.name, column.type));
+        runtime.bind(targetValues, column.name,
+                     serializedBoundValue(serializedModel, std::string{column.name}, column.type.value()));
         ++parameterCount;
     }
 
@@ -251,14 +262,14 @@ auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
     return static_cast<std::size_t>(affectedRows);
 }
 
-Database::Database() : backendType{db::BackendType::Empty} {}
+DatabaseCore::DatabaseCore() : backendType{db::BackendType::Empty} {}
 
-Database::Database(db::CommandGeneratorFactory factory)
+DatabaseCore::DatabaseCore(db::CommandGeneratorFactory factory)
     : backendType{db::BackendType::Empty}, commandGeneratorFactory{std::move(factory)}
 {
 }
 
-auto Database::connect(const std::string& connectionString) -> void
+auto DatabaseCore::connect(const std::string& connectionString) -> void
 {
     if (backend != nullptr)
     {
@@ -277,7 +288,7 @@ auto Database::connect(const std::string& connectionString) -> void
     connect(selectedBackend->type(), connectionString);
 }
 
-auto Database::connect(db::BackendType requestedBackend, const std::string& connectionString) -> void
+auto DatabaseCore::connect(db::BackendType requestedBackend, const std::string& connectionString) -> void
 {
     if (backend != nullptr)
     {
@@ -340,7 +351,7 @@ auto Database::connect(db::BackendType requestedBackend, const std::string& conn
     backendType = requestedBackend;
 }
 
-auto Database::disconnect() -> void
+auto DatabaseCore::disconnect() -> void
 {
     if (backend == nullptr)
     {
@@ -379,22 +390,22 @@ auto Database::disconnect() -> void
     }
 }
 
-auto Database::getBackendType() const noexcept -> db::BackendType
+auto DatabaseCore::getBackendType() const noexcept -> db::BackendType
 {
     return backendType;
 }
 
-auto Database::isConnected() const noexcept -> bool
+auto DatabaseCore::isConnected() const noexcept -> bool
 {
     return backend != nullptr and sql.is_connected();
 }
 
-auto Database::getBackendCapabilities() const -> const db::BackendCapabilities&
+auto DatabaseCore::getBackendCapabilities() const -> const db::BackendCapabilities&
 {
     return getBackend().capabilities();
 }
 
-auto Database::beginTransaction() -> void
+auto DatabaseCore::beginTransaction() -> void
 {
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "begin transaction", "transactions are not supported");
@@ -416,7 +427,7 @@ auto Database::beginTransaction() -> void
     }
 }
 
-auto Database::commitTransaction() -> void
+auto DatabaseCore::commitTransaction() -> void
 {
     (void)getBackend();
 
@@ -446,7 +457,7 @@ auto Database::commitTransaction() -> void
     }
 }
 
-auto Database::rollbackTransaction() -> void
+auto DatabaseCore::rollbackTransaction() -> void
 {
     (void)getBackend();
 
@@ -470,7 +481,7 @@ auto Database::rollbackTransaction() -> void
     }
 }
 
-auto Database::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
+auto DatabaseCore::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
 {
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
@@ -518,7 +529,7 @@ auto Database::executeMutation(const db::Statement& statement, std::string_view 
     }
 }
 
-auto Database::executeSql(std::string_view statement, std::string_view operation) -> void
+auto DatabaseCore::executeSql(std::string_view statement, std::string_view operation) -> void
 {
     (void)getBackend();
 
@@ -532,9 +543,9 @@ auto Database::executeSql(std::string_view statement, std::string_view operation
     }
 }
 
-auto Database::relationEndpointExists(const model::ModelInfo& modelInfo, const db::binding::PrimaryKey& key) -> bool
+auto DatabaseCore::relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool
 {
-    const auto primaryKeyColumns = db::binding::getPrimaryKeyColumns(modelInfo);
+    const auto primaryKeyColumns = db::binding::getPrimaryKeyColumns(model);
 
     if (primaryKeyColumns.size() != key.size())
     {
@@ -555,12 +566,11 @@ auto Database::relationEndpointExists(const model::ModelInfo& modelInfo, const d
         const auto parameterName = std::format("orm_endpoint_{}", i);
         where += std::format("{} = {}", dialect.quoteIdentifier(primaryKeyColumns[i]->name),
                              dialect.bindMarker(parameterName));
-        statement.parameters.push_back(
-            db::StatementParameter{.name = parameterName, .value = db::binding::toQueryValue(key[i])});
+        statement.parameters.push_back(db::StatementParameter{
+            .name = parameterName, .value = db::binding::toQueryValue(key[i]), .nullType = std::nullopt});
     }
 
-    statement.sql =
-        std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(modelInfo.tableName), where);
+    statement.sql = std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(model->tableName), where);
     ensureStatementWithinBindLimit(statement.parameters.size(), "validate relation endpoint");
     soci::values parameterValues;
     long long count{};
@@ -583,7 +593,7 @@ auto Database::relationEndpointExists(const model::ModelInfo& modelInfo, const d
     return count > 0;
 }
 
-auto Database::tableExists(std::string_view tableName) -> bool
+auto DatabaseCore::tableExists(std::string_view tableName) -> bool
 {
     try
     {
@@ -595,7 +605,7 @@ auto Database::tableExists(std::string_view tableName) -> bool
     }
 }
 
-auto Database::ensureRelationTableEndpointsExist(const model::ModelInfo& ownerInfo) -> void
+auto DatabaseCore::ensureRelationTableEndpointsExist(model::ModelView owner) -> void
 {
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.schema.createTableIfNotExists, "create relation tables",
@@ -610,16 +620,21 @@ auto Database::ensureRelationTableEndpointsExist(const model::ModelInfo& ownerIn
     requireCapability(capabilities.relations.manyToMany, "create relation tables",
                       "many-to-many relations are not supported");
 
-    for (const auto& relation : ownerInfo.relationsInfo)
+    for (const auto& relation : owner->relations)
     {
-        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.has_value() or
-            not relation.junction->owningSide)
+        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.isConfigured() or
+            not relation.junction.owningSide)
         {
             continue;
         }
 
-        const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(ownerInfo);
-        const auto targetPrimaryKey = db::binding::getPrimaryKeyColumns(relation.targetModel());
+        const auto target = owner.resolveTarget(relation);
+        if (target == nullptr)
+        {
+            throw std::invalid_argument{"ManyToMany relation target is outside the selected schema"};
+        }
+        const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(owner);
+        const auto targetPrimaryKey = db::binding::getPrimaryKeyColumns(*target);
 
         if (ownerPrimaryKey.size() > 1 or targetPrimaryKey.size() > 1)
         {
@@ -629,21 +644,21 @@ auto Database::ensureRelationTableEndpointsExist(const model::ModelInfo& ownerIn
 
         for (const auto* column : targetPrimaryKey)
         {
-            if (not capabilities.supportsColumnType(column->type))
+            if (not capabilities.supportsColumnType(column->type.value()))
             {
                 throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "create relation tables",
                                     "A target primary-key type is not supported by the backend"};
             }
         }
 
-        if (not tableExists(ownerInfo.tableName) or not tableExists(relation.targetModel().tableName))
+        if (not tableExists(owner->tableName) or not tableExists(target->tableName))
         {
             throw std::invalid_argument{"ManyToMany endpoint tables must exist before creating relation tables"};
         }
     }
 }
 
-auto Database::getBackend() const -> const db::BackendProvider&
+auto DatabaseCore::getBackend() const -> const db::BackendProvider&
 {
     if (backend == nullptr or not sql.is_connected())
     {
@@ -654,12 +669,12 @@ auto Database::getBackend() const -> const db::BackendProvider&
     return *backend;
 }
 
-auto Database::getCommandGenerator() const -> const db::CommandGenerator&
+auto DatabaseCore::getCommandGenerator() const -> const db::CommandGenerator&
 {
     return getBackend().commandGenerator();
 }
 
-auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
+auto DatabaseCore::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
 {
     try
     {
@@ -671,14 +686,14 @@ auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
     }
 }
 
-auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::string_view operation) const -> void
+auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string_view operation) const -> void
 {
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
 
     try
     {
-        validateModelIdentifiers(dialect, modelInfo);
+        validateModelIdentifiers(dialect, descriptor);
     }
     catch (const std::invalid_argument&)
     {
@@ -688,19 +703,20 @@ auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::stri
 
     if (operation == "create table")
     {
-        if (modelInfo.idColumnsNames.size() > 1)
+        if (descriptor->primaryKeyIndices.size() > 1)
         {
             requireCapability(capabilities.schema.compositePrimaryKeys, operation,
                               "composite primary keys are not supported");
         }
 
-        if (not modelInfo.foreignModelsInfo.empty())
+        if (std::ranges::any_of(descriptor->columns,
+                                [](const auto& column) { return column.kind == model::FieldKind::ToOne; }))
         {
             requireCapability(capabilities.schema.foreignKeys, operation, "foreign keys are not supported");
         }
     }
 
-    for (const auto& column : modelInfo.columnsInfo)
+    for (const auto& column : descriptor->columns)
     {
         if (column.isAutoIncrement and operation == "create table")
         {
@@ -708,14 +724,20 @@ auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::stri
                               "auto-increment primary keys are not supported");
         }
 
-        if (column.isForeignModel)
+        if (column.kind == model::FieldKind::ToOne)
         {
             requireCapability(capabilities.relations.toOne, operation, "to-one relations are not supported");
-            const auto& relatedModel = modelInfo.foreignModelsInfo.at(column.name);
-
-            for (const auto& relatedColumn : relatedModel.columnsInfo)
+            const auto relatedModel = descriptor.resolveTarget(column);
+            if (relatedModel == nullptr)
             {
-                if (relatedColumn.isPrimaryKey and not capabilities.supportsColumnType(relatedColumn.type))
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                    "A related model is outside the selected schema"};
+            }
+
+            for (const auto primaryKeyIndex : relatedModel->primaryKeyIndices)
+            {
+                const auto& relatedColumn = relatedModel->columns[primaryKeyIndex];
+                if (not capabilities.supportsColumnType(relatedColumn.type.value()))
                 {
                     throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                         "A related primary-key column type is not supported by the backend"};
@@ -725,7 +747,7 @@ auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::stri
             continue;
         }
 
-        if (not capabilities.supportsColumnType(column.type))
+        if (not capabilities.supportsColumnType(column.type.value()))
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                 "A model column type is not supported by the backend"};
@@ -733,15 +755,15 @@ auto Database::ensureModelSupported(const model::ModelInfo& modelInfo, std::stri
     }
 }
 
-auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> void
+auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query::SelectSpec& spec) const -> void
 {
-    ensureModelSupported(queryData.modelInfo, "select");
+    ensureModelSupported(descriptor, "select");
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
 
     try
     {
-        for (const auto& projection : queryData.projections)
+        for (const auto& projection : spec.projections)
         {
             (void)dialect.quoteIdentifier(projection.resultField);
         }
@@ -752,53 +774,52 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
                             "A projection alias is not supported by the selected backend"};
     }
 
-    if (queryData.projections.empty() and (not queryData.groupBy.empty() or queryData.having.has_value()))
+    if (spec.projections.empty() and (not spec.groupBy.empty() or spec.having.has_value()))
     {
         requireCapability(capabilities.query.fullModelGrouping, "select",
                           "GROUP BY and HAVING for full-model queries are not supported");
     }
 
-    if (queryData.limit.has_value())
+    if (spec.limit.has_value())
     {
         requireCapability(capabilities.query.limit, "select", "LIMIT is not supported");
     }
 
-    if (queryData.offset.has_value())
+    if (spec.offset.has_value())
     {
         requireCapability(capabilities.query.offset, "select", "OFFSET is not supported");
 
-        if (not queryData.limit.has_value())
+        if (not spec.limit.has_value())
         {
             requireCapability(capabilities.query.offsetWithoutLimit, "select", "OFFSET without LIMIT is not supported");
         }
 
-        if (capabilities.query.offsetRequiresOrderBy and queryData.orderBy.empty())
+        if (capabilities.query.offsetRequiresOrderBy and spec.orderBy.empty())
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "select",
                                 "This backend requires ORDER BY when OFFSET is used"};
         }
     }
 
-    if (not queryData.projections.empty())
+    if (not spec.projections.empty())
     {
         requireCapability(capabilities.query.projections, "select projection", "projections are not supported");
     }
 
-    if (queryData.isDistinct and not queryData.projections.empty() and
-        capabilities.query.distinctOrderByRequiresProjectedColumn)
+    if (spec.isDistinct and not spec.projections.empty() and capabilities.query.distinctOrderByRequiresProjectedColumn)
     {
-        for (const auto& ordering : queryData.orderBy)
+        for (const auto& ordering : spec.orderBy)
         {
             const auto orderingSql =
-                ordering.isRaw ? std::string{} : renderColumnForValidation(ordering.column, queryData, dialect);
+                ordering.isRaw ? std::string{} : renderColumnForValidation(ordering.column, descriptor, spec, dialect);
             const auto ordersByProjectedColumn =
                 not ordering.isRaw and
-                std::ranges::any_of(queryData.projections,
-                                    [&orderingSql, &queryData, &dialect](const auto& projection)
+                std::ranges::any_of(spec.projections,
+                                    [&orderingSql, descriptor, &spec, &dialect](const auto& projection)
                                     {
                                         const auto* projectedColumn = std::get_if<query::Column>(&projection.source);
                                         return projectedColumn != nullptr and
-                                               renderColumnForValidation(*projectedColumn, queryData, dialect) ==
+                                               renderColumnForValidation(*projectedColumn, descriptor, spec, dialect) ==
                                                    orderingSql;
                                     });
 
@@ -807,39 +828,38 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
         }
     }
 
-    if (not queryData.groupBy.empty())
+    if (not spec.groupBy.empty())
     {
         requireCapability(capabilities.query.groupBy, "select", "GROUP BY is not supported");
     }
 
-    if (queryData.having.has_value())
+    if (spec.having.has_value())
     {
         requireCapability(capabilities.query.having, "select", "HAVING is not supported");
     }
 
     const auto isAggregateProjection =
-        std::ranges::any_of(queryData.projections, [](const auto& projection)
+        std::ranges::any_of(spec.projections, [](const auto& projection)
                             { return std::holds_alternative<query::AggregateExpression>(projection.source); });
-    const auto isAggregateQuery =
-        not queryData.groupBy.empty() or queryData.having.has_value() or isAggregateProjection;
+    const auto isAggregateQuery = not spec.groupBy.empty() or spec.having.has_value() or isAggregateProjection;
 
-    if (capabilities.query.strictProjectionGrouping and not queryData.projections.empty() and isAggregateQuery)
+    if (capabilities.query.strictProjectionGrouping and not spec.projections.empty() and isAggregateQuery)
     {
         std::vector<std::string> groupedColumns;
-        groupedColumns.reserve(queryData.groupBy.size());
+        groupedColumns.reserve(spec.groupBy.size());
 
-        for (const auto& groupedColumn : queryData.groupBy)
+        for (const auto& groupedColumn : spec.groupBy)
         {
-            groupedColumns.push_back(renderColumnForValidation(groupedColumn, queryData, dialect));
+            groupedColumns.push_back(renderColumnForValidation(groupedColumn, descriptor, spec, dialect));
         }
 
-        auto isGroupedColumn = [&groupedColumns, &queryData, &dialect](const query::Column& column)
+        auto isGroupedColumn = [&groupedColumns, descriptor, &spec, &dialect](const query::Column& column)
         {
-            const auto rendered = renderColumnForValidation(column, queryData, dialect);
+            const auto rendered = renderColumnForValidation(column, descriptor, spec, dialect);
             return std::ranges::find(groupedColumns, rendered) != groupedColumns.end();
         };
 
-        for (const auto& projection : queryData.projections)
+        for (const auto& projection : spec.projections)
         {
             if (const auto* column = std::get_if<query::Column>(&projection.source); column != nullptr)
             {
@@ -848,7 +868,7 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
             }
         }
 
-        for (const auto& ordering : queryData.orderBy)
+        for (const auto& ordering : spec.orderBy)
         {
             if (not ordering.isRaw)
             {
@@ -858,28 +878,34 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
         }
     }
 
-    if (queryData.predicate.has_value() and containsCollectionPredicate(queryData.predicate->getNode()))
+    if (spec.predicate.has_value() and containsCollectionPredicate(spec.predicate->getNode()))
     {
         requireCapability(capabilities.query.collectionPredicates, "select", "collection predicates are not supported");
         requireCapability(capabilities.relations.collectionPredicates, "select",
                           "collection predicates are not supported");
     }
 
-    if (not queryData.includes.empty())
+    if (not spec.includes.empty())
     {
         requireCapability(capabilities.relations.collectionIncludes, "include collection",
                           "collection includes are not supported");
 
-        for (const auto& include : queryData.includes)
+        for (const auto& include : spec.includes)
         {
-            const auto* relation = queryData.modelInfo.findRelation(include);
+            const auto* relation = descriptor.findRelation(include);
 
             if (relation == nullptr)
             {
                 continue;
             }
 
-            ensureModelSupported(relation->targetModel(), "include collection");
+            const auto target = descriptor.resolveTarget(*relation);
+            if (target == nullptr)
+            {
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "include collection",
+                                    "An included relation target is outside the selected schema"};
+            }
+            ensureModelSupported(*target, "include collection");
 
             if (relation->kind == model::RelationKind::OneToMany)
             {
@@ -895,7 +921,7 @@ auto Database::ensureQuerySupported(const query::QueryData& queryData) const -> 
     }
 }
 
-auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> void
+auto DatabaseCore::ensureAffectedRowsAvailable(std::string_view operation) const -> void
 {
     if (getBackendCapabilities().mutations.affectedRows != db::AffectedRowsSupport::Reliable)
     {
@@ -904,7 +930,7 @@ auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> 
     }
 }
 
-auto Database::requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void
+auto DatabaseCore::requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void
 {
     if (not supported)
     {
@@ -913,8 +939,8 @@ auto Database::requireCapability(bool supported, std::string_view operation, std
     }
 }
 
-auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
-                                    std::string_view operation) -> void
+auto DatabaseCore::throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
+                                        std::string_view operation) -> void
 {
     if (backend == nullptr)
     {
@@ -930,7 +956,7 @@ auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseError
     throw backend->runtime().translateError(error, fallback, operation);
 }
 
-auto Database::ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void
+auto DatabaseCore::ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void
 {
     if (parameterCount == 0)
     {

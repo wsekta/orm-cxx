@@ -84,85 +84,77 @@ auto uniqueAlias(std::string_view base, const std::unordered_set<std::string>& r
     return candidate;
 }
 
-auto findColumnInfo(const orm::model::ModelInfo& modelInfo,
-                    const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo*
+auto findColumn(const orm::model::ModelView model, std::string_view fieldOrColumnName) -> const orm::model::ColumnView*
 {
-    const auto columnInfo =
-        std::ranges::find_if(modelInfo.columnsInfo, [&fieldOrColumnName](const orm::model::ColumnInfo& column)
-                             { return column.fieldName == fieldOrColumnName or column.name == fieldOrColumnName; });
-
-    if (columnInfo == modelInfo.columnsInfo.end())
-    {
-        return nullptr;
-    }
-
-    return &*columnInfo;
+    return model.findColumn(fieldOrColumnName);
 }
 
-auto getColumnInfoOrThrow(const orm::model::ModelInfo& modelInfo,
-                          const std::string& fieldOrColumnName) -> const orm::model::ColumnInfo&
+auto getColumnOrThrow(const orm::model::ModelView model,
+                      std::string_view fieldOrColumnName) -> const orm::model::ColumnView&
 {
-    const auto* columnInfo = findColumnInfo(modelInfo, fieldOrColumnName);
+    const auto* column = findColumn(model, fieldOrColumnName);
 
-    if (columnInfo == nullptr)
+    if (column == nullptr)
     {
-        throw std::invalid_argument{"Unknown column path segment: " + fieldOrColumnName};
+        throw std::invalid_argument{"Unknown column path segment: " + std::string{fieldOrColumnName}};
     }
 
-    return *columnInfo;
+    return *column;
 }
 
-auto getForeignModelInfoOrThrow(const orm::model::ModelInfo& modelInfo,
-                                const orm::model::ColumnInfo& columnInfo) -> const orm::model::ModelInfo&
+auto getTargetOrThrow(const orm::model::ModelView model, const orm::model::ColumnView& column) -> orm::model::ModelView
 {
-    if (not columnInfo.isForeignModel)
+    if (column.kind != orm::model::FieldKind::ToOne)
     {
-        throw std::invalid_argument{"Column is not a related model: " + columnInfo.fieldName};
+        throw std::invalid_argument{"Column is not a related model: " + std::string{column.fieldName}};
     }
 
-    return modelInfo.foreignModelsInfo.at(columnInfo.name);
+    const auto target = model.resolveTarget(column);
+    if (target == nullptr)
+    {
+        throw std::logic_error{"To-one relation target is not available in the schema"};
+    }
+    return target;
 }
 
 auto renderSelectColumn(const orm::query::Column& column,
                         const orm::db::commands::RenderContext& context) -> std::string
 {
     const auto parts = splitPath(column.getPath());
-    const auto rootTable = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
+    const auto rootTable = context.tableAlias.empty() ? std::string{context.model->tableName} : context.tableAlias;
 
     if (parts.size() == 1)
     {
-        const auto& columnInfo = getColumnInfoOrThrow(context.modelInfo, parts[0]);
+        const auto& columnView = getColumnOrThrow(context.model, parts[0]);
 
-        if (columnInfo.isForeignModel)
+        if (columnView.kind == orm::model::FieldKind::ToOne)
         {
             throw std::invalid_argument{"Use a related field path instead of the related model itself: " +
                                         column.getPath()};
         }
 
-        return orm::db::aliases::qualifiedIdentifier(context.dialect, rootTable, columnInfo.name);
+        return orm::db::aliases::qualifiedIdentifier(context.dialect, rootTable, columnView.name);
     }
 
     if (parts.size() == 2)
     {
-        const auto& relatedColumnInfo = getColumnInfoOrThrow(context.modelInfo, parts[0]);
-        const auto& foreignModelInfo = getForeignModelInfoOrThrow(context.modelInfo, relatedColumnInfo);
-        const auto& foreignColumnInfo = getColumnInfoOrThrow(foreignModelInfo, parts[1]);
+        const auto& relatedColumn = getColumnOrThrow(context.model, parts[0]);
+        const auto target = getTargetOrThrow(context.model, relatedColumn);
+        const auto& targetColumn = getColumnOrThrow(target, parts[1]);
 
         if (context.shouldJoin)
         {
-            return orm::db::aliases::qualifiedIdentifier(context.dialect, relatedColumnInfo.name,
-                                                         foreignColumnInfo.name);
+            return orm::db::aliases::qualifiedIdentifier(context.dialect, relatedColumn.name, targetColumn.name);
         }
 
-        if (not foreignColumnInfo.isPrimaryKey)
+        if (not targetColumn.isPrimaryKey)
         {
             throw std::invalid_argument{"Cannot filter by non-id related field when joining is disabled: " +
                                         column.getPath()};
         }
 
         return orm::db::aliases::qualifiedIdentifier(
-            context.dialect, rootTable,
-            orm::db::aliases::joinedRelationColumn(relatedColumnInfo.name, foreignColumnInfo.name));
+            context.dialect, rootTable, orm::db::aliases::joinedRelationColumn(relatedColumn.name, targetColumn.name));
     }
 
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
@@ -215,7 +207,8 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
             throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};
         }
 
-        context.parameters.push_back(orm::db::StatementParameter{.name = parameter.name, .value = parameter.value});
+        context.parameters.push_back(
+            orm::db::StatementParameter{.name = parameter.name, .value = parameter.value, .nullType = std::nullopt});
     }
 }
 
@@ -223,15 +216,15 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
 auto renderPredicate(const orm::query::PredicateNodePtr& node,
                      orm::db::commands::RenderContext& context) -> std::string;
 
-auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<const orm::model::ColumnInfo*>
+auto primaryKeyColumns(orm::model::ModelView model) -> std::vector<const orm::model::ColumnView*>
 {
-    std::vector<const orm::model::ColumnInfo*> columns;
+    std::vector<const orm::model::ColumnView*> columns;
 
-    for (const auto& column : modelInfo.columnsInfo)
+    for (const auto& column : model->columns)
     {
         if (column.isPrimaryKey)
         {
-            if (column.isForeignModel)
+            if (column.kind == orm::model::FieldKind::ToOne)
             {
                 throw std::invalid_argument{"Relations with model-valued primary-key fields are not supported"};
             }
@@ -248,43 +241,42 @@ auto primaryKeyColumns(const orm::model::ModelInfo& modelInfo) -> std::vector<co
     return columns;
 }
 
-auto renderToOneJoins(const orm::model::ModelInfo& modelInfo, const orm::db::SqlDialect& dialect,
+auto renderToOneJoins(orm::model::ModelView model, const orm::db::SqlDialect& dialect,
                       const std::string& rootAlias) -> std::string
 {
     std::string joins;
 
-    for (const auto& relation : modelInfo.relationsInfo)
+    for (const auto& relation : model->columns)
     {
-        if (relation.kind != orm::model::RelationKind::ToOne)
+        if (relation.kind != orm::model::FieldKind::ToOne)
         {
             continue;
         }
 
-        const auto& targetInfo = relation.targetModel();
+        const auto target = getTargetOrThrow(model, relation);
         std::vector<std::string> predicates;
 
-        for (const auto* targetColumn : primaryKeyColumns(targetInfo))
+        for (const auto* targetColumn : primaryKeyColumns(target))
         {
             predicates.push_back(std::format(
-                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relation.columnName, targetColumn->name),
+                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relation.name, targetColumn->name),
                 orm::db::aliases::qualifiedIdentifier(
-                    dialect, rootAlias,
-                    orm::db::aliases::joinedRelationColumn(relation.columnName, targetColumn->name))));
+                    dialect, rootAlias, orm::db::aliases::joinedRelationColumn(relation.name, targetColumn->name))));
         }
 
-        joins += std::format(" LEFT JOIN {} AS {} ON {}", dialect.quoteIdentifier(targetInfo.tableName),
-                             dialect.quoteIdentifier(relation.columnName), join(predicates, " AND "));
+        joins += std::format(" LEFT JOIN {} AS {} ON {}", dialect.quoteIdentifier(target->tableName),
+                             dialect.quoteIdentifier(relation.name), join(predicates, " AND "));
     }
 
     return joins;
 }
 
-auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, const orm::model::ModelInfo& targetInfo,
+auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, orm::model::ModelView target,
                            orm::db::commands::RenderContext& outerContext,
                            const std::string& targetAlias) -> std::string
 {
     orm::db::commands::RenderContext targetContext{
-        .modelInfo = targetInfo,
+        .model = target,
         .dialect = outerContext.dialect,
         .shouldJoin = true,
         .columnRenderMode = orm::db::commands::ColumnRenderMode::Select,
@@ -310,7 +302,7 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
         throw std::invalid_argument{"Nested collection predicates are not supported"};
     }
 
-    const auto* relation = context.modelInfo.findRelation(expression.relation);
+    const auto* relation = context.model.findRelation(expression.relation);
 
     if (relation == nullptr or relation->kind == orm::model::RelationKind::ToOne)
     {
@@ -322,17 +314,21 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
         throw std::invalid_argument{"Collection any/none requires an element predicate"};
     }
 
-    const auto outerAlias = context.tableAlias.empty() ? std::string{context.modelInfo.tableName} : context.tableAlias;
-    const auto ownerPrimaryKey = primaryKeyColumns(context.modelInfo);
-    const auto& targetInfo = relation->targetModel();
-    const auto targetPrimaryKey = primaryKeyColumns(targetInfo);
+    const auto outerAlias = context.tableAlias.empty() ? std::string{context.model->tableName} : context.tableAlias;
+    const auto ownerPrimaryKey = primaryKeyColumns(context.model);
+    const auto target = context.model.resolveTarget(*relation);
+    if (target == nullptr)
+    {
+        throw std::logic_error{"Collection relation target is not available in the schema"};
+    }
+    const auto targetPrimaryKey = primaryKeyColumns(target);
     auto reservedAliases = std::unordered_set<std::string>{outerAlias};
 
-    for (const auto& targetRelation : targetInfo.relationsInfo)
+    for (const auto& targetRelation : target->columns)
     {
-        if (targetRelation.kind == orm::model::RelationKind::ToOne)
+        if (targetRelation.kind == orm::model::FieldKind::ToOne)
         {
-            reservedAliases.insert(targetRelation.columnName);
+            reservedAliases.emplace(targetRelation.name);
         }
     }
 
@@ -344,11 +340,11 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
     if (relation->kind == orm::model::RelationKind::OneToMany)
     {
-        const auto* mappedRelation = targetInfo.findRelation(relation->mappedBy);
+        const auto* mappedRelation = target.findRelation(relation->mappedBy);
 
         if (mappedRelation == nullptr or mappedRelation->kind != orm::model::RelationKind::ToOne)
         {
-            throw std::invalid_argument{"Invalid OneToMany mappedBy relation: " + relation->fieldName};
+            throw std::invalid_argument{"Invalid OneToMany mappedBy relation: " + std::string{relation->fieldName}};
         }
 
         for (const auto* ownerColumn : ownerPrimaryKey)
@@ -361,23 +357,24 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
                             orm::db::aliases::qualifiedIdentifier(context.dialect, outerAlias, ownerColumn->name)));
         }
 
-        from = std::format("{} AS {}{}", context.dialect.quoteIdentifier(targetInfo.tableName),
+        from = std::format("{} AS {}{}", context.dialect.quoteIdentifier(target->tableName),
                            context.dialect.quoteIdentifier(targetAlias),
-                           renderToOneJoins(targetInfo, context.dialect, targetAlias));
+                           renderToOneJoins(target, context.dialect, targetAlias));
     }
     else
     {
-        if (not relation->junction.has_value())
+        const auto junction = context.model.resolveJunction(*relation);
+        if (not junction.isConfigured())
         {
-            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " + relation->fieldName};
+            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " +
+                                        std::string{relation->fieldName}};
         }
-
-        const auto& junction = relation->junction.value();
 
         if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
             junction.targetColumns.size() != targetPrimaryKey.size())
         {
-            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " + junction.tableName};
+            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " +
+                                        std::string{junction.tableName}};
         }
 
         std::vector<std::string> targetJoin;
@@ -400,14 +397,14 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
         from = std::format("{} AS {} JOIN {} AS {} ON {}{}", context.dialect.quoteIdentifier(junction.tableName),
                            context.dialect.quoteIdentifier(junctionAlias),
-                           context.dialect.quoteIdentifier(targetInfo.tableName),
+                           context.dialect.quoteIdentifier(target->tableName),
                            context.dialect.quoteIdentifier(targetAlias), join(targetJoin, " AND "),
-                           renderToOneJoins(targetInfo, context.dialect, targetAlias));
+                           renderToOneJoins(target, context.dialect, targetAlias));
     }
 
     if (expression.predicate != nullptr)
     {
-        predicates.push_back(renderNestedPredicate(expression.predicate, targetInfo, context, targetAlias));
+        predicates.push_back(renderNestedPredicate(expression.predicate, target, context, targetAlias));
     }
 
     const auto existsSql = std::format("EXISTS (SELECT 1 FROM {} WHERE {})", from, join(predicates, " AND "));
@@ -496,52 +493,52 @@ auto renderColumn(const query::Column& column, const RenderContext& context) -> 
 {
     if (context.columnRenderMode == ColumnRenderMode::WritePredicate)
     {
-        return renderWriteColumn(column, context.modelInfo, context.dialect, true).sql;
+        return renderWriteColumn(column, context.model, context.dialect, true).sql;
     }
 
     return renderSelectColumn(column, context);
 }
 
-auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo, const SqlDialect& dialect,
+auto renderWriteColumn(const query::Column& column, model::ModelView modelView, const SqlDialect& dialect,
                        bool qualifyWithTable) -> WriteColumn
 {
     const auto parts = splitPath(column.getPath());
 
     if (parts.size() == 1)
     {
-        const auto& columnInfo = getColumnInfoOrThrow(modelInfo, parts[0]);
+        const auto& columnView = getColumnOrThrow(modelView, parts[0]);
 
-        if (columnInfo.isForeignModel)
+        if (columnView.kind == model::FieldKind::ToOne)
         {
             throw std::invalid_argument{"Use a related primary-key field path in write queries: " + column.getPath()};
         }
 
         return WriteColumn{.sql = qualifyWithTable ?
-                                      aliases::qualifiedIdentifier(dialect, modelInfo.tableName, columnInfo.name) :
-                                      dialect.quoteIdentifier(columnInfo.name),
-                           .type = columnInfo.type,
-                           .isNotNull = columnInfo.isNotNull};
+                                      aliases::qualifiedIdentifier(dialect, modelView->tableName, columnView.name) :
+                                      dialect.quoteIdentifier(columnView.name),
+                           .type = columnView.type.value(),
+                           .isNotNull = columnView.isNotNull};
     }
 
     if (parts.size() == 2)
     {
-        const auto& relatedColumnInfo = getColumnInfoOrThrow(modelInfo, parts[0]);
-        const auto& foreignModelInfo = getForeignModelInfoOrThrow(modelInfo, relatedColumnInfo);
-        const auto& foreignColumnInfo = getColumnInfoOrThrow(foreignModelInfo, parts[1]);
+        const auto& relatedColumn = getColumnOrThrow(modelView, parts[0]);
+        const auto target = getTargetOrThrow(modelView, relatedColumn);
+        const auto& targetColumn = getColumnOrThrow(target, parts[1]);
 
-        if (not foreignColumnInfo.isPrimaryKey)
+        if (not targetColumn.isPrimaryKey)
         {
             throw std::invalid_argument{"Only related primary-key fields can be used in write queries: " +
                                         column.getPath()};
         }
 
-        const auto columnName = std::format("{}_{}", relatedColumnInfo.name, foreignColumnInfo.name);
+        const auto columnName = std::format("{}_{}", relatedColumn.name, targetColumn.name);
 
         return WriteColumn{.sql = qualifyWithTable ?
-                                      aliases::qualifiedIdentifier(dialect, modelInfo.tableName, columnName) :
+                                      aliases::qualifiedIdentifier(dialect, modelView->tableName, columnName) :
                                       dialect.quoteIdentifier(columnName),
-                           .type = foreignColumnInfo.type,
-                           .isNotNull = relatedColumnInfo.isNotNull};
+                           .type = targetColumn.type.value(),
+                           .isNotNull = relatedColumn.isNotNull};
     }
 
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
@@ -572,7 +569,7 @@ auto addAutomaticParameter(RenderContext& context, const query::QueryValue& valu
     } while (context.parameterNames.contains(parameterName));
 
     context.parameterNames.insert(parameterName);
-    context.parameters.push_back(StatementParameter{.name = parameterName, .value = value});
+    context.parameters.push_back(StatementParameter{.name = parameterName, .value = value, .nullType = std::nullopt});
 
     return context.dialect.bindMarker(parameterName);
 }

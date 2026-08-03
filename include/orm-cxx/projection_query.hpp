@@ -5,22 +5,20 @@
 #include <optional>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <unordered_set>
 #include <utility>
 #include <vector>
 
-#include "model.hpp"
 #include "orm-cxx/model/ColumnType.hpp"
-#include "orm-cxx/query/QueryData.hpp"
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
-
-DISABLE_WARNING_PUSH
-DISABLE_EXTERNAL_WARNINGS
-#include <rfl.hpp>
-DISABLE_WARNING_POP
+#include "orm-cxx/model/Mapping.hpp"
+#include "orm-cxx/query/SelectSpec.hpp"
+#include "orm-cxx/reflection/Reflection.hpp"
 
 namespace orm
 {
+class DatabaseCore;
+template <typename SchemaType>
 class Database;
 
 namespace detail
@@ -43,8 +41,6 @@ inline auto isSupportedProjectionResultType(model::ColumnType type) -> bool
     case model::ColumnType::String:
         return true;
     case model::ColumnType::Uuid:
-    case model::ColumnType::Unknown:
-    case model::ColumnType::OneToOne:
         return false;
     }
 
@@ -54,8 +50,23 @@ inline auto isSupportedProjectionResultType(model::ColumnType type) -> bool
 struct ProjectionResultField
 {
     std::string name;
-    model::ColumnType type;
+    std::optional<model::ColumnType> type;
 };
+
+template <typename T>
+consteval auto projectionLogicalType() -> std::optional<model::ColumnType>
+{
+    using field_t = std::remove_cvref_t<T>;
+    using value_t = std::remove_cv_t<model::detail::static_optional_value_t<field_t>>;
+    if constexpr (requires { model::LogicalTypeTraits<value_t>::value; })
+    {
+        return model::LogicalTypeTraits<value_t>::value;
+    }
+    else
+    {
+        return std::nullopt;
+    }
+}
 
 inline auto validateProjectionAliasNames(const std::vector<query::Projection>& projections,
                                          const std::vector<ProjectionResultField>& fields) -> void
@@ -69,7 +80,7 @@ inline auto validateProjectionAliasNames(const std::vector<query::Projection>& p
 
     for (const auto& field : fields)
     {
-        if (not isSupportedProjectionResultType(field.type))
+        if (not field.type.has_value() or not isSupportedProjectionResultType(field.type.value()))
         {
             throw std::invalid_argument{"Unsupported projection result field type: " + field.name};
         }
@@ -109,17 +120,19 @@ inline auto validateProjectionAliasNames(const std::vector<query::Projection>& p
 template <typename Result>
 auto validateProjectionAliases(const std::vector<query::Projection>& projections) -> void
 {
-    const auto fields = rfl::fields<Result>();
     std::vector<ProjectionResultField> resultFields;
+    resultFields.reserve(reflection::fieldCount<Result>);
 
-    for (const auto& field : fields)
+    [&]<std::size_t... Indices>(std::index_sequence<Indices...>)
     {
-        const auto [type, isNotNull] = model::toColumnType(field.type());
-
-        (void)isNotNull;
-
-        resultFields.push_back({std::string{field.name()}, type});
-    }
+        constexpr auto fields = reflection::fields<Result>();
+        auto appendField = [&]<std::size_t Index>()
+        {
+            constexpr auto type = projectionLogicalType<reflection::field_type_t<Result, Index>>();
+            resultFields.emplace_back(std::string{fields[Index].name}, type);
+        };
+        (appendField.template operator()<Indices>(), ...);
+    }(std::make_index_sequence<reflection::fieldCount<Result>>{});
 
     validateProjectionAliasNames(projections, resultFields);
 }
@@ -135,7 +148,7 @@ template <typename Source, typename Result>
 class ProjectionQuery
 {
 public:
-    ProjectionQuery() : data{.modelInfo = Model<Source>().getModelInfo()} {}
+    ProjectionQuery() = default;
 
     template <typename... Projections>
     auto project(Projections... projections) -> ProjectionQuery<Source, Result>&
@@ -233,15 +246,17 @@ public:
     }
 
 private:
+    template <typename>
     friend class orm::Database;
+    friend class orm::DatabaseCore;
 
-    [[nodiscard]] inline auto getData() const -> const query::QueryData&
+    [[nodiscard]] inline auto getData() const -> const query::SelectSpec&
     {
         detail::validateProjectionAliases<Result>(data.projections);
 
         return data;
     }
 
-    query::QueryData data;
+    query::SelectSpec data;
 };
 } // namespace orm

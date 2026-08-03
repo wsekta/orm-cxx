@@ -8,7 +8,7 @@
 
 #include "orm-cxx/database/SqlDialect.hpp"
 #include "orm-cxx/database/Statement.hpp"
-#include "orm-cxx/model/ModelInfo.hpp"
+#include "orm-cxx/model/ModelView.hpp"
 #include "orm-cxx/query/Predicate.hpp"
 
 namespace orm::db::commands
@@ -21,7 +21,7 @@ enum class ColumnRenderMode
 
 struct RenderContext
 {
-    const model::ModelInfo& modelInfo;
+    model::ModelView model;
     const SqlDialect& dialect;
     bool shouldJoin = true;
     ColumnRenderMode columnRenderMode = ColumnRenderMode::Select;
@@ -40,8 +40,8 @@ struct WriteColumn
 };
 
 [[nodiscard]] auto renderColumn(const query::Column& column, const RenderContext& context) -> std::string;
-[[nodiscard]] auto renderWriteColumn(const query::Column& column, const model::ModelInfo& modelInfo,
-                                     const SqlDialect& dialect, bool qualifyWithTable) -> WriteColumn;
+[[nodiscard]] auto renderWriteColumn(const query::Column& column, model::ModelView model, const SqlDialect& dialect,
+                                     bool qualifyWithTable) -> WriteColumn;
 [[nodiscard]] auto renderWhere(const std::optional<query::Predicate>& predicate, RenderContext& context) -> std::string;
 [[nodiscard]] auto renderWhere(const query::Predicate& predicate, RenderContext& context) -> std::string;
 [[nodiscard]] auto addAutomaticParameter(RenderContext& context, const query::QueryValue& value) -> std::string;

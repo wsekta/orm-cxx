@@ -2,7 +2,7 @@
 
 #include "DatabaseTest.hpp"
 
-class SimpleModelTest : public DatabaseTest
+class SimpleModelTest : public DatabaseTest<models::Schema>
 {
 };
 
@@ -165,7 +165,10 @@ TEST_P(SimpleModelTest, shouldThrowWhileReadingNullValueToNotNullableField)
     createTable<models::ModelWithOptionalFloat>();
     auto models = std::vector<models::ModelWithOptionalFloat>{{std::nullopt, "test", 1.0f}, {2, "test2", 2.0f}};
     database.insert(models);
-    orm::Query<models::ModelWithFloat> queryForOptionalFloat;
+    orm::ProjectionQuery<models::ModelWithOptionalFloat, models::ModelWithFloat> queryForOptionalFloat;
+    queryForOptionalFloat.project(orm::query::as("field1", orm::query::col("field1")),
+                                  orm::query::as("field2", orm::query::col("field2")),
+                                  orm::query::as("field3", orm::query::col("field3")));
     EXPECT_THROW(database.select(queryForOptionalFloat), std::runtime_error);
 }
 

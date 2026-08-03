@@ -4,11 +4,7 @@
 
 #include "faker-cxx/Lorem.h"
 #include "faker-cxx/Number.h"
-
-DISABLE_WARNING_PUSH
-DISABLE_EXTERNAL_WARNINGS
-#include "rfl/to_view.hpp"
-DISABLE_WARNING_POP
+#include "orm-cxx/reflection/Reflection.hpp"
 
 namespace orm
 {
@@ -52,7 +48,7 @@ auto generateModel() -> T
 {
     T model;
 
-    auto modelAsTuple = rfl::to_view(model).values();
+    auto modelAsTuple = reflection::fieldPointers(model);
 
     auto fieldGenerator = [](auto, auto* field) { fillField(*field); };
 

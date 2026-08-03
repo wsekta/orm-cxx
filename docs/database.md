@@ -14,12 +14,28 @@
 
 ## Connect
 
-To connect to database create its object and connect it with standard connection string:
+Bind each database to a closed compile-time schema after declaring its model
+types, then connect it with a standard connection string:
 
 ```cpp
-orm::Database database;
+struct User
+{
+    int id;
+};
+
+using AppSchema = orm::Schema<User>;
+orm::Database<AppSchema> database;
 database.connect("sqlite3://test.db");
 ```
+
+Every model used by `select`, `insert`, schema operations, or relation
+operations must belong to `AppSchema`. All relation targets must be listed as
+well. Missing models and invalid mappings fail during compilation. The former
+untyped `orm::Database` declaration is no longer supported; see
+[Migrating to static schemas](migration-static-schema.md).
+
+The remaining fragments are independent examples. In each case, the
+`database` object's schema must contain every model named by that operation.
 
 Automatic selection requires exactly one registered backend to accept the
 connection string. Select a known backend explicitly when desired:
@@ -69,7 +85,7 @@ sanitized and do not contain connection strings or bound values.
 
 ## Create table
 
-To create table in database use `createTable` method and pass model as template argument:
+To create a table in the database, use `createTable` method and pass model as template argument:
 
 ```cpp
 struct ObjectModel
@@ -87,7 +103,7 @@ database.createTable<ObjectModel>();
 
 ## Delete table
 
-To delete table from database use `deleteTable` method and pass model as template argument:
+To delete a table from the database, use `deleteTable` method and pass model as template argument:
 
 ```cpp
 database.deleteTable<ObjectModel>();
@@ -123,7 +139,7 @@ recursively create, drop, or synchronize relation tables.
 
 ## Insert objects
 
-To insert objects into database use `insert` method and pass vector of objects as argument:
+To insert objects into the database, use `insert` method and pass vector of objects as argument:
 
 ```cpp
 std::vector<ObjectModel> objects{
@@ -148,10 +164,11 @@ the selected database assigns the value:
 ```cpp
 struct User
 {
-    inline static const std::vector<std::string> auto_increment_columns = {"id"};
-
     int id;
     std::string name;
+
+    inline static constexpr auto auto_increment_columns =
+        orm::autoIncrement<&User::id>();
 };
 
 database.createTable<User>();
@@ -261,7 +278,7 @@ clearEmail.set(col("email"), std::nullopt)
           .where(col("id") == 1);
 ```
 
-`update` returns the number of affected rows. Calling it without a `where` predicate or without assignments throws
+`update` returns the number of affected rows. Calling it without a `where` predicate, or without assignments throws
 `std::invalid_argument`. Assigning `NULL` to a non-nullable column also throws before executing SQL.
 
 ## Remove objects

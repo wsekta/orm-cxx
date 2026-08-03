@@ -2,23 +2,20 @@
 
 #include <format>
 #include <optional>
-#include <stdexcept>
+#include <string>
 #include <type_traits>
 
 #include "BindingConcepts.hpp"
 #include "BindingPayload.hpp"
 #include "ConversionError.hpp"
 #include "NumericValue.hpp"
+#include "orm-cxx/reflection/Reflection.hpp"
 #include "orm-cxx/relations.hpp"
 #include "orm-cxx/utils/ConstexprFor.hpp"
-#include "orm-cxx/utils/DisableExternalsWarning.hpp"
 #include "soci/values.h"
 
 namespace orm::db::binding
 {
-template <typename ModelField>
-struct ObjectFieldFromValues;
-
 template <typename T>
 struct IsOptionalBoundField : std::false_type
 {
@@ -57,164 +54,144 @@ auto getScalarFieldValue(const soci::values& values, const std::string& fieldNam
     }
 }
 
-template <SociDefaultSupported ModelField>
-struct ObjectFieldFromValues<ModelField>
+namespace detail
 {
-    template <typename T, bool JoinedValues>
-    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
+template <typename Owner>
+[[nodiscard]] auto selectedScalarAlias(const model::ModelView& owner, const model::ColumnView& column) -> std::string
+{
+    return std::format("{}_{}", owner->tableName, column.name);
+}
+
+template <bool JoinedValues>
+[[nodiscard]] auto selectedRelatedAlias(const model::ModelView& owner, const model::ColumnView& relationColumn,
+                                        const model::ColumnView& targetColumn) -> std::string
+{
+    if constexpr (JoinedValues)
     {
-        auto fieldName =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        if constexpr (std::is_arithmetic_v<ModelField>)
+        return std::format("{}_{}", relationColumn.name, targetColumn.name);
+    }
+    else
+    {
+        return std::format("{}_{}_{}", owner->tableName, relationColumn.name, targetColumn.name);
+    }
+}
+
+template <typename Related, typename SchemaType, bool JoinedValues>
+auto hydrateRelated(Related& related, const model::ModelView& owner, const model::ColumnView& relationColumn,
+                    const soci::values& values) -> void
+{
+    using related_t = std::remove_cv_t<Related>;
+    auto relatedFields = reflection::fieldPointers(related);
+
+    auto hydrate = [&]<typename Index>(Index, auto* field)
+    {
+        using field_t = std::decay_t<decltype(*field)>;
+        if constexpr (orm::is_relation_collection_v<field_t>)
         {
-            *column = getNumericValue<ModelField>(values, fieldName);
+            return;
         }
         else
         {
-            *column = values.get<ModelField>(fieldName);
-        }
-    }
-};
-
-template <ModelWithId ModelField>
-struct ObjectFieldFromValues<ModelField>
-{
-    template <typename T, bool JoinedValues>
-    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
-    {
-        auto foreignFieldName = model.getModelInfo().columnsInfo[columnIndex].name;
-        auto foreignModelAsTuple = rfl::to_view(column).values();
-        auto foreignModel = model.getModelInfo().foreignModelsInfo.at(foreignFieldName);
-        std::size_t foreignColumnIndex = 0;
-
-        auto getForeignFieldFromValue = [&foreignModel, &values, &foreignFieldName, &model,
-                                         &foreignColumnIndex](auto /*fieldIndex*/, auto foreignModelColumn)
-        {
-            using field_t = std::decay_t<decltype(*foreignModelColumn)>;
-
-            if constexpr (orm::is_relation_collection_v<field_t>)
+            constexpr auto* targetColumn = mappedColumn<related_t, SchemaType, Index::value>;
+            if constexpr (targetColumn != nullptr)
             {
-                return;
-            }
-            else
-            {
-                const auto& columnInfo = foreignModel.columnsInfo[foreignColumnIndex++];
-
                 if constexpr (JoinedValues)
                 {
-                    auto fieldName = std::format("{}_{}", foreignFieldName, columnInfo.name);
-                    *foreignModelColumn = getScalarFieldValue<field_t>(values, fieldName);
+                    const auto alias = selectedRelatedAlias<true>(owner, relationColumn, *targetColumn);
+                    *field = getScalarFieldValue<field_t>(values, alias);
                 }
-                else if (columnInfo.isPrimaryKey)
+                else if (targetColumn->isPrimaryKey)
                 {
-                    auto fieldName =
-                        std::format("{}_{}_{}", model.getModelInfo().tableName, foreignFieldName, columnInfo.name);
-                    *foreignModelColumn = getScalarFieldValue<field_t>(values, fieldName);
+                    const auto alias = selectedRelatedAlias<false>(owner, relationColumn, *targetColumn);
+                    *field = getScalarFieldValue<field_t>(values, alias);
                 }
             }
-        };
+        }
+    };
 
-        orm::utils::constexpr_for_tuple(foreignModelAsTuple, getForeignFieldFromValue);
-    }
-};
+    utils::constexpr_for_tuple(relatedFields, hydrate);
+}
 
-template <typename ModelField>
-struct ObjectFieldFromValues<std::optional<ModelField>>
+template <typename Related, typename SchemaType, bool JoinedValues>
+[[nodiscard]] auto relatedPrimaryKeyIsPresent(const model::ModelView& owner, const model::ColumnView& relationColumn,
+                                              const soci::values& values) -> bool
 {
-    template <typename T, bool JoinedValues>
-    static auto get(std::optional<ModelField>* column, const BindingPayload<T, JoinedValues>& model,
-                    std::size_t columnIndex, const soci::values& values) -> void
+    constexpr auto related = model::modelView<SchemaType, Related>();
+    bool hasPresentPrimaryKey{};
+    bool hasNullPrimaryKey{};
+
+    for (const auto primaryKeyIndex : related->primaryKeyIndices)
     {
-        if constexpr (ModelWithId<ModelField>)
+        const auto& targetColumn = related->columns[primaryKeyIndex];
+        const auto alias = selectedRelatedAlias<JoinedValues>(owner, relationColumn, targetColumn);
+        if (values.get_indicator(alias) == soci::i_null)
         {
-            const auto& columnInfo = model.getModelInfo().columnsInfo[columnIndex];
-            const auto& foreignModel = model.getModelInfo().foreignModelsInfo.at(columnInfo.name);
-            bool hasPresentPrimaryKey{};
-            bool hasNullPrimaryKey{};
-
-            for (const auto& foreignColumnInfo : foreignModel.columnsInfo)
-            {
-                if (not foreignColumnInfo.isPrimaryKey)
-                {
-                    continue;
-                }
-
-                const auto fieldName = JoinedValues ? std::format("{}_{}", columnInfo.name, foreignColumnInfo.name) :
-                                                      std::format("{}_{}_{}", model.getModelInfo().tableName,
-                                                                  columnInfo.name, foreignColumnInfo.name);
-
-                if (values.get_indicator(fieldName) == soci::i_null)
-                {
-                    hasNullPrimaryKey = true;
-                }
-                else
-                {
-                    hasPresentPrimaryKey = true;
-                }
-            }
-
-            if (not hasPresentPrimaryKey)
-            {
-                *column = std::nullopt;
-                return;
-            }
-
-            if (hasNullPrimaryKey)
-            {
-                throw ConversionError{"Cannot hydrate optional relation with a partially null primary key"};
-            }
-
-            ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
+            hasNullPrimaryKey = true;
         }
         else
         {
-            const auto fieldName = std::format("{}_{}", model.getModelInfo().tableName,
-                                               model.getModelInfo().columnsInfo[columnIndex].name);
+            hasPresentPrimaryKey = true;
+        }
+    }
 
-            if (values.get_indicator(fieldName) == soci::i_null)
+    if (not hasPresentPrimaryKey)
+    {
+        return false;
+    }
+    if (hasNullPrimaryKey)
+    {
+        throw ConversionError{"Cannot hydrate optional relation with a partially null primary key"};
+    }
+    return true;
+}
+} // namespace detail
+
+template <typename ModelField>
+struct ObjectFieldFromValues
+{
+    template <typename T, typename SchemaType, bool JoinedValues>
+    static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>&,
+                    const model::ColumnView& column, const soci::values& values) -> void
+    {
+        constexpr auto owner = model::modelView<SchemaType, T>();
+
+        if constexpr (SchemaModel<SchemaType, ModelField>)
+        {
+            using related_t = std::remove_cv_t<optional_value_t<ModelField>>;
+
+            if constexpr (IsOptionalBoundField<ModelField>::value)
             {
-                *column = std::nullopt;
+                if (not detail::relatedPrimaryKeyIsPresent<related_t, SchemaType, JoinedValues>(owner, column, values))
+                {
+                    *field = std::nullopt;
+                    return;
+                }
+                detail::hydrateRelated<related_t, SchemaType, JoinedValues>(field->emplace(), owner, column, values);
             }
             else
             {
-                ObjectFieldFromValues<ModelField>::get(&column->emplace(), model, columnIndex, values);
+                detail::hydrateRelated<ModelField, SchemaType, JoinedValues>(*field, owner, column, values);
             }
         }
+        else
+        {
+            const auto alias = detail::selectedScalarAlias<T>(owner, column);
+            *field = getScalarFieldValue<ModelField>(values, alias);
+        }
     }
-};
 
-template <typename ModelField>
-struct ObjectFieldFromValuesWithCast
-{
-    template <typename T, bool JoinedValues>
-    static auto get(ModelField* column, const BindingPayload<T, JoinedValues>& model, std::size_t columnIndex,
-                    const soci::values& values) -> void
+    template <typename T, typename SchemaType, bool JoinedValues, std::size_t FieldIndex>
+    static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>& payload,
+                    std::integral_constant<std::size_t, FieldIndex>, const soci::values& values) -> void
     {
-        auto fieldName =
-            std::format("{}_{}", model.getModelInfo().tableName, model.getModelInfo().columnsInfo[columnIndex].name);
-        *column = getNumericValue<ModelField>(values, fieldName);
+        get(field, payload, payload.template columnDescriptor<FieldIndex>(), values);
     }
-};
 
-template <SociConvertableToDouble ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
-{
-};
-
-template <SociConvertableToInt ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
-{
-};
-
-template <SociConvertableToLongLong ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
-{
-};
-
-template <SociConvertableToUnsignedLongLong ModelField>
-struct ObjectFieldFromValues<ModelField> : ObjectFieldFromValuesWithCast<ModelField>
-{
+    template <typename T, typename SchemaType, bool JoinedValues>
+    static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>& payload,
+                    std::size_t fieldIndex, const soci::values& values) -> void
+    {
+        get(field, payload, payload.columnDescriptor(fieldIndex), values);
+    }
 };
 } // namespace orm::db::binding

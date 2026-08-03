@@ -1,6 +1,6 @@
 #pragma once
 
-#include "orm-cxx/model/ModelInfo.hpp"
+#include "orm-cxx/model/ModelView.hpp"
 
 namespace orm::db::commands
 {
@@ -9,6 +9,6 @@ class DropTableCommand
 public:
     virtual ~DropTableCommand() = default;
 
-    [[nodiscard]] virtual auto dropTable(const model::ModelInfo& modelInfo) const -> std::string = 0;
+    [[nodiscard]] virtual auto dropTable(model::ModelView model) const -> std::string = 0;
 };
 }

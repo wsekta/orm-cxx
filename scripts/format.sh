@@ -10,6 +10,7 @@ mapfile -d '' -t candidates < <(
 )
 cpp_files=()
 for file in "${candidates[@]}"; do
+    [[ -f "$file" ]] || continue
     case "$file" in
         *.c | *.cc | *.cpp | *.cxx | *.h | *.hh | *.hpp | *.hxx)
             cpp_files+=("$file")
@@ -19,7 +20,7 @@ done
 
 clang-format-18 -i -- "${cpp_files[@]}"
 
-mapfile -d '' -t cmake_files < <(
+mapfile -d '' -t cmake_candidates < <(
     git ls-files -z --cached --others --exclude-standard -- \
         CMakeLists.txt \
         ':(glob)**/CMakeLists.txt' \
@@ -28,5 +29,10 @@ mapfile -d '' -t cmake_files < <(
         ':(exclude,glob)cmake/third_party/**' \
         ':(exclude,glob)externals/**'
 )
+
+cmake_files=()
+for file in "${cmake_candidates[@]}"; do
+    [[ -f "$file" ]] && cmake_files+=("$file")
+done
 
 cmake-format -i "${cmake_files[@]}"
