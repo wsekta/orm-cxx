@@ -6,7 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wsekta/orm-cxx/graphs/commit-activity)
 [![Generic badge](https://img.shields.io/badge/gcc-13+-blue.svg)](https://gcc.gnu.org/)
-[![Generic badge](https://img.shields.io/badge/clang-16+-blue.svg)](https://clang.llvm.org/)
+[![Generic badge](https://img.shields.io/badge/clang-18+-blue.svg)](https://clang.llvm.org/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/wsekta/orm-cxx/issues/new)
 
@@ -337,12 +337,11 @@ PostgreSQL.
 
 - [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 143 or newer.
 - [GCC➚](https://gcc.gnu.org/) version 13 or newer.
-- [Clang➚](https://clang.llvm.org/) version 16 or newer.
+- [Clang➚](https://clang.llvm.org/) version 18 or newer.
 
 ## 📦 Dependencies
 
 - [GTest](https://github.com/google/googletest) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
-- [faker-cxx](https://github.com/cieslarmichal/faker-cxx) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
 - [SOCI](https://github.com/SOCI/soci)
 - SQLite development libraries (when `ORM_CXX_ENABLE_SQLITE_BACKEND=ON`)
 - PostgreSQL `libpq` development libraries (when `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON`)

@@ -10,26 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  build:
-    name: ${{ matrix.name }}
+  pg15-gcc-13:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: PostgreSQL 15 / GCC 13
-            server: 15
-            preset: linux-gcc-postgresql
-            coverage: false
-          - name: PostgreSQL 18 / Clang 18 coverage
-            server: 18
-            preset: linux-clang-postgresql-coverage
-            coverage: true
-
+    name: PG 15 / GCC 13
     services:
       postgres:
-        image: postgres:${{ matrix.server }}
+        image: postgres:15
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_PASSWORD: orm_cxx
@@ -41,46 +28,27 @@ jobs:
           --health-interval 2s
           --health-timeout 5s
           --health-retries 20
-
     env:
       ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
       PGPASSWORD: orm_cxx
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-
-      - name: Install build and PostgreSQL client dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
-            clang-18 \
-            clang-tools-18 \
-            gcc-13 \
-            g++-13 \
-            libclang-rt-18-dev \
-            libpq-dev \
-            libsqlite3-dev \
-            llvm-18 \
-            lcov \
-            ninja-build \
-            postgresql-client \
-            sqlite3
-
+            gcc-13 g++-13 libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
       - name: Configure
-        run: cmake --preset ${{ matrix.preset }}
-
+        run: cmake --preset linux-gcc-postgresql
       - name: Build
-        run: cmake --build build/${{ matrix.preset }} --parallel 2
-
-      - name: Run the complete profile
-        run: ctest --preset ${{ matrix.preset }}
-
+        run: cmake --build build/linux-gcc-postgresql --parallel 2
+      - name: Test
+        run: ctest --preset linux-gcc-postgresql
       - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/${{ matrix.preset }} --output-on-failure --no-tests=error --label-regex backend-postgresql
-
+        run: ctest --test-dir build/linux-gcc-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
       - name: Verify isolated schemas were removed
         run: |
           remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
@@ -90,18 +58,207 @@ jobs:
             exit 1
           fi
 
-      - name: Generate PostgreSQL coverage
-        if: matrix.coverage
-        run: cmake --build --preset linux-clang-postgresql-coverage --target orm-cxx-coverage
+  pg15-gcc-14:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    name: PG 15 / GCC 14
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+          POSTGRES_USER: orm_cxx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      PGPASSWORD: orm_cxx
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            gcc-14 g++-14 libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
+      - name: Configure
+        run: cmake --preset linux-gcc-14-postgresql
+      - name: Build
+        run: cmake --build build/linux-gcc-14-postgresql --parallel 2
+      - name: Test
+        run: ctest --preset linux-gcc-14-postgresql
+      - name: Repeat PostgreSQL tests
+        run: ctest --test-dir build/linux-gcc-14-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
+      - name: Verify isolated schemas were removed
+        run: |
+          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
+            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
+          if [ -n "$remaining" ]; then
+            echo "PostgreSQL test schemas were not removed: $remaining"
+            exit 1
+          fi
 
-      - name: Upload PostgreSQL coverage to Codecov
-        if: matrix.coverage
+  pg18-clang-18:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    name: PG 18 / Clang 18
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+          POSTGRES_USER: orm_cxx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      PGPASSWORD: orm_cxx
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 \
+            libpq-dev libsqlite3-dev lcov ninja-build postgresql-client sqlite3
+      - name: Configure
+        run: cmake --preset linux-clang-postgresql-coverage
+      - name: Build and generate coverage
+        run: cmake --build --preset linux-clang-postgresql-coverage --target orm-cxx-coverage
+      - name: Test
+        run: ctest --preset linux-clang-postgresql-coverage
+      - name: Repeat PostgreSQL tests
+        run: ctest --test-dir build/linux-clang-postgresql-coverage --output-on-failure --no-tests=error --label-regex backend-postgresql
+      - name: Verify isolated schemas were removed
+        run: |
+          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
+            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
+          if [ -n "$remaining" ]; then
+            echo "PostgreSQL test schemas were not removed: $remaining"
+            exit 1
+          fi
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
           files: ${{ github.workspace }}/build/linux-clang-postgresql-coverage/coverage.lcov
-          flags: postgresql
-          name: postgresql
+          flags: linux-clang-postgresql-coverage
+          name: PG 18 / Clang 18
           disable_search: true
           fail_ci_if_error: true
           verbose: true
+
+  pg18-clang-19:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    name: PG 18 / Clang 19
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+          POSTGRES_USER: orm_cxx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      PGPASSWORD: orm_cxx
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-19 clang-tools-19 libclang-rt-19-dev llvm-19 \
+            libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
+      - name: Configure
+        run: cmake --preset linux-clang-19-postgresql
+      - name: Build
+        run: cmake --build build/linux-clang-19-postgresql --parallel 2
+      - name: Test
+        run: ctest --preset linux-clang-19-postgresql
+      - name: Repeat PostgreSQL tests
+        run: ctest --test-dir build/linux-clang-19-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
+      - name: Verify isolated schemas were removed
+        run: |
+          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
+            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
+          if [ -n "$remaining" ]; then
+            echo "PostgreSQL test schemas were not removed: $remaining"
+            exit 1
+          fi
+
+  pg18-clang-20:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    name: PG 18 / Clang 20
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+          POSTGRES_USER: orm_cxx
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      PGPASSWORD: orm_cxx
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-20 clang-tools-20 libclang-rt-20-dev llvm-20 \
+            libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
+      - name: Configure
+        run: cmake --preset linux-clang-20-postgresql
+      - name: Build
+        run: cmake --build build/linux-clang-20-postgresql --parallel 2
+      - name: Test
+        run: ctest --preset linux-clang-20-postgresql
+      - name: Repeat PostgreSQL tests
+        run: ctest --test-dir build/linux-clang-20-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
+      - name: Verify isolated schemas were removed
+        run: |
+          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
+            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
+          if [ -n "$remaining" ]; then
+            echo "PostgreSQL test schemas were not removed: $remaining"
+            exit 1
+          fi

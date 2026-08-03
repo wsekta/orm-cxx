@@ -10,25 +10,36 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  gcc-13:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-
+    name: GCC 13
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-
-      - name: Install GCC 13 dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
-            gcc-13 \
-            g++-13 \
-            ninja-build \
-            sqlite3 \
-            libsqlite3-dev
-
+            gcc-13 g++-13 ninja-build sqlite3 libsqlite3-dev
       - name: Build and test
         run: cmake --workflow --preset linux-gcc-debug
+
+  gcc-14:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    name: GCC 14
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            gcc-14 g++-14 ninja-build sqlite3 libsqlite3-dev
+      - name: Build and test
+        run: cmake --workflow --preset linux-gcc-14-debug

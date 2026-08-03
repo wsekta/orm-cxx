@@ -61,6 +61,9 @@ contracts, then expand expressiveness and database support deliberately.
   one-command paths for the supported Linux CI checks and an equivalent MSVC
   workflow.
 - CI coverage for GCC, Clang, MSVC, Codecov, formatting, and static analysis.
+- GitHub Actions CI matrix strategy testing all supported compiler versions
+  (GCC 13, 14; Clang 18, 19, 20; MSVC latest) with per-version job isolation
+  and explicit coverage on Clang 18.
 - A source-level backend provider contract that centralizes backend selection,
   capabilities, runtime limits, session hooks, value binding, SQL dialect
   behavior, command generation, affected-row normalization, and driver-error

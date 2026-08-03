@@ -1,4 +1,4 @@
-name: Clang coverage
+name: Clang
 
 on:
   push:
@@ -10,45 +10,78 @@ permissions:
   contents: read
 
 jobs:
-  coverage:
+  clang-18:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
-
+    name: Clang 18
     steps:
       - name: Checkout
         uses: actions/checkout@v5
         with:
           submodules: recursive
-
-      - name: Install Clang 18 dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
-            clang-18 \
-            clang-tools-18 \
-            libclang-rt-18-dev \
-            llvm-18 \
-            lcov \
-            ninja-build \
-            sqlite3 \
-            libsqlite3-dev
-
-      - name: Configure coverage
+            clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 \
+            lcov ninja-build sqlite3 libsqlite3-dev
+      - name: Configure
         run: cmake --preset linux-clang-coverage
-
       - name: Run tests and generate coverage
         run: cmake --build --preset linux-clang-coverage --target orm-cxx-coverage
-
       - name: Run full portability profile
         run: ctest --preset linux-clang-coverage
-
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
           files: ${{ github.workspace }}/build/linux-clang-coverage/coverage.lcov
-          flags: clang
-          name: clang
+          flags: linux-clang-coverage
+          name: Clang 18
           disable_search: true
           fail_ci_if_error: true
           verbose: true
+
+  clang-19:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    name: Clang 19
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-19 clang-tools-19 libclang-rt-19-dev llvm-19 \
+            ninja-build sqlite3 libsqlite3-dev
+      - name: Configure
+        run: cmake --preset linux-clang-19-debug
+      - name: Build
+        run: cmake --build --preset linux-clang-19-debug
+      - name: Test
+        run: ctest --preset linux-clang-19-debug
+
+  clang-20:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    name: Clang 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes \
+            clang-20 clang-tools-20 libclang-rt-20-dev llvm-20 \
+            ninja-build sqlite3 libsqlite3-dev
+      - name: Configure
+        run: cmake --preset linux-clang-20-debug
+      - name: Build
+        run: cmake --build --preset linux-clang-20-debug
+      - name: Test
+        run: ctest --preset linux-clang-20-debug
