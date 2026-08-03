@@ -8,7 +8,7 @@ policy for the `orm-cxx` project.
 | Workflow | Status |
 |----------|--------|
 | GCC (13, 14) | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
-| Clang (16–20) | [![Clang](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml) |
+| Clang (18–20) | [![Clang](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml) |
 | PostgreSQL | [![PostgreSQL](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml) |
 | MSVC | [![MSVC](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml) |
 | Quality | [![Quality](https://github.com/wsekta/orm-cxx/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/quality.yml) |
@@ -26,17 +26,16 @@ installed from the default Ubuntu repositories.
 | GCC 13 | `gcc-13` / `g++-13` | `linux-gxx-build.yml` | Tested |
 | GCC 14 | `gcc-14` / `g++-14` | `linux-gxx-build.yml` | Tested |
 
-GCC 15 is not yet available in Ubuntu 24.04 repositories.
-
 ### Clang
 
 | Version | Package | Workflow | Coverage | Status |
 |---------|---------|----------|----------|--------|
-| Clang 16 | `clang-16` / `clang++-16` | `linux-clang-build.yml` | No | Tested |
-| Clang 17 | `clang-17` / `clang++-17` | `linux-clang-build.yml` | No | Tested |
 | Clang 18 | `clang-18` / `clang++-18` | `linux-clang-build.yml` | Yes | Tested |
 | Clang 19 | `clang-19` / `clang++-19` | `linux-clang-build.yml` | No | Tested |
 | Clang 20 | `clang-20` / `clang++-20` | `linux-clang-build.yml` | No | Tested |
+
+> **Note:** Clang 16 and 17 are not supported. The compile-time reflection
+> layer uses `consteval` patterns that require Clang 18 or newer.
 
 ### MSVC
 
@@ -53,8 +52,6 @@ combinations:
 |----------|-----------|----------|----------|
 | GCC 13 | 15 | No | `postgresql-build.yml` |
 | GCC 14 | 15 | No | `postgresql-build.yml` |
-| Clang 16 | 18 | No | `postgresql-build.yml` |
-| Clang 17 | 18 | No | `postgresql-build.yml` |
 | Clang 18 | 18 | Yes | `postgresql-build.yml` |
 | Clang 19 | 18 | No | `postgresql-build.yml` |
 | Clang 20 | 18 | No | `postgresql-build.yml` |
@@ -83,16 +80,12 @@ compatibility with local development workflows.
 | `linux-gcc-14-debug` | GCC 14 | CI matrix |
 | `linux-clang-debug` | Clang 18 | Local development (default) |
 | `linux-clang-coverage` | Clang 18 | CI coverage |
-| `linux-clang-16-debug` | Clang 16 | CI matrix |
-| `linux-clang-17-debug` | Clang 17 | CI matrix |
 | `linux-clang-19-debug` | Clang 19 | CI matrix |
 | `linux-clang-19-coverage` | Clang 19 | Local coverage (optional) |
 | `linux-clang-19-postgresql` | Clang 19 | PostgreSQL CI matrix |
 | `linux-clang-20-debug` | Clang 20 | CI matrix |
 | `linux-gcc-postgresql` | GCC 13 | PostgreSQL (default) |
 | `linux-gcc-14-postgresql` | GCC 14 | PostgreSQL CI matrix |
-| `linux-clang-16-postgresql` | Clang 16 | PostgreSQL CI matrix |
-| `linux-clang-17-postgresql` | Clang 17 | PostgreSQL CI matrix |
 | `linux-clang-postgresql-coverage` | Clang 18 | PostgreSQL coverage |
 | `linux-clang-19-postgresql-coverage` | Clang 19 | PostgreSQL local (optional) |
 | `linux-clang-20-postgresql` | Clang 20 | PostgreSQL CI matrix |
@@ -103,7 +96,8 @@ compatibility with local development workflows.
 
 To add a new compiler version to CI:
 
-1. Add new CMake presets in `CMakePresets.json` (configure, build, test, workflow)
-2. Add a new entry to the relevant workflow matrix in `.github/workflows/`
-3. Update this document with the new version
-4. If the new version should collect coverage, update the coverage policy section
+1. Verify the compiler's consteval/constexpr support matches Clang 18+
+2. Add new CMake presets in `CMakePresets.json` (configure, build, test, workflow)
+3. Add a new job in the relevant workflow in `.github/workflows/`
+4. Update this document with the new version
+5. If the new version should collect coverage, update the coverage policy section
