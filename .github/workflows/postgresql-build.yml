@@ -28,6 +28,16 @@ jobs:
             preset: linux-gcc-14-postgresql
             coverage: false
             compiler_packages: gcc-14 g++-14
+          - name: PostgreSQL 18 / Clang 16
+            server: 18
+            preset: linux-clang-16-postgresql
+            coverage: false
+            compiler_packages: clang-16 clang-tools-16 libclang-rt-16-dev llvm-16
+          - name: PostgreSQL 18 / Clang 17
+            server: 18
+            preset: linux-clang-17-postgresql
+            coverage: false
+            compiler_packages: clang-17 clang-tools-17 libclang-rt-17-dev llvm-17
           - name: PostgreSQL 18 / Clang 18 (coverage)
             server: 18
             preset: linux-clang-postgresql-coverage

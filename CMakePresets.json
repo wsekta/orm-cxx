@@ -137,6 +137,34 @@
             }
         },
         {
+            "name": "linux-clang-16-debug",
+            "displayName": "Linux Clang 16 Debug",
+            "inherits": "developer-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-16",
+                "CMAKE_CXX_COMPILER": "clang++-16"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
+            "name": "linux-clang-17-debug",
+            "displayName": "Linux Clang 17 Debug",
+            "inherits": "developer-base",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "clang-17",
+                "CMAKE_CXX_COMPILER": "clang++-17"
+            },
+            "condition": {
+                "type": "equals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Linux"
+            }
+        },
+        {
             "name": "linux-clang-19-debug",
             "displayName": "Linux Clang 19 Debug",
             "inherits": "developer-base",
@@ -182,6 +210,24 @@
             "name": "linux-clang-19-postgresql",
             "displayName": "Linux Clang 19 with PostgreSQL",
             "inherits": "linux-clang-19-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-16-postgresql",
+            "displayName": "Linux Clang 16 with PostgreSQL",
+            "inherits": "linux-clang-16-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-17-postgresql",
+            "displayName": "Linux Clang 17 with PostgreSQL",
+            "inherits": "linux-clang-17-debug",
             "cacheVariables": {
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
                 "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
@@ -274,6 +320,16 @@
             "configuration": "Debug"
         },
         {
+            "name": "linux-clang-16-debug",
+            "configurePreset": "linux-clang-16-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-17-debug",
+            "configurePreset": "linux-clang-17-debug",
+            "configuration": "Debug"
+        },
+        {
             "name": "linux-clang-19-coverage",
             "configurePreset": "linux-clang-19-coverage",
             "configuration": "Debug",
@@ -297,6 +353,16 @@
         {
             "name": "linux-clang-19-postgresql",
             "configurePreset": "linux-clang-19-postgresql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-16-postgresql",
+            "configurePreset": "linux-clang-16-postgresql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-17-postgresql",
+            "configurePreset": "linux-clang-17-postgresql",
             "configuration": "Debug"
         },
         {
@@ -428,6 +494,28 @@
             }
         },
         {
+            "name": "linux-clang-16-debug",
+            "configurePreset": "linux-clang-16-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-17-debug",
+            "configurePreset": "linux-clang-17-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
             "name": "linux-clang-19-coverage",
             "configurePreset": "linux-clang-19-coverage",
             "configuration": "Debug",
@@ -469,6 +557,28 @@
         {
             "name": "linux-clang-19-postgresql",
             "configurePreset": "linux-clang-19-postgresql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-16-postgresql",
+            "configurePreset": "linux-clang-16-postgresql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-17-postgresql",
+            "configurePreset": "linux-clang-17-postgresql",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -672,6 +782,40 @@
             ]
         },
         {
+            "name": "linux-clang-16-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-16-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-16-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-16-debug"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-17-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-17-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-17-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-17-debug"
+                }
+            ]
+        },
+        {
             "name": "linux-clang-19-coverage",
             "steps": [
                 {
@@ -736,6 +880,40 @@
                 {
                     "type": "test",
                     "name": "linux-clang-19-postgresql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-16-postgresql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-16-postgresql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-16-postgresql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-16-postgresql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-17-postgresql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-17-postgresql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-17-postgresql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-17-postgresql"
                 }
             ]
         },

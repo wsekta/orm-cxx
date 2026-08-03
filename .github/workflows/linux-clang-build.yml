@@ -17,6 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: Clang 16
+            preset: linux-clang-16-debug
+            packages: clang-16 clang-tools-16 libclang-rt-16-dev llvm-16
+            coverage: false
+          - name: Clang 17
+            preset: linux-clang-17-debug
+            packages: clang-17 clang-tools-17 libclang-rt-17-dev llvm-17
+            coverage: false
           - name: Clang 18 (coverage)
             preset: linux-clang-coverage
             packages: clang-18 clang-tools-18 libclang-rt-18-dev llvm-18
