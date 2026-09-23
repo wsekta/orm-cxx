@@ -8,7 +8,7 @@ var searchData=
   ['dialect_5',['Capabilities versus dialect',['../md_docs_2backend-extension.html#autotoc_md3',1,'']]],
   ['dialect_20differences_6',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
   ['differences_7',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
-  ['distinct_8',['Distinct',['../md_docs_2query.html#autotoc_md82',1,'']]],
+  ['distinct_8',['Distinct',['../md_docs_2query.html#autotoc_md88',1,'']]],
   ['done_9',['Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['dto_20rules_10',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md73',1,'']]]
+  ['dto_20rules_10',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md79',1,'']]]
 ];
