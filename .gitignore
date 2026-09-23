@@ -35,6 +35,8 @@
 .idea/
 .vscode/
 .cache/
+__pycache__/
+*.pyc
 vcpkg_installed/
 html/
 doxygen-awesome-css

@@ -1,0 +1,12 @@
+orm-cxx provides CMake targets:
+
+    find_package(orm-cxx CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
+
+For reflection without database dependencies in the consuming target:
+
+    find_package(orm-cxx-reflection CONFIG REQUIRED)
+    target_link_libraries(main PRIVATE orm-cxx::reflection)
+
+SQLite is enabled by default. Add the postgresql feature for PostgreSQL.
+Disable default features for a core-only build or a PostgreSQL-only build.

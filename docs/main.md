@@ -13,7 +13,7 @@ ORM C++ is a compile-time ORM for C++20 that maps plain aggregate structs to
 database tables using native reflection — no macros, no code generation.
 It ships with SQLite and PostgreSQL backends built on SOCI.
 
-**Minimum compilers:** GCC 13+, Clang 16+, MSVC 17+.
+**Minimum compilers:** GCC 13+, Clang 18+, MSVC 17+.
 
 1. [Model](model.md)
 2. [Collection relations](relations.md)
@@ -22,3 +22,4 @@ It ships with SQLite and PostgreSQL backends built on SOCI.
 5. [Backends](backends.md)
 6. [Backend portability](backend-portability.md)
 7. [Backend extension contract](backend-extension.md)
+8. [Package managers and releases](packaging.md)

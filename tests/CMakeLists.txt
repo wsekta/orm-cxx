@@ -60,7 +60,9 @@ target_compile_definitions(
 )
 
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    target_include_directories(orm-cxx-UT PRIVATE "$<TARGET_PROPERTY:soci_postgresql,INCLUDE_DIRECTORIES>")
+    target_include_directories(
+        orm-cxx-UT PRIVATE "$<TARGET_PROPERTY:${ORM_CXX_SOCI_POSTGRESQL_TARGET},INCLUDE_DIRECTORIES>"
+    )
 endif()
 
 if(MSVC)
@@ -83,7 +85,8 @@ add_test(
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(
-    orm-cxx-UT PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>" LABELS "unit;backend-sqlite"
+    orm-cxx-UT PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_SQLITE3_TARGET}>" LABELS
+                          "unit;backend-sqlite"
 )
 
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
@@ -99,15 +102,15 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
     )
     set_tests_properties(
         orm-cxx-postgresql-conformance orm-cxx-postgresql-integration
-        PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_postgresql>" LABELS
+        PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_POSTGRESQL_TARGET}>" LABELS
                    "integration;backend-postgresql" FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
     )
     set_tests_properties(orm-cxx-postgresql-conformance PROPERTIES LABELS "conformance;backend-postgresql")
 endif()
 set_tests_properties(
     orm-cxx-sqlite-conformance
-    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:soci_sqlite3>" LABELS "conformance;backend-sqlite"
-               FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
+    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_SQLITE3_TARGET}>" LABELS
+               "conformance;backend-sqlite" FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
 )
 
 set(orm_cxx_make_program "${CMAKE_MAKE_PROGRAM}")

@@ -1,6 +1,69 @@
 include_guard(GLOBAL)
 
 function(orm_cxx_add_runtime_dependencies source_dir)
+    set(ORM_CXX_SOCI_NEEDS_OPENSSL
+        OFF
+        PARENT_SCOPE
+    )
+    if(ORM_CXX_USE_SYSTEM_SOCI)
+        find_package(SOCI 4.0.3 CONFIG REQUIRED)
+        set(soci_export_core Core)
+        set(soci_export_sqlite3 SQLite3)
+        set(soci_export_postgresql PostgreSQL)
+        set(soci_components core)
+        if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+            list(APPEND soci_components sqlite3)
+        endif()
+        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
+            list(APPEND soci_components postgresql)
+        endif()
+
+        foreach(component IN LISTS soci_components)
+            # Recent SOCI exports component names; older packages and Conan distinguish static and shared targets. Keep
+            # the exact exported name so installed consumers use the same linkage.
+            if(TARGET SOCI::${soci_export_${component}})
+                set(soci_target "SOCI::${soci_export_${component}}")
+            elseif(TARGET SOCI::soci_${component})
+                set(soci_target "SOCI::soci_${component}")
+            elseif(TARGET SOCI::soci_${component}_static)
+                set(soci_target "SOCI::soci_${component}_static")
+            else()
+                message(FATAL_ERROR "The installed SOCI package does not provide its ${component} target.")
+            endif()
+
+            # Older SOCI PostgreSQL exports name OpenSSL::SSL in their static link interface without finding it. Inspect
+            # both modern and legacy configuration-specific properties, and resolve only declared dependencies.
+            if(component STREQUAL "postgresql")
+                get_target_property(soci_link_libraries "${soci_target}" INTERFACE_LINK_LIBRARIES)
+                get_target_property(soci_configurations "${soci_target}" IMPORTED_CONFIGURATIONS)
+                foreach(config IN LISTS soci_configurations)
+                    string(TOUPPER "${config}" config_upper)
+                    get_target_property(
+                        soci_config_libraries "${soci_target}" "IMPORTED_LINK_INTERFACE_LIBRARIES_${config_upper}"
+                    )
+                    list(APPEND soci_link_libraries "${soci_config_libraries}")
+                endforeach()
+                if(soci_link_libraries MATCHES "OpenSSL::(SSL|Crypto)")
+                    find_package(OpenSSL REQUIRED)
+                    set(ORM_CXX_SOCI_NEEDS_OPENSSL
+                        ON
+                        PARENT_SCOPE
+                    )
+                endif()
+            endif()
+            string(TOUPPER "${component}" component_upper)
+            set(ORM_CXX_SOCI_${component_upper}_TARGET
+                "${soci_target}"
+                PARENT_SCOPE
+            )
+            set(ORM_CXX_SOCI_${component_upper}_INSTALLED_TARGET
+                "${soci_target}"
+                PARENT_SCOPE
+            )
+        endforeach()
+        return()
+    endif()
+
     if(TARGET soci_core)
         if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)
             message(
@@ -59,6 +122,20 @@ function(orm_cxx_add_runtime_dependencies source_dir)
             )
         endif()
     endif()
+
+    foreach(component core sqlite3 postgresql)
+        if(TARGET soci_${component})
+            string(TOUPPER "${component}" component_upper)
+            set(ORM_CXX_SOCI_${component_upper}_TARGET
+                "soci_${component}"
+                PARENT_SCOPE
+            )
+            set(ORM_CXX_SOCI_${component_upper}_INSTALLED_TARGET
+                "SOCI::soci_${component}"
+                PARENT_SCOPE
+            )
+        endif()
+    endforeach()
 endfunction()
 
 function(orm_cxx_add_test_dependencies source_dir)

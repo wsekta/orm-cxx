@@ -35,6 +35,7 @@ function(orm_cxx_define_options)
     )
     option(ORM_CXX_ENABLE_SQLITE_BACKEND "Build and register the SQLite backend" ON)
     option(ORM_CXX_ENABLE_POSTGRESQL_BACKEND "Build and register the PostgreSQL backend" OFF)
+    option(ORM_CXX_USE_SYSTEM_SOCI "Use an installed SOCI package instead of the bundled submodule" OFF)
     option(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
            "Build live PostgreSQL integration tests (requires ORM_CXX_POSTGRESQL_TEST_DSN at runtime)" OFF
     )

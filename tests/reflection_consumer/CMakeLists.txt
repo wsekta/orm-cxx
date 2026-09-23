@@ -6,3 +6,6 @@ find_package(orm-cxx-reflection CONFIG REQUIRED)
 
 add_executable(orm-cxx-reflection-consumer main.cpp)
 target_link_libraries(orm-cxx-reflection-consumer PRIVATE orm-cxx::reflection)
+
+enable_testing()
+add_test(NAME orm-cxx-reflection-consumer COMMAND orm-cxx-reflection-consumer)

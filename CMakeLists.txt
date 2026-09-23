@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(orm-cxx LANGUAGES CXX)
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" ORM_CXX_VERSION LIMIT_COUNT 1)
+if(NOT ORM_CXX_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION.txt must contain a three-part numeric version (for example 0.1.0).")
+endif()
+project(
+    orm-cxx
+    VERSION "${ORM_CXX_VERSION}"
+    LANGUAGES CXX
+)
 
 include(GNUInstallDirs)
 

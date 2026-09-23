@@ -1,0 +1,18 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(SOCI 4.0.3 CONFIG)
+if(@ORM_CXX_SOCI_NEEDS_OPENSSL@)
+    find_dependency(OpenSSL)
+endif()
+find_dependency(
+    orm-cxx-reflection @PROJECT_VERSION@ EXACT CONFIG HINTS "${CMAKE_CURRENT_LIST_DIR}/../orm-cxx-reflection"
+)
+
+set(orm-cxx_core_FOUND TRUE)
+set(orm-cxx_reflection_FOUND TRUE)
+set(orm-cxx_sqlite3_FOUND @ORM_CXX_ENABLE_SQLITE_BACKEND@)
+set(orm-cxx_postgresql_FOUND @ORM_CXX_ENABLE_POSTGRESQL_BACKEND@)
+
+include("${CMAKE_CURRENT_LIST_DIR}/orm-cxx-targets.cmake")
+check_required_components(orm-cxx)

@@ -1,0 +1,39 @@
+vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
+
+vcpkg_download_distfile(ARCHIVE
+    URLS "@ORM_CXX_SOURCE_URL@"
+    FILENAME "orm-cxx-${VERSION}.tar.gz"
+    SHA512 @ORM_CXX_SOURCE_SHA512@
+)
+vcpkg_extract_source_archive(SOURCE_PATH ARCHIVE "${ARCHIVE}")
+
+vcpkg_check_features(OUT_FEATURE_OPTIONS FEATURE_OPTIONS
+    FEATURES
+        sqlite      ORM_CXX_ENABLE_SQLITE_BACKEND
+        postgresql  ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+)
+
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+    OPTIONS
+        -DORM_CXX_USE_SYSTEM_SOCI=ON
+        -DORM_CXX_BUILD_TESTS=OFF
+        -DORM_CXX_BUILD_EXAMPLES=OFF
+        -DORM_CXX_WARNINGS_AS_ERRORS=OFF
+        ${FEATURE_OPTIONS}
+)
+vcpkg_cmake_install()
+vcpkg_copy_pdbs()
+vcpkg_cmake_config_fixup(
+    PACKAGE_NAME orm-cxx
+    CONFIG_PATH lib/cmake/orm-cxx
+    DO_NOT_DELETE_PARENT_CONFIG_PATH
+)
+vcpkg_cmake_config_fixup(
+    PACKAGE_NAME orm-cxx-reflection
+    CONFIG_PATH lib/cmake/orm-cxx-reflection
+)
+
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include" "${CURRENT_PACKAGES_DIR}/debug/share")
+file(INSTALL "${CMAKE_CURRENT_LIST_DIR}/usage" DESTINATION "${CURRENT_PACKAGES_DIR}/share/${PORT}")
+vcpkg_install_copyright(FILE_LIST "${SOURCE_PATH}/LICENSE" "${SOURCE_PATH}/THIRD_PARTY_NOTICES.md")

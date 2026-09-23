@@ -31,6 +31,15 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 ## ⚙️ Usage
 
+### Package installation
+
+The [package guide](docs/packaging.md) covers vcpkg and Conan installation with
+automatic SOCI/SQLite/libpq dependencies, backend selection, and the GitHub Actions
+release pipeline driven by `VERSION.txt`. Central catalog availability follows
+acceptance of the generated submissions to vcpkg and ConanCenter.
+
+### Example
+
 ```cpp
 #include <string>
 #include <vector>

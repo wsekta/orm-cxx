@@ -1,0 +1,179 @@
+name: Packages
+
+on:
+  push:
+    branches: [main, release]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never cancel a release halfway through publishing or creating submissions.
+concurrency:
+  group: packages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.prepare.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Verify release automation
+        run: |
+          python -m pip install -r tools/requirements-packaging.txt
+          python -m unittest discover -s tests/packaging -v
+      - name: Check release submission configuration
+        if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request'
+        env:
+          REGISTRY_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+          CONANCENTER_ISSUE: ${{ vars.CONANCENTER_ISSUE }}
+        run: |
+          if [[ -z "$REGISTRY_TOKEN" ]]; then
+            echo '::error::Set PACKAGE_REGISTRY_TOKEN before releasing; see docs/packaging.md.'
+            exit 1
+          fi
+          if ! [[ "$CONANCENTER_ISSUE" =~ ^[1-9][0-9]*$ ]]; then
+            echo '::error::Set the numeric CONANCENTER_ISSUE repository variable before releasing; see docs/packaging.md.'
+            exit 1
+          fi
+      - name: Prepare source archive and central catalog recipes
+        id: prepare
+        run: python scripts/prepare_packages.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: package-distribution
+          path: build/distribution
+          if-no-files-found: error
+
+  test:
+    needs: prepare
+    name: ${{ matrix.manager }} / ${{ matrix.os }} / ${{ matrix.backends }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+        manager: [conan, vcpkg]
+        backends: [sqlite, both, core, postgresql]
+        exclude:
+          - os: windows-2022
+            backends: core
+          - os: windows-2022
+            backends: postgresql
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    env:
+      CONAN_HOME: ${{ github.workspace }}/build/conan-home
+      VCPKG_DISABLE_METRICS: '1'
+      VCPKG_BINARY_SOURCES: clear
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - uses: ilammy/msvc-dev-cmd@v1
+        if: runner.os == 'Windows'
+      - name: Install package tools
+        run: python -m pip install -r tools/requirements-packaging.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: package-distribution
+          path: build/distribution
+      - name: Install vcpkg host prerequisites on Linux
+        if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install --yes pkg-config
+      - name: Initialize pinned vcpkg on Linux
+        if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
+        shell: bash
+        run: |
+          git submodule update --init externals/vcpkg
+          ./externals/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - name: Initialize pinned vcpkg on Windows
+        if: matrix.manager == 'vcpkg' && runner.os == 'Windows'
+        shell: cmd
+        run: |
+          git submodule update --init externals/vcpkg
+          call .\externals\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+      - name: Build package and run installed consumer
+        run: python scripts/check_packages.py --manager ${{ matrix.manager }} --backends ${{ matrix.backends }}
+      - name: Preserve failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.manager }}-${{ matrix.os }}-${{ matrix.backends }}
+          path: |
+            build/**/CMakeConfigureLog.yaml
+            build/**/LastTest.log
+            externals/vcpkg/buildtrees/**/*.log
+
+  release:
+    if: github.ref == 'refs/heads/release' && github.event_name != 'pull_request'
+    needs: [prepare, test]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check central catalog credentials
+        env:
+          REGISTRY_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+          CONANCENTER_ISSUE: ${{ vars.CONANCENTER_ISSUE }}
+        run: |
+          if [[ -z "$REGISTRY_TOKEN" ]]; then
+            echo '::error::Set PACKAGE_REGISTRY_TOKEN before releasing; see docs/packaging.md.'
+            exit 1
+          fi
+          if ! [[ "$CONANCENTER_ISSUE" =~ ^[1-9][0-9]*$ ]]; then
+            echo '::error::Set the numeric CONANCENTER_ISSUE repository variable before releasing; see docs/packaging.md.'
+            exit 1
+          fi
+      - run: python -m pip install -r tools/requirements-packaging.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: package-distribution
+          path: build/distribution
+      - name: Publish verified immutable sources
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python scripts/publish_packages.py release --distribution build/distribution
+
+  submit:
+    needs: release
+    strategy:
+      fail-fast: false
+      matrix:
+        manager: [vcpkg, conan]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r tools/requirements-packaging.txt
+      - uses: actions/download-artifact@v4
+        with:
+          name: package-distribution
+          path: build/distribution
+      - name: Submit to the official catalog
+        env:
+          GH_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
+          CONANCENTER_ISSUE: ${{ vars.CONANCENTER_ISSUE }}
+        run: python scripts/publish_packages.py ${{ matrix.manager }} --distribution build/distribution

@@ -14,6 +14,10 @@
 #include "soci/soci.h"
 #include "soci/sqlite3/soci-sqlite3.h"
 
+// Older SOCI releases include sqlite3.h inside sqlite_api; it must be included first.
+// Newer SOCI releases no longer include the header, but error classification needs its constants.
+#include <sqlite3.h>
+
 namespace
 {
 constexpr std::string_view connectionStringPrefix{"sqlite3://"};
