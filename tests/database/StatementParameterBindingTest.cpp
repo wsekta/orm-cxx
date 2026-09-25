@@ -670,16 +670,16 @@ TEST(StatementParameterBindingTest, malformedPrimaryKeyDescriptorsReportTheirSpe
     using orm::model::FieldKind;
 
     std::array<ColumnView, 1> columns{{{.fieldIndex = 0,
-                                       .fieldName = "id",
-                                       .name = "id",
-                                       .type = orm::model::ColumnType::Int,
-                                       .kind = FieldKind::Scalar}}};
+                                        .fieldName = "id",
+                                        .name = "id",
+                                        .type = orm::model::ColumnType::Int,
+                                        .kind = FieldKind::Scalar}}};
     std::array<std::size_t, 1> primaryKeyIndices{1};
     orm::model::ModelDataView modelData{.type = orm::model::typeId<int>(),
-                                         .schemaIndex = 0,
-                                         .tableName = "synthetic_key",
-                                         .columns = columns,
-                                         .primaryKeyIndices = primaryKeyIndices};
+                                        .schemaIndex = 0,
+                                        .tableName = "synthetic_key",
+                                        .columns = columns,
+                                        .primaryKeyIndices = primaryKeyIndices};
     const std::array<const orm::model::ModelDataView*, 1> models{&modelData};
     const orm::model::SchemaView schema{.models = models};
     const auto model = schema.at(0);

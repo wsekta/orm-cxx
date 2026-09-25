@@ -1,8 +1,8 @@
 #include <array>
 #include <cstddef>
-#include <memory>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -92,8 +92,8 @@ struct BitField
     unsigned bits : 3;
 };
 
-using BitFieldBinding = decltype(detail::bindingTraitsImpl(std::declval<BitField&>(),
-                                                            std::integral_constant<std::size_t, 1>{}));
+using BitFieldBinding =
+    decltype(detail::bindingTraitsImpl(std::declval<BitField&>(), std::integral_constant<std::size_t, 1>{}));
 static_assert(!BitFieldBinding::fieldsAreAddressable);
 
 template <typename T>

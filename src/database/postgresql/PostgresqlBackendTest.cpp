@@ -180,8 +180,7 @@ TEST(PostgresqlBackendTest, runtimeRejectsMismatchedStringStorageAndAcceptsNullT
                                         }),
                  orm::db::binding::ConversionError);
     backend.runtime().bind(values, "missing_text",
-                           orm::db::BoundValue{.logicalType = orm::model::ColumnType::String,
-                                               .value = std::nullopt});
+                           orm::db::BoundValue{.logicalType = orm::model::ColumnType::String, .value = std::nullopt});
     EXPECT_EQ(values.get_indicator("missing_text"), soci::i_null);
 }
 

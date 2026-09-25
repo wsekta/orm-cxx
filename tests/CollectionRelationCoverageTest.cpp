@@ -99,10 +99,12 @@ public:
           ownerColumns{owner->columns.begin(), owner->columns.end()},
           ownerRelations{owner->relations.begin(), owner->relations.end()},
           targetColumns{target->columns.begin(), target->columns.end()},
-          targetRelations{target->relations.begin(), target->relations.end()}, ownerData{owner.data()},
+          targetRelations{target->relations.begin(), target->relations.end()},
+          ownerData{owner.data()},
           targetData{target.data()},
           schema{std::span<const orm::model::ModelDataView* const>{models.data(), models.size()}},
-          ownerIndex{owner.modelIndex}, targetIndex{target.modelIndex}
+          ownerIndex{owner.modelIndex},
+          targetIndex{target.modelIndex}
     {
         ownerData.columns = ownerColumns;
         ownerData.relations = ownerRelations;
@@ -112,8 +114,14 @@ public:
         models[targetIndex] = &targetData;
     }
 
-    [[nodiscard]] auto owner() const -> orm::model::ModelView { return {&schema, ownerIndex}; }
-    [[nodiscard]] auto target() const -> orm::model::ModelView { return {&schema, targetIndex}; }
+    [[nodiscard]] auto owner() const -> orm::model::ModelView
+    {
+        return {&schema, ownerIndex};
+    }
+    [[nodiscard]] auto target() const -> orm::model::ModelView
+    {
+        return {&schema, targetIndex};
+    }
 
     std::vector<orm::model::ColumnView> ownerColumns;
     std::vector<orm::model::RelationView> ownerRelations;
@@ -352,21 +360,18 @@ TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsInvalidRu
 TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMetadata)
 {
     TrackingRelationDialect dialect;
-    MutableRelationSchema metadata{
-        orm::modelView<collection_models::Schema, collection_models::User>(),
-        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::User>(),
+                                   orm::modelView<collection_models::Schema, collection_models::Role>()};
     metadata.ownerRelations.front().targetModelIndex = orm::model::noTargetModel;
     const auto owner = metadata.owner();
     const auto relation = metadata.ownerRelations.front();
 
     EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::logic_error);
-    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)),
-                 std::logic_error);
-    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
-                 std::logic_error);
-    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
-                                                                     {key(1)}, false),
-                 std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)), std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)), std::logic_error);
+    EXPECT_THROW(
+        (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
+        std::logic_error);
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
@@ -377,17 +382,16 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMe
 TEST(CollectionRelationCoverageTest, relationGeneratorsRejectJunctionColumnsThatDoNotMatchEndpointKeys)
 {
     TrackingRelationDialect dialect;
-    MutableRelationSchema metadata{
-        orm::modelView<collection_models::Schema, collection_models::User>(),
-        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::User>(),
+                                   orm::modelView<collection_models::Schema, collection_models::Role>()};
     metadata.ownerRelations.front().junction.ownerColumns = {};
     const auto owner = metadata.owner();
     const auto relation = metadata.ownerRelations.front();
 
     EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
-                                                                     {key(1)}, false),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
+        std::invalid_argument);
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
@@ -398,9 +402,8 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectJunctionColumnsThat
 TEST(CollectionRelationCoverageTest, relationGeneratorsRejectMissingJunctionAndNonCollectionRelation)
 {
     TrackingRelationDialect dialect;
-    MutableRelationSchema metadata{
-        orm::modelView<collection_models::Schema, collection_models::User>(),
-        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::User>(),
+                                   orm::modelView<collection_models::Schema, collection_models::Role>()};
     metadata.ownerRelations.front().junction = {};
     auto owner = metadata.owner();
     auto relation = metadata.ownerRelations.front();
@@ -410,9 +413,9 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectMissingJunctionAndN
                  std::invalid_argument);
     EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
                  std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
-                                                                     {key(1)}, false),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
+        std::invalid_argument);
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
@@ -424,17 +427,16 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectMissingJunctionAndN
                  std::invalid_argument);
     EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
                  std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
-                                                                     {key(1)}, false),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
+        std::invalid_argument);
 }
 
 TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
 {
     TrackingRelationDialect dialect;
-    MutableRelationSchema metadata{
-        orm::modelView<collection_models::Schema, collection_models::Author>(),
-        orm::modelView<collection_models::Schema, collection_models::Book>()};
+    MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::Author>(),
+                                   orm::modelView<collection_models::Schema, collection_models::Book>()};
     metadata.ownerRelations.front().mappedBy = "missing";
     const auto owner = metadata.owner();
     const auto relation = metadata.ownerRelations.front();
@@ -443,9 +445,9 @@ TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
                  std::invalid_argument);
     EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
                  std::invalid_argument);
-    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
-                                                                     {key(1)}, false),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
+        std::invalid_argument);
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
@@ -456,9 +458,8 @@ TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
 TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
 {
     orm::db::sqlite::SqliteDialect dialect;
-    MutableRelationSchema metadata{
-        orm::modelView<collection_models::Schema, collection_models::Book>(),
-        orm::modelView<collection_models::Schema, collection_models::Author>()};
+    MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::Book>(),
+                                   orm::modelView<collection_models::Schema, collection_models::Author>()};
     const auto relation = std::ranges::find_if(metadata.ownerColumns, [](const auto& column)
                                                { return column.kind == orm::model::FieldKind::ToOne; });
     ASSERT_NE(relation, metadata.ownerColumns.end());
@@ -502,9 +503,8 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
                      std::invalid_argument);
     }
     {
-        MutableRelationSchema metadata{
-            orm::modelView<collection_models::Schema, collection_models::Author>(),
-            orm::modelView<collection_models::Schema, collection_models::Book>()};
+        MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::Author>(),
+                                       orm::modelView<collection_models::Schema, collection_models::Book>()};
         ASSERT_FALSE(metadata.targetRelations.empty());
         metadata.targetRelations.front().kind = orm::model::RelationKind::ManyToMany;
         orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
@@ -541,8 +541,7 @@ TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceComple
     ASSERT_EQ(unlink.parameters.size(), 2);
 
     const auto select = orm::db::relations::collectionSelectStatement(user, relation, "SELECT 1;\n", {key(1)}, true);
-    EXPECT_NE(select.sql.find("FROM \"collection_user_roles\" AS \"orm_relation_junction\""),
-              std::string::npos);
+    EXPECT_NE(select.sql.find("FROM \"collection_user_roles\" AS \"orm_relation_junction\""), std::string::npos);
     EXPECT_NE(select.sql.find("JOIN (SELECT 1)"), std::string::npos);
     ASSERT_EQ(select.parameters.size(), 1);
     EXPECT_EQ(select.parameters.front().value, orm::query::QueryValue{1});

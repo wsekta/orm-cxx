@@ -1,5 +1,5 @@
-#include <gtest/gtest.h>
 #include <array>
+#include <gtest/gtest.h>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -392,18 +392,12 @@ TEST(StaticMetadataTest, relationSqlNameAndIncompleteInverseMappingAreResolvedAt
                                           .kind = RelationKind::ManyToMany,
                                           .mappedBy = "owning",
                                           .targetModelIndex = 1}}};
-    std::array<RelationView, 1> owning{{{.fieldName = "different",
-                                         .columnName = "owning_sql",
-                                         .kind = RelationKind::ToOne,
-                                         .targetModelIndex = 0}}};
-    const orm::model::ModelDataView ownerData{.type = orm::model::typeId<int>(),
-                                               .schemaIndex = 0,
-                                               .tableName = "owner",
-                                               .relations = inverse};
-    const orm::model::ModelDataView targetData{.type = orm::model::typeId<double>(),
-                                                .schemaIndex = 1,
-                                                .tableName = "target",
-                                                .relations = owning};
+    std::array<RelationView, 1> owning{
+        {{.fieldName = "different", .columnName = "owning_sql", .kind = RelationKind::ToOne, .targetModelIndex = 0}}};
+    const orm::model::ModelDataView ownerData{
+        .type = orm::model::typeId<int>(), .schemaIndex = 0, .tableName = "owner", .relations = inverse};
+    const orm::model::ModelDataView targetData{
+        .type = orm::model::typeId<double>(), .schemaIndex = 1, .tableName = "target", .relations = owning};
     const std::array<const orm::model::ModelDataView*, 2> models{&ownerData, &targetData};
     const orm::model::SchemaView schema{.models = models};
     const auto owner = schema.at(0);
@@ -418,8 +412,8 @@ TEST(StaticMetadataTest, relationSqlNameAndIncompleteInverseMappingAreResolvedAt
 
     const std::array<std::string_view, 1> ownerColumns{"owner_id"};
     const std::array<std::string_view, 1> targetColumns{"target_id"};
-    owning[0].junction = {.tableName = "junction", .ownerColumns = ownerColumns, .targetColumns = targetColumns,
-                          .owningSide = true};
+    owning[0].junction = {
+        .tableName = "junction", .ownerColumns = ownerColumns, .targetColumns = targetColumns, .owningSide = true};
     const auto resolved = owner.resolveJunction(inverse[0]);
     ASSERT_TRUE(resolved.isConfigured());
     EXPECT_EQ(resolved.tableName, "junction");

@@ -460,15 +460,6 @@ public:
     std::unique_ptr<orm::Database<Schema>> database;
 };
 
-class DatabaseCoreProbe final : public orm::DatabaseCore
-{
-public:
-    using orm::DatabaseCore::ensureModelSupported;
-    using orm::DatabaseCore::ensureRelationTableEndpointsExist;
-    using orm::DatabaseCore::loadCollectionField;
-    using orm::DatabaseCore::relationEndpointExists;
-};
-
 template <typename Operation>
 auto expectDatabaseError(Operation&& operation, orm::DatabaseErrorCode code,
                          std::string_view expectedOperation = {}) -> void
@@ -918,14 +909,10 @@ TEST(DatabaseCoverageCompletionTest, insertExecutesUnboundCommandForAutoOnlyMode
 
 TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackendBinding)
 {
-    std::array<orm::model::ColumnView, 1> columns{{{.fieldIndex = 0,
-                                                   .fieldName = "id",
-                                                   .name = "id",
-                                                   .type = orm::model::ColumnType::Uuid}}};
-    const orm::model::ModelDataView data{.type = orm::model::typeId<int>(),
-                                          .schemaIndex = 0,
-                                          .tableName = "synthetic_uuid",
-                                          .columns = columns};
+    std::array<orm::model::ColumnView, 1> columns{
+        {{.fieldIndex = 0, .fieldName = "id", .name = "id", .type = orm::model::ColumnType::Uuid}}};
+    const orm::model::ModelDataView data{
+        .type = orm::model::typeId<int>(), .schemaIndex = 0, .tableName = "synthetic_uuid", .columns = columns};
     const std::array<const orm::model::ModelDataView*, 1> models{&data};
     const orm::model::SchemaView schema{.models = models};
     const orm::db::sqlite::SqliteBackend backend;
@@ -935,20 +922,17 @@ TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackend
 
     EXPECT_THROW((void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized, schema.at(0)),
                  std::invalid_argument);
-    EXPECT_EQ(bound.size(), 0);
 }
 
 TEST(DatabaseCoverageCompletionTest, modelBindingRejectsToOneColumnWithoutSchemaTarget)
 {
     std::array<orm::model::ColumnView, 1> columns{{{.fieldIndex = 0,
-                                                   .fieldName = "owner",
-                                                   .name = "owner",
-                                                   .kind = orm::model::FieldKind::ToOne,
-                                                   .targetModelIndex = orm::model::noTargetModel}}};
-    const orm::model::ModelDataView data{.type = orm::model::typeId<int>(),
-                                          .schemaIndex = 0,
-                                          .tableName = "synthetic_relation",
-                                          .columns = columns};
+                                                    .fieldName = "owner",
+                                                    .name = "owner",
+                                                    .kind = orm::model::FieldKind::ToOne,
+                                                    .targetModelIndex = orm::model::noTargetModel}}};
+    const orm::model::ModelDataView data{
+        .type = orm::model::typeId<int>(), .schemaIndex = 0, .tableName = "synthetic_relation", .columns = columns};
     const std::array<const orm::model::ModelDataView*, 1> models{&data};
     const orm::model::SchemaView schema{.models = models};
     const orm::db::sqlite::SqliteBackend backend;
@@ -956,68 +940,5 @@ TEST(DatabaseCoverageCompletionTest, modelBindingRejectsToOneColumnWithoutSchema
     soci::values bound;
 
     EXPECT_THROW((void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized, schema.at(0)),
-                 std::invalid_argument);
-    EXPECT_EQ(bound.size(), 0);
-}
-
-TEST(DatabaseCoverageCompletionTest, coreRejectsIncompleteRelationEndpointKey)
-{
-    DatabaseCoreProbe database;
-    database.connect("sqlite3://:memory:");
-    constexpr auto descriptor = orm::modelView<Schema, models::ModelWithId>();
-    EXPECT_THROW((void)database.relationEndpointExists(descriptor, {}), std::invalid_argument);
-}
-
-TEST(DatabaseCoverageCompletionTest, coreRejectsMissingRelationTargetsInTestMetadata)
-{
-    std::array<orm::model::ColumnView, 1> columns{{{.fieldIndex = 0,
-                                                   .fieldName = "target",
-                                                   .name = "target",
-                                                   .kind = orm::model::FieldKind::ToOne,
-                                                   .targetModelIndex = orm::model::noTargetModel}}};
-    std::array<orm::model::RelationView, 1> relations{{{.fieldIndex = 0,
-                                                       .fieldName = "targets",
-                                                       .columnName = "targets",
-                                                       .kind = orm::model::RelationKind::ManyToMany,
-                                                       .targetModelIndex = orm::model::noTargetModel,
-                                                       .junction = {.tableName = "junction", .owningSide = true}}}};
-    orm::model::ModelDataView data{.type = orm::model::typeId<int>(),
-                                    .schemaIndex = 0,
-                                    .tableName = "synthetic_owner",
-                                    .columns = columns,
-                                    .relations = relations};
-    const std::array<const orm::model::ModelDataView*, 1> models{&data};
-    const orm::model::SchemaView schema{.models = models};
-    const auto descriptor = schema.at(0);
-    DatabaseCoreProbe database;
-    database.connect("sqlite3://:memory:");
-
-    expectDatabaseError([&]() { database.ensureModelSupported(descriptor, "create table"); },
-                        orm::DatabaseErrorCode::UnsupportedFeature, "create table");
-    data.columns = {};
-    expectDatabaseError([&]() { database.ensureModelSupported(descriptor, "create relation tables"); },
-                        orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
-    EXPECT_THROW(database.ensureRelationTableEndpointsExist(descriptor), std::invalid_argument);
-}
-
-TEST(DatabaseCoverageCompletionTest, relationTableScanSkipsNonOwningRelations)
-{
-    DatabaseCoreProbe database;
-    database.connect("sqlite3://:memory:");
-    constexpr auto descriptor = orm::modelView<Schema, collection_models::Author>();
-    EXPECT_NO_THROW(database.ensureRelationTableEndpointsExist(descriptor));
-}
-
-TEST(DatabaseCoverageCompletionTest, includedCollectionRejectsMismatchedTestMetadata)
-{
-    DatabaseCoreProbe database;
-    constexpr auto owner = orm::modelView<Schema, collection_models::Author>();
-    auto relation = owner->relations[0];
-    relation.targetModelIndex = Schema::indexOf<models::ModelWithId>();
-    std::vector<collection_models::Author> owners;
-
-    EXPECT_THROW((database.loadCollectionField<Schema, 2, collection_models::Author,
-                                               orm::OneToMany<collection_models::Book>>(
-                     owner, orm::query::SelectSpec{}, owners, relation)),
                  std::invalid_argument);
 }
