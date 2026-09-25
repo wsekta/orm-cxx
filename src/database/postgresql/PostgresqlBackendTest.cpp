@@ -168,6 +168,23 @@ TEST(PostgresqlBackendTest, runtimeRejectsStringValuesContainingEmbeddedNul)
                  orm::db::binding::ConversionError);
 }
 
+TEST(PostgresqlBackendTest, runtimeRejectsMismatchedStringStorageAndAcceptsNullText)
+{
+    const orm::db::postgresql::PostgresqlBackend backend;
+    soci::values values;
+
+    EXPECT_THROW(backend.runtime().bind(values, "mismatched",
+                                        orm::db::BoundValue{
+                                            .logicalType = orm::model::ColumnType::String,
+                                            .value = orm::query::QueryValue::Value{42},
+                                        }),
+                 orm::db::binding::ConversionError);
+    backend.runtime().bind(values, "missing_text",
+                           orm::db::BoundValue{.logicalType = orm::model::ColumnType::String,
+                                               .value = std::nullopt});
+    EXPECT_EQ(values.get_indicator("missing_text"), soci::i_null);
+}
+
 TEST(PostgresqlBackendTest, runtimeMapsSqlStateClassesAndReturnsSanitizedErrors)
 {
     const orm::db::postgresql::PostgresqlBackend backend;

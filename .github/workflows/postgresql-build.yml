@@ -108,7 +108,7 @@ jobs:
 
   pg18-clang-18:
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 60
     name: PG 18 / Clang 18
     services:
       postgres:
@@ -142,8 +142,14 @@ jobs:
         run: cmake --preset linux-clang-postgresql-coverage
       - name: Build and generate coverage
         run: cmake --build --preset linux-clang-postgresql-coverage --target orm-cxx-coverage
+      - name: Generate SQLite coverage from the same commit
+        run: |
+          cmake --preset linux-clang-coverage
+          cmake --build --preset linux-clang-coverage --target orm-cxx-coverage --parallel 2
       - name: Test
         run: ctest --preset linux-clang-postgresql-coverage
+      - name: Test SQLite profile
+        run: ctest --preset linux-clang-coverage
       - name: Repeat PostgreSQL tests
         run: ctest --test-dir build/linux-clang-postgresql-coverage --output-on-failure --no-tests=error --label-regex backend-postgresql
       - name: Verify isolated schemas were removed
@@ -154,11 +160,29 @@ jobs:
             echo "PostgreSQL test schemas were not removed: $remaining"
             exit 1
           fi
+      - name: Test coverage merger
+        run: python3 -m unittest discover -s tests/coverage -v
+      - name: Require 100% merged line coverage
+        run: |
+          python3 scripts/check_merged_coverage.py \
+            build/linux-clang-coverage/coverage.lcov \
+            build/linux-clang-postgresql-coverage/coverage.lcov \
+            --source-root . --output build/coverage-merged.lcov
+      - name: Archive coverage for this commit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.sha }}
+          path: |
+            build/linux-clang-coverage/coverage.lcov
+            build/linux-clang-postgresql-coverage/coverage.lcov
+            build/coverage-merged.lcov
+          if-no-files-found: warn
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
-          files: ${{ github.workspace }}/build/linux-clang-postgresql-coverage/coverage.lcov
+          files: ${{ github.workspace }}/build/coverage-merged.lcov
           flags: linux-clang-postgresql-coverage
           name: PG 18 / Clang 18
           disable_search: true

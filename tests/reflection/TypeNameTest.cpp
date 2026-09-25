@@ -1,4 +1,6 @@
 #include <array>
+#include <cstddef>
+#include <memory>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <optional>
@@ -85,6 +87,15 @@ struct NonAggregate
     int value;
 };
 
+struct BitField
+{
+    unsigned bits : 3;
+};
+
+using BitFieldBinding = decltype(detail::bindingTraitsImpl(std::declval<BitField&>(),
+                                                            std::integral_constant<std::size_t, 1>{}));
+static_assert(!BitFieldBinding::fieldsAreAddressable);
+
 template <typename T>
 concept CanTieRvalue = requires(T&& value) { tieFields(std::move(value)); };
 
@@ -162,6 +173,114 @@ consteval auto constexprFieldAccessWorks() -> bool
 
 static_assert(constexprFieldAccessWorks());
 
+template <std::size_t Count>
+void verifyGeneratedBinding()
+{
+    using Model = reflection_limit_models::RuntimeFields<Count>;
+    using Arity = std::integral_constant<std::size_t, Count>;
+    Model model{};
+
+    using MutableBinding = decltype(detail::bindingTraitsImpl(model, Arity{}));
+    using ConstBinding = decltype(detail::bindingTraitsImpl(std::as_const(model), Arity{}));
+    static_assert(MutableBinding::fieldsAreAddressable);
+    static_assert(ConstBinding::fieldsAreAddressable);
+    static_assert(std::tuple_size_v<typename MutableBinding::Tuple> == Count);
+    static_assert(std::tuple_size_v<typename ConstBinding::Tuple> == Count);
+
+    auto mutableTraits = detail::bindingTraitsImpl(model, Arity{});
+    auto constTraits = detail::bindingTraitsImpl(std::as_const(model), Arity{});
+    EXPECT_TRUE(mutableTraits.fieldsAreAddressable);
+    EXPECT_TRUE(constTraits.fieldsAreAddressable);
+
+    const auto addresses = model.addresses();
+    auto tied = detail::tieFieldsImpl(model, Arity{});
+    std::size_t index = 0;
+    std::apply(
+        [&](auto&... fields)
+        {
+            static_assert((std::is_same_v<decltype(fields), int&> && ...));
+            auto check = [&](int& field)
+            {
+                EXPECT_EQ(field, static_cast<int>(index));
+                EXPECT_EQ(std::addressof(field), addresses[index]);
+                field += 1000;
+                ++index;
+            };
+            (check(fields), ...);
+        },
+        tied);
+    EXPECT_EQ(index, Count);
+
+    auto constTied = detail::tieFieldsImpl(std::as_const(model), Arity{});
+    index = 0;
+    std::apply(
+        [&](const auto&... fields)
+        {
+            static_assert((std::is_same_v<decltype(fields), const int&> && ...));
+            auto check = [&](const int& field)
+            {
+                EXPECT_EQ(field, static_cast<int>(index + 1000));
+                EXPECT_EQ(std::addressof(field), addresses[index]);
+                ++index;
+            };
+            (check(fields), ...);
+        },
+        constTied);
+    EXPECT_EQ(index, Count);
+}
+
+template <std::size_t... Counts>
+void verifyAllGeneratedBindings(std::index_sequence<Counts...>)
+{
+    (verifyGeneratedBinding<Counts>(), ...);
+}
+
+TEST(ReflectionGeneratedBindingsTest, coversEveryGeneratedArityAtRuntime)
+{
+    verifyAllGeneratedBindings(std::make_index_sequence<maxFieldCount + 1>{});
+}
+
+TEST(ReflectionGeneratedBindingsTest, identifiesBitFieldsAsNonAddressable)
+{
+    BitField value{3};
+    const auto traits = detail::bindingTraitsImpl(value, std::integral_constant<std::size_t, 1>{});
+    EXPECT_FALSE(traits.fieldsAreAddressable);
+}
+
+TEST(ReflectionFixedStringTest, exposesRuntimeValueAndComparisonOverloads)
+{
+    char text[]{'m', 'o', 'd', 'e', 'l', '\0'};
+    const FixedString value{text};
+    EXPECT_EQ(value.size(), 5U);
+    EXPECT_FALSE(value.empty());
+    EXPECT_EQ(value.data(), value.c_str());
+    EXPECT_EQ(value.view(), "model"sv);
+    EXPECT_EQ(static_cast<std::string_view>(value), "model"sv);
+    EXPECT_EQ(value[2], 'd');
+    EXPECT_EQ(value.value[5], '\0');
+    EXPECT_EQ(value, FixedString{"model"});
+    EXPECT_EQ(value, "model"sv);
+    EXPECT_EQ("model"sv, value);
+    EXPECT_NE(value, FixedString{"models"});
+
+    char emptyText[]{'\0'};
+    const FixedString empty{emptyText};
+    EXPECT_TRUE(empty.empty());
+    EXPECT_EQ(empty.size(), 0U);
+    EXPECT_TRUE(empty.view().empty());
+
+    const FixedString<3> defaultValue;
+    EXPECT_EQ(defaultValue.size(), 3U);
+    EXPECT_EQ(defaultValue[0], '\0');
+}
+
+TEST(ReflectionPointerWrapperTest, retainsTheRuntimePointer)
+{
+    int value = 42;
+    const auto wrapped = detail::wrapPointer(std::addressof(value));
+    EXPECT_EQ(wrapped.value, std::addressof(value));
+}
+
 TEST(ReflectionNamesTest, exposesCompilerNamesThroughStableStorage)
 {
     EXPECT_THAT(getTypeName<Person>(), ::testing::HasSubstr("Person"));
@@ -187,6 +306,19 @@ TEST(ReflectionFieldsTest, tiesAndAddressesMutableFields)
     EXPECT_EQ(std::get<0>(pointers), &record.id);
     EXPECT_EQ(std::get<1>(pointers), &record.enabled);
     EXPECT_EQ(std::get<2>(pointers), &record.score);
+}
+
+TEST(ReflectionFieldsTest, addressesConstFields)
+{
+    const Record record{7, true, 9.5};
+    const auto tied = tieFields(record);
+    EXPECT_EQ(std::addressof(std::get<0>(tied)), std::addressof(record.id));
+    EXPECT_EQ(std::get<1>(tied), record.enabled);
+
+    const auto pointers = fieldPointers(record);
+    EXPECT_EQ(std::get<0>(pointers), std::addressof(record.id));
+    EXPECT_EQ(std::get<1>(pointers), std::addressof(record.enabled));
+    EXPECT_EQ(std::get<2>(pointers), std::addressof(record.score));
 }
 
 TEST(ReflectionFieldsTest, supportsEmptyAggregates)

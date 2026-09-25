@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <array>
 #include <optional>
 #include <string>
 #include <type_traits>
@@ -322,4 +323,117 @@ TEST(StaticMetadataTest, constructedCollectionIsLoaded)
     ASSERT_EQ(related.size(), 2);
     EXPECT_EQ(related[0].id, 1);
     EXPECT_EQ(related[1].value, "second");
+}
+
+TEST(StaticMetadataTest, runtimeLookupsDistinguishFieldNamesSqlNamesAndMissingModels)
+{
+    const auto& schema = orm::model::schemaView<TestSchema>();
+    const auto typed = schema.findTable("typed_mappings");
+    ASSERT_TRUE(typed);
+    EXPECT_EQ(typed.findColumn("displayName"), &typed->columns[1]);
+    EXPECT_EQ(typed.findColumn("display_name"), &typed->columns[1]);
+    EXPECT_EQ(typed.findColumn("absent"), nullptr);
+    EXPECT_EQ(schema.find(orm::model::typeId<TypedMapping>()), typed);
+    EXPECT_EQ(schema.find(orm::model::typeId<int>()), nullptr);
+    EXPECT_EQ(schema.findTable("absent"), nullptr);
+
+    const auto child = schema.find(orm::model::typeId<Child>());
+    ASSERT_TRUE(child);
+    EXPECT_EQ(child.findRelationField("parent"), &child->relations[0]);
+    EXPECT_EQ(child.findRelationField("absent"), nullptr);
+    EXPECT_EQ(child.findRelation("absent"), nullptr);
+    EXPECT_EQ(child.resolveTarget(child->columns[1]), schema.find(orm::model::typeId<Parent>()));
+    EXPECT_EQ(child.resolveTarget(child->relations[0]), schema.find(orm::model::typeId<Parent>()));
+
+    const auto role = schema.find(orm::model::typeId<Role>());
+    ASSERT_TRUE(role);
+    const auto junction = role.resolveJunction(role->relations[0]);
+    ASSERT_TRUE(junction.isConfigured());
+    EXPECT_EQ(junction.tableName, "user_roles");
+    EXPECT_EQ(junction.ownerColumns[0], "role_id");
+    EXPECT_EQ(junction.targetColumns[0], "user_id");
+    EXPECT_FALSE(junction.owningSide);
+}
+
+TEST(StaticMetadataTest, invalidModelViewsReturnEmptyLookupsAndTargets)
+{
+    const auto& schema = orm::model::schemaView<TestSchema>();
+    const orm::model::ModelView invalid;
+    const auto outOfRange = schema.at(schema.models.size());
+    const orm::model::ColumnView scalar{.kind = orm::model::FieldKind::Scalar};
+    const orm::model::ColumnView unboundRelation{.kind = orm::model::FieldKind::ToOne};
+    const orm::model::RelationView unboundTarget{};
+
+    EXPECT_FALSE(invalid.valid());
+    EXPECT_EQ(invalid, nullptr);
+    EXPECT_EQ(invalid.operator->(), nullptr);
+    EXPECT_EQ(invalid.findColumn("id"), nullptr);
+    EXPECT_EQ(invalid.findRelation("parent"), nullptr);
+    EXPECT_EQ(invalid.findRelationField("parent"), nullptr);
+    EXPECT_EQ(invalid.primaryKeySize(), 0);
+    EXPECT_FALSE(outOfRange.valid());
+    EXPECT_EQ(outOfRange.primaryKeySize(), 0);
+    EXPECT_EQ(invalid.resolveTarget(unboundRelation), nullptr);
+
+    const auto child = schema.find(orm::model::typeId<Child>());
+    ASSERT_TRUE(child);
+    EXPECT_EQ(child.resolveTarget(scalar), nullptr);
+    EXPECT_EQ(child.resolveTarget(unboundRelation), nullptr);
+    EXPECT_EQ(child.resolveTarget(unboundTarget), nullptr);
+}
+
+TEST(StaticMetadataTest, relationSqlNameAndIncompleteInverseMappingAreResolvedAtRuntime)
+{
+    using orm::model::RelationKind;
+    using orm::model::RelationView;
+
+    std::array<RelationView, 1> inverse{{{.fieldName = "inverse",
+                                          .columnName = "inverse_sql",
+                                          .kind = RelationKind::ManyToMany,
+                                          .mappedBy = "owning",
+                                          .targetModelIndex = 1}}};
+    std::array<RelationView, 1> owning{{{.fieldName = "different",
+                                         .columnName = "owning_sql",
+                                         .kind = RelationKind::ToOne,
+                                         .targetModelIndex = 0}}};
+    const orm::model::ModelDataView ownerData{.type = orm::model::typeId<int>(),
+                                               .schemaIndex = 0,
+                                               .tableName = "owner",
+                                               .relations = inverse};
+    const orm::model::ModelDataView targetData{.type = orm::model::typeId<double>(),
+                                                .schemaIndex = 1,
+                                                .tableName = "target",
+                                                .relations = owning};
+    const std::array<const orm::model::ModelDataView*, 2> models{&ownerData, &targetData};
+    const orm::model::SchemaView schema{.models = models};
+    const auto owner = schema.at(0);
+
+    EXPECT_EQ(owner.findRelation("inverse_sql"), &inverse[0]);
+    EXPECT_EQ(owner.findRelationField("inverse_sql"), nullptr);
+    EXPECT_FALSE(owner.resolveJunction(inverse[0]).isConfigured());
+    owning[0].fieldName = "owning";
+    EXPECT_FALSE(owner.resolveJunction(inverse[0]).isConfigured());
+    owning[0].kind = RelationKind::ManyToMany;
+    EXPECT_FALSE(owner.resolveJunction(inverse[0]).isConfigured());
+
+    const std::array<std::string_view, 1> ownerColumns{"owner_id"};
+    const std::array<std::string_view, 1> targetColumns{"target_id"};
+    owning[0].junction = {.tableName = "junction", .ownerColumns = ownerColumns, .targetColumns = targetColumns,
+                          .owningSide = true};
+    const auto resolved = owner.resolveJunction(inverse[0]);
+    ASSERT_TRUE(resolved.isConfigured());
+    EXPECT_EQ(resolved.tableName, "junction");
+    EXPECT_EQ(resolved.ownerColumns[0], "target_id");
+    EXPECT_EQ(resolved.targetColumns[0], "owner_id");
+    EXPECT_FALSE(resolved.owningSide);
+
+    inverse[0].targetModelIndex = orm::model::noTargetModel;
+    EXPECT_FALSE(owner.resolveJunction(inverse[0]).isConfigured());
+    inverse[0].kind = RelationKind::OneToMany;
+    EXPECT_FALSE(owner.resolveJunction(inverse[0]).isConfigured());
+    inverse[0].junction = owning[0].junction;
+    EXPECT_EQ(owner.resolveJunction(inverse[0]).tableName, "junction");
+
+    orm::model::detail::RelationNameBuffer<4> name{{'n', 'a', 'm', 'e'}, 4};
+    EXPECT_EQ(name.view(), "name");
 }

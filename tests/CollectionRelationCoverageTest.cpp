@@ -1,5 +1,8 @@
+#include <algorithm>
 #include <gtest/gtest.h>
 #include <optional>
+#include <span>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -7,7 +10,11 @@
 
 #include "orm-cxx/database/binding/PrimaryKey.hpp"
 #include "orm-cxx/database/RelationStatements.hpp"
+#include "orm-cxx/database/sqlite/SqliteDialect.hpp"
 #include "orm-cxx/query.hpp"
+#include "src/database/defaults/DefaultCreateTableCommand.hpp"
+#include "src/database/defaults/DefaultInsertCommand.hpp"
+#include "src/database/defaults/DefaultSelectCommand.hpp"
 #include "src/database/defaults/SqlRenderer.hpp"
 #include "tests/CollectionModelsDefinitions.hpp"
 #include "tests/ModelsDefinitions.hpp"
@@ -78,6 +85,48 @@ auto collectionPredicate(std::string relation, orm::query::CollectionOperator co
         .predicate = std::move(predicate),
     }}};
 }
+
+// A copy of the real metadata keeps the runtime schema shape intact while a
+// single descriptor is changed to exercise error handling for invalid input.
+class MutableRelationSchema
+{
+private:
+    std::vector<const orm::model::ModelDataView*> models;
+
+public:
+    MutableRelationSchema(orm::model::ModelView owner, orm::model::ModelView target)
+        : models{owner.schema->models.begin(), owner.schema->models.end()},
+          ownerColumns{owner->columns.begin(), owner->columns.end()},
+          ownerRelations{owner->relations.begin(), owner->relations.end()},
+          targetColumns{target->columns.begin(), target->columns.end()},
+          targetRelations{target->relations.begin(), target->relations.end()}, ownerData{owner.data()},
+          targetData{target.data()},
+          schema{std::span<const orm::model::ModelDataView* const>{models.data(), models.size()}},
+          ownerIndex{owner.modelIndex}, targetIndex{target.modelIndex}
+    {
+        ownerData.columns = ownerColumns;
+        ownerData.relations = ownerRelations;
+        targetData.columns = targetColumns;
+        targetData.relations = targetRelations;
+        models[ownerIndex] = &ownerData;
+        models[targetIndex] = &targetData;
+    }
+
+    [[nodiscard]] auto owner() const -> orm::model::ModelView { return {&schema, ownerIndex}; }
+    [[nodiscard]] auto target() const -> orm::model::ModelView { return {&schema, targetIndex}; }
+
+    std::vector<orm::model::ColumnView> ownerColumns;
+    std::vector<orm::model::RelationView> ownerRelations;
+    std::vector<orm::model::ColumnView> targetColumns;
+    std::vector<orm::model::RelationView> targetRelations;
+
+private:
+    orm::model::ModelDataView ownerData;
+    orm::model::ModelDataView targetData;
+    orm::model::SchemaView schema;
+    std::size_t ownerIndex;
+    std::size_t targetIndex;
+};
 } // namespace
 
 TEST(CollectionRelationCoverageTest, constEmptyCollectionIsUsable)
@@ -299,3 +348,203 @@ TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsInvalidRu
                                                       missingPredicateContext),
                  std::invalid_argument);
 }
+
+TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMetadata)
+{
+    TrackingRelationDialect dialect;
+    MutableRelationSchema metadata{
+        orm::modelView<collection_models::Schema, collection_models::User>(),
+        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    metadata.ownerRelations.front().targetModelIndex = orm::model::noTargetModel;
+    const auto owner = metadata.owner();
+    const auto relation = metadata.ownerRelations.front();
+
+    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
+                                                                     {key(1)}, false),
+                 std::logic_error);
+
+    orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
+    EXPECT_THROW((void)orm::db::commands::renderWhere(
+                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                 std::logic_error);
+}
+
+TEST(CollectionRelationCoverageTest, relationGeneratorsRejectJunctionColumnsThatDoNotMatchEndpointKeys)
+{
+    TrackingRelationDialect dialect;
+    MutableRelationSchema metadata{
+        orm::modelView<collection_models::Schema, collection_models::User>(),
+        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    metadata.ownerRelations.front().junction.ownerColumns = {};
+    const auto owner = metadata.owner();
+    const auto relation = metadata.ownerRelations.front();
+
+    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
+                                                                     {key(1)}, false),
+                 std::invalid_argument);
+
+    orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
+    EXPECT_THROW((void)orm::db::commands::renderWhere(
+                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                 std::invalid_argument);
+}
+
+TEST(CollectionRelationCoverageTest, relationGeneratorsRejectMissingJunctionAndNonCollectionRelation)
+{
+    TrackingRelationDialect dialect;
+    MutableRelationSchema metadata{
+        orm::modelView<collection_models::Schema, collection_models::User>(),
+        orm::modelView<collection_models::Schema, collection_models::Role>()};
+    metadata.ownerRelations.front().junction = {};
+    auto owner = metadata.owner();
+    auto relation = metadata.ownerRelations.front();
+
+    EXPECT_TRUE(orm::db::relations::createTableStatements(dialect, owner).empty());
+    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
+                                                                     {key(1)}, false),
+                 std::invalid_argument);
+
+    orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
+    EXPECT_THROW((void)orm::db::commands::renderWhere(
+                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                 std::invalid_argument);
+
+    relation.kind = orm::model::RelationKind::ToOne;
+    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
+                                                                     {key(1)}, false),
+                 std::invalid_argument);
+}
+
+TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
+{
+    TrackingRelationDialect dialect;
+    MutableRelationSchema metadata{
+        orm::modelView<collection_models::Schema, collection_models::Author>(),
+        orm::modelView<collection_models::Schema, collection_models::Book>()};
+    metadata.ownerRelations.front().mappedBy = "missing";
+    const auto owner = metadata.owner();
+    const auto relation = metadata.ownerRelations.front();
+
+    EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)),
+                 std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;",
+                                                                     {key(1)}, false),
+                 std::invalid_argument);
+
+    orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
+    EXPECT_THROW((void)orm::db::commands::renderWhere(
+                     collectionPredicate("books", orm::query::CollectionOperator::Exists), context),
+                 std::invalid_argument);
+}
+
+TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
+{
+    orm::db::sqlite::SqliteDialect dialect;
+    MutableRelationSchema metadata{
+        orm::modelView<collection_models::Schema, collection_models::Book>(),
+        orm::modelView<collection_models::Schema, collection_models::Author>()};
+    const auto relation = std::ranges::find_if(metadata.ownerColumns, [](const auto& column)
+                                               { return column.kind == orm::model::FieldKind::ToOne; });
+    ASSERT_NE(relation, metadata.ownerColumns.end());
+    relation->targetModelIndex = orm::model::noTargetModel;
+    const auto model = metadata.owner();
+
+    EXPECT_THROW((void)orm::db::commands::DefaultCreateTableCommand{dialect}.createTable(model), std::logic_error);
+    EXPECT_THROW((void)orm::db::commands::DefaultInsertCommand{dialect}.insert(model), std::logic_error);
+    EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, {}), std::logic_error);
+
+    orm::query::SelectSpec projected;
+    projected.projections.push_back(orm::query::as("id", orm::query::col("id")));
+    EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, projected), std::logic_error);
+
+    orm::db::commands::RenderContext context{.model = model, .dialect = dialect};
+    EXPECT_THROW((void)orm::db::commands::renderColumn(orm::query::col("author.id"), context), std::logic_error);
+    EXPECT_THROW((void)orm::db::commands::renderWriteColumn(orm::query::col("author.id"), model, dialect, true),
+                 std::logic_error);
+}
+
+TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAndMappedRelation)
+{
+    TrackingRelationDialect dialect;
+    const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
+    const auto role = orm::modelView<collection_models::Schema, collection_models::Role>();
+
+    {
+        MutableRelationSchema metadata{user, role};
+        metadata.ownerColumns.front().isPrimaryKey = false;
+        orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
+        EXPECT_THROW((void)orm::db::commands::renderWhere(
+                         collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                     std::invalid_argument);
+    }
+    {
+        MutableRelationSchema metadata{user, role};
+        metadata.targetColumns.front().kind = orm::model::FieldKind::ToOne;
+        orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
+        EXPECT_THROW((void)orm::db::commands::renderWhere(
+                         collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                     std::invalid_argument);
+    }
+    {
+        MutableRelationSchema metadata{
+            orm::modelView<collection_models::Schema, collection_models::Author>(),
+            orm::modelView<collection_models::Schema, collection_models::Book>()};
+        ASSERT_FALSE(metadata.targetRelations.empty());
+        metadata.targetRelations.front().kind = orm::model::RelationKind::ManyToMany;
+        orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
+        EXPECT_THROW((void)orm::db::commands::renderWhere(
+                         collectionPredicate("books", orm::query::CollectionOperator::Exists), context),
+                     std::invalid_argument);
+    }
+}
+
+#if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
+TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceCompleteStatements)
+{
+    const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
+    const auto relation = user->relations.front();
+    const auto create = orm::db::relations::createTableStatements(user);
+    ASSERT_EQ(create.size(), 1);
+    EXPECT_NE(create.front().find("CREATE TABLE IF NOT EXISTS \"collection_user_roles\""), std::string::npos);
+
+    const auto drop = orm::db::relations::dropTableStatements(user);
+    ASSERT_EQ(drop.size(), 1);
+    EXPECT_EQ(drop.front(), "DROP TABLE IF EXISTS \"collection_user_roles\";");
+
+    const auto link = orm::db::relations::linkStatement(user, relation, key(1), key(2));
+    EXPECT_NE(link.sql.find("INSERT INTO \"collection_user_roles\""), std::string::npos);
+    ASSERT_EQ(link.parameters.size(), 2);
+    EXPECT_EQ(link.parameters[0].name, "orm_rel_owner_0");
+    EXPECT_EQ(link.parameters[0].value, orm::query::QueryValue{1});
+    EXPECT_EQ(link.parameters[1].name, "orm_rel_target_0");
+    EXPECT_EQ(link.parameters[1].value, orm::query::QueryValue{2});
+
+    const auto unlink = orm::db::relations::unlinkStatement(user, relation, key(1), key(2));
+    EXPECT_EQ(unlink.sql, "DELETE FROM \"collection_user_roles\" WHERE \"user_id\" = :orm_rel_owner_0 "
+                          "AND \"role_id\" = :orm_rel_target_0;");
+    ASSERT_EQ(unlink.parameters.size(), 2);
+
+    const auto select = orm::db::relations::collectionSelectStatement(user, relation, "SELECT 1;\n", {key(1)}, true);
+    EXPECT_NE(select.sql.find("FROM \"collection_user_roles\" AS \"orm_relation_junction\""),
+              std::string::npos);
+    EXPECT_NE(select.sql.find("JOIN (SELECT 1)"), std::string::npos);
+    ASSERT_EQ(select.parameters.size(), 1);
+    EXPECT_EQ(select.parameters.front().value, orm::query::QueryValue{1});
+}
+#endif

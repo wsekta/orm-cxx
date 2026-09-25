@@ -67,6 +67,7 @@ endif()
 
 if(MSVC)
     set_source_files_properties(database/BackendConformanceTest.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
+    set_source_files_properties(reflection/TypeNameTest.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
     set(orm_cxx_test_working_directory "${PROJECT_BINARY_DIR}/bin")
 else()
     set(orm_cxx_test_working_directory "${PROJECT_SOURCE_DIR}")
