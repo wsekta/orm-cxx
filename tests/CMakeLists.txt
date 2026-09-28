@@ -34,6 +34,15 @@ set(ORM_CXX_TEST_SOURCES
     database/QueryLanguageTest.cpp
     database/BaseOperationsTest.cpp
     model/StaticMetadataTest.cpp
+    reflection/GeneratedBindingArity0To15Test.cpp
+    reflection/GeneratedBindingArity16To31Test.cpp
+    reflection/GeneratedBindingArity32To47Test.cpp
+    reflection/GeneratedBindingArity48To63Test.cpp
+    reflection/GeneratedBindingArity64To79Test.cpp
+    reflection/GeneratedBindingArity80To95Test.cpp
+    reflection/GeneratedBindingArity96To111Test.cpp
+    reflection/GeneratedBindingArity112To127Test.cpp
+    reflection/GeneratedBindingArity128To128Test.cpp
     reflection/MemberNameHeaderTest.cpp
     reflection/TypeNameTest.cpp
     utils/ConstexprForTest.cpp

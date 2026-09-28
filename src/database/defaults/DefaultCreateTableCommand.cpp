@@ -1,6 +1,5 @@
 #include "DefaultCreateTableCommand.hpp"
 
-#include <algorithm>
 #include <format>
 #include <stdexcept>
 
@@ -13,6 +12,7 @@ DefaultCreateTableCommand::DefaultCreateTableCommand(const SqlDialect& dialectIn
 auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std::string
 {
     std::string command = dialect.renderCreateTablePrefix(model->tableName, true) + "\n";
+    std::vector<ForeignKeyTarget> foreignKeys;
 
     for (const auto& column : model->columns)
     {
@@ -23,6 +23,7 @@ auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std
             {
                 throw std::logic_error{"To-one relation target is not available in the schema"};
             }
+            foreignKeys.push_back(ForeignKeyTarget{.relationColumn = column, .target = target});
             command.append(addColumnsForForeignIds(*target, column));
 
             continue;
@@ -60,11 +61,9 @@ auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std
         command.append(")");
     }
 
-    const auto hasToOne = std::ranges::any_of(model->columns, [](const model::ColumnView& column)
-                                              { return column.kind == model::FieldKind::ToOne; });
-    if (hasToOne)
+    if (not foreignKeys.empty())
     {
-        command.append(std::format(",\n{}", addForeignIds(model)));
+        command.append(std::format(",\n{}", addForeignIds(foreignKeys)));
     }
 
     command.append("\n);");
@@ -106,22 +105,14 @@ auto DefaultCreateTableCommand::addColumnsForForeignIds(model::ModelView target,
     return command;
 }
 
-auto DefaultCreateTableCommand::addForeignIds(model::ModelView model) const -> std::string
+auto DefaultCreateTableCommand::addForeignIds(const std::vector<ForeignKeyTarget>& foreignKeys) const -> std::string
 {
     std::string command{};
 
-    for (const auto& relationColumn : model->columns)
+    for (const auto& foreignKey : foreignKeys)
     {
-        if (relationColumn.kind != model::FieldKind::ToOne)
-        {
-            continue;
-        }
-
-        const auto target = model.resolveTarget(relationColumn);
-        if (target == nullptr)
-        {
-            throw std::logic_error{"To-one relation target is not available in the schema"};
-        }
+        const auto& relationColumn = foreignKey.relationColumn;
+        const auto target = foreignKey.target;
 
         std::string foreignKeyCommand{"\tFOREIGN KEY ("};
         for (const auto& targetColumn : target->columns)
