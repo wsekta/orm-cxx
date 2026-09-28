@@ -70,8 +70,8 @@ if(ORM_CXX_ENABLE_COVERAGE)
 endif()
 
 if(ORM_CXX_BUILD_TESTS AND CMAKE_GENERATOR MATCHES "Ninja")
-    # Generated arity tests instantiate large structured bindings. Keep their
-    # compilation below the memory limit of hosted CI runners.
+    # Generated arity tests instantiate large structured bindings. Keep their compilation below the memory limit of
+    # hosted CI runners.
     set_property(GLOBAL APPEND PROPERTY JOB_POOLS orm_cxx_test_compile=1)
     set_property(TARGET orm-cxx-UT PROPERTY JOB_POOL_COMPILE orm_cxx_test_compile)
 endif()
