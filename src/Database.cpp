@@ -9,6 +9,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "database/DatabaseValidation.hpp"
 #include "database/defaults/SqlAliases.hpp"
 #include "database/defaults/SqlRenderer.hpp"
 #include "orm-cxx/database/BackendRuntime.hpp"
@@ -133,11 +134,7 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
             continue;
         }
 
-        const auto relatedModel = model.resolveTarget(column);
-        if (relatedModel == nullptr)
-        {
-            throw std::invalid_argument{"To-one column has no target model in the schema"};
-        }
+        const auto relatedModel = orm::detail::requireToOneTarget(model, column);
         (void)dialect.quoteIdentifier(relatedModel->tableName);
 
         for (const auto& relatedColumn : relatedModel->columns)
@@ -161,11 +158,7 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
     for (const auto& relation : model->relations)
     {
         (void)dialect.quoteIdentifier(relation.columnName);
-        const auto targetModel = model.resolveTarget(relation);
-        if (targetModel == nullptr)
-        {
-            throw std::invalid_argument{"Collection relation has no target model in the schema"};
-        }
+        const auto targetModel = orm::detail::requireRelationTarget(model, relation);
         (void)dialect.quoteIdentifier(targetModel->tableName);
 
         for (const auto& targetColumn : targetModel->columns)
@@ -208,6 +201,109 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
 
 namespace orm
 {
+auto detail::hasOwningJunction(model::ModelView owner) -> bool
+{
+    return std::ranges::any_of(owner->relations,
+                               [](const auto& relation)
+                               {
+                                   return relation.kind == model::RelationKind::ManyToMany and
+                                          relation.junction.isConfigured() and relation.junction.owningSide;
+                               });
+}
+
+auto detail::requireToOneTarget(model::ModelView owner, const model::ColumnView& column) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(column);
+    if (target == nullptr)
+    {
+        throw std::invalid_argument{"To-one column has no target model in the schema"};
+    }
+    return target;
+}
+
+auto detail::requireRelationTarget(model::ModelView owner, const model::RelationView& relation) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw std::invalid_argument{"Collection relation has no target model in the schema"};
+    }
+    return target;
+}
+
+auto detail::requireEndpointKeyColumns(model::ModelView descriptor,
+                                       const db::binding::PrimaryKey& key) -> std::vector<const model::ColumnView*>
+{
+    auto columns = db::binding::getPrimaryKeyColumns(descriptor);
+    if (columns.size() != key.size())
+    {
+        throw std::invalid_argument{"Incomplete relation endpoint primary key"};
+    }
+    return columns;
+}
+
+auto detail::owningJunctionRelations(model::ModelView owner) -> std::vector<const model::RelationView*>
+{
+    std::vector<const model::RelationView*> relations;
+    for (const auto& relation : owner->relations)
+    {
+        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.isConfigured() or
+            not relation.junction.owningSide)
+        {
+            continue;
+        }
+        relations.push_back(&relation);
+    }
+    return relations;
+}
+
+auto detail::requireOwningJunctionTarget(model::ModelView owner,
+                                         const model::RelationView& relation) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw std::invalid_argument{"ManyToMany relation target is outside the selected schema"};
+    }
+    return target;
+}
+
+auto detail::requireSupportedRelatedTarget(model::ModelView owner, const model::ColumnView& column,
+                                           db::BackendType backendType, std::string_view operation) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(column);
+    if (target == nullptr)
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                            "A related model is outside the selected schema"};
+    }
+    return target;
+}
+
+auto detail::requireIncludedRelationTarget(model::ModelView owner, const model::RelationView& relation,
+                                           db::BackendType backendType) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr)
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "include collection",
+                            "An included relation target is outside the selected schema"};
+    }
+    return target;
+}
+
+auto detail::requireCollectionTarget(model::ModelView owner, const model::RelationView& relation,
+                                     model::TypeId expectedType) -> model::ModelView
+{
+    const auto target = owner.resolveTarget(relation);
+    if (target == nullptr or target->type != expectedType)
+    {
+        throw std::invalid_argument{"Collection wrapper target does not match relation metadata: " +
+                                    std::string{relation.fieldName}};
+    }
+    return target;
+}
+
 auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
                                  const soci::values& serializedModel, model::ModelView descriptor) -> std::size_t
 {
@@ -545,12 +641,7 @@ auto DatabaseCore::executeSql(std::string_view statement, std::string_view opera
 
 auto DatabaseCore::relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool
 {
-    const auto primaryKeyColumns = db::binding::getPrimaryKeyColumns(model);
-
-    if (primaryKeyColumns.size() != key.size())
-    {
-        throw std::invalid_argument{"Incomplete relation endpoint primary key"};
-    }
+    const auto primaryKeyColumns = detail::requireEndpointKeyColumns(model, key);
 
     const auto& dialect = getBackend().dialect();
     db::Statement statement;
@@ -620,19 +711,9 @@ auto DatabaseCore::ensureRelationTableEndpointsExist(model::ModelView owner) -> 
     requireCapability(capabilities.relations.manyToMany, "create relation tables",
                       "many-to-many relations are not supported");
 
-    for (const auto& relation : owner->relations)
+    for (const auto* relation : detail::owningJunctionRelations(owner))
     {
-        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.isConfigured() or
-            not relation.junction.owningSide)
-        {
-            continue;
-        }
-
-        const auto target = owner.resolveTarget(relation);
-        if (target == nullptr)
-        {
-            throw std::invalid_argument{"ManyToMany relation target is outside the selected schema"};
-        }
+        const auto target = detail::requireOwningJunctionTarget(owner, *relation);
         const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(owner);
         const auto targetPrimaryKey = db::binding::getPrimaryKeyColumns(*target);
 
@@ -727,12 +808,7 @@ auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string
         if (column.kind == model::FieldKind::ToOne)
         {
             requireCapability(capabilities.relations.toOne, operation, "to-one relations are not supported");
-            const auto relatedModel = descriptor.resolveTarget(column);
-            if (relatedModel == nullptr)
-            {
-                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
-                                    "A related model is outside the selected schema"};
-            }
+            const auto relatedModel = detail::requireSupportedRelatedTarget(descriptor, column, backendType, operation);
 
             for (const auto primaryKeyIndex : relatedModel->primaryKeyIndices)
             {
@@ -899,12 +975,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
                 continue;
             }
 
-            const auto target = descriptor.resolveTarget(*relation);
-            if (target == nullptr)
-            {
-                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "include collection",
-                                    "An included relation target is outside the selected schema"};
-            }
+            const auto target = detail::requireIncludedRelationTarget(descriptor, *relation, backendType);
             ensureModelSupported(*target, "include collection");
 
             if (relation->kind == model::RelationKind::OneToMany)

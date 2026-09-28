@@ -52,8 +52,7 @@ void verifyGeneratedBinding()
         if constexpr (Count == 0)
         {
             using TieFunction = std::tuple<> (*)(Model&, Arity) noexcept;
-            TieFunction volatile tieFunction =
-                static_cast<TieFunction>(&orm::reflection::detail::tieFieldsImpl<Model>);
+            TieFunction volatile tieFunction = static_cast<TieFunction>(&orm::reflection::detail::tieFieldsImpl<Model>);
             return tieFunction(model, Arity{});
         }
         else

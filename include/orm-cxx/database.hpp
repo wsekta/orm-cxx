@@ -56,6 +56,9 @@ inline auto bindStatementParameters(const db::BackendRuntime& runtime, soci::val
 auto bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
                          const soci::values& serializedModel, model::ModelView model) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
+[[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
+[[nodiscard]] auto requireCollectionTarget(model::ModelView owner, const model::RelationView& relation,
+                                           model::TypeId expectedType) -> model::ModelView;
 } // namespace detail
 
 /**
@@ -340,13 +343,7 @@ protected:
     auto createRelationTablesImpl() -> void
     {
         const auto owner = model::modelView<SchemaType, T>();
-        const auto ownsJunctionTable =
-            std::ranges::any_of(owner->relations,
-                                [](const auto& relation)
-                                {
-                                    return relation.kind == model::RelationKind::ManyToMany and
-                                           relation.junction.isConfigured() and relation.junction.owningSide;
-                                });
+        const auto ownsJunctionTable = detail::hasOwningJunction(owner);
 
         if (not ownsJunctionTable)
         {
@@ -369,13 +366,7 @@ protected:
     auto deleteRelationTablesImpl() -> void
     {
         const auto owner = model::modelView<SchemaType, T>();
-        const auto ownsJunctionTable =
-            std::ranges::any_of(owner->relations,
-                                [](const auto& relation)
-                                {
-                                    return relation.kind == model::RelationKind::ManyToMany and
-                                           relation.junction.isConfigured() and relation.junction.owningSide;
-                                });
+        const auto ownsJunctionTable = detail::hasOwningJunction(owner);
 
         if (not ownsJunctionTable)
         {
@@ -591,12 +582,8 @@ private:
     {
         using target_t = orm::relation_target_t<Collection>;
 
-        const auto targetDescriptor = ownerDescriptor.resolveTarget(relation);
-        if (targetDescriptor == nullptr or targetDescriptor->type != model::typeId<target_t>())
-        {
-            throw std::invalid_argument{"Collection wrapper target does not match relation metadata: " +
-                                        std::string{relation.fieldName}};
-        }
+        const auto targetDescriptor =
+            detail::requireCollectionTarget(ownerDescriptor, relation, model::typeId<target_t>());
 
         const auto ownerPrimaryKey = db::binding::getPrimaryKeyColumns(ownerDescriptor);
         const auto runtimeLimits = getBackendRuntimeLimits();
