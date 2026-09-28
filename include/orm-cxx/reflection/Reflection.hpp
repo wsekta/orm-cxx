@@ -119,7 +119,7 @@ template <typename T>
 inline constexpr InactiveStorage<InactiveStorage<T>> fakeObjectStorage{};
 
 template <typename T>
-[[nodiscard]] constexpr auto fakeObject() noexcept -> const T&
+[[nodiscard]] consteval auto fakeObject() noexcept -> const T&
 {
     return fakeObjectStorage<T>.object.object;
 }

@@ -113,7 +113,7 @@ consteval auto memberIndex() -> std::size_t
 }
 
 template <auto... Members>
-consteval auto uniqueMemberNames() -> bool
+constexpr auto uniqueMemberNames() -> bool
 {
     const auto nameStorage = std::tuple{reflectedMemberName<Members>()...};
     const auto names =
@@ -235,7 +235,7 @@ struct PrimaryKey
         }
     }
 
-    [[nodiscard]] consteval auto contains(std::string_view memberName) const -> bool
+    [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
     {
         if constexpr (sizeof...(Members) == 0)
         {
@@ -288,7 +288,7 @@ struct AutoIncrement
         }
     }
 
-    [[nodiscard]] consteval auto contains(std::string_view memberName) const -> bool
+    [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
     {
         if constexpr (sizeof...(Members) == 0)
         {

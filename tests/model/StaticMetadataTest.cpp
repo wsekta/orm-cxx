@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <type_traits>
 
 #include "orm-cxx/model/Schema.hpp"
@@ -290,6 +291,31 @@ TEST(StaticMetadataTest, exposesImmutableModelAndSchemaViews)
     ASSERT_NE(model.findColumn("displayName"), nullptr);
     EXPECT_EQ(model.findColumn("displayName"), model.findColumn("display_name"));
     EXPECT_EQ(schema.find(model->type), model);
+}
+
+TEST(StaticMetadataTest, compileTimeMappingsAlsoSupportRuntimeInspection)
+{
+    using SchemaFunction = const orm::model::SchemaView& (*)() noexcept;
+    SchemaFunction volatile schemaFunction = &orm::model::schemaView<TestSchema>;
+    const auto& schema = schemaFunction();
+    EXPECT_EQ(schema.findTable("typed_mappings"), metadata<TypedMapping>);
+
+    using UniqueNamesFunction = bool (*)();
+    UniqueNamesFunction volatile uniqueNames =
+        &orm::model::detail::uniqueMemberNames<&TypedMapping::id, &TypedMapping::displayName>;
+    UniqueNamesFunction volatile duplicateNames =
+        &orm::model::detail::uniqueMemberNames<&TypedMapping::id, &TypedMapping::id>;
+    EXPECT_TRUE(uniqueNames());
+    EXPECT_FALSE(duplicateNames());
+
+    const auto primary = orm::primaryKey<&CompositeId::key, &CompositeId::tenant>();
+    const auto increment = orm::autoIncrement<&TypedMapping::id>();
+    const std::string keyName{"key"};
+    const std::string idName{"id"};
+    EXPECT_TRUE(primary.contains(keyName));
+    EXPECT_FALSE(primary.contains(idName));
+    EXPECT_TRUE(increment.contains(idName));
+    EXPECT_FALSE(increment.contains(keyName));
 }
 
 TEST(StaticMetadataTest, relationCollectionsHaveValueSemantics)

@@ -47,7 +47,20 @@ void verifyGeneratedBinding()
     EXPECT_TRUE(constTraits.fieldsAreAddressable);
 
     const auto expected = model.addresses();
-    auto tied = orm::reflection::detail::tieFieldsImpl(model, Arity{});
+    auto tied = [&]
+    {
+        if constexpr (Count == 0)
+        {
+            using TieFunction = std::tuple<> (*)(Model&, Arity) noexcept;
+            TieFunction volatile tieFunction =
+                static_cast<TieFunction>(&orm::reflection::detail::tieFieldsImpl<Model>);
+            return tieFunction(model, Arity{});
+        }
+        else
+        {
+            return orm::reflection::detail::tieFieldsImpl(model, Arity{});
+        }
+    }();
     const auto actual = std::apply([](auto&... fields)
                                    { return std::array<int*, sizeof...(fields)>{std::addressof(fields)...}; }, tied);
     for (std::size_t index = 0; index < Count; ++index)

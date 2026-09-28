@@ -339,7 +339,7 @@ protected:
     template <typename SchemaType, typename T>
     auto createRelationTablesImpl() -> void
     {
-        constexpr auto owner = model::modelView<SchemaType, T>();
+        const auto owner = model::modelView<SchemaType, T>();
         const auto ownsJunctionTable =
             std::ranges::any_of(owner->relations,
                                 [](const auto& relation)
@@ -368,7 +368,7 @@ protected:
     template <typename SchemaType, typename T>
     auto deleteRelationTablesImpl() -> void
     {
-        constexpr auto owner = model::modelView<SchemaType, T>();
+        const auto owner = model::modelView<SchemaType, T>();
         const auto ownsJunctionTable =
             std::ranges::any_of(owner->relations,
                                 [](const auto& relation)
