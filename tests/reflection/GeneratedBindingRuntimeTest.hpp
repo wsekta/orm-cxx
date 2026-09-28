@@ -35,8 +35,14 @@ void verifyGeneratedBinding()
             return (std::is_same_v<std::tuple_element_t<Indices, typename ConstBinding::Tuple>, const int> && ...);
         }(std::make_index_sequence<Count>{}));
 
-    const auto mutableTraits = orm::reflection::detail::bindingTraitsImpl(model, Arity{});
-    const auto constTraits = orm::reflection::detail::bindingTraitsImpl(std::as_const(model), Arity{});
+    using MutableFunction = MutableBinding (*)(Model&, Arity) noexcept;
+    using ConstFunction = ConstBinding (*)(const Model&, Arity) noexcept;
+    MutableFunction volatile mutableFunction =
+        static_cast<MutableFunction>(&orm::reflection::detail::bindingTraitsImpl<Model>);
+    ConstFunction volatile constFunction =
+        static_cast<ConstFunction>(&orm::reflection::detail::bindingTraitsImpl<const Model>);
+    const auto mutableTraits = mutableFunction(model, Arity{});
+    const auto constTraits = constFunction(std::as_const(model), Arity{});
     EXPECT_TRUE(mutableTraits.fieldsAreAddressable);
     EXPECT_TRUE(constTraits.fieldsAreAddressable);
 
