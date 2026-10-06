@@ -252,7 +252,9 @@ orm_cxx_expect_compile_failure(query-internal-ast-predicate QueryInternalAstPred
 orm_cxx_expect_compile_failure(query-internal-ast-order QueryInternalAstOrder.cpp "ORM_QUERY_MODEL_ORDERS")
 orm_cxx_expect_compile_failure(query-internal-ast-group QueryInternalAstGroup.cpp "ORM_QUERY_MODEL_COLUMNS")
 orm_cxx_expect_compile_failure(query-internal-ast-having QueryInternalAstHaving.cpp "AggregatePredicateFor")
-orm_cxx_expect_compile_failure(query-internal-ast-projection QueryInternalAstProjection.cpp "ORM_QUERY_MODEL_PROJECTIONS")
+orm_cxx_expect_compile_failure(
+    query-internal-ast-projection QueryInternalAstProjection.cpp "ORM_QUERY_MODEL_PROJECTIONS"
+)
 orm_cxx_expect_compile_failure(query-internal-ast-update QueryInternalAstUpdate.cpp "set")
 orm_cxx_expect_compile_failure(query-internal-ast-remove QueryInternalAstRemove.cpp "PredicateFor")
 orm_cxx_expect_compile_failure(query-impersonated-predicate QueryImpersonatedPredicate.cpp "PredicateFor")
@@ -261,4 +263,6 @@ orm_cxx_expect_compile_failure(query-wrong-group-pack-model QueryWrongGroupPackM
 orm_cxx_expect_compile_failure(query-wrong-projection-pack-model QueryWrongProjectionPackModel.cpp "ORM_QUERY_MODEL")
 orm_cxx_expect_compile_failure(query-projection-wrong-order-model QueryProjectionWrongOrderModel.cpp "ORM_QUERY_MODEL")
 orm_cxx_expect_compile_failure(query-projection-wrong-group-model QueryProjectionWrongGroupModel.cpp "ORM_QUERY_MODEL")
-orm_cxx_expect_compile_failure(query-internal-ast-order-after-valid QueryInternalAstOrderAfterValid.cpp "ORM_QUERY_MODEL_ORDERS")
+orm_cxx_expect_compile_failure(
+    query-internal-ast-order-after-valid QueryInternalAstOrderAfterValid.cpp "ORM_QUERY_MODEL_ORDERS"
+)
