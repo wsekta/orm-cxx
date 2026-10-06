@@ -46,7 +46,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSam
     {
         models[i].field1 = static_cast<int>(i);
     }
-    query.orderBy(orm::query::asc(orm::query::col("field1")));
+    query.orderBy(orm::query::asc(orm::query::col<&models::SomeDataModel::field1>()));
 
     database.insert(models);
 
@@ -72,7 +72,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_value
     database.insert(models);
 
     orm::Query<models::ModelWithOptional> queryForOptional;
-    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
+    queryForOptional.orderBy(orm::query::asc(orm::query::col<&models::ModelWithOptional::field1>()));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -91,8 +91,9 @@ TEST_P(SimpleModelTest, shouldRoundTripExplicitNullAndPresentOptionalValues)
     database.insert(models);
 
     orm::Query<models::ModelWithOptional> nullQuery;
-    nullQuery.where(orm::query::col("field1").isNull() && orm::query::col("field2").isNull() &&
-                    orm::query::col("field3").isNull());
+    nullQuery.where(orm::query::col<&models::ModelWithOptional::field1>().isNull() &&
+                    orm::query::col<&models::ModelWithOptional::field2>().isNull() &&
+                    orm::query::col<&models::ModelWithOptional::field3>().isNull());
     const auto nullModels = database.select(nullQuery);
 
     ASSERT_EQ(nullModels.size(), 1);
@@ -101,7 +102,7 @@ TEST_P(SimpleModelTest, shouldRoundTripExplicitNullAndPresentOptionalValues)
     EXPECT_FALSE(nullModels[0].field3.has_value());
 
     orm::Query<models::ModelWithOptional> presentQuery;
-    presentQuery.where(orm::query::col("field1") == 42);
+    presentQuery.where(orm::query::col<&models::ModelWithOptional::field1>() == 42);
     const auto presentModels = database.select(presentQuery);
 
     ASSERT_EQ(presentModels.size(), 1);
@@ -126,7 +127,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesSh
     database.insert(models);
 
     orm::Query<models::ModelWithFloat> queryForOptional;
-    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
+    queryForOptional.orderBy(orm::query::asc(orm::query::col<&models::ModelWithFloat::field1>()));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -150,7 +151,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloatAndOption
     database.insert(models);
 
     orm::Query<models::ModelWithOptionalFloat> queryForOptional;
-    queryForOptional.orderBy(orm::query::asc(orm::query::col("field1")));
+    queryForOptional.orderBy(orm::query::asc(orm::query::col<&models::ModelWithOptionalFloat::field1>()));
     auto returnedModels = database.select(queryForOptional);
 
     for (std::size_t i = 0; i < modelCount; i++)
@@ -166,9 +167,9 @@ TEST_P(SimpleModelTest, shouldThrowWhileReadingNullValueToNotNullableField)
     auto models = std::vector<models::ModelWithOptionalFloat>{{std::nullopt, "test", 1.0f}, {2, "test2", 2.0f}};
     database.insert(models);
     orm::ProjectionQuery<models::ModelWithOptionalFloat, models::ModelWithFloat> queryForOptionalFloat;
-    queryForOptionalFloat.project(orm::query::as("field1", orm::query::col("field1")),
-                                  orm::query::as("field2", orm::query::col("field2")),
-                                  orm::query::as("field3", orm::query::col("field3")));
+    queryForOptionalFloat.project(orm::query::as("field1", orm::query::col<&models::ModelWithOptionalFloat::field1>()),
+                                  orm::query::as("field2", orm::query::col<&models::ModelWithOptionalFloat::field2>()),
+                                  orm::query::as("field3", orm::query::col<&models::ModelWithOptionalFloat::field3>()));
     EXPECT_THROW(database.select(queryForOptionalFloat), std::runtime_error);
 }
 

@@ -76,10 +76,10 @@ auto key(int value) -> orm::db::binding::PrimaryKey
     return {orm::query::QueryValue{value}};
 }
 
-auto collectionPredicate(std::string relation, orm::query::CollectionOperator collectionOperator,
-                         orm::query::PredicateNodePtr predicate = nullptr) -> orm::query::Predicate
+auto collectionPredicate(std::string relation, orm::query::detail::CollectionOperator collectionOperator,
+                         orm::query::detail::PredicateNodePtr predicate = nullptr) -> orm::query::detail::Predicate
 {
-    return orm::query::Predicate{orm::query::PredicateNode{orm::query::CollectionExpression{
+    return orm::query::detail::Predicate{orm::query::detail::PredicateNode{orm::query::detail::CollectionExpression{
         .relation = std::move(relation),
         .collectionOperator = collectionOperator,
         .predicate = std::move(predicate),
@@ -147,11 +147,11 @@ TEST(CollectionRelationCoverageTest, constEmptyCollectionIsUsable)
     EXPECT_EQ(empty.begin(), empty.end());
 }
 
-TEST(CollectionRelationCoverageTest, queryRejectsEmptyInclude)
+TEST(CollectionRelationCoverageTest, typedIncludeReturnsTheSameQuery)
 {
     orm::Query<collection_models::User> query;
 
-    EXPECT_THROW((void)query.include(""), std::invalid_argument);
+    EXPECT_EQ(&query.include<&collection_models::User::roles>(), &query);
 }
 
 TEST(CollectionRelationCoverageTest, primaryKeyHelpersUseStaticModelMetadata)
@@ -347,14 +347,16 @@ TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsInvalidRu
     const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
     orm::db::commands::RenderContext unknownRelationContext{.model = user, .dialect = dialect};
 
-    EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("missing", orm::query::CollectionOperator::Exists), unknownRelationContext),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::commands::renderWhere(
+            collectionPredicate("missing", orm::query::detail::CollectionOperator::Exists), unknownRelationContext),
+        std::invalid_argument);
 
     orm::db::commands::RenderContext missingPredicateContext{.model = user, .dialect = dialect};
-    EXPECT_THROW((void)orm::db::commands::renderWhere(collectionPredicate("roles", orm::query::CollectionOperator::Any),
-                                                      missingPredicateContext),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::db::commands::renderWhere(collectionPredicate("roles", orm::query::detail::CollectionOperator::Any),
+                                             missingPredicateContext),
+        std::invalid_argument);
 }
 
 TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMetadata)
@@ -375,7 +377,7 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMe
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                     collectionPredicate("roles", orm::query::detail::CollectionOperator::Exists), context),
                  std::logic_error);
 }
 
@@ -395,7 +397,7 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectJunctionColumnsThat
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                     collectionPredicate("roles", orm::query::detail::CollectionOperator::Exists), context),
                  std::invalid_argument);
 }
 
@@ -419,7 +421,7 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectMissingJunctionAndN
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                     collectionPredicate("roles", orm::query::detail::CollectionOperator::Exists), context),
                  std::invalid_argument);
 
     relation.kind = orm::model::RelationKind::ToOne;
@@ -451,7 +453,7 @@ TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
 
     orm::db::commands::RenderContext context{.model = owner, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderWhere(
-                     collectionPredicate("books", orm::query::CollectionOperator::Exists), context),
+                     collectionPredicate("books", orm::query::detail::CollectionOperator::Exists), context),
                  std::invalid_argument);
 }
 
@@ -470,13 +472,21 @@ TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
     EXPECT_THROW((void)orm::db::commands::DefaultInsertCommand{dialect}.insert(model), std::logic_error);
     EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, {}), std::logic_error);
 
-    orm::query::SelectSpec projected;
-    projected.projections.push_back(orm::query::as("id", orm::query::col("id")));
+    orm::query::detail::SelectSpec projected;
+    projected.projections.push_back(
+        orm::query::detail::erase(orm::query::as("id", orm::query::col<&collection_models::Book::id>())));
     EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, projected), std::logic_error);
 
     orm::db::commands::RenderContext context{.model = model, .dialect = dialect};
-    EXPECT_THROW((void)orm::db::commands::renderColumn(orm::query::col("author.id"), context), std::logic_error);
-    EXPECT_THROW((void)orm::db::commands::renderWriteColumn(orm::query::col("author.id"), model, dialect, true),
+    EXPECT_THROW((void)orm::db::commands::renderColumn(
+                     orm::query::detail::erase(
+                         orm::query::col<&collection_models::Book::author, &collection_models::Author::id>()),
+                     context),
+                 std::logic_error);
+    EXPECT_THROW((void)orm::db::commands::renderWriteColumn(
+                     orm::query::detail::erase(
+                         orm::query::col<&collection_models::Book::author, &collection_models::Author::id>()),
+                     model, dialect, true),
                  std::logic_error);
 }
 
@@ -491,7 +501,7 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
         metadata.ownerColumns.front().isPrimaryKey = false;
         orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
         EXPECT_THROW((void)orm::db::commands::renderWhere(
-                         collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                         collectionPredicate("roles", orm::query::detail::CollectionOperator::Exists), context),
                      std::invalid_argument);
     }
     {
@@ -499,7 +509,7 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
         metadata.targetColumns.front().kind = orm::model::FieldKind::ToOne;
         orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
         EXPECT_THROW((void)orm::db::commands::renderWhere(
-                         collectionPredicate("roles", orm::query::CollectionOperator::Exists), context),
+                         collectionPredicate("roles", orm::query::detail::CollectionOperator::Exists), context),
                      std::invalid_argument);
     }
     {
@@ -509,7 +519,7 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
         metadata.targetRelations.front().kind = orm::model::RelationKind::ManyToMany;
         orm::db::commands::RenderContext context{.model = metadata.owner(), .dialect = dialect};
         EXPECT_THROW((void)orm::db::commands::renderWhere(
-                         collectionPredicate("books", orm::query::CollectionOperator::Exists), context),
+                         collectionPredicate("books", orm::query::detail::CollectionOperator::Exists), context),
                      std::invalid_argument);
     }
 }

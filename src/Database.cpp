@@ -17,10 +17,11 @@
 
 namespace
 {
-auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool;
+auto containsCollectionPredicate(const orm::query::detail::PredicateNode& node) -> bool;
 
-auto renderColumnForValidation(const orm::query::Column& column, orm::model::ModelView model,
-                               const orm::query::SelectSpec& spec, const orm::db::SqlDialect& dialect) -> std::string
+auto renderColumnForValidation(const orm::query::detail::Column& column, orm::model::ModelView model,
+                               const orm::query::detail::SelectSpec& spec,
+                               const orm::db::SqlDialect& dialect) -> std::string
 {
     const orm::db::commands::RenderContext context{
         .model = model,
@@ -76,22 +77,22 @@ auto serializedBoundValue(const soci::values& values, const std::string& name,
     throw std::invalid_argument{"Cannot bind a serialized model value with an unsupported column type: " + name};
 }
 
-auto containsCollectionPredicate(const orm::query::PredicateNode& node) -> bool
+auto containsCollectionPredicate(const orm::query::detail::PredicateNode& node) -> bool
 {
     return std::visit(
         [](const auto& expression) -> bool
         {
             using expression_t = std::decay_t<decltype(expression)>;
 
-            if constexpr (std::is_same_v<expression_t, orm::query::CollectionExpression>)
+            if constexpr (std::is_same_v<expression_t, orm::query::detail::CollectionExpression>)
             {
                 return true;
             }
-            else if constexpr (std::is_same_v<expression_t, orm::query::LogicalExpression>)
+            else if constexpr (std::is_same_v<expression_t, orm::query::detail::LogicalExpression>)
             {
                 return containsCollectionPredicate(*expression.left) or containsCollectionPredicate(*expression.right);
             }
-            else if constexpr (std::is_same_v<expression_t, orm::query::NotExpression>)
+            else if constexpr (std::is_same_v<expression_t, orm::query::detail::NotExpression>)
             {
                 return containsCollectionPredicate(*expression.predicate);
             }
@@ -831,7 +832,21 @@ auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string
     }
 }
 
-auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query::SelectSpec& spec) const -> void
+auto DatabaseCore::ensurePredicateSupported(const query::detail::Predicate& predicate,
+                                            std::string_view operation) const -> void
+{
+    if (containsCollectionPredicate(predicate.getNode()))
+    {
+        const auto& capabilities = getBackendCapabilities();
+        requireCapability(capabilities.query.collectionPredicates, operation,
+                          "collection predicates are not supported");
+        requireCapability(capabilities.relations.collectionPredicates, operation,
+                          "collection predicates are not supported");
+    }
+}
+
+auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
+                                        const query::detail::SelectSpec& spec) const -> void
 {
     ensureModelSupported(descriptor, "select");
     const auto& capabilities = getBackendCapabilities();
@@ -890,14 +905,14 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
                 ordering.isRaw ? std::string{} : renderColumnForValidation(ordering.column, descriptor, spec, dialect);
             const auto ordersByProjectedColumn =
                 not ordering.isRaw and
-                std::ranges::any_of(spec.projections,
-                                    [&orderingSql, descriptor, &spec, &dialect](const auto& projection)
-                                    {
-                                        const auto* projectedColumn = std::get_if<query::Column>(&projection.source);
-                                        return projectedColumn != nullptr and
-                                               renderColumnForValidation(*projectedColumn, descriptor, spec, dialect) ==
-                                                   orderingSql;
-                                    });
+                std::ranges::any_of(
+                    spec.projections,
+                    [&orderingSql, descriptor, &spec, &dialect](const auto& projection)
+                    {
+                        const auto* projectedColumn = std::get_if<query::detail::Column>(&projection.source);
+                        return projectedColumn != nullptr and
+                               renderColumnForValidation(*projectedColumn, descriptor, spec, dialect) == orderingSql;
+                    });
 
             requireCapability(ordersByProjectedColumn, "select projection",
                               "DISTINCT projection queries may order only by projected columns");
@@ -916,7 +931,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
 
     const auto isAggregateProjection =
         std::ranges::any_of(spec.projections, [](const auto& projection)
-                            { return std::holds_alternative<query::AggregateExpression>(projection.source); });
+                            { return std::holds_alternative<query::detail::AggregateExpression>(projection.source); });
     const auto isAggregateQuery = not spec.groupBy.empty() or spec.having.has_value() or isAggregateProjection;
 
     if (capabilities.query.strictProjectionGrouping and not spec.projections.empty() and isAggregateQuery)
@@ -929,7 +944,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
             groupedColumns.push_back(renderColumnForValidation(groupedColumn, descriptor, spec, dialect));
         }
 
-        auto isGroupedColumn = [&groupedColumns, descriptor, &spec, &dialect](const query::Column& column)
+        auto isGroupedColumn = [&groupedColumns, descriptor, &spec, &dialect](const query::detail::Column& column)
         {
             const auto rendered = renderColumnForValidation(column, descriptor, spec, dialect);
             return std::ranges::find(groupedColumns, rendered) != groupedColumns.end();
@@ -937,7 +952,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
 
         for (const auto& projection : spec.projections)
         {
-            if (const auto* column = std::get_if<query::Column>(&projection.source); column != nullptr)
+            if (const auto* column = std::get_if<query::detail::Column>(&projection.source); column != nullptr)
             {
                 requireCapability(isGroupedColumn(*column), "select projection",
                                   "Non-aggregate projected columns must appear in GROUP BY");
@@ -954,11 +969,9 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, const query
         }
     }
 
-    if (spec.predicate.has_value() and containsCollectionPredicate(spec.predicate->getNode()))
+    if (spec.predicate.has_value())
     {
-        requireCapability(capabilities.query.collectionPredicates, "select", "collection predicates are not supported");
-        requireCapability(capabilities.relations.collectionPredicates, "select",
-                          "collection predicates are not supported");
+        ensurePredicateSupported(*spec.predicate, "select");
     }
 
     if (not spec.includes.empty())

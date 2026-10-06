@@ -293,7 +293,7 @@ TEST_P(ProjectionQueryDatabaseTest, shouldReportLossyHydrationAsStructuredConver
     database.insert(models::ModelWithId{1, 300, "too-wide"});
 
     orm::ProjectionQuery<models::ModelWithId, NarrowIntegralProjection> query;
-    query.project(as("value", col("field1")));
+    query.project(as("value", col<&models::ModelWithId::field1>()));
 
     try
     {
@@ -314,9 +314,9 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedDtos)
     database.insert(std::vector<models::ModelWithId>{{1, 10, "first"}, {2, 20, "second"}, {3, 30, "third"}});
 
     orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
-    query.project(as("id", col("id")), as("name", col("field2")))
-        .where(col("id") >= 2)
-        .orderBy(desc(col("id")))
+    query.project(as("id", col<&models::ModelWithId::id>()), as("name", col<&models::ModelWithId::field2>()))
+        .where(col<&models::ModelWithId::id>() >= 2)
+        .orderBy(desc(col<&models::ModelWithId::id>()))
         .limit(1);
 
     const auto rows = database.select(query);
@@ -338,7 +338,10 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedRelatedField)
     database.insert(models);
 
     orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedProjection> query;
-    query.project(as("id", col("id")), as("relatedName", col("field3.field2"))).where(col("id") == 2);
+    query
+        .project(as("id", col<&models::ModelRelatedToOtherModel::id>()),
+                 as("relatedName", col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>()))
+        .where(col<&models::ModelRelatedToOtherModel::id>() == 2);
 
     const auto rows = database.select(query);
 
@@ -353,7 +356,10 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectProjectedOptionalField)
     database.insert(std::vector<models::ModelWithOptional>{{1, std::nullopt, 1.0}, {2, "present", 2.0}});
 
     orm::ProjectionQuery<models::ModelWithOptional, OptionalProjection> query;
-    query.project(as("id", col("field1")), as("name", col("field2"))).orderBy(asc(col("field1")));
+    query
+        .project(as("id", col<&models::ModelWithOptional::field1>()),
+                 as("name", col<&models::ModelWithOptional::field2>()))
+        .orderBy(asc(col<&models::ModelWithOptional::field1>()));
 
     const auto rows = database.select(query);
 
@@ -373,12 +379,14 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByScal
 
     orm::ProjectionQuery<models::ModelWithId, AggregateSummaryProjection> query;
     query
-        .project(as("name", col("field2")), as("users", countAll()), as("totalField1", sum(col("field1"))),
-                 as("averageField1", avg(col("field1"))), as("minField1", min(col("field1"))),
-                 as("maxField1", max(col("field1"))))
-        .groupBy(col("field2"))
-        .having(countAll() > 2)
-        .orderBy(asc(col("field2")));
+        .project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()),
+                 as("totalField1", sum(col<&models::ModelWithId::field1>())),
+                 as("averageField1", avg(col<&models::ModelWithId::field1>())),
+                 as("minField1", min(col<&models::ModelWithId::field1>())),
+                 as("maxField1", max(col<&models::ModelWithId::field1>())))
+        .groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() > 2)
+        .orderBy(asc(col<&models::ModelWithId::field2>()));
 
     const auto rows = database.select(query);
 
@@ -403,9 +411,11 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectAggregateProjectionGroupedByRela
     database.insert(models);
 
     orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateSummaryProjection> query;
-    query.project(as("relatedName", col("field3.field2")), as("users", countAll()))
-        .groupBy(col("field3.field2"))
-        .orderBy(asc(col("field3.field2")));
+    query
+        .project(as("relatedName", col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>()),
+                 as("users", countAll<models::ModelRelatedToOtherModel>()))
+        .groupBy(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>())
+        .orderBy(asc(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>()));
 
     const auto rows = database.select(query);
 
@@ -422,7 +432,8 @@ TEST_P(ProjectionQueryDatabaseTest, shouldSelectNullableAggregateProjection)
     database.insert(std::vector<models::ModelWithOptional>{{1, "present", 1.0}, {2, "present", 2.0}});
 
     orm::ProjectionQuery<models::ModelWithOptional, NullableAggregateProjection> query;
-    query.project(as("averageValue", avg(col("field3")))).where(col("field1") == 999);
+    query.project(as("averageValue", avg(col<&models::ModelWithOptional::field3>())))
+        .where(col<&models::ModelWithOptional::field1>() == 999);
 
     const auto rows = database.select(query);
 

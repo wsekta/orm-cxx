@@ -23,3 +23,5 @@ It ships with SQLite and PostgreSQL backends built on SOCI.
 6. [Backend portability](backend-portability.md)
 7. [Backend extension contract](backend-extension.md)
 8. [Package managers and releases](packaging.md)
+9. [Migrating to static schemas](migration-static-schema.md)
+10. [Migrating to typed queries](migration-typed-queries.md)

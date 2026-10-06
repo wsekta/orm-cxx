@@ -22,7 +22,7 @@ TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithId_value
     auto models = std::vector<models::ModelWithId>{{1, 1, ""}, {2, 2, ""}};
     database.insert(models);
     orm::Query<models::ModelWithId> queryForIdModel;
-    queryForIdModel.orderBy(asc(col("id")));
+    queryForIdModel.orderBy(asc(col<&models::ModelWithId::id>()));
     auto returnedModels = database.select(queryForIdModel);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -39,7 +39,7 @@ TEST_P(IdModelsTest, shouldExecuteInsertQueryAndSelectQueryWithNamesMapping_valu
     auto models = std::vector<models::ModelWithIdAndNamesMapping>{{1, 1, "test"}, {2, 2, "test2"}};
     database.insert(models);
     orm::Query<models::ModelWithIdAndNamesMapping> queryForNamesMapping;
-    queryForNamesMapping.orderBy(asc(col("id")));
+    queryForNamesMapping.orderBy(asc(col<&models::ModelWithIdAndNamesMapping::id>()));
     auto returnedModels = database.select(queryForNamesMapping);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -58,7 +58,7 @@ TEST_P(IdModelsTest, shouldGenerateAutoIncrementIdsOnInsert)
     database.insert(models);
 
     orm::Query<models::ModelWithAutoIncrementId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithAutoIncrementId::id>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 2);
@@ -77,17 +77,20 @@ TEST_P(IdModelsTest, shouldUseGeneratedAutoIncrementIdsInWriteQueries)
     database.insert(std::vector<models::ModelWithAutoIncrementId>{{0, 10, "first"}, {0, 20, "second"}});
 
     orm::Query<models::ModelWithAutoIncrementId> initialQuery;
-    initialQuery.orderBy(asc(col("id")));
+    initialQuery.orderBy(asc(col<&models::ModelWithAutoIncrementId::id>()));
     const auto initialModels = database.select(initialQuery);
     ASSERT_EQ(initialModels.size(), 2);
 
     orm::Update<models::ModelWithAutoIncrementId> update;
-    update.set(col("field2"), "updated").where(col("id") == initialModels[1].id);
+    update.set(col<&models::ModelWithAutoIncrementId::field2>(), "updated")
+        .where(col<&models::ModelWithAutoIncrementId::id>() == initialModels[1].id);
     EXPECT_EQ(database.update(update), 1);
-    EXPECT_EQ(database.remove<models::ModelWithAutoIncrementId>(col("id") == initialModels[0].id), 1);
+    EXPECT_EQ(database.remove<models::ModelWithAutoIncrementId>(col<&models::ModelWithAutoIncrementId::id>() ==
+                                                                initialModels[0].id),
+              1);
 
     orm::Query<models::ModelWithAutoIncrementId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithAutoIncrementId::id>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 1);
@@ -102,7 +105,7 @@ TEST_P(IdModelsTest, shouldUseGeneratedAutoIncrementIdInRelatedModel)
     database.insert(std::vector<models::ModelWithAutoIncrementId>{{0, 10, "first"}, {0, 20, "second"}});
 
     orm::Query<models::ModelWithAutoIncrementId> idQuery;
-    idQuery.orderBy(asc(col("id")));
+    idQuery.orderBy(asc(col<&models::ModelWithAutoIncrementId::id>()));
     const auto generatedModels = database.select(idQuery);
     ASSERT_EQ(generatedModels.size(), 2);
 

@@ -32,17 +32,17 @@ auto CommandGenerator::insert(model::ModelView model) const -> std::string
     return insertCommand->insert(model);
 }
 
-auto CommandGenerator::select(model::ModelView model, const query::SelectSpec& spec) const -> SelectStatement
+auto CommandGenerator::select(model::ModelView model, const query::detail::SelectSpec& spec) const -> SelectStatement
 {
     return selectCommand->select(model, spec);
 }
 
-auto CommandGenerator::update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement
+auto CommandGenerator::update(model::ModelView model, const query::detail::UpdateSpec& spec) const -> Statement
 {
     return updateCommand->update(model, spec);
 }
 
-auto CommandGenerator::remove(model::ModelView model, const query::Predicate& predicate) const -> Statement
+auto CommandGenerator::remove(model::ModelView model, const query::detail::Predicate& predicate) const -> Statement
 {
     return deleteCommand->remove(model, predicate);
 }

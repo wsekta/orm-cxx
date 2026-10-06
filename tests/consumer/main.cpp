@@ -1,8 +1,14 @@
 #include "orm-cxx/database.hpp"
+#include "orm-cxx/projection_query.hpp"
+#include "orm-cxx/update.hpp"
 
 namespace consumer_models
 {
 struct ConsumerModel
+{
+    int id;
+};
+struct ConsumerSummary
 {
     int id;
 };
@@ -62,6 +68,15 @@ int main()
     static_assert(orm::reflection::fieldName<consumer_models::ConsumerModel, 0>() == "id");
 
     orm::Database<consumer_models::Schema> database;
+    orm::Query<consumer_models::ConsumerModel> query;
+    query.where(orm::query::col<&consumer_models::ConsumerModel::id>() == 7)
+        .orderBy(orm::query::asc(orm::query::col<&consumer_models::ConsumerModel::id>()));
+    orm::Update<consumer_models::ConsumerModel> update;
+    update.set(orm::query::col<&consumer_models::ConsumerModel::id>(), short{8})
+        .where(orm::query::col<&consumer_models::ConsumerModel::id>() == 7);
+    orm::ProjectionQuery<consumer_models::ConsumerModel, consumer_models::ConsumerSummary> projection;
+    projection.project(orm::query::as("id", orm::query::col<&consumer_models::ConsumerModel::id>()))
+        .where(orm::query::col<&consumer_models::ConsumerModel::id>() >= short{1});
 
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");

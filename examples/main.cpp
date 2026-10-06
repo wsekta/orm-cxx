@@ -66,22 +66,25 @@ int main() // NOLINT(bugprone-exception-escape)
 
     // grouping and HAVING keep the full-model result type
     orm::Query<ObjectModel> groupedQuery;
-    groupedQuery.where(col("field1").isNotNull())
-        .groupBy(col("field2"))
-        .having(countAll() > 0)
-        .andHaving(avg(col("field1")) >= 1.0);
+    groupedQuery.where(col<&ObjectModel::field1>().isNotNull())
+        .groupBy(col<&ObjectModel::field2>())
+        .having(countAll<ObjectModel>() > 0)
+        .andHaving(avg(col<&ObjectModel::field1>()) >= 1.0);
     auto groupedObjects = database.select(groupedQuery);
 
     // projection select returns a flat DTO
     orm::ProjectionQuery<ObjectModel, ObjectSummary> summaryQuery;
-    summaryQuery.project(as("number", col("field1")), as("name", col("field2"))).orderBy(asc(col("field2")));
+    summaryQuery.project(as("number", col<&ObjectModel::field1>()), as("name", col<&ObjectModel::field2>()))
+        .orderBy(asc(col<&ObjectModel::field2>()));
     auto summaries = database.select(summaryQuery);
 
     // aggregate projection returns a flat DTO with aggregate fields
     orm::ProjectionQuery<ObjectModel, ObjectStats> statsQuery;
-    statsQuery.project(as("name", col("field2")), as("rows", countAll()), as("averageNumber", avg(col("field1"))))
-        .groupBy(col("field2"))
-        .having(countAll() > 0);
+    statsQuery
+        .project(as("name", col<&ObjectModel::field2>()), as("rows", countAll<ObjectModel>()),
+                 as("averageNumber", avg(col<&ObjectModel::field1>())))
+        .groupBy(col<&ObjectModel::field2>())
+        .having(countAll<ObjectModel>() > 0);
     auto stats = database.select(statsQuery);
 
     return 0;

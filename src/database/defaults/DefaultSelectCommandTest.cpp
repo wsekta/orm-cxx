@@ -12,7 +12,9 @@
 #include "tests/utils/FakeDatabase.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
 
-using namespace orm::query;
+using namespace orm::query::detail;
+using orm::query::param;
+using orm::query::QueryValue;
 
 namespace
 {
@@ -76,22 +78,23 @@ auto expectedModelWithFloatWhereSql(const std::string& predicateSql) -> std::str
 }
 
 template <typename T>
-auto select(orm::db::commands::DefaultSelectCommand& command, orm::Query<T>& query) -> orm::db::SelectStatement
+auto select(orm::db::commands::DefaultSelectCommand& command,
+            orm::tests::RuntimeQuery<T>& query) -> orm::db::SelectStatement
 {
     return command.select(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getSelectSpec(query));
 }
 
 template <typename Source, typename Result>
 auto select(orm::db::commands::DefaultSelectCommand& command,
-            orm::ProjectionQuery<Source, Result>& query) -> orm::db::SelectStatement
+            orm::tests::RuntimeProjectionQuery<Source, Result>& query) -> orm::db::SelectStatement
 {
     return command.select(orm::modelView<models::Schema, Source>(), orm::FakeDatabase::getSelectSpec(query));
 }
 
 auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& command,
-                                  const orm::query::Predicate& predicate) -> std::string
+                                  const orm::query::detail::Predicate& predicate) -> std::string
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
     query.where(predicate);
 
     return select(command, query).sql;
@@ -160,7 +163,7 @@ public:
 
 TEST_F(DefaultSelectCommandTest, select)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     EXPECT_EQ(select(command, query).sql, selectSql);
 }
@@ -169,7 +172,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBin
 {
     orm::tests::TrackingSqlDialect dialect;
     orm::db::commands::DefaultSelectCommand command{dialect};
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
     query.where(col("field1") == 5);
 
     const auto statement = select(command, query);
@@ -186,7 +189,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesOnlyProjectedNumericAggregateResu
 {
     orm::tests::TrackingSqlDialect dialect;
     orm::db::commands::DefaultSelectCommand command{dialect};
-    orm::ProjectionQuery<models::ModelWithId, ExactNumericAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ExactNumericAggregateProjection> query;
     query.project(as("total", sum(col("field1"))), as("average", avg(col("field1")))).having(avg(col("field1")) > 0.0);
 
     const auto statement = select(command, query);
@@ -200,7 +203,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesOnlyProjectedNumericAggregateResu
 
 TEST_F(DefaultSelectCommandTest, selectWithLimit)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.limit(10);
 
@@ -209,7 +212,7 @@ TEST_F(DefaultSelectCommandTest, selectWithLimit)
 
 TEST_F(DefaultSelectCommandTest, selectWithOffset)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.offset(10);
 
@@ -218,13 +221,13 @@ TEST_F(DefaultSelectCommandTest, selectWithOffset)
 
 TEST_F(DefaultSelectCommandTest, selectWithLimitAndOffset)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.limit(10).offset(10);
 
     EXPECT_EQ(select(command, query).sql, selectSqlWithLimitAndOffset);
 
-    orm::Query<models::ModelWithFloat> query2;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query2;
 
     query2.offset(10).limit(10);
 
@@ -233,7 +236,7 @@ TEST_F(DefaultSelectCommandTest, selectWithLimitAndOffset)
 
 TEST_F(DefaultSelectCommandTest, selectWithDistinct)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.distinct();
 
@@ -245,7 +248,7 @@ TEST_F(DefaultSelectCommandTest, selectWithDistinct)
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithGroupByHavingAndClauseOrder)
 {
-    orm::Query<models::ModelWithId> query;
+    orm::tests::RuntimeQuery<models::ModelWithId> query;
 
     query.where(col("field1") >= 10)
         .groupBy(col("field2"))
@@ -271,7 +274,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithGroupByHavingAndClauseOrder)
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithAllAggregateFunctionsInHaving)
 {
-    orm::Query<models::ModelWithId> query;
+    orm::tests::RuntimeQuery<models::ModelWithId> query;
 
     query.groupBy(col("field2"))
         .having((count(col("field2")) == 2) && (sum(col("field1")) != 30) && (min(col("id")) < 5) &&
@@ -295,7 +298,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithAllAggregateFunctionsInHavin
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithMappedGroupByAndHavingColumns)
 {
-    orm::Query<models::ModelWithIdAndNamesMapping> query;
+    orm::tests::RuntimeQuery<models::ModelWithIdAndNamesMapping> query;
 
     query.groupBy(col("field2")).having(count(col("field1")) > 1);
 
@@ -316,7 +319,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithMappedGroupByAndHavingColumn
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedGroupByAndHavingPath)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.groupBy(col("field3.field2")).having(count(col("field3.id")) > 1);
 
@@ -336,7 +339,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedGroupByAndHavingPath)
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedPrimaryKeyGroupingWithoutJoining)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.groupBy(col("field3.id")).having(count(col("field3.id")) > 1).disableJoining();
 
@@ -354,7 +357,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedPrimaryKeyGroupingWit
 
 TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedNonPrimaryKeyGroupingWithoutJoining_shouldThrow)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.groupBy(col("field3.field2")).having(count(col("field3.field1")) > 1).disableJoining();
 
@@ -363,7 +366,7 @@ TEST_F(DefaultSelectCommandTest, selectFullModelWithRelatedNonPrimaryKeyGrouping
 
 TEST_F(DefaultSelectCommandTest, selectProjection)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("field2")));
 
@@ -373,7 +376,7 @@ TEST_F(DefaultSelectCommandTest, selectProjection)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithMappedFieldName)
 {
-    orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithIdAndNamesMapping, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("field2")));
 
@@ -384,7 +387,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithMappedFieldName)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedFieldPath)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("field3.field2")));
 
@@ -396,7 +399,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedFieldPath)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyWithoutJoining)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, RelatedProjection> query;
 
     query.project(as("id", col("id")), as("relatedId", col("field3.id"))).disableJoining();
 
@@ -407,7 +410,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyWithoutJoi
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyWithoutJoining_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("field3.field2"))).disableJoining();
 
@@ -416,7 +419,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyWithout
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffset)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("field2")))
         .distinct()
@@ -436,7 +439,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithWhereOrderDistinctLimitOffs
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateFunctions)
 {
-    orm::ProjectionQuery<models::ModelWithId, AggregateFunctionsProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, AggregateFunctionsProjection> query;
 
     query.project(as("allRows", countAll()), as("countedNames", count(col("field2"))),
                   as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
@@ -451,7 +454,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateFunctions)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateMappedFieldName)
 {
-    orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, AggregateFunctionsProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithIdAndNamesMapping, AggregateFunctionsProjection> query;
 
     query.project(as("allRows", countAll()), as("countedNames", count(col("field2"))),
                   as("totalField1", sum(col("field1"))), as("averageField1", avg(col("field1"))),
@@ -468,7 +471,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateMappedFieldName)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithGroupByHavingAndClauseOrder)
 {
-    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
 
     query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
         .where(col("field1") >= 10)
@@ -494,7 +497,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithGroupByHavingAndClauseOrder
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithOrAndNotHaving)
 {
-    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
 
     query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
         .groupBy(col("field2"))
@@ -514,7 +517,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithOrAndNotHaving)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRemainingHavingComparisonOperators)
 {
-    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
 
     query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
         .groupBy(col("field2"))
@@ -534,7 +537,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRemainingHavingComparisonOp
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedGroupByPath)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedNameAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, RelatedNameAggregateProjection> query;
 
     query.project(as("relatedName", col("field3.field2")), as("users", countAll())).groupBy(col("field3.field2"));
 
@@ -546,7 +549,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedGroupByPath)
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyGroupByWithoutJoining)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
 
     query.project(as("relatedId", col("field3.id")), as("users", countAll()))
         .groupBy(col("field3.id"))
@@ -559,7 +562,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedPrimaryKeyGroupByWit
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyGroupByWithoutJoining_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelRelatedToOtherModel, RelatedAggregateProjection> query;
 
     query.project(as("relatedId", col("field3.id")), as("users", countAll()))
         .groupBy(col("field3.field2"))
@@ -570,7 +573,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithRelatedNonPrimaryKeyGroupBy
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithInvalidAggregateSource_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", count(col("missing"))));
 
@@ -579,7 +582,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithInvalidAggregateSource_shou
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateWithoutSourceColumn_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")),
                   as("name", AggregateExpression{.function = AggregateFunction::Sum, .column = std::nullopt}));
@@ -589,7 +592,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithAggregateWithoutSourceColum
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunction_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name",
                                           AggregateExpression{.function = static_cast<AggregateFunction>(999), // NOLINT
@@ -600,7 +603,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedAggregateFunctio
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedHavingOperator_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, GroupedAggregateProjection> query;
     const auto having = AggregatePredicate{AggregatePredicateNode{AggregateComparisonExpression{
         .aggregate = countAll(), .comparisonOperator = ComparisonOperator::Like, .value = QueryValue{1}}}};
 
@@ -613,7 +616,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnsupportedHavingOperator_s
 
 TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldThrow)
 {
-    orm::ProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
+    orm::tests::RuntimeProjectionQuery<models::ModelWithId, ModelWithIdProjection> query;
 
     query.project(as("id", col("id")), as("name", col("missing")));
 
@@ -622,7 +625,7 @@ TEST_F(DefaultSelectCommandTest, selectProjectionWithUnknownSourceColumn_shouldT
 
 TEST_F(DefaultSelectCommandTest, selectWithComparisonPredicate_shouldUseBindParameter)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(col("field1") == 5);
 
@@ -655,19 +658,20 @@ TEST_F(DefaultSelectCommandTest, selectWithComparisonOperators_shouldRenderSqlOp
 
 TEST_F(DefaultSelectCommandTest, selectWithUnsupportedComparisonOperator_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
-    query.where(orm::query::Predicate{orm::query::PredicateNode{orm::query::ComparisonExpression{
-        .column = col("field1"),
-        .comparisonOperator = static_cast<orm::query::ComparisonOperator>(999), // NOLINT
-        .value = orm::query::QueryValue{1},
-    }}});
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
+    query.where(
+        orm::query::detail::Predicate{orm::query::detail::PredicateNode{orm::query::detail::ComparisonExpression{
+            .column = col("field1"),
+            .comparisonOperator = static_cast<orm::query::detail::ComparisonOperator>(999), // NOLINT
+            .value = orm::query::QueryValue{1},
+        }}});
 
     EXPECT_THROW((void)select(command, query), std::invalid_argument);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithLogicalPredicates)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where((col("field1") >= 2 && col("field2").like("%abc%")) || !col("field3").isNull());
 
@@ -686,7 +690,7 @@ TEST_F(DefaultSelectCommandTest, selectWithLogicalPredicates)
 
 TEST_F(DefaultSelectCommandTest, selectWithInAndBetweenPredicates)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(col("field1").in({1, 2, 3}) && col("field3").between(1.0, 3.5));
 
@@ -708,7 +712,7 @@ TEST_F(DefaultSelectCommandTest, selectWithInAndBetweenPredicates)
 
 TEST_F(DefaultSelectCommandTest, selectWithOrderBy)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.orderBy(desc(col("field2")), asc(col("field1"))).limit(10);
 
@@ -721,7 +725,7 @@ TEST_F(DefaultSelectCommandTest, selectWithOrderBy)
 
 TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(raw("LOWER(models_ModelWithFloat.field2) = :name", param("name", "wojtek")))
         .orderBy(rawOrder("LOWER(models_ModelWithFloat.field2) ASC"));
@@ -740,7 +744,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
 
 TEST_F(DefaultSelectCommandTest, selectWithMappedFieldName)
 {
-    orm::Query<models::ModelWithIdAndNamesMapping> query;
+    orm::tests::RuntimeQuery<models::ModelWithIdAndNamesMapping> query;
 
     query.where(col("field1") == 7);
 
@@ -756,7 +760,7 @@ TEST_F(DefaultSelectCommandTest, selectWithMappedFieldName)
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedFieldPath)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.where(col("field3.field2") == "test");
 
@@ -772,7 +776,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedFieldPath)
 
 TEST_F(DefaultSelectCommandTest, selectWithEmptyColumnPath_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(col("") == 1);
 
@@ -781,7 +785,7 @@ TEST_F(DefaultSelectCommandTest, selectWithEmptyColumnPath_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithScalarUsedAsRelatedPath_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(col("field1.field2") == 1);
 
@@ -790,7 +794,7 @@ TEST_F(DefaultSelectCommandTest, selectWithScalarUsedAsRelatedPath_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedModelColumn_shouldThrow)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.where(col("field3") == 1);
 
@@ -799,7 +803,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedModelColumn_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedNonPrimaryKeyWithoutJoining_shouldThrow)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.disableJoining().where(col("field3.field2") == "target");
 
@@ -808,7 +812,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedNonPrimaryKeyWithoutJoining_sh
 
 TEST_F(DefaultSelectCommandTest, selectWithRelatedPrimaryKeyWithoutJoining_shouldUseForeignKeyColumn)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.disableJoining().where(col("field3.id") == 2);
 
@@ -826,7 +830,7 @@ TEST_F(DefaultSelectCommandTest, selectWithRelatedPrimaryKeyWithoutJoining_shoul
 
 TEST_F(DefaultSelectCommandTest, selectWithTooDeepRelatedPath_shouldThrow)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.where(col("field3.id.extra") == 1);
 
@@ -835,7 +839,7 @@ TEST_F(DefaultSelectCommandTest, selectWithTooDeepRelatedPath_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoining)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     query.disableJoining();
 
@@ -844,21 +848,21 @@ TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithoutJoinin
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToOtherModelWithJoining)
 {
-    orm::Query<models::ModelRelatedToOtherModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToOtherModel> query;
 
     EXPECT_EQ(select(command, query).sql, selectSqlWithModelRelatedToOtherModelWithJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithModelRelatedToCompositeIdModelWithJoining)
 {
-    orm::Query<models::ModelRelatedToCompositeIdModel> query;
+    orm::tests::RuntimeQuery<models::ModelRelatedToCompositeIdModel> query;
 
     EXPECT_EQ(select(command, query).sql, selectSqlWithModelRelatedToCompositeIdModelWithJoining);
 }
 
 TEST_F(DefaultSelectCommandTest, selectWithUnknownColumn_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(col("missing") == 1);
 
@@ -867,7 +871,7 @@ TEST_F(DefaultSelectCommandTest, selectWithUnknownColumn_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(raw("field1 = :orm_p0", param("orm_p0", 1)));
 
@@ -876,7 +880,7 @@ TEST_F(DefaultSelectCommandTest, selectWithReservedRawParameter_shouldThrow)
 
 TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
 {
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
 
     query.where(raw("field1 = :value OR field2 = :value", param("value", 1), param("value", 2)));
 
@@ -886,14 +890,14 @@ TEST_F(DefaultSelectCommandTest, selectWithDuplicateRawParameter_shouldThrow)
 TEST_F(DefaultSelectCommandTest, selectWithInvalidRawParameterName_shouldThrow)
 {
     {
-        orm::Query<models::ModelWithFloat> query;
+        orm::tests::RuntimeQuery<models::ModelWithFloat> query;
         query.where(raw("field1 = :value", param("", 1)));
 
         EXPECT_THROW((void)select(command, query), std::invalid_argument);
     }
 
     {
-        orm::Query<models::ModelWithFloat> query;
+        orm::tests::RuntimeQuery<models::ModelWithFloat> query;
         query.where(raw("field1 = :value", param(":value", 1)));
 
         EXPECT_THROW((void)select(command, query), std::invalid_argument);
@@ -912,7 +916,7 @@ TEST_F(DefaultSelectCommandTest, manuallyConstructedEmptyListPredicatesRenderPor
         .listOperator = ListOperator::NotIn,
         .values = {},
     }}};
-    orm::Query<models::ModelWithFloat> query;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
     query.where(emptyIn && emptyNotIn);
 
     const auto statement = select(command, query);

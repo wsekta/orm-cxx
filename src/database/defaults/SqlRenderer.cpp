@@ -117,7 +117,7 @@ auto getTargetOrThrow(const orm::model::ModelView model, const orm::model::Colum
     return target;
 }
 
-auto renderSelectColumn(const orm::query::Column& column,
+auto renderSelectColumn(const orm::query::detail::Column& column,
                         const orm::db::commands::RenderContext& context) -> std::string
 {
     const auto parts = splitPath(column.getPath());
@@ -144,7 +144,11 @@ auto renderSelectColumn(const orm::query::Column& column,
 
         if (context.shouldJoin)
         {
-            return orm::db::aliases::qualifiedIdentifier(context.dialect, relatedColumn.name, targetColumn.name);
+            const auto relationAlias = context.relationAliases.find(std::string{relatedColumn.name});
+            const auto qualifier = relationAlias == context.relationAliases.end() ?
+                                       relatedColumn.name :
+                                       std::string_view{relationAlias->second};
+            return orm::db::aliases::qualifiedIdentifier(context.dialect, qualifier, targetColumn.name);
         }
 
         if (not targetColumn.isPrimaryKey)
@@ -160,25 +164,25 @@ auto renderSelectColumn(const orm::query::Column& column,
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
 }
 
-auto comparisonOperatorToSql(orm::query::ComparisonOperator comparisonOperator) -> std::string_view
+auto comparisonOperatorToSql(orm::query::detail::ComparisonOperator comparisonOperator) -> std::string_view
 {
     switch (comparisonOperator)
     {
-    case orm::query::ComparisonOperator::Equal:
+    case orm::query::detail::ComparisonOperator::Equal:
         return "=";
-    case orm::query::ComparisonOperator::NotEqual:
+    case orm::query::detail::ComparisonOperator::NotEqual:
         return "!=";
-    case orm::query::ComparisonOperator::Greater:
+    case orm::query::detail::ComparisonOperator::Greater:
         return ">";
-    case orm::query::ComparisonOperator::GreaterOrEqual:
+    case orm::query::detail::ComparisonOperator::GreaterOrEqual:
         return ">=";
-    case orm::query::ComparisonOperator::Less:
+    case orm::query::detail::ComparisonOperator::Less:
         return "<";
-    case orm::query::ComparisonOperator::LessOrEqual:
+    case orm::query::detail::ComparisonOperator::LessOrEqual:
         return "<=";
-    case orm::query::ComparisonOperator::Like:
+    case orm::query::detail::ComparisonOperator::Like:
         return "LIKE";
-    case orm::query::ComparisonOperator::NotLike:
+    case orm::query::detail::ComparisonOperator::NotLike:
         return "NOT LIKE";
     }
 
@@ -212,8 +216,9 @@ auto addRawParameters(orm::db::commands::RenderContext& context,
     }
 }
 
-auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string;
-auto renderPredicate(const orm::query::PredicateNodePtr& node,
+auto renderPredicate(const orm::query::detail::PredicateNode& node,
+                     orm::db::commands::RenderContext& context) -> std::string;
+auto renderPredicate(const orm::query::detail::PredicateNodePtr& node,
                      orm::db::commands::RenderContext& context) -> std::string;
 
 auto primaryKeyColumns(orm::model::ModelView model) -> std::vector<const orm::model::ColumnView*>
@@ -241,8 +246,8 @@ auto primaryKeyColumns(orm::model::ModelView model) -> std::vector<const orm::mo
     return columns;
 }
 
-auto renderToOneJoins(orm::model::ModelView model, const orm::db::SqlDialect& dialect,
-                      const std::string& rootAlias) -> std::string
+auto renderToOneJoins(orm::model::ModelView model, const orm::db::SqlDialect& dialect, const std::string& rootAlias,
+                      const std::unordered_map<std::string, std::string>& relationAliases) -> std::string
 {
     std::string joins;
 
@@ -254,26 +259,27 @@ auto renderToOneJoins(orm::model::ModelView model, const orm::db::SqlDialect& di
         }
 
         const auto target = getTargetOrThrow(model, relation);
+        const auto& relationAlias = relationAliases.at(std::string{relation.name});
         std::vector<std::string> predicates;
 
         for (const auto* targetColumn : primaryKeyColumns(target))
         {
             predicates.push_back(std::format(
-                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relation.name, targetColumn->name),
+                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relationAlias, targetColumn->name),
                 orm::db::aliases::qualifiedIdentifier(
                     dialect, rootAlias, orm::db::aliases::joinedRelationColumn(relation.name, targetColumn->name))));
         }
 
         joins += std::format(" LEFT JOIN {} AS {} ON {}", dialect.quoteIdentifier(target->tableName),
-                             dialect.quoteIdentifier(relation.name), join(predicates, " AND "));
+                             dialect.quoteIdentifier(relationAlias), join(predicates, " AND "));
     }
 
     return joins;
 }
 
-auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, orm::model::ModelView target,
-                           orm::db::commands::RenderContext& outerContext,
-                           const std::string& targetAlias) -> std::string
+auto renderNestedPredicate(const orm::query::detail::PredicateNodePtr& predicate, orm::model::ModelView target,
+                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias,
+                           const std::unordered_map<std::string, std::string>& relationAliases) -> std::string
 {
     orm::db::commands::RenderContext targetContext{
         .model = target,
@@ -281,6 +287,7 @@ auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, orm::m
         .shouldJoin = true,
         .columnRenderMode = orm::db::commands::ColumnRenderMode::Select,
         .tableAlias = targetAlias,
+        .relationAliases = relationAliases,
         .allowCollectionPredicates = false,
         .parameters = std::move(outerContext.parameters),
         .parameterNames = std::move(outerContext.parameterNames),
@@ -294,7 +301,7 @@ auto renderNestedPredicate(const orm::query::PredicateNodePtr& predicate, orm::m
     return sql;
 }
 
-auto renderCollectionPredicate(const orm::query::CollectionExpression& expression,
+auto renderCollectionPredicate(const orm::query::detail::CollectionExpression& expression,
                                orm::db::commands::RenderContext& context) -> std::string
 {
     if (not context.allowCollectionPredicates)
@@ -309,7 +316,8 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
         throw std::invalid_argument{"Unknown collection relation: " + expression.relation};
     }
 
-    if (expression.collectionOperator != orm::query::CollectionOperator::Exists and expression.predicate == nullptr)
+    if (expression.collectionOperator != orm::query::detail::CollectionOperator::Exists and
+        expression.predicate == nullptr)
     {
         throw std::invalid_argument{"Collection any/none requires an element predicate"};
     }
@@ -335,6 +343,24 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
     const auto targetAlias = uniqueAlias("orm_relation_target", reservedAliases);
     reservedAliases.insert(targetAlias);
     const auto junctionAlias = uniqueAlias("orm_relation_junction", reservedAliases);
+    reservedAliases.insert(junctionAlias);
+    std::unordered_set<std::string> assignedAliases{outerAlias, targetAlias, junctionAlias};
+    std::unordered_map<std::string, std::string> relationAliases;
+
+    for (const auto& targetRelation : target->columns)
+    {
+        if (targetRelation.kind != orm::model::FieldKind::ToOne)
+        {
+            continue;
+        }
+
+        const auto relationName = std::string{targetRelation.name};
+        const auto relationAlias =
+            assignedAliases.contains(relationName) ? uniqueAlias(relationName, reservedAliases) : relationName;
+        relationAliases.emplace(relationName, relationAlias);
+        assignedAliases.insert(relationAlias);
+        reservedAliases.insert(relationAlias);
+    }
     std::vector<std::string> predicates;
     std::string from;
 
@@ -359,7 +385,7 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
 
         from = std::format("{} AS {}{}", context.dialect.quoteIdentifier(target->tableName),
                            context.dialect.quoteIdentifier(targetAlias),
-                           renderToOneJoins(target, context.dialect, targetAlias));
+                           renderToOneJoins(target, context.dialect, targetAlias, relationAliases));
     }
     else
     {
@@ -399,30 +425,34 @@ auto renderCollectionPredicate(const orm::query::CollectionExpression& expressio
                            context.dialect.quoteIdentifier(junctionAlias),
                            context.dialect.quoteIdentifier(target->tableName),
                            context.dialect.quoteIdentifier(targetAlias), join(targetJoin, " AND "),
-                           renderToOneJoins(target, context.dialect, targetAlias));
+                           renderToOneJoins(target, context.dialect, targetAlias, relationAliases));
     }
 
     if (expression.predicate != nullptr)
     {
-        predicates.push_back(renderNestedPredicate(expression.predicate, target, context, targetAlias));
+        predicates.push_back(
+            renderNestedPredicate(expression.predicate, target, context, targetAlias, relationAliases));
     }
 
     const auto existsSql = std::format("EXISTS (SELECT 1 FROM {} WHERE {})", from, join(predicates, " AND "));
 
-    return expression.collectionOperator == orm::query::CollectionOperator::None ? std::format("NOT ({})", existsSql) :
-                                                                                   existsSql;
+    return expression.collectionOperator == orm::query::detail::CollectionOperator::None ?
+               std::format("NOT ({})", existsSql) :
+               existsSql;
 }
 
-auto renderPredicate(const orm::query::PredicateNodePtr& node, orm::db::commands::RenderContext& context) -> std::string
+auto renderPredicate(const orm::query::detail::PredicateNodePtr& node,
+                     orm::db::commands::RenderContext& context) -> std::string
 {
     return renderPredicate(*node, context);
 }
 
-auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::RenderContext& context) -> std::string
+auto renderPredicate(const orm::query::detail::PredicateNode& node,
+                     orm::db::commands::RenderContext& context) -> std::string
 {
     return std::visit(
         Overloaded{
-            [&context](const orm::query::ComparisonExpression& expression)
+            [&context](const orm::query::detail::ComparisonExpression& expression)
             {
                 const auto column = orm::db::commands::renderColumn(expression.column, context);
                 const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
@@ -430,22 +460,23 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
 
                 return std::format("{} {} {}", column, sqlOperator, parameter);
             },
-            [&context](const orm::query::NullExpression& expression)
+            [&context](const orm::query::detail::NullExpression& expression)
             {
                 return std::format("{} {}", orm::db::commands::renderColumn(expression.column, context),
-                                   expression.nullOperator == orm::query::NullOperator::IsNull ? "IS NULL" :
-                                                                                                 "IS NOT NULL");
+                                   expression.nullOperator == orm::query::detail::NullOperator::IsNull ? "IS NULL" :
+                                                                                                         "IS NOT NULL");
             },
-            [&context](const orm::query::ListExpression& expression)
+            [&context](const orm::query::detail::ListExpression& expression)
             {
                 if (expression.values.empty())
                 {
-                    return expression.listOperator == orm::query::ListOperator::In ? std::string{"(1 = 0)"} :
-                                                                                     std::string{"(1 = 1)"};
+                    return expression.listOperator == orm::query::detail::ListOperator::In ? std::string{"(1 = 0)"} :
+                                                                                             std::string{"(1 = 1)"};
                 }
 
                 const auto column = orm::db::commands::renderColumn(expression.column, context);
-                const auto sqlOperator = expression.listOperator == orm::query::ListOperator::In ? "IN" : "NOT IN";
+                const auto sqlOperator =
+                    expression.listOperator == orm::query::detail::ListOperator::In ? "IN" : "NOT IN";
                 std::vector<std::string> placeholders;
                 placeholders.reserve(expression.values.size());
 
@@ -456,32 +487,34 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
 
                 return std::format("{} {} ({})", column, sqlOperator, join(placeholders, ", "));
             },
-            [&context](const orm::query::BetweenExpression& expression)
+            [&context](const orm::query::detail::BetweenExpression& expression)
             {
                 const auto column = orm::db::commands::renderColumn(expression.column, context);
-                const auto sqlOperator =
-                    expression.betweenOperator == orm::query::BetweenOperator::Between ? "BETWEEN" : "NOT BETWEEN";
+                const auto sqlOperator = expression.betweenOperator == orm::query::detail::BetweenOperator::Between ?
+                                             "BETWEEN" :
+                                             "NOT BETWEEN";
                 const auto lowerParameter = orm::db::commands::addAutomaticParameter(context, expression.lowerValue);
                 const auto upperParameter = orm::db::commands::addAutomaticParameter(context, expression.upperValue);
 
                 return std::format("{} {} {} AND {}", column, sqlOperator, lowerParameter, upperParameter);
             },
-            [&context](const orm::query::LogicalExpression& expression)
+            [&context](const orm::query::detail::LogicalExpression& expression)
             {
                 const auto left = renderPredicate(expression.left, context);
-                const auto sqlOperator = expression.logicalOperator == orm::query::LogicalOperator::And ? "AND" : "OR";
+                const auto sqlOperator =
+                    expression.logicalOperator == orm::query::detail::LogicalOperator::And ? "AND" : "OR";
                 const auto right = renderPredicate(expression.right, context);
 
                 return std::format("({} {} {})", left, sqlOperator, right);
             },
-            [&context](const orm::query::NotExpression& expression)
+            [&context](const orm::query::detail::NotExpression& expression)
             { return std::format("(NOT ({}))", renderPredicate(expression.predicate, context)); },
-            [&context](const orm::query::RawExpression& expression)
+            [&context](const orm::query::detail::RawExpression& expression)
             {
                 addRawParameters(context, expression.parameters);
                 return expression.sql;
             },
-            [&context](const orm::query::CollectionExpression& expression)
+            [&context](const orm::query::detail::CollectionExpression& expression)
             { return renderCollectionPredicate(expression, context); }},
         node.expression);
 }
@@ -489,7 +522,7 @@ auto renderPredicate(const orm::query::PredicateNode& node, orm::db::commands::R
 
 namespace orm::db::commands
 {
-auto renderColumn(const query::Column& column, const RenderContext& context) -> std::string
+auto renderColumn(const query::detail::Column& column, const RenderContext& context) -> std::string
 {
     if (context.columnRenderMode == ColumnRenderMode::WritePredicate)
     {
@@ -499,7 +532,7 @@ auto renderColumn(const query::Column& column, const RenderContext& context) -> 
     return renderSelectColumn(column, context);
 }
 
-auto renderWriteColumn(const query::Column& column, model::ModelView modelView, const SqlDialect& dialect,
+auto renderWriteColumn(const query::detail::Column& column, model::ModelView modelView, const SqlDialect& dialect,
                        bool qualifyWithTable) -> WriteColumn
 {
     const auto parts = splitPath(column.getPath());
@@ -544,7 +577,7 @@ auto renderWriteColumn(const query::Column& column, model::ModelView modelView, 
     throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
 }
 
-auto renderWhere(const std::optional<query::Predicate>& predicate, RenderContext& context) -> std::string
+auto renderWhere(const std::optional<query::detail::Predicate>& predicate, RenderContext& context) -> std::string
 {
     if (not predicate.has_value())
     {
@@ -554,7 +587,7 @@ auto renderWhere(const std::optional<query::Predicate>& predicate, RenderContext
     return " WHERE " + renderPredicate(predicate->getNode(), context);
 }
 
-auto renderWhere(const query::Predicate& predicate, RenderContext& context) -> std::string
+auto renderWhere(const query::detail::Predicate& predicate, RenderContext& context) -> std::string
 {
     return " WHERE " + renderPredicate(predicate.getNode(), context);
 }

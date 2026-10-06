@@ -75,15 +75,15 @@ int main() // NOLINT(bugprone-exception-escape)
     database.insert(user);
     database.insert(role);
 
-    const std::size_t assignedBooks = database.link(author, "books", book);
-    const std::size_t assignedRoles = database.link(user, "roles", role);
+    const std::size_t assignedBooks = database.link<&Author::books>(author, book);
+    const std::size_t assignedRoles = database.link<&User::roles>(user, role);
 
     orm::Query<Author> authorQuery;
-    authorQuery.include("books").where(any("books", col("title").like("Kind%")));
+    authorQuery.include<&Author::books>().where(any<&Author::books>(col<&Book::title>().like("Kind%")));
     const auto authors = database.select(authorQuery);
 
     orm::Query<User> userQuery;
-    userQuery.include("roles").where(exists("roles"));
+    userQuery.include<&User::roles>().where(exists<&User::roles>());
     const auto users = database.select(userQuery);
 
     return assignedBooks == 1 && assignedRoles == 1 && !authors.empty() && authors.front().books.isLoaded() &&

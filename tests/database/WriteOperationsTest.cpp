@@ -16,12 +16,12 @@ TEST_P(WriteOperationsTest, updateSingleRow_shouldChangeOnlyMatchingRow)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}});
 
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), "updated").where(col("field1") == 1);
+    update.set(col<&models::SomeDataModel::field2>(), "updated").where(col<&models::SomeDataModel::field1>() == 1);
 
     const auto affectedRows = database.update(update);
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field1") == 1);
+    query.where(col<&models::SomeDataModel::field1>() == 1);
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(affectedRows, 1);
@@ -35,12 +35,12 @@ TEST_P(WriteOperationsTest, updateMultipleRows_shouldReturnAffectedRows)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
 
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), "updated").where(col("field1") >= 2);
+    update.set(col<&models::SomeDataModel::field2>(), "updated").where(col<&models::SomeDataModel::field1>() >= 2);
 
     const auto affectedRows = database.update(update);
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field2") == "updated");
+    query.where(col<&models::SomeDataModel::field2>() == "updated");
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(affectedRows, 2);
@@ -53,12 +53,13 @@ TEST_P(WriteOperationsTest, updateToNull_shouldStoreNullForOptionalField)
     database.insert(std::vector<models::ModelWithOptional>{{1, "one", 1.0}, {2, "two", 2.0}});
 
     orm::Update<models::ModelWithOptional> update;
-    update.set(col("field1"), std::nullopt).where(col("field2") == "two");
+    update.set(col<&models::ModelWithOptional::field1>(), std::nullopt)
+        .where(col<&models::ModelWithOptional::field2>() == "two");
 
     const auto affectedRows = database.update(update);
 
     orm::Query<models::ModelWithOptional> query;
-    query.where(col("field2") == "two");
+    query.where(col<&models::ModelWithOptional::field2>() == "two");
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(affectedRows, 1);
@@ -72,7 +73,7 @@ TEST_P(WriteOperationsTest, updateWithNoMatches_shouldReturnZero)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}});
 
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), "updated").where(col("field1") == 99);
+    update.set(col<&models::SomeDataModel::field2>(), "updated").where(col<&models::SomeDataModel::field1>() == 99);
 
     EXPECT_EQ(database.update(update), 0);
 }
@@ -82,7 +83,7 @@ TEST_P(WriteOperationsTest, removeMatchingRow_shouldDeleteOnlyMatchingRow)
     createTable<models::SomeDataModel>();
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}});
 
-    const auto affectedRows = database.remove<models::SomeDataModel>(col("field1") == 2);
+    const auto affectedRows = database.remove<models::SomeDataModel>(col<&models::SomeDataModel::field1>() == 2);
 
     orm::Query<models::SomeDataModel> query;
     const auto returnedModels = database.select(query);
@@ -97,7 +98,7 @@ TEST_P(WriteOperationsTest, removeWithRawPredicateWithoutParameters_shouldReturn
     createTable<models::SomeDataModel>();
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}});
 
-    const auto affectedRows = database.remove<models::SomeDataModel>(raw("field1 = field1"));
+    const auto affectedRows = database.remove<models::SomeDataModel>(raw<models::SomeDataModel>("field1 = field1"));
 
     orm::Query<models::SomeDataModel> query;
     const auto returnedModels = database.select(query);
@@ -113,12 +114,12 @@ TEST_P(WriteOperationsTest, updateWithSqlInjectionLikeValue_shouldTreatValueAsPa
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}});
 
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), injectedValue).where(col("field1") == 1);
+    update.set(col<&models::SomeDataModel::field2>(), injectedValue).where(col<&models::SomeDataModel::field1>() == 1);
 
     const auto affectedRows = database.update(update);
 
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(asc(col("field1")));
+    query.orderBy(asc(col<&models::SomeDataModel::field1>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(affectedRows, 1);
@@ -138,12 +139,13 @@ TEST_P(WriteOperationsTest, updateRelatedPrimaryKey_shouldChangeForeignKey)
     database.insert(models::ModelRelatedToOtherModel{1, 100, "related", models[0]});
 
     orm::Update<models::ModelRelatedToOtherModel> update;
-    update.set(col("field3.id"), 2).where(col("id") == 1);
+    update.set(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::id>(), 2)
+        .where(col<&models::ModelRelatedToOtherModel::id>() == 1);
 
     const auto affectedRows = database.update(update);
 
     orm::Query<models::ModelRelatedToOtherModel> query;
-    query.where(col("id") == 1);
+    query.where(col<&models::ModelRelatedToOtherModel::id>() == 1);
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(affectedRows, 1);

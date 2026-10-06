@@ -9,7 +9,7 @@
 #include "Predicate.hpp"
 #include "Projection.hpp"
 
-namespace orm::query
+namespace orm::query::detail
 {
 /**
  * @brief Runtime SELECT options independent from static model metadata.
@@ -27,4 +27,4 @@ struct SelectSpec
     bool isDistinct = false;
     bool shouldJoin = true;
 };
-} // namespace orm::query
+} // namespace orm::query::detail

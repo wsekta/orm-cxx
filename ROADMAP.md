@@ -23,6 +23,9 @@ contracts, then expand expressiveness and database support deliberately.
 - Table creation and drop commands.
 - Full row-level CRUD operations through `orm::Database`, including insert,
   select, predicate-based update, and predicate-based remove operations.
+- Typed member-pointer query fields and one-level to-one paths, with compile-time
+  model, operator, value, nullable, and write-target checks; typed collection
+  filters/includes/mutations and removal of runtime text paths in 0.2.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
   `DISTINCT`, `LIMIT`, `OFFSET`, `GROUP BY`, aggregate `HAVING`, raw predicates,
   raw ordering, and bind parameters.
@@ -106,10 +109,9 @@ expanding that contract only where another production backend needs it.
 
 These items are valuable, but they should not block the core ORM experience.
 
-- Replace runtime query field and relation-path strings with a compile-time
-  query DSL that validates direct fields, one-level to-one paths, collection
-  paths, projection aliases, and update targets against the selected schema.
-  SQL values and backend capability negotiation remain runtime concerns.
+- Explore compile-time DTO projection aliases and deeper to-one paths after
+  the typed 0.2 query contract; DTO alias validation and backend capability
+  negotiation remain runtime concerns.
 - Define and document thread-safety guarantees.
 - Add structured logging hooks.
 - Explore coroutine-based APIs for asynchronous or pipelined database work.

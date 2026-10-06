@@ -6,6 +6,11 @@ find_package(orm-cxx CONFIG REQUIRED)
 
 add_executable(orm-cxx-package-consumer main.cpp)
 target_link_libraries(orm-cxx-package-consumer PRIVATE orm-cxx::orm-cxx)
+if(MSVC)
+    target_compile_options(orm-cxx-package-consumer PRIVATE /W4 /WX)
+else()
+    target_compile_options(orm-cxx-package-consumer PRIVATE -Wall -Wextra -Wpedantic -Werror)
+endif()
 
 # CI supplies these expectations independently of the package's exported macros.
 if(DEFINED ORM_CXX_EXPECT_SQLITE)

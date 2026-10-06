@@ -92,8 +92,8 @@ int main()
     using namespace orm::query;
 
     orm::Query<ObjectModel> query;
-    query.where(col("field2").like("te%"))
-         .orderBy(asc(col("field1")))
+    query.where(col<&ObjectModel::field2>().like("te%"))
+         .orderBy(asc(col<&ObjectModel::field1>()))
          .limit(10)
          .offset(5);
 
@@ -123,9 +123,23 @@ int main()
 ```cpp
 using namespace orm::query;
 
-orm::Query<User> query;
-query.where((col("age") >= 18 && col("name").like("Ann%")) || col("email").isNull())
-     .orderBy(desc(col("created_at")), asc(col("id")))
+struct SearchUser
+{
+    int id;
+    int age;
+    std::string name;
+    std::optional<std::string> email;
+
+    inline static constexpr orm::reflection::FixedString table_name{"users"};
+};
+
+using SearchSchema = orm::Schema<SearchUser>;
+orm::Database<SearchSchema> database;
+database.connect("sqlite3://test.db");
+
+orm::Query<SearchUser> query;
+query.where((col<&SearchUser::age>() >= 18 && col<&SearchUser::name>().like("Ann%")) || col<&SearchUser::email>().isNull())
+     .orderBy(desc(col<&SearchUser::age>()), asc(col<&SearchUser::id>()))
      .limit(20)
      .offset(40)
      .distinct();
@@ -136,11 +150,14 @@ auto users = database.select(query);
 Values are passed as SOCI bind parameters. For advanced cases, raw SQL fragments can be used with explicit parameters:
 
 ```cpp
-query.where(raw("LOWER(users.name) = :name", param("name", "wojtek")))
-     .orderBy(rawOrder("LOWER(users.name) ASC"));
+query.where(raw<SearchUser>("LOWER(users.name) = :name", param("name", "wojtek")))
+     .orderBy(rawOrder<SearchUser>("LOWER(users.name) ASC"));
 ```
 
-See [Query documentation](docs/query.md) for supported operators and limitations.
+Fields, relation paths, root models, operators, and values are checked during
+compilation. Numeric values allow only safe widening and NULL operations require
+nullable fields. The 0.1 string-field API is removed in 0.2. See
+[Query documentation](docs/query.md) and [Migration to typed queries](docs/migration-typed-queries.md).
 
 ### PostgreSQL
 
@@ -229,8 +246,8 @@ using RelationsSchema = orm::Schema<Author, Book>;
 orm::Database<RelationsSchema> database;
 
 orm::Query<Author> query;
-query.include("books")
-     .where(orm::query::any("books", orm::query::col("title").like("C++%")));
+query.include<&Author::books>()
+     .where(orm::query::any<&Author::books>(orm::query::col<&Book::title>().like("C++%")));
 
 auto authors = database.select(query);
 ```

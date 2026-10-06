@@ -14,7 +14,7 @@ TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
     {
         models[i].field1 = static_cast<int>(i);
     }
-    query.orderBy(orm::query::asc(orm::query::col("field1")));
+    query.orderBy(orm::query::asc(orm::query::col<&models::SomeDataModel::field1>()));
 
     database.beginTransaction();
 

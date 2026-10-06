@@ -278,6 +278,10 @@ protected:
         constexpr auto model = model::modelView<SchemaType, T>();
         ensureModelSupported(model, "update");
         requireCapability(getBackendCapabilities().mutations.update, "update", "update is not supported");
+        if (update.getData().predicate.has_value())
+        {
+            ensurePredicateSupported(*update.getData().predicate, "update");
+        }
         const auto statement = getCommandGenerator().update(model, update.getData());
 
         return executeMutation(statement, "update");
@@ -291,11 +295,12 @@ protected:
      * @return The number of affected rows.
      */
     template <typename SchemaType, typename T>
-    auto removeImpl(const query::Predicate& predicate) -> std::size_t
+    auto removeImpl(const query::detail::Predicate& predicate) -> std::size_t
     {
         constexpr auto model = model::modelView<SchemaType, T>();
         ensureModelSupported(model, "remove");
         requireCapability(getBackendCapabilities().mutations.remove, "remove", "remove is not supported");
+        ensurePredicateSupported(predicate, "remove");
         const auto statement = getCommandGenerator().remove(model, predicate);
 
         return executeMutation(statement, "remove");
@@ -527,7 +532,7 @@ private:
     }
 
     template <typename SchemaType, typename Owner>
-    auto loadIncludedCollections(model::ModelView ownerDescriptor, const query::SelectSpec& queryData,
+    auto loadIncludedCollections(model::ModelView ownerDescriptor, const query::detail::SelectSpec& queryData,
                                  std::vector<Owner>& owners) -> void
     {
         if (queryData.includes.empty())
@@ -554,6 +559,7 @@ private:
         auto ownerFields = reflection::fieldPointers(owners.front());
         auto loadField = [this, &queryData, &owners, ownerDescriptor, &reflectedFields](auto fieldIndex, auto* field)
         {
+            (void)this;
             using collection_t = std::decay_t<decltype(*field)>;
 
             if constexpr (orm::is_relation_collection_v<collection_t>)
@@ -577,7 +583,7 @@ private:
     }
 
     template <typename SchemaType, std::size_t FieldIndex, typename Owner, typename Collection>
-    auto loadCollectionField(model::ModelView ownerDescriptor, const query::SelectSpec& queryData,
+    auto loadCollectionField(model::ModelView ownerDescriptor, const query::detail::SelectSpec& queryData,
                              std::vector<Owner>& owners, const model::RelationView& relation) -> void
     {
         using target_t = orm::relation_target_t<Collection>;
@@ -663,7 +669,8 @@ private:
     [[nodiscard]] auto getBackendRuntimeLimits() -> db::BackendRuntimeLimits;
     auto ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void;
     auto ensureModelSupported(model::ModelView model, std::string_view operation) const -> void;
-    auto ensureQuerySupported(model::ModelView model, const query::SelectSpec& spec) const -> void;
+    auto ensureQuerySupported(model::ModelView model, const query::detail::SelectSpec& spec) const -> void;
+    auto ensurePredicateSupported(const query::detail::Predicate& predicate, std::string_view operation) const -> void;
     auto ensureAffectedRowsAvailable(std::string_view operation) const -> void;
     auto requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void;
     [[noreturn]] auto throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
@@ -741,11 +748,12 @@ public:
         return this->template updateImpl<SchemaType>(update);
     }
 
-    template <typename T>
-    auto remove(const query::Predicate& predicate) -> std::size_t
+    template <typename T, typename P>
+        requires query::detail::PredicateFor<P, T> && query::detail::ORM_QUERY_WRITE_SAFE<P>
+    auto remove(const P& predicate) -> std::size_t
     {
         requireSchemaModel<T>();
-        return this->template removeImpl<SchemaType, T>(predicate);
+        return this->template removeImpl<SchemaType, T>(query::detail::erase(predicate));
     }
 
     template <typename T>
@@ -776,20 +784,30 @@ public:
         this->template deleteRelationTablesImpl<SchemaType, T>();
     }
 
-    template <typename Owner, typename Target>
-    auto link(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
+    template <auto Member, typename Owner, typename Target>
+        requires query::detail::ORM_QUERY_COLLECTION<Member> &&
+                     query::detail::ORM_QUERY_MODEL_TYPE<Owner,
+                                                         typename query::detail::CollectionTraits<Member>::Model> &&
+                     query::detail::ORM_QUERY_MODEL_TYPE<Target,
+                                                         typename query::detail::CollectionTraits<Member>::Target>
+    auto link(const Owner& owner, const Target& target) -> std::size_t
     {
         requireSchemaModel<Owner>();
         requireSchemaModel<Target>();
-        return this->template linkImpl<SchemaType>(owner, relationField, target);
+        return this->template linkImpl<SchemaType>(owner, query::detail::CollectionTraits<Member>::name(), target);
     }
 
-    template <typename Owner, typename Target>
-    auto unlink(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
+    template <auto Member, typename Owner, typename Target>
+        requires query::detail::ORM_QUERY_COLLECTION<Member> &&
+                     query::detail::ORM_QUERY_MODEL_TYPE<Owner,
+                                                         typename query::detail::CollectionTraits<Member>::Model> &&
+                     query::detail::ORM_QUERY_MODEL_TYPE<Target,
+                                                         typename query::detail::CollectionTraits<Member>::Target>
+    auto unlink(const Owner& owner, const Target& target) -> std::size_t
     {
         requireSchemaModel<Owner>();
         requireSchemaModel<Target>();
-        return this->template unlinkImpl<SchemaType>(owner, relationField, target);
+        return this->template unlinkImpl<SchemaType>(owner, query::detail::CollectionTraits<Member>::name(), target);
     }
 };
 } // namespace orm

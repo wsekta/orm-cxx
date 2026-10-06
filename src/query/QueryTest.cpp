@@ -12,10 +12,10 @@ TEST(QueryTest, shouldStoreGroupByAndCombinedHavingPredicates)
 {
     orm::Query<models::ModelWithId> query;
 
-    query.groupBy(col("field2"), col("field1"))
-        .having(countAll() > 1)
-        .andHaving(avg(col("field1")) >= 10.0)
-        .orHaving(!(max(col("id")) <= 3));
+    query.groupBy(col<&models::ModelWithId::field2>(), col<&models::ModelWithId::field1>())
+        .having(countAll<models::ModelWithId>() > 1)
+        .andHaving(avg(col<&models::ModelWithId::field1>()) >= 10.0)
+        .orHaving(!(max(col<&models::ModelWithId::id>()) <= 3));
 
     const auto& data = orm::FakeDatabase::getSelectSpec(query);
 
@@ -25,23 +25,24 @@ TEST(QueryTest, shouldStoreGroupByAndCombinedHavingPredicates)
     ASSERT_TRUE(data.having.has_value());
 
     const auto& havingRoot = data.having->getNode();
-    ASSERT_TRUE(std::holds_alternative<AggregateLogicalExpression>(havingRoot.expression));
-    EXPECT_EQ(std::get<AggregateLogicalExpression>(havingRoot.expression).logicalOperator, LogicalOperator::Or);
+    ASSERT_TRUE(std::holds_alternative<detail::AggregateLogicalExpression>(havingRoot.expression));
+    EXPECT_EQ(std::get<detail::AggregateLogicalExpression>(havingRoot.expression).logicalOperator,
+              detail::LogicalOperator::Or);
 }
 
 TEST(QueryTest, shouldInitializeHavingWithAndHavingOrOrHaving)
 {
     orm::Query<models::ModelWithId> andQuery;
-    andQuery.andHaving(count(col("id")) > 0);
+    andQuery.andHaving(count(col<&models::ModelWithId::id>()) > 0);
 
     const auto& andData = orm::FakeDatabase::getSelectSpec(andQuery);
     ASSERT_TRUE(andData.having.has_value());
-    EXPECT_TRUE(std::holds_alternative<AggregateComparisonExpression>(andData.having->getNode().expression));
+    EXPECT_TRUE(std::holds_alternative<detail::AggregateComparisonExpression>(andData.having->getNode().expression));
 
     orm::Query<models::ModelWithId> orQuery;
-    orQuery.orHaving(sum(col("field1")) > 0);
+    orQuery.orHaving(sum(col<&models::ModelWithId::field1>()) > 0);
 
     const auto& orData = orm::FakeDatabase::getSelectSpec(orQuery);
     ASSERT_TRUE(orData.having.has_value());
-    EXPECT_TRUE(std::holds_alternative<AggregateComparisonExpression>(orData.having->getNode().expression));
+    EXPECT_TRUE(std::holds_alternative<detail::AggregateComparisonExpression>(orData.having->getNode().expression));
 }

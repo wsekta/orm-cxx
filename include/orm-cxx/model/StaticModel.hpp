@@ -32,7 +32,7 @@ struct StaticSchemaTraits<Schema<Models...>>
     [[nodiscard]] static consteval auto indexOfImpl(std::index_sequence<Is...>) -> std::size_t
     {
         std::size_t result = 0;
-        (((std::same_as<Model, Models>) ? (result = Is, true) : false) || ...);
+        (void)(((std::same_as<Model, Models>) ? (result = Is, true) : false) || ...);
         return result;
     }
 
@@ -186,7 +186,7 @@ consteval auto normalizedDefaultTableName()
     constexpr auto prefixSize = source.starts_with("class ")  ? std::string_view{"class "}.size() :
                                 source.starts_with("struct ") ? std::string_view{"struct "}.size() :
                                                                 0U;
-    constexpr auto resultSize = [source, prefixSize]
+    constexpr auto resultSize = [source]
     {
         std::size_t result{};
         for (std::size_t index = prefixSize; index < source.size(); ++index)

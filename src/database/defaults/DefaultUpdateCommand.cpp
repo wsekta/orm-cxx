@@ -30,7 +30,7 @@ namespace orm::db::commands
 {
 DefaultUpdateCommand::DefaultUpdateCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultUpdateCommand::update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement
+auto DefaultUpdateCommand::update(model::ModelView model, const query::detail::UpdateSpec& spec) const -> Statement
 {
     if (spec.assignments.empty())
     {
@@ -56,7 +56,7 @@ auto DefaultUpdateCommand::update(model::ModelView model, const query::UpdateSpe
     return Statement{.sql = sql, .parameters = std::move(context.parameters)};
 }
 
-auto DefaultUpdateCommand::getAssignments(model::ModelView model, const query::UpdateSpec& spec,
+auto DefaultUpdateCommand::getAssignments(model::ModelView model, const query::detail::UpdateSpec& spec,
                                           RenderContext& context) -> std::string
 {
     std::vector<std::string> assignments;

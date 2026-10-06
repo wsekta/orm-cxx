@@ -11,29 +11,32 @@ class DefaultSelectCommand : public SelectCommand
 public:
     explicit DefaultSelectCommand(const SqlDialect& dialectInit);
 
-    [[nodiscard]] auto select(model::ModelView model, const query::SelectSpec& spec) const -> SelectStatement override;
+    [[nodiscard]] auto select(model::ModelView model,
+                              const query::detail::SelectSpec& spec) const -> SelectStatement override;
 
 private:
-    static auto getSelectFields(model::ModelView model, const query::SelectSpec& spec,
+    static auto getSelectFields(model::ModelView model, const query::detail::SelectSpec& spec,
                                 RenderContext& context) -> std::string;
     static auto getFullModelSelectFields(bool shouldJoin, model::ModelView model,
                                          const SqlDialect& dialect) -> std::string;
-    static auto getProjectionSelectFields(const std::vector<query::Projection>& projections,
+    static auto getProjectionSelectFields(const std::vector<query::detail::Projection>& projections,
                                           RenderContext& context) -> std::string;
-    static auto renderProjectionSource(const query::ProjectionSource& source, RenderContext& context) -> std::string;
-    static auto renderAggregate(const query::AggregateExpression& aggregate, RenderContext& context) -> std::string;
+    static auto renderProjectionSource(const query::detail::ProjectionSource& source,
+                                       RenderContext& context) -> std::string;
+    static auto renderAggregate(const query::detail::AggregateExpression& aggregate,
+                                RenderContext& context) -> std::string;
     static auto getForeignModelSelectFields(bool shouldJoin, const std::string& foreginModelFieldName,
                                             model::ModelView target, model::ModelView model,
                                             const SqlDialect& dialect) -> std::string;
     static auto getJoins(bool shouldJoin, model::ModelView model, const SqlDialect& dialect) -> std::string;
-    static auto getGroupBy(const query::SelectSpec& spec, RenderContext& context) -> std::string;
-    static auto getHaving(const std::optional<query::AggregatePredicate>& having,
+    static auto getGroupBy(const query::detail::SelectSpec& spec, RenderContext& context) -> std::string;
+    static auto getHaving(const std::optional<query::detail::AggregatePredicate>& having,
                           RenderContext& context) -> std::string;
-    static auto renderAggregatePredicate(const query::AggregatePredicateNode& node,
+    static auto renderAggregatePredicate(const query::detail::AggregatePredicateNode& node,
                                          RenderContext& context) -> std::string;
-    static auto renderAggregatePredicate(const query::AggregatePredicateNodePtr& node,
+    static auto renderAggregatePredicate(const query::detail::AggregatePredicateNodePtr& node,
                                          RenderContext& context) -> std::string;
-    static auto getOrderBy(const query::SelectSpec& spec, RenderContext& context) -> std::string;
+    static auto getOrderBy(const query::detail::SelectSpec& spec, RenderContext& context) -> std::string;
 
     const SqlDialect& dialect;
 };

@@ -16,7 +16,8 @@ TEST_P(QueryLanguageTest, whereWithComparisonAndLike_shouldFilterRows)
     database.insert(std::vector<models::SomeDataModel>{{1, "miss", 1.0}, {2, "match-one", 2.0}, {3, "match-two", 3.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field1") >= 2 && col("field2").like("match%")).orderBy(asc(col("field1")));
+    query.where(col<&models::SomeDataModel::field1>() >= 2 && col<&models::SomeDataModel::field2>().like("match%"))
+        .orderBy(asc(col<&models::SomeDataModel::field1>()));
 
     const auto returnedModels = database.select(query);
 
@@ -31,7 +32,7 @@ TEST_P(QueryLanguageTest, whereWithOptionalNull_shouldFilterRows)
     database.insert(std::vector<models::ModelWithOptional>{{std::nullopt, "null", 1.0}, {2, "not-null", 2.0}});
 
     orm::Query<models::ModelWithOptional> query;
-    query.where(col("field1").isNull());
+    query.where(col<&models::ModelWithOptional::field1>().isNull());
 
     const auto returnedModels = database.select(query);
 
@@ -48,7 +49,7 @@ TEST_P(QueryLanguageTest, whereWithSqlInjectionLikeValue_shouldTreatValueAsParam
     database.insert(std::vector<models::SomeDataModel>{{1, injectedValue, 1.0}, {2, "safe", 2.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field2") == injectedValue);
+    query.where(col<&models::SomeDataModel::field2>() == injectedValue);
 
     const auto returnedModels = database.select(query);
 
@@ -63,7 +64,7 @@ TEST_P(QueryLanguageTest, orderByWithLimitAndOffset_shouldReturnExpectedPage)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(desc(col("field1"))).limit(1).offset(1);
+    query.orderBy(desc(col<&models::SomeDataModel::field1>())).limit(1).offset(1);
 
     const auto returnedModels = database.select(query);
 
@@ -77,7 +78,7 @@ TEST_P(QueryLanguageTest, orderByWithOffsetOnly_shouldReturnRemainingRows)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(asc(col("field1"))).offset(1);
+    query.orderBy(asc(col<&models::SomeDataModel::field1>())).offset(1);
 
     const auto returnedModels = database.select(query);
 
@@ -97,7 +98,7 @@ TEST_P(QueryLanguageTest, whereWithRelatedFieldPath_shouldFilterJoinedRows)
     database.insert(relatedModels);
 
     orm::Query<models::ModelRelatedToOtherModel> query;
-    query.where(col("field3.field2") == "second");
+    query.where(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>() == "second");
 
     const auto returnedModels = database.select(query);
 
@@ -118,7 +119,8 @@ TEST_P(QueryLanguageTest, whereWithCompositeRelatedFieldPath_shouldJoinByAllIds)
     database.insert(relatedModels);
 
     orm::Query<models::ModelRelatedToCompositeIdModel> query;
-    query.where(col("field3.field2") == "second");
+    query.where(col<&models::ModelRelatedToCompositeIdModel::field3, &models::ModelWithOverwrittenId::field2>() ==
+                "second");
 
     const auto returnedModels = database.select(query);
 
@@ -135,15 +137,15 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldFilterAndPageGroups)
         {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "gamma"}, {6, 60, "gamma"}});
 
     orm::Query<models::ModelWithId> query;
-    query.where(col("id") >= 1)
-        .groupBy(col("field2"))
-        .having(countAll() == 2)
-        .andHaving(count(col("field1")) == 2)
-        .andHaving(sum(col("field1")) > 20)
-        .andHaving(avg(col("field1")) >= 15.0)
-        .andHaving(min(col("field1")) >= 10)
-        .andHaving(max(col("field1")) <= 60)
-        .orderBy(asc(col("field2")))
+    query.where(col<&models::ModelWithId::id>() >= 1)
+        .groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() == 2)
+        .andHaving(count(col<&models::ModelWithId::field1>()) == 2)
+        .andHaving(sum(col<&models::ModelWithId::field1>()) > 20)
+        .andHaving(avg(col<&models::ModelWithId::field1>()) >= 15.0)
+        .andHaving(min(col<&models::ModelWithId::field1>()) >= 10)
+        .andHaving(max(col<&models::ModelWithId::field1>()) <= 60)
+        .orderBy(asc(col<&models::ModelWithId::field2>()))
         .limit(1)
         .offset(1);
 
@@ -164,7 +166,9 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
     database.insert(models);
 
     orm::Query<models::ModelRelatedToOtherModel> query;
-    query.groupBy(col("field3.field2")).having(countAll() > 1).andHaving(avg(col("field1")) >= 15.0);
+    query.groupBy(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>())
+        .having(countAll<models::ModelRelatedToOtherModel>() > 1)
+        .andHaving(avg(col<&models::ModelRelatedToOtherModel::field1>()) >= 15.0);
 
     const std::vector<models::ModelRelatedToOtherModel> returnedModels = database.select(query);
 

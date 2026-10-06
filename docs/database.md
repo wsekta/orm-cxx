@@ -92,7 +92,7 @@ struct ObjectModel
 {
     int id;
     std::string name;
-    std::string email;
+    std::optional<std::string> email;
     std::string password;
     std::string created_at;
     std::string updated_at;
@@ -207,19 +207,19 @@ Many-to-many mutations add or remove one junction row:
 User user{1, "Ada"};
 Role admin{10, "admin"};
 
-std::size_t linked = database.link(user, "roles", admin);
-std::size_t unlinked = database.unlink(user, "roles", admin);
+std::size_t linked = database.link<&User::roles>(user, admin);
+std::size_t unlinked = database.unlink<&User::roles>(user, admin);
 ```
 
 Each operation is idempotent: it returns `1` when the relation changed and `0`
 when the database was already in the requested state. The same operations can
 be called through an inverse many-to-many field.
 
-For one-to-many, pass the parent, collection field name, and child:
+For one-to-many, select the collection member in the template argument and pass the parent and child:
 
 ```cpp
-std::size_t assigned = database.link(author, "books", book);
-std::size_t detached = database.unlink(author, "books", book);
+std::size_t assigned = database.link<&Author::books>(author, book);
+std::size_t detached = database.unlink<&Author::books>(author, book);
 ```
 
 `link` updates the child's mapped foreign key, including moving it from another
@@ -244,8 +244,8 @@ To select objects from database use `select` method and pass [query](query.md) a
 using namespace orm::query;
 
 orm::Query<ObjectModel> query;
-query.where(col("name").like("name%"))
-     .orderBy(asc(col("id")))
+query.where(col<&ObjectModel::name>().like("name%"))
+     .orderBy(asc(col<&ObjectModel::id>()))
      .limit(10);
 
 auto queriedObjects = database.select(query);
@@ -263,9 +263,9 @@ To update rows, build an `orm::Update<Model>` with one or more assignments and a
 using namespace orm::query;
 
 orm::Update<ObjectModel> update;
-update.set(col("email"), "new-email@example.com")
-      .set(col("updated_at"), "updated_at")
-      .where(col("id") == 1);
+update.set(col<&ObjectModel::email>(), "new-email@example.com")
+      .set(col<&ObjectModel::updated_at>(), "updated_at")
+      .where(col<&ObjectModel::id>() == 1);
 
 std::size_t updatedRows = database.update(update);
 ```
@@ -274,12 +274,16 @@ Use `std::nullopt` to store `NULL` in nullable columns:
 
 ```cpp
 orm::Update<ObjectModel> clearEmail;
-clearEmail.set(col("email"), std::nullopt)
-          .where(col("id") == 1);
+clearEmail.set(col<&ObjectModel::email>(), std::nullopt)
+          .where(col<&ObjectModel::id>() == 1);
 ```
 
 `update` returns the number of affected rows. Calling it without a `where` predicate, or without assignments throws
-`std::invalid_argument`. Assigning `NULL` to a non-nullable column also throws before executing SQL.
+`std::invalid_argument`. Assigning `NULL` or an optional value to a non-nullable column fails to compile.
+Assignments accept only type-compatible values with safe numeric widening.
+Nullable assignments also accept `std::optional<T>` when `T` satisfies the same
+value rule; an empty optional stores SQL `NULL`. Filter values do not accept
+optionals: test nullability explicitly in the predicate.
 
 ## Remove objects
 
@@ -288,7 +292,7 @@ To delete rows, call `remove` with the model type and a required predicate:
 ```cpp
 using namespace orm::query;
 
-std::size_t removedRows = database.remove<ObjectModel>(col("id") == 1);
+std::size_t removedRows = database.remove<ObjectModel>(col<&ObjectModel::id>() == 1);
 ```
 
 `remove` returns the number of affected rows. There is no unfiltered public delete-row API.

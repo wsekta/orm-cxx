@@ -17,6 +17,7 @@ set(ORM_CXX_TEST_SOURCES
     ../src/query/ProjectionQueryTest.cpp
     ../src/query/QueryTest.cpp
     ../src/query/QueryValueTest.cpp
+    ../src/query/TypedQueryTest.cpp
     CollectionRelationCoverageTest.cpp
     database/BackendConformanceTest.cpp
     database/DatabaseCoverageCompletionTest.cpp
@@ -141,12 +142,13 @@ set(orm_cxx_compile_fail_arguments
     "${CMAKE_GENERATOR}"
     "-DORM_CXX_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
+    "-DORM_CXX_DEPENDENCY_INCLUDE_PATHS=$<JOIN:$<TARGET_PROPERTY:${ORM_CXX_SOCI_CORE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>,|>"
 )
 if(orm_cxx_make_program)
     list(APPEND orm_cxx_compile_fail_arguments "-DCMAKE_MAKE_PROGRAM=${orm_cxx_make_program}")
 endif()
 add_test(NAME orm-cxx-compile-fail COMMAND "${CMAKE_COMMAND}" ${orm_cxx_compile_fail_arguments})
-set_tests_properties(orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema")
+set_tests_properties(orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema;query")
 
 set(orm_cxx_consumer_common_configure_arguments
     -S

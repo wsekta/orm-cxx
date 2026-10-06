@@ -137,7 +137,7 @@ public:
     explicit StaticSelectCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
     auto select(orm::model::ModelView /*model*/,
-                const orm::query::SelectSpec& /*spec*/) const -> orm::db::SelectStatement override
+                const orm::query::detail::SelectSpec& /*spec*/) const -> orm::db::SelectStatement override
     {
         return statement;
     }
@@ -152,7 +152,7 @@ public:
     explicit StaticUpdateCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
     auto update(orm::model::ModelView /*model*/,
-                const orm::query::UpdateSpec& /*spec*/) const -> orm::db::Statement override
+                const orm::query::detail::UpdateSpec& /*spec*/) const -> orm::db::Statement override
     {
         return statement;
     }
@@ -167,7 +167,7 @@ public:
     explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
 
     auto remove(orm::model::ModelView /*model*/,
-                const orm::query::Predicate& /*predicate*/) const -> orm::db::Statement override
+                const orm::query::detail::Predicate& /*predicate*/) const -> orm::db::Statement override
     {
         return statement;
     }
@@ -591,7 +591,7 @@ TEST(DatabaseCoverageCompletionTest, mutationTranslatesConversionAndAffectedRowF
     bundle.database->createTable<models::SomeDataModel>();
     bundle.database->insert(models::SomeDataModel{1, "one", 1.0});
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), "updated").where(col("field1") == 1);
+    update.set(col<&models::SomeDataModel::field2>(), "updated").where(col<&models::SomeDataModel::field1>() == 1);
 
     bundle.backend->runtimeStrategy.throwFromBind = true;
     expectDatabaseError([&bundle, &update]() { (void)bundle.database->update(update); },
@@ -628,12 +628,14 @@ TEST(DatabaseCoverageCompletionTest, relationEndpointValidationTranslatesBinding
     bundle.database->insert(book);
 
     bundle.backend->runtimeStrategy.throwFromBind = true;
-    expectDatabaseError([&bundle, &author, &book]() { (void)bundle.database->link(author, "books", book); },
+    expectDatabaseError([&bundle, &author, &book]()
+                        { (void)bundle.database->link<&collection_models::Author::books>(author, book); },
                         orm::DatabaseErrorCode::Conversion, "validate relation endpoint");
 
     bundle.backend->runtimeStrategy.throwFromBind = false;
     bundle.database->deleteTable<collection_models::Book>();
-    expectDatabaseError([&bundle, &author, &book]() { (void)bundle.database->link(author, "books", book); },
+    expectDatabaseError([&bundle, &author, &book]()
+                        { (void)bundle.database->link<&collection_models::Author::books>(author, book); },
                         orm::DatabaseErrorCode::Statement, "validate relation endpoint");
 }
 
@@ -675,7 +677,7 @@ TEST(DatabaseCoverageCompletionTest, includeTranslatesRuntimeLimitErrorsAndRejec
     bundle.database->createTable<collection_models::Book>();
     bundle.database->insert(collection_models::Author{1, "author", {}});
     orm::Query<collection_models::Author> query;
-    query.include("books");
+    query.include<&collection_models::Author::books>();
 
     bundle.backend->runtimeStrategy.throwFromLimits = true;
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
@@ -714,7 +716,7 @@ TEST(DatabaseCoverageCompletionTest, queryCapabilityChecksHandleNegatedCollectio
         bundle.backend->capabilitiesValue.query.collectionPredicates = false;
         bundle.connect();
         orm::Query<collection_models::Author> query;
-        query.where(!any("books", col("title") == "book"));
+        query.where(!any<&collection_models::Author::books>(col<&collection_models::Book::title>() == "book"));
 
         expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, "select");
@@ -732,6 +734,33 @@ TEST(DatabaseCoverageCompletionTest, queryCapabilityChecksHandleNegatedCollectio
     }
 }
 
+TEST(DatabaseCoverageCompletionTest, collectionWritesRequireBothPredicateCapabilities)
+{
+    for (const bool disableQueryCapability : {true, false})
+    {
+        DatabaseBundle bundle;
+        if (disableQueryCapability)
+        {
+            bundle.backend->capabilitiesValue.query.collectionPredicates = false;
+        }
+        else
+        {
+            bundle.backend->capabilitiesValue.relations.collectionPredicates = false;
+        }
+        bundle.connect();
+        const auto predicate =
+            !none<&collection_models::Author::books>(col<&collection_models::Book::title>() == "book");
+        orm::Update<collection_models::Author> update;
+        update.set(col<&collection_models::Author::name>(), "changed").where(predicate);
+
+        expectDatabaseError([&bundle, &update]() { (void)bundle.database->update(update); },
+                            orm::DatabaseErrorCode::UnsupportedFeature, "update");
+        expectDatabaseError([&bundle, &predicate]()
+                            { (void)bundle.database->remove<collection_models::Author>(predicate); },
+                            orm::DatabaseErrorCode::UnsupportedFeature, "remove");
+    }
+}
+
 TEST(DatabaseCoverageCompletionTest, fullModelGroupingRequiresItsDedicatedCapability)
 {
     DatabaseBundle bundle;
@@ -739,12 +768,12 @@ TEST(DatabaseCoverageCompletionTest, fullModelGroupingRequiresItsDedicatedCapabi
     bundle.connect();
 
     orm::Query<models::ModelWithOneField> groupedQuery;
-    groupedQuery.groupBy(orm::query::col("field1"));
+    groupedQuery.groupBy(orm::query::col<&models::ModelWithOneField::field1>());
     expectDatabaseError([&bundle, &groupedQuery]() { (void)bundle.database->select(groupedQuery); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "select");
 
     orm::Query<models::ModelWithOneField> havingQuery;
-    havingQuery.having(orm::query::countAll() > 0);
+    havingQuery.having(orm::query::countAll<models::ModelWithOneField>() > 0);
     expectDatabaseError([&bundle, &havingQuery]() { (void)bundle.database->select(havingQuery); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "select");
 }
@@ -756,13 +785,15 @@ TEST(DatabaseCoverageCompletionTest, distinctProjectionRejectsOrderingByAnUnproj
     bundle.connect();
 
     orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
-    query.project(as("value", col("field1"))).distinct().orderBy(asc(col("field2")));
+    query.project(as("value", col<&models::ModelWithId::field1>()))
+        .distinct()
+        .orderBy(asc(col<&models::ModelWithId::field2>()));
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
 }
 
-TEST(DatabaseCoverageCompletionTest, distinctProjectionAcceptsMappedAndFieldNamesForTheSameColumn)
+TEST(DatabaseCoverageCompletionTest, distinctProjectionAcceptsTypedColumnWithRenamedSqlMapping)
 {
     DatabaseBundle bundle;
     bundle.backend->capabilitiesValue.query.distinctOrderByRequiresProjectedColumn = true;
@@ -771,7 +802,9 @@ TEST(DatabaseCoverageCompletionTest, distinctProjectionAcceptsMappedAndFieldName
     bundle.database->insert(models::ModelWithIdAndNamesMapping{1, 7, "mapped"});
 
     orm::ProjectionQuery<models::ModelWithIdAndNamesMapping, ScalarProjection> query;
-    query.project(as("value", col("field1"))).distinct().orderBy(asc(col("some_field1_name")));
+    query.project(as("value", col<&models::ModelWithIdAndNamesMapping::field1>()))
+        .distinct()
+        .orderBy(asc(col<&models::ModelWithIdAndNamesMapping::field1>()));
 
     const auto rows = bundle.database->select(query);
     ASSERT_EQ(rows.size(), 1);
@@ -785,7 +818,7 @@ TEST(DatabaseCoverageCompletionTest, strictProjectionGroupingRejectsUngroupedPro
         bundle.backend->capabilitiesValue.query.strictProjectionGrouping = true;
         bundle.connect();
         orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
-        query.project(as("value", col("field1"))).groupBy(col("field2"));
+        query.project(as("value", col<&models::ModelWithId::field1>())).groupBy(col<&models::ModelWithId::field2>());
 
         expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
@@ -796,7 +829,9 @@ TEST(DatabaseCoverageCompletionTest, strictProjectionGroupingRejectsUngroupedPro
         bundle.backend->capabilitiesValue.query.strictProjectionGrouping = true;
         bundle.connect();
         orm::ProjectionQuery<models::ModelWithId, ScalarProjection> query;
-        query.project(as("value", col("field1"))).groupBy(col("field1")).orderBy(asc(col("field2")));
+        query.project(as("value", col<&models::ModelWithId::field1>()))
+            .groupBy(col<&models::ModelWithId::field1>())
+            .orderBy(asc(col<&models::ModelWithId::field2>()));
 
         expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
@@ -810,7 +845,7 @@ TEST(DatabaseCoverageCompletionTest, statementBindLimitIsEnforcedBeforeExecution
     bundle.backend->runtimeStrategy.limitsValue.maxBindParameters = 2;
     bundle.connect();
     orm::Query<models::ModelWithOneField> query;
-    query.where(col("field1").in({1, 2, 3}));
+    query.where(col<&models::ModelWithOneField::field1>().in({1, 2, 3}));
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "select");
@@ -822,7 +857,7 @@ TEST(DatabaseCoverageCompletionTest, mutationRejectsBackendWithoutReliableAffect
     bundle.backend->capabilitiesValue.mutations.affectedRows = orm::db::AffectedRowsSupport::Unavailable;
     bundle.connect();
     orm::Update<models::ModelWithOneField> update;
-    update.set(col("field1"), 2).where(col("field1") == 1);
+    update.set(col<&models::ModelWithOneField::field1>(), 2).where(col<&models::ModelWithOneField::field1>() == 1);
 
     expectDatabaseError([&bundle, &update]() { (void)bundle.database->update(update); },
                         orm::DatabaseErrorCode::AffectedRowsUnavailable, "update");
@@ -878,7 +913,7 @@ TEST(DatabaseCoverageCompletionTest, projectionAliasErrorsAreReportedAsUnsupport
     bundle.backend->dialectStrategy.rejectedIdentifier = "value";
     bundle.connect();
     orm::ProjectionQuery<models::ModelWithOneField, ScalarProjection> query;
-    query.project(as("value", col("field1")));
+    query.project(as("value", col<&models::ModelWithOneField::field1>()));
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "select projection");
@@ -889,7 +924,7 @@ TEST(DatabaseCoverageCompletionTest, projectionSelectTranslatesDriverErrors)
     DatabaseBundle bundle;
     bundle.connect();
     orm::ProjectionQuery<models::ModelWithOneField, ScalarProjection> query;
-    query.project(as("value", col("field1")));
+    query.project(as("value", col<&models::ModelWithOneField::field1>()));
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::Statement, "select projection");

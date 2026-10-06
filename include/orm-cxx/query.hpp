@@ -34,9 +34,11 @@ public:
      * @brief Replaces the WHERE predicate.
      * @param predicate
      */
-    auto where(const query::Predicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, T>
+    auto where(const P& predicate) -> Query<T>&
     {
-        data.predicate = predicate;
+        data.predicate = query::detail::erase(predicate);
 
         return *this;
     }
@@ -45,9 +47,12 @@ public:
      * @brief Adds a predicate with AND.
      * @param predicate
      */
-    auto andWhere(const query::Predicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, T>
+    auto andWhere(const P& predicate) -> Query<T>&
     {
-        data.predicate = data.predicate.has_value() ? data.predicate.value() && predicate : predicate;
+        data.predicate = data.predicate.has_value() ? data.predicate.value() && query::detail::erase(predicate) :
+                                                      query::detail::erase(predicate);
 
         return *this;
     }
@@ -56,9 +61,12 @@ public:
      * @brief Adds a predicate with OR.
      * @param predicate
      */
-    auto orWhere(const query::Predicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, T>
+    auto orWhere(const P& predicate) -> Query<T>&
     {
-        data.predicate = data.predicate.has_value() ? data.predicate.value() || predicate : predicate;
+        data.predicate = data.predicate.has_value() ? data.predicate.value() || query::detail::erase(predicate) :
+                                                      query::detail::erase(predicate);
 
         return *this;
     }
@@ -70,9 +78,10 @@ public:
      * @return A reference to the QueryBuilder object.
      */
     template <typename... Orders>
+        requires(query::detail::OrderFor<Orders, T> && ...)
     auto orderBy(Orders... orders) -> Query<T>&
     {
-        data.orderBy = {std::move(orders)...};
+        data.orderBy = {query::detail::erase(orders)...};
 
         return *this;
     }
@@ -84,9 +93,10 @@ public:
      * @return A reference to this query.
      */
     template <typename... Columns>
+        requires(query::detail::ColumnFor<Columns, T> && ...)
     auto groupBy(Columns... columns) -> Query<T>&
     {
-        data.groupBy = {std::move(columns)...};
+        data.groupBy = {query::detail::erase(columns)...};
 
         return *this;
     }
@@ -97,9 +107,11 @@ public:
      * @return A
      * reference to this query.
      */
-    auto having(const query::AggregatePredicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, T>
+    auto having(const P& predicate) -> Query<T>&
     {
-        data.having = predicate;
+        data.having = query::detail::erase(predicate);
 
         return *this;
     }
@@ -110,9 +122,12 @@ public:
      *
      * @return A reference to this query.
      */
-    auto andHaving(const query::AggregatePredicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, T>
+    auto andHaving(const P& predicate) -> Query<T>&
     {
-        data.having = data.having.has_value() ? data.having.value() && predicate : predicate;
+        data.having = data.having.has_value() ? data.having.value() && query::detail::erase(predicate) :
+                                                query::detail::erase(predicate);
 
         return *this;
     }
@@ -123,9 +138,12 @@ public:
      *
      * @return A reference to this query.
      */
-    auto orHaving(const query::AggregatePredicate& predicate) -> Query<T>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, T>
+    auto orHaving(const P& predicate) -> Query<T>&
     {
-        data.having = data.having.has_value() ? data.having.value() || predicate : predicate;
+        data.having = data.having.has_value() ? data.having.value() || query::detail::erase(predicate) :
+                                                query::detail::erase(predicate);
 
         return *this;
     }
@@ -185,18 +203,14 @@ public:
      * after the root SELECT, so root pagination is
      * preserved.
      */
-    auto include(std::string relation) -> Query<T>&
+    template <auto Member>
+        requires query::detail::ORM_QUERY_COLLECTION<Member> &&
+                     query::detail::ORM_QUERY_MODEL_TYPE<typename query::detail::CollectionTraits<Member>::Model, T>
+    auto include() -> Query<T>&
     {
-        if (relation.empty())
-        {
-            throw std::invalid_argument{"Included relation name must not be empty"};
-        }
-
+        const auto relation = query::detail::CollectionTraits<Member>::name();
         if (std::ranges::find(data.includes, relation) == data.includes.end())
-        {
-            data.includes.push_back(std::move(relation));
-        }
-
+            data.includes.push_back(relation);
         return *this;
     }
 
@@ -212,11 +226,11 @@ private:
      * @brief Gets the query data.
      * @return The query data.
      */
-    [[nodiscard]] inline auto getData() const -> const query::SelectSpec&
+    [[nodiscard]] inline auto getData() const -> const query::detail::SelectSpec&
     {
         return data;
     }
 
-    query::SelectSpec data; /**< Runtime query options; model metadata comes from Database<Schema>. */
+    query::detail::SelectSpec data; /**< Runtime query options; model metadata comes from Database<Schema>. */
 };
 } // namespace orm

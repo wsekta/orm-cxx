@@ -11,7 +11,7 @@
 
 #include "QueryValue.hpp"
 
-namespace orm::query
+namespace orm::query::detail
 {
 class Predicate;
 struct PredicateNode;
@@ -454,4 +454,6 @@ auto raw(std::string sql, Parameters... parameters) -> Predicate
     return Predicate{PredicateNode{
         RawExpression{.sql = std::move(sql), .parameters = std::vector<QueryParameter>{std::move(parameters)...}}}};
 }
-} // namespace orm::query
+} // namespace orm::query::detail
+
+#include "TypedColumn.hpp"

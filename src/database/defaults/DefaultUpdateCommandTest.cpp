@@ -11,7 +11,9 @@
 #include "tests/utils/FakeDatabase.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
 
-using namespace orm::query;
+using namespace orm::query::detail;
+using orm::query::param;
+using orm::query::QueryValue;
 
 namespace
 {
@@ -22,7 +24,8 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 }
 
 template <typename T>
-auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command, orm::Update<T>& update) -> orm::db::Statement
+auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command,
+                  orm::tests::RuntimeUpdate<T>& update) -> orm::db::Statement
 {
     return command.update(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getUpdateSpec(update));
 }
@@ -37,7 +40,7 @@ public:
 
 TEST_F(DefaultUpdateCommandTest, updateWithComparisonPredicate)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.set(col("field2"), "updated").where(col("field1") == 5);
 
@@ -54,7 +57,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithComparisonPredicate)
 
 TEST_F(DefaultUpdateCommandTest, updateWithNullAssignment)
 {
-    orm::Update<models::ModelWithOptional> update;
+    orm::tests::RuntimeUpdate<models::ModelWithOptional> update;
 
     update.set(col("field1"), std::nullopt).where(col("field2") == "target");
 
@@ -73,7 +76,7 @@ TEST(DefaultUpdateCommandDialectTest, delegatesIdentifiersAndPresentAndNullBindM
 {
     orm::tests::TrackingSqlDialect dialect;
     orm::db::commands::DefaultUpdateCommand command{dialect};
-    orm::Update<models::ModelWithOptional> update;
+    orm::tests::RuntimeUpdate<models::ModelWithOptional> update;
     update.set(col("field1"), std::nullopt).set(col("field2"), "updated").where(col("field3") >= 1.0);
 
     const auto statement = renderUpdate(command, update);
@@ -86,7 +89,7 @@ TEST(DefaultUpdateCommandDialectTest, delegatesIdentifiersAndPresentAndNullBindM
 
 TEST_F(DefaultUpdateCommandTest, updateWithNullAssignmentToNotNullColumn_shouldThrow)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.set(col("field2"), std::nullopt).where(col("field1") == 5);
 
@@ -95,7 +98,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithNullAssignmentToNotNullColumn_shouldT
 
 TEST_F(DefaultUpdateCommandTest, updateWithMappedFieldName)
 {
-    orm::Update<models::ModelWithIdAndNamesMapping> update;
+    orm::tests::RuntimeUpdate<models::ModelWithIdAndNamesMapping> update;
 
     update.set(col("field2"), "updated").where(col("field1") == 7);
 
@@ -106,7 +109,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithMappedFieldName)
 
 TEST_F(DefaultUpdateCommandTest, updateWithPrimaryKeyAssignment)
 {
-    orm::Update<models::ModelWithId> update;
+    orm::tests::RuntimeUpdate<models::ModelWithId> update;
 
     update.set(col("id"), 9).where(col("field1") == 1);
 
@@ -116,7 +119,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithPrimaryKeyAssignment)
 
 TEST_F(DefaultUpdateCommandTest, updateWithRelatedPrimaryKeyAssignment)
 {
-    orm::Update<models::ModelRelatedToOtherModel> update;
+    orm::tests::RuntimeUpdate<models::ModelRelatedToOtherModel> update;
 
     update.set(col("field3.id"), 2).where(col("id") == 1);
 
@@ -126,7 +129,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedPrimaryKeyAssignment)
 
 TEST_F(DefaultUpdateCommandTest, updateWithRelatedNonPrimaryKeyAssignment_shouldThrow)
 {
-    orm::Update<models::ModelRelatedToOtherModel> update;
+    orm::tests::RuntimeUpdate<models::ModelRelatedToOtherModel> update;
 
     update.set(col("field3.field2"), "updated").where(col("id") == 1);
 
@@ -135,7 +138,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedNonPrimaryKeyAssignment_should
 
 TEST_F(DefaultUpdateCommandTest, updateWithRelatedModelAssignment_shouldThrow)
 {
-    orm::Update<models::ModelRelatedToOtherModel> update;
+    orm::tests::RuntimeUpdate<models::ModelRelatedToOtherModel> update;
 
     update.set(col("field3"), 2).where(col("id") == 1);
 
@@ -144,7 +147,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithRelatedModelAssignment_shouldThrow)
 
 TEST_F(DefaultUpdateCommandTest, updateWithTooDeepRelatedAssignment_shouldThrow)
 {
-    orm::Update<models::ModelRelatedToOtherModel> update;
+    orm::tests::RuntimeUpdate<models::ModelRelatedToOtherModel> update;
 
     update.set(col("field3.id.extra"), 2).where(col("id") == 1);
 
@@ -153,7 +156,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithTooDeepRelatedAssignment_shouldThrow)
 
 TEST_F(DefaultUpdateCommandTest, updateWithoutPredicate_shouldThrow)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.set(col("field2"), "updated");
 
@@ -162,7 +165,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithoutPredicate_shouldThrow)
 
 TEST_F(DefaultUpdateCommandTest, updateWithoutAssignments_shouldThrow)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.where(col("field1") == 1);
 
@@ -171,7 +174,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithoutAssignments_shouldThrow)
 
 TEST_F(DefaultUpdateCommandTest, updateWithUnknownColumn_shouldThrow)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.set(col("missing"), 1).where(col("field1") == 1);
 
@@ -180,7 +183,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithUnknownColumn_shouldThrow)
 
 TEST_F(DefaultUpdateCommandTest, updateWithRawPredicate)
 {
-    orm::Update<models::ModelWithFloat> update;
+    orm::tests::RuntimeUpdate<models::ModelWithFloat> update;
 
     update.set(col("field2"), "updated").where(raw("models_ModelWithFloat.field1 = :value", param("value", 1)));
 

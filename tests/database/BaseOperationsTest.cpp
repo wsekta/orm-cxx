@@ -149,16 +149,19 @@ TEST_P(BaseOperationsTest, shouldQuoteMappedReservedIdentifiersAcrossCrudCommand
     database.insert(base_operations_models::ReservedIdentifierModel{1, "before"});
 
     orm::Query<base_operations_models::ReservedIdentifierModel> select;
-    select.where(orm::query::col("value") == "before");
+    select.where(orm::query::col<&base_operations_models::ReservedIdentifierModel::value>() == "before");
     auto rows = database.select(select);
 
     ASSERT_EQ(rows.size(), 1);
     EXPECT_EQ(rows[0].id, 1);
 
     orm::Update<base_operations_models::ReservedIdentifierModel> update;
-    update.set(orm::query::col("value"), "after").where(orm::query::col("id") == 1);
+    update.set(orm::query::col<&base_operations_models::ReservedIdentifierModel::value>(), "after")
+        .where(orm::query::col<&base_operations_models::ReservedIdentifierModel::id>() == 1);
     EXPECT_EQ(database.update(update), 1);
-    EXPECT_EQ(database.remove<base_operations_models::ReservedIdentifierModel>(orm::query::col("value") == "after"), 1);
+    EXPECT_EQ(database.remove<base_operations_models::ReservedIdentifierModel>(
+                  orm::query::col<&base_operations_models::ReservedIdentifierModel::value>() == "after"),
+              1);
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, BaseOperationsTest, backendTestConfigs, backendTestName);

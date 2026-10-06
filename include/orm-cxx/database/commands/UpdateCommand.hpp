@@ -11,6 +11,7 @@ class UpdateCommand
 public:
     virtual ~UpdateCommand() = default;
 
-    [[nodiscard]] virtual auto update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement = 0;
+    [[nodiscard]] virtual auto update(model::ModelView model,
+                                      const query::detail::UpdateSpec& spec) const -> Statement = 0;
 };
 } // namespace orm::db::commands

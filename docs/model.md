@@ -120,7 +120,7 @@ struct User {
 };
 ```
 
-Query and update builders still use C++ field names such as `orm::query::col("displayName")`;
+Query and update builders use member pointers such as `orm::query::col<&User::displayName>()`;
 the renderer maps them to database column names.
 
 Physical non-identity column names are also used as prepared-statement bind

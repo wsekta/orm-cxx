@@ -48,12 +48,13 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyLinkAndUnlink_shouldReparentNull
     database.insert(std::vector{firstAuthor, secondAuthor});
     database.insert(book);
 
-    EXPECT_EQ(database.link(firstAuthor, "books", book), 1);
-    EXPECT_EQ(database.link(firstAuthor, "books", book), 0);
-    EXPECT_EQ(database.link(secondAuthor, "books", book), 1);
+    EXPECT_EQ(database.link<&collection_models::Author::books>(firstAuthor, book), 1);
+    EXPECT_EQ(database.link<&collection_models::Author::books>(firstAuthor, book), 0);
+    EXPECT_EQ(database.link<&collection_models::Author::books>(secondAuthor, book), 1);
 
     orm::Query<collection_models::Author> included;
-    included.include("books").orderBy(orm::query::asc(orm::query::col("id")));
+    included.include<&collection_models::Author::books>().orderBy(
+        orm::query::asc(orm::query::col<&collection_models::Author::id>()));
     auto authors = database.select(included);
 
     ASSERT_EQ(authors.size(), 2);
@@ -63,11 +64,12 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyLinkAndUnlink_shouldReparentNull
     ASSERT_EQ(authors[1].books.size(), 1);
     EXPECT_EQ(authors[1].books[0].id, book.id);
 
-    EXPECT_EQ(database.unlink(secondAuthor, "books", book), 1);
-    EXPECT_EQ(database.unlink(secondAuthor, "books", book), 0);
+    EXPECT_EQ(database.unlink<&collection_models::Author::books>(secondAuthor, book), 1);
+    EXPECT_EQ(database.unlink<&collection_models::Author::books>(secondAuthor, book), 0);
 
     orm::Query<collection_models::Author> afterUnlink;
-    afterUnlink.where(orm::query::col("id") == secondAuthor.id).include("books");
+    afterUnlink.where(orm::query::col<&collection_models::Author::id>() == secondAuthor.id)
+        .include<&collection_models::Author::books>();
     authors = database.select(afterUnlink);
 
     ASSERT_EQ(authors.size(), 1);
@@ -84,8 +86,8 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyUnlink_shouldRejectNonNullableMa
     database.insert(author);
     database.insert(book);
 
-    EXPECT_EQ(database.link(author, "books", book), 0);
-    EXPECT_THROW((void)database.unlink(author, "books", book), std::invalid_argument);
+    EXPECT_EQ(database.link<&collection_models::RequiredAuthor::books>(author, book), 0);
+    EXPECT_THROW((void)database.unlink<&collection_models::RequiredAuthor::books>(author, book), std::invalid_argument);
 }
 
 TEST_P(CollectionRelationDatabaseTest, oneToManyForeignKey_shouldBlockDeletingParentWithChildren)
@@ -98,7 +100,8 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyForeignKey_shouldBlockDeletingPa
 
     try
     {
-        (void)database.remove<collection_models::Author>(orm::query::col("id") == author.id);
+        (void)database.remove<collection_models::Author>(orm::query::col<&collection_models::Author::id>() ==
+                                                         author.id);
         FAIL() << "Expected DatabaseError";
     }
     catch (const orm::DatabaseError& error)
@@ -119,7 +122,7 @@ TEST_P(CollectionRelationDatabaseTest, includeWithJoiningDisabled_shouldStillLoa
     database.insert(book);
 
     orm::Query<collection_models::Author> query;
-    query.disableJoining().include("books");
+    query.disableJoining().include<&collection_models::Author::books>();
     const auto authors = database.select(query);
 
     ASSERT_EQ(authors.size(), 1);
@@ -151,24 +154,25 @@ TEST_P(CollectionRelationDatabaseTest, manyToManyRelationTableAndMutations_shoul
     database.insert(user);
     database.insert(std::vector{admin, editor});
 
-    EXPECT_EQ(database.link(user, "roles", admin), 1);
-    EXPECT_EQ(database.link(user, "roles", admin), 0);
-    EXPECT_EQ(database.link(admin, "users", user), 0);
-    EXPECT_EQ(database.link(user, "roles", editor), 1);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, admin), 1);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, admin), 0);
+    EXPECT_EQ(database.link<&collection_models::Role::users>(admin, user), 0);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, editor), 1);
 
     orm::Query<collection_models::User> included;
-    included.include("roles").include("roles");
+    included.include<&collection_models::User::roles>().include<&collection_models::User::roles>();
     auto users = database.select(included);
 
     ASSERT_EQ(users.size(), 1);
     EXPECT_TRUE(users[0].roles.isLoaded());
     EXPECT_EQ(sortedIds(users[0].roles), (std::vector<int>{10, 20}));
 
-    EXPECT_EQ(database.unlink(admin, "users", user), 1);
-    EXPECT_EQ(database.unlink(admin, "users", user), 0);
+    EXPECT_EQ(database.unlink<&collection_models::Role::users>(admin, user), 1);
+    EXPECT_EQ(database.unlink<&collection_models::Role::users>(admin, user), 0);
 
     orm::Query<collection_models::Role> inverseInclude;
-    inverseInclude.include("users").orderBy(orm::query::asc(orm::query::col("id")));
+    inverseInclude.include<&collection_models::Role::users>().orderBy(
+        orm::query::asc(orm::query::col<&collection_models::Role::id>()));
     const auto roles = database.select(inverseInclude);
 
     ASSERT_EQ(roles.size(), 2);
@@ -186,12 +190,12 @@ TEST_P(CollectionRelationDatabaseTest, manyToManyDeleteEndpoint_shouldDeleteOnly
     const collection_models::Role role{10, "role", {}};
     database.insert(user);
     database.insert(role);
-    ASSERT_EQ(database.link(user, "roles", role), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
 
-    EXPECT_EQ(database.remove<collection_models::User>(orm::query::col("id") == user.id), 1);
+    EXPECT_EQ(database.remove<collection_models::User>(orm::query::col<&collection_models::User::id>() == user.id), 1);
 
     orm::Query<collection_models::Role> roleQuery;
-    roleQuery.include("users");
+    roleQuery.include<&collection_models::Role::users>();
     const auto roles = database.select(roleQuery);
 
     ASSERT_EQ(roles.size(), 1);
@@ -208,11 +212,12 @@ TEST_P(CollectionRelationDatabaseTest, manyToManyInclude_shouldShareOneTargetAcr
     const collection_models::Role shared{10, "shared", {}};
     database.insert(std::vector{first, second});
     database.insert(shared);
-    ASSERT_EQ(database.link(first, "roles", shared), 1);
-    ASSERT_EQ(database.link(second, "roles", shared), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(first, shared), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(second, shared), 1);
 
     orm::Query<collection_models::User> userQuery;
-    userQuery.include("roles").orderBy(orm::query::asc(orm::query::col("id")));
+    userQuery.include<&collection_models::User::roles>().orderBy(
+        orm::query::asc(orm::query::col<&collection_models::User::id>()));
     const auto users = database.select(userQuery);
 
     ASSERT_EQ(users.size(), 2);
@@ -222,7 +227,7 @@ TEST_P(CollectionRelationDatabaseTest, manyToManyInclude_shouldShareOneTargetAcr
     EXPECT_EQ(users[1].roles[0].id, shared.id);
 
     orm::Query<collection_models::Role> roleQuery;
-    roleQuery.include("users");
+    roleQuery.include<&collection_models::Role::users>();
     const auto roles = database.select(roleQuery);
     ASSERT_EQ(roles.size(), 1);
     EXPECT_EQ(sortedIds(roles[0].users), (std::vector<int>{1, 2}));
@@ -238,7 +243,7 @@ TEST_P(CollectionRelationDatabaseTest, insert_shouldIgnoreInMemoryCollectionAndN
     database.insert(user);
 
     orm::Query<collection_models::User> userQuery;
-    userQuery.include("roles");
+    userQuery.include<&collection_models::User::roles>();
     const auto users = database.select(userQuery);
     ASSERT_EQ(users.size(), 1);
     EXPECT_TRUE(users[0].roles.isLoaded());
@@ -265,11 +270,14 @@ TEST_P(CollectionRelationDatabaseTest, include_shouldKeepCompleteCollectionsWhen
     const collection_models::Role secondRole{20, "second-role", {}};
     database.insert(std::vector{first, second});
     database.insert(std::vector{firstRole, secondRole});
-    ASSERT_EQ(database.link(second, "roles", firstRole), 1);
-    ASSERT_EQ(database.link(second, "roles", secondRole), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(second, firstRole), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(second, secondRole), 1);
 
     orm::Query<collection_models::User> query;
-    query.include("roles").orderBy(orm::query::asc(orm::query::col("id"))).limit(1).offset(1);
+    query.include<&collection_models::User::roles>()
+        .orderBy(orm::query::asc(orm::query::col<&collection_models::User::id>()))
+        .limit(1)
+        .offset(1);
     const auto users = database.select(query);
 
     ASSERT_EQ(users.size(), 1);
@@ -290,11 +298,11 @@ TEST_P(CollectionRelationDatabaseTest, include_shouldLoadSeveralCollectionsIndep
     database.insert(member);
     database.insert(permission);
     database.insert(team);
-    ASSERT_EQ(database.link(member, "permissions", permission), 1);
-    ASSERT_EQ(database.link(member, "teams", team), 1);
+    ASSERT_EQ(database.link<&collection_models::Member::permissions>(member, permission), 1);
+    ASSERT_EQ(database.link<&collection_models::Member::teams>(member, team), 1);
 
     orm::Query<collection_models::Member> query;
-    query.include("permissions").include("teams");
+    query.include<&collection_models::Member::permissions>().include<&collection_models::Member::teams>();
     const auto members = database.select(query);
 
     ASSERT_EQ(members.size(), 1);
@@ -319,7 +327,7 @@ TEST_P(CollectionRelationDatabaseTest, include_shouldHandleMoreParentsThanLegacy
     database.insert(users);
 
     orm::Query<collection_models::User> query;
-    query.include("roles");
+    query.include<&collection_models::User::roles>();
     const auto returnedUsers = database.select(query);
 
     ASSERT_EQ(returnedUsers.size(), static_cast<std::size_t>(parentCount));
@@ -338,18 +346,18 @@ TEST_P(CollectionRelationDatabaseTest, manyToMany_shouldSupportCompositeEndpoint
     database.insert(owner);
     database.insert(std::vector{firstTag, secondTag});
 
-    EXPECT_EQ(database.link(owner, "tags", firstTag), 1);
-    EXPECT_EQ(database.link(owner, "tags", secondTag), 1);
+    EXPECT_EQ(database.link<&collection_models::CompositeOwner::tags>(owner, firstTag), 1);
+    EXPECT_EQ(database.link<&collection_models::CompositeOwner::tags>(owner, secondTag), 1);
 
     orm::Query<collection_models::CompositeOwner> query;
-    query.include("tags");
+    query.include<&collection_models::CompositeOwner::tags>();
     const auto owners = database.select(query);
 
     ASSERT_EQ(owners.size(), 1);
     EXPECT_TRUE(owners[0].tags.isLoaded());
     EXPECT_EQ(sortedIds(owners[0].tags), (std::vector<int>{10, 20}));
-    EXPECT_EQ(database.unlink(owner, "tags", firstTag), 1);
-    EXPECT_EQ(database.unlink(owner, "tags", firstTag), 0);
+    EXPECT_EQ(database.unlink<&collection_models::CompositeOwner::tags>(owner, firstTag), 1);
+    EXPECT_EQ(database.unlink<&collection_models::CompositeOwner::tags>(owner, firstTag), 0);
 }
 
 TEST_P(CollectionRelationDatabaseTest, collectionPredicates_shouldFilterOneToManyWithoutLoadingIt)
@@ -361,29 +369,32 @@ TEST_P(CollectionRelationDatabaseTest, collectionPredicates_shouldFilterOneToMan
     const collection_models::Book book{10, injectedTitle, std::nullopt};
     database.insert(std::vector{matching, empty});
     database.insert(book);
-    ASSERT_EQ(database.link(matching, "books", book), 1);
+    ASSERT_EQ(database.link<&collection_models::Author::books>(matching, book), 1);
 
     orm::Query<collection_models::Author> anyQuery;
-    anyQuery.where(orm::query::any("books", orm::query::col("title") == injectedTitle));
+    anyQuery.where(orm::query::any<&collection_models::Author::books>(
+        orm::query::col<&collection_models::Book::title>() == injectedTitle));
     const auto withMatchingBook = database.select(anyQuery);
     ASSERT_EQ(withMatchingBook.size(), 1);
     EXPECT_EQ(withMatchingBook[0].id, matching.id);
     EXPECT_FALSE(withMatchingBook[0].books.isLoaded());
 
     orm::Query<collection_models::Author> relatedPathQuery;
-    relatedPathQuery.where(orm::query::any("books", orm::query::col("author.name") == matching.name));
+    relatedPathQuery.where(orm::query::any<&collection_models::Author::books>(
+        orm::query::col<&collection_models::Book::author, &collection_models::Author::name>() == matching.name));
     const auto matchedThroughBookAuthor = database.select(relatedPathQuery);
     ASSERT_EQ(matchedThroughBookAuthor.size(), 1);
     EXPECT_EQ(matchedThroughBookAuthor[0].id, matching.id);
 
     orm::Query<collection_models::Author> existsQuery;
-    existsQuery.where(orm::query::exists("books"));
+    existsQuery.where(orm::query::exists<&collection_models::Author::books>());
     const auto withBooks = database.select(existsQuery);
     ASSERT_EQ(withBooks.size(), 1);
     EXPECT_EQ(withBooks[0].id, matching.id);
 
     orm::Query<collection_models::Author> noneQuery;
-    noneQuery.where(orm::query::none("books", orm::query::col("title") == injectedTitle));
+    noneQuery.where(orm::query::none<&collection_models::Author::books>(
+        orm::query::col<&collection_models::Book::title>() == injectedTitle));
     const auto withoutMatchingBook = database.select(noneQuery);
     ASSERT_EQ(withoutMatchingBook.size(), 1);
     EXPECT_EQ(withoutMatchingBook[0].id, empty.id);
@@ -399,27 +410,30 @@ TEST_P(CollectionRelationDatabaseTest, collectionPredicates_shouldFilterManyToMa
     const collection_models::Role reader{20, "reader", {}};
     database.insert(std::vector{adminUser, ordinaryUser, userWithoutRoles});
     database.insert(std::vector{admin, reader});
-    ASSERT_EQ(database.link(adminUser, "roles", admin), 1);
-    ASSERT_EQ(database.link(ordinaryUser, "roles", reader), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(adminUser, admin), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(ordinaryUser, reader), 1);
 
     orm::Query<collection_models::User> anyQuery;
-    anyQuery.where(orm::query::any("roles", orm::query::col("name") == "admin"));
+    anyQuery.where(
+        orm::query::any<&collection_models::User::roles>(orm::query::col<&collection_models::Role::name>() == "admin"));
     const auto admins = database.select(anyQuery);
     ASSERT_EQ(admins.size(), 1);
     EXPECT_EQ(admins[0].id, adminUser.id);
 
     orm::Query<collection_models::User> existsQuery;
-    existsQuery.where(orm::query::exists("roles"));
+    existsQuery.where(orm::query::exists<&collection_models::User::roles>());
     const auto usersWithRoles = database.select(existsQuery);
     EXPECT_EQ(usersWithRoles.size(), 2);
 
     orm::Query<collection_models::User> noneQuery;
-    noneQuery.where(orm::query::none("roles", orm::query::col("name") == "reader"));
+    noneQuery.where(orm::query::none<&collection_models::User::roles>(
+        orm::query::col<&collection_models::Role::name>() == "reader"));
     const auto usersWithoutReader = database.select(noneQuery);
     EXPECT_EQ(sortedIds(usersWithoutReader), (std::vector<int>{1, 3}));
 
     orm::Query<collection_models::Role> inverseQuery;
-    inverseQuery.where(orm::query::any("users", orm::query::col("name") == ordinaryUser.name));
+    inverseQuery.where(orm::query::any<&collection_models::Role::users>(
+        orm::query::col<&collection_models::User::name>() == ordinaryUser.name));
     const auto rolesWithOrdinaryUser = database.select(inverseQuery);
     ASSERT_EQ(rolesWithOrdinaryUser.size(), 1);
     EXPECT_EQ(rolesWithOrdinaryUser[0].id, reader.id);
@@ -434,15 +448,15 @@ TEST_P(CollectionRelationDatabaseTest, relationMutation_shouldParticipateInExpli
     database.insert(role);
 
     database.beginTransaction();
-    ASSERT_EQ(database.link(user, "roles", role), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
     database.rollbackTransaction();
 
     orm::Query<collection_models::User> query;
-    query.where(orm::query::exists("roles"));
+    query.where(orm::query::exists<&collection_models::User::roles>());
     EXPECT_TRUE(database.select(query).empty());
 }
 
-TEST_P(CollectionRelationDatabaseTest, invalidCollectionPathsAndMissingKeys_shouldBeRejected)
+TEST_P(CollectionRelationDatabaseTest, relationMutations_shouldRejectMissingKeysAndMissingEndpoints)
 {
     createUserRoleSchema();
     const collection_models::User missingKey{0, "missing-key", {}};
@@ -450,48 +464,16 @@ TEST_P(CollectionRelationDatabaseTest, invalidCollectionPathsAndMissingKeys_shou
     const collection_models::Role role{10, "role", {}};
     database.insert(role);
 
-    EXPECT_THROW((void)database.link(missingKey, "roles", role), std::invalid_argument);
-    EXPECT_ANY_THROW((void)database.link(missingEndpoint, "roles", role));
-
-    orm::Query<collection_models::User> collectionPathQuery;
-    collectionPathQuery.where(orm::query::col("roles.name") == "role");
-    EXPECT_THROW((void)database.select(collectionPathQuery), std::invalid_argument);
-
-    orm::Query<collection_models::User> collectionOrderQuery;
-    collectionOrderQuery.orderBy(orm::query::asc(orm::query::col("roles.name")));
-    EXPECT_THROW((void)database.select(collectionOrderQuery), std::invalid_argument);
-
-    orm::Query<collection_models::User> nestedCollectionPredicate;
-    nestedCollectionPredicate.where(
-        orm::query::any("roles", orm::query::any("users", orm::query::col("name") == "nested")));
-    EXPECT_THROW((void)database.select(nestedCollectionPredicate), std::invalid_argument);
-
-    EXPECT_THROW(
-        {
-            orm::Query<collection_models::User> missingInclude;
-            missingInclude.include("missing");
-            (void)database.select(missingInclude);
-        },
-        std::invalid_argument);
-}
-
-TEST_P(CollectionRelationDatabaseTest, relationMutations_shouldRejectUnknownFieldsAndWrongTargetTypes)
-{
-    const collection_models::User user{1, "user", {}};
-    const collection_models::Role role{10, "role", {}};
-    const collection_models::Book book{20, "book", std::nullopt};
-
-    EXPECT_THROW((void)database.link(user, "missing", role), std::invalid_argument);
-    EXPECT_THROW((void)database.unlink(user, "missing", role), std::invalid_argument);
-    EXPECT_THROW((void)database.link(user, "roles", book), std::invalid_argument);
-    EXPECT_THROW((void)database.unlink(user, "roles", book), std::invalid_argument);
+    EXPECT_THROW((void)database.link<&collection_models::User::roles>(missingKey, role), std::invalid_argument);
+    EXPECT_ANY_THROW((void)database.link<&collection_models::User::roles>(missingEndpoint, role));
+    EXPECT_THROW((void)database.unlink<&collection_models::User::roles>(missingKey, role), std::invalid_argument);
 }
 
 TEST_P(CollectionRelationDatabaseTest, includeOnEmptyRootResult_shouldNotRunCollectionHydration)
 {
     createUserRoleSchema();
     orm::Query<collection_models::User> query;
-    query.include("roles");
+    query.include<&collection_models::User::roles>();
 
     EXPECT_TRUE(database.select(query).empty());
 }
@@ -505,7 +487,7 @@ TEST_P(CollectionRelationDatabaseTest, includeOneOfSeveralCollections_shouldLeav
     database.insert(collection_models::Member{1, "member", {}, {}});
 
     orm::Query<collection_models::Member> query;
-    query.include("permissions");
+    query.include<&collection_models::Member::permissions>();
     const auto members = database.select(query);
 
     ASSERT_EQ(members.size(), 1);

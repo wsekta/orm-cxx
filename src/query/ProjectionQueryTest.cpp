@@ -43,36 +43,38 @@ using namespace projection_query_test_models;
 
 namespace
 {
-auto projectionColumnPath(const Projection& projection) -> std::string
+auto projectionColumnPath(const detail::Projection& projection) -> std::string
 {
-    return std::get<Column>(projection.source).getPath();
+    return std::get<detail::Column>(projection.source).getPath();
 }
 } // namespace
 
 TEST(ProjectionQueryTest, shouldCreateProjectionAlias)
 {
-    const auto projection = as("name", col("displayName"));
+    const auto projection = detail::erase(as("name", col<&models::ModelWithId::field2>()));
 
     EXPECT_EQ(projection.resultField, "name");
-    EXPECT_EQ(projectionColumnPath(projection), "displayName");
+    EXPECT_EQ(projectionColumnPath(projection), "field2");
 }
 
 TEST(ProjectionQueryTest, shouldCreateAggregateProjectionAlias)
 {
-    const auto projection = as("users", countAll());
-    const auto& aggregate = std::get<AggregateExpression>(projection.source);
+    const auto projection = detail::erase(as("users", countAll<models::ModelWithId>()));
+    const auto& aggregate = std::get<detail::AggregateExpression>(projection.source);
 
     EXPECT_EQ(projection.resultField, "users");
-    EXPECT_EQ(aggregate.function, AggregateFunction::CountAll);
+    EXPECT_EQ(aggregate.function, detail::AggregateFunction::CountAll);
     EXPECT_FALSE(aggregate.column.has_value());
 }
 
 TEST(ProjectionQueryTest, shouldCreateAggregateExpressions)
 {
-    const auto aggregates = std::vector<std::pair<AggregateExpression, AggregateFunction>>{
-        {count(col("field1")), AggregateFunction::Count}, {sum(col("field1")), AggregateFunction::Sum},
-        {avg(col("field1")), AggregateFunction::Avg},     {min(col("field1")), AggregateFunction::Min},
-        {max(col("field1")), AggregateFunction::Max},
+    const auto aggregates = std::vector<std::pair<detail::AggregateExpression, detail::AggregateFunction>>{
+        {detail::erase(count(col<&models::ModelWithId::field1>())), detail::AggregateFunction::Count},
+        {detail::erase(sum(col<&models::ModelWithId::field1>())), detail::AggregateFunction::Sum},
+        {detail::erase(avg(col<&models::ModelWithId::field1>())), detail::AggregateFunction::Avg},
+        {detail::erase(min(col<&models::ModelWithId::field1>())), detail::AggregateFunction::Min},
+        {detail::erase(max(col<&models::ModelWithId::field1>())), detail::AggregateFunction::Max},
     };
 
     for (const auto& [aggregate, function] : aggregates)
@@ -120,9 +122,9 @@ TEST(ProjectionQueryTest, shouldStoreProjectionDataAndSupportChaining)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDto> query;
 
-    query.project(as("id", col("id")), as("name", col("field2")))
-        .where(col("id") == 1)
-        .orderBy(desc(col("id")))
+    query.project(as("id", col<&models::ModelWithId::id>()), as("name", col<&models::ModelWithId::field2>()))
+        .where(col<&models::ModelWithId::id>() == 1)
+        .orderBy(desc(col<&models::ModelWithId::id>()))
         .distinct()
         .limit(10)
         .offset(5)
@@ -149,11 +151,13 @@ TEST(ProjectionQueryTest, shouldStoreGroupByAndHavingData)
 {
     orm::ProjectionQuery<models::ModelWithId, AggregateProjectionDto> query;
 
-    query.project(as("name", col("field2")), as("users", countAll()), as("averageField1", avg(col("field1"))))
-        .groupBy(col("field2"))
-        .having(countAll() > 1)
-        .andHaving(avg(col("field1")) >= 10.0)
-        .orHaving(max(col("id")) == 3);
+    query
+        .project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()),
+                 as("averageField1", avg(col<&models::ModelWithId::field1>())))
+        .groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() > 1)
+        .andHaving(avg(col<&models::ModelWithId::field1>()) >= 10.0)
+        .orHaving(max(col<&models::ModelWithId::id>()) == 3);
 
     const auto& data = orm::FakeDatabase::getSelectSpec(query);
 
@@ -162,15 +166,17 @@ TEST(ProjectionQueryTest, shouldStoreGroupByAndHavingData)
     ASSERT_TRUE(data.having.has_value());
 
     const auto& havingRoot = data.having->getNode();
-    ASSERT_TRUE(std::holds_alternative<AggregateLogicalExpression>(havingRoot.expression));
-    EXPECT_EQ(std::get<AggregateLogicalExpression>(havingRoot.expression).logicalOperator, LogicalOperator::Or);
+    ASSERT_TRUE(std::holds_alternative<detail::AggregateLogicalExpression>(havingRoot.expression));
+    EXPECT_EQ(std::get<detail::AggregateLogicalExpression>(havingRoot.expression).logicalOperator,
+              detail::LogicalOperator::Or);
 }
 
 TEST(ProjectionQueryTest, shouldAllowOptionalResultFields)
 {
     orm::ProjectionQuery<models::ModelWithOptional, ProjectionDtoWithOptional> query;
 
-    EXPECT_NO_THROW(query.project(as("id", col("field1")), as("name", col("field2"))));
+    EXPECT_NO_THROW(query.project(as("id", col<&models::ModelWithOptional::field1>()),
+                                  as("name", col<&models::ModelWithOptional::field2>())));
 }
 
 TEST(ProjectionQueryTest, shouldRejectEmptyProjectionList)
@@ -184,33 +190,41 @@ TEST(ProjectionQueryTest, shouldRejectEmptyProjectionAlias)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDto> query;
 
-    EXPECT_THROW(query.project(as("", col("id")), as("name", col("field2"))), std::invalid_argument);
+    EXPECT_THROW(
+        query.project(as("", col<&models::ModelWithId::id>()), as("name", col<&models::ModelWithId::field2>())),
+        std::invalid_argument);
 }
 
 TEST(ProjectionQueryTest, shouldRejectDuplicateProjectionAlias)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDto> query;
 
-    EXPECT_THROW(query.project(as("id", col("id")), as("id", col("field2"))), std::invalid_argument);
+    EXPECT_THROW(
+        query.project(as("id", col<&models::ModelWithId::id>()), as("id", col<&models::ModelWithId::field2>())),
+        std::invalid_argument);
 }
 
 TEST(ProjectionQueryTest, shouldRejectAliasThatDoesNotMatchDtoField)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDto> query;
 
-    EXPECT_THROW(query.project(as("id", col("id")), as("missing", col("field2"))), std::invalid_argument);
+    EXPECT_THROW(
+        query.project(as("id", col<&models::ModelWithId::id>()), as("missing", col<&models::ModelWithId::field2>())),
+        std::invalid_argument);
 }
 
 TEST(ProjectionQueryTest, shouldRejectMissingDtoFieldAlias)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDto> query;
 
-    EXPECT_THROW(query.project(as("id", col("id"))), std::invalid_argument);
+    EXPECT_THROW(query.project(as("id", col<&models::ModelWithId::id>())), std::invalid_argument);
 }
 
 TEST(ProjectionQueryTest, shouldRejectUnsupportedDtoField)
 {
     orm::ProjectionQuery<models::ModelWithId, ProjectionDtoWithUnsupportedField> query;
 
-    EXPECT_THROW(query.project(as("id", col("id")), as("nested", col("field1"))), std::invalid_argument);
+    EXPECT_THROW(
+        query.project(as("id", col<&models::ModelWithId::id>()), as("nested", col<&models::ModelWithId::field1>())),
+        std::invalid_argument);
 }

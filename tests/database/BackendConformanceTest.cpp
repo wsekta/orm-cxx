@@ -66,13 +66,71 @@ struct NonPortableBindNameModel
         orm::columnNames(orm::columnName<&NonPortableBindNameModel::value, "odd-name">());
 };
 
+struct TypedAccount
+{
+    int id;
+    std::optional<int> age;
+    std::optional<std::string> email;
+    std::optional<MappedModel> profile;
+    orm::ManyToMany<collection_models::Role> roles;
+
+    inline static constexpr orm::reflection::FixedString table_name{"typed_accounts"};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&TypedAccount::age, "account_age">(),
+                         orm::columnName<&TypedAccount::profile, "account_profile">());
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&TypedAccount::roles>()
+                                                                .through<"typed_account_roles">()
+                                                                .ownerColumns<"account_id">()
+                                                                .targetColumns<"role_id">());
+};
+
+struct TypedAccountStats
+{
+    std::optional<std::string> profile;
+    long long accounts;
+    std::optional<long long> totalAge;
+    std::optional<double> averageAge;
+    std::optional<int> minimumAge;
+    std::optional<int> maximumAge;
+};
+
+struct AliasProfile
+{
+    int id;
+    std::string name;
+
+    inline static constexpr orm::reflection::FixedString table_name{"conformance_alias_profiles"};
+};
+
+struct AliasTarget
+{
+    int id;
+    std::string name;
+    std::optional<AliasProfile> profile;
+
+    inline static constexpr orm::reflection::FixedString table_name{"conformance_alias_targets"};
+    inline static constexpr auto columns_names =
+        orm::columnNames(orm::columnName<&AliasTarget::profile, "conformance_alias_owner">());
+};
+
+struct AliasOwner
+{
+    int id;
+    std::string name;
+    orm::ManyToMany<AliasTarget> targets;
+
+    inline static constexpr orm::reflection::FixedString table_name{"conformance_alias_owner"};
+    inline static constexpr auto relations =
+        orm::relations(orm::manyToMany<&AliasOwner::targets>().through<"conformance_alias_links">());
+};
+
 using Schema =
     orm::Schema<models::SomeDataModel, models::ModelWithOptional, models::ModelWithId, models::ModelWithAutoIncrementId,
                 models::ModelWithOverwrittenId, models::ModelRelatedToOtherModel,
                 models::ModelOptionallyRelatedToOtherModel, models::ModelWithAllBasicTypes, collection_models::Author,
                 collection_models::Book, collection_models::User, collection_models::Role,
                 collection_models::CompositeOwner, collection_models::CompositeTag, ReservedIdentifierModel,
-                MappedModel, NonPortableBindNameModel>;
+                MappedModel, NonPortableBindNameModel, TypedAccount, AliasProfile, AliasTarget, AliasOwner>;
 } // namespace conformance_models
 
 namespace
@@ -269,7 +327,7 @@ TEST_P(BackendConformanceTest, crudRoundTripsSupportedScalarValues)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.5}, {2, "two", 2.5}});
 
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(asc(col("field1")));
+    query.orderBy(asc(col<&models::SomeDataModel::field1>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 2);
@@ -310,7 +368,7 @@ TEST_P(BackendConformanceTest, advertisedScalarTypesRoundTripAtDeclaredBoundarie
     database.insert(rows);
 
     orm::Query<models::ModelWithAllBasicTypes> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithAllBasicTypes::id>()));
     const auto returnedRows = database.select(query);
 
     ASSERT_EQ(returnedRows.size(), rows.size());
@@ -357,7 +415,7 @@ TEST_P(BackendConformanceTest, preparedValuesPreserveInjectionLikeText)
     database.insert(std::vector<models::SomeDataModel>{{1, injectedValue, 1.0}, {2, "safe", 2.0}});
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field2") == injectedValue);
+    query.where(col<&models::SomeDataModel::field2>() == injectedValue);
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -378,7 +436,7 @@ TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
     database.insert(conformance_models::MappedModel{7, "mapped"});
 
     orm::Query<conformance_models::MappedModel> query;
-    query.where(col("id") == 7);
+    query.where(col<&conformance_models::MappedModel::id>() == 7);
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -411,7 +469,7 @@ TEST_P(BackendConformanceTest, reservedTableAndColumnNamesRoundTrip)
     database.insert(conformance_models::ReservedIdentifierModel{1, "quoted"});
 
     orm::Query<conformance_models::ReservedIdentifierModel> query;
-    query.where(col("value") == "quoted");
+    query.where(col<&conformance_models::ReservedIdentifierModel::value>() == "quoted");
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -440,7 +498,7 @@ TEST_P(BackendConformanceTest, compositePrimaryKeysFollowAdvertisedCapability)
     database.insert(std::vector<models::ModelWithOverwrittenId>{{100, 1, "one"}, {200, 2, "two"}});
 
     orm::Query<models::ModelWithOverwrittenId> query;
-    query.orderBy(asc(col("field1")));
+    query.orderBy(asc(col<&models::ModelWithOverwrittenId::field1>()));
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 2);
@@ -473,14 +531,14 @@ TEST_P(BackendConformanceTest, generatedPrimaryKeysFollowAdvertisedCapability)
     database.insert(std::vector<models::ModelWithAutoIncrementId>{{0, 10, "first"}, {0, 20, "second"}});
 
     orm::Query<models::ModelWithAutoIncrementId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithAutoIncrementId::id>()));
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 2);
     EXPECT_NE(rows[0].id, rows[1].id);
 
     orm::Query<models::ModelWithAutoIncrementId> selectedByGeneratedKey;
-    selectedByGeneratedKey.where(col("id") == rows[0].id);
+    selectedByGeneratedKey.where(col<&models::ModelWithAutoIncrementId::id>() == rows[0].id);
     const auto selectedRows = database.select(selectedByGeneratedKey);
 
     ASSERT_EQ(selectedRows.size(), 1);
@@ -502,7 +560,9 @@ TEST_P(BackendConformanceTest, nullableValuesRoundTripWithoutNullLoss)
         std::vector<models::ModelWithOptional>{{std::nullopt, std::nullopt, std::nullopt}, {42, "present", 3.5}});
 
     orm::Query<models::ModelWithOptional> nullQuery;
-    nullQuery.where(col("field1").isNull() and col("field2").isNull() and col("field3").isNull());
+    nullQuery.where(col<&models::ModelWithOptional::field1>().isNull() and
+                    col<&models::ModelWithOptional::field2>().isNull() and
+                    col<&models::ModelWithOptional::field3>().isNull());
     const auto nullRows = database.select(nullQuery);
 
     ASSERT_EQ(nullRows.size(), 1);
@@ -511,7 +571,7 @@ TEST_P(BackendConformanceTest, nullableValuesRoundTripWithoutNullLoss)
     EXPECT_FALSE(nullRows[0].field3.has_value());
 
     orm::Query<models::ModelWithOptional> presentQuery;
-    presentQuery.where(col("field1") == 42);
+    presentQuery.where(col<&models::ModelWithOptional::field1>() == 42);
     const auto presentRows = database.select(presentQuery);
 
     ASSERT_EQ(presentRows.size(), 1);
@@ -534,7 +594,7 @@ TEST_P(BackendConformanceTest, nullableToOneRelationRoundTripsWithoutNullLoss)
     database.insert(models::ModelOptionallyRelatedToOtherModel{1, 10, "without-target", std::nullopt});
 
     orm::Query<models::ModelOptionallyRelatedToOtherModel> query;
-    query.where(col("id") == 1);
+    query.where(col<&models::ModelOptionallyRelatedToOtherModel::id>() == 1);
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -545,7 +605,7 @@ TEST_P(BackendConformanceTest, projectionFollowsAdvertisedCapability)
 {
     const auto& capabilities = database.getBackendCapabilities();
     orm::ProjectionQuery<models::ModelWithId, conformance_models::Projection> query;
-    query.project(as("id", col("id")), as("name", col("field2")));
+    query.project(as("id", col<&models::ModelWithId::id>()), as("name", col<&models::ModelWithId::field2>()));
 
     if (supportsModelWithId(capabilities) and not capabilities.query.projections)
     {
@@ -587,7 +647,7 @@ TEST_P(BackendConformanceTest, lossyProjectionHydrationReportsConversionError)
     database.insert(models::ModelWithId{1, 300, "too-wide"});
 
     orm::ProjectionQuery<models::ModelWithId, conformance_models::NarrowProjection> query;
-    query.project(as("value", col("field1")));
+    query.project(as("value", col<&models::ModelWithId::field1>()));
 
     expectDatabaseError([this, &query]() { (void)database.select(query); }, orm::DatabaseErrorCode::Conversion,
                         GetParam().type, "select projection");
@@ -638,7 +698,7 @@ TEST_P(BackendConformanceTest, toOneRelationFollowsAdvertisedCapability)
     database.insert(models::ModelRelatedToOtherModel{1, 10, "owner", target});
 
     orm::Query<models::ModelRelatedToOtherModel> query;
-    query.where(col("id") == 1);
+    query.where(col<&models::ModelRelatedToOtherModel::id>() == 1);
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -674,14 +734,16 @@ TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabi
 
     if (not capabilities.relations.oneToMany)
     {
-        expectDatabaseError([this, &author, &book]() { (void)database.link(author, "books", book); },
+        expectDatabaseError([this, &author, &book]()
+                            { (void)database.link<&collection_models::Author::books>(author, book); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "link relation");
         return;
     }
 
     if (not capabilities.mutations.update)
     {
-        expectDatabaseError([this, &author, &book]() { (void)database.link(author, "books", book); },
+        expectDatabaseError([this, &author, &book]()
+                            { (void)database.link<&collection_models::Author::books>(author, book); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "link relation");
         return;
     }
@@ -699,21 +761,22 @@ TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabi
 
     if (capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable)
     {
-        expectDatabaseError([this, &author, &book]() { (void)database.link(author, "books", book); },
+        expectDatabaseError([this, &author, &book]()
+                            { (void)database.link<&collection_models::Author::books>(author, book); },
                             orm::DatabaseErrorCode::AffectedRowsUnavailable, GetParam().type, "link relation");
         return;
     }
 
-    ASSERT_EQ(database.link(author, "books", book), 1);
+    ASSERT_EQ(database.link<&collection_models::Author::books>(author, book), 1);
 
     orm::Query<collection_models::Author> query;
-    query.where(any("books", col("title") == book.title));
+    query.where(any<&collection_models::Author::books>(col<&collection_models::Book::title>() == book.title));
 
     if (not capabilities.query.collectionPredicates or not capabilities.relations.collectionPredicates)
     {
         expectDatabaseError([this, &query]() { (void)database.select(query); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "select");
-        EXPECT_EQ(database.unlink(author, "books", book), 1);
+        EXPECT_EQ(database.unlink<&collection_models::Author::books>(author, book), 1);
         return;
     }
 
@@ -722,7 +785,7 @@ TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabi
     EXPECT_EQ(linkedAuthors[0].id, author.id);
     EXPECT_FALSE(linkedAuthors[0].books.isLoaded());
 
-    EXPECT_EQ(database.unlink(author, "books", book), 1);
+    EXPECT_EQ(database.unlink<&collection_models::Author::books>(author, book), 1);
     EXPECT_TRUE(database.select(query).empty());
 }
 
@@ -758,22 +821,24 @@ TEST_P(BackendConformanceTest, collectionRelationFollowsAdvertisedCapabilities)
 
     if (not capabilities.mutations.atomicInsertIfAbsent)
     {
-        expectDatabaseError([this, &user, &role]() { (void)database.link(user, "roles", role); },
+        expectDatabaseError([this, &user, &role]()
+                            { (void)database.link<&collection_models::User::roles>(user, role); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "link relation");
         return;
     }
 
     if (capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable)
     {
-        expectDatabaseError([this, &user, &role]() { (void)database.link(user, "roles", role); },
+        expectDatabaseError([this, &user, &role]()
+                            { (void)database.link<&collection_models::User::roles>(user, role); },
                             orm::DatabaseErrorCode::AffectedRowsUnavailable, GetParam().type, "link relation");
         return;
     }
 
-    EXPECT_EQ(database.link(user, "roles", role), 1);
-    EXPECT_EQ(database.link(user, "roles", role), 0);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, role), 0);
     orm::Query<collection_models::User> query;
-    query.include("roles");
+    query.include<&collection_models::User::roles>();
 
     if (not capabilities.relations.collectionIncludes)
     {
@@ -827,24 +892,29 @@ TEST_P(BackendConformanceTest, compositeRelationKeysFollowAdvertisedCapability)
 
     if (not capabilities.mutations.atomicInsertIfAbsent)
     {
-        expectDatabaseError([this, &owner, &tag]() { (void)database.link(owner, "tags", tag); },
+        expectDatabaseError([this, &owner, &tag]()
+                            { (void)database.link<&collection_models::CompositeOwner::tags>(owner, tag); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "link relation");
         return;
     }
 
     if (capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable)
     {
-        expectDatabaseError([this, &owner, &tag]() { (void)database.link(owner, "tags", tag); },
+        expectDatabaseError([this, &owner, &tag]()
+                            { (void)database.link<&collection_models::CompositeOwner::tags>(owner, tag); },
                             orm::DatabaseErrorCode::AffectedRowsUnavailable, GetParam().type, "link relation");
         return;
     }
 
-    ASSERT_EQ(database.link(owner, "tags", tag), 1);
+    ASSERT_EQ(database.link<&collection_models::CompositeOwner::tags>(owner, tag), 1);
 
     if (capabilities.relations.collectionIncludes)
     {
         orm::Query<collection_models::CompositeOwner> query;
-        query.where(col("tenant") == owner.tenant and col("id") == owner.id).include("tags");
+        query
+            .where(col<&collection_models::CompositeOwner::tenant>() == owner.tenant and
+                   col<&collection_models::CompositeOwner::id>() == owner.id)
+            .include<&collection_models::CompositeOwner::tags>();
         const auto owners = database.select(query);
 
         ASSERT_EQ(owners.size(), 1);
@@ -856,13 +926,14 @@ TEST_P(BackendConformanceTest, compositeRelationKeysFollowAdvertisedCapability)
 
     if (not capabilities.mutations.remove)
     {
-        expectDatabaseError([this, &owner, &tag]() { (void)database.unlink(owner, "tags", tag); },
+        expectDatabaseError([this, &owner, &tag]()
+                            { (void)database.unlink<&collection_models::CompositeOwner::tags>(owner, tag); },
                             orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "unlink relation");
         return;
     }
 
-    EXPECT_EQ(database.unlink(owner, "tags", tag), 1);
-    EXPECT_EQ(database.unlink(owner, "tags", tag), 0);
+    EXPECT_EQ(database.unlink<&collection_models::CompositeOwner::tags>(owner, tag), 1);
+    EXPECT_EQ(database.unlink<&collection_models::CompositeOwner::tags>(owner, tag), 0);
 }
 
 TEST_P(BackendConformanceTest, deletingManyToManyEndpointCascadesOnlyTheJunctionLink)
@@ -888,12 +959,12 @@ TEST_P(BackendConformanceTest, deletingManyToManyEndpointCascadesOnlyTheJunction
     const auto role = collection_models::Role{2, "role", {}};
     database.insert(user);
     database.insert(role);
-    ASSERT_EQ(database.link(user, "roles", role), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
 
-    ASSERT_EQ(database.remove<collection_models::User>(col("id") == user.id), 1);
+    ASSERT_EQ(database.remove<collection_models::User>(col<&collection_models::User::id>() == user.id), 1);
 
     orm::Query<collection_models::Role> query;
-    query.where(col("id") == role.id).include("users");
+    query.where(col<&collection_models::Role::id>() == role.id).include<&collection_models::Role::users>();
     const auto roles = database.select(query);
 
     ASSERT_EQ(roles.size(), 1);
@@ -925,11 +996,11 @@ TEST_P(BackendConformanceTest, relationMutationRollsBackWithExplicitTransaction)
     database.insert(role);
 
     database.beginTransaction();
-    ASSERT_EQ(database.link(user, "roles", role), 1);
+    ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
     database.rollbackTransaction();
 
     orm::Query<collection_models::User> query;
-    query.where(col("id") == user.id).include("roles");
+    query.where(col<&collection_models::User::id>() == user.id).include<&collection_models::User::roles>();
     const auto users = database.select(query);
 
     ASSERT_EQ(users.size(), 1);
@@ -987,7 +1058,7 @@ TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
     database.commitTransaction();
 
     orm::Query<models::SomeDataModel> query;
-    query.where(col("field1") == 1);
+    query.where(col<&models::SomeDataModel::field1>() == 1);
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -1039,7 +1110,7 @@ TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
     EXPECT_NO_THROW(database.insert(models::ModelWithId{2, 20, "recovered"}));
 
     orm::Query<models::ModelWithId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithId::id>()));
     const auto rows = database.select(query);
     ASSERT_EQ(rows.size(), 2);
     EXPECT_EQ(rows[0].field2, "existing");
@@ -1050,7 +1121,7 @@ TEST_P(BackendConformanceTest, orderedLimitFollowsAdvertisedCapability)
 {
     const auto& capabilities = database.getBackendCapabilities();
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(asc(col("field1"))).limit(2);
+    query.orderBy(asc(col<&models::SomeDataModel::field1>())).limit(2);
 
     if (supportsSomeDataModel(capabilities) and not capabilities.query.limit)
     {
@@ -1078,7 +1149,9 @@ TEST_P(BackendConformanceTest, groupByAndHavingFollowAdvertisedCapabilities)
 {
     const auto& capabilities = database.getBackendCapabilities();
     orm::Query<models::ModelWithId> query;
-    query.groupBy(col("field2")).having(countAll() == 2).orderBy(asc(col("field2")));
+    query.groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() == 2)
+        .orderBy(asc(col<&models::ModelWithId::field2>()));
 
     if (supportsModelWithId(capabilities) and
         (not capabilities.query.groupBy or not capabilities.query.having or not capabilities.query.fullModelGrouping))
@@ -1108,10 +1181,10 @@ TEST_P(BackendConformanceTest, groupedProjectionWorksIndependentlyOfFullModelGro
 {
     const auto& capabilities = database.getBackendCapabilities();
     orm::ProjectionQuery<models::ModelWithId, conformance_models::GroupedProjection> query;
-    query.project(as("name", col("field2")), as("users", countAll()))
-        .groupBy(col("field2"))
-        .having(countAll() >= 2)
-        .orderBy(asc(col("field2")));
+    query.project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()))
+        .groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() >= 2)
+        .orderBy(asc(col<&models::ModelWithId::field2>()));
 
     if (supportsModelWithId(capabilities) and
         (not capabilities.query.projections or not capabilities.query.groupBy or not capabilities.query.having))
@@ -1155,7 +1228,7 @@ TEST_P(BackendConformanceTest, nullableAverageProjectionReturnsNullForAnEmptyRes
 
     createTable<models::ModelWithOptional>();
     orm::ProjectionQuery<models::ModelWithOptional, conformance_models::NullableAggregateProjection> query;
-    query.project(as("averageValue", avg(col("field3"))));
+    query.project(as("averageValue", avg(col<&models::ModelWithOptional::field3>())));
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -1166,7 +1239,7 @@ TEST_P(BackendConformanceTest, orderedOffsetWithoutLimitReturnsRemainingRows)
 {
     const auto& capabilities = database.getBackendCapabilities();
     orm::Query<models::SomeDataModel> query;
-    query.orderBy(asc(col("field1"))).offset(1);
+    query.orderBy(asc(col<&models::SomeDataModel::field1>())).offset(1);
 
     if (supportsSomeDataModel(capabilities) and
         (not capabilities.query.offset or not capabilities.query.offsetWithoutLimit))
@@ -1204,7 +1277,7 @@ TEST_P(BackendConformanceTest, mutationsReportExactAffectedRows)
     database.insert(std::vector<models::SomeDataModel>{{1, "one", 1.0}, {2, "two", 2.0}, {3, "three", 3.0}});
 
     orm::Update<models::SomeDataModel> update;
-    update.set(col("field2"), "updated").where(col("field1") >= 2);
+    update.set(col<&models::SomeDataModel::field2>(), "updated").where(col<&models::SomeDataModel::field1>() >= 2);
 
     if (not capabilities.mutations.update)
     {
@@ -1223,18 +1296,196 @@ TEST_P(BackendConformanceTest, mutationsReportExactAffectedRows)
 
     if (not capabilities.mutations.remove)
     {
-        expectDatabaseError([this]() { (void)database.remove<models::SomeDataModel>(col("field1") == 1); },
-                            orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "remove");
+        expectDatabaseError(
+            [this]() { (void)database.remove<models::SomeDataModel>(col<&models::SomeDataModel::field1>() == 1); },
+            orm::DatabaseErrorCode::UnsupportedFeature, GetParam().type, "remove");
     }
     else if (capabilities.mutations.affectedRows != orm::db::AffectedRowsSupport::Reliable)
     {
-        expectDatabaseError([this]() { (void)database.remove<models::SomeDataModel>(col("field1") == 1); },
-                            orm::DatabaseErrorCode::AffectedRowsUnavailable, GetParam().type, "remove");
+        expectDatabaseError(
+            [this]() { (void)database.remove<models::SomeDataModel>(col<&models::SomeDataModel::field1>() == 1); },
+            orm::DatabaseErrorCode::AffectedRowsUnavailable, GetParam().type, "remove");
     }
     else
     {
-        EXPECT_EQ(database.remove<models::SomeDataModel>(col("field1") == 1), 1);
+        EXPECT_EQ(database.remove<models::SomeDataModel>(col<&models::SomeDataModel::field1>() == 1), 1);
     }
+}
+
+TEST_P(BackendConformanceTest, typedFieldsCoverRenamedColumnsRelationsAggregatesAndNullableWrites)
+{
+    if (not GetParam().supported)
+    {
+        GTEST_SKIP() << "The complete typed query contract applies to supported backends";
+    }
+
+    using Account = conformance_models::TypedAccount;
+    using Profile = conformance_models::MappedModel;
+    using Role = collection_models::Role;
+
+    createTable<Profile>();
+    createTable<Role>();
+    createTable<Account>();
+    createRelationTables<Account>();
+    const Profile firstProfile{10, "alpha"};
+    const Profile secondProfile{20, "beta"};
+    const Role admin{100, "admin", {}};
+    const Role reader{200, "reader", {}};
+    const std::vector<Account> accounts{{1, 18, "first@example.test", firstProfile, {}},
+                                        {2, 25, std::nullopt, secondProfile, {}},
+                                        {3, std::nullopt, "third@example.test", std::nullopt, {}}};
+    database.insert(std::vector<Profile>{firstProfile, secondProfile});
+    database.insert(std::vector<Role>{admin, reader});
+    database.insert(accounts);
+    ASSERT_EQ(database.link<&Account::roles>(accounts[0], admin), 1);
+    ASSERT_EQ(database.link<&Account::roles>(accounts[1], reader), 1);
+
+    orm::Query<Account> selected;
+    selected
+        .where((col<&Account::age>().between(short{18}, 30) && col<&Account::email>() != nullptr) ||
+               col<&Account::profile, &Profile::id>().isNull())
+        .orderBy(desc(col<&Account::id>()))
+        .include<&Account::roles>();
+    const auto rows = database.select(selected);
+    ASSERT_EQ(rows.size(), 2);
+    EXPECT_EQ(rows[0].id, 3);
+    EXPECT_FALSE(rows[0].profile.has_value());
+    EXPECT_TRUE(rows[0].roles.isLoaded());
+    EXPECT_TRUE(rows[0].roles.empty());
+    EXPECT_EQ(rows[1].id, 1);
+    ASSERT_EQ(rows[1].roles.size(), 1);
+    EXPECT_EQ(rows[1].roles[0].name, "admin");
+
+    orm::Query<Account> rawQuery;
+    rawQuery.where(raw<Account>("account_age = :age", param("age", 25))).orderBy(rawOrder<Account>("id DESC"));
+    const auto rawRows = database.select(rawQuery);
+    ASSERT_EQ(rawRows.size(), 1);
+    EXPECT_EQ(rawRows[0].id, 2);
+
+    orm::ProjectionQuery<Account, conformance_models::TypedAccountStats> statistics;
+    statistics
+        .project(as("profile", col<&Account::profile, &Profile::name>()), as("accounts", countAll<Account>()),
+                 as("totalAge", sum(col<&Account::age>())), as("averageAge", avg(col<&Account::age>())),
+                 as("minimumAge", min(col<&Account::age>())), as("maximumAge", max(col<&Account::age>())))
+        .where(col<&Account::age>().in({18, 25}))
+        .groupBy(col<&Account::profile, &Profile::name>())
+        .having(countAll<Account>() >= 1 && avg(col<&Account::age>()) >= 18.0)
+        .andHaving(sum(col<&Account::age>()) > 0)
+        .orderBy(asc(col<&Account::profile, &Profile::name>()));
+    const auto grouped = database.select(statistics);
+    ASSERT_EQ(grouped.size(), 2);
+    EXPECT_EQ(grouped[0].profile, "alpha");
+    EXPECT_EQ(grouped[0].accounts, 1);
+    EXPECT_EQ(grouped[0].totalAge, 18);
+    EXPECT_EQ(grouped[0].averageAge, 18.0);
+    EXPECT_EQ(grouped[0].minimumAge, 18);
+    EXPECT_EQ(grouped[0].maximumAge, 18);
+    EXPECT_EQ(grouped[1].profile, "beta");
+    EXPECT_EQ(grouped[1].totalAge, 25);
+
+    orm::Update<Account> promoted;
+    promoted.set(col<&Account::age>(), std::optional<short>{21})
+        .set(col<&Account::email>(), "promoted@example.test")
+        .set(col<&Account::profile, &Profile::id>(), secondProfile.id)
+        .where(any<&Account::roles>(col<&Role::name>() == "admin"));
+    EXPECT_EQ(database.update(promoted), 1);
+
+    orm::Query<Account> promotedQuery;
+    promotedQuery.where(col<&Account::profile, &Profile::name>() == "beta").andWhere(col<&Account::age>() == 21);
+    const auto promotedRows = database.select(promotedQuery);
+    ASSERT_EQ(promotedRows.size(), 1);
+    EXPECT_EQ(promotedRows[0].id, 1);
+    EXPECT_EQ(promotedRows[0].email, "promoted@example.test");
+
+    orm::Update<Account> detached;
+    detached.set(col<&Account::profile, &Profile::id>(), std::nullopt)
+        .set(col<&Account::age>(), std::optional<int>{})
+        .where(col<&Account::id>() == 1);
+    EXPECT_EQ(database.update(detached), 1);
+    orm::Query<Account> missingValues;
+    missingValues.where(col<&Account::profile, &Profile::id>() == nullptr && col<&Account::age>().isNull())
+        .orderBy(asc(col<&Account::id>()));
+    const auto nullRows = database.select(missingValues);
+    ASSERT_EQ(nullRows.size(), 2);
+    EXPECT_EQ(nullRows[0].id, 1);
+    EXPECT_FALSE(nullRows[0].age.has_value());
+    EXPECT_FALSE(nullRows[0].profile.has_value());
+    EXPECT_EQ(nullRows[1].id, 3);
+
+    EXPECT_EQ(database.remove<Account>(any<&Account::roles>(col<&Role::name>() == "admin")), 1);
+    EXPECT_EQ(database.remove<Account>(none<&Account::roles>(col<&Role::name>() == "reader")), 1);
+    orm::Query<Account> surviving;
+    surviving.where(exists<&Account::roles>()).include<&Account::roles>();
+    const auto survivors = database.select(surviving);
+    ASSERT_EQ(survivors.size(), 1);
+    EXPECT_EQ(survivors[0].id, 2);
+    ASSERT_EQ(survivors[0].roles.size(), 1);
+    EXPECT_EQ(survivors[0].roles[0].name, "reader");
+}
+
+TEST_P(BackendConformanceTest, collectionPredicatesKeepOuterOwnerWhenRelatedAliasMatchesItsTable)
+{
+    if (not GetParam().supported)
+    {
+        GTEST_SKIP() << "Collection alias correlation applies to supported backends";
+    }
+
+    using Owner = conformance_models::AliasOwner;
+    using Target = conformance_models::AliasTarget;
+    using Profile = conformance_models::AliasProfile;
+
+    createTable<Profile>();
+    createTable<Target>();
+    createTable<Owner>();
+    createRelationTables<Owner>();
+    const Profile alpha{1, "alpha"};
+    const Profile beta{2, "beta"};
+    const Target matching{10, "match", alpha};
+    const Target other{20, "other", beta};
+    const std::vector<Owner> owners{{1, "first", {}}, {2, "second", {}}, {3, "empty", {}}};
+    database.insert(std::vector<Profile>{alpha, beta});
+    database.insert(std::vector<Target>{matching, other});
+    database.insert(owners);
+    ASSERT_EQ(database.link<&Owner::targets>(owners[0], matching), 1);
+    ASSERT_EQ(database.link<&Owner::targets>(owners[1], other), 1);
+
+    auto ownerIds = [this](const auto& predicate)
+    {
+        orm::Query<Owner> query;
+        query.where(predicate).orderBy(asc(col<&Owner::id>()));
+        std::vector<int> ids;
+        for (const auto& owner : database.select(query))
+            ids.push_back(owner.id);
+        return ids;
+    };
+    EXPECT_EQ(ownerIds(any<&Owner::targets>(col<&Target::name>() == "match")), std::vector<int>{1});
+    EXPECT_EQ((ownerIds(any<&Owner::targets>(col<&Target::profile, &Profile::name>() == "alpha"))),
+              std::vector<int>{1});
+    EXPECT_EQ(ownerIds(exists<&Owner::targets>()), (std::vector<int>{1, 2}));
+    EXPECT_EQ(ownerIds(none<&Owner::targets>(col<&Target::name>() == "match")), (std::vector<int>{2, 3}));
+
+    orm::Update<Owner> update;
+    update.set(col<&Owner::name>(), "updated").where(any<&Owner::targets>(col<&Target::name>() == "match"));
+    EXPECT_EQ(database.update(update), 1);
+    EXPECT_EQ(ownerIds(col<&Owner::name>() == "updated"), std::vector<int>{1});
+    EXPECT_EQ(ownerIds(col<&Owner::name>() == "second"), std::vector<int>{2});
+    EXPECT_EQ(ownerIds(col<&Owner::name>() == "empty"), std::vector<int>{3});
+
+    orm::Update<Owner> updateExisting;
+    updateExisting.set(col<&Owner::name>(), "linked").where(exists<&Owner::targets>());
+    EXPECT_EQ(database.update(updateExisting), 2);
+    EXPECT_EQ(ownerIds(col<&Owner::name>() == "linked"), (std::vector<int>{1, 2}));
+    orm::Update<Owner> updateMissing;
+    updateMissing.set(col<&Owner::name>(), "unmatched").where(none<&Owner::targets>(col<&Target::name>() == "match"));
+    EXPECT_EQ(database.update(updateMissing), 2);
+    EXPECT_EQ(ownerIds(col<&Owner::name>() == "unmatched"), (std::vector<int>{2, 3}));
+
+    EXPECT_EQ(database.remove<Owner>(any<&Owner::targets>(col<&Target::name>() == "match")), 1);
+    EXPECT_EQ(ownerIds(col<&Owner::id>() > 0), (std::vector<int>{2, 3}));
+    EXPECT_EQ(database.remove<Owner>(none<&Owner::targets>(col<&Target::name>() == "other")), 1);
+    EXPECT_EQ(ownerIds(exists<&Owner::targets>()), std::vector<int>{2});
+    EXPECT_EQ(database.remove<Owner>(exists<&Owner::targets>()), 1);
+    EXPECT_TRUE(ownerIds(col<&Owner::id>() > 0).empty());
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, BackendConformanceTest, conformanceBackendTestConfigs, backendTestName);

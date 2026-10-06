@@ -31,44 +31,44 @@ auto join(const std::vector<std::string>& parts, std::string_view separator) -> 
     return joined;
 }
 
-auto comparisonOperatorToSql(orm::query::ComparisonOperator comparisonOperator) -> std::string_view
+auto comparisonOperatorToSql(orm::query::detail::ComparisonOperator comparisonOperator) -> std::string_view
 {
     switch (comparisonOperator)
     {
-    case orm::query::ComparisonOperator::Equal:
+    case orm::query::detail::ComparisonOperator::Equal:
         return "=";
-    case orm::query::ComparisonOperator::NotEqual:
+    case orm::query::detail::ComparisonOperator::NotEqual:
         return "!=";
-    case orm::query::ComparisonOperator::Greater:
+    case orm::query::detail::ComparisonOperator::Greater:
         return ">";
-    case orm::query::ComparisonOperator::GreaterOrEqual:
+    case orm::query::detail::ComparisonOperator::GreaterOrEqual:
         return ">=";
-    case orm::query::ComparisonOperator::Less:
+    case orm::query::detail::ComparisonOperator::Less:
         return "<";
-    case orm::query::ComparisonOperator::LessOrEqual:
+    case orm::query::detail::ComparisonOperator::LessOrEqual:
         return "<=";
-    case orm::query::ComparisonOperator::Like:
-    case orm::query::ComparisonOperator::NotLike:
+    case orm::query::detail::ComparisonOperator::Like:
+    case orm::query::detail::ComparisonOperator::NotLike:
         break;
     }
 
     throw std::invalid_argument{"Unsupported aggregate comparison operator"};
 }
 
-auto aggregateFunctionToSql(orm::query::AggregateFunction function) -> std::string_view
+auto aggregateFunctionToSql(orm::query::detail::AggregateFunction function) -> std::string_view
 {
     switch (function)
     {
-    case orm::query::AggregateFunction::Count:
-    case orm::query::AggregateFunction::CountAll:
+    case orm::query::detail::AggregateFunction::Count:
+    case orm::query::detail::AggregateFunction::CountAll:
         return "COUNT";
-    case orm::query::AggregateFunction::Sum:
+    case orm::query::detail::AggregateFunction::Sum:
         return "SUM";
-    case orm::query::AggregateFunction::Avg:
+    case orm::query::detail::AggregateFunction::Avg:
         return "AVG";
-    case orm::query::AggregateFunction::Min:
+    case orm::query::detail::AggregateFunction::Min:
         return "MIN";
-    case orm::query::AggregateFunction::Max:
+    case orm::query::detail::AggregateFunction::Max:
         return "MAX";
     }
 
@@ -89,7 +89,8 @@ namespace orm::db::commands
 {
 DefaultSelectCommand::DefaultSelectCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultSelectCommand::select(model::ModelView model, const query::SelectSpec& spec) const -> SelectStatement
+auto DefaultSelectCommand::select(model::ModelView model,
+                                  const query::detail::SelectSpec& spec) const -> SelectStatement
 {
     RenderContext context{
         .model = model,
@@ -116,7 +117,7 @@ auto DefaultSelectCommand::select(model::ModelView model, const query::SelectSpe
     return SelectStatement{.sql = sql, .parameters = std::move(context.parameters)};
 }
 
-auto DefaultSelectCommand::getSelectFields(model::ModelView model, const query::SelectSpec& spec,
+auto DefaultSelectCommand::getSelectFields(model::ModelView model, const query::detail::SelectSpec& spec,
                                            RenderContext& context) -> std::string
 {
     if (spec.projections.empty())
@@ -156,7 +157,7 @@ auto DefaultSelectCommand::getFullModelSelectFields(bool shouldJoin, model::Mode
     return selectFields;
 }
 
-auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Projection>& projections,
+auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::detail::Projection>& projections,
                                                      RenderContext& context) -> std::string
 {
     std::vector<std::string> selectFields;
@@ -171,27 +172,27 @@ auto DefaultSelectCommand::getProjectionSelectFields(const std::vector<query::Pr
     return join(selectFields, ", ");
 }
 
-auto DefaultSelectCommand::renderProjectionSource(const query::ProjectionSource& source,
+auto DefaultSelectCommand::renderProjectionSource(const query::detail::ProjectionSource& source,
                                                   RenderContext& context) -> std::string
 {
-    return std::visit(Overloaded{[&context](const query::Column& column) { return renderColumn(column, context); },
-                                 [&context](const query::AggregateExpression& aggregate)
-                                 {
-                                     const auto expression = renderAggregate(aggregate, context);
-                                     const auto returnsExactNumeric =
-                                         aggregate.function == query::AggregateFunction::Sum or
-                                         aggregate.function == query::AggregateFunction::Avg;
-                                     return context.dialect.renderAggregateResult(expression, returnsExactNumeric);
-                                 }},
-                      source);
+    return std::visit(
+        Overloaded{[&context](const query::detail::Column& column) { return renderColumn(column, context); },
+                   [&context](const query::detail::AggregateExpression& aggregate)
+                   {
+                       const auto expression = renderAggregate(aggregate, context);
+                       const auto returnsExactNumeric = aggregate.function == query::detail::AggregateFunction::Sum or
+                                                        aggregate.function == query::detail::AggregateFunction::Avg;
+                       return context.dialect.renderAggregateResult(expression, returnsExactNumeric);
+                   }},
+        source);
 }
 
-auto DefaultSelectCommand::renderAggregate(const query::AggregateExpression& aggregate,
+auto DefaultSelectCommand::renderAggregate(const query::detail::AggregateExpression& aggregate,
                                            RenderContext& context) -> std::string
 {
     const auto functionName = aggregateFunctionToSql(aggregate.function);
 
-    if (aggregate.function == query::AggregateFunction::CountAll)
+    if (aggregate.function == query::detail::AggregateFunction::CountAll)
     {
         return std::format("{}(*)", functionName);
     }
@@ -284,7 +285,7 @@ auto DefaultSelectCommand::getJoins(bool shouldJoin, model::ModelView model, con
     return joins;
 }
 
-auto DefaultSelectCommand::getGroupBy(const query::SelectSpec& spec, RenderContext& context) -> std::string
+auto DefaultSelectCommand::getGroupBy(const query::detail::SelectSpec& spec, RenderContext& context) -> std::string
 {
     if (spec.groupBy.empty())
     {
@@ -302,7 +303,7 @@ auto DefaultSelectCommand::getGroupBy(const query::SelectSpec& spec, RenderConte
     return " GROUP BY " + join(groupByClauses, ", ");
 }
 
-auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredicate>& having,
+auto DefaultSelectCommand::getHaving(const std::optional<query::detail::AggregatePredicate>& having,
                                      RenderContext& context) -> std::string
 {
     if (not having.has_value())
@@ -313,17 +314,17 @@ auto DefaultSelectCommand::getHaving(const std::optional<query::AggregatePredica
     return " HAVING " + renderAggregatePredicate(having->getNode(), context);
 }
 
-auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNodePtr& node,
+auto DefaultSelectCommand::renderAggregatePredicate(const query::detail::AggregatePredicateNodePtr& node,
                                                     RenderContext& context) -> std::string
 {
     return renderAggregatePredicate(*node, context);
 }
 
-auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredicateNode& node,
+auto DefaultSelectCommand::renderAggregatePredicate(const query::detail::AggregatePredicateNode& node,
                                                     RenderContext& context) -> std::string
 {
     return std::visit(
-        Overloaded{[&context](const query::AggregateComparisonExpression& expression)
+        Overloaded{[&context](const query::detail::AggregateComparisonExpression& expression)
                    {
                        const auto aggregate = renderAggregate(expression.aggregate, context);
                        const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
@@ -331,21 +332,21 @@ auto DefaultSelectCommand::renderAggregatePredicate(const query::AggregatePredic
 
                        return std::format("{} {} {}", aggregate, sqlOperator, parameter);
                    },
-                   [&context](const query::AggregateLogicalExpression& expression)
+                   [&context](const query::detail::AggregateLogicalExpression& expression)
                    {
                        const auto left = renderAggregatePredicate(expression.left, context);
                        const auto sqlOperator =
-                           expression.logicalOperator == query::LogicalOperator::And ? "AND" : "OR";
+                           expression.logicalOperator == query::detail::LogicalOperator::And ? "AND" : "OR";
                        const auto right = renderAggregatePredicate(expression.right, context);
 
                        return std::format("({} {} {})", left, sqlOperator, right);
                    },
-                   [&context](const query::AggregateNotExpression& expression)
+                   [&context](const query::detail::AggregateNotExpression& expression)
                    { return std::format("(NOT ({}))", renderAggregatePredicate(expression.predicate, context)); }},
         node.expression);
 }
 
-auto DefaultSelectCommand::getOrderBy(const query::SelectSpec& spec, RenderContext& context) -> std::string
+auto DefaultSelectCommand::getOrderBy(const query::detail::SelectSpec& spec, RenderContext& context) -> std::string
 {
     if (spec.orderBy.empty())
     {
@@ -364,7 +365,7 @@ auto DefaultSelectCommand::getOrderBy(const query::SelectSpec& spec, RenderConte
         }
 
         orderByClauses.push_back(std::format("{} {}", renderColumn(orderBy.column, context),
-                                             orderBy.direction == query::OrderDirection::Asc ? "ASC" : "DESC"));
+                                             orderBy.direction == query::detail::OrderDirection::Asc ? "ASC" : "DESC"));
     }
 
     return " ORDER BY " + join(orderByClauses, ", ");

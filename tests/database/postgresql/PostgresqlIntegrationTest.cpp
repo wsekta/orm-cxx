@@ -185,7 +185,7 @@ TEST_P(PostgresqlIntegrationTest, scalarNullAndUtf8ValuesRoundTripAndUnsignedOve
         std::vector<models::ModelWithOptional>{{std::nullopt, std::nullopt, std::nullopt}, {42, text, 123.5}});
 
     orm::Query<models::ModelWithOptional> nullQuery;
-    nullQuery.where(col("field1").isNull());
+    nullQuery.where(col<&models::ModelWithOptional::field1>().isNull());
     const auto nullRows = database.select(nullQuery);
     ASSERT_EQ(nullRows.size(), 1);
     EXPECT_FALSE(nullRows[0].field1.has_value());
@@ -193,7 +193,7 @@ TEST_P(PostgresqlIntegrationTest, scalarNullAndUtf8ValuesRoundTripAndUnsignedOve
     EXPECT_FALSE(nullRows[0].field3.has_value());
 
     orm::Query<models::ModelWithOptional> presentQuery;
-    presentQuery.where(col("field1") == 42);
+    presentQuery.where(col<&models::ModelWithOptional::field1>() == 42);
     const auto presentRows = database.select(presentQuery);
     ASSERT_EQ(presentRows.size(), 1);
     EXPECT_EQ(presentRows[0].field1, std::optional<int>{42});
@@ -201,7 +201,7 @@ TEST_P(PostgresqlIntegrationTest, scalarNullAndUtf8ValuesRoundTripAndUnsignedOve
     EXPECT_EQ(presentRows[0].field3, std::optional<double>{123.5});
 
     orm::Query<models::ModelWithOptional> orderedNullsQuery;
-    orderedNullsQuery.orderBy(asc(col("field1")));
+    orderedNullsQuery.orderBy(asc(col<&models::ModelWithOptional::field1>()));
     const auto orderedNullRows = database.select(orderedNullsQuery);
     ASSERT_EQ(orderedNullRows.size(), 2);
     EXPECT_EQ(orderedNullRows[0].field1, std::optional<int>{42});
@@ -244,7 +244,7 @@ TEST_P(PostgresqlIntegrationTest, generatedIdentitySupportsDefaultValuesAndGener
     database.insert(postgresql_integration_models::AutoOnly{0});
 
     orm::Query<postgresql_integration_models::AutoOnly> autoOnlyQuery;
-    autoOnlyQuery.orderBy(asc(col("id")));
+    autoOnlyQuery.orderBy(asc(col<&postgresql_integration_models::AutoOnly::id>()));
     const auto autoOnlyRows = database.select(autoOnlyQuery);
     ASSERT_EQ(autoOnlyRows.size(), 2);
     EXPECT_GT(autoOnlyRows[0].id, 0);
@@ -257,7 +257,7 @@ TEST_P(PostgresqlIntegrationTest, generatedIdentitySupportsDefaultValuesAndGener
     ASSERT_EQ(generatedRows.size(), 1);
 
     orm::Query<models::ModelWithAutoIncrementId> selectedById;
-    selectedById.where(col("id") == generatedRows[0].id);
+    selectedById.where(col<&models::ModelWithAutoIncrementId::id>() == generatedRows[0].id);
     const auto selectedRows = database.select(selectedById);
     ASSERT_EQ(selectedRows.size(), 1);
     EXPECT_EQ(selectedRows[0].field2, "generated");
@@ -269,11 +269,11 @@ TEST_P(PostgresqlIntegrationTest, likePreservesPostgresqlCaseSensitivity)
     database.insert(models::ModelWithId{1, 10, "Alpha"});
 
     orm::Query<models::ModelWithId> lowercaseQuery;
-    lowercaseQuery.where(col("field2").like("alpha%"));
+    lowercaseQuery.where(col<&models::ModelWithId::field2>().like("alpha%"));
     EXPECT_TRUE(database.select(lowercaseQuery).empty());
 
     orm::Query<models::ModelWithId> exactCaseQuery;
-    exactCaseQuery.where(col("field2").like("Alpha%"));
+    exactCaseQuery.where(col<&models::ModelWithId::field2>().like("Alpha%"));
     EXPECT_EQ(database.select(exactCaseQuery).size(), 1);
 }
 
@@ -289,7 +289,7 @@ TEST_P(PostgresqlIntegrationTest, sumOfBigintProjectionPreservesValuesAboveDoubl
     });
 
     orm::ProjectionQuery<models::ModelWithAllInts, postgresql_integration_models::ExactSumProjection> query;
-    query.project(as("total", sum(col("field7"))));
+    query.project(as("total", sum(col<&models::ModelWithAllInts::field7>())));
     const auto rows = database.select(query);
 
     ASSERT_EQ(rows.size(), 1);
@@ -307,10 +307,10 @@ TEST_P(PostgresqlIntegrationTest, relationUpsertIsIdempotentAndReportsAffectedRo
     database.insert(user);
     database.insert(role);
 
-    EXPECT_EQ(database.link(user, "roles", role), 1);
-    EXPECT_EQ(database.link(user, "roles", role), 0);
-    EXPECT_EQ(database.unlink(user, "roles", role), 1);
-    EXPECT_EQ(database.unlink(user, "roles", role), 0);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
+    EXPECT_EQ(database.link<&collection_models::User::roles>(user, role), 0);
+    EXPECT_EQ(database.unlink<&collection_models::User::roles>(user, role), 1);
+    EXPECT_EQ(database.unlink<&collection_models::User::roles>(user, role), 0);
 }
 
 TEST_P(PostgresqlIntegrationTest, projectionDistinctGroupingOrderingAndPaginationCompose)
@@ -320,22 +320,28 @@ TEST_P(PostgresqlIntegrationTest, projectionDistinctGroupingOrderingAndPaginatio
         {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "gamma"}});
 
     orm::ProjectionQuery<models::ModelWithId, postgresql_integration_models::NameProjection> distinctQuery;
-    distinctQuery.project(as("name", col("field2"))).distinct().orderBy(desc(col("field2"))).offset(1).limit(2);
+    distinctQuery.project(as("name", col<&models::ModelWithId::field2>()))
+        .distinct()
+        .orderBy(desc(col<&models::ModelWithId::field2>()))
+        .offset(1)
+        .limit(2);
     const auto distinctRows = database.select(distinctQuery);
     ASSERT_EQ(distinctRows.size(), 2);
     EXPECT_EQ(distinctRows[0].name, "beta");
     EXPECT_EQ(distinctRows[1].name, "alpha");
 
     orm::ProjectionQuery<models::ModelWithId, postgresql_integration_models::NameProjection> invalidDistinctQuery;
-    invalidDistinctQuery.project(as("name", col("field2"))).distinct().orderBy(asc(col("field1")));
+    invalidDistinctQuery.project(as("name", col<&models::ModelWithId::field2>()))
+        .distinct()
+        .orderBy(asc(col<&models::ModelWithId::field1>()));
     expectPostgresqlError([this, &invalidDistinctQuery]() { (void)database.select(invalidDistinctQuery); },
                           orm::DatabaseErrorCode::UnsupportedFeature, "select projection", std::nullopt);
 
     orm::ProjectionQuery<models::ModelWithId, postgresql_integration_models::GroupedProjection> groupedQuery;
-    groupedQuery.project(as("name", col("field2")), as("users", countAll()))
-        .groupBy(col("field2"))
-        .having(countAll() >= 2)
-        .orderBy(asc(col("field2")));
+    groupedQuery.project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()))
+        .groupBy(col<&models::ModelWithId::field2>())
+        .having(countAll<models::ModelWithId>() >= 2)
+        .orderBy(asc(col<&models::ModelWithId::field2>()));
     const auto groupedRows = database.select(groupedQuery);
     ASSERT_EQ(groupedRows.size(), 2);
     EXPECT_EQ(groupedRows[0].name, "alpha");
@@ -344,7 +350,9 @@ TEST_P(PostgresqlIntegrationTest, projectionDistinctGroupingOrderingAndPaginatio
     EXPECT_EQ(groupedRows[1].users, 2);
 
     orm::ProjectionQuery<models::ModelWithId, postgresql_integration_models::GroupedProjection> invalidGroupingQuery;
-    invalidGroupingQuery.project(as("name", col("field2")), as("users", countAll())).groupBy(col("field1"));
+    invalidGroupingQuery
+        .project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()))
+        .groupBy(col<&models::ModelWithId::field1>());
     expectPostgresqlError([this, &invalidGroupingQuery]() { (void)database.select(invalidGroupingQuery); },
                           orm::DatabaseErrorCode::UnsupportedFeature, "select projection", std::nullopt);
 }
@@ -367,7 +375,7 @@ TEST_P(PostgresqlIntegrationTest, transactionRollbackRecoversAfterConstraintFail
     database.commitTransaction();
 
     orm::Query<models::ModelWithId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithId::id>()));
     const auto rows = database.select(query);
     ASSERT_EQ(rows.size(), 3);
     EXPECT_EQ(rows[1].field2, "recovered");
@@ -390,7 +398,7 @@ TEST_P(PostgresqlIntegrationTest, nativeSqlStateDistinguishesUniqueAndForeignKey
                           orm::DatabaseErrorCode::Constraint, "insert", "23503");
 
     orm::Query<models::ModelWithId> query;
-    query.orderBy(asc(col("id")));
+    query.orderBy(asc(col<&models::ModelWithId::id>()));
     EXPECT_EQ(database.select(query).size(), 2);
 }
 
@@ -410,7 +418,7 @@ TEST_P(PostgresqlIntegrationTest, runtimeBindCeilingSupportsAPracticalLargePredi
     std::vector<int> ids(practicalParameterCount);
     std::iota(ids.begin(), ids.end(), 0);
     orm::Query<models::ModelWithId> query;
-    query.where(col("id").in(ids));
+    query.where(col<&models::ModelWithId::id>().in(ids));
     const auto rows = database.select(query);
     ASSERT_EQ(rows.size(), 1);
     EXPECT_EQ(rows[0].id, 1);

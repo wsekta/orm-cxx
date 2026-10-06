@@ -43,16 +43,16 @@ static_assert(std::same_as<ApplicationDatabase::Payload<Employee>,
     (void)database.select(query);
 
     orm::ProjectionQuery<Employee, EmployeeName> projection;
-    projection.project(orm::query::as("name", orm::query::col("name")));
+    projection.project(orm::query::as("name", orm::query::col<&Employee::department, &Department::name>()));
     (void)database.select(projection);
 
     database.insert(Employee{});
     database.insert(std::vector<Employee>{});
 
     orm::Update<Employee> update;
-    update.set(orm::query::col("rank"), 2).where(orm::query::col("id") == 1);
+    update.set(orm::query::col<&Employee::rank>(), 2).where(orm::query::col<&Employee::id>() == 1);
     (void)database.update(update);
-    (void)database.remove<Employee>(orm::query::col("id") == 1);
+    (void)database.remove<Employee>(orm::query::col<&Employee::id>() == 1);
     database.createTable<Employee>();
     database.deleteTable<Employee>();
 

@@ -28,9 +28,9 @@ public:
     [[nodiscard]] auto createTable(model::ModelView model) const -> std::string;
     [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string;
     [[nodiscard]] auto insert(model::ModelView model) const -> std::string;
-    [[nodiscard]] auto select(model::ModelView model, const query::SelectSpec& spec) const -> SelectStatement;
-    [[nodiscard]] auto update(model::ModelView model, const query::UpdateSpec& spec) const -> Statement;
-    [[nodiscard]] auto remove(model::ModelView model, const query::Predicate& predicate) const -> Statement;
+    [[nodiscard]] auto select(model::ModelView model, const query::detail::SelectSpec& spec) const -> SelectStatement;
+    [[nodiscard]] auto update(model::ModelView model, const query::detail::UpdateSpec& spec) const -> Statement;
+    [[nodiscard]] auto remove(model::ModelView model, const query::detail::Predicate& predicate) const -> Statement;
 
 private:
     std::unique_ptr<commands::CreateTableCommand> createTableCommand;

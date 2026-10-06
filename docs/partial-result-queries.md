@@ -24,24 +24,11 @@ fields returned by the projection. `ProjectionQuery<Source, Result>` is the only
 public entry point for partial-result queries; `orm::Query<Model>` remains
 reserved for full-model results.
 
-The public projection helper lives in `orm::query`:
-
-```cpp
-namespace orm::query
-{
-struct Projection;
-
-auto as(std::string resultField, Column sourceColumn) -> Projection;
-auto as(std::string resultField, AggregateExpression aggregate) -> Projection;
-
-auto count(Column sourceColumn) -> AggregateExpression;
-auto countAll() -> AggregateExpression;
-auto sum(Column sourceColumn) -> AggregateExpression;
-auto avg(Column sourceColumn) -> AggregateExpression;
-auto min(Column sourceColumn) -> AggregateExpression;
-auto max(Column sourceColumn) -> AggregateExpression;
-} // namespace orm::query
-```
+Projection and aggregate helpers live in `orm::query`. `as("dtoField", expression)`
+accepts a typed column or aggregate and retains its source model.
+`count(column)`, `sum(column)`, `avg(column)`, `min(column)`, and `max(column)`
+take typed column references. `countAll<Model>()` explicitly names the source
+model because it has no column argument.
 
 Projection aliases are explicit. The alias passed to `as` names a field on the
 DTO result type, while `col` references a field path on the source model.
@@ -53,7 +40,7 @@ struct User
 {
     int id;
     std::string displayName;
-    std::string email;
+    std::optional<std::string> email;
 };
 
 struct UserSummary
@@ -63,8 +50,8 @@ struct UserSummary
 };
 
 orm::ProjectionQuery<User, UserSummary> query;
-query.project(as("id", col("id")),
-              as("name", col("displayName")));
+query.project(as("id", col<&User::id>()),
+              as("name", col<&User::displayName>()));
 
 std::vector<UserSummary> rows = database.select(query);
 ```
@@ -78,10 +65,10 @@ and join controls as `Query`:
 using namespace orm::query;
 
 orm::ProjectionQuery<User, UserSummary> query;
-query.project(as("id", col("id")),
-              as("name", col("displayName")))
-     .where(col("email").isNotNull())
-     .orderBy(asc(col("id")))
+query.project(as("id", col<&User::id>()),
+              as("name", col<&User::displayName>()))
+     .where(col<&User::email>().isNotNull())
+     .orderBy(asc(col<&User::id>()))
      .limit(25)
      .offset(50);
 ```
@@ -124,8 +111,8 @@ struct UserLocation
 };
 
 orm::ProjectionQuery<User, UserLocation> query;
-query.project(as("id", col("id")),
-              as("city", col("profile.city")));
+query.project(as("id", col<&User::id>()),
+              as("city", col<&User::profile, &Profile::city>()));
 ```
 
 Nullable result fields are represented with `std::optional<T>`:
@@ -138,8 +125,8 @@ struct UserEmail
 };
 
 orm::ProjectionQuery<User, UserEmail> query;
-query.project(as("id", col("id")),
-              as("email", col("email")));
+query.project(as("id", col<&User::id>()),
+              as("email", col<&User::email>()));
 ```
 
 ## Aggregate result queries
@@ -155,28 +142,41 @@ struct CityStats
 {
     std::string city;
     long long users;
-    double averageAge;
+    std::optional<double> averageAge;
+};
+
+struct Profile
+{
+    int id;
+    std::string city;
+};
+
+struct User
+{
+    int id;
+    int age;
+    Profile profile;
 };
 
 orm::ProjectionQuery<User, CityStats> query;
-query.project(as("city", col("profile.city")),
-              as("users", countAll()),
-              as("averageAge", avg(col("age"))))
-     .groupBy(col("profile.city"))
-     .having(countAll() > 1);
+query.project(as("city", col<&User::profile, &Profile::city>()),
+              as("users", countAll<User>()),
+              as("averageAge", avg(col<&User::age>())))
+     .groupBy(col<&User::profile, &Profile::city>())
+     .having(countAll<User>() > 1);
 ```
 
-Supported v1 aggregate helpers are `count(col(...))`, `countAll()`,
+Supported aggregate helpers are `count(col(...))`, `countAll<User>()`,
 `sum(col(...))`, `avg(col(...))`, `min(col(...))`, and `max(col(...))`.
-`countAll()` renders `COUNT(*)`; the other helpers validate and render a source
+`countAll<User>()` renders `COUNT(*)`; the other helpers validate and render a source
 column path.
 
 `HAVING` uses aggregate predicates instead of regular column predicates:
 
 ```cpp
-query.having(countAll() > 1)
-     .andHaving(avg(col("age")) >= 18.0)
-     .orHaving(!(max(col("age")) < 65));
+query.having(countAll<User>() > 1)
+     .andHaving(avg(col<&User::age>()) >= 18.0)
+     .orHaving(!(max(col<&User::age>()) < 65));
 ```
 
 Comparison values are bound as SQL parameters, the same way `WHERE` predicate
@@ -191,7 +191,7 @@ Common DTO field choices are:
 
 * `long long` for `count` and `countAll`,
 * `double` for `avg`,
-* the database result type for `sum`, `min`, and `max`,
+* `long long` for integral `sum`, and the column scalar type for `min` and `max`,
 * `std::optional<T>` when the aggregate can return SQL `NULL`, such as `avg`
   or `sum` over an empty result set.
 
@@ -206,16 +206,16 @@ Alias validation is part of the public contract:
 * every DTO field must have exactly one projection alias,
 * every projection alias must match a DTO field,
 * duplicate aliases are invalid,
-* invalid source column paths are invalid for the projection,
+* source column paths and their root model are checked at compile time,
 * relation fields must be projected as flat DTO fields.
 
-Alias validation failures throw `std::invalid_argument` before executing
+DTO aliases remain runtime strings. Alias validation failures throw `std::invalid_argument` before executing
 SQL.
 
 ## Limitations
 
 Projection DTOs are flat. Relation fields must be flattened through aliases,
-for example `as("city", col("profile.city"))`.
+for example `as("city", col<&User::profile, &Profile::city>())`.
 
 `ProjectionQuery` does not expose `include`; collection wrappers are model
 state and are never hydrated into a flat DTO. A projection `WHERE` predicate
@@ -225,3 +225,5 @@ mapped source-model collection, but the collection itself cannot be projected.
 Aggregate `ORDER BY`, `COUNT(DISTINCT ...)`, raw aggregate expressions,
 and general subqueries are not part of this version. Correlated `EXISTS` is
 available only through the collection predicate helpers.
+
+Typed fields replace the 0.1 text-path API; see [Migration to typed queries](migration-typed-queries.md).

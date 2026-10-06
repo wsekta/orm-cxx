@@ -98,7 +98,7 @@ struct Book
 };
 ```
 
-This choice also determines whether `unlink(author, "books", book)` is valid.
+This choice also determines whether `unlink<&Author::books>(author, book)` is valid.
 
 ## Many-to-many
 
@@ -218,8 +218,8 @@ Use endpoint objects with complete, non-null primary-key values:
 User user{1, "Ada"};
 Role role{10, "admin"};
 
-std::size_t inserted = database.link(user, "roles", role);
-std::size_t removed = database.unlink(user, "roles", role);
+std::size_t inserted = database.link<&User::roles>(user, role);
+std::size_t removed = database.unlink<&User::roles>(user, role);
 ```
 
 For many-to-many, `link` inserts one junction row and `unlink` deletes it. Both
@@ -230,8 +230,8 @@ endpoint rows.
 For one-to-many, pass the parent first and child last:
 
 ```cpp
-std::size_t changed = database.link(author, "books", book);
-std::size_t detached = database.unlink(author, "books", book);
+std::size_t changed = database.link<&Author::books>(author, book);
+std::size_t detached = database.unlink<&Author::books>(author, book);
 ```
 
 `link` assigns the child's mapped foreign key and may move the child from a
@@ -253,8 +253,8 @@ explicitly with `Query<T>::include`:
 
 ```cpp
 orm::Query<Author> query;
-query.include("books")
-     .orderBy(orm::query::asc(orm::query::col("id")))
+query.include<&Author::books>()
+     .orderBy(orm::query::asc(orm::query::col<&Author::id>()))
      .limit(20);
 
 auto authors = database.select(query);
@@ -284,13 +284,13 @@ Collection predicates use correlated `EXISTS` subqueries:
 using namespace orm::query;
 
 orm::Query<Author> prolific;
-prolific.where(any("books", col("title").like("C++%")));
+prolific.where(any<&Author::books>(col<&Book::title>().like("C++%")));
 
 orm::Query<Author> withBooks;
-withBooks.where(exists("books"));
+withBooks.where(exists<&Author::books>());
 
 orm::Query<Author> withoutDrafts;
-withoutDrafts.where(none("books", col("title").like("Draft%")));
+withoutDrafts.where(none<&Author::books>(col<&Book::title>().like("Draft%")));
 ```
 
 The predicate passed to `any` or `none` is relative to the collection's target
@@ -299,12 +299,12 @@ model. It may use scalar target fields and existing one-level to-one paths.
 checks only whether the collection is non-empty. Values remain SOCI bind
 parameters.
 
-Filtering does not load the collection. Add `include("books")` separately when
+Filtering does not load the collection. Add `include<&Author::books>()` separately when
 the result objects also need the elements. Nested collection predicates are not
 supported.
 
 A collection is not a flat column path. Expressions such as
-`col("books.title")` are rejected, as are collection fields in `ORDER BY`,
+`col<&Author::books, &Book::title>()` are rejected, as are collection fields in `ORDER BY`,
 `GROUP BY`, projections, aggregate expressions, and `Update` assignments.
 
 ## End-to-end workflow
@@ -337,15 +337,15 @@ database.insert(user);
 database.insert(role);
 
 // 3. Persist associations explicitly.
-database.link(author, "books", book); // updates Book::author
-database.link(user, "roles", role);   // inserts into user_roles
+database.link<&Author::books>(author, book); // updates Book::author
+database.link<&User::roles>(user, role);   // inserts into user_roles
 
 // The inverse many-to-many side is equivalent for mutations:
-database.link(role, "users", user);  // returns 0: the link already exists
+database.link<&Role::users>(role, user);  // returns 0: the link already exists
 
 // 4. Load collections explicitly.
 orm::Query<Author> authorQuery;
-authorQuery.include("books");
+authorQuery.include<&Author::books>();
 const auto authors = database.select(authorQuery);
 
 if (!authors.empty() && authors[0].books.isLoaded())
@@ -357,8 +357,8 @@ if (!authors.empty() && authors[0].books.isLoaded())
 }
 
 // 5. Detach links before removing rows when application rules require it.
-database.unlink(author, "books", book);
-database.unlink(user, "roles", role);
+database.unlink<&Author::books>(author, book);
+database.unlink<&User::roles>(user, role);
 
 // 6. Drop owning junction tables before endpoint tables.
 database.deleteRelationTables<User>();
@@ -416,18 +416,17 @@ payload models, and schema migrations are outside the current contract.
 * `oneToMany<&Author::books>()` and `manyToMany<&User::roles>()` require
   collection member pointers. Prefer a target member pointer for `mappedBy`;
   its `FixedString` fallback names a C++ field, not a SQL column.
-* Runtime query and mutation calls such as `include("roles")`,
-  `exists("roles")`, and `link(user, "roles", role)` still use reflected C++
-  field names. Compile-time query-path validation is planned separately.
+* Query and mutation operations select collection member pointers. Their
+  owner, target model, and nested predicate are checked at compile time.
 * Adding an element with `model.roles.values().push_back(role)` changes only
-  that in-memory wrapper. Call `database.link(model, "roles", role)` to persist
+  that in-memory wrapper. Call `database.link<&User::roles>(model, role)` to persist
   the association.
 * `insert(model)` never inspects or stores collection wrapper contents. Insert
   both endpoints first and then call `link`.
 * An empty wrapper with `isLoaded() == false` does not prove that the database
   relation is empty. Use `include` and check for `isLoaded() == true` before
   interpreting `empty()` as a database result.
-* `include("roles")` and `where(exists("roles"))` are independent. The first
+* `include<&User::roles>()` and `where(exists<&User::roles>())` are independent. The first
   hydrates the wrapper; the second filters parent rows.
 * Only the owning many-to-many model calls `createRelationTables<T>()` and
   `deleteRelationTables<T>()`. Calling them for the inverse model is a no-op.

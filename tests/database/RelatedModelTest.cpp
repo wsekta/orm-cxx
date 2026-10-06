@@ -22,7 +22,7 @@ TEST_P(RelatedModelTest,
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
-    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col("id")));
+    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col<&models::ModelRelatedToOtherModel::id>()));
     queryForRelatedModel.disableJoining();
     auto returnedModels = database.select(queryForRelatedModel);
 
@@ -44,7 +44,7 @@ TEST_P(RelatedModelTest, shouldExecuteInsertQueryAndSelectQueryWithRelatedModel_
     database.insert(models);
     database.insert(relatedModels);
     orm::Query<models::ModelRelatedToOtherModel> queryForRelatedModel;
-    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col("id")));
+    queryForRelatedModel.orderBy(orm::query::asc(orm::query::col<&models::ModelRelatedToOtherModel::id>()));
     auto returnedModels = database.select(queryForRelatedModel);
 
     for (std::size_t i = 0; i < models.size(); i++)
@@ -67,7 +67,7 @@ TEST_P(RelatedModelTest, shouldRoundTripOptionalRelatedModelWithJoining)
         {1, 100, "with-relation", relatedModels[0]}, {2, 200, "without-relation", std::nullopt}});
 
     orm::Query<models::ModelOptionallyRelatedToOtherModel> query;
-    query.orderBy(orm::query::asc(orm::query::col("id")));
+    query.orderBy(orm::query::asc(orm::query::col<&models::ModelOptionallyRelatedToOtherModel::id>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 2);
@@ -90,7 +90,7 @@ TEST_P(RelatedModelTest, shouldRoundTripOptionalRelatedModelWithoutJoining)
         {1, 100, "with-relation", relatedModel}, {2, 200, "without-relation", std::nullopt}});
 
     orm::Query<models::ModelOptionallyRelatedToOtherModel> query;
-    query.disableJoining().orderBy(orm::query::asc(orm::query::col("id")));
+    query.disableJoining().orderBy(orm::query::asc(orm::query::col<&models::ModelOptionallyRelatedToOtherModel::id>()));
     const auto returnedModels = database.select(query);
 
     ASSERT_EQ(returnedModels.size(), 2);

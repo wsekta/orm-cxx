@@ -135,9 +135,9 @@ For that case only, use the structural-name fallback:
 orm::oneToMany<&Author::books>().mappedBy<"author">()
 ```
 
-Runtime operations have not yet moved to member pointers. Calls such as
-`query.include("roles")`, `exists("roles")`, and
-`database.link(user, "roles", role)` still take reflected C++ field names.
+Runtime operations now select typed member pointers:
+`query.include<&User::roles>()`, `exists<&User::roles>()`, and
+`database.link<&User::roles>(user, role)`.
 
 ## 4. Define the closed schema
 
@@ -177,18 +177,13 @@ using AppSchema = orm::Schema<>;
 orm::Database<AppSchema> database;
 ```
 
-## 5. Keep query paths unchanged for now
+## 5. Migrate query fields and relations
 
-This migration does not rename the current query DSL. `col("displayName")`
-still uses the reflected C++ field name and is translated through
-`columns_names`; it does not use the physical `display_name` spelling.
-One-level paths such as `col("profile.city")` and collection names passed to
-`include`, `any`, `exists`, and `none` remain runtime strings.
-
-Compile-time query-field and relation-path validation is the next focused API
-step. Until then, mapping and schema errors are compile-time failures while
-query-path and backend-capability errors are reported when a query is
-validated or rendered.
+Version 0.2 removes string query paths. Use `col<&User::displayName>()` and
+`col<&User::profile, &Profile::city>()`; physical `columns_names` mappings
+remain unchanged. Collection filters and mutations also use member pointers.
+See [Migration to typed queries](migration-typed-queries.md) for the complete
+replacement table and value rules.
 
 ## Suggested rollout
 

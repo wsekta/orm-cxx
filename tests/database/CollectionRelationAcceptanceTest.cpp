@@ -163,10 +163,10 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, manyToManyUsesReloadedAutoIncre
     ASSERT_EQ(roles.size(), 1);
     ASSERT_NE(users[0].id, 0);
     ASSERT_NE(roles[0].id, 0);
-    EXPECT_EQ(database.link(users[0], "roles", roles[0]), 1);
+    EXPECT_EQ(database.link<&acceptance_models::AutoUser::roles>(users[0], roles[0]), 1);
 
     orm::Query<acceptance_models::AutoUser> includedQuery;
-    includedQuery.include("roles");
+    includedQuery.include<&acceptance_models::AutoUser::roles>();
     users = database.select(includedQuery);
 
     ASSERT_EQ(users.size(), 1);
@@ -190,7 +190,7 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeUsesOneCollectionQueryIn
     database.insert(sharedRole);
     for (const auto& user : users)
     {
-        ASSERT_EQ(database.link(user, "roles", sharedRole), 1);
+        ASSERT_EQ(database.link<&collection_models::User::roles>(user, sharedRole), 1);
     }
 
     const auto executedQueries = std::make_shared<std::vector<std::string>>();
@@ -199,7 +199,7 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeUsesOneCollectionQueryIn
     session.set_logger(soci::logger{new QueryCountingLogger{executedQueries}});
 
     orm::Query<collection_models::User> query;
-    query.include("roles");
+    query.include<&collection_models::User::roles>();
     const auto returnedUsers = database.select(query);
     session.set_logger(originalLogger);
 
@@ -221,10 +221,10 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeGroupsLongPrimaryKeysUsi
     const long_key_models::Target target{10, "target"};
     database.insert(owner);
     database.insert(target);
-    ASSERT_EQ(database.link(owner, "targets", target), 1);
+    ASSERT_EQ(database.link<&long_key_models::Owner::targets>(owner, target), 1);
 
     orm::Query<long_key_models::Owner> query;
-    query.include("targets");
+    query.include<&long_key_models::Owner::targets>();
     const auto owners = database.select(query);
 
     ASSERT_EQ(owners.size(), 1);

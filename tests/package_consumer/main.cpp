@@ -4,12 +4,18 @@
 #include <vector>
 
 #include "orm-cxx/database.hpp"
+#include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/query.hpp"
 #include "orm-cxx/update.hpp"
 
 struct PackageModel
 {
     int id;
+    std::string name;
+};
+
+struct PackageSummary
+{
     std::string name;
 };
 
@@ -29,6 +35,17 @@ int main()
 {
     try
     {
+        using orm::query::col;
+
+        // These builders are exercised for every installed backend configuration.
+        orm::Query<PackageModel> query;
+        query.where(col<&PackageModel::id>() == short{1}).orderBy(orm::query::asc(col<&PackageModel::id>()));
+        orm::Update<PackageModel> update;
+        update.set(col<&PackageModel::name>(), "updated").where(col<&PackageModel::id>() == 1);
+        orm::ProjectionQuery<PackageModel, PackageSummary> projection;
+        projection.project(orm::query::as("name", col<&PackageModel::name>())).where(col<&PackageModel::id>() == 1);
+
+        orm::Database<PackageSchema> database;
         const orm::db::CommandGeneratorFactory factory;
         const auto* sqlite = factory.findBackend("sqlite3://:memory:");
         const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
@@ -44,22 +61,16 @@ int main()
         }
 
 #if ORM_CXX_ENABLE_SQLITE_BACKEND
-        using orm::query::col;
-        orm::Database<PackageSchema> database;
         database.connect("sqlite3://:memory:");
         database.createTable<PackageModel>();
         database.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
 
-        orm::Query<PackageModel> query;
-        query.where(col("id") == 1);
         auto rows = database.select(query);
         if (rows.size() != 1 or rows.front().name != "first")
         {
             return 3;
         }
 
-        orm::Update<PackageModel> update;
-        update.set(col("name"), "updated").where(col("id") == 1);
         if (database.update(update) != 1)
         {
             return 4;
@@ -69,7 +80,12 @@ int main()
         {
             return 5;
         }
-        if (database.remove<PackageModel>(col("id") == 1) != 1 or not database.select(query).empty())
+        const auto summaries = database.select(projection);
+        if (summaries.size() != 1 or summaries.front().name != "updated")
+        {
+            return 8;
+        }
+        if (database.remove<PackageModel>(col<&PackageModel::id>() == 1) != 1 or not database.select(query).empty())
         {
             return 6;
         }

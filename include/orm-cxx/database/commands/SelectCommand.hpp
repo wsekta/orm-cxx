@@ -12,6 +12,6 @@ public:
     virtual ~SelectCommand() = default;
 
     [[nodiscard]] virtual auto select(model::ModelView model,
-                                      const query::SelectSpec& spec) const -> SelectStatement = 0;
+                                      const query::detail::SelectSpec& spec) const -> SelectStatement = 0;
 };
 } // namespace orm::db::commands

@@ -6,7 +6,7 @@ namespace orm::db::commands
 {
 DefaultDeleteCommand::DefaultDeleteCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
 
-auto DefaultDeleteCommand::remove(model::ModelView model, const query::Predicate& predicate) const -> Statement
+auto DefaultDeleteCommand::remove(model::ModelView model, const query::detail::Predicate& predicate) const -> Statement
 {
     RenderContext context{
         .model = model,

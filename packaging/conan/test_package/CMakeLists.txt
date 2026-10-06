@@ -14,3 +14,11 @@ target_compile_definitions(
 add_executable(test_reflection test_reflection.cpp)
 target_compile_features(test_reflection PRIVATE cxx_std_20)
 target_link_libraries(test_reflection PRIVATE orm-cxx::reflection)
+
+foreach(consumer IN ITEMS test_package test_reflection)
+    if(MSVC)
+        target_compile_options(${consumer} PRIVATE /W4 /WX)
+    else()
+        target_compile_options(${consumer} PRIVATE -Wall -Wextra -Wpedantic -Werror)
+    endif()
+endforeach()

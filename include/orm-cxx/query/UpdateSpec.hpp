@@ -6,7 +6,7 @@
 #include "Predicate.hpp"
 #include "QueryValue.hpp"
 
-namespace orm::query
+namespace orm::query::detail
 {
 struct UpdateValue
 {
@@ -27,4 +27,4 @@ struct UpdateSpec
     std::vector<UpdateAssignment> assignments;
     std::optional<Predicate> predicate = std::nullopt;
 };
-} // namespace orm::query
+} // namespace orm::query::detail

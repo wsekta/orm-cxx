@@ -68,7 +68,7 @@ consteval auto projectionLogicalType() -> std::optional<model::ColumnType>
     }
 }
 
-inline auto validateProjectionAliasNames(const std::vector<query::Projection>& projections,
+inline auto validateProjectionAliasNames(const std::vector<query::detail::Projection>& projections,
                                          const std::vector<ProjectionResultField>& fields) -> void
 {
     if (projections.empty())
@@ -118,7 +118,7 @@ inline auto validateProjectionAliasNames(const std::vector<query::Projection>& p
 }
 
 template <typename Result>
-auto validateProjectionAliases(const std::vector<query::Projection>& projections) -> void
+auto validateProjectionAliases(const std::vector<query::detail::Projection>& projections) -> void
 {
     std::vector<ProjectionResultField> resultFields;
     resultFields.reserve(reflection::fieldCount<Result>);
@@ -151,68 +151,87 @@ public:
     ProjectionQuery() = default;
 
     template <typename... Projections>
+        requires(query::detail::ProjectionFor<Projections, Source> && ...)
     auto project(Projections... projections) -> ProjectionQuery<Source, Result>&
     {
-        data.projections = {std::move(projections)...};
+        data.projections = {query::detail::erase(projections)...};
         detail::validateProjectionAliases<Result>(data.projections);
 
         return *this;
     }
 
-    auto where(const query::Predicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, Source>
+    auto where(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.predicate = predicate;
+        data.predicate = query::detail::erase(predicate);
 
         return *this;
     }
 
-    auto andWhere(const query::Predicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, Source>
+    auto andWhere(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.predicate = data.predicate.has_value() ? data.predicate.value() && predicate : predicate;
+        data.predicate = data.predicate.has_value() ? data.predicate.value() && query::detail::erase(predicate) :
+                                                      query::detail::erase(predicate);
 
         return *this;
     }
 
-    auto orWhere(const query::Predicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::PredicateFor<P, Source>
+    auto orWhere(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.predicate = data.predicate.has_value() ? data.predicate.value() || predicate : predicate;
+        data.predicate = data.predicate.has_value() ? data.predicate.value() || query::detail::erase(predicate) :
+                                                      query::detail::erase(predicate);
 
         return *this;
     }
 
     template <typename... Orders>
+        requires(query::detail::OrderFor<Orders, Source> && ...)
     auto orderBy(Orders... orders) -> ProjectionQuery<Source, Result>&
     {
-        data.orderBy = {std::move(orders)...};
+        data.orderBy = {query::detail::erase(orders)...};
 
         return *this;
     }
 
     template <typename... Columns>
+        requires(query::detail::ColumnFor<Columns, Source> && ...)
     auto groupBy(Columns... columns) -> ProjectionQuery<Source, Result>&
     {
-        data.groupBy = {std::move(columns)...};
+        data.groupBy = {query::detail::erase(columns)...};
 
         return *this;
     }
 
-    auto having(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, Source>
+    auto having(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.having = predicate;
+        data.having = query::detail::erase(predicate);
 
         return *this;
     }
 
-    auto andHaving(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, Source>
+    auto andHaving(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.having = data.having.has_value() ? data.having.value() && predicate : predicate;
+        data.having = data.having.has_value() ? data.having.value() && query::detail::erase(predicate) :
+                                                query::detail::erase(predicate);
 
         return *this;
     }
 
-    auto orHaving(const query::AggregatePredicate& predicate) -> ProjectionQuery<Source, Result>&
+    template <typename P>
+        requires query::detail::AggregatePredicateFor<P, Source>
+    auto orHaving(const P& predicate) -> ProjectionQuery<Source, Result>&
     {
-        data.having = data.having.has_value() ? data.having.value() || predicate : predicate;
+        data.having = data.having.has_value() ? data.having.value() || query::detail::erase(predicate) :
+                                                query::detail::erase(predicate);
 
         return *this;
     }
@@ -250,13 +269,13 @@ private:
     friend class orm::Database;
     friend class orm::DatabaseCore;
 
-    [[nodiscard]] inline auto getData() const -> const query::SelectSpec&
+    [[nodiscard]] inline auto getData() const -> const query::detail::SelectSpec&
     {
         detail::validateProjectionAliases<Result>(data.projections);
 
         return data;
     }
 
-    query::SelectSpec data;
+    query::detail::SelectSpec data;
 };
 } // namespace orm

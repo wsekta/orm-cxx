@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -26,6 +27,7 @@ struct RenderContext
     bool shouldJoin = true;
     ColumnRenderMode columnRenderMode = ColumnRenderMode::Select;
     std::string tableAlias = {};
+    std::unordered_map<std::string, std::string> relationAliases = {};
     bool allowCollectionPredicates = true;
     std::vector<StatementParameter> parameters = {};
     std::unordered_set<std::string> parameterNames = {};
@@ -39,11 +41,12 @@ struct WriteColumn
     bool isNotNull;
 };
 
-[[nodiscard]] auto renderColumn(const query::Column& column, const RenderContext& context) -> std::string;
-[[nodiscard]] auto renderWriteColumn(const query::Column& column, model::ModelView model, const SqlDialect& dialect,
-                                     bool qualifyWithTable) -> WriteColumn;
-[[nodiscard]] auto renderWhere(const std::optional<query::Predicate>& predicate, RenderContext& context) -> std::string;
-[[nodiscard]] auto renderWhere(const query::Predicate& predicate, RenderContext& context) -> std::string;
+[[nodiscard]] auto renderColumn(const query::detail::Column& column, const RenderContext& context) -> std::string;
+[[nodiscard]] auto renderWriteColumn(const query::detail::Column& column, model::ModelView model,
+                                     const SqlDialect& dialect, bool qualifyWithTable) -> WriteColumn;
+[[nodiscard]] auto renderWhere(const std::optional<query::detail::Predicate>& predicate,
+                               RenderContext& context) -> std::string;
+[[nodiscard]] auto renderWhere(const query::detail::Predicate& predicate, RenderContext& context) -> std::string;
 [[nodiscard]] auto addAutomaticParameter(RenderContext& context, const query::QueryValue& value) -> std::string;
 [[nodiscard]] auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::string;
 } // namespace orm::db::commands

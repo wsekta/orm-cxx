@@ -9,7 +9,9 @@
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"
 
-using namespace orm::query;
+using namespace orm::query::detail;
+using orm::query::param;
+using orm::query::QueryValue;
 
 namespace
 {
