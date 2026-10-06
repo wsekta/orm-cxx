@@ -98,48 +98,99 @@ builds configurations that do not have a matching binary.
 
 ## Maintainer setup and publishing
 
-1. Add the repository Actions secret **`PACKAGE_REGISTRY_TOKEN`**, containing a
-   GitHub personal access token for an account allowed to fork the public
-   catalogs, push recipe branches to its forks, and open upstream PRs. A classic
-   token with `public_repo` scope is suitable for these public repositories.
+1. Authenticate GitHub CLI as **`wsekta`**, preserving SSH for Git operations:
+
+   ```sh
+   gh auth login --hostname github.com --git-protocol ssh --web --skip-ssh-key
+   gh api user --jq .login
+   ```
+
+   The second command must print `wsekta`. Add the repository Actions secret
+   **`PACKAGE_REGISTRY_TOKEN`**, containing a classic GitHub personal access token
+   created by `wsekta`, with **`public_repo`** scope and a **30-day expiry**.
+   It must allow forking the public catalogs, pushing recipe branches to its forks,
+   and opening upstream PRs. Use the GitHub secret input panel to store its value.
    The repository's ordinary `GITHUB_TOKEN` cannot perform these cross-repository
    operations. The script creates the forks automatically. Do not put tokens in
    files, recipes, workflow inputs, or commit messages.
-2. Before the first ConanCenter submission, the account behind that token must
-   sign the ConanCenter Index CLA. Open or identify the ConanCenter issue for
-   the new package, then set the repository Actions variable
-   **`CONANCENTER_ISSUE`** to its positive numeric identifier. The pipeline
-   adds `Fixes #<issue>` to the ConanCenter PR and stops before release if the
-   variable is absent or malformed. Update the variable when a later release
-   needs a different related issue.
+2. Before the first ConanCenter submission, `wsekta` must personally review and
+   sign the [ConanCenter Index CLA](https://cla-assistant.io/conan-io/conan-center-index).
+   The vcpkg submission may also request the
+   [Microsoft CLA](https://github.com/microsoft/vcpkg/blob/master/CONTRIBUTING.md#legal)
+   after opening its PR; the account holder must review and sign it.
+   Open or identify the ConanCenter issue for the new package, then set the
+   repository Actions variable **`CONANCENTER_ISSUE`** to its positive numeric
+   identifier. This must identify an existing issue in
+   `conan-io/conan-center-index`, not a pull request. The pipeline adds
+   `Fixes #<issue>` to the ConanCenter PR. Update the variable when a later release
+   needs a different related issue. CLA acceptance and token creation require
+   the account holder's interaction.
 3. Give GitHub Actions permission to write repository contents (the release job
    requests `contents: write`). Branch protection rules and organization token
    policies may require an administrator's configuration.
-4. Update `VERSION.txt`, review the changes on `main`, and wait for its checks. Create
-   the `release` branch from the reviewed commit, or fast-forward the existing
-   branch to it. For example, for the **first** release only:
+4. Keep `VERSION.txt` at `0.1.0` for the initial release. For a later release,
+   increase it before preparing changed sources. Review the changes on `main`
+   and wait for all its checks. Create `release` from that exact reviewed SHA,
+   or fast-forward the existing branch to it. For example, for the **first**
+   release only, substitute the approved commit SHA:
 
    ```sh
-   git push origin main:release
+   git push origin <reviewed-sha>:refs/heads/release
    ```
 
-5. The workflow builds the archive once, checks it through both managers on Linux
+5. The workflow runs the read-only
+   `python scripts/publish_packages.py preflight` before preparing release
+   sources and again before publishing them. With `GH_TOKEN` set to the registry
+   secret, it verifies the token owner is `wsekta` and the ConanCenter issue
+   exists. `PACKAGE_REGISTRY_OWNER` supplies the expected login; its default is
+   `wsekta`, and the workflow explicitly sets it. Missing or invalid credentials,
+   a different account, and an absent, malformed, or PR issue stop publication.
+   Preflight does not create forks, tags, releases, or submissions.
+   The workflow builds the archive once, checks it through both managers on Linux
    and Windows, then creates tag `v<version>` and a GitHub release with the source
-   archive, `SHA256SUMS`, and provenance metadata `release.json`.
+   archive, `SHA256SUMS`, and provenance metadata `release.json`. Publishing the
+   release uses the repository's `GITHUB_TOKEN`; catalog submissions use the
+   registry token.
 6. Separate submission jobs open/update version-specific PRs in both catalogs.
+   Their commits use the authenticated login for the author and committer, with
+   `<account-id>+wsekta@users.noreply.github.com` derived from GitHub's account API.
    Track their review and central CI until accepted. vcpkg version database
    entries are generated with `x-add-version`; Conan `config.yml` and
    `conandata.yml` retain existing versions. No binary is uploaded directly to
    ConanCenter by this repository; ConanCenter builds its own binaries.
 
 Release jobs only run for the `release` branch. PR builds receive no publication
-credentials. A manual workflow dispatch on `release` retries the process; existing
-tags and source assets must still match the exact tested commit and bytes. Pushes
-are never forced, open PRs are reused, and a closed unmerged submission requires
-maintainer action. Increase `VERSION.txt` when changing a published release. If a
-network failure interrupts an unpublished draft, rerunning completes missing
+credentials. Published tags, commits, and source assets are immutable: the script
+requires the exact tested commit and bytes, and refuses a conflicting tag or hash.
+Pushes are never forced, open PRs are reused, and a closed unmerged submission
+requires maintainer action. Increase `VERSION.txt` when changing published sources.
+If a network failure interrupts an unpublished draft, rerunning completes missing
 assets after checking the assets already present. A missing token stops publishing
 with an actionable error instead of reporting false success.
+
+### Retry without changing the release
+
+For a configuration or transient failure, correct the configuration and rerun
+failed jobs for the same release run and SHA. A manual workflow dispatch on
+`release` is also safe while the branch still points to that SHA.
+
+If only the submission script needs fixing after publication, commit the fix on
+`main`, then run only the affected catalog submission with the updated script and
+the **original** `package-distribution` artifact, including its original
+`release.json`, archive, checksums, and generated recipes. Download it from the
+successful release run and choose a new `--work` directory for each retry:
+
+```sh
+gh run download <release-run-id> --name package-distribution --dir build/retry-distribution
+python scripts/publish_packages.py vcpkg --distribution build/retry-distribution --work build/retry-vcpkg-0.1.0
+python scripts/publish_packages.py conan --distribution build/retry-distribution --work build/retry-conan-0.1.0 --conan-issue <issue-number>
+```
+
+Authenticate these local commands as `wsekta`, or provide `GH_TOKEN` for that
+account. `--expected-owner wsekta` can explicitly select the same owner check.
+Do not rerun `prepare_packages.py` from the newer `main`, move the published tag,
+or run the complete release workflow from a moved `release` branch with the same
+version. A conflict in the immutable sources must be resolved before proceeding.
 
 ## Local package verification
 
@@ -191,5 +242,7 @@ minor release series while the library is at version `0.x`.
 
 The normal repository/submodule build remains available for development.
 
-References: [vcpkg central submissions](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-adding-to-registry),
+References: [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_login),
+[GitHub token scopes](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps),
+[vcpkg central submissions](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started-adding-to-registry),
 [ConanCenter contribution guide](https://github.com/conan-io/conan-center-index/blob/master/CONTRIBUTING.md).

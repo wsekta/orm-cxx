@@ -1,7 +1,10 @@
 """Release safety and source/recipe integrity checks; no network or credentials."""
 
 import json
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -105,10 +108,92 @@ class PackageReleaseTests(unittest.TestCase):
         metadata = prepare.prepare(self.directory)
         ref = [{"ref": f"refs/tags/{metadata['tag']}",
                 "object": {"type": "commit", "sha": "different-commit"}}]
-        with patch.object(publish, "gh_api", return_value=ref) as api:
+        with patch.object(publish, "gh_api", side_effect=[None, ref]) as api, \
+             patch.object(publish, "run") as command:
             with self.assertRaisesRegex(ValueError, "another commit"):
                 publish.release(self.directory, metadata)
-        self.assertEqual(api.call_count, 1)
+        self.assertEqual(api.call_count, 2)
+        command.assert_not_called()
+        self.assertTrue(all(len(call.args) == 1 for call in api.call_args_list))
+
+    def test_release_resolves_annotated_tags_before_comparing_commits(self):
+        metadata = prepare.prepare(self.directory)
+        ref = [{"ref": f"refs/tags/{metadata['tag']}",
+                "object": {"type": "tag", "sha": "annotated-tag"}}]
+        with patch.object(publish, "gh_api", side_effect=[
+            None, ref, {"object": {"type": "commit", "sha": "different-commit"}}
+        ]) as api, patch.object(publish, "run") as command:
+            with self.assertRaisesRegex(ValueError, "another commit"):
+                publish.release(self.directory, metadata)
+        self.assertEqual(api.call_args_list[-1].args[0],
+                         f"repos/{metadata['repository']}/git/tags/annotated-tag")
+        command.assert_not_called()
+
+    def test_gh_api_parses_headers_and_sends_json_payloads(self):
+        response = subprocess.CompletedProcess(
+            ["gh", "api"], 0,
+            stdout='HTTP/2.0 201 Created\r\nContent-Type: application/json\r\n\r\n{"id": 42}\n',
+            stderr="",
+        )
+        with patch.object(publish.subprocess, "run", return_value=response) as command:
+            self.assertEqual(publish.gh_api("repos/example/repo/git/refs", {"sha": "tested"}),
+                             {"id": 42})
+        self.assertIn("--include", command.call_args.args[0])
+        self.assertIn("--method", command.call_args.args[0])
+        self.assertEqual(json.loads(command.call_args.kwargs["input"]), {"sha": "tested"})
+
+    def test_gh_api_only_treats_actual_http_404_as_missing(self):
+        cases = (
+            (404, 1, True),
+            (404, 1, False),
+            (401, 1, True),
+            (403, 1, True),
+            (429, 1, True),
+            (500, 1, True),
+            (None, 1, True),
+        )
+        for status, returncode, allow_missing in cases:
+            with self.subTest(status=status, allow_not_found=allow_missing):
+                stdout = (f'HTTP/2.0 {status}\nContent-Type: application/json\n\n'
+                          '{"message": "Not Found"}') if status else ""
+                result = subprocess.CompletedProcess(
+                    ["gh", "api"], returncode, stdout=stdout,
+                    stderr="request failed: 404 is mentioned but no HTTP response was received",
+                )
+                with patch.object(publish.subprocess, "run", return_value=result):
+                    if status == 404 and allow_missing:
+                        self.assertIsNone(publish.gh_api("repos/example/repo", allow_not_found=True))
+                    else:
+                        with self.assertRaises(subprocess.CalledProcessError):
+                            publish.gh_api("repos/example/repo", allow_not_found=allow_missing)
+
+    def test_release_api_errors_stop_before_tag_or_asset_mutations(self):
+        metadata = prepare.prepare(self.directory)
+        for status in (401, 403, 429, None):
+            with self.subTest(status=status):
+                stdout = f'HTTP/2.0 {status}\n\n{{"message": "Failure"}}' if status else ""
+                result = subprocess.CompletedProcess(["gh", "api"], 1, stdout=stdout,
+                                                     stderr="request failed")
+                with patch.object(publish.subprocess, "run", return_value=result) as api, \
+                     patch.object(publish, "run") as command:
+                    with self.assertRaises(subprocess.CalledProcessError):
+                        publish.release(self.directory, metadata)
+                self.assertEqual(api.call_count, 1)
+                self.assertIn(f"repos/{metadata['repository']}/releases/tags/{metadata['tag']}",
+                              api.call_args.args[0])
+                command.assert_not_called()
+
+    def test_release_checksum_errors_stop_before_github_calls(self):
+        metadata = prepare.prepare(self.directory)
+        for algorithm in ("sha256", "sha512"):
+            with self.subTest(algorithm=algorithm), \
+                 patch.object(publish, "gh_api") as api, \
+                 patch.object(publish, "run") as command:
+                changed = {**metadata, algorithm: "incorrect-checksum"}
+                with self.assertRaisesRegex(ValueError, algorithm):
+                    publish.release(self.directory, changed)
+            api.assert_not_called()
+            command.assert_not_called()
 
     def test_vcpkg_rerun_does_not_downgrade_a_newer_central_version(self):
         prepare.write_json(self.directory / "ports/orm-cxx/vcpkg.json", {"version": "0.2.0"})
@@ -127,6 +212,83 @@ class PackageReleaseTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "CONANCENTER_ISSUE"):
                     publish.validate_conan_issue(value)
 
+    def test_submission_identity_requires_expected_owner_and_positive_user_id(self):
+        user = {"login": "wsekta", "id": 12345}
+        with patch.object(publish, "gh_api", return_value=user) as api:
+            self.assertEqual(publish.submission_identity(), user)
+        api.assert_called_once_with("user")
+        for invalid in ({"login": "another-user", "id": 12345},
+                        *({"login": "wsekta", "id": value}
+                          for value in (None, 0, -1, True, "12345"))):
+            with self.subTest(user=invalid), \
+                 patch.object(publish, "gh_api", return_value=invalid):
+                with self.assertRaises(ValueError):
+                    publish.submission_identity()
+
+    def test_submission_rejects_another_account_before_creating_a_fork(self):
+        metadata = prepare.prepare(self.directory)
+        for manager in ("vcpkg", "conan"):
+            with self.subTest(manager=manager), \
+                 patch.object(publish, "gh_api", return_value={"login": "another-user", "id": 42}) as api, \
+                 patch.object(publish, "run") as command:
+                with self.assertRaises(ValueError):
+                    publish.submit(self.directory, metadata, manager,
+                                   self.directory / "submissions", conan_issue="123")
+            api.assert_called_once_with("user")
+            command.assert_not_called()
+            self.assertFalse((self.directory / "submissions").exists())
+
+    def test_preflight_validates_conan_issue_against_upstream(self):
+        user = {"login": "wsekta", "id": 12345}
+        issue = {"number": 123, "state": "open", "title": "[request] orm-cxx/0.1.0",
+                 "html_url": "https://example.test/issues/123"}
+        with patch.object(publish, "gh_api", side_effect=[user, issue]) as api:
+            self.assertEqual(publish.validate_submission_configuration("123"), user)
+        self.assertEqual(api.call_args_list[-1].args,
+                         ("repos/conan-io/conan-center-index/issues/123",))
+        with patch.object(publish, "gh_api", side_effect=[user, {**issue, "pull_request": {}}]):
+            with self.assertRaises(ValueError):
+                publish.validate_submission_configuration("123")
+        with patch.object(publish, "gh_api", side_effect=[user, {**issue, "title": "another package"}]):
+            with self.assertRaises(ValueError):
+                publish.validate_submission_configuration("123")
+        with patch.object(publish, "gh_api", side_effect=[user, {**issue, "state": "closed"}]):
+            self.assertEqual(publish.validate_submission_configuration("123"), user)
+
+    def test_preflight_rejects_invalid_issue_without_creating_remote_state(self):
+        user = {"login": "wsekta", "id": 12345}
+        with patch.object(publish, "gh_api", return_value=user) as api, \
+             patch.object(publish, "run") as command:
+            with self.assertRaisesRegex(ValueError, "CONANCENTER_ISSUE"):
+                publish.validate_submission_configuration("0")
+        self.assertTrue(all(call.args == ("user",) for call in api.call_args_list))
+        command.assert_not_called()
+
+    def test_submission_git_identity_matches_authenticated_account(self):
+        user = {"login": "wsekta", "id": 12345}
+        publish.run("git", "init", "--quiet", self.directory)
+        publish.configure_submission_identity(self.directory, user)
+        self.assertEqual(publish.run("git", "config", "--local", "--get", "user.name",
+                                     cwd=self.directory), "wsekta")
+        self.assertEqual(publish.run("git", "config", "--local", "--get", "user.email",
+                                     cwd=self.directory), "12345+wsekta@users.noreply.github.com")
+
+    def test_submission_commit_overrides_inherited_author_and_committer(self):
+        user = {"login": "wsekta", "id": 12345}
+        publish.run("git", "init", "--quiet", self.directory)
+        publish.configure_submission_identity(self.directory, user)
+        publish.run("git", "config", "commit.gpgsign", "false", cwd=self.directory)
+        (self.directory / "package.txt").write_text("package change\n", encoding="utf-8")
+        inherited = {"GIT_AUTHOR_NAME": "Unexpected author", "GIT_AUTHOR_EMAIL": "other@example.test",
+                     "GIT_COMMITTER_NAME": "Unexpected committer",
+                     "GIT_COMMITTER_EMAIL": "other@example.test"}
+        with patch.dict(os.environ, inherited):
+            publish.commit_changes(self.directory, "Add package", user=user)
+        identity = publish.run("git", "log", "-1", "--format=%an|%ae|%cn|%ce", cwd=self.directory)
+        self.assertEqual(identity,
+                         "wsekta|12345+wsekta@users.noreply.github.com|"
+                         "wsekta|12345+wsekta@users.noreply.github.com")
+
     def test_existing_submission_is_reused_without_changing_its_branch(self):
         pull_request = {"html_url": "https://example.test/pr/1", "state": "open", "merged_at": None}
         with patch.object(publish, "gh_api", return_value=[pull_request]):
@@ -140,20 +302,80 @@ class PackageReleaseTests(unittest.TestCase):
         metadata = prepare.prepare(self.directory)
         ref = [{"ref": f"refs/tags/{metadata['tag']}",
                 "object": {"type": "commit", "sha": metadata["commit"]}}]
-        state = {"isDraft": False, "assets": [{"name": metadata["archive"]}]}
+        state = {"draft": False, "assets": [{"name": metadata["archive"]}]}
         def download(*args, **kwargs):
             destination = Path(args[args.index("--dir") + 1])
             (destination / metadata["archive"]).write_bytes(b"published-original")
             return ""
-        with patch.object(publish, "gh_api", return_value=ref), \
-             patch.object(publish.subprocess, "run") as command, \
+        with patch.object(publish, "gh_api", side_effect=[state, ref]), \
              patch.object(publish, "run", side_effect=download) as upload:
-            command.return_value.returncode = 0
-            command.return_value.stdout = json.dumps(state)
             with self.assertRaisesRegex(ValueError, "differs"):
                 publish.release(self.directory, metadata)
             self.assertEqual(upload.call_count, 1)
             self.assertEqual(upload.call_args.args[2], "download")
+
+    def release_download(self, *args, **kwargs):
+        if args[2] == "download":
+            name = args[args.index("--pattern") + 1]
+            destination = Path(args[args.index("--dir") + 1])
+            shutil.copyfile(self.directory / name, destination / name)
+        return ""
+
+    def test_draft_release_resumes_by_adding_only_missing_assets(self):
+        metadata = prepare.prepare(self.directory)
+        ref = [{"ref": f"refs/tags/{metadata['tag']}",
+                "object": {"type": "commit", "sha": metadata["commit"]}}]
+        state = {"draft": True, "assets": [{"name": metadata["archive"]}]}
+        with patch.object(publish, "gh_api", side_effect=[state, ref]) as api, \
+             patch.object(publish, "run", side_effect=self.release_download) as command:
+            publish.release(self.directory, metadata)
+        self.assertTrue(all(len(call.args) == 1 for call in api.call_args_list))
+        uploads = [call.args[4] for call in command.call_args_list if call.args[2] == "upload"]
+        self.assertEqual(uploads, [self.directory / "SHA256SUMS", self.directory / "release.json"])
+        self.assertEqual(command.call_args.args,
+                         ("gh", "release", "edit", metadata["tag"], "--repo",
+                          metadata["repository"], "--draft=false"))
+
+    def test_complete_published_release_is_verified_without_mutations(self):
+        metadata = prepare.prepare(self.directory)
+        ref = [{"ref": f"refs/tags/{metadata['tag']}",
+                "object": {"type": "commit", "sha": metadata["commit"]}}]
+        state = {"draft": False,
+                 "assets": [{"name": name} for name in (metadata["archive"], "SHA256SUMS", "release.json")]}
+        with patch.object(publish, "gh_api", side_effect=[state, ref]) as api, \
+             patch.object(publish, "run", side_effect=self.release_download) as command:
+            publish.release(self.directory, metadata)
+        self.assertTrue(all(len(call.args) == 1 for call in api.call_args_list))
+        self.assertEqual(command.call_count, 3)
+        self.assertTrue(all(call.args[2] == "download" for call in command.call_args_list))
+
+    def test_draft_checks_all_existing_assets_before_adding_missing_ones(self):
+        metadata = prepare.prepare(self.directory)
+        ref = [{"ref": f"refs/tags/{metadata['tag']}",
+                "object": {"type": "commit", "sha": metadata["commit"]}}]
+        state = {"draft": True, "assets": [{"name": "release.json"}]}
+        def corrupt_download(*args, **kwargs):
+            if args[2] == "download":
+                destination = Path(args[args.index("--dir") + 1])
+                (destination / "release.json").write_bytes(b"different published metadata")
+            return ""
+        with patch.object(publish, "gh_api", side_effect=[state, ref]), \
+             patch.object(publish, "run", side_effect=corrupt_download) as command:
+            with self.assertRaisesRegex(ValueError, "differs"):
+                publish.release(self.directory, metadata)
+        self.assertEqual(command.call_count, 1)
+        self.assertEqual(command.call_args.args[2], "download")
+
+    def test_published_release_rejects_missing_asset_without_uploading(self):
+        metadata = prepare.prepare(self.directory)
+        ref = [{"ref": f"refs/tags/{metadata['tag']}",
+                "object": {"type": "commit", "sha": metadata["commit"]}}]
+        state = {"draft": False, "assets": [{"name": metadata["archive"]}]}
+        with patch.object(publish, "gh_api", side_effect=[state, ref]), \
+             patch.object(publish, "run", side_effect=self.release_download) as command:
+            with self.assertRaisesRegex(ValueError, "Published release lacks"):
+                publish.release(self.directory, metadata)
+        self.assertTrue(all(call.args[2] == "download" for call in command.call_args_list))
 
 
 if __name__ == "__main__":
