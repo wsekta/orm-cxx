@@ -4,7 +4,7 @@ var searchData=
   ['increment_20primary_20key_1',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md65',1,'']]],
   ['insert_20objects_2',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
   ['insertimpl_3',['insertImpl',['../classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254',1,'orm::DatabaseCore::insertImpl(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944',1,'orm::DatabaseCore::insertImpl(T object) -&gt; void']]],
-  ['installation_4',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md74',1,'']]],
+  ['installation_4',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md75',1,'']]],
   ['integration_5',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
   ['isconnected_6',['isConnected',['../classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb',1,'orm::DatabaseCore']]],
   ['ismanytomanydescriptor_7',['IsManyToManyDescriptor',['../structorm_1_1detail_1_1IsManyToManyDescriptor.html',1,'orm::detail']]],
