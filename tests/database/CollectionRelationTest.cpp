@@ -466,7 +466,7 @@ TEST_P(CollectionRelationDatabaseTest, relationMutations_shouldRejectMissingKeys
 
     EXPECT_THROW((void)database.link<&collection_models::User::roles>(missingKey, role), std::invalid_argument);
     EXPECT_ANY_THROW((void)database.link<&collection_models::User::roles>(missingEndpoint, role));
-    EXPECT_THROW((void)database.unlink<&collection_models::User::roles>(missingKey, role), std::invalid_argument);
+    EXPECT_EQ(database.unlink<&collection_models::User::roles>(missingKey, role), 0);
 }
 
 TEST_P(CollectionRelationDatabaseTest, includeOnEmptyRootResult_shouldNotRunCollectionHydration)

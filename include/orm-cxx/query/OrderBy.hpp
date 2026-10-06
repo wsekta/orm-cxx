@@ -97,4 +97,6 @@ struct IsTypedOrderBy<TypedOrderBy<M>> : std::true_type
 };
 template <typename E, typename M>
 concept OrderFor = IsTypedOrderBy<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
+template <typename M, typename... Orders>
+concept ORM_QUERY_MODEL_ORDERS = (OrderFor<Orders, M> && ...);
 } // namespace orm::query::detail

@@ -79,4 +79,6 @@ struct IsTypedProjection<TypedProjection<M>> : std::true_type
 };
 template <typename E, typename M>
 concept ProjectionFor = IsTypedProjection<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
+template <typename M, typename... Projections>
+concept ORM_QUERY_MODEL_PROJECTIONS = (ProjectionFor<Projections, M> && ...);
 } // namespace orm::query::detail

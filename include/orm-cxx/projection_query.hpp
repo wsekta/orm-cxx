@@ -151,7 +151,7 @@ public:
     ProjectionQuery() = default;
 
     template <typename... Projections>
-        requires(query::detail::ProjectionFor<Projections, Source> && ...)
+        requires query::detail::ORM_QUERY_MODEL_PROJECTIONS<Source, Projections...>
     auto project(Projections... projections) -> ProjectionQuery<Source, Result>&
     {
         data.projections = {query::detail::erase(projections)...};
@@ -190,7 +190,7 @@ public:
     }
 
     template <typename... Orders>
-        requires(query::detail::OrderFor<Orders, Source> && ...)
+        requires query::detail::ORM_QUERY_MODEL_ORDERS<Source, Orders...>
     auto orderBy(Orders... orders) -> ProjectionQuery<Source, Result>&
     {
         data.orderBy = {query::detail::erase(orders)...};
@@ -199,7 +199,7 @@ public:
     }
 
     template <typename... Columns>
-        requires(query::detail::ColumnFor<Columns, Source> && ...)
+        requires query::detail::ORM_QUERY_MODEL_COLUMNS<Source, Columns...>
     auto groupBy(Columns... columns) -> ProjectionQuery<Source, Result>&
     {
         data.groupBy = {query::detail::erase(columns)...};

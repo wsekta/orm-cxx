@@ -444,4 +444,6 @@ template <typename E, typename M>
 concept PredicateFor = IsTypedPredicate<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
 template <typename E, typename M>
 concept ColumnFor = IsTypedColumn<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
+template <typename M, typename... Columns>
+concept ORM_QUERY_MODEL_COLUMNS = (ColumnFor<Columns, M> && ...);
 } // namespace orm::query::detail

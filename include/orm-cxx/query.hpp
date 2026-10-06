@@ -78,7 +78,7 @@ public:
      * @return A reference to the QueryBuilder object.
      */
     template <typename... Orders>
-        requires(query::detail::OrderFor<Orders, T> && ...)
+        requires query::detail::ORM_QUERY_MODEL_ORDERS<T, Orders...>
     auto orderBy(Orders... orders) -> Query<T>&
     {
         data.orderBy = {query::detail::erase(orders)...};
@@ -93,7 +93,7 @@ public:
      * @return A reference to this query.
      */
     template <typename... Columns>
-        requires(query::detail::ColumnFor<Columns, T> && ...)
+        requires query::detail::ORM_QUERY_MODEL_COLUMNS<T, Columns...>
     auto groupBy(Columns... columns) -> Query<T>&
     {
         data.groupBy = {query::detail::erase(columns)...};

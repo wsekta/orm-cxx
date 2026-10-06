@@ -65,10 +65,10 @@ int main() // NOLINT(bugprone-exception-escape)
     database.createTable<Role>();
     database.createRelationTables<User>();
 
-    Author author{1, "Octavia Butler"};
+    Author author{1, "Octavia Butler", {}};
     Book book{10, "Kindred", std::nullopt};
-    User user{1, "Ada"};
-    Role role{10, "admin"};
+    User user{1, "Ada", {}};
+    Role role{10, "admin", {}};
 
     database.insert(author);
     database.insert(book);
