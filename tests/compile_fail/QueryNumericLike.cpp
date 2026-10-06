@@ -8,5 +8,5 @@ using namespace typed_query_models;
 [[maybe_unused]] auto rejected(Database& database) -> void
 {
     (void)database;
-    (void)col<&User::age>().like("1%");
+    (void)col<&User::age>().like(18);
 }
