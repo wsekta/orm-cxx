@@ -165,9 +165,10 @@ template&lt;typename T&gt; </td></tr>
 <tr class="memitem:affdb3ac31435178e16447a0fba5b9060" id="r_affdb3ac31435178e16447a0fba5b9060"><td class="memTemplParams" colspan="2"><a id="affdb3ac31435178e16447a0fba5b9060" name="affdb3ac31435178e16447a0fba5b9060"></a>
 template&lt;typename T&gt; </td></tr>
 <tr class="memitem:affdb3ac31435178e16447a0fba5b9060 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>update</b> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
-<tr class="memitem:a491a26b3d783b6aa2b3f635de75a3260" id="r_a491a26b3d783b6aa2b3f635de75a3260"><td class="memTemplParams" colspan="2"><a id="a491a26b3d783b6aa2b3f635de75a3260" name="a491a26b3d783b6aa2b3f635de75a3260"></a>
-template&lt;typename T&gt; </td></tr>
-<tr class="memitem:a491a26b3d783b6aa2b3f635de75a3260 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>remove</b> (const query::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
+<tr class="memitem:a44f491632748d0d6006d77aefeae283e" id="r_a44f491632748d0d6006d77aefeae283e"><td class="memTemplParams" colspan="2"><a id="a44f491632748d0d6006d77aefeae283e" name="a44f491632748d0d6006d77aefeae283e"></a>
+template&lt;typename T, typename P&gt; <br />
+requires query::detail::PredicateFor&lt;P, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;P&gt;</td></tr>
+<tr class="memitem:a44f491632748d0d6006d77aefeae283e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>remove</b> (const P &amp;predicate) -&gt; std::size_t</td></tr>
 <tr class="memitem:a7fe438d5bc042e28b77b52198e8dc39e" id="r_a7fe438d5bc042e28b77b52198e8dc39e"><td class="memTemplParams" colspan="2"><a id="a7fe438d5bc042e28b77b52198e8dc39e" name="a7fe438d5bc042e28b77b52198e8dc39e"></a>
 template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a7fe438d5bc042e28b77b52198e8dc39e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>createTable</b> () -&gt; void</td></tr>
@@ -180,12 +181,18 @@ template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a915d755afb5a4650c4bb48ce1522794b" id="r_a915d755afb5a4650c4bb48ce1522794b"><td class="memTemplParams" colspan="2"><a id="a915d755afb5a4650c4bb48ce1522794b" name="a915d755afb5a4650c4bb48ce1522794b"></a>
 template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a915d755afb5a4650c4bb48ce1522794b template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>deleteRelationTables</b> () -&gt; void</td></tr>
-<tr class="memitem:a9bf15468755f4fd8ef1316e807295efb" id="r_a9bf15468755f4fd8ef1316e807295efb"><td class="memTemplParams" colspan="2"><a id="a9bf15468755f4fd8ef1316e807295efb" name="a9bf15468755f4fd8ef1316e807295efb"></a>
-template&lt;typename Owner, typename Target&gt; </td></tr>
-<tr class="memitem:a9bf15468755f4fd8ef1316e807295efb template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>link</b> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
-<tr class="memitem:a14d33c87b8335472c02979b2ee81328a" id="r_a14d33c87b8335472c02979b2ee81328a"><td class="memTemplParams" colspan="2"><a id="a14d33c87b8335472c02979b2ee81328a" name="a14d33c87b8335472c02979b2ee81328a"></a>
-template&lt;typename Owner, typename Target&gt; </td></tr>
-<tr class="memitem:a14d33c87b8335472c02979b2ee81328a template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>unlink</b> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
+<tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf" id="r_a66e6e8556e49b459824922c8bd0ac6bf"><td class="memTemplParams" colspan="2"><a id="a66e6e8556e49b459824922c8bd0ac6bf" name="a66e6e8556e49b459824922c8bd0ac6bf"></a>
+template&lt;auto Member, typename Owner, typename Target&gt; <br />
+requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <br class="typebreak" />
+query::detail::CollectionTraits&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
+query::detail::CollectionTraits&lt;Member&gt;::Target&gt;</td></tr>
+<tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>link</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
+<tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8" id="r_a3329d6482ff53ae7209f94e37e7cc0f8"><td class="memTemplParams" colspan="2"><a id="a3329d6482ff53ae7209f94e37e7cc0f8" name="a3329d6482ff53ae7209f94e37e7cc0f8"></a>
+template&lt;auto Member, typename Owner, typename Target&gt; <br />
+requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <br class="typebreak" />
+query::detail::CollectionTraits&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
+query::detail::CollectionTraits&lt;Member&gt;::Target&gt;</td></tr>
+<tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>unlink</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
 <tr class="memitem:a918187290120417d85097a787b05153f" id="r_a918187290120417d85097a787b05153f"><td class="memItemLeft"><a id="a918187290120417d85097a787b05153f" name="a918187290120417d85097a787b05153f"></a>
 &#160;</td><td class="memItemRight"><b>DatabaseCore</b> ()</td></tr>
 <tr class="memdesc:a918187290120417d85097a787b05153f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> object. <br /></td></tr>
@@ -254,9 +261,9 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a3ff773773243b59718df615485543699 pro_methods_classorm_1_1DatabaseCore" id="r_a3ff773773243b59718df615485543699"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:a3ff773773243b59718df615485543699 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699">updateImpl</a> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
 <tr class="memdesc:a3ff773773243b59718df615485543699 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes an update query.  <br /></td></tr>
-<tr class="memitem:a1bbe06e369f085c3c4cdbb662da4501b pro_methods_classorm_1_1DatabaseCore" id="r_a1bbe06e369f085c3c4cdbb662da4501b"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
-<tr class="memitem:a1bbe06e369f085c3c4cdbb662da4501b pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a1bbe06e369f085c3c4cdbb662da4501b">removeImpl</a> (const query::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
-<tr class="memdesc:a1bbe06e369f085c3c4cdbb662da4501b pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
+<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore" id="r_a52e2d23d75aad96891051c9dbc08365c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
+<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c">removeImpl</a> (const query::detail::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
+<tr class="memdesc:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f pro_methods_classorm_1_1DatabaseCore" id="r_ad7cb162365dcbcfc96a39a6146d5958f"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#ad7cb162365dcbcfc96a39a6146d5958f">createTableImpl</a> () -&gt; void</td></tr>
 <tr class="memdesc:ad7cb162365dcbcfc96a39a6146d5958f pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a create table query for a model.  <br /></td></tr>

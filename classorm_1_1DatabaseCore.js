@@ -17,7 +17,7 @@ var classorm_1_1DatabaseCore =
     [ "insertImpl", "classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944", null ],
     [ "isConnected", "classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb", null ],
     [ "linkImpl", "classorm_1_1DatabaseCore.html#ac79c01ec161840a63a1a189202a92944", null ],
-    [ "removeImpl", "classorm_1_1DatabaseCore.html#a1bbe06e369f085c3c4cdbb662da4501b", null ],
+    [ "removeImpl", "classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c", null ],
     [ "rollbackTransaction", "classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442", null ],
     [ "selectImpl", "classorm_1_1DatabaseCore.html#a71fd9763cb799bf21a58b255016aac01", null ],
     [ "selectImpl", "classorm_1_1DatabaseCore.html#a0620afc10145bf024748c71ee7cefb75", null ],

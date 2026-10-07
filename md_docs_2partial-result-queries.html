@@ -113,9 +113,9 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2parti
   <div class="headertitle"><div class="title">Partial-result queries </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md76"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md82"></a></p>
 <p>Partial-result queries select a subset of model fields into a flat user-defined DTO. Use them when you do not need to hydrate a full model object.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md77"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md83"></a>
 Contract</h1>
 <p>Full-model selects keep the existing API and result type:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
@@ -126,29 +126,15 @@ Contract</h1>
 <div class="line"><span class="keyword">class </span><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery</a>;</div>
 <div class="ttc" id="aclassorm_1_1ProjectionQuery_html"><div class="ttname"><a href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery</a></div><div class="ttdoc">A select query that returns a user-defined DTO instead of the full source model.</div><div class="ttdef"><b>Definition</b> projection_query.hpp:149</div></div>
 </div><!-- fragment --><p><span class="tt">Source</span> is the mapped ORM model. <span class="tt">Result</span> is a user-defined DTO with the exact fields returned by the projection. <span class="tt">ProjectionQuery&lt;Source, Result&gt;</span> is the only public entry point for partial-result queries; <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;Model&gt;</span> remains reserved for full-model results.</p>
-<p>The public projection helper lives in <span class="tt">orm::query</span>:</p>
-<div class="fragment"><div class="line"><span class="keyword">namespace </span>orm::query</div>
-<div class="line">{</div>
-<div class="line"><span class="keyword">struct </span>Projection;</div>
-<div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> as(std::string resultField, Column sourceColumn) -&gt; Projection;</div>
-<div class="line"><span class="keyword">auto</span> as(std::string resultField, AggregateExpression aggregate) -&gt; Projection;</div>
-<div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> count(Column sourceColumn) -&gt; AggregateExpression;</div>
-<div class="line"><span class="keyword">auto</span> countAll() -&gt; AggregateExpression;</div>
-<div class="line"><span class="keyword">auto</span> sum(Column sourceColumn) -&gt; AggregateExpression;</div>
-<div class="line"><span class="keyword">auto</span> avg(Column sourceColumn) -&gt; AggregateExpression;</div>
-<div class="line"><span class="keyword">auto</span> min(Column sourceColumn) -&gt; AggregateExpression;</div>
-<div class="line"><span class="keyword">auto</span> max(Column sourceColumn) -&gt; AggregateExpression;</div>
-<div class="line">} <span class="comment">// namespace orm::query</span></div>
-</div><!-- fragment --><p>Projection aliases are explicit. The alias passed to <span class="tt">as</span> names a field on the DTO result type, while <span class="tt">col</span> references a field path on the source model.</p>
+<p>Projection and aggregate helpers live in <span class="tt">orm::query</span>. <span class="tt">as("dtoField", expression)</span> accepts a typed column or aggregate and retains its source model. <span class="tt">count(column)</span>, <span class="tt">sum(column)</span>, <span class="tt">avg(column)</span>, <span class="tt">min(column)</span>, and <span class="tt">max(column)</span> take typed column references. <span class="tt">countAll&lt;Model&gt;()</span> explicitly names the source model because it has no column argument.</p>
+<p>Projection aliases are explicit. The alias passed to <span class="tt">as</span> names a field on the DTO result type, while <span class="tt">col</span> references a field path on the source model.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>User</div>
 <div class="line">{</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string displayName;</div>
-<div class="line">    std::string email;</div>
+<div class="line">    std::optional&lt;std::string&gt; email;</div>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>UserSummary</div>
@@ -158,20 +144,20 @@ Contract</h1>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery&lt;User, UserSummary&gt;</a> query;</div>
-<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col(<span class="stringliteral">&quot;id&quot;</span>)),</div>
-<div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col(<span class="stringliteral">&quot;displayName&quot;</span>)));</div>
+<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col&lt;&amp;User::displayName&gt;()));</div>
 <div class="line"> </div>
 <div class="line">std::vector&lt;UserSummary&gt; rows = database.select(query);</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md78"></a>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md84"></a>
 Query behavior</h1>
 <p><span class="tt">ProjectionQuery</span> supports the same filtering, ordering, paging, distinct, and join controls as <span class="tt">Query</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery&lt;User, UserSummary&gt;</a> query;</div>
-<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col(<span class="stringliteral">&quot;id&quot;</span>)),</div>
-<div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col(<span class="stringliteral">&quot;displayName&quot;</span>)))</div>
-<div class="line">     .where(col(<span class="stringliteral">&quot;email&quot;</span>).isNotNull())</div>
-<div class="line">     .orderBy(asc(col(<span class="stringliteral">&quot;id&quot;</span>)))</div>
+<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col&lt;&amp;User::displayName&gt;()))</div>
+<div class="line">     .where(col&lt;&amp;User::email&gt;().isNotNull())</div>
+<div class="line">     .orderBy(asc(col&lt;&amp;User::id&gt;()))</div>
 <div class="line">     .limit(25)</div>
 <div class="line">     .offset(50);</div>
 </div><!-- fragment --><p>The supported builder methods are:</p>
@@ -209,8 +195,8 @@ Query behavior</h1>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery&lt;User, UserLocation&gt;</a> query;</div>
-<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col(<span class="stringliteral">&quot;id&quot;</span>)),</div>
-<div class="line">              as(<span class="stringliteral">&quot;city&quot;</span>, col(<span class="stringliteral">&quot;profile.city&quot;</span>)));</div>
+<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;city&quot;</span>, col&lt;&amp;User::profile, &amp;Profile::city&gt;()));</div>
 </div><!-- fragment --><p>Nullable result fields are represented with <span class="tt">std::optional&lt;T&gt;</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>UserEmail</div>
 <div class="line">{</div>
@@ -219,9 +205,9 @@ Query behavior</h1>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery&lt;User, UserEmail&gt;</a> query;</div>
-<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col(<span class="stringliteral">&quot;id&quot;</span>)),</div>
-<div class="line">              as(<span class="stringliteral">&quot;email&quot;</span>, col(<span class="stringliteral">&quot;email&quot;</span>)));</div>
-</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md79"></a>
+<div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;email&quot;</span>, col&lt;&amp;User::email&gt;()));</div>
+</div><!-- fragment --><h1 class="doxsection"><a class="anchor" id="autotoc_md85"></a>
 Aggregate result queries</h1>
 <p>Use <span class="tt">ProjectionQuery&lt;Source, Result&gt;</span> when aggregated values must be returned. They are projected into DTO fields through the same explicit <span class="tt">as("dtoField", ...)</span> aliases:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -230,30 +216,43 @@ Aggregate result queries</h1>
 <div class="line">{</div>
 <div class="line">    std::string city;</div>
 <div class="line">    <span class="keywordtype">long</span> <span class="keywordtype">long</span> users;</div>
-<div class="line">    <span class="keywordtype">double</span> averageAge;</div>
+<div class="line">    std::optional&lt;double&gt; averageAge;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>Profile</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    std::string city;</div>
+<div class="line">};</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>User</div>
+<div class="line">{</div>
+<div class="line">    <span class="keywordtype">int</span> id;</div>
+<div class="line">    <span class="keywordtype">int</span> age;</div>
+<div class="line">    Profile profile;</div>
 <div class="line">};</div>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1ProjectionQuery.html">orm::ProjectionQuery&lt;User, CityStats&gt;</a> query;</div>
-<div class="line">query.project(as(<span class="stringliteral">&quot;city&quot;</span>, col(<span class="stringliteral">&quot;profile.city&quot;</span>)),</div>
-<div class="line">              as(<span class="stringliteral">&quot;users&quot;</span>, countAll()),</div>
-<div class="line">              as(<span class="stringliteral">&quot;averageAge&quot;</span>, avg(col(<span class="stringliteral">&quot;age&quot;</span>))))</div>
-<div class="line">     .groupBy(col(<span class="stringliteral">&quot;profile.city&quot;</span>))</div>
-<div class="line">     .having(countAll() &gt; 1);</div>
-</div><!-- fragment --><p>Supported v1 aggregate helpers are <span class="tt">count(col(...))</span>, <span class="tt">countAll()</span>, <span class="tt">sum(col(...))</span>, <span class="tt">avg(col(...))</span>, <span class="tt">min(col(...))</span>, and <span class="tt">max(col(...))</span>. <span class="tt">countAll()</span> renders <span class="tt">COUNT(*)</span>; the other helpers validate and render a source column path.</p>
+<div class="line">query.project(as(<span class="stringliteral">&quot;city&quot;</span>, col&lt;&amp;User::profile, &amp;Profile::city&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;users&quot;</span>, countAll&lt;User&gt;()),</div>
+<div class="line">              as(<span class="stringliteral">&quot;averageAge&quot;</span>, avg(col&lt;&amp;User::age&gt;())))</div>
+<div class="line">     .groupBy(col&lt;&amp;User::profile, &amp;Profile::city&gt;())</div>
+<div class="line">     .having(countAll&lt;User&gt;() &gt; 1);</div>
+</div><!-- fragment --><p>Supported aggregate helpers are <span class="tt">count(col(...))</span>, <span class="tt">countAll&lt;User&gt;()</span>, <span class="tt">sum(col(...))</span>, <span class="tt">avg(col(...))</span>, <span class="tt">min(col(...))</span>, and <span class="tt">max(col(...))</span>. <span class="tt">countAll&lt;User&gt;()</span> renders <span class="tt">COUNT(*)</span>; the other helpers validate and render a source column path.</p>
 <p><span class="tt">HAVING</span> uses aggregate predicates instead of regular column predicates:</p>
-<div class="fragment"><div class="line">query.having(countAll() &gt; 1)</div>
-<div class="line">     .andHaving(avg(col(<span class="stringliteral">&quot;age&quot;</span>)) &gt;= 18.0)</div>
-<div class="line">     .orHaving(!(max(col(<span class="stringliteral">&quot;age&quot;</span>)) &lt; 65));</div>
+<div class="fragment"><div class="line">query.having(countAll&lt;User&gt;() &gt; 1)</div>
+<div class="line">     .andHaving(avg(col&lt;&amp;User::age&gt;()) &gt;= 18.0)</div>
+<div class="line">     .orHaving(!(max(col&lt;&amp;User::age&gt;()) &lt; 65));</div>
 </div><!-- fragment --><p>Comparison values are bound as SQL parameters, the same way <span class="tt">WHERE</span> predicate values are bound.</p>
 <p>The same aggregate helpers, <span class="tt">groupBy</span>, <span class="tt">having</span>, <span class="tt">andHaving</span>, and <span class="tt">orHaving</span> are available on full-model <span class="tt">Query&lt;Model&gt;</span>. That query still returns <span class="tt">std::vector&lt;Model&gt;</span> and uses aggregates only for <span class="tt">HAVING</span>; it does not require a DTO unless aggregate values are selected as result fields.</p>
 <p>Common DTO field choices are:</p>
 <ul>
 <li><span class="tt">long long</span> for <span class="tt">count</span> and <span class="tt">countAll</span>,</li>
 <li><span class="tt">double</span> for <span class="tt">avg</span>,</li>
-<li>the database result type for <span class="tt">sum</span>, <span class="tt">min</span>, and <span class="tt">max</span>,</li>
+<li><span class="tt">long long</span> for integral <span class="tt">sum</span>, and the column scalar type for <span class="tt">min</span> and <span class="tt">max</span>,</li>
 <li><span class="tt">std::optional&lt;T&gt;</span> when the aggregate can return SQL <span class="tt">NULL</span>, such as <span class="tt">avg</span> or <span class="tt">sum</span> over an empty result set.</li>
 </ul>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md80"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md86"></a>
 Result DTO rules</h1>
 <p>Projection DTOs are flat result objects. Supported DTO field types are the scalar types already supported by model binding plus <span class="tt">std::optional&lt;T&gt;</span> for SQL <span class="tt">NULL</span> values.</p>
 <p>Alias validation is part of the public contract:</p>
@@ -261,15 +260,16 @@ Result DTO rules</h1>
 <li>every DTO field must have exactly one projection alias,</li>
 <li>every projection alias must match a DTO field,</li>
 <li>duplicate aliases are invalid,</li>
-<li>invalid source column paths are invalid for the projection,</li>
+<li>source column paths and their root model are checked at compile time,</li>
 <li>relation fields must be projected as flat DTO fields.</li>
 </ul>
-<p>Alias validation failures throw <span class="tt">std::invalid_argument</span> before executing SQL.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md81"></a>
+<p>DTO aliases remain runtime strings. Alias validation failures throw <span class="tt">std::invalid_argument</span> before executing SQL.</p>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md87"></a>
 Limitations</h1>
-<p>Projection DTOs are flat. Relation fields must be flattened through aliases, for example <span class="tt">as("city", col("profile.city"))</span>.</p>
+<p>Projection DTOs are flat. Relation fields must be flattened through aliases, for example <span class="tt">as("city", col&lt;&amp;User::profile, &amp;Profile::city&gt;())</span>.</p>
 <p><span class="tt">ProjectionQuery</span> does not expose <span class="tt">include</span>; collection wrappers are model state and are never hydrated into a flat DTO. A projection <span class="tt">WHERE</span> predicate may still use the dedicated <span class="tt">any</span>, <span class="tt">exists</span>, and <span class="tt">none</span> helpers to filter by a mapped source-model collection, but the collection itself cannot be projected.</p>
-<p>Aggregate <span class="tt">ORDER BY</span>, <span class="tt">COUNT(DISTINCT ...)</span>, raw aggregate expressions, and general subqueries are not part of this version. Correlated <span class="tt">EXISTS</span> is available only through the collection predicate helpers. </p>
+<p>Aggregate <span class="tt">ORDER BY</span>, <span class="tt">COUNT(DISTINCT ...)</span>, raw aggregate expressions, and general subqueries are not part of this version. Correlated <span class="tt">EXISTS</span> is available only through the collection predicate helpers.</p>
+<p>Typed fields replace the 0.1 text-path API; see <a class="el" href="md_docs_2migration-typed-queries.html" title="Migrating to typed queries in 0.2">Migration to typed queries</a>. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
 </div><!-- doc-content -->

@@ -187,9 +187,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a3ff773773243b59718df615485543699" id="r_a3ff773773243b59718df615485543699"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:a3ff773773243b59718df615485543699 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3ff773773243b59718df615485543699">updateImpl</a> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
 <tr class="memdesc:a3ff773773243b59718df615485543699"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes an update query.  <br /></td></tr>
-<tr class="memitem:a1bbe06e369f085c3c4cdbb662da4501b" id="r_a1bbe06e369f085c3c4cdbb662da4501b"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
-<tr class="memitem:a1bbe06e369f085c3c4cdbb662da4501b template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1bbe06e369f085c3c4cdbb662da4501b">removeImpl</a> (const query::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
-<tr class="memdesc:a1bbe06e369f085c3c4cdbb662da4501b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
+<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c" id="r_a52e2d23d75aad96891051c9dbc08365c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
+<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a52e2d23d75aad96891051c9dbc08365c">removeImpl</a> (const query::detail::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
+<tr class="memdesc:a52e2d23d75aad96891051c9dbc08365c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f" id="r_ad7cb162365dcbcfc96a39a6146d5958f"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ad7cb162365dcbcfc96a39a6146d5958f">createTableImpl</a> () -&gt; void</td></tr>
 <tr class="memdesc:ad7cb162365dcbcfc96a39a6146d5958f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a create table query for a model.  <br /></td></tr>
@@ -521,8 +521,8 @@ template&lt;typename SchemaType, typename Owner, typename Target&gt; </div>
 
 </div>
 </div>
-<a id="a1bbe06e369f085c3c4cdbb662da4501b" name="a1bbe06e369f085c3c4cdbb662da4501b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1bbe06e369f085c3c4cdbb662da4501b">&#9670;&#160;</a></span>removeImpl()</h2>
+<a id="a52e2d23d75aad96891051c9dbc08365c" name="a52e2d23d75aad96891051c9dbc08365c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52e2d23d75aad96891051c9dbc08365c">&#9670;&#160;</a></span>removeImpl()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -535,7 +535,7 @@ template&lt;typename SchemaType, typename T&gt; </div>
         <tr>
           <td class="memname">auto orm::DatabaseCore::removeImpl </td>
           <td>(</td>
-          <td class="paramtype">const query::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
+          <td class="paramtype">const query::detail::Predicate &amp;</td>          <td class="paramname"><span class="paramname"><em>predicate</em></span></td><td>)</td>
           <td> -&gt; std::size_t</td>
         </tr>
       </table>

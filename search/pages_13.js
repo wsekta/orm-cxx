@@ -1,12 +1,9 @@
 var searchData=
 [
-  ['objects_0',['objects',['../md_docs_2database.html#autotoc_md43',1,'Insert objects'],['../md_docs_2database.html#autotoc_md45',1,'Query objects'],['../md_docs_2database.html#autotoc_md47',1,'Remove objects'],['../md_docs_2database.html#autotoc_md46',1,'Update objects']]],
-  ['of_20done_1',['of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['offset_2',['Limit and offset',['../md_docs_2query.html#autotoc_md90',1,'']]],
-  ['one_20relations_3',['One-to-one relations',['../md_docs_2model.html#autotoc_md66',1,'']]],
-  ['one_20to_20many_4',['One-to-many',['../md_docs_2relations.html#autotoc_md99',1,'']]],
-  ['one_20to_20one_20relations_5',['One-to-one relations',['../md_docs_2model.html#autotoc_md66',1,'']]],
-  ['optional_20fields_6',['Optional fields',['../md_docs_2model.html#autotoc_md61',1,'']]],
-  ['ordering_7',['Ordering',['../md_docs_2query.html#autotoc_md88',1,'']]],
-  ['orm_20c_8',['ORM C++',['../index.html',1,'']]]
+  ['name_0',['Table name',['../md_docs_2model.html#autotoc_md68',1,'']]],
+  ['names_1',['names',['../md_docs_2model.html#autotoc_md69',1,'Column names'],['../md_docs_2relations.html#autotoc_md107',1,'Junction column names']]],
+  ['names_20and_20relations_2',['Column names and relations',['../md_docs_2query.html#autotoc_md93',1,'']]],
+  ['native_20cmake_20installation_3',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md81',1,'']]],
+  ['new_20compiler_20versions_4',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
+  ['null_20and_20writes_20explicit_5',['Make NULL and writes explicit',['../md_docs_2migration-typed-queries.html#autotoc_md61',1,'']]]
 ];

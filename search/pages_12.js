@@ -1,9 +1,25 @@
 var searchData=
 [
-  ['name_0',['Table name',['../md_docs_2model.html#autotoc_md62',1,'']]],
-  ['names_1',['names',['../md_docs_2model.html#autotoc_md63',1,'Column names'],['../md_docs_2relations.html#autotoc_md101',1,'Junction column names']]],
-  ['names_20and_20relations_2',['Column names and relations',['../md_docs_2query.html#autotoc_md87',1,'']]],
-  ['native_20cmake_20installation_3',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md75',1,'']]],
-  ['new_20compiler_20versions_4',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
-  ['now_5',['5. Keep query paths unchanged for now',['../md_docs_2migration-static-schema.html#autotoc_md55',1,'']]]
+  ['maintainer_20setup_20and_20publishing_0',['Maintainer setup and publishing',['../md_docs_2packaging.html#autotoc_md78',1,'']]],
+  ['make_20null_20and_20writes_20explicit_1',['Make NULL and writes explicit',['../md_docs_2migration-typed-queries.html#autotoc_md61',1,'']]],
+  ['managers_20and_20releases_2',['Package managers and releases',['../md_docs_2packaging.html',1,'']]],
+  ['many_3',['many',['../md_docs_2relations.html#autotoc_md106',1,'Many-to-many'],['../md_docs_2relations.html#autotoc_md105',1,'One-to-many']]],
+  ['many_20to_20many_4',['Many-to-many',['../md_docs_2relations.html#autotoc_md106',1,'']]],
+  ['mappings_5',['mappings',['../md_docs_2migration-static-schema.html#autotoc_md53',1,'3. Convert collection mappings'],['../md_docs_2relations.html#autotoc_md114',1,'Validation and unsupported mappings']]],
+  ['mappings_20and_20static_20schemas_6',['Migrating to compile-time mappings and static schemas',['../md_docs_2migration-static-schema.html',1,'']]],
+  ['matrix_7',['Matrix',['../md_docs_2ci-compiler-matrix.html',1,'CI Compiler Matrix'],['../md_docs_2ci-compiler-matrix.html#autotoc_md33',1,'PostgreSQL Compiler Matrix']]],
+  ['matrix_8',['Minimum CI matrix',['../md_docs_2backend-portability.html#autotoc_md17',1,'']]],
+  ['migrate_20query_20fields_20and_20relations_9',['5. Migrate query fields and relations',['../md_docs_2migration-static-schema.html#autotoc_md55',1,'']]],
+  ['migrating_20an_20existing_20schema_10',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md116',1,'']]],
+  ['migrating_20to_20compile_20time_20mappings_20and_20static_20schemas_11',['Migrating to compile-time mappings and static schemas',['../md_docs_2migration-static-schema.html',1,'']]],
+  ['migrating_20to_20typed_20queries_20in_200_202_12',['Migrating to typed queries in 0.2',['../md_docs_2migration-typed-queries.html',1,'']]],
+  ['migration_20summary_13',['Migration summary',['../md_docs_2migration-static-schema.html#autotoc_md50',1,'']]],
+  ['minimum_20ci_20matrix_14',['Minimum CI matrix',['../md_docs_2backend-portability.html#autotoc_md17',1,'']]],
+  ['mistakes_15',['Common mistakes',['../md_docs_2relations.html#autotoc_md115',1,'']]],
+  ['model_16',['Model',['../md_docs_2model.html',1,'']]],
+  ['model_17',['model',['../md_docs_2model.html#autotoc_md64',1,'Create a model'],['../md_docs_2backend-portability.html#autotoc_md16',1,'Verification model']]],
+  ['model_20configuration_18',['2. Replace runtime model configuration',['../md_docs_2migration-static-schema.html#autotoc_md52',1,'']]],
+  ['model_20grouping_20and_20having_19',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md99',1,'']]],
+  ['models_20reflectable_20',['1. Keep models reflectable',['../md_docs_2migration-static-schema.html#autotoc_md51',1,'']]],
+  ['msvc_21',['MSVC',['../md_docs_2ci-compiler-matrix.html#autotoc_md32',1,'']]]
 ];

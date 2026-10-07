@@ -1,10 +1,15 @@
 var searchData=
 [
-  ['end_20to_20end_20workflow_0',['End-to-end workflow',['../md_docs_2relations.html#autotoc_md106',1,'']]],
-  ['end_20workflow_1',['End-to-end workflow',['../md_docs_2relations.html#autotoc_md106',1,'']]],
-  ['error_20contract_2',['Error contract',['../md_docs_2backend-extension.html#autotoc_md6',1,'']]],
-  ['errors_3',['Capabilities and errors',['../md_docs_2database.html#autotoc_md39',1,'']]],
-  ['existing_20schema_4',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md110',1,'']]],
-  ['extension_20contract_5',['Backend extension contract',['../md_docs_2backend-extension.html',1,'']]],
-  ['extension_20points_6',['Concrete extension points',['../md_docs_2backend-extension.html#autotoc_md1',1,'']]]
+  ['database_0',['Database',['../md_docs_2database.html',1,'']]],
+  ['database_20boundary_1',['Retain runtime validation at the database boundary',['../md_docs_2migration-typed-queries.html#autotoc_md62',1,'']]],
+  ['define_20the_20closed_20schema_2',['4. Define the closed schema',['../md_docs_2migration-static-schema.html#autotoc_md54',1,'']]],
+  ['definition_20of_20done_3',['Definition of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
+  ['delete_20relation_20tables_4',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md42',1,'']]],
+  ['delete_20table_5',['Delete table',['../md_docs_2database.html#autotoc_md41',1,'']]],
+  ['dialect_6',['Capabilities versus dialect',['../md_docs_2backend-extension.html#autotoc_md3',1,'']]],
+  ['dialect_20differences_7',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
+  ['differences_8',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
+  ['distinct_9',['Distinct',['../md_docs_2query.html#autotoc_md95',1,'']]],
+  ['done_10',['Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
+  ['dto_20rules_11',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md86',1,'']]]
 ];

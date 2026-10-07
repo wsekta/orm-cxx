@@ -1,20 +1,9 @@
 var searchData=
 [
-  ['objects_0',['objects',['../md_docs_2database.html#autotoc_md43',1,'Insert objects'],['../md_docs_2database.html#autotoc_md45',1,'Query objects'],['../md_docs_2database.html#autotoc_md47',1,'Remove objects'],['../md_docs_2database.html#autotoc_md46',1,'Update objects']]],
-  ['of_20done_1',['of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['offset_2',['offset',['../md_docs_2query.html#autotoc_md90',1,'Limit and offset'],['../classorm_1_1Query.html#ad277561652627e31187604dd6487fec8',1,'orm::Query::offset()']]],
-  ['one_20relations_3',['One-to-one relations',['../md_docs_2model.html#autotoc_md66',1,'']]],
-  ['one_20to_20many_4',['One-to-many',['../md_docs_2relations.html#autotoc_md99',1,'']]],
-  ['one_20to_20one_20relations_5',['One-to-one relations',['../md_docs_2model.html#autotoc_md66',1,'']]],
-  ['onetomany_6',['OneToMany',['../classorm_1_1OneToMany.html',1,'orm']]],
-  ['onetomanydescriptor_7',['OneToManyDescriptor',['../structorm_1_1OneToManyDescriptor.html',1,'orm']]],
-  ['optional_20fields_8',['Optional fields',['../md_docs_2model.html#autotoc_md61',1,'']]],
-  ['optionalrelationcollectiontraits_9',['OptionalRelationCollectionTraits',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits.html',1,'orm::detail']]],
-  ['optionalrelationcollectiontraits_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_10',['OptionalRelationCollectionTraits&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::detail']]],
-  ['orderby_11',['orderBy',['../classorm_1_1Query.html#a0e4c45fc5b506b7dfb03f96d995fe65c',1,'orm::Query']]],
-  ['ordering_12',['Ordering',['../md_docs_2query.html#autotoc_md88',1,'']]],
-  ['orhaving_13',['orHaving',['../classorm_1_1Query.html#af3629afe58473bd3dc8deeca9d96ec3a',1,'orm::Query']]],
-  ['orm_20c_14',['ORM C++',['../index.html',1,'']]],
-  ['orm_3a_3adatabase_15',['Database',['../classorm_1_1Query.html#ae0f742b2920b17d9a95c91c6239abc24',1,'orm::Query']]],
-  ['orwhere_16',['orWhere',['../classorm_1_1Query.html#a26c4f45217d1bfff2a86421c5d40e4d6',1,'orm::Query']]]
+  ['name_0',['Table name',['../md_docs_2model.html#autotoc_md68',1,'']]],
+  ['names_1',['names',['../md_docs_2model.html#autotoc_md69',1,'Column names'],['../md_docs_2relations.html#autotoc_md107',1,'Junction column names']]],
+  ['names_20and_20relations_2',['Column names and relations',['../md_docs_2query.html#autotoc_md93',1,'']]],
+  ['native_20cmake_20installation_3',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md81',1,'']]],
+  ['new_20compiler_20versions_4',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
+  ['null_20and_20writes_20explicit_5',['Make NULL and writes explicit',['../md_docs_2migration-typed-queries.html#autotoc_md61',1,'']]]
 ];

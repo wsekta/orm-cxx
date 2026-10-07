@@ -1,9 +1,11 @@
 var searchData=
 [
-  ['validation_20and_20unsupported_20mappings_0',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md108',1,'']]],
-  ['vcpkg_20after_20acceptance_1',['Consume from vcpkg after acceptance',['../md_docs_2packaging.html#autotoc_md70',1,'']]],
-  ['verification_2',['Local package verification',['../md_docs_2packaging.html#autotoc_md74',1,'']]],
-  ['verification_20model_3',['Verification model',['../md_docs_2backend-portability.html#autotoc_md16',1,'']]],
-  ['versions_4',['Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'Adding New Compiler Versions'],['../md_docs_2ci-compiler-matrix.html#autotoc_md29',1,'Tested Compiler Versions']]],
-  ['versus_20dialect_5',['Capabilities versus dialect',['../md_docs_2backend-extension.html#autotoc_md3',1,'']]]
+  ['unlink_0',['Link and unlink',['../md_docs_2relations.html#autotoc_md109',1,'']]],
+  ['unlink_20relations_1',['Link and unlink relations',['../md_docs_2database.html#autotoc_md44',1,'']]],
+  ['unlinkimpl_2',['unlinkImpl',['../classorm_1_1DatabaseCore.html#a1284e1a622ebbb8ec1c7357e94189875',1,'orm::DatabaseCore']]],
+  ['unsupported_20mappings_3',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md114',1,'']]],
+  ['update_4',['Update',['../classorm_1_1Update.html',1,'orm']]],
+  ['update_20objects_5',['Update objects',['../md_docs_2database.html#autotoc_md46',1,'']]],
+  ['updateimpl_6',['updateImpl',['../classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699',1,'orm::DatabaseCore']]],
+  ['use_20values_20that_20preserve_20their_20entire_20type_20range_7',['Use values that preserve their entire type range',['../md_docs_2migration-typed-queries.html#autotoc_md60',1,'']]]
 ];

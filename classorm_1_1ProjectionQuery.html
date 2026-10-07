@@ -121,27 +121,42 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Pr
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af740c5877f5cc866e9ac5717b2d056e4" id="r_af740c5877f5cc866e9ac5717b2d056e4"><td class="memTemplParams" colspan="2"><a id="af740c5877f5cc866e9ac5717b2d056e4" name="af740c5877f5cc866e9ac5717b2d056e4"></a>
-template&lt;typename... Projections&gt; </td></tr>
-<tr class="memitem:af740c5877f5cc866e9ac5717b2d056e4 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>project</b> (Projections... projections) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a3d6403b61b137be606dd9bf68370f91a" id="r_a3d6403b61b137be606dd9bf68370f91a"><td class="memItemLeft"><a id="a3d6403b61b137be606dd9bf68370f91a" name="a3d6403b61b137be606dd9bf68370f91a"></a>
-auto&#160;</td><td class="memItemRight"><b>where</b> (const query::Predicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a24bd3130fd9927b708cbe39038cf2509" id="r_a24bd3130fd9927b708cbe39038cf2509"><td class="memItemLeft"><a id="a24bd3130fd9927b708cbe39038cf2509" name="a24bd3130fd9927b708cbe39038cf2509"></a>
-auto&#160;</td><td class="memItemRight"><b>andWhere</b> (const query::Predicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:ab79b27cb223796587d1ec1e02a57934b" id="r_ab79b27cb223796587d1ec1e02a57934b"><td class="memItemLeft"><a id="ab79b27cb223796587d1ec1e02a57934b" name="ab79b27cb223796587d1ec1e02a57934b"></a>
-auto&#160;</td><td class="memItemRight"><b>orWhere</b> (const query::Predicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:ab925a4c57e36b4323066865178b02b47" id="r_ab925a4c57e36b4323066865178b02b47"><td class="memTemplParams" colspan="2"><a id="ab925a4c57e36b4323066865178b02b47" name="ab925a4c57e36b4323066865178b02b47"></a>
-template&lt;typename... Orders&gt; </td></tr>
-<tr class="memitem:ab925a4c57e36b4323066865178b02b47 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>orderBy</b> (Orders... orders) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a8d4477f57092587d7598daca3963ed9a" id="r_a8d4477f57092587d7598daca3963ed9a"><td class="memTemplParams" colspan="2"><a id="a8d4477f57092587d7598daca3963ed9a" name="a8d4477f57092587d7598daca3963ed9a"></a>
-template&lt;typename... Columns&gt; </td></tr>
-<tr class="memitem:a8d4477f57092587d7598daca3963ed9a template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>groupBy</b> (Columns... columns) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a00299a92623567f4df1020e813023c73" id="r_a00299a92623567f4df1020e813023c73"><td class="memItemLeft"><a id="a00299a92623567f4df1020e813023c73" name="a00299a92623567f4df1020e813023c73"></a>
-auto&#160;</td><td class="memItemRight"><b>having</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a7066128877b89de8f172cd26d755f53a" id="r_a7066128877b89de8f172cd26d755f53a"><td class="memItemLeft"><a id="a7066128877b89de8f172cd26d755f53a" name="a7066128877b89de8f172cd26d755f53a"></a>
-auto&#160;</td><td class="memItemRight"><b>andHaving</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
-<tr class="memitem:a5728b8f31114913e6d507111849f706f" id="r_a5728b8f31114913e6d507111849f706f"><td class="memItemLeft"><a id="a5728b8f31114913e6d507111849f706f" name="a5728b8f31114913e6d507111849f706f"></a>
-auto&#160;</td><td class="memItemRight"><b>orHaving</b> (const query::AggregatePredicate &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a37ebdec953f6fd9885f5ad9c9cc4c82e" id="r_a37ebdec953f6fd9885f5ad9c9cc4c82e"><td class="memTemplParams" colspan="2"><a id="a37ebdec953f6fd9885f5ad9c9cc4c82e" name="a37ebdec953f6fd9885f5ad9c9cc4c82e"></a>
+template&lt;typename... Projections&gt; <br />
+requires query::detail::ORM_QUERY_MODEL_PROJECTIONS&lt;Source, Projections...&gt;</td></tr>
+<tr class="memitem:a37ebdec953f6fd9885f5ad9c9cc4c82e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>project</b> (Projections... projections) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a13214afdd1e5b5471694f716878b001f" id="r_a13214afdd1e5b5471694f716878b001f"><td class="memTemplParams" colspan="2"><a id="a13214afdd1e5b5471694f716878b001f" name="a13214afdd1e5b5471694f716878b001f"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::PredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:a13214afdd1e5b5471694f716878b001f template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>where</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:ac59903f739f67fd08c2cb7728a6b8bea" id="r_ac59903f739f67fd08c2cb7728a6b8bea"><td class="memTemplParams" colspan="2"><a id="ac59903f739f67fd08c2cb7728a6b8bea" name="ac59903f739f67fd08c2cb7728a6b8bea"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::PredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:ac59903f739f67fd08c2cb7728a6b8bea template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>andWhere</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:af853eaaf5c1e618a80072099f1558fab" id="r_af853eaaf5c1e618a80072099f1558fab"><td class="memTemplParams" colspan="2"><a id="af853eaaf5c1e618a80072099f1558fab" name="af853eaaf5c1e618a80072099f1558fab"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::PredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:af853eaaf5c1e618a80072099f1558fab template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>orWhere</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a64bf6884c99ed0ed76070e0230f25c25" id="r_a64bf6884c99ed0ed76070e0230f25c25"><td class="memTemplParams" colspan="2"><a id="a64bf6884c99ed0ed76070e0230f25c25" name="a64bf6884c99ed0ed76070e0230f25c25"></a>
+template&lt;typename... Orders&gt; <br />
+requires query::detail::ORM_QUERY_MODEL_ORDERS&lt;Source, Orders...&gt;</td></tr>
+<tr class="memitem:a64bf6884c99ed0ed76070e0230f25c25 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>orderBy</b> (Orders... orders) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a70456348fff8015bb5ced55186cd1686" id="r_a70456348fff8015bb5ced55186cd1686"><td class="memTemplParams" colspan="2"><a id="a70456348fff8015bb5ced55186cd1686" name="a70456348fff8015bb5ced55186cd1686"></a>
+template&lt;typename... Columns&gt; <br />
+requires query::detail::ORM_QUERY_MODEL_COLUMNS&lt;Source, Columns...&gt;</td></tr>
+<tr class="memitem:a70456348fff8015bb5ced55186cd1686 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>groupBy</b> (Columns... columns) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:ac11186dd6d14e8098067bda30dab8709" id="r_ac11186dd6d14e8098067bda30dab8709"><td class="memTemplParams" colspan="2"><a id="ac11186dd6d14e8098067bda30dab8709" name="ac11186dd6d14e8098067bda30dab8709"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::AggregatePredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:ac11186dd6d14e8098067bda30dab8709 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>having</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a6acef1266cc42c3120a7dcb4edad683e" id="r_a6acef1266cc42c3120a7dcb4edad683e"><td class="memTemplParams" colspan="2"><a id="a6acef1266cc42c3120a7dcb4edad683e" name="a6acef1266cc42c3120a7dcb4edad683e"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::AggregatePredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:a6acef1266cc42c3120a7dcb4edad683e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>andHaving</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
+<tr class="memitem:a5b85f1244afd42a72b93ec366d362206" id="r_a5b85f1244afd42a72b93ec366d362206"><td class="memTemplParams" colspan="2"><a id="a5b85f1244afd42a72b93ec366d362206" name="a5b85f1244afd42a72b93ec366d362206"></a>
+template&lt;typename P&gt; <br />
+requires query::detail::AggregatePredicateFor&lt;P, Source&gt;</td></tr>
+<tr class="memitem:a5b85f1244afd42a72b93ec366d362206 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>orHaving</b> (const P &amp;predicate) -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
 <tr class="memitem:a0e90cd92827d5a371740a62db0956145" id="r_a0e90cd92827d5a371740a62db0956145"><td class="memItemLeft"><a id="a0e90cd92827d5a371740a62db0956145" name="a0e90cd92827d5a371740a62db0956145"></a>
 auto&#160;</td><td class="memItemRight"><b>distinct</b> () -&gt; ProjectionQuery&lt; Source, Result &gt; &amp;</td></tr>
 <tr class="memitem:ac404aee04e5dffeb920d8fef3ae5cb48" id="r_ac404aee04e5dffeb920d8fef3ae5cb48"><td class="memItemLeft"><a id="ac404aee04e5dffeb920d8fef3ae5cb48" name="ac404aee04e5dffeb920d8fef3ae5cb48"></a>

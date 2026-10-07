@@ -1,20 +1,13 @@
 var searchData=
 [
-  ['package_20managers_20and_20releases_0',['Package managers and releases',['../md_docs_2packaging.html',1,'']]],
-  ['package_20verification_1',['Local package verification',['../md_docs_2packaging.html#autotoc_md74',1,'']]],
-  ['partial_20result_20queries_2',['Partial result queries',['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md92',1,'Partial-result queries']]],
-  ['paths_20unchanged_20for_20now_3',['5. Keep query paths unchanged for now',['../md_docs_2migration-static-schema.html#autotoc_md55',1,'']]],
-  ['points_4',['Concrete extension points',['../md_docs_2backend-extension.html#autotoc_md1',1,'']]],
-  ['policy_5',['Coverage Policy',['../md_docs_2ci-compiler-matrix.html#autotoc_md34',1,'']]],
-  ['portability_6',['portability',['../md_docs_2backend-portability.html',1,'Backend portability'],['../md_docs_2backends.html#autotoc_md26',1,'Raw SQL portability']]],
-  ['portability_20layers_7',['Portability layers',['../md_docs_2backend-portability.html#autotoc_md11',1,'']]],
-  ['portable_20behavior_8',['Portable behavior',['../md_docs_2backend-portability.html#autotoc_md12',1,'']]],
-  ['postgresql_9',['PostgreSQL',['../md_docs_2backends.html#autotoc_md23',1,'']]],
-  ['postgresql_20compiler_20matrix_10',['PostgreSQL Compiler Matrix',['../md_docs_2ci-compiler-matrix.html#autotoc_md33',1,'']]],
-  ['predicates_11',['predicates',['../md_docs_2query.html#autotoc_md86',1,'Collection predicates'],['../md_docs_2query.html#autotoc_md85',1,'Where predicates'],['../md_docs_2query.html#autotoc_md95',1,'Write predicates']]],
-  ['presets_12',['CMake Presets',['../md_docs_2ci-compiler-matrix.html#autotoc_md35',1,'']]],
-  ['primary_20key_13',['Primary key',['../md_docs_2model.html#autotoc_md64',1,'']]],
-  ['primary_20key_14',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md65',1,'']]],
-  ['projection_20queries_15',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md94',1,'']]],
-  ['publishing_16',['Maintainer setup and publishing',['../md_docs_2packaging.html#autotoc_md72',1,'']]]
+  ['objects_0',['objects',['../md_docs_2database.html#autotoc_md43',1,'Insert objects'],['../md_docs_2database.html#autotoc_md45',1,'Query objects'],['../md_docs_2database.html#autotoc_md47',1,'Remove objects'],['../md_docs_2database.html#autotoc_md46',1,'Update objects']]],
+  ['of_20done_1',['of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
+  ['offset_2',['Limit and offset',['../md_docs_2query.html#autotoc_md96',1,'']]],
+  ['one_20relations_3',['One-to-one relations',['../md_docs_2model.html#autotoc_md72',1,'']]],
+  ['one_20to_20many_4',['One-to-many',['../md_docs_2relations.html#autotoc_md105',1,'']]],
+  ['one_20to_20one_20relations_5',['One-to-one relations',['../md_docs_2model.html#autotoc_md72',1,'']]],
+  ['optional_20fields_6',['Optional fields',['../md_docs_2model.html#autotoc_md67',1,'']]],
+  ['ordering_7',['Ordering',['../md_docs_2query.html#autotoc_md94',1,'']]],
+  ['orm_20c_8',['ORM C++',['../index.html',1,'']]],
+  ['ownership_20consistent_9',['Keep expression ownership consistent',['../md_docs_2migration-typed-queries.html#autotoc_md59',1,'']]]
 ];
