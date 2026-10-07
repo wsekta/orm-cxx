@@ -734,6 +734,22 @@ TEST(DatabaseCoverageCompletionTest, queryCapabilityChecksHandleNegatedCollectio
     }
 }
 
+TEST(DatabaseCoverageCompletionTest, internalCollectionValidationRejectsInvalidFieldsAndTargetTypes)
+{
+    constexpr auto owner = orm::model::modelView<Schema, collection_models::User>();
+    const auto* relation = orm::detail::requireCollectionRelation(owner, "roles");
+    ASSERT_NE(relation, nullptr);
+    EXPECT_EQ(relation->fieldName, "roles");
+    EXPECT_THROW((void)orm::detail::requireCollectionRelation(owner, "missing"), std::invalid_argument);
+    EXPECT_THROW((void)orm::detail::requireCollectionRelation(owner, "name"), std::invalid_argument);
+    EXPECT_THROW(
+        (void)orm::detail::requireCollectionTarget(owner, *relation, orm::model::typeId<collection_models::User>()),
+        std::invalid_argument);
+    EXPECT_EQ(
+        orm::detail::requireCollectionTarget(owner, *relation, orm::model::typeId<collection_models::Role>())->type,
+        orm::model::typeId<collection_models::Role>());
+}
+
 TEST(DatabaseCoverageCompletionTest, collectionWritesRequireBothPredicateCapabilities)
 {
     for (const bool disableQueryCapability : {true, false})

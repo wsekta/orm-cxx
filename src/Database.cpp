@@ -293,6 +293,16 @@ auto detail::requireIncludedRelationTarget(model::ModelView owner, const model::
     return target;
 }
 
+auto detail::requireCollectionRelation(model::ModelView owner, std::string_view fieldName) -> const model::RelationView*
+{
+    const auto* relation = owner.findRelation(fieldName);
+    if (relation == nullptr or relation->kind == model::RelationKind::ToOne)
+    {
+        throw std::invalid_argument{"Unknown collection relation: " + std::string{fieldName}};
+    }
+    return relation;
+}
+
 auto detail::requireCollectionTarget(model::ModelView owner, const model::RelationView& relation,
                                      model::TypeId expectedType) -> model::ModelView
 {
@@ -981,12 +991,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
 
         for (const auto& include : spec.includes)
         {
-            const auto* relation = descriptor.findRelation(include);
-
-            if (relation == nullptr)
-            {
-                continue;
-            }
+            const auto* relation = detail::requireCollectionRelation(descriptor, include);
 
             const auto target = detail::requireIncludedRelationTarget(descriptor, *relation, backendType);
             ensureModelSupported(*target, "include collection");

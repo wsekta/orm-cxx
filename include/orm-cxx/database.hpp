@@ -57,6 +57,8 @@ auto bindModelParameters(const db::BackendRuntime& runtime, soci::values& target
                          const soci::values& serializedModel, model::ModelView model) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
+[[nodiscard]] auto requireCollectionRelation(model::ModelView owner,
+                                             std::string_view fieldName) -> const model::RelationView*;
 [[nodiscard]] auto requireCollectionTarget(model::ModelView owner, const model::RelationView& relation,
                                            model::TypeId expectedType) -> model::ModelView;
 } // namespace detail
@@ -398,18 +400,9 @@ protected:
     auto linkImpl(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
     {
         constexpr auto ownerDescriptor = model::modelView<SchemaType, Owner>();
-        const auto* relation = ownerDescriptor.findRelation(relationField);
-
-        if (relation == nullptr or relation->kind == model::RelationKind::ToOne)
-        {
-            throw std::invalid_argument{"Unknown collection relation: " + std::string{relationField}};
-        }
-
-        const auto targetDescriptor = ownerDescriptor.resolveTarget(*relation);
-        if (targetDescriptor == nullptr or targetDescriptor->type != model::typeId<Target>())
-        {
-            throw std::invalid_argument{"Relation target type does not match mapping: " + std::string{relationField}};
-        }
+        const auto* relation = detail::requireCollectionRelation(ownerDescriptor, relationField);
+        const auto targetDescriptor =
+            detail::requireCollectionTarget(ownerDescriptor, *relation, model::typeId<Target>());
 
         ensureModelSupported(ownerDescriptor, "link relation");
         ensureModelSupported(*targetDescriptor, "link relation");
@@ -451,18 +444,9 @@ protected:
     auto unlinkImpl(const Owner& owner, std::string_view relationField, const Target& target) -> std::size_t
     {
         constexpr auto ownerDescriptor = model::modelView<SchemaType, Owner>();
-        const auto* relation = ownerDescriptor.findRelation(relationField);
-
-        if (relation == nullptr or relation->kind == model::RelationKind::ToOne)
-        {
-            throw std::invalid_argument{"Unknown collection relation: " + std::string{relationField}};
-        }
-
-        const auto targetDescriptor = ownerDescriptor.resolveTarget(*relation);
-        if (targetDescriptor == nullptr or targetDescriptor->type != model::typeId<Target>())
-        {
-            throw std::invalid_argument{"Relation target type does not match mapping: " + std::string{relationField}};
-        }
+        const auto* relation = detail::requireCollectionRelation(ownerDescriptor, relationField);
+        const auto targetDescriptor =
+            detail::requireCollectionTarget(ownerDescriptor, *relation, model::typeId<Target>());
 
         ensureModelSupported(ownerDescriptor, "unlink relation");
         ensureModelSupported(*targetDescriptor, "unlink relation");
@@ -542,12 +526,7 @@ private:
 
         for (const auto& includedRelation : queryData.includes)
         {
-            const auto* relation = ownerDescriptor.findRelation(includedRelation);
-
-            if (relation == nullptr or relation->kind == model::RelationKind::ToOne)
-            {
-                throw std::invalid_argument{"Unknown collection relation: " + includedRelation};
-            }
+            (void)detail::requireCollectionRelation(ownerDescriptor, includedRelation);
         }
 
         if (owners.empty())

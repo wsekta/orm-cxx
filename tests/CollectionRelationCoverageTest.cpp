@@ -359,6 +359,30 @@ TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsInvalidRu
         std::invalid_argument);
 }
 
+TEST(CollectionRelationCoverageTest, collectionPredicateRendererRejectsNestedInternalAst)
+{
+    TrackingRelationDialect dialect;
+    const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
+    const auto nested = collectionPredicate("users", orm::query::detail::CollectionOperator::Exists);
+
+    for (const auto collectionOperator :
+         {orm::query::detail::CollectionOperator::Any, orm::query::detail::CollectionOperator::None})
+    {
+        orm::db::commands::RenderContext context{.model = user, .dialect = dialect};
+        const auto predicate = collectionPredicate(
+            "roles", collectionOperator, std::make_shared<orm::query::detail::PredicateNode>(nested.getNode()));
+        try
+        {
+            (void)orm::db::commands::renderWhere(predicate, context);
+            FAIL() << "Expected the renderer to reject a nested collection predicate";
+        }
+        catch (const std::invalid_argument& error)
+        {
+            EXPECT_STREQ(error.what(), "Nested collection predicates are not supported");
+        }
+    }
+}
+
 TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMetadata)
 {
     TrackingRelationDialect dialect;
