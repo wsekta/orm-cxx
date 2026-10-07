@@ -44,7 +44,7 @@ inline constexpr bool isSafeNumericWidening = []
 {
     using T = std::remove_cvref_t<Target>;
     using S = std::remove_cvref_t<Source>;
-    if constexpr (!numericScalar<T> || !numericScalar<S>)
+    if constexpr (!numericScalar<T> || !std::is_arithmetic_v<S> || std::same_as<S, bool>)
         return false;
     else if constexpr (std::is_integral_v<T> && std::is_integral_v<S>)
         return (!std::is_signed_v<S> || std::is_signed_v<T>) &&

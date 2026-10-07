@@ -1,3 +1,4 @@
+#include <limits>
 #include <type_traits>
 
 #include "TypedQueryModels.hpp"
@@ -20,6 +21,36 @@ static_assert(not detail::compatibleValue<bool, int>);
 static_assert(detail::compatibleValue<bool, bool>);
 static_assert(detail::compatibleValue<std::string, const char*>);
 static_assert(not detail::compatibleValue<int, std::optional<int>>);
+static_assert(detail::isSafeNumericWidening<int, char16_t>);
+static_assert(detail::isSafeNumericWidening<double, char32_t>);
+static_assert(not detail::isSafeNumericWidening<short, char16_t>);
+static_assert(not detail::isSafeNumericWidening<int, char32_t>);
+static_assert(not detail::supportedScalar<long double>);
+static_assert(not detail::supportedScalar<wchar_t>);
+static_assert(not detail::supportedScalar<char16_t>);
+static_assert(not detail::supportedScalar<char32_t>);
+static_assert(not detail::isSafeNumericWidening<long double, double>);
+static_assert(detail::isSafeNumericWidening<double, long double> ==
+              (std::numeric_limits<double>::radix == std::numeric_limits<long double>::radix &&
+               std::numeric_limits<double>::digits >= std::numeric_limits<long double>::digits &&
+               std::numeric_limits<double>::max_exponent >= std::numeric_limits<long double>::max_exponent &&
+               std::numeric_limits<double>::min_exponent <= std::numeric_limits<long double>::min_exponent));
+
+template <typename Source>
+auto instantiateFloatingValue() -> void
+{
+    if constexpr (detail::isSafeNumericWidening<double, Source>)
+    {
+        (void)(col<&User::score>() == Source{1.25});
+        (void)(avg(col<&User::score>()) == Source{1.25});
+        orm::Update<User> update;
+        update.set(col<&User::score>(), Source{1.25});
+    }
+    else
+    {
+        static_assert(not requires(Source value) { col<&User::score>() == value; });
+    }
+}
 
 using UserPredicate = decltype(col<&User::age>() == 1);
 using RelatedPredicate = decltype(col<&User::profile, &Profile::city>() == "city");
@@ -51,6 +82,7 @@ static_assert(not std::is_constructible_v<TypedAggregatePredicate<User>, detail:
 
 [[maybe_unused]] auto instantiateTypedApi(Database& database) -> void
 {
+    instantiateFloatingValue<long double>();
     orm::Query<User> query;
     query.where(col<&User::age>() >= short{18})
         .andWhere(col<&User::name>().like("A%"))
@@ -72,6 +104,8 @@ static_assert(not std::is_constructible_v<TypedAggregatePredicate<User>, detail:
         .andWhere(col<&User::unsignedAge>() == static_cast<unsigned short>(21))
         .andWhere(col<&User::score>() == 21)
         .andWhere(col<&User::ratio>() == short{21})
+        .andWhere(col<&User::age>() == char16_t{21})
+        .andWhere(col<&User::score>() == char32_t{21})
         .andWhere(col<&User::active>() == true)
         .andWhere(col<&User::active>().notIn(std::vector<bool>{false}))
         .andWhere(col<&User::email>() != std::nullopt)
@@ -108,6 +142,8 @@ static_assert(not std::is_constructible_v<TypedAggregatePredicate<User>, detail:
     orm::Update<User> update;
     update.set(col<&User::age>(), short{21})
         .set(col<&User::score>(), 0.5F)
+        .set(col<&User::age>(), char16_t{21})
+        .set(col<&User::score>(), char32_t{21})
         .set(col<&User::email>(), std::optional<std::string>{})
         .set(col<&User::email>(), std::optional<std::string>{"Ada"})
         .set(col<&User::email>(), std::nullopt)

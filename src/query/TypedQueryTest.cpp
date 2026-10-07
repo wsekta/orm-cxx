@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <string>
@@ -67,6 +68,21 @@ auto comparison(const auto& typed) -> ast::ComparisonExpression
 {
     return std::get<ast::ComparisonExpression>(ast::erase(typed).getNode().expression);
 }
+
+template <typename Source>
+auto checkFloatingNormalization(Source value) -> void
+{
+    if constexpr (ast::isSafeNumericWidening<double, Source>)
+    {
+        const auto stored = comparison(col<&User::score>() == value).value;
+        EXPECT_EQ(stored.getLogicalType(), orm::model::ColumnType::Double);
+        EXPECT_DOUBLE_EQ(std::get<double>(stored.get()), static_cast<double>(value));
+    }
+    else
+    {
+        static_assert(not requires(Source candidate) { col<&User::score>() == candidate; });
+    }
+}
 } // namespace
 
 TEST(TypedQueryTest, resolvesMemberAndToOnePaths)
@@ -87,6 +103,21 @@ TEST(TypedQueryTest, comparisonsPreserveOperatorsAndBoundValues)
     EXPECT_EQ(std::get<int>(comparison(age == short{18}).value.get()), 18);
     EXPECT_EQ(std::get<double>(comparison(col<&User::score>() == 0.5F).value.get()), 0.5);
     EXPECT_EQ(std::get<long long>(comparison(col<&User::wide>() == 18).value.get()), 18);
+}
+
+TEST(TypedQueryTest, arithmeticValuesNormalizeToSupportedFieldTypes)
+{
+    const auto narrowCharacter = std::numeric_limits<char16_t>::max();
+    const auto integer = comparison(col<&User::age>() == narrowCharacter).value;
+    EXPECT_EQ(integer.getLogicalType(), orm::model::ColumnType::Int);
+    EXPECT_EQ(std::get<int>(integer.get()), static_cast<int>(narrowCharacter));
+
+    const auto wideCharacter = std::numeric_limits<char32_t>::max();
+    const auto floating = comparison(col<&User::score>() == wideCharacter).value;
+    EXPECT_EQ(floating.getLogicalType(), orm::model::ColumnType::Double);
+    EXPECT_DOUBLE_EQ(std::get<double>(floating.get()), static_cast<double>(wideCharacter));
+
+    checkFloatingNormalization(1.25L);
 }
 
 TEST(TypedQueryTest, textValuesAndPatternsRemainParameters)
