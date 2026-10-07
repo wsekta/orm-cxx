@@ -87,6 +87,12 @@ fields accept literals, `std::string`, and `std::string_view`; LIKE requires a
 string field. Explicit casts are the caller's responsibility and should follow
 an application-level range check when narrowing is intentional.
 
+Choose the literal's type explicitly when the field requires it: use `short{1}`
+for a `short` field, `1u` for an `unsigned int` field, and `1.0F` for a `float`
+field. Plain `1` has type `int`, so it cannot target `short` or `unsigned int`;
+plain `1.0` has type `double`, so it cannot target `float`. These rules apply
+even when the particular literal's value would fit.
+
 ## Make NULL and writes explicit
 
 NULL predicates require an optional scalar or a path through an optional to-one
