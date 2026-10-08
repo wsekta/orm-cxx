@@ -2,20 +2,20 @@ var searchData=
 [
   ['objects_0',['objects',['../md_docs_2database.html#autotoc_md43',1,'Insert objects'],['../md_docs_2database.html#autotoc_md45',1,'Query objects'],['../md_docs_2database.html#autotoc_md47',1,'Remove objects'],['../md_docs_2database.html#autotoc_md46',1,'Update objects']]],
   ['of_20done_1',['of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['offset_2',['offset',['../md_docs_2query.html#autotoc_md96',1,'Limit and offset'],['../classorm_1_1Query.html#ad277561652627e31187604dd6487fec8',1,'orm::Query::offset()']]],
-  ['one_20relations_3',['One-to-one relations',['../md_docs_2model.html#autotoc_md72',1,'']]],
-  ['one_20to_20many_4',['One-to-many',['../md_docs_2relations.html#autotoc_md105',1,'']]],
-  ['one_20to_20one_20relations_5',['One-to-one relations',['../md_docs_2model.html#autotoc_md72',1,'']]],
+  ['offset_2',['offset',['../md_docs_2query.html#autotoc_md97',1,'Limit and offset'],['../classorm_1_1Query.html#ad277561652627e31187604dd6487fec8',1,'orm::Query::offset()']]],
+  ['one_20relations_3',['One-to-one relations',['../md_docs_2model.html#autotoc_md73',1,'']]],
+  ['one_20to_20many_4',['One-to-many',['../md_docs_2relations.html#autotoc_md106',1,'']]],
+  ['one_20to_20one_20relations_5',['One-to-one relations',['../md_docs_2model.html#autotoc_md73',1,'']]],
   ['onetomany_6',['OneToMany',['../classorm_1_1OneToMany.html',1,'orm']]],
   ['onetomanydescriptor_7',['OneToManyDescriptor',['../structorm_1_1OneToManyDescriptor.html',1,'orm']]],
-  ['optional_20fields_8',['Optional fields',['../md_docs_2model.html#autotoc_md67',1,'']]],
+  ['optional_20fields_8',['Optional fields',['../md_docs_2model.html#autotoc_md68',1,'']]],
   ['optionalrelationcollectiontraits_9',['OptionalRelationCollectionTraits',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits.html',1,'orm::detail']]],
   ['optionalrelationcollectiontraits_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_10',['OptionalRelationCollectionTraits&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::detail']]],
   ['orderby_11',['orderBy',['../classorm_1_1Query.html#a465a0203fde67022b95fdc578a88796a',1,'orm::Query']]],
-  ['ordering_12',['Ordering',['../md_docs_2query.html#autotoc_md94',1,'']]],
+  ['ordering_12',['Ordering',['../md_docs_2query.html#autotoc_md95',1,'']]],
   ['orhaving_13',['orHaving',['../classorm_1_1Query.html#a7fd213e9328f2d27b94aab2dbbcc2232',1,'orm::Query']]],
   ['orm_20c_14',['ORM C++',['../index.html',1,'']]],
   ['orm_3a_3adatabase_15',['Database',['../classorm_1_1Query.html#ae0f742b2920b17d9a95c91c6239abc24',1,'orm::Query']]],
   ['orwhere_16',['orWhere',['../classorm_1_1Query.html#a1280c34a4025e89600e25654c9513808',1,'orm::Query']]],
-  ['ownership_20consistent_17',['Keep expression ownership consistent',['../md_docs_2migration-typed-queries.html#autotoc_md59',1,'']]]
+  ['ownership_20consistent_17',['Keep expression ownership consistent',['../md_docs_2migration-typed-queries.html#autotoc_md60',1,'']]]
 ];

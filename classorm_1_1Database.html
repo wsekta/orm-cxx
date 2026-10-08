@@ -150,6 +150,18 @@ template&lt;typename T&gt; </td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:ac76e254e6b04854b9382103d5c9d5547" id="r_ac76e254e6b04854b9382103d5c9d5547"><td class="memTemplParams" colspan="2"><a id="ac76e254e6b04854b9382103d5c9d5547" name="ac76e254e6b04854b9382103d5c9d5547"></a>
+template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
+requires (Plan::operation == query::detail::PlanOperation::Select)</td></tr>
+<tr class="memitem:ac76e254e6b04854b9382103d5c9d5547 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>select</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::vector&lt; typename Plan::Result &gt;</td></tr>
+<tr class="memitem:a3981f184c7328909221536a02f57cb82" id="r_a3981f184c7328909221536a02f57cb82"><td class="memTemplParams" colspan="2"><a id="a3981f184c7328909221536a02f57cb82" name="a3981f184c7328909221536a02f57cb82"></a>
+template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
+requires (Plan::operation == query::detail::PlanOperation::Update)</td></tr>
+<tr class="memitem:a3981f184c7328909221536a02f57cb82 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>update</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
+<tr class="memitem:aad4e6a7209db29f1024f6e66b10d8ba3" id="r_aad4e6a7209db29f1024f6e66b10d8ba3"><td class="memTemplParams" colspan="2"><a id="aad4e6a7209db29f1024f6e66b10d8ba3" name="aad4e6a7209db29f1024f6e66b10d8ba3"></a>
+template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
+requires (Plan::operation == query::detail::PlanOperation::Remove)</td></tr>
+<tr class="memitem:aad4e6a7209db29f1024f6e66b10d8ba3 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>remove</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
 <tr class="memitem:a0507b1c785e33b8a976a95cf36b44fa5" id="r_a0507b1c785e33b8a976a95cf36b44fa5"><td class="memTemplParams" colspan="2"><a id="a0507b1c785e33b8a976a95cf36b44fa5" name="a0507b1c785e33b8a976a95cf36b44fa5"></a>
 template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a0507b1c785e33b8a976a95cf36b44fa5 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>select</b> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
@@ -246,12 +258,30 @@ auto&#160;</td><td class="memItemRight"><b>rollbackTransaction</b> () -&gt; void
 <tr class="heading"><td colspan="2"><h2 id="header-inherited" class="groupheader"><a id="inherited" name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classorm_1_1DatabaseCore"><td colspan="2">Protected Member Functions inherited from <a class="el" href="classorm_1_1DatabaseCore.html">orm::DatabaseCore</a></td></tr>
-<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 pro_methods_classorm_1_1DatabaseCore" id="r_a0620afc10145bf024748c71ee7cefb75"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
-<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a0620afc10145bf024748c71ee7cefb75">selectImpl</a> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
-<tr class="memdesc:a0620afc10145bf024748c71ee7cefb75 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a select query and returns the result.  <br /></td></tr>
-<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore" id="r_a71fd9763cb799bf21a58b255016aac01"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename Source, typename Result&gt; </td></tr>
-<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a71fd9763cb799bf21a58b255016aac01">selectImpl</a> (<a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a>&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
-<tr class="memdesc:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a projection select query and returns DTO results.  <br /></td></tr>
+<tr class="memitem:a71cc2254b98daa4cc02394321c3c67b1 pro_methods_classorm_1_1DatabaseCore" id="r_a71cc2254b98daa4cc02394321c3c67b1"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename Plan, typename... Args&gt; </td></tr>
+<tr class="memitem:a71cc2254b98daa4cc02394321c3c67b1 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a71cc2254b98daa4cc02394321c3c67b1">selectPlanImpl</a> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::vector&lt; typename Plan::Result &gt;</td></tr>
+<tr class="memdesc:a71cc2254b98daa4cc02394321c3c67b1 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a select query and returns the result.  <br /></td></tr>
+<tr class="memitem:a34653887798593d190a5c18e1f1afaf3 pro_methods_classorm_1_1DatabaseCore" id="r_a34653887798593d190a5c18e1f1afaf3"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Plan, typename... Args&gt; </td></tr>
+<tr class="memitem:a34653887798593d190a5c18e1f1afaf3 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>updatePlanImpl</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
+<tr class="memitem:ae7977e29a0c41a847d7dec32da6c5f2f pro_methods_classorm_1_1DatabaseCore" id="r_ae7977e29a0c41a847d7dec32da6c5f2f"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Plan, typename... Args&gt; </td></tr>
+<tr class="memitem:ae7977e29a0c41a847d7dec32da6c5f2f pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>removePlanImpl</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
+<tr class="memitem:a596a0fb6b11fbb578aa5a57254f2fadb pro_methods_classorm_1_1DatabaseCore" id="r_a596a0fb6b11fbb578aa5a57254f2fadb"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Plan, typename... Args&gt; </td></tr>
+<tr class="memitem:a596a0fb6b11fbb578aa5a57254f2fadb pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>executeDynamicPlan</b> (const Plan &amp;plan, Args &amp;&amp;... args)</td></tr>
+<tr class="memitem:a3fd50979c4b6a5af4c6406b47f1831ff pro_methods_classorm_1_1DatabaseCore" id="r_a3fd50979c4b6a5af4c6406b47f1831ff"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Plan, db::CompiledSqlFlavor Flavor, typename Args&gt; </td></tr>
+<tr class="memitem:a3fd50979c4b6a5af4c6406b47f1831ff pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>executeCompiledPlan</b> (const Plan &amp;plan, const Args &amp;values)</td></tr>
+<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 pro_methods_classorm_1_1DatabaseCore" id="r_a0620afc10145bf024748c71ee7cefb75"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename T&gt; </td></tr>
+<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>selectImpl</b> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
+<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore" id="r_a71fd9763cb799bf21a58b255016aac01"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Source, typename Result&gt; </td></tr>
+<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>selectImpl</b> (<a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a>&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
+<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec pro_methods_classorm_1_1DatabaseCore" id="r_a6e233618ac3e5a54ff3a33010a301eec"><td class="memTemplParams" colspan="2">
+template&lt;typename SchemaType, typename Source, typename Result, bool Projection, typename Loader&gt; </td></tr>
+<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>executeSelectStatement</b> (db::StatementView statement, bool shouldJoin, Loader loadIncludes) -&gt; std::vector&lt; Result &gt;</td></tr>
 <tr class="memitem:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore" id="r_a449a757e1722ec84af9aed218e8ae254"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254">insertImpl</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
 <tr class="memdesc:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for multiple objects.  <br /></td></tr>

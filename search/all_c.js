@@ -5,5 +5,5 @@ var searchData=
   ['getbackendtype_2',['getBackendType',['../classorm_1_1DatabaseCore.html#acebe4fa46933e2610fe83ea2a7b37a45',1,'orm::DatabaseCore']]],
   ['glance_3',['Compatibility at a glance',['../md_docs_2backends.html#autotoc_md21',1,'']]],
   ['groupby_4',['groupBy',['../classorm_1_1Query.html#a32a55bb33ff9e45f02be71033ad095ca',1,'orm::Query']]],
-  ['grouping_20and_20having_5',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md99',1,'']]]
+  ['grouping_20and_20having_5',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md100',1,'']]]
 ];

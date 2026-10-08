@@ -19,8 +19,7 @@ var classorm_1_1DatabaseCore =
     [ "linkImpl", "classorm_1_1DatabaseCore.html#ac79c01ec161840a63a1a189202a92944", null ],
     [ "removeImpl", "classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c", null ],
     [ "rollbackTransaction", "classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442", null ],
-    [ "selectImpl", "classorm_1_1DatabaseCore.html#a71fd9763cb799bf21a58b255016aac01", null ],
-    [ "selectImpl", "classorm_1_1DatabaseCore.html#a0620afc10145bf024748c71ee7cefb75", null ],
+    [ "selectPlanImpl", "classorm_1_1DatabaseCore.html#a71cc2254b98daa4cc02394321c3c67b1", null ],
     [ "unlinkImpl", "classorm_1_1DatabaseCore.html#a1284e1a622ebbb8ec1c7357e94189875", null ],
     [ "updateImpl", "classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699", null ]
 ];

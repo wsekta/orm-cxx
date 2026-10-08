@@ -2,10 +2,10 @@ var searchData=
 [
   ['in_200_202_0',['Migrating to typed queries in 0.2',['../md_docs_2migration-typed-queries.html',1,'']]],
   ['include_1',['include',['../classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c',1,'orm::Query']]],
-  ['increment_20primary_20key_2',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md71',1,'']]],
+  ['increment_20primary_20key_2',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md72',1,'']]],
   ['insert_20objects_3',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
   ['insertimpl_4',['insertImpl',['../classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254',1,'orm::DatabaseCore::insertImpl(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944',1,'orm::DatabaseCore::insertImpl(T object) -&gt; void']]],
-  ['installation_5',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md81',1,'']]],
+  ['installation_5',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md82',1,'']]],
   ['integration_6',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
   ['isconnected_7',['isConnected',['../classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb',1,'orm::DatabaseCore']]],
   ['ismanytomanydescriptor_8',['IsManyToManyDescriptor',['../structorm_1_1detail_1_1IsManyToManyDescriptor.html',1,'orm::detail']]],

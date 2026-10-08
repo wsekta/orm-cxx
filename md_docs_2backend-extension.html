@@ -131,7 +131,7 @@ Concrete extension points</h1>
 <div class="fragment"><div class="line">orm::db::CommandGeneratorFactory backends;</div>
 <div class="line">backends.registerBackend(std::make_unique&lt;MyBackend&gt;());</div>
 <div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database{std::move(backends)};</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:677</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:774</div></div>
 </div><!-- fragment --><p>The registry and its providers become owned by the database object. In-tree backends may also be registered by the factory's default construction path.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 Required backend responsibilities</h1>
