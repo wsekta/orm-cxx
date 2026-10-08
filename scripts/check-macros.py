@@ -27,7 +27,7 @@ CPP_NON_CODE = re.compile(
 )
 DIRECTIVE = re.compile(r"^[ \t]*#[ \t]*(\w+)\b([^\n]*)", re.MULTILINE)
 IDENTIFIER = re.compile(r"\b[A-Za-z_]\w*\b")
-DEFINE_FLAG = re.compile(r"(?:^|[\s;:])(?:-D|/D)(?:\s*[A-Za-z_]\w*|$)")
+DEFINE_FLAG = re.compile(r"(?:^|[\s;:])(?:-D|/D)(?:\s*(?:[A-Za-z_]\w*|\$\{[^}]+\})|$)")
 CMAKE_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|\[(=*)\[[\s\S]*?\]\1\]|[^\s()]+')
 INCLUDE_FLAGS_VARIABLE = "${orm_cxx_compile_include_flags}"
 
@@ -189,7 +189,7 @@ def source_kind(path: str) -> str | None:
     parts = Path(path).parts
     if not parts or parts[0] in {"externals", "build", "html", ".git", ".cache", "vcpkg_installed"}:
         return None
-    if any(part.startswith("build-") or part.startswith("build_") for part in parts):
+    if any(part.startswith("build-") or part.startswith("build_") for part in parts[:-1]):
         return None
     if path.startswith("cmake/third_party/") or path == "cmake/cmake-coverage.cmake":
         return None

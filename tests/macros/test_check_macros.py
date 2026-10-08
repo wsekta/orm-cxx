@@ -96,6 +96,16 @@ auto number = 1'000;
                 self.assertTrue(macros.check_cmake("CMakeLists.txt", source))
         self.assertEqual(macros.check_cmake("CMakeLists.txt", 'set(flags -DCMAKE_OPTION=ON)\nexecute_process(COMMAND cmake ${flags})'), [])
 
+    def test_cmake_macro_names_expanded_from_variables_are_rejected(self):
+        for prefix in ("-D", "/D"):
+            for source in (
+                f'target_compile_options(x PRIVATE "{prefix}${{macro_name}}=1")',
+                f'set(CMAKE_CXX_FLAGS "-Wall {prefix}${{macro_name}}=1")',
+                f'set(flags "{prefix}${{macro_name}}=1")\ntarget_compile_options(x PRIVATE ${{flags}})',
+            ):
+                with self.subTest(prefix=prefix, source=source):
+                    self.assertTrue(macros.check_cmake("CMakeLists.txt", source))
+
     def test_try_compile_include_flags_are_permitted_and_validated(self):
         source = '''set(orm_cxx_compile_include_flags)
 list(APPEND orm_cxx_compile_include_flags "-I${include_directory}")
@@ -124,6 +134,13 @@ try_compile(result SOURCES sample.cpp COMPILE_DEFINITIONS ${orm_cxx_compile_incl
                 self.assertIsNone(macros.source_kind(path))
         self.assertEqual(macros.source_kind("cmake/BuildConfig.hpp.in"), "cpp")
         self.assertEqual(macros.source_kind("cmake/config.cmake.in"), "cmake")
+
+    def test_build_named_sources_are_checked_but_build_directories_are_excluded(self):
+        self.assertEqual(macros.source_kind("src/build_helpers.hpp"), "cpp")
+        self.assertEqual(macros.source_kind("src/build-helper.cpp"), "cpp")
+        self.assertEqual(macros.source_kind("cmake/build_options.cmake"), "cmake")
+        self.assertIsNone(macros.source_kind("src/build_helpers/generated.hpp"))
+        self.assertIsNone(macros.source_kind("src/build-debug/generated.hpp"))
 
     def test_git_inventory_checks_unignored_sources_and_skips_dependencies(self):
         test_root = (Path(__file__).resolve().parents[2] / "build/macro-policy-tests").resolve()
