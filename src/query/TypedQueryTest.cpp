@@ -183,6 +183,18 @@ TEST(TypedQueryTest, listsSupportInitializerListsAndVectors)
     EXPECT_THROW((void)age.notIn(std::vector<int>{}), std::invalid_argument);
 }
 
+TEST(TypedQueryTest, variadicNotInPreservesOperatorOrderAndSafeWidening)
+{
+    const auto excluded = ast::erase(col<&User::age>().notIn(short{20}, 21));
+    const auto& list = std::get<ast::ListExpression>(excluded.getNode().expression);
+    EXPECT_EQ(list.listOperator, ast::ListOperator::NotIn);
+    EXPECT_EQ(list.column.getPath(), "age");
+    ASSERT_EQ(list.values.size(), 2);
+    EXPECT_EQ(list.values[0].getLogicalType(), orm::model::ColumnType::Int);
+    EXPECT_EQ(std::get<int>(list.values[0].get()), 20);
+    EXPECT_EQ(std::get<int>(list.values[1].get()), 21);
+}
+
 TEST(TypedQueryTest, rangesPreserveBoundOrder)
 {
     const auto age = col<&User::age>();
