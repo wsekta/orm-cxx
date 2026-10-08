@@ -434,5 +434,5 @@ TEST(StaticPlanRendererTest, unknownProviderAndRuntimeShapesRetainTheRuntimeRend
     EXPECT_EQ(cached.backend->calls.selects, 2);
     constexpr auto invalidJoin =
         select<User>().where(col<&User::profile, &Profile::city>() == "Paris").disableJoining();
-    EXPECT_THROW((void)cached.database->select(invalidJoin), orm::DatabaseError);
+    EXPECT_THROW((void)cached.database->select(invalidJoin), std::invalid_argument);
 }

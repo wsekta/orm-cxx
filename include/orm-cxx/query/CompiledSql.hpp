@@ -105,18 +105,17 @@ constexpr auto appendExpression(SqlProgram& program) -> std::size_t
     program.nodes.push_back(node);
     return index;
 }
-template <typename P>
-inline constexpr bool eligible = []() consteval
+template <typename Tuple>
+struct TupleEligible;
+template <typename... Items>
+struct TupleEligible<std::tuple<Items...>> : std::bool_constant<(staticSqlEligible<Items> && ...)>
 {
-    bool result = true;
-    if constexpr (P::hasPredicate)
-        result = result && staticSqlEligible<typename P::Predicate>;
-    if constexpr (P::hasHaving)
-        result = result && staticSqlEligible<typename P::Having>;
-    visitTypes<typename P::Orders>([&]<typename T>() { result = result && staticSqlEligible<T>; });
-    visitTypes<typename P::Projections>([&]<typename T>() { result = result && staticSqlEligible<T>; });
-    return result;
-}();
+};
+template <typename P>
+inline constexpr bool eligible =
+    (!P::hasPredicate || staticSqlEligible<typename P::Predicate>) &&
+    (!P::hasHaving || staticSqlEligible<typename P::Having>) && TupleEligible<typename P::Orders>::value &&
+    TupleEligible<typename P::Projections>::value;
 template <typename P>
 constexpr auto program() -> SqlProgram
 {

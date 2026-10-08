@@ -133,8 +133,7 @@ protected:
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }
-        auto query = plan.toDynamic(std::forward<Args>(args)...);
-        return selectImpl<SchemaType>(query);
+        return executeDynamicPlan<SchemaType>(plan, std::forward<Args>(args)...);
     }
     template <typename SchemaType, typename Plan, typename... Args>
     auto updatePlanImpl(const Plan& plan, Args&&... args) -> std::size_t
@@ -156,8 +155,7 @@ protected:
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }
-        auto query = plan.toDynamic(std::forward<Args>(args)...);
-        return updateImpl<SchemaType>(query);
+        return executeDynamicPlan<SchemaType>(plan, std::forward<Args>(args)...);
     }
     template <typename SchemaType, typename Plan, typename... Args>
     auto removePlanImpl(const Plan& plan, Args&&... args) -> std::size_t
@@ -179,8 +177,19 @@ protected:
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }
-        auto predicate = plan.toDynamic(std::forward<Args>(args)...);
-        return removeImpl<SchemaType, typename Plan::Model>(query::detail::erase(predicate));
+        return executeDynamicPlan<SchemaType>(plan, std::forward<Args>(args)...);
+    }
+
+    template <typename SchemaType, typename Plan, typename... Args>
+    auto executeDynamicPlan(const Plan& plan, Args&&... args)
+    {
+        auto bound = plan.toDynamic(std::forward<Args>(args)...);
+        if constexpr (Plan::operation == query::detail::PlanOperation::Select)
+            return selectImpl<SchemaType>(bound);
+        else if constexpr (Plan::operation == query::detail::PlanOperation::Update)
+            return updateImpl<SchemaType>(bound);
+        else
+            return removeImpl<SchemaType, typename Plan::Model>(query::detail::erase(bound));
     }
 
     template <typename SchemaType, typename Plan, db::CompiledSqlFlavor Flavor, typename Args>

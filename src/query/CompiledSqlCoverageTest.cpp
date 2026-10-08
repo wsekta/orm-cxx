@@ -1,5 +1,6 @@
 #include <array>
 #include <gtest/gtest.h>
+#include <limits>
 #include <optional>
 #include <string>
 #include <tuple>
@@ -21,6 +22,45 @@ using namespace static_plan_models;
 namespace sql = orm::db::detail;
 namespace ast = orm::query::detail;
 using Flavor = orm::db::CompiledSqlFlavor;
+
+struct LongIdentifierModel
+{
+    int id;
+    inline static constexpr orm::reflection::FixedString table_name{
+        "table_name_that_deliberately_exceeds_the_postgresql_sixty_three_byte_limit"};
+};
+struct EmbeddedNulIdentifierModel
+{
+    int id;
+    inline static constexpr orm::reflection::FixedString table_name{"embedded\0nul"};
+};
+using IdentifierSchema = orm::Schema<LongIdentifierModel, EmbeddedNulIdentifierModel>;
+using LongIdentifierPlan = decltype(select<LongIdentifierModel>());
+using EmbeddedNulIdentifierPlan = decltype(select<EmbeddedNulIdentifierModel>());
+
+static_assert(ast::compiledStatement<IdentifierSchema, LongIdentifierPlan, Flavor::SQLite>.valid);
+static_assert(!ast::compiledStatement<IdentifierSchema, LongIdentifierPlan, Flavor::PostgreSQL>.valid);
+static_assert(!ast::compiledStatement<IdentifierSchema, EmbeddedNulIdentifierPlan, Flavor::SQLite>.valid);
+static_assert(!ast::compiledStatement<IdentifierSchema, EmbeddedNulIdentifierPlan, Flavor::PostgreSQL>.valid);
+
+struct CompositeBook;
+struct CompositeAuthor
+{
+    std::string tenant;
+    int id;
+    orm::OneToMany<CompositeBook> books;
+    inline static constexpr orm::reflection::FixedString table_name{"composite_authors"};
+    inline static constexpr auto id_columns = orm::primaryKey<&CompositeAuthor::tenant, &CompositeAuthor::id>();
+    inline static constexpr auto relations =
+        orm::relations(orm::oneToMany<&CompositeAuthor::books>().mappedBy<"author">());
+};
+struct CompositeBook
+{
+    int id;
+    CompositeAuthor author;
+    inline static constexpr orm::reflection::FixedString table_name{"composite_books"};
+};
+using CompositeSchema = orm::Schema<CompositeAuthor, CompositeBook>;
 
 template <typename SchemaType = Schema, typename Plan>
 auto expectRuntimeProgramMatchesCache(const Plan&) -> void
@@ -135,6 +175,8 @@ TEST(CompiledSqlCoverageTest, builtinPolicyValidatesNamesAndRuntimePolicyRejects
     EXPECT_THROW((void)postgres.bindMarker(""), std::invalid_argument);
     EXPECT_THROW((void)sqlite.quoteIdentifier(""), std::invalid_argument);
     EXPECT_THROW((void)postgres.quoteIdentifier(std::string(64, 'a')), std::invalid_argument);
+    EXPECT_THROW((void)postgres.quoteIdentifier(std::string_view{"embedded\0nul", 12}), std::invalid_argument);
+    EXPECT_THROW((void)sqlite.quoteIdentifier(std::string_view{"embedded\0nul", 12}), std::invalid_argument);
     sql::SqlProgram program;
     program.boundPagination = true;
     const orm::db::sqlite::SqliteDialect dialect;
@@ -225,5 +267,44 @@ TEST(CompiledSqlCoverageTest, sharedEmitterDefendsAggregateOperatorsAndIncomplet
     EXPECT_THROW(
         (void)sql::emitSql(program.view(), orm::modelView<Schema, User>(), sql::StaticSqlPolicy<Flavor::SQLite>{}),
         std::invalid_argument);
+    program = ast::compiled::program<std::remove_cvref_t<decltype(aggregate)>>();
+    program.nodes[program.having].kind = static_cast<sql::SqlNodeKind>(-1);
+    EXPECT_THROW(
+        (void)sql::emitSql(program.view(), orm::modelView<Schema, User>(), sql::StaticSqlPolicy<Flavor::SQLite>{}),
+        std::logic_error);
+}
+
+TEST(CompiledSqlCoverageTest, compositeCollectionSqlCorrelatesEveryEndpointKey)
+{
+    constexpr auto books = select<CompositeAuthor>().where(exists<&CompositeAuthor::books>());
+    expectRuntimeProgramMatchesCache<CompositeSchema>(books);
+    constexpr auto& authorSql = ast::compiledStatement<CompositeSchema, decltype(books), Flavor::SQLite>;
+    EXPECT_NE(authorSql.view().find("\"orm_relation_target\".\"author_tenant\" = \"composite_authors\".\"tenant\" AND "
+                                    "\"orm_relation_target\".\"author_id\" = \"composite_authors\".\"id\""),
+              std::string_view::npos);
+    constexpr auto tags =
+        select<collection_models::CompositeOwner>().where(exists<&collection_models::CompositeOwner::tags>());
+    expectRuntimeProgramMatchesCache<collection_models::Schema>(tags);
+    constexpr auto& tagSql = ast::compiledStatement<collection_models::Schema, decltype(tags), Flavor::SQLite>;
+    EXPECT_NE(tagSql.view().find(
+                  "\"orm_relation_junction\".\"owner_tenant\" = \"collection_composite_owners\".\"tenant\" AND "
+                  "\"orm_relation_junction\".\"owner_id\" = \"collection_composite_owners\".\"id\""),
+              std::string_view::npos);
+    EXPECT_NE(tagSql.view().find("\"orm_relation_target\".\"scope\" = \"orm_relation_junction\".\"tag_scope\" AND "
+                                 "\"orm_relation_target\".\"id\" = \"orm_relation_junction\".\"tag_id\""),
+              std::string_view::npos);
+}
+
+TEST(CompiledSqlCoverageTest, collectorRejectsPaginationAboveTheSignedBackendRange)
+{
+    if constexpr (std::numeric_limits<std::size_t>::max() >
+                  static_cast<std::size_t>(std::numeric_limits<long long>::max()))
+    {
+        constexpr auto limit = select<User>().limit(param<std::size_t, 0>());
+        constexpr auto offset = select<User>().offset(param<std::size_t, 0>());
+        const auto excessive = std::numeric_limits<std::size_t>::max();
+        EXPECT_THROW((void)ast::collectParameters(limit, std::tuple{excessive}), std::out_of_range);
+        EXPECT_THROW((void)ast::collectParameters(offset, std::tuple{excessive}), std::out_of_range);
+    }
 }
 } // namespace

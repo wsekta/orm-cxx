@@ -218,7 +218,7 @@ public:
                 detail::ORM_QUERY_MODEL_TYPE<typename detail::CollectionTraits<Member>::Model, Model>
     constexpr auto include() const
     {
-        constexpr bool alreadyIncluded = []<std::size_t... I>(std::index_sequence<I...>) {
+        constexpr bool alreadyIncluded = []<std::size_t... I>(std::index_sequence<I...>) consteval {
             return (std::same_as<std::tuple_element_t<I, Includes>, detail::IncludeTag<Member>> || ...);
         }(std::make_index_sequence<std::tuple_size_v<Includes>>{});
         if constexpr (alreadyIncluded)

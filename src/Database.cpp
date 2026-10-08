@@ -864,7 +864,8 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
     requirements.hasOffset = spec.offset.has_value();
     requirements.having = spec.having.has_value() ? 0 : db::detail::noSqlNode;
     for (const auto& order : spec.orderBy)
-        requirements.orders.push_back({columnSource(order.column), order.direction, order.isRaw, order.rawSql});
+        requirements.orders.push_back({order.isRaw ? db::detail::SqlSource{} : columnSource(order.column),
+                                       order.direction, order.isRaw, order.rawSql});
     for (const auto& group : spec.groupBy)
         requirements.groups.push_back(columnSource(group));
     for (const auto& projection : spec.projections)

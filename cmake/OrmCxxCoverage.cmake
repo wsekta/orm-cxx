@@ -48,4 +48,7 @@ function(orm_cxx_enable_coverage library_target test_target)
 
     add_custom_target(orm-cxx-coverage-lcov)
     add_dependencies(orm-cxx-coverage-lcov orm-cxx-coverage)
+    if(TARGET orm-cxx-static-plan-allocations)
+        add_dependencies(orm-cxx-coverage orm-cxx-static-plan-allocations)
+    endif()
 endfunction()

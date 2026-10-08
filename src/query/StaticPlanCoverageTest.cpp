@@ -81,3 +81,25 @@ TEST(StaticPlanCoverageTest, runtimeRemoveConstructionProducesTheBoundPredicate)
     EXPECT_EQ(comparison.column.getPath(), "id");
     EXPECT_EQ(std::get<int>(comparison.value.get()), id);
 }
+
+TEST(StaticPlanCoverageTest, convertedPlansAcceptAdditionalRuntimeFilters)
+{
+    constexpr auto adults = select<User>().where(col<&User::age>() >= param<int, 0>());
+    auto query = adults.toDynamic(18);
+    const std::string searchName{"Ada"};
+    if (!searchName.empty())
+        query.andWhere(col<&User::name>() == searchName);
+    const auto& predicate = orm::FakeDatabase::getSelectSpec(query).predicate;
+    ASSERT_TRUE(predicate.has_value());
+    const auto& logical = std::get<ast::LogicalExpression>(predicate->getNode().expression);
+    EXPECT_EQ(logical.logicalOperator, ast::LogicalOperator::And);
+    EXPECT_EQ(std::get<int>(std::get<ast::ComparisonExpression>(logical.left->expression).value.get()), 18);
+    EXPECT_EQ(std::get<std::string>(std::get<ast::ComparisonExpression>(logical.right->expression).value.get()),
+              searchName);
+
+    auto unfiltered = select<User>().toDynamic();
+    unfiltered.andWhere(col<&User::name>() == searchName);
+    const auto& initialPredicate = orm::FakeDatabase::getSelectSpec(unfiltered).predicate;
+    ASSERT_TRUE(initialPredicate.has_value());
+    EXPECT_EQ(std::get<ast::ComparisonExpression>(initialPredicate->getNode().expression).column.getPath(), "name");
+}
