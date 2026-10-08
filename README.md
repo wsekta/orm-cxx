@@ -118,6 +118,23 @@ int main()
 
 ### Query language
 
+Version 0.3 adds [immutable static query plans](docs/static-queries.md) with
+typed argument slots and SQL reuse for SQLite and PostgreSQL:
+
+```cpp
+struct PlanUser { int id; int age; };
+using PlanSchema = orm::Schema<PlanUser>;
+orm::Database<PlanSchema> database;
+// Connect and populate the table before execution.
+constexpr auto adults = orm::query::select<PlanUser>()
+    .where(orm::query::col<&PlanUser::age>() >= orm::query::param<int, 0>());
+auto rows = database.select(adults, 18);
+```
+
+See [the 0.3 migration guide](docs/migration-static-queries.md) for expression
+return types and `.dynamic()` conversions. Mutable query builders remain
+available for queries assembled through runtime branches.
+
 `orm::Query<T>` supports ORM-style `SELECT` queries returning `std::vector<T>`.
 
 ```cpp

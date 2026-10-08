@@ -45,6 +45,19 @@ int main()
         orm::ProjectionQuery<PackageModel, PackageSummary> projection;
         projection.project(orm::query::as("name", col<&PackageModel::name>())).where(col<&PackageModel::id>() == 1);
 
+        using namespace orm::query;
+        constexpr auto selectPlan = select<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
+        constexpr auto updatePlan = orm::query::update<PackageModel>()
+                                        .set(col<&PackageModel::name>(), param<std::string, 0>())
+                                        .where(col<&PackageModel::id>() == param<int, 1>());
+        constexpr auto projectionPlan = selectAs<PackageModel, PackageSummary>(as<"name">(col<&PackageModel::name>()))
+                                            .where(col<&PackageModel::id>() == param<int, 0>());
+        constexpr auto removePlan = remove<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
+        (void)selectPlan.toDynamic(1);
+        (void)updatePlan.toDynamic(std::string{"updated"}, 1);
+        (void)projectionPlan.toDynamic(1);
+        (void)removePlan.toDynamic(1);
+
         orm::Database<PackageSchema> database;
         const orm::db::CommandGeneratorFactory factory;
         const auto* sqlite = factory.findBackend("sqlite3://:memory:");
@@ -65,13 +78,13 @@ int main()
         database.createTable<PackageModel>();
         database.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
 
-        auto rows = database.select(query);
+        auto rows = database.select(selectPlan, 1);
         if (rows.size() != 1 or rows.front().name != "first")
         {
             return 3;
         }
 
-        if (database.update(update) != 1)
+        if (database.update(updatePlan, std::string{"updated"}, 1) != 1)
         {
             return 4;
         }
@@ -80,12 +93,12 @@ int main()
         {
             return 5;
         }
-        const auto summaries = database.select(projection);
+        const auto summaries = database.select(projectionPlan, 1);
         if (summaries.size() != 1 or summaries.front().name != "updated")
         {
             return 8;
         }
-        if (database.remove<PackageModel>(col<&PackageModel::id>() == 1) != 1 or not database.select(query).empty())
+        if (database.remove(removePlan, 1) != 1 or not database.select(query).empty())
         {
             return 6;
         }

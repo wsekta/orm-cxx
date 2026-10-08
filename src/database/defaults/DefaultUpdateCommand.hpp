@@ -15,8 +15,5 @@ public:
 
 private:
     const SqlDialect& dialect;
-
-    static auto getAssignments(model::ModelView model, const query::detail::UpdateSpec& spec,
-                               RenderContext& context) -> std::string;
 };
 } // namespace orm::db::commands

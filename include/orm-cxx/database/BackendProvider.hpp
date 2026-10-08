@@ -4,6 +4,7 @@
 
 #include "BackendCapabilities.hpp"
 #include "BackendType.hpp"
+#include "CompiledSqlFlavor.hpp"
 
 namespace orm::db
 {
@@ -22,5 +23,9 @@ public:
     [[nodiscard]] virtual auto dialect() const noexcept -> const SqlDialect& = 0;
     [[nodiscard]] virtual auto runtime() const noexcept -> const BackendRuntime& = 0;
     [[nodiscard]] virtual auto commandGenerator() const noexcept -> const CommandGenerator& = 0;
+    [[nodiscard]] virtual auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
+    {
+        return CompiledSqlFlavor::None;
+    }
 };
 } // namespace orm::db

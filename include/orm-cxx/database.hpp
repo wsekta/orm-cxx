@@ -6,6 +6,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -25,10 +26,12 @@
 #include "database/CommandGeneratorFactory.hpp"
 #include "database/DatabaseError.hpp"
 #include "database/RelationStatements.hpp"
+#include "database/SqlEmitter.hpp"
 #include "database/Statement.hpp"
 #include "model/Schema.hpp"
 #include "projection_query.hpp"
 #include "query.hpp"
+#include "query/CompiledSql.hpp"
 #include "reflection/Reflection.hpp"
 #include "soci/soci.h"
 #include "soci/values.h"
@@ -45,7 +48,7 @@ inline auto bindStatementParameter(const db::BackendRuntime& runtime, soci::valu
 }
 
 inline auto bindStatementParameters(const db::BackendRuntime& runtime, soci::values& values,
-                                    const std::vector<db::StatementParameter>& parameters) -> void
+                                    std::span<const db::StatementParameter> parameters) -> void
 {
     for (const auto& parameter : parameters)
     {
@@ -110,95 +113,177 @@ public:
      * @return The vector of objects of type T returned by the select query.
      */
 protected:
+    template <typename SchemaType, typename Plan, typename... Args>
+    auto selectPlanImpl(const Plan& plan, Args&&... args) -> std::vector<typename Plan::Result>
+    {
+        Plan::validateShape();
+        query::detail::validateParameters<Plan, Args...>();
+        if constexpr (query::detail::compiledSqlEligible<Plan>)
+        {
+            const auto values = std::forward_as_tuple(args...);
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            {
+                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
+            }
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            {
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
+            }
+        }
+        auto query = plan.toDynamic(std::forward<Args>(args)...);
+        return selectImpl<SchemaType>(query);
+    }
+    template <typename SchemaType, typename Plan, typename... Args>
+    auto updatePlanImpl(const Plan& plan, Args&&... args) -> std::size_t
+    {
+        Plan::validateShape();
+        query::detail::validateParameters<Plan, Args...>();
+        if constexpr (query::detail::compiledSqlEligible<Plan>)
+        {
+            const auto values = std::forward_as_tuple(args...);
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            {
+                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
+            }
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            {
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
+            }
+        }
+        auto query = plan.toDynamic(std::forward<Args>(args)...);
+        return updateImpl<SchemaType>(query);
+    }
+    template <typename SchemaType, typename Plan, typename... Args>
+    auto removePlanImpl(const Plan& plan, Args&&... args) -> std::size_t
+    {
+        Plan::validateShape();
+        query::detail::validateParameters<Plan, Args...>();
+        if constexpr (query::detail::compiledSqlEligible<Plan>)
+        {
+            const auto values = std::forward_as_tuple(args...);
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            {
+                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
+            }
+            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            {
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                    return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
+            }
+        }
+        auto predicate = plan.toDynamic(std::forward<Args>(args)...);
+        return removeImpl<SchemaType, typename Plan::Model>(query::detail::erase(predicate));
+    }
+
+    template <typename SchemaType, typename Plan, db::CompiledSqlFlavor Flavor, typename Args>
+    auto executeCompiledPlan(const Plan& plan, const Args& values)
+    {
+        constexpr auto descriptor = model::modelView<SchemaType, typename Plan::Model>();
+        constexpr auto& compiled = query::detail::compiledStatement<SchemaType, Plan, Flavor>;
+        const auto requirements = compiled.program.view();
+        if constexpr (Plan::operation == query::detail::PlanOperation::Select)
+        {
+            if constexpr (Plan::isProjection)
+                detail::validateProjectionAliases<typename Plan::Result>(requirements.projections);
+            ensureQuerySupported(descriptor, requirements);
+            const auto parameters = query::detail::collectParameters(plan, values);
+            return executeSelectStatement<SchemaType, typename Plan::Model, typename Plan::Result, Plan::isProjection>(
+                db::StatementView{compiled.view(), parameters}, Plan::shouldJoin,
+                [&](auto& rows)
+                {
+                    (void)rows;
+                    if constexpr (!Plan::isProjection)
+                        loadIncludedCollections<SchemaType>(descriptor, requirements, rows);
+                });
+        }
+        else
+        {
+            constexpr auto operation = Plan::operation == query::detail::PlanOperation::Update ? "update" : "remove";
+            ensureModelSupported(descriptor, operation);
+            if constexpr (Plan::operation == query::detail::PlanOperation::Update)
+                requireCapability(getBackendCapabilities().mutations.update, operation, "update is not supported");
+            else
+                requireCapability(getBackendCapabilities().mutations.remove, operation, "remove is not supported");
+            ensurePredicateSupported(std::ranges::any_of(requirements.nodes, [](const auto& node)
+                                                         { return node.kind == db::detail::SqlNodeKind::Collection; }),
+                                     operation);
+            const auto parameters = query::detail::collectParameters(plan, values);
+            return executeMutation(db::StatementView{compiled.view(), parameters}, operation);
+        }
+    }
     template <typename SchemaType, typename T>
     auto selectImpl(Query<T>& query) -> std::vector<T>
     {
-        constexpr auto model = model::modelView<SchemaType, T>();
-        ensureQuerySupported(model, query.getData());
-        std::vector<T> result;
-        const auto statement = getCommandGenerator().select(model, query.getData());
-        ensureStatementWithinBindLimit(statement.parameters.size(), "select");
-
-        try
-        {
-            soci::values parameterValues;
-            detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
-
-            auto readRows = [&]<bool JoinedValues>()
-            {
-                soci::rowset<db::binding::BindingPayload<T, SchemaType, JoinedValues>> preparedRowSet =
-                    (sql.prepare << statement.sql, soci::use(parameterValues));
-
-                for (auto& payload : preparedRowSet)
-                {
-                    result.push_back(std::move(payload.value));
-                }
-            };
-
-            if (query.getData().shouldJoin)
-            {
-                readRows.template operator()<true>();
-            }
-            else
-            {
-                readRows.template operator()<false>();
-            }
-
-            loadIncludedCollections<SchemaType>(model, query.getData(), result);
-        }
-        catch (const db::binding::ConversionError&)
-        {
-            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, "select",
-                                "A database result cannot be represented by the requested model"};
-        }
-        catch (const soci::soci_error& error)
-        {
-            throwTranslatedError(error, DatabaseErrorCode::Statement, "select");
-        }
-
-        return result;
+        constexpr auto descriptor = model::modelView<SchemaType, T>();
+        ensureQuerySupported(descriptor, query.getData());
+        const auto statement = getCommandGenerator().select(descriptor, query.getData());
+        return executeSelectStatement<SchemaType, T, T, false>(
+            db::StatementView{statement.sql, statement.parameters}, query.getData().shouldJoin,
+            [&](auto& rows) { loadIncludedCollections<SchemaType>(descriptor, query.getData(), rows); });
     }
 
-    /**
-     * @brief Executes a projection select query and returns DTO results.
-     *
-     * @tparam Source The source ORM model.
-     * @tparam Result The flat projection DTO.
-     * @param query The projection query to execute.
-     * @return The vector of DTO objects returned by the projection query.
-     */
     template <typename SchemaType, typename Source, typename Result>
     auto selectImpl(ProjectionQuery<Source, Result>& query) -> std::vector<Result>
     {
-        constexpr auto model = model::modelView<SchemaType, Source>();
-        ensureQuerySupported(model, query.getData());
-        std::vector<Result> result;
-        const auto statement = getCommandGenerator().select(model, query.getData());
-        ensureStatementWithinBindLimit(statement.parameters.size(), "select projection");
+        constexpr auto descriptor = model::modelView<SchemaType, Source>();
+        ensureQuerySupported(descriptor, query.getData());
+        const auto statement = getCommandGenerator().select(descriptor, query.getData());
+        return executeSelectStatement<SchemaType, Source, Result, true>(
+            db::StatementView{statement.sql, statement.parameters}, query.getData().shouldJoin, [](auto&) {});
+    }
 
+    template <typename SchemaType, typename Source, typename Result, bool Projection, typename Loader>
+    auto executeSelectStatement(db::StatementView statement, bool shouldJoin,
+                                Loader loadIncludes) -> std::vector<Result>
+    {
+        constexpr auto operation = Projection ? "select projection" : "select";
+        ensureStatementWithinBindLimit(statement.parameters.size(), operation);
+        std::vector<Result> result;
         try
         {
             soci::values parameterValues;
             detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
-
-            soci::rowset<db::binding::ProjectionPayload<Result>> preparedRowSet =
-                (sql.prepare << statement.sql, soci::use(parameterValues));
-
-            for (auto& payload : preparedRowSet)
+            if constexpr (Projection)
             {
-                result.push_back(std::move(payload.value));
+                soci::rowset<db::binding::ProjectionPayload<Result>> rows =
+                    (sql.prepare << statement.sql, soci::use(parameterValues));
+                for (auto& payload : rows)
+                    result.push_back(std::move(payload.value));
             }
+            else
+            {
+                auto readRows = [&]<bool Joined>()
+                {
+                    soci::rowset<db::binding::BindingPayload<Source, SchemaType, Joined>> rows =
+                        (sql.prepare << statement.sql, soci::use(parameterValues));
+                    for (auto& payload : rows)
+                        result.push_back(std::move(payload.value));
+                };
+                if (shouldJoin)
+                    readRows.template operator()<true>();
+                else
+                    readRows.template operator()<false>();
+            }
+            loadIncludes(result);
         }
         catch (const db::binding::ConversionError&)
         {
-            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, "select projection",
-                                "A database result cannot be represented by the requested projection"};
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, operation,
+                                Projection ? "A database result cannot be represented by the requested projection" :
+                                             "A database result cannot be represented by the requested model"};
         }
         catch (const soci::soci_error& error)
         {
-            throwTranslatedError(error, DatabaseErrorCode::Statement, "select projection");
+            throwTranslatedError(error, DatabaseErrorCode::Statement, operation);
         }
-
         return result;
     }
 
@@ -515,8 +600,8 @@ private:
         }
     }
 
-    template <typename SchemaType, typename Owner>
-    auto loadIncludedCollections(model::ModelView ownerDescriptor, const query::detail::SelectSpec& queryData,
+    template <typename SchemaType, typename Owner, typename Options>
+    auto loadIncludedCollections(model::ModelView ownerDescriptor, const Options& queryData,
                                  std::vector<Owner>& owners) -> void
     {
         if (queryData.includes.empty())
@@ -561,9 +646,9 @@ private:
         utils::constexpr_for_tuple(ownerFields, loadField);
     }
 
-    template <typename SchemaType, std::size_t FieldIndex, typename Owner, typename Collection>
-    auto loadCollectionField(model::ModelView ownerDescriptor, const query::detail::SelectSpec& queryData,
-                             std::vector<Owner>& owners, const model::RelationView& relation) -> void
+    template <typename SchemaType, std::size_t FieldIndex, typename Owner, typename Collection, typename Options>
+    auto loadCollectionField(model::ModelView ownerDescriptor, const Options& queryData, std::vector<Owner>& owners,
+                             const model::RelationView& relation) -> void
     {
         using target_t = orm::relation_target_t<Collection>;
 
@@ -639,6 +724,7 @@ private:
     }
 
     auto executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t;
+    auto executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t;
     auto executeSql(std::string_view statement, std::string_view operation) -> void;
     auto relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool;
     auto tableExists(std::string_view tableName) -> bool;
@@ -649,7 +735,9 @@ private:
     auto ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void;
     auto ensureModelSupported(model::ModelView model, std::string_view operation) const -> void;
     auto ensureQuerySupported(model::ModelView model, const query::detail::SelectSpec& spec) const -> void;
+    auto ensureQuerySupported(model::ModelView model, db::detail::SqlQueryView query) const -> void;
     auto ensurePredicateSupported(const query::detail::Predicate& predicate, std::string_view operation) const -> void;
+    auto ensurePredicateSupported(bool containsCollection, std::string_view operation) const -> void;
     auto ensureAffectedRowsAvailable(std::string_view operation) const -> void;
     auto requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void;
     [[noreturn]] auto throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
@@ -685,6 +773,28 @@ class Database final : public DatabaseCore
 
 public:
     using DatabaseCore::DatabaseCore;
+
+    template <query::detail::StaticPlanType Plan, typename... Args>
+        requires(Plan::operation == query::detail::PlanOperation::Select)
+    auto select(const Plan& plan, Args&&... args) -> std::vector<typename Plan::Result>
+    {
+        requireSchemaModel<typename Plan::Model>();
+        return this->template selectPlanImpl<SchemaType>(plan, std::forward<Args>(args)...);
+    }
+    template <query::detail::StaticPlanType Plan, typename... Args>
+        requires(Plan::operation == query::detail::PlanOperation::Update)
+    auto update(const Plan& plan, Args&&... args) -> std::size_t
+    {
+        requireSchemaModel<typename Plan::Model>();
+        return this->template updatePlanImpl<SchemaType>(plan, std::forward<Args>(args)...);
+    }
+    template <query::detail::StaticPlanType Plan, typename... Args>
+        requires(Plan::operation == query::detail::PlanOperation::Remove)
+    auto remove(const Plan& plan, Args&&... args) -> std::size_t
+    {
+        requireSchemaModel<typename Plan::Model>();
+        return this->template removePlanImpl<SchemaType>(plan, std::forward<Args>(args)...);
+    }
 
     template <typename T>
     using Payload = db::binding::BindingPayload<T, SchemaType>;

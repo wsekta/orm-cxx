@@ -234,3 +234,5 @@ private:
     query::detail::SelectSpec data; /**< Runtime query options; model metadata comes from Database<Schema>. */
 };
 } // namespace orm
+
+#include "query/StaticPlan.hpp"

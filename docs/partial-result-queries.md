@@ -3,6 +3,9 @@
 Partial-result queries select a subset of model fields into a flat user-defined
 DTO. Use them when you do not need to hydrate a full model object.
 
+For immutable DTO plans, use `query::selectAs<Source, Result>` with literal
+`as<"alias">` projections as described in [static query plans](static-queries.md).
+
 ## Contract
 
 Full-model selects keep the existing API and result type:

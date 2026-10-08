@@ -1,7 +1,7 @@
 # Package managers and releases
 
 `VERSION.txt` is the release version shared by CMake, vcpkg, and Conan. The current
-version is `0.2.0`; use a stable `major.minor.patch` value and increase it before
+version is `0.3.0`; use a stable `major.minor.patch` value and increase it before
 publishing changed sources. The library currently ships as a static library.
 
 The **Packages** workflow validates packages on `main`, pull requests, and
@@ -74,7 +74,7 @@ Use Conan 2 and a `conanfile.txt`:
 
 ```ini
 [requires]
-orm-cxx/0.2.0
+orm-cxx/0.3.0
 
 [generators]
 CMakeDeps
@@ -129,7 +129,7 @@ builds configurations that do not have a matching binary.
    requests `contents: write`). Branch protection rules and organization token
    policies may require an administrator's configuration.
 4. Use `VERSION.txt` as the sole release version. The breaking typed-query API
-   uses `0.2.0`; increase the minor version for incompatible changes while on `0.x`. For a later release,
+   uses `0.3.0`; increase the minor version for incompatible changes while on `0.x`. For a later release,
    increase it before preparing changed sources. Review the changes on `main`
    and wait for all its checks. Create `release` from that exact reviewed SHA,
    or fast-forward the existing branch to it. For example, for the **first**
@@ -183,8 +183,8 @@ successful release run and choose a new `--work` directory for each retry:
 
 ```sh
 gh run download <release-run-id> --name package-distribution --dir build/retry-distribution
-python scripts/publish_packages.py vcpkg --distribution build/retry-distribution --work build/retry-vcpkg-0.2.0
-python scripts/publish_packages.py conan --distribution build/retry-distribution --work build/retry-conan-0.2.0 --conan-issue <issue-number>
+python scripts/publish_packages.py vcpkg --distribution build/retry-distribution --work build/retry-vcpkg-0.3.0
+python scripts/publish_packages.py conan --distribution build/retry-distribution --work build/retry-conan-0.3.0 --conan-issue <issue-number>
 ```
 
 Authenticate these local commands as `wsekta`, or provide `GH_TOKEN` for that

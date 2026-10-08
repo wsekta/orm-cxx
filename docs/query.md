@@ -1,5 +1,10 @@
 # Query
 
+The mutable builder is described below. For reusable query shapes and typed
+argument slots, see [static query plans](static-queries.md). Expressions also
+offer `.dynamic()` when a named facade is needed; see the
+[0.3 migration guide](migration-static-queries.md).
+
 1. [Build select](#build-select)
 2. [Loading collections](#loading-collections)
 3. [Where predicates](#where-predicates)

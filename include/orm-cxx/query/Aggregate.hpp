@@ -196,7 +196,32 @@ class TypedAggregatePredicate
 {
 public:
     using Model = Owner;
+    using ParameterTypes = std::tuple<>;
+    using DynamicAggregateMarker = void;
+    inline static constexpr auto kind = ExprKind::DynamicAggregatePredicate;
+    inline static constexpr bool isPredicate = false;
     inline static constexpr bool isAggregatePredicate = true;
+    inline static constexpr bool writeSafe = false;
+    inline static constexpr bool containsCollection = false;
+    inline static constexpr bool staticSqlEligible = false;
+    template <typename E>
+        requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                 detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    TypedAggregatePredicate(const E& expression) : data{detail::erase(expression)}
+    {
+    }
+    template <typename E>
+        requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    auto operator=(const E& expression) -> TypedAggregatePredicate&
+    {
+        data = detail::erase(expression);
+        return *this;
+    }
+    auto dynamic() const -> TypedAggregatePredicate
+    {
+        return *this;
+    }
 
 private:
     friend struct detail::TypedAccess;
@@ -207,50 +232,52 @@ private:
     }
     detail::AggregatePredicate data;
 };
-
 template <typename Owner, typename ResultValue, bool Nullable>
 class TypedAggregate
 {
 public:
     using Model = Owner;
     using Value = ResultValue;
+    using ParameterTypes = std::tuple<>;
+    inline static constexpr auto kind = ExprKind::DynamicAggregate;
     inline static constexpr bool nullable = Nullable;
     inline static constexpr bool isAggregate = true;
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T>
-    auto operator==(T&& value) const -> TypedAggregatePredicate<Model>
+    inline static constexpr bool writeSafe = false;
+    inline static constexpr bool containsCollection = false;
+    inline static constexpr bool staticSqlEligible = false;
+    template <typename E>
+        requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                 std::same_as<typename E::Value, Value> &&
+                 (E::nullable == Nullable) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    TypedAggregate(const E& expression) : data{detail::erase(expression)}
     {
-        return compare(detail::ComparisonOperator::Equal, std::forward<T>(value));
     }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T>
-    auto operator!=(T&& value) const -> TypedAggregatePredicate<Model>
+    template <typename E>
+        requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                     std::same_as<typename E::Value, Value> &&
+                     (E::nullable == Nullable) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    auto operator=(const E& expression) -> TypedAggregate&
     {
-        return compare(detail::ComparisonOperator::NotEqual, std::forward<T>(value));
+        data = detail::erase(expression);
+        return *this;
     }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    auto operator>(T&& value) const -> TypedAggregatePredicate<Model>
-    {
-        return compare(detail::ComparisonOperator::Greater, std::forward<T>(value));
+#define ORM_QUERY_DYNAMIC_AGG_COMPARE(symbol, op, ordered)                                                             \
+    template <typename T>                                                                                              \
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>                                                        \
+    ordered constexpr auto operator symbol(T&& value) const                                                            \
+    {                                                                                                                  \
+        return detail::comparison<detail::ComparisonOperator::op>(*this, std::forward<T>(value));                      \
     }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    auto operator>=(T&& value) const -> TypedAggregatePredicate<Model>
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(==, Equal, )
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(!=, NotEqual, )
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(>, Greater, &&detail::ORM_QUERY_ORDERABLE<Value>)
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(>=, GreaterOrEqual, &&detail::ORM_QUERY_ORDERABLE<Value>)
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(<, Less, &&detail::ORM_QUERY_ORDERABLE<Value>)
+    ORM_QUERY_DYNAMIC_AGG_COMPARE(<=, LessOrEqual, &&detail::ORM_QUERY_ORDERABLE<Value>)
+#undef ORM_QUERY_DYNAMIC_AGG_COMPARE
+    auto dynamic() const -> TypedAggregate
     {
-        return compare(detail::ComparisonOperator::GreaterOrEqual, std::forward<T>(value));
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    auto operator<(T&& value) const -> TypedAggregatePredicate<Model>
-    {
-        return compare(detail::ComparisonOperator::Less, std::forward<T>(value));
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    auto operator<=(T&& value) const -> TypedAggregatePredicate<Model>
-    {
-        return compare(detail::ComparisonOperator::LessOrEqual, std::forward<T>(value));
+        return *this;
     }
 
 private:
@@ -260,90 +287,111 @@ private:
     {
         return data;
     }
-    template <typename T>
-    auto compare(detail::ComparisonOperator op, T&& value) const -> TypedAggregatePredicate<Model>
-    {
-        return detail::TypedAccess::make<TypedAggregatePredicate<Model>>(
-            detail::AggregatePredicate{detail::AggregatePredicateNode{
-                detail::AggregateComparisonExpression{data, op, detail::typedValue<Value>(std::forward<T>(value))}}});
-    }
     detail::AggregateExpression data;
 };
-
-template <auto... Members>
-auto count(TypedColumn<Members...> column) -> TypedAggregate<typename TypedColumn<Members...>::Model, long long, false>
-{
-    using R = TypedAggregate<typename TypedColumn<Members...>::Model, long long, false>;
-    return detail::TypedAccess::make<R>(detail::count(detail::erase(column)));
-}
-template <typename Model>
-auto countAll() -> TypedAggregate<Model, long long, false>
-{
-    return detail::TypedAccess::make<TypedAggregate<Model, long long, false>>(detail::countAll());
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
-auto sum(TypedColumn<Members...> column)
-    -> TypedAggregate<
-        typename TypedColumn<Members...>::Model,
-        std::conditional_t<std::is_integral_v<typename TypedColumn<Members...>::Value>, long long, double>, true>
-{
-    using V = std::conditional_t<std::is_integral_v<typename TypedColumn<Members...>::Value>, long long, double>;
-    using R = TypedAggregate<typename TypedColumn<Members...>::Model, V, true>;
-    return detail::TypedAccess::make<R>(detail::sum(detail::erase(column)));
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
-auto avg(TypedColumn<Members...> column) -> TypedAggregate<typename TypedColumn<Members...>::Model, double, true>
-{
-    using R = TypedAggregate<typename TypedColumn<Members...>::Model, double, true>;
-    return detail::TypedAccess::make<R>(detail::avg(detail::erase(column)));
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
-auto min(TypedColumn<Members...> column)
-    -> TypedAggregate<typename TypedColumn<Members...>::Model, typename TypedColumn<Members...>::Value, true>
-{
-    using R = TypedAggregate<typename TypedColumn<Members...>::Model, typename TypedColumn<Members...>::Value, true>;
-    return detail::TypedAccess::make<R>(detail::min(detail::erase(column)));
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
-auto max(TypedColumn<Members...> column)
-    -> TypedAggregate<typename TypedColumn<Members...>::Model, typename TypedColumn<Members...>::Value, true>
-{
-    using R = TypedAggregate<typename TypedColumn<Members...>::Model, typename TypedColumn<Members...>::Value, true>;
-    return detail::TypedAccess::make<R>(detail::max(detail::erase(column)));
-}
-template <typename L, typename R>
-    requires detail::ORM_QUERY_MODEL<TypedAggregatePredicate<R>, L>
-auto operator&&(const TypedAggregatePredicate<L>& l, const TypedAggregatePredicate<R>& r) -> TypedAggregatePredicate<L>
-{
-    return detail::TypedAccess::make<TypedAggregatePredicate<L>>(detail::erase(l) && detail::erase(r));
-}
-template <typename L, typename R>
-    requires detail::ORM_QUERY_MODEL<TypedAggregatePredicate<R>, L>
-auto operator||(const TypedAggregatePredicate<L>& l, const TypedAggregatePredicate<R>& r) -> TypedAggregatePredicate<L>
-{
-    return detail::TypedAccess::make<TypedAggregatePredicate<L>>(detail::erase(l) || detail::erase(r));
-}
-template <typename M>
-auto operator!(const TypedAggregatePredicate<M>& p) -> TypedAggregatePredicate<M>
-{
-    return detail::TypedAccess::make<TypedAggregatePredicate<M>>(!detail::erase(p));
-}
 } // namespace orm::query
 
 namespace orm::query::detail
 {
-template <typename E>
-struct IsTypedAggregatePredicate : std::false_type
+template <AggregateFunction Function, typename C, typename M, typename V, bool N>
+struct AggregateMeta : ExpressionMeta<M, false>
 {
+    using Source = C;
+    using Value = V;
+    using Dynamic = TypedAggregate<M, V, N>;
+    inline static constexpr auto function = Function;
+    inline static constexpr bool nullable = N;
+    inline static constexpr bool isAggregate = true;
+    inline static constexpr bool staticSqlEligible = true;
+    template <typename Children, typename Args>
+    static auto render(const Children& children, const Args& args)
+    {
+        if constexpr (Function == AggregateFunction::CountAll)
+            return AggregateExpression{.function = Function};
+        else
+            return AggregateExpression{.function = Function, .column = TypedAccess::erase(std::get<0>(children), args)};
+    }
+    template <typename Children, typename Args, typename Callback>
+    static auto visit(const Children&, const Args&, Callback&) -> void
+    {
+    }
 };
 template <typename M>
 struct IsTypedAggregatePredicate<TypedAggregatePredicate<M>> : std::true_type
 {
 };
+template <typename E>
+struct IsTypedAggregate : std::false_type
+{
+};
+template <typename M, typename V, bool N>
+struct IsTypedAggregate<TypedAggregate<M, V, N>> : std::true_type
+{
+};
+template <typename E>
+concept AggregateExpressionType =
+    (IsTypedAggregate<std::remove_cvref_t<E>>::value || isExpression<E>) && std::remove_cvref_t<E>::isAggregate;
 template <typename E, typename M>
-concept AggregatePredicateFor = IsTypedAggregatePredicate<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
+concept AnyAggregatePredicateFor =
+    (IsTypedAggregatePredicate<std::remove_cvref_t<E>>::value || isExpression<E>) &&
+    std::remove_cvref_t<E>::isAggregatePredicate && ORM_QUERY_MODEL<std::remove_cvref_t<E>, M>;
+template <typename E, typename M>
+concept AggregatePredicateFor = AnyAggregatePredicateFor<E, M> && ORM_QUERY_UNBOUND_PARAMETER<E>;
+template <typename E, typename M>
+concept PlanAggregatePredicateFor = AnyAggregatePredicateFor<E, M>;
 } // namespace orm::query::detail
+
+namespace orm::query
+{
+template <auto... Members>
+constexpr auto count(TypedColumn<Members...> column)
+{
+    using C = TypedColumn<Members...>;
+    return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Count, C,
+                                                                             typename C::Model, long long, false>>(
+        column);
+}
+template <typename Model>
+constexpr auto countAll()
+{
+    return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::CountAll, void,
+                                                                             Model, long long, false>>();
+}
+template <auto... Members>
+    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
+constexpr auto sum(TypedColumn<Members...> column)
+{
+    using C = TypedColumn<Members...>;
+    using V = std::conditional_t<std::is_integral_v<typename C::Value>, long long, double>;
+    return detail::makeExpression<ExprKind::Aggregate,
+                                  detail::AggregateMeta<detail::AggregateFunction::Sum, C, typename C::Model, V, true>>(
+        column);
+}
+template <auto... Members>
+    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
+constexpr auto avg(TypedColumn<Members...> column)
+{
+    using C = TypedColumn<Members...>;
+    return detail::makeExpression<
+        ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Avg, C, typename C::Model, double, true>>(
+        column);
+}
+template <auto... Members>
+    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
+constexpr auto min(TypedColumn<Members...> column)
+{
+    using C = TypedColumn<Members...>;
+    return detail::makeExpression<
+        ExprKind::Aggregate,
+        detail::AggregateMeta<detail::AggregateFunction::Min, C, typename C::Model, typename C::Value, true>>(column);
+}
+template <auto... Members>
+    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
+constexpr auto max(TypedColumn<Members...> column)
+{
+    using C = TypedColumn<Members...>;
+    return detail::makeExpression<
+        ExprKind::Aggregate,
+        detail::AggregateMeta<detail::AggregateFunction::Max, C, typename C::Model, typename C::Value, true>>(column);
+}
+} // namespace orm::query

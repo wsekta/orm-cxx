@@ -19,19 +19,6 @@ namespace
 {
 auto containsCollectionPredicate(const orm::query::detail::PredicateNode& node) -> bool;
 
-auto renderColumnForValidation(const orm::query::detail::Column& column, orm::model::ModelView model,
-                               const orm::query::detail::SelectSpec& spec,
-                               const orm::db::SqlDialect& dialect) -> std::string
-{
-    const orm::db::commands::RenderContext context{
-        .model = model,
-        .dialect = dialect,
-        .shouldJoin = spec.shouldJoin,
-    };
-
-    return orm::db::commands::renderColumn(column, context);
-}
-
 auto serializedBoundValue(const soci::values& values, const std::string& name,
                           orm::model::ColumnType type) -> orm::db::BoundValue
 {
@@ -590,6 +577,11 @@ auto DatabaseCore::rollbackTransaction() -> void
 
 auto DatabaseCore::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
 {
+    return executeMutation(db::StatementView{statement.sql, statement.parameters}, operation);
+}
+
+auto DatabaseCore::executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t
+{
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
     soci::values parameterValues;
@@ -845,7 +837,12 @@ auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string
 auto DatabaseCore::ensurePredicateSupported(const query::detail::Predicate& predicate,
                                             std::string_view operation) const -> void
 {
-    if (containsCollectionPredicate(predicate.getNode()))
+    ensurePredicateSupported(containsCollectionPredicate(predicate.getNode()), operation);
+}
+
+auto DatabaseCore::ensurePredicateSupported(bool containsCollection, std::string_view operation) const -> void
+{
+    if (containsCollection)
     {
         const auto& capabilities = getBackendCapabilities();
         requireCapability(capabilities.query.collectionPredicates, operation,
@@ -858,154 +855,155 @@ auto DatabaseCore::ensurePredicateSupported(const query::detail::Predicate& pred
 auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
                                         const query::detail::SelectSpec& spec) const -> void
 {
+    auto columnSource = [](const query::detail::Column& column)
+    {
+        const std::string_view path = column.getPath();
+        const auto dot = path.find('.');
+        db::detail::SqlSource result;
+        result.pathSize = dot == std::string_view::npos ? 1 : 2;
+        result.pathParts[0] = path.substr(0, dot);
+        if (dot != std::string_view::npos)
+        {
+            result.pathParts[1] = path.substr(dot + 1);
+            if (result.pathParts[1].find('.') != std::string_view::npos)
+                result.pathSize = 3;
+        }
+        return result;
+    };
+    db::detail::SqlProgram requirements;
+    requirements.isDistinct = spec.isDistinct;
+    requirements.shouldJoin = spec.shouldJoin;
+    requirements.hasLimit = spec.limit.has_value();
+    requirements.hasOffset = spec.offset.has_value();
+    requirements.having = spec.having.has_value() ? 0 : db::detail::noSqlNode;
+    for (const auto& order : spec.orderBy)
+        requirements.orders.push_back({columnSource(order.column), order.direction, order.isRaw, order.rawSql});
+    for (const auto& group : spec.groupBy)
+        requirements.groups.push_back(columnSource(group));
+    for (const auto& projection : spec.projections)
+    {
+        auto source = std::visit(
+            [&](const auto& expression)
+            {
+                if constexpr (std::same_as<std::remove_cvref_t<decltype(expression)>, query::detail::Column>)
+                    return columnSource(expression);
+                else
+                {
+                    auto result =
+                        expression.column.has_value() ? columnSource(*expression.column) : db::detail::SqlSource{};
+                    result.isAggregate = true;
+                    result.function = expression.function;
+                    return result;
+                }
+            },
+            projection.source);
+        requirements.projections.push_back({source, projection.resultField});
+    }
+    for (const auto& include : spec.includes)
+        requirements.includes.push_back(include);
+    if (spec.predicate.has_value() && containsCollectionPredicate(spec.predicate->getNode()))
+        requirements.nodes.push_back(db::detail::SqlNode{.kind = db::detail::SqlNodeKind::Collection});
+    ensureQuerySupported(descriptor, requirements.view());
+}
+
+auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, db::detail::SqlQueryView spec) const -> void
+{
     ensureModelSupported(descriptor, "select");
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
-
     try
     {
         for (const auto& projection : spec.projections)
-        {
-            (void)dialect.quoteIdentifier(projection.resultField);
-        }
+            (void)dialect.quoteIdentifier(projection.alias);
     }
     catch (const std::invalid_argument&)
     {
         throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "select projection",
                             "A projection alias is not supported by the selected backend"};
     }
-
-    if (spec.projections.empty() and (not spec.groupBy.empty() or spec.having.has_value()))
-    {
+    const bool hasHaving = spec.having != db::detail::noSqlNode;
+    if (spec.projections.empty() && (!spec.groups.empty() || hasHaving))
         requireCapability(capabilities.query.fullModelGrouping, "select",
                           "GROUP BY and HAVING for full-model queries are not supported");
-    }
-
-    if (spec.limit.has_value())
-    {
+    if (spec.hasLimit)
         requireCapability(capabilities.query.limit, "select", "LIMIT is not supported");
-    }
-
-    if (spec.offset.has_value())
+    if (spec.hasOffset)
     {
         requireCapability(capabilities.query.offset, "select", "OFFSET is not supported");
-
-        if (not spec.limit.has_value())
-        {
+        if (!spec.hasLimit)
             requireCapability(capabilities.query.offsetWithoutLimit, "select", "OFFSET without LIMIT is not supported");
-        }
-
-        if (capabilities.query.offsetRequiresOrderBy and spec.orderBy.empty())
-        {
+        if (capabilities.query.offsetRequiresOrderBy && spec.orders.empty())
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "select",
                                 "This backend requires ORDER BY when OFFSET is used"};
-        }
     }
-
-    if (not spec.projections.empty())
-    {
+    if (!spec.projections.empty())
         requireCapability(capabilities.query.projections, "select projection", "projections are not supported");
-    }
-
-    if (spec.isDistinct and not spec.projections.empty() and capabilities.query.distinctOrderByRequiresProjectedColumn)
+    auto columnIdentity = [&](const db::detail::SqlSource& source)
     {
-        for (const auto& ordering : spec.orderBy)
+        const auto info = db::detail::resolveSqlColumn(source, descriptor);
+        if (!spec.shouldJoin && info.relation != nullptr && !info.column->isPrimaryKey)
+            throw std::invalid_argument{"Cannot filter by non-id related field when joining is disabled: " +
+                                        db::detail::sqlPath(source)};
+        return std::pair{info.relation, info.column};
+    };
+    if (spec.isDistinct && !spec.projections.empty() && capabilities.query.distinctOrderByRequiresProjectedColumn)
+    {
+        for (const auto& ordering : spec.orders)
         {
-            const auto orderingSql =
-                ordering.isRaw ? std::string{} : renderColumnForValidation(ordering.column, descriptor, spec, dialect);
-            const auto ordersByProjectedColumn =
-                not ordering.isRaw and
-                std::ranges::any_of(
-                    spec.projections,
-                    [&orderingSql, descriptor, &spec, &dialect](const auto& projection)
-                    {
-                        const auto* projectedColumn = std::get_if<query::detail::Column>(&projection.source);
-                        return projectedColumn != nullptr and
-                               renderColumnForValidation(*projectedColumn, descriptor, spec, dialect) == orderingSql;
-                    });
-
-            requireCapability(ordersByProjectedColumn, "select projection",
+            bool projected = false;
+            if (!ordering.isRaw)
+            {
+                const auto identity = columnIdentity(ordering.source);
+                projected = std::ranges::any_of(
+                    spec.projections, [&](const auto& projection)
+                    { return !projection.source.isAggregate && columnIdentity(projection.source) == identity; });
+            }
+            requireCapability(projected, "select projection",
                               "DISTINCT projection queries may order only by projected columns");
         }
     }
-
-    if (not spec.groupBy.empty())
-    {
+    if (!spec.groups.empty())
         requireCapability(capabilities.query.groupBy, "select", "GROUP BY is not supported");
-    }
-
-    if (spec.having.has_value())
-    {
+    if (hasHaving)
         requireCapability(capabilities.query.having, "select", "HAVING is not supported");
-    }
-
-    const auto isAggregateProjection =
-        std::ranges::any_of(spec.projections, [](const auto& projection)
-                            { return std::holds_alternative<query::detail::AggregateExpression>(projection.source); });
-    const auto isAggregateQuery = not spec.groupBy.empty() or spec.having.has_value() or isAggregateProjection;
-
-    if (capabilities.query.strictProjectionGrouping and not spec.projections.empty() and isAggregateQuery)
+    const bool isAggregateProjection =
+        std::ranges::any_of(spec.projections, [](const auto& projection) { return projection.source.isAggregate; });
+    if (capabilities.query.strictProjectionGrouping && !spec.projections.empty() &&
+        (!spec.groups.empty() || hasHaving || isAggregateProjection))
     {
-        std::vector<std::string> groupedColumns;
-        groupedColumns.reserve(spec.groupBy.size());
-
-        for (const auto& groupedColumn : spec.groupBy)
+        auto isGrouped = [&](const db::detail::SqlSource& column)
         {
-            groupedColumns.push_back(renderColumnForValidation(groupedColumn, descriptor, spec, dialect));
-        }
-
-        auto isGroupedColumn = [&groupedColumns, descriptor, &spec, &dialect](const query::detail::Column& column)
-        {
-            const auto rendered = renderColumnForValidation(column, descriptor, spec, dialect);
-            return std::ranges::find(groupedColumns, rendered) != groupedColumns.end();
+            const auto identity = columnIdentity(column);
+            return std::ranges::any_of(spec.groups,
+                                       [&](const auto& group) { return columnIdentity(group) == identity; });
         };
-
         for (const auto& projection : spec.projections)
-        {
-            if (const auto* column = std::get_if<query::detail::Column>(&projection.source); column != nullptr)
-            {
-                requireCapability(isGroupedColumn(*column), "select projection",
+            if (!projection.source.isAggregate)
+                requireCapability(isGrouped(projection.source), "select projection",
                                   "Non-aggregate projected columns must appear in GROUP BY");
-            }
-        }
-
-        for (const auto& ordering : spec.orderBy)
-        {
-            if (not ordering.isRaw)
-            {
-                requireCapability(isGroupedColumn(ordering.column), "select projection",
+        for (const auto& order : spec.orders)
+            if (!order.isRaw)
+                requireCapability(isGrouped(order.source), "select projection",
                                   "Typed ORDER BY columns in aggregate queries must appear in GROUP BY");
-            }
-        }
     }
-
-    if (spec.predicate.has_value())
-    {
-        ensurePredicateSupported(*spec.predicate, "select");
-    }
-
-    if (not spec.includes.empty())
+    ensurePredicateSupported(std::ranges::any_of(spec.nodes, [](const auto& node)
+                                                 { return node.kind == db::detail::SqlNodeKind::Collection; }),
+                             "select");
+    if (!spec.includes.empty())
     {
         requireCapability(capabilities.relations.collectionIncludes, "include collection",
                           "collection includes are not supported");
-
-        for (const auto& include : spec.includes)
+        for (const auto include : spec.includes)
         {
             const auto* relation = detail::requireCollectionRelation(descriptor, include);
-
             const auto target = detail::requireIncludedRelationTarget(descriptor, *relation, backendType);
             ensureModelSupported(*target, "include collection");
-
             if (relation->kind == model::RelationKind::OneToMany)
-            {
                 requireCapability(capabilities.relations.oneToMany, "include collection",
                                   "one-to-many relations are not supported");
-            }
             else if (relation->kind == model::RelationKind::ManyToMany)
-            {
                 requireCapability(capabilities.relations.manyToMany, "include collection",
                                   "many-to-many relations are not supported");
-            }
         }
     }
 }

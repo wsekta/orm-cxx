@@ -25,3 +25,5 @@ It ships with SQLite and PostgreSQL backends built on SOCI.
 8. [Package managers and releases](packaging.md)
 9. [Migrating to static schemas](migration-static-schema.md)
 10. [Migrating to typed queries](migration-typed-queries.md)
+11. [Static query plans](static-queries.md)
+12. [Migrating queries to 0.3](migration-static-queries.md)

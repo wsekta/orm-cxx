@@ -3,6 +3,7 @@
 #include <format>
 #include <stdexcept>
 
+#include "orm-cxx/database/SqlEmitter.hpp"
 #include "orm-cxx/database/SqlNameValidation.hpp"
 #include "SqliteTypeTranslator.hpp"
 
@@ -30,33 +31,7 @@ namespace orm::db::sqlite
 {
 auto SqliteDialect::quoteIdentifier(std::string_view identifier) const -> std::string
 {
-    if (identifier.empty())
-    {
-        throw std::invalid_argument{"SQL identifier cannot be empty"};
-    }
-
-    if (identifier.find('\0') != std::string_view::npos)
-    {
-        throw std::invalid_argument{"SQLite identifiers must not contain an embedded NUL byte"};
-    }
-
-    std::string quoted{"\""};
-
-    for (const auto character : identifier)
-    {
-        if (character == '"')
-        {
-            quoted += "\"\"";
-        }
-        else
-        {
-            quoted += character;
-        }
-    }
-
-    quoted += '"';
-
-    return quoted;
+    return detail::quoteStandardIdentifier(identifier, CompiledSqlFlavor::SQLite);
 }
 
 auto SqliteDialect::bindMarker(std::string_view logicalName) const -> std::string
@@ -93,22 +68,12 @@ auto SqliteDialect::renderAutoIncrementPrimaryKey(std::string_view columnName) c
 
 auto SqliteDialect::renderPagination(const PaginationSpec& pagination) const -> std::string
 {
-    if (pagination.limit.has_value())
-    {
-        if (pagination.offset.has_value())
-        {
-            return std::format(" LIMIT {} OFFSET {}", pagination.limit.value(), pagination.offset.value());
-        }
-
-        return std::format(" LIMIT {}", pagination.limit.value());
-    }
-
-    if (pagination.offset.has_value())
-    {
-        return std::format(" LIMIT -1 OFFSET {}", pagination.offset.value());
-    }
-
-    return {};
+    detail::SqlQueryView query;
+    query.hasLimit = pagination.limit.has_value();
+    query.hasOffset = pagination.offset.has_value();
+    query.literalLimit = pagination.limit.value_or(0);
+    query.literalOffset = pagination.offset.value_or(0);
+    return detail::StaticSqlPolicy<CompiledSqlFlavor::SQLite>{}.pagination(query);
 }
 
 auto SqliteDialect::renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string

@@ -1,14 +1,14 @@
 #include "SqlRenderer.hpp"
 
-#include <algorithm>
-#include <format>
 #include <stdexcept>
 #include <string_view>
-#include <unordered_set>
-#include <utility>
+#include <variant>
 
-#include "SqlAliases.hpp"
+#include "orm-cxx/database/SqlEmitter.hpp"
+#include "orm-cxx/query/UpdateSpec.hpp"
 
+namespace orm::db::commands
+{
 namespace
 {
 template <class... Ts>
@@ -16,609 +16,297 @@ struct Overloaded : Ts...
 {
     using Ts::operator()...;
 };
-
 template <class... Ts>
 Overloaded(Ts...) -> Overloaded<Ts...>;
 
-auto splitPath(const std::string& path) -> std::vector<std::string>
+using detail::SqlNode;
+using detail::SqlNodeKind;
+using detail::SqlProgram;
+using detail::SqlSource;
+
+auto source(const query::detail::Column& column) -> SqlSource
 {
-    std::vector<std::string> parts;
-    std::size_t currentPosition = 0;
-
-    while (currentPosition <= path.size())
+    const auto& path = column.getPath();
+    SqlSource result;
+    std::size_t start = 0;
+    while (start <= path.size())
     {
-        const auto nextPosition = path.find('.', currentPosition);
-        const auto part = path.substr(currentPosition, nextPosition - currentPosition);
-
+        const auto dot = path.find('.', start);
+        const auto part = std::string_view{path}.substr(start, dot - start);
         if (part.empty())
-        {
             throw std::invalid_argument{"Column path contains an empty segment: " + path};
-        }
-
-        parts.push_back(part);
-
-        if (nextPosition == std::string::npos)
-        {
+        if (result.pathSize == 2)
+            throw std::invalid_argument{"Only one level of related model paths is supported: " + path};
+        result.pathParts[result.pathSize++] = part;
+        if (dot == std::string::npos)
             break;
-        }
-
-        currentPosition = nextPosition + 1;
+        start = dot + 1;
     }
-
-    return parts;
+    return result;
 }
-
-auto join(const std::vector<std::string>& parts, std::string_view separator) -> std::string
+auto source(const query::detail::AggregateExpression& expression) -> SqlSource
 {
-    std::string joined;
-
-    for (const auto& part : parts)
-    {
-        joined += part;
-        joined += separator;
-    }
-
-    if (not joined.empty())
-    {
-        joined.resize(joined.size() - separator.size());
-    }
-
-    return joined;
+    if (expression.function != query::detail::AggregateFunction::CountAll && !expression.column.has_value())
+        throw std::invalid_argument{"Aggregate function requires a source column"};
+    auto result = expression.column.has_value() ? source(*expression.column) : SqlSource{};
+    result.isAggregate = true;
+    result.function = expression.function;
+    return result;
 }
-
-auto startsWith(std::string_view value, std::string_view prefix) -> bool
+auto addValue(SqlProgram& program, RenderContext& context, const query::QueryValue& value) -> std::size_t
 {
-    return value.substr(0, prefix.size()) == prefix;
+    (void)addAutomaticParameter(context, value);
+    const auto index = program.bindings.size();
+    program.bindings.push_back({value.getLogicalType(), context.nextParameterIndex - 1, {}});
+    return index;
 }
-
-auto uniqueAlias(std::string_view base, const std::unordered_set<std::string>& reserved) -> std::string
+auto addNull(SqlProgram& program, RenderContext& context, model::ColumnType type) -> std::size_t
 {
-    auto candidate = std::string{base};
-    std::size_t suffix = 1;
-
-    while (reserved.contains(candidate))
-    {
-        candidate = std::format("{}_{}", base, suffix++);
-    }
-
-    return candidate;
+    (void)addNullParameter(context, type);
+    const auto index = program.bindings.size();
+    program.bindings.push_back({type, context.nextParameterIndex - 1, {}});
+    return index;
 }
-
-auto findColumn(const orm::model::ModelView model, std::string_view fieldOrColumnName) -> const orm::model::ColumnView*
+auto appendPredicate(SqlProgram& program, RenderContext& context,
+                     const query::detail::PredicateNode& predicate) -> std::size_t
 {
-    return model.findColumn(fieldOrColumnName);
+    auto node = std::visit(
+        Overloaded{[&](const query::detail::ComparisonExpression& expression)
+                   {
+                       return SqlNode{.kind = SqlNodeKind::Comparison,
+                                      .source = source(expression.column),
+                                      .operation = static_cast<unsigned>(expression.comparisonOperator),
+                                      .firstParameter = addValue(program, context, expression.value),
+                                      .parameterCount = 1};
+                   },
+                   [&](const query::detail::NullExpression& expression)
+                   {
+                       return SqlNode{.kind = SqlNodeKind::Null,
+                                      .source = source(expression.column),
+                                      .operation = static_cast<unsigned>(expression.nullOperator)};
+                   },
+                   [&](const query::detail::ListExpression& expression)
+                   {
+                       SqlNode result{.kind = SqlNodeKind::List,
+                                      .source = source(expression.column),
+                                      .operation = static_cast<unsigned>(expression.listOperator),
+                                      .firstParameter = program.bindings.size(),
+                                      .parameterCount = expression.values.size()};
+                       for (const auto& value : expression.values)
+                           (void)addValue(program, context, value);
+                       return result;
+                   },
+                   [&](const query::detail::BetweenExpression& expression)
+                   {
+                       SqlNode result{.kind = SqlNodeKind::Between,
+                                      .source = source(expression.column),
+                                      .operation = static_cast<unsigned>(expression.betweenOperator),
+                                      .firstParameter = addValue(program, context, expression.lowerValue),
+                                      .parameterCount = 2};
+                       (void)addValue(program, context, expression.upperValue);
+                       return result;
+                   },
+                   [&](const query::detail::LogicalExpression& expression)
+                   {
+                       const auto left = appendPredicate(program, context, *expression.left);
+                       const auto right = appendPredicate(program, context, *expression.right);
+                       return SqlNode{.kind = expression.logicalOperator == query::detail::LogicalOperator::And ?
+                                                  SqlNodeKind::And :
+                                                  SqlNodeKind::Or,
+                                      .left = left,
+                                      .right = right};
+                   },
+                   [&](const query::detail::NotExpression& expression) {
+                       return SqlNode{.kind = SqlNodeKind::Not,
+                                      .left = appendPredicate(program, context, *expression.predicate)};
+                   },
+                   [&](const query::detail::RawExpression& expression)
+                   {
+                       for (const auto& parameter : expression.parameters)
+                       {
+                           if (parameter.name.empty() || parameter.name.front() == ':')
+                               throw std::invalid_argument{"Raw query parameter name must not be empty or include ':'"};
+                           if (parameter.name.starts_with("orm_p"))
+                               throw std::invalid_argument{"Raw query parameter cannot use reserved prefix orm_p: " +
+                                                           parameter.name};
+                           (void)context.dialect.bindMarker(parameter.name);
+                           if (!context.parameterNames.insert(parameter.name).second)
+                               throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};
+                           context.parameters.push_back(
+                               {.name = parameter.name, .value = parameter.value, .nullType = std::nullopt});
+                           program.bindings.push_back({parameter.value.getLogicalType(), 0, parameter.name});
+                       }
+                       return SqlNode{.kind = SqlNodeKind::Raw, .rawSql = expression.sql};
+                   },
+                   [&](const query::detail::CollectionExpression& expression)
+                   {
+                       return SqlNode{.kind = SqlNodeKind::Collection,
+                                      .operation = static_cast<unsigned>(expression.collectionOperator),
+                                      .left = expression.predicate == nullptr ?
+                                                  detail::noSqlNode :
+                                                  appendPredicate(program, context, *expression.predicate),
+                                      .relation = expression.relation};
+                   }},
+        predicate.expression);
+    const auto index = program.nodes.size();
+    program.nodes.push_back(node);
+    return index;
 }
-
-auto getColumnOrThrow(const orm::model::ModelView model,
-                      std::string_view fieldOrColumnName) -> const orm::model::ColumnView&
+auto appendHaving(SqlProgram& program, RenderContext& context,
+                  const query::detail::AggregatePredicateNode& predicate) -> std::size_t
 {
-    const auto* column = findColumn(model, fieldOrColumnName);
-
-    if (column == nullptr)
-    {
-        throw std::invalid_argument{"Unknown column path segment: " + std::string{fieldOrColumnName}};
-    }
-
-    return *column;
+    auto node = std::visit(
+        Overloaded{[&](const query::detail::AggregateComparisonExpression& expression)
+                   {
+                       return SqlNode{.kind = SqlNodeKind::Comparison,
+                                      .source = source(expression.aggregate),
+                                      .operation = static_cast<unsigned>(expression.comparisonOperator),
+                                      .firstParameter = addValue(program, context, expression.value),
+                                      .parameterCount = 1};
+                   },
+                   [&](const query::detail::AggregateLogicalExpression& expression)
+                   {
+                       const auto left = appendHaving(program, context, *expression.left);
+                       const auto right = appendHaving(program, context, *expression.right);
+                       return SqlNode{.kind = expression.logicalOperator == query::detail::LogicalOperator::And ?
+                                                  SqlNodeKind::And :
+                                                  SqlNodeKind::Or,
+                                      .left = left,
+                                      .right = right};
+                   },
+                   [&](const query::detail::AggregateNotExpression& expression) {
+                       return SqlNode{.kind = SqlNodeKind::Not,
+                                      .left = appendHaving(program, context, *expression.predicate)};
+                   }},
+        predicate.expression);
+    const auto index = program.nodes.size();
+    program.nodes.push_back(node);
+    return index;
 }
-
-auto getTargetOrThrow(const orm::model::ModelView model, const orm::model::ColumnView& column) -> orm::model::ModelView
+auto scope(const RenderContext& context) -> detail::SqlRenderScope
 {
-    if (column.kind != orm::model::FieldKind::ToOne)
-    {
-        throw std::invalid_argument{"Column is not a related model: " + std::string{column.fieldName}};
-    }
-
-    const auto target = model.resolveTarget(column);
-    if (target == nullptr)
-    {
-        throw std::logic_error{"To-one relation target is not available in the schema"};
-    }
-    return target;
-}
-
-auto renderSelectColumn(const orm::query::detail::Column& column,
-                        const orm::db::commands::RenderContext& context) -> std::string
-{
-    const auto parts = splitPath(column.getPath());
-    const auto rootTable = context.tableAlias.empty() ? std::string{context.model->tableName} : context.tableAlias;
-
-    if (parts.size() == 1)
-    {
-        const auto& columnView = getColumnOrThrow(context.model, parts[0]);
-
-        if (columnView.kind == orm::model::FieldKind::ToOne)
-        {
-            throw std::invalid_argument{"Use a related field path instead of the related model itself: " +
-                                        column.getPath()};
-        }
-
-        return orm::db::aliases::qualifiedIdentifier(context.dialect, rootTable, columnView.name);
-    }
-
-    if (parts.size() == 2)
-    {
-        const auto& relatedColumn = getColumnOrThrow(context.model, parts[0]);
-        const auto target = getTargetOrThrow(context.model, relatedColumn);
-        const auto& targetColumn = getColumnOrThrow(target, parts[1]);
-
-        if (context.shouldJoin)
-        {
-            const auto relationAlias = context.relationAliases.find(std::string{relatedColumn.name});
-            const auto qualifier = relationAlias == context.relationAliases.end() ?
-                                       relatedColumn.name :
-                                       std::string_view{relationAlias->second};
-            return orm::db::aliases::qualifiedIdentifier(context.dialect, qualifier, targetColumn.name);
-        }
-
-        if (not targetColumn.isPrimaryKey)
-        {
-            throw std::invalid_argument{"Cannot filter by non-id related field when joining is disabled: " +
-                                        column.getPath()};
-        }
-
-        return orm::db::aliases::qualifiedIdentifier(
-            context.dialect, rootTable, orm::db::aliases::joinedRelationColumn(relatedColumn.name, targetColumn.name));
-    }
-
-    throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
-}
-
-auto comparisonOperatorToSql(orm::query::detail::ComparisonOperator comparisonOperator) -> std::string_view
-{
-    switch (comparisonOperator)
-    {
-    case orm::query::detail::ComparisonOperator::Equal:
-        return "=";
-    case orm::query::detail::ComparisonOperator::NotEqual:
-        return "!=";
-    case orm::query::detail::ComparisonOperator::Greater:
-        return ">";
-    case orm::query::detail::ComparisonOperator::GreaterOrEqual:
-        return ">=";
-    case orm::query::detail::ComparisonOperator::Less:
-        return "<";
-    case orm::query::detail::ComparisonOperator::LessOrEqual:
-        return "<=";
-    case orm::query::detail::ComparisonOperator::Like:
-        return "LIKE";
-    case orm::query::detail::ComparisonOperator::NotLike:
-        return "NOT LIKE";
-    }
-
-    throw std::invalid_argument{"Unsupported comparison operator"};
-}
-
-auto addRawParameters(orm::db::commands::RenderContext& context,
-                      const std::vector<orm::query::QueryParameter>& parameters) -> void
-{
-    for (const auto& parameter : parameters)
-    {
-        if (parameter.name.empty() or parameter.name.front() == ':')
-        {
-            throw std::invalid_argument{"Raw query parameter name must not be empty or include ':'"};
-        }
-
-        if (startsWith(parameter.name, "orm_p"))
-        {
-            throw std::invalid_argument{"Raw query parameter cannot use reserved prefix orm_p: " + parameter.name};
-        }
-
-        (void)context.dialect.bindMarker(parameter.name);
-
-        if (not context.parameterNames.insert(parameter.name).second)
-        {
-            throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};
-        }
-
-        context.parameters.push_back(
-            orm::db::StatementParameter{.name = parameter.name, .value = parameter.value, .nullType = std::nullopt});
-    }
-}
-
-auto renderPredicate(const orm::query::detail::PredicateNode& node,
-                     orm::db::commands::RenderContext& context) -> std::string;
-auto renderPredicate(const orm::query::detail::PredicateNodePtr& node,
-                     orm::db::commands::RenderContext& context) -> std::string;
-
-auto primaryKeyColumns(orm::model::ModelView model) -> std::vector<const orm::model::ColumnView*>
-{
-    std::vector<const orm::model::ColumnView*> columns;
-
-    for (const auto& column : model->columns)
-    {
-        if (column.isPrimaryKey)
-        {
-            if (column.kind == orm::model::FieldKind::ToOne)
-            {
-                throw std::invalid_argument{"Relations with model-valued primary-key fields are not supported"};
-            }
-
-            columns.push_back(&column);
-        }
-    }
-
-    if (columns.empty())
-    {
-        throw std::invalid_argument{"Collection relation endpoint must define a primary key"};
-    }
-
-    return columns;
-}
-
-auto renderToOneJoins(orm::model::ModelView model, const orm::db::SqlDialect& dialect, const std::string& rootAlias,
-                      const std::unordered_map<std::string, std::string>& relationAliases) -> std::string
-{
-    std::string joins;
-
-    for (const auto& relation : model->columns)
-    {
-        if (relation.kind != orm::model::FieldKind::ToOne)
-        {
-            continue;
-        }
-
-        const auto target = getTargetOrThrow(model, relation);
-        const auto& relationAlias = relationAliases.at(std::string{relation.name});
-        std::vector<std::string> predicates;
-
-        for (const auto* targetColumn : primaryKeyColumns(target))
-        {
-            predicates.push_back(std::format(
-                "{} = {}", orm::db::aliases::qualifiedIdentifier(dialect, relationAlias, targetColumn->name),
-                orm::db::aliases::qualifiedIdentifier(
-                    dialect, rootAlias, orm::db::aliases::joinedRelationColumn(relation.name, targetColumn->name))));
-        }
-
-        joins += std::format(" LEFT JOIN {} AS {} ON {}", dialect.quoteIdentifier(target->tableName),
-                             dialect.quoteIdentifier(relationAlias), join(predicates, " AND "));
-    }
-
-    return joins;
-}
-
-auto renderNestedPredicate(const orm::query::detail::PredicateNodePtr& predicate, orm::model::ModelView target,
-                           orm::db::commands::RenderContext& outerContext, const std::string& targetAlias,
-                           const std::unordered_map<std::string, std::string>& relationAliases) -> std::string
-{
-    orm::db::commands::RenderContext targetContext{
-        .model = target,
-        .dialect = outerContext.dialect,
-        .shouldJoin = true,
-        .columnRenderMode = orm::db::commands::ColumnRenderMode::Select,
-        .tableAlias = targetAlias,
-        .relationAliases = relationAliases,
-        .allowCollectionPredicates = false,
-        .parameters = std::move(outerContext.parameters),
-        .parameterNames = std::move(outerContext.parameterNames),
-        .nextParameterIndex = outerContext.nextParameterIndex,
-    };
-    const auto sql = renderPredicate(predicate, targetContext);
-    outerContext.parameters = std::move(targetContext.parameters);
-    outerContext.parameterNames = std::move(targetContext.parameterNames);
-    outerContext.nextParameterIndex = targetContext.nextParameterIndex;
-
-    return sql;
-}
-
-auto renderCollectionPredicate(const orm::query::detail::CollectionExpression& expression,
-                               orm::db::commands::RenderContext& context) -> std::string
-{
-    if (not context.allowCollectionPredicates)
-    {
-        throw std::invalid_argument{"Nested collection predicates are not supported"};
-    }
-
-    const auto* relation = context.model.findRelation(expression.relation);
-
-    if (relation == nullptr or relation->kind == orm::model::RelationKind::ToOne)
-    {
-        throw std::invalid_argument{"Unknown collection relation: " + expression.relation};
-    }
-
-    if (expression.collectionOperator != orm::query::detail::CollectionOperator::Exists and
-        expression.predicate == nullptr)
-    {
-        throw std::invalid_argument{"Collection any/none requires an element predicate"};
-    }
-
-    const auto outerAlias = context.tableAlias.empty() ? std::string{context.model->tableName} : context.tableAlias;
-    const auto ownerPrimaryKey = primaryKeyColumns(context.model);
-    const auto target = context.model.resolveTarget(*relation);
-    if (target == nullptr)
-    {
-        throw std::logic_error{"Collection relation target is not available in the schema"};
-    }
-    const auto targetPrimaryKey = primaryKeyColumns(target);
-    auto reservedAliases = std::unordered_set<std::string>{outerAlias};
-
-    for (const auto& targetRelation : target->columns)
-    {
-        if (targetRelation.kind == orm::model::FieldKind::ToOne)
-        {
-            reservedAliases.emplace(targetRelation.name);
-        }
-    }
-
-    const auto targetAlias = uniqueAlias("orm_relation_target", reservedAliases);
-    reservedAliases.insert(targetAlias);
-    const auto junctionAlias = uniqueAlias("orm_relation_junction", reservedAliases);
-    reservedAliases.insert(junctionAlias);
-    std::unordered_set<std::string> assignedAliases{outerAlias, targetAlias, junctionAlias};
-    std::unordered_map<std::string, std::string> relationAliases;
-
-    for (const auto& targetRelation : target->columns)
-    {
-        if (targetRelation.kind != orm::model::FieldKind::ToOne)
-        {
-            continue;
-        }
-
-        const auto relationName = std::string{targetRelation.name};
-        const auto relationAlias =
-            assignedAliases.contains(relationName) ? uniqueAlias(relationName, reservedAliases) : relationName;
-        relationAliases.emplace(relationName, relationAlias);
-        assignedAliases.insert(relationAlias);
-        reservedAliases.insert(relationAlias);
-    }
-    std::vector<std::string> predicates;
-    std::string from;
-
-    if (relation->kind == orm::model::RelationKind::OneToMany)
-    {
-        const auto* mappedRelation = target.findRelation(relation->mappedBy);
-
-        if (mappedRelation == nullptr or mappedRelation->kind != orm::model::RelationKind::ToOne)
-        {
-            throw std::invalid_argument{"Invalid OneToMany mappedBy relation: " + std::string{relation->fieldName}};
-        }
-
-        for (const auto* ownerColumn : ownerPrimaryKey)
-        {
-            predicates.push_back(
-                std::format("{} = {}",
-                            orm::db::aliases::qualifiedIdentifier(
-                                context.dialect, targetAlias,
-                                orm::db::aliases::joinedRelationColumn(mappedRelation->columnName, ownerColumn->name)),
-                            orm::db::aliases::qualifiedIdentifier(context.dialect, outerAlias, ownerColumn->name)));
-        }
-
-        from = std::format("{} AS {}{}", context.dialect.quoteIdentifier(target->tableName),
-                           context.dialect.quoteIdentifier(targetAlias),
-                           renderToOneJoins(target, context.dialect, targetAlias, relationAliases));
-    }
-    else
-    {
-        const auto junction = context.model.resolveJunction(*relation);
-        if (not junction.isConfigured())
-        {
-            throw std::invalid_argument{"ManyToMany relation has no junction mapping: " +
-                                        std::string{relation->fieldName}};
-        }
-
-        if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
-            junction.targetColumns.size() != targetPrimaryKey.size())
-        {
-            throw std::invalid_argument{"Junction columns do not match relation endpoint keys: " +
-                                        std::string{junction.tableName}};
-        }
-
-        std::vector<std::string> targetJoin;
-
-        for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
-        {
-            predicates.push_back(std::format(
-                "{} = {}",
-                orm::db::aliases::qualifiedIdentifier(context.dialect, junctionAlias, junction.ownerColumns[i]),
-                orm::db::aliases::qualifiedIdentifier(context.dialect, outerAlias, ownerPrimaryKey[i]->name)));
-        }
-
-        for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
-        {
-            targetJoin.push_back(std::format(
-                "{} = {}",
-                orm::db::aliases::qualifiedIdentifier(context.dialect, targetAlias, targetPrimaryKey[i]->name),
-                orm::db::aliases::qualifiedIdentifier(context.dialect, junctionAlias, junction.targetColumns[i])));
-        }
-
-        from = std::format("{} AS {} JOIN {} AS {} ON {}{}", context.dialect.quoteIdentifier(junction.tableName),
-                           context.dialect.quoteIdentifier(junctionAlias),
-                           context.dialect.quoteIdentifier(target->tableName),
-                           context.dialect.quoteIdentifier(targetAlias), join(targetJoin, " AND "),
-                           renderToOneJoins(target, context.dialect, targetAlias, relationAliases));
-    }
-
-    if (expression.predicate != nullptr)
-    {
-        predicates.push_back(
-            renderNestedPredicate(expression.predicate, target, context, targetAlias, relationAliases));
-    }
-
-    const auto existsSql = std::format("EXISTS (SELECT 1 FROM {} WHERE {})", from, join(predicates, " AND "));
-
-    return expression.collectionOperator == orm::query::detail::CollectionOperator::None ?
-               std::format("NOT ({})", existsSql) :
-               existsSql;
-}
-
-auto renderPredicate(const orm::query::detail::PredicateNodePtr& node,
-                     orm::db::commands::RenderContext& context) -> std::string
-{
-    return renderPredicate(*node, context);
-}
-
-auto renderPredicate(const orm::query::detail::PredicateNode& node,
-                     orm::db::commands::RenderContext& context) -> std::string
-{
-    return std::visit(
-        Overloaded{
-            [&context](const orm::query::detail::ComparisonExpression& expression)
-            {
-                const auto column = orm::db::commands::renderColumn(expression.column, context);
-                const auto sqlOperator = comparisonOperatorToSql(expression.comparisonOperator);
-                const auto parameter = orm::db::commands::addAutomaticParameter(context, expression.value);
-
-                return std::format("{} {} {}", column, sqlOperator, parameter);
-            },
-            [&context](const orm::query::detail::NullExpression& expression)
-            {
-                return std::format("{} {}", orm::db::commands::renderColumn(expression.column, context),
-                                   expression.nullOperator == orm::query::detail::NullOperator::IsNull ? "IS NULL" :
-                                                                                                         "IS NOT NULL");
-            },
-            [&context](const orm::query::detail::ListExpression& expression)
-            {
-                if (expression.values.empty())
-                {
-                    return expression.listOperator == orm::query::detail::ListOperator::In ? std::string{"(1 = 0)"} :
-                                                                                             std::string{"(1 = 1)"};
-                }
-
-                const auto column = orm::db::commands::renderColumn(expression.column, context);
-                const auto sqlOperator =
-                    expression.listOperator == orm::query::detail::ListOperator::In ? "IN" : "NOT IN";
-                std::vector<std::string> placeholders;
-                placeholders.reserve(expression.values.size());
-
-                for (const auto& value : expression.values)
-                {
-                    placeholders.push_back(orm::db::commands::addAutomaticParameter(context, value));
-                }
-
-                return std::format("{} {} ({})", column, sqlOperator, join(placeholders, ", "));
-            },
-            [&context](const orm::query::detail::BetweenExpression& expression)
-            {
-                const auto column = orm::db::commands::renderColumn(expression.column, context);
-                const auto sqlOperator = expression.betweenOperator == orm::query::detail::BetweenOperator::Between ?
-                                             "BETWEEN" :
-                                             "NOT BETWEEN";
-                const auto lowerParameter = orm::db::commands::addAutomaticParameter(context, expression.lowerValue);
-                const auto upperParameter = orm::db::commands::addAutomaticParameter(context, expression.upperValue);
-
-                return std::format("{} {} {} AND {}", column, sqlOperator, lowerParameter, upperParameter);
-            },
-            [&context](const orm::query::detail::LogicalExpression& expression)
-            {
-                const auto left = renderPredicate(expression.left, context);
-                const auto sqlOperator =
-                    expression.logicalOperator == orm::query::detail::LogicalOperator::And ? "AND" : "OR";
-                const auto right = renderPredicate(expression.right, context);
-
-                return std::format("({} {} {})", left, sqlOperator, right);
-            },
-            [&context](const orm::query::detail::NotExpression& expression)
-            { return std::format("(NOT ({}))", renderPredicate(expression.predicate, context)); },
-            [&context](const orm::query::detail::RawExpression& expression)
-            {
-                addRawParameters(context, expression.parameters);
-                return expression.sql;
-            },
-            [&context](const orm::query::detail::CollectionExpression& expression)
-            { return renderCollectionPredicate(expression, context); }},
-        node.expression);
+    detail::SqlRenderScope result{context.model,
+                                  context.shouldJoin,
+                                  context.columnRenderMode == ColumnRenderMode::WritePredicate,
+                                  context.allowCollectionPredicates,
+                                  context.tableAlias,
+                                  {}};
+    for (const auto& pair : context.relationAliases)
+        result.relationAliases.push_back(pair);
+    return result;
 }
 } // namespace
 
-namespace orm::db::commands
-{
 auto renderColumn(const query::detail::Column& column, const RenderContext& context) -> std::string
 {
-    if (context.columnRenderMode == ColumnRenderMode::WritePredicate)
-    {
-        return renderWriteColumn(column, context.model, context.dialect, true).sql;
-    }
-
-    return renderSelectColumn(column, context);
+    return detail::emitSqlColumn(source(column), scope(context), detail::RuntimeSqlPolicy{context.dialect});
 }
-
 auto renderWriteColumn(const query::detail::Column& column, model::ModelView modelView, const SqlDialect& dialect,
                        bool qualifyWithTable) -> WriteColumn
 {
-    const auto parts = splitPath(column.getPath());
-
-    if (parts.size() == 1)
-    {
-        const auto& columnView = getColumnOrThrow(modelView, parts[0]);
-
-        if (columnView.kind == model::FieldKind::ToOne)
-        {
-            throw std::invalid_argument{"Use a related primary-key field path in write queries: " + column.getPath()};
-        }
-
-        return WriteColumn{.sql = qualifyWithTable ?
-                                      aliases::qualifiedIdentifier(dialect, modelView->tableName, columnView.name) :
-                                      dialect.quoteIdentifier(columnView.name),
-                           .type = columnView.type.value(),
-                           .isNotNull = columnView.isNotNull};
-    }
-
-    if (parts.size() == 2)
-    {
-        const auto& relatedColumn = getColumnOrThrow(modelView, parts[0]);
-        const auto target = getTargetOrThrow(modelView, relatedColumn);
-        const auto& targetColumn = getColumnOrThrow(target, parts[1]);
-
-        if (not targetColumn.isPrimaryKey)
-        {
-            throw std::invalid_argument{"Only related primary-key fields can be used in write queries: " +
-                                        column.getPath()};
-        }
-
-        const auto columnName = std::format("{}_{}", relatedColumn.name, targetColumn.name);
-
-        return WriteColumn{.sql = qualifyWithTable ?
-                                      aliases::qualifiedIdentifier(dialect, modelView->tableName, columnName) :
-                                      dialect.quoteIdentifier(columnName),
-                           .type = targetColumn.type.value(),
-                           .isNotNull = relatedColumn.isNotNull};
-    }
-
-    throw std::invalid_argument{"Only one level of related model paths is supported: " + column.getPath()};
+    const auto columnSource = source(column);
+    const auto info = detail::resolveSqlColumn(columnSource, modelView, true);
+    const detail::SqlRenderScope writeScope{modelView, false, true, true, {}, {}};
+    return {.sql = detail::emitSqlColumn(columnSource, writeScope, detail::RuntimeSqlPolicy{dialect}, qualifyWithTable),
+            .type = info.logicalType,
+            .isNotNull = info.isNotNull};
 }
-
 auto renderWhere(const std::optional<query::detail::Predicate>& predicate, RenderContext& context) -> std::string
 {
-    if (not predicate.has_value())
-    {
-        return {};
-    }
-
-    return " WHERE " + renderPredicate(predicate->getNode(), context);
+    return predicate.has_value() ? renderWhere(*predicate, context) : std::string{};
 }
-
 auto renderWhere(const query::detail::Predicate& predicate, RenderContext& context) -> std::string
 {
-    return " WHERE " + renderPredicate(predicate.getNode(), context);
+    SqlProgram program;
+    program.predicate = appendPredicate(program, context, predicate.getNode());
+    return " WHERE " + detail::emitSqlPredicate(program.view(), program.predicate, scope(context),
+                                                detail::RuntimeSqlPolicy{context.dialect});
 }
-
 auto addAutomaticParameter(RenderContext& context, const query::QueryValue& value) -> std::string
 {
-    std::string parameterName;
-
+    std::string name;
     do
     {
-        parameterName = std::format("orm_p{}", context.nextParameterIndex++);
-    } while (context.parameterNames.contains(parameterName));
-
-    context.parameterNames.insert(parameterName);
-    context.parameters.push_back(StatementParameter{.name = parameterName, .value = value, .nullType = std::nullopt});
-
-    return context.dialect.bindMarker(parameterName);
+        name = "orm_p" + std::to_string(context.nextParameterIndex++);
+    } while (context.parameterNames.contains(name));
+    context.parameterNames.insert(name);
+    context.parameters.push_back({.name = name, .value = value, .nullType = std::nullopt});
+    return context.dialect.bindMarker(name);
 }
-
 auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::string
 {
-    std::string parameterName;
-
+    std::string name;
     do
     {
-        parameterName = std::format("orm_p{}", context.nextParameterIndex++);
-    } while (context.parameterNames.contains(parameterName));
-
-    context.parameterNames.insert(parameterName);
-    context.parameters.push_back(StatementParameter{.name = parameterName, .value = std::nullopt, .nullType = type});
-
-    return context.dialect.bindMarker(parameterName);
+        name = "orm_p" + std::to_string(context.nextParameterIndex++);
+    } while (context.parameterNames.contains(name));
+    context.parameterNames.insert(name);
+    context.parameters.push_back({.name = name, .value = std::nullopt, .nullType = type});
+    return context.dialect.bindMarker(name);
+}
+auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec,
+                           const SqlDialect& dialect) -> SelectStatement
+{
+    RenderContext context{.model = model, .dialect = dialect, .shouldJoin = spec.shouldJoin};
+    SqlProgram program;
+    program.isDistinct = spec.isDistinct;
+    program.shouldJoin = spec.shouldJoin;
+    for (const auto& projection : spec.projections)
+        program.projections.push_back(
+            {std::visit([](const auto& item) { return source(item); }, projection.source), projection.resultField});
+    if (spec.predicate.has_value())
+        program.predicate = appendPredicate(program, context, spec.predicate->getNode());
+    for (const auto& group : spec.groupBy)
+        program.groups.push_back(source(group));
+    if (spec.having.has_value())
+        program.having = appendHaving(program, context, spec.having->getNode());
+    for (const auto& order : spec.orderBy)
+        program.orders.push_back(
+            {order.isRaw ? SqlSource{} : source(order.column), order.direction, order.isRaw, order.rawSql});
+    program.hasLimit = spec.limit.has_value();
+    program.hasOffset = spec.offset.has_value();
+    program.literalLimit = spec.limit.value_or(0);
+    program.literalOffset = spec.offset.value_or(0);
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    return {.sql = sql, .parameters = std::move(context.parameters)};
+}
+auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSpec& spec,
+                           const SqlDialect& dialect) -> Statement
+{
+    RenderContext context{
+        .model = model, .dialect = dialect, .shouldJoin = false, .columnRenderMode = ColumnRenderMode::WritePredicate};
+    SqlProgram program;
+    program.operation = detail::SqlOperation::Update;
+    program.shouldJoin = false;
+    if (spec.assignments.empty())
+        throw std::invalid_argument{"UPDATE requires at least one assignment"};
+    if (!spec.predicate.has_value())
+        throw std::invalid_argument{"UPDATE requires a WHERE predicate"};
+    for (const auto& assignment : spec.assignments)
+    {
+        const auto columnSource = source(assignment.column);
+        const auto info = detail::resolveSqlColumn(columnSource, model, true);
+        if (!assignment.value.value.has_value() && info.isNotNull)
+            throw std::invalid_argument{"Cannot assign NULL to NOT NULL column: " + assignment.column.getPath()};
+        const auto parameter = assignment.value.value.has_value() ?
+                                   addValue(program, context, *assignment.value.value) :
+                                   addNull(program, context, info.logicalType);
+        program.assignments.push_back({columnSource, parameter});
+    }
+    program.predicate = appendPredicate(program, context, spec.predicate->getNode());
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    return {.sql = sql, .parameters = std::move(context.parameters)};
+}
+auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate,
+                           const SqlDialect& dialect) -> Statement
+{
+    RenderContext context{
+        .model = model, .dialect = dialect, .shouldJoin = false, .columnRenderMode = ColumnRenderMode::WritePredicate};
+    SqlProgram program;
+    program.operation = detail::SqlOperation::Remove;
+    program.shouldJoin = false;
+    program.predicate = appendPredicate(program, context, predicate.getNode());
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    return {.sql = sql, .parameters = std::move(context.parameters)};
 }
 } // namespace orm::db::commands

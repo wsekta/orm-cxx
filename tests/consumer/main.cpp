@@ -78,6 +78,21 @@ int main()
     projection.project(orm::query::as("id", orm::query::col<&consumer_models::ConsumerModel::id>()))
         .where(orm::query::col<&consumer_models::ConsumerModel::id>() >= short{1});
 
+    using namespace orm::query;
+    constexpr auto selectPlan =
+        select<consumer_models::ConsumerModel>().where(col<&consumer_models::ConsumerModel::id>() == param<int, 0>());
+    constexpr auto projectionPlan = selectAs<consumer_models::ConsumerModel, consumer_models::ConsumerSummary>(
+        as<"id">(col<&consumer_models::ConsumerModel::id>()));
+    constexpr auto updatePlan = orm::query::update<consumer_models::ConsumerModel>()
+                                    .set(col<&consumer_models::ConsumerModel::id>(), param<int, 0>())
+                                    .where(col<&consumer_models::ConsumerModel::id>() == param<int, 1>());
+    constexpr auto removePlan =
+        remove<consumer_models::ConsumerModel>().where(col<&consumer_models::ConsumerModel::id>() == param<int, 0>());
+    (void)selectPlan.toDynamic(7);
+    (void)projectionPlan.toDynamic();
+    (void)updatePlan.toDynamic(8, 7);
+    (void)removePlan.toDynamic(7);
+
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");

@@ -29,6 +29,10 @@ contracts, then expand expressiveness and database support deliberately.
 - A query builder for full-model `SELECT` queries with predicates, ordering,
   `DISTINCT`, `LIMIT`, `OFFSET`, `GROUP BY`, aggregate `HAVING`, raw predicates,
   raw ordering, and bind parameters.
+- Immutable select, DTO projection, update, and delete plans with typed
+  argument slots, compile-time expression structure, and cached SQLite and
+  PostgreSQL SQL in 0.3; explicit conversion to the mutable query builders
+  supports runtime clauses and raw SQL.
 - A projection query builder for partial-result `SELECT` queries that hydrate
   flat DTOs through explicit field aliases.
 - Aggregate projection queries with `count`, `countAll`, `sum`, `avg`, `min`,

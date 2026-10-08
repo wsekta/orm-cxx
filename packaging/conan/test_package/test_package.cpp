@@ -39,6 +39,22 @@ int main()
     projection.project(orm::query::as("name", col<&package_models::Entry::name>()))
         .where(col<&package_models::Entry::id>() == 1);
 
+    using namespace orm::query;
+    constexpr auto selectPlan =
+        select<package_models::Entry>().where(col<&package_models::Entry::id>() == param<int, 0>());
+    constexpr auto updatePlan = orm::query::update<package_models::Entry>()
+                                    .set(col<&package_models::Entry::name>(), param<std::string, 0>())
+                                    .where(col<&package_models::Entry::id>() == param<int, 1>());
+    constexpr auto projectionPlan =
+        selectAs<package_models::Entry, package_models::EntrySummary>(as<"name">(col<&package_models::Entry::name>()))
+            .where(col<&package_models::Entry::id>() == param<int, 0>());
+    constexpr auto removePlan =
+        remove<package_models::Entry>().where(col<&package_models::Entry::id>() == param<int, 0>());
+    (void)selectPlan.toDynamic(1);
+    (void)updatePlan.toDynamic(std::string{"updated dependencies"}, 1);
+    (void)projectionPlan.toDynamic(1);
+    (void)removePlan.toDynamic(1);
+
     orm::Database<package_models::Schema> database;
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
@@ -57,19 +73,23 @@ int main()
     database.connect("sqlite3://:memory:");
     database.createTable<package_models::Entry>();
     database.insert(package_models::Entry{1, "packaged dependencies"});
-    const auto entries = database.select(query);
+    const auto entries = database.select(selectPlan, 1);
     if (entries.size() != 1 || entries.front().id != 1 || entries.front().name != "packaged dependencies")
     {
         return 3;
     }
-    if (database.update(update) != 1)
+    if (database.update(updatePlan, std::string{"updated dependencies"}, 1) != 1)
     {
         return 4;
     }
-    const auto summaries = database.select(projection);
+    const auto summaries = database.select(projectionPlan, 1);
     if (summaries.size() != 1 || summaries.front().name != "updated dependencies")
     {
         return 5;
+    }
+    if (database.remove(removePlan, 1) != 1 || !database.select(query).empty())
+    {
+        return 6;
     }
     database.disconnect();
 #endif

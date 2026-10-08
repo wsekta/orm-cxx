@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -55,5 +56,12 @@ struct Statement
 {
     std::string sql;
     std::vector<StatementParameter> parameters;
+};
+
+/** Non-owning statement input; compiled SQL has static storage duration. */
+struct StatementView
+{
+    std::string_view sql;
+    std::span<const StatementParameter> parameters;
 };
 } // namespace orm::db

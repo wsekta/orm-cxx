@@ -19,6 +19,10 @@ public:
     [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
     [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;
     [[nodiscard]] auto commandGenerator() const noexcept -> const CommandGenerator& override;
+    [[nodiscard]] auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor override
+    {
+        return CompiledSqlFlavor::PostgreSQL;
+    }
 
 private:
     BackendCapabilities backendCapabilities;

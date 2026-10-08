@@ -68,7 +68,17 @@ consteval auto projectionLogicalType() -> std::optional<model::ColumnType>
     }
 }
 
-inline auto validateProjectionAliasNames(const std::vector<query::detail::Projection>& projections,
+template <typename Projection>
+auto projectionAlias(const Projection& projection) -> std::string_view
+{
+    if constexpr (requires { projection.resultField; })
+        return projection.resultField;
+    else
+        return projection.alias;
+}
+
+template <typename Projections>
+inline auto validateProjectionAliasNames(const Projections& projections,
                                          const std::vector<ProjectionResultField>& fields) -> void
 {
     if (projections.empty())
@@ -92,19 +102,20 @@ inline auto validateProjectionAliasNames(const std::vector<query::detail::Projec
 
     for (const auto& projection : projections)
     {
-        if (projection.resultField.empty())
+        const std::string alias{projectionAlias(projection)};
+        if (alias.empty())
         {
             throw std::invalid_argument{"Projection alias must not be empty"};
         }
 
-        if (not resultFields.contains(projection.resultField))
+        if (not resultFields.contains(alias))
         {
-            throw std::invalid_argument{"Projection alias does not match a result field: " + projection.resultField};
+            throw std::invalid_argument{"Projection alias does not match a result field: " + alias};
         }
 
-        if (not projectedFields.insert(projection.resultField).second)
+        if (not projectedFields.insert(alias).second)
         {
-            throw std::invalid_argument{"Duplicate projection alias: " + projection.resultField};
+            throw std::invalid_argument{"Duplicate projection alias: " + alias};
         }
     }
 
@@ -117,8 +128,8 @@ inline auto validateProjectionAliasNames(const std::vector<query::detail::Projec
     }
 }
 
-template <typename Result>
-auto validateProjectionAliases(const std::vector<query::detail::Projection>& projections) -> void
+template <typename Result, typename Projections>
+auto validateProjectionAliases(const Projections& projections) -> void
 {
     std::vector<ProjectionResultField> resultFields;
     resultFields.reserve(reflection::fieldCount<Result>);
@@ -279,3 +290,5 @@ private:
     query::detail::SelectSpec data;
 };
 } // namespace orm
+
+#include "query/StaticPlan.hpp"

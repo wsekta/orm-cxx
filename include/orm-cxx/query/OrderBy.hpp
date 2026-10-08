@@ -56,7 +56,28 @@ class TypedOrderBy
 {
 public:
     using Model = Owner;
+    using ParameterTypes = std::tuple<>;
+    inline static constexpr auto kind = ExprKind::DynamicOrder;
     inline static constexpr bool isOrder = true;
+    inline static constexpr bool staticSqlEligible = false;
+    template <typename E>
+        requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
+                 detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    TypedOrderBy(const E& expression) : data{detail::erase(expression)}
+    {
+    }
+    template <typename E>
+        requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
+                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+    auto operator=(const E& expression) -> TypedOrderBy&
+    {
+        data = detail::erase(expression);
+        return *this;
+    }
+    auto dynamic() const -> TypedOrderBy
+    {
+        return *this;
+    }
 
 private:
     friend struct detail::TypedAccess;
@@ -67,26 +88,28 @@ private:
     }
     detail::OrderBy data;
 };
-template <auto... Members>
-auto asc(TypedColumn<Members...> column) -> TypedOrderBy<typename TypedColumn<Members...>::Model>
-{
-    using R = TypedOrderBy<typename TypedColumn<Members...>::Model>;
-    return detail::TypedAccess::make<R>(detail::asc(detail::erase(column)));
-}
-template <auto... Members>
-auto desc(TypedColumn<Members...> column) -> TypedOrderBy<typename TypedColumn<Members...>::Model>
-{
-    using R = TypedOrderBy<typename TypedColumn<Members...>::Model>;
-    return detail::TypedAccess::make<R>(detail::desc(detail::erase(column)));
-}
-template <typename Model>
-auto rawOrder(std::string sql) -> TypedOrderBy<Model>
-{
-    return detail::TypedAccess::make<TypedOrderBy<Model>>(detail::rawOrder(std::move(sql)));
-}
 } // namespace orm::query
+
 namespace orm::query::detail
 {
+template <typename C, OrderDirection Direction>
+struct OrderMeta : ExpressionMeta<typename C::Model>
+{
+    using Source = C;
+    using Dynamic = TypedOrderBy<typename C::Model>;
+    inline static constexpr auto direction = Direction;
+    inline static constexpr bool isOrder = true;
+    inline static constexpr bool staticSqlEligible = true;
+    template <typename Children, typename Args>
+    static auto render(const Children& children, const Args& args)
+    {
+        return OrderBy{.column = TypedAccess::erase(std::get<0>(children), args), .direction = Direction};
+    }
+    template <typename Children, typename Args, typename Callback>
+    static auto visit(const Children&, const Args&, Callback&) -> void
+    {
+    }
+};
 template <typename E>
 struct IsTypedOrderBy : std::false_type
 {
@@ -96,7 +119,30 @@ struct IsTypedOrderBy<TypedOrderBy<M>> : std::true_type
 {
 };
 template <typename E, typename M>
-concept OrderFor = IsTypedOrderBy<std::remove_cvref_t<E>>::value && ORM_QUERY_MODEL<E, M>;
+concept OrderFor =
+    (IsTypedOrderBy<std::remove_cvref_t<E>>::value || isExpression<E>) && std::remove_cvref_t<E>::isOrder &&
+    ORM_QUERY_MODEL<std::remove_cvref_t<E>, M> && ORM_QUERY_UNBOUND_PARAMETER<E>;
 template <typename M, typename... Orders>
 concept ORM_QUERY_MODEL_ORDERS = (OrderFor<Orders, M> && ...);
 } // namespace orm::query::detail
+
+namespace orm::query
+{
+template <auto... Members>
+constexpr auto asc(TypedColumn<Members...> column)
+{
+    return detail::makeExpression<ExprKind::Order,
+                                  detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Asc>>(column);
+}
+template <auto... Members>
+constexpr auto desc(TypedColumn<Members...> column)
+{
+    return detail::makeExpression<ExprKind::Order,
+                                  detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Desc>>(column);
+}
+template <typename M>
+auto rawOrder(std::string sql) -> TypedOrderBy<M>
+{
+    return detail::TypedAccess::make<TypedOrderBy<M>>(detail::rawOrder(std::move(sql)));
+}
+} // namespace orm::query

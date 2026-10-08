@@ -92,3 +92,5 @@ private:
     query::detail::UpdateSpec data;
 };
 } // namespace orm
+
+#include "query/StaticPlan.hpp"

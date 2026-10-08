@@ -18,12 +18,15 @@ set(ORM_CXX_TEST_SOURCES
     ../src/query/QueryTest.cpp
     ../src/query/QueryValueTest.cpp
     ../src/query/TypedQueryTest.cpp
+    ../src/query/StaticPlanTest.cpp
+    ../src/query/ExpressionRuntimeTest.cpp
     CollectionRelationCoverageTest.cpp
     database/BackendConformanceTest.cpp
     database/DatabaseCoverageCompletionTest.cpp
     database/DatabaseValidationTest.cpp
     database/DatabaseErrorTest.cpp
     database/StaticDatabaseApiCompileTest.cpp
+    database/StaticPlanTest.cpp
     database/StatementParameterBindingTest.cpp
     database/ProjectionQueryTest.cpp
     database/TransactionsTest.cpp
@@ -88,12 +91,12 @@ add_test(
     NAME orm-cxx-UT
     COMMAND
         orm-cxx-UT
-        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
+        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 add_test(
     NAME orm-cxx-sqlite-conformance
-    COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite
+    COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(
@@ -104,7 +107,7 @@ set_tests_properties(
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
     add_test(
         NAME orm-cxx-postgresql-conformance
-        COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql
+        COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     add_test(

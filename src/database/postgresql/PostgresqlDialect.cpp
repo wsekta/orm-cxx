@@ -3,12 +3,12 @@
 #include <format>
 #include <stdexcept>
 
+#include "orm-cxx/database/SqlEmitter.hpp"
 #include "orm-cxx/database/SqlNameValidation.hpp"
 #include "PostgresqlTypeTranslator.hpp"
 
 namespace
 {
-constexpr std::size_t maxPostgresqlIdentifierBytes = 63;
 
 auto join(const std::vector<std::string>& values, std::string_view separator) -> std::string
 {
@@ -32,38 +32,7 @@ namespace orm::db::postgresql
 {
 auto PostgresqlDialect::quoteIdentifier(std::string_view identifier) const -> std::string
 {
-    if (identifier.empty())
-    {
-        throw std::invalid_argument{"SQL identifier cannot be empty"};
-    }
-
-    if (identifier.find('\0') != std::string_view::npos)
-    {
-        throw std::invalid_argument{"PostgreSQL identifiers must not contain an embedded NUL byte"};
-    }
-
-    if (identifier.size() > maxPostgresqlIdentifierBytes)
-    {
-        throw std::invalid_argument{"PostgreSQL identifiers must not exceed 63 bytes"};
-    }
-
-    std::string quoted{"\""};
-
-    for (const auto character : identifier)
-    {
-        if (character == '"')
-        {
-            quoted += "\"\"";
-        }
-        else
-        {
-            quoted += character;
-        }
-    }
-
-    quoted += '"';
-
-    return quoted;
+    return detail::quoteStandardIdentifier(identifier, CompiledSqlFlavor::PostgreSQL);
 }
 
 auto PostgresqlDialect::bindMarker(std::string_view logicalName) const -> std::string
@@ -100,22 +69,12 @@ auto PostgresqlDialect::renderAutoIncrementPrimaryKey(std::string_view columnNam
 
 auto PostgresqlDialect::renderPagination(const PaginationSpec& pagination) const -> std::string
 {
-    if (pagination.limit.has_value())
-    {
-        if (pagination.offset.has_value())
-        {
-            return std::format(" LIMIT {} OFFSET {}", pagination.limit.value(), pagination.offset.value());
-        }
-
-        return std::format(" LIMIT {}", pagination.limit.value());
-    }
-
-    if (pagination.offset.has_value())
-    {
-        return std::format(" OFFSET {}", pagination.offset.value());
-    }
-
-    return {};
+    detail::SqlQueryView query;
+    query.hasLimit = pagination.limit.has_value();
+    query.hasOffset = pagination.offset.has_value();
+    query.literalLimit = pagination.limit.value_or(0);
+    query.literalOffset = pagination.offset.value_or(0);
+    return detail::StaticSqlPolicy<CompiledSqlFlavor::PostgreSQL>{}.pagination(query);
 }
 
 auto PostgresqlDialect::renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string
@@ -158,11 +117,7 @@ auto PostgresqlDialect::renderInsertIfAbsent(const InsertIfAbsentSpec& insert) c
 auto PostgresqlDialect::renderAggregateResult(std::string_view expression,
                                               bool preserveExactNumeric) const -> std::string
 {
-    if (preserveExactNumeric)
-    {
-        return std::format("CAST({} AS TEXT)", expression);
-    }
-
-    return std::string{expression};
+    return detail::StaticSqlPolicy<CompiledSqlFlavor::PostgreSQL>{}.renderAggregateResult(expression,
+                                                                                          preserveExactNumeric);
 }
 } // namespace orm::db::postgresql
