@@ -7,22 +7,12 @@
 #include <string>
 #include <vector>
 
+#include "orm-cxx-tests/TestConfig.hpp"
 #include "orm-cxx/database.hpp"
 #include "orm-cxx/query.hpp"
+#include "tests/database/postgresql/PostgresqlTestSchema.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/GenerateModels.hpp"
-
-#ifndef ORM_CXX_ENABLE_POSTGRESQL_BACKEND
-#define ORM_CXX_ENABLE_POSTGRESQL_BACKEND 0
-#endif
-
-#ifndef ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-#define ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS 0
-#endif
-
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-#include "tests/database/postgresql/PostgresqlTestSchema.hpp"
-#endif
 
 struct BackendTestConfig
 {
@@ -43,25 +33,27 @@ const auto sqliteBackendTestConfig = BackendTestConfig{
     .supported = true,
 };
 
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
 const auto postgresqlBackendTestConfig = BackendTestConfig{
     .type = orm::db::BackendType::Postgres,
     .name = "Postgresql",
     .connectionString = {},
     .supported = true,
 };
-#endif
 
 // Keep the legacy integration fixtures SQLite-only. Backends added to the
 // reusable public conformance profile must not implicitly run suites that use
 // SQLite-specific assumptions or private driver instrumentation.
 [[maybe_unused]] const auto backendTestConfigs = ::testing::Values(sqliteBackendTestConfig);
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-[[maybe_unused]] const auto conformanceBackendTestConfigs =
-    ::testing::Values(sqliteBackendTestConfig, postgresqlBackendTestConfig);
-#else
-[[maybe_unused]] const auto conformanceBackendTestConfigs = ::testing::Values(sqliteBackendTestConfig);
-#endif
+[[maybe_unused]] const auto conformanceBackendTestConfigs = ::testing::ValuesIn(
+    []
+    {
+        std::vector<BackendTestConfig> configs{sqliteBackendTestConfig};
+        if constexpr (orm::test::config::postgresqlIntegrationEnabled)
+        {
+            configs.push_back(postgresqlBackendTestConfig);
+        }
+        return configs;
+    }());
 
 auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) -> std::string
 {
@@ -79,27 +71,25 @@ public:
 
     auto SetUp() -> void override
     {
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-        if (GetParam().type == orm::db::BackendType::Postgres)
+        activeConnectionString = GetParam().connectionString;
+        if constexpr (orm::test::config::postgresqlIntegrationEnabled)
         {
-            const auto dsn = postgresql_test::configuredDsn();
-            ASSERT_FALSE(dsn.empty())
-                << "ORM_CXX_POSTGRESQL_TEST_DSN is required when PostgreSQL integration tests are enabled";
+            if (GetParam().type == orm::db::BackendType::Postgres)
+            {
+                const auto dsn = postgresql_test::configuredDsn();
+                ASSERT_FALSE(dsn.empty())
+                    << "ORM_CXX_POSTGRESQL_TEST_DSN is required when PostgreSQL integration tests are enabled";
 
-            try
-            {
-                postgresqlSchema = std::make_unique<postgresql_test::PostgresqlTestSchema>(dsn);
-                activeConnectionString = postgresqlSchema->connectionString();
+                try
+                {
+                    postgresqlSchema = std::make_unique<postgresql_test::PostgresqlTestSchema>(dsn);
+                    activeConnectionString = postgresqlSchema->connectionString();
+                }
+                catch (const std::exception& error)
+                {
+                    FAIL() << "Failed to create an isolated PostgreSQL test schema: " << error.what();
+                }
             }
-            catch (const std::exception& error)
-            {
-                FAIL() << "Failed to create an isolated PostgreSQL test schema: " << error.what();
-            }
-        }
-        else
-#endif
-        {
-            activeConnectionString = GetParam().connectionString;
         }
 
         database.connect(GetParam().type, activeConnectionString);
@@ -140,20 +130,21 @@ public:
             }
         }
 
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-        if (postgresqlSchema != nullptr)
+        if constexpr (orm::test::config::postgresqlIntegrationEnabled)
         {
-            try
+            if (postgresqlSchema != nullptr)
             {
-                postgresqlSchema->drop();
+                try
+                {
+                    postgresqlSchema->drop();
+                }
+                catch (const std::exception& error)
+                {
+                    ADD_FAILURE() << "Failed to drop isolated PostgreSQL test schema: " << error.what();
+                }
+                postgresqlSchema.reset();
             }
-            catch (const std::exception& error)
-            {
-                ADD_FAILURE() << "Failed to drop isolated PostgreSQL test schema: " << error.what();
-            }
-            postgresqlSchema.reset();
         }
-#endif
     }
 
     template <typename T>
@@ -175,17 +166,13 @@ public:
         return activeConnectionString;
     }
 
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
     auto postgresqlTestSchema() noexcept -> postgresql_test::PostgresqlTestSchema*
     {
         return postgresqlSchema.get();
     }
-#endif
 
 private:
     std::vector<std::function<void()>> tearDownFunctions;
     std::string activeConnectionString;
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
     std::unique_ptr<postgresql_test::PostgresqlTestSchema> postgresqlSchema;
-#endif
 };

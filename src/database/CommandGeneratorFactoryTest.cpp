@@ -4,6 +4,7 @@
 #include <memory>
 #include <stdexcept>
 
+#include "orm-cxx/BuildConfig.hpp"
 #include "orm-cxx/database/sqlite/SqliteBackend.hpp"
 
 namespace
@@ -67,13 +68,16 @@ TEST(CommandGeneratorFactoryTest, findsBackendByConnectionString)
 
     ASSERT_NE(sqlite, nullptr);
     EXPECT_EQ(sqlite->type(), orm::db::BackendType::Sqlite);
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=test");
-    ASSERT_NE(postgresql, nullptr);
-    EXPECT_EQ(postgresql->type(), orm::db::BackendType::Postgres);
-#else
-    EXPECT_EQ(factory.findBackend("postgresql://host=localhost dbname=test"), nullptr);
-#endif
+    if constexpr (orm::config::postgresqlBackendEnabled)
+    {
+        ASSERT_NE(postgresql, nullptr);
+        EXPECT_EQ(postgresql->type(), orm::db::BackendType::Postgres);
+    }
+    else
+    {
+        EXPECT_EQ(postgresql, nullptr);
+    }
 }
 
 TEST(CommandGeneratorFactoryTest, rejectsDuplicateAndNullBackendRegistration)

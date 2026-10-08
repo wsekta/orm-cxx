@@ -1,14 +1,44 @@
+#include <concepts>
 #include <orm-cxx/database.hpp>
 #include <orm-cxx/projection_query.hpp>
 #include <orm-cxx/update.hpp>
 #include <string>
 
-#if !defined(ORM_CXX_ENABLE_SQLITE_BACKEND) || !defined(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-#error The package must propagate its configured backends to consumers.
-#endif
+#include "BackendExpectations.hpp"
 
-static_assert(ORM_CXX_ENABLE_SQLITE_BACKEND == ORM_CXX_EXPECT_SQLITE);
-static_assert(ORM_CXX_ENABLE_POSTGRESQL_BACKEND == ORM_CXX_EXPECT_POSTGRESQL);
+template <typename Owner>
+consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
+{
+    constexpr bool create = requires(Owner owner) {
+        { orm::db::relations::createTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool drop = requires(Owner owner) {
+        { orm::db::relations::dropTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool link =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool unlink =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool select = requires(Owner owner, orm::model::RelationView relation, std::string sql,
+                                     const std::vector<orm::db::binding::PrimaryKey>& keys) {
+        {
+            orm::db::relations::collectionSelectStatement(owner, relation, sql, keys, true)
+        } -> std::same_as<orm::db::Statement>;
+    };
+    constexpr bool enabled = orm::config::sqliteBackendEnabled;
+    return create == enabled and drop == enabled and link == enabled and unlink == enabled and select == enabled;
+}
+
+static_assert(sqliteRelationOverloadsMatchConfiguration<orm::model::ModelView>());
+
+static_assert(not orm::test::config::expectedSqliteBackend.has_value() or
+              orm::config::sqliteBackendEnabled == *orm::test::config::expectedSqliteBackend);
+static_assert(not orm::test::config::expectedPostgresqlBackend.has_value() or
+              orm::config::postgresqlBackendEnabled == *orm::test::config::expectedPostgresqlBackend);
 
 namespace package_models
 {
@@ -60,38 +90,39 @@ int main()
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
 
-    if ((sqlite != nullptr) != static_cast<bool>(ORM_CXX_ENABLE_SQLITE_BACKEND))
+    if ((sqlite != nullptr) != orm::config::sqliteBackendEnabled)
     {
         return 1;
     }
-    if ((postgresql != nullptr) != static_cast<bool>(ORM_CXX_ENABLE_POSTGRESQL_BACKEND))
+    if ((postgresql != nullptr) != orm::config::postgresqlBackendEnabled)
     {
         return 2;
     }
 
-#if ORM_CXX_ENABLE_SQLITE_BACKEND
-    database.connect("sqlite3://:memory:");
-    database.createTable<package_models::Entry>();
-    database.insert(package_models::Entry{1, "packaged dependencies"});
-    const auto entries = database.select(selectPlan, 1);
-    if (entries.size() != 1 || entries.front().id != 1 || entries.front().name != "packaged dependencies")
+    if constexpr (orm::config::sqliteBackendEnabled)
     {
-        return 3;
+        database.connect("sqlite3://:memory:");
+        database.createTable<package_models::Entry>();
+        database.insert(package_models::Entry{1, "packaged dependencies"});
+        const auto entries = database.select(selectPlan, 1);
+        if (entries.size() != 1 || entries.front().id != 1 || entries.front().name != "packaged dependencies")
+        {
+            return 3;
+        }
+        if (database.update(updatePlan, std::string{"updated dependencies"}, 1) != 1)
+        {
+            return 4;
+        }
+        const auto summaries = database.select(projectionPlan, 1);
+        if (summaries.size() != 1 || summaries.front().name != "updated dependencies")
+        {
+            return 5;
+        }
+        if (database.remove(removePlan, 1) != 1 || !database.select(query).empty())
+        {
+            return 6;
+        }
+        database.disconnect();
     }
-    if (database.update(updatePlan, std::string{"updated dependencies"}, 1) != 1)
-    {
-        return 4;
-    }
-    const auto summaries = database.select(projectionPlan, 1);
-    if (summaries.size() != 1 || summaries.front().name != "updated dependencies")
-    {
-        return 5;
-    }
-    if (database.remove(removePlan, 1) != 1 || !database.select(query).empty())
-    {
-        return 6;
-    }
-    database.disconnect();
-#endif
     return 0;
 }

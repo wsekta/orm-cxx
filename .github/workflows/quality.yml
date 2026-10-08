@@ -10,6 +10,24 @@ permissions:
   contents: read
 
 jobs:
+  macros:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Test and enforce the no-macro policy
+        run: |
+          python -m unittest discover -s tests/macros -v
+          python scripts/check-macros.py
+
   format:
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -29,6 +29,7 @@
 #include "database/SqlEmitter.hpp"
 #include "database/Statement.hpp"
 #include "model/Schema.hpp"
+#include "orm-cxx/BuildConfig.hpp"
 #include "projection_query.hpp"
 #include "query.hpp"
 #include "query/CompiledSql.hpp"

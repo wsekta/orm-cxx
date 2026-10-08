@@ -1,7 +1,3 @@
-#include "tests/database/DatabaseTest.hpp"
-
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND && ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-
 #include <algorithm>
 #include <cstdint>
 #include <limits>
@@ -15,6 +11,7 @@
 #include "orm-cxx/database/postgresql/PostgresqlBackend.hpp"
 #include "orm-cxx/model.hpp"
 #include "tests/CollectionModelsDefinitions.hpp"
+#include "tests/database/DatabaseTest.hpp"
 
 using namespace orm::query;
 
@@ -426,5 +423,3 @@ TEST_P(PostgresqlIntegrationTest, runtimeBindCeilingSupportsAPracticalLargePredi
 
 INSTANTIATE_TEST_SUITE_P(Postgresql, PostgresqlIntegrationTest, ::testing::Values(postgresqlBackendTestConfig),
                          backendTestName);
-
-#endif

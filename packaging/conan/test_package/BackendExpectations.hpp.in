@@ -1,0 +1,9 @@
+#pragma once
+
+#include <optional>
+
+namespace orm::test::config
+{
+inline constexpr std::optional<bool> expectedSqliteBackend = @orm_cxx_expected_sqlite@;
+inline constexpr std::optional<bool> expectedPostgresqlBackend = @orm_cxx_expected_postgresql@;
+}

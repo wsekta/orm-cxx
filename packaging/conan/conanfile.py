@@ -119,10 +119,6 @@ class OrmCxxConan(ConanFile):
         core.set_property("cmake_target_name", "orm-cxx::core")
         core.libs = ["orm-cxx"]
         core.requires = ["reflection", "soci::soci_core"]
-        core.defines = [
-            f"ORM_CXX_ENABLE_SQLITE_BACKEND={int(bool(self.options.with_sqlite3))}",
-            f"ORM_CXX_ENABLE_POSTGRESQL_BACKEND={int(bool(self.options.with_postgresql))}",
-        ]
         if self.options.with_sqlite3:
             core.requires.append("soci::soci_sqlite3")
         if self.options.with_postgresql:

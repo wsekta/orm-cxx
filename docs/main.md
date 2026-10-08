@@ -12,6 +12,9 @@
 ORM C++ is a compile-time ORM for C++20 that maps plain aggregate structs to
 database tables using native reflection — no macros, no code generation.
 It ships with SQLite and PostgreSQL backends built on SOCI.
+The library defines no preprocessor macros. Backend configuration uses generated
+C++ constants; compiler adapters and external libraries have documented
+[exceptions](migration-macro-free.md).
 
 **Minimum compilers:** GCC 13+, Clang 18+, MSVC 17+.
 
@@ -27,3 +30,4 @@ It ships with SQLite and PostgreSQL backends built on SOCI.
 10. [Migrating to typed queries](migration-typed-queries.md)
 11. [Static query plans](static-queries.md)
 12. [Migrating queries to 0.3](migration-static-queries.md)
+13. [Migrating backend configuration without macros](migration-macro-free.md)

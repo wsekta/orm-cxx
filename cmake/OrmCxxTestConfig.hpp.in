@@ -1,0 +1,6 @@
+#pragma once
+
+namespace orm::test::config
+{
+inline constexpr bool postgresqlIntegrationEnabled = @orm_cxx_postgresql_integration_enabled@;
+}

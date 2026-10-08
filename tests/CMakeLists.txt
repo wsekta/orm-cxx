@@ -69,18 +69,21 @@ endif()
 add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})
 set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
-target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}")
+set(orm_cxx_postgresql_integration_enabled false)
+if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
+    set(orm_cxx_postgresql_integration_enabled true)
+endif()
+configure_file(
+    "${PROJECT_SOURCE_DIR}/cmake/OrmCxxTestConfig.hpp.in"
+    "${PROJECT_BINARY_DIR}/generated/test-include/orm-cxx-tests/TestConfig.hpp" @ONLY
+)
+target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}/generated/test-include")
 
 add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp)
 target_link_libraries(orm-cxx-static-plan-allocations PRIVATE orm-cxx::orm-cxx orm-cxx-project-warnings)
 set_target_properties(orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 add_test(NAME orm-cxx-static-plan-allocations COMMAND orm-cxx-static-plan-allocations)
 set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES LABELS "unit;query;allocation")
-target_compile_definitions(
-    orm-cxx-UT
-    PRIVATE ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS=$<BOOL:${ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS}>
-)
-
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     target_include_directories(
         orm-cxx-UT PRIVATE "$<TARGET_PROPERTY:${ORM_CXX_SOCI_POSTGRESQL_TARGET},INCLUDE_DIRECTORIES>"
@@ -153,6 +156,7 @@ set(orm_cxx_compile_fail_arguments
     -G
     "${CMAKE_GENERATOR}"
     "-DORM_CXX_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
+    "-DORM_CXX_GENERATED_INCLUDE_DIR=${ORM_CXX_GENERATED_INCLUDE_DIR}"
     "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
     "-DORM_CXX_DEPENDENCY_INCLUDE_PATHS=$<JOIN:$<TARGET_PROPERTY:${ORM_CXX_SOCI_CORE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>,|>"
 )

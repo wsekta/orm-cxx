@@ -1,12 +1,43 @@
+#include <concepts>
 #include <exception>
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "BackendExpectations.hpp"
 #include "orm-cxx/database.hpp"
 #include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/query.hpp"
 #include "orm-cxx/update.hpp"
+
+template <typename Owner>
+consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
+{
+    constexpr bool create = requires(Owner owner) {
+        { orm::db::relations::createTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool drop = requires(Owner owner) {
+        { orm::db::relations::dropTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool link =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool unlink =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool select = requires(Owner owner, orm::model::RelationView relation, std::string sql,
+                                     const std::vector<orm::db::binding::PrimaryKey>& keys) {
+        {
+            orm::db::relations::collectionSelectStatement(owner, relation, sql, keys, true)
+        } -> std::same_as<orm::db::Statement>;
+    };
+    constexpr bool enabled = orm::config::sqliteBackendEnabled;
+    return create == enabled and drop == enabled and link == enabled and unlink == enabled and select == enabled;
+}
+
+static_assert(sqliteRelationOverloadsMatchConfiguration<orm::model::ModelView>());
 
 struct PackageModel
 {
@@ -24,12 +55,10 @@ using PackageSchema = orm::Schema<PackageModel>;
 static_assert(orm::reflection::fieldCount<PackageModel> == 2);
 static_assert(orm::reflection::fieldName<PackageModel, 0>() == "id");
 
-#ifdef ORM_CXX_EXPECT_SQLITE
-static_assert(ORM_CXX_ENABLE_SQLITE_BACKEND == ORM_CXX_EXPECT_SQLITE);
-#endif
-#ifdef ORM_CXX_EXPECT_POSTGRESQL
-static_assert(ORM_CXX_ENABLE_POSTGRESQL_BACKEND == ORM_CXX_EXPECT_POSTGRESQL);
-#endif
+static_assert(not orm::test::config::expectedSqliteBackend.has_value() or
+              orm::config::sqliteBackendEnabled == *orm::test::config::expectedSqliteBackend);
+static_assert(not orm::test::config::expectedPostgresqlBackend.has_value() or
+              orm::config::postgresqlBackendEnabled == *orm::test::config::expectedPostgresqlBackend);
 
 int main()
 {
@@ -62,8 +91,8 @@ int main()
         const orm::db::CommandGeneratorFactory factory;
         const auto* sqlite = factory.findBackend("sqlite3://:memory:");
         const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
-        if ((sqlite != nullptr) != static_cast<bool>(ORM_CXX_ENABLE_SQLITE_BACKEND) or
-            (postgresql != nullptr) != static_cast<bool>(ORM_CXX_ENABLE_POSTGRESQL_BACKEND))
+        if ((sqlite != nullptr) != orm::config::sqliteBackendEnabled or
+            (postgresql != nullptr) != orm::config::postgresqlBackendEnabled)
         {
             std::cerr << "Backend registration does not match the installed package features\n";
             return 1;
@@ -73,38 +102,39 @@ int main()
             return 2;
         }
 
-#if ORM_CXX_ENABLE_SQLITE_BACKEND
-        database.connect("sqlite3://:memory:");
-        database.createTable<PackageModel>();
-        database.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
+        if constexpr (orm::config::sqliteBackendEnabled)
+        {
+            database.connect("sqlite3://:memory:");
+            database.createTable<PackageModel>();
+            database.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
 
-        auto rows = database.select(selectPlan, 1);
-        if (rows.size() != 1 or rows.front().name != "first")
-        {
-            return 3;
-        }
+            auto rows = database.select(selectPlan, 1);
+            if (rows.size() != 1 or rows.front().name != "first")
+            {
+                return 3;
+            }
 
-        if (database.update(updatePlan, std::string{"updated"}, 1) != 1)
-        {
-            return 4;
+            if (database.update(updatePlan, std::string{"updated"}, 1) != 1)
+            {
+                return 4;
+            }
+            rows = database.select(query);
+            if (rows.size() != 1 or rows.front().name != "updated")
+            {
+                return 5;
+            }
+            const auto summaries = database.select(projectionPlan, 1);
+            if (summaries.size() != 1 or summaries.front().name != "updated")
+            {
+                return 8;
+            }
+            if (database.remove(removePlan, 1) != 1 or not database.select(query).empty())
+            {
+                return 6;
+            }
+            database.deleteTable<PackageModel>();
+            database.disconnect();
         }
-        rows = database.select(query);
-        if (rows.size() != 1 or rows.front().name != "updated")
-        {
-            return 5;
-        }
-        const auto summaries = database.select(projectionPlan, 1);
-        if (summaries.size() != 1 or summaries.front().name != "updated")
-        {
-            return 8;
-        }
-        if (database.remove(removePlan, 1) != 1 or not database.select(query).empty())
-        {
-            return 6;
-        }
-        database.deleteTable<PackageModel>();
-        database.disconnect();
-#endif
         return 0;
     }
     catch (const std::exception& error)

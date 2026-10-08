@@ -64,8 +64,11 @@ cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems
 
 On Linux the default `x64-linux` triplet is suitable.
 
-The imported target propagates headers, C++20, enabled-backend definitions, and
-transitive linkage. `find_package(orm-cxx-reflection CONFIG REQUIRED)` exposes
+The imported target propagates headers, C++20, and transitive linkage. The
+installed `orm-cxx/BuildConfig.hpp` exposes the enabled backends as C++ constants
+in `orm::config`; no compiler macro definitions are exported. See the
+[configuration migration](migration-macro-free.md) for replacing earlier flags.
+`find_package(orm-cxx-reflection CONFIG REQUIRED)` exposes
 `orm-cxx::reflection` for applications using only the header-only reflection layer.
 
 ## Consume from ConanCenter after acceptance

@@ -1,0 +1,3 @@
+#pragma once
+
+// This build does not provide the default SQLite relation overloads.

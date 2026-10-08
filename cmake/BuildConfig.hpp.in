@@ -1,0 +1,7 @@
+#pragma once
+
+namespace orm::config
+{
+inline constexpr bool sqliteBackendEnabled = @ORM_CXX_SQLITE_BACKEND_ENABLED@;
+inline constexpr bool postgresqlBackendEnabled = @ORM_CXX_POSTGRESQL_BACKEND_ENABLED@;
+} // namespace orm::config

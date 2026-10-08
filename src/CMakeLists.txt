@@ -15,6 +15,16 @@ set(ORM_CXX_SOURCES
     database/CommandGenerator.cpp
 )
 
+include(OrmCxxBuildConfig)
+set(ORM_CXX_GENERATED_INCLUDE_DIR "${PROJECT_BINARY_DIR}/generated/include")
+set(ORM_CXX_GENERATED_INCLUDE_DIR
+    "${ORM_CXX_GENERATED_INCLUDE_DIR}"
+    PARENT_SCOPE
+)
+orm_cxx_generate_build_config(
+    "${ORM_CXX_GENERATED_INCLUDE_DIR}" "${ORM_CXX_ENABLE_SQLITE_BACKEND}" "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}"
+)
+
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     list(APPEND ORM_CXX_SOURCES database/sqlite/SqliteBackend.cpp database/sqlite/SqliteDialect.cpp
          database/sqlite/SqliteRelationStatements.cpp database/sqlite/SqliteTypeTranslator.cpp
@@ -72,12 +82,9 @@ endif()
 
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
 target_include_directories(
-    orm-cxx PUBLIC "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
-                   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
-target_compile_definitions(
-    orm-cxx PUBLIC ORM_CXX_ENABLE_SQLITE_BACKEND=$<BOOL:${ORM_CXX_ENABLE_SQLITE_BACKEND}>
-                   ORM_CXX_ENABLE_POSTGRESQL_BACKEND=$<BOOL:${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}>
+    orm-cxx
+    PUBLIC "$<BUILD_INTERFACE:${ORM_CXX_GENERATED_INCLUDE_DIR}>" "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>"
+           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 target_link_libraries(
     orm-cxx
@@ -123,6 +130,12 @@ install(
     DIRECTORY "${PROJECT_SOURCE_DIR}/include/orm-cxx"
     DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
     PATTERN "reflection" EXCLUDE
+)
+install(FILES "${ORM_CXX_GENERATED_INCLUDE_DIR}/orm-cxx/BuildConfig.hpp"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/orm-cxx"
+)
+install(FILES "${ORM_CXX_GENERATED_INCLUDE_DIR}/orm-cxx/database/detail/SqliteRelationDeclarations.hpp"
+        DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/orm-cxx/database/detail"
 )
 install(
     EXPORT orm-cxx-targets

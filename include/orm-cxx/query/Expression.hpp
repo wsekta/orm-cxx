@@ -50,21 +50,51 @@ public:
         return detail::TypedAccess::make<typename Meta::Dynamic>(runtime());
     }
 
-#define ORM_QUERY_AGG_EXPR_COMPARE(symbol, op, ordered)                                                                \
-    template <typename T>                                                                                              \
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&      \
-                (!(ordered) || detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)                                      \
-    constexpr auto operator symbol(T&& value) const                                                                    \
-    {                                                                                                                  \
-        return detail::comparison<detail::ComparisonOperator::op>(*this, std::forward<T>(value));                      \
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
+    constexpr auto operator==(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
     }
-    ORM_QUERY_AGG_EXPR_COMPARE(==, Equal, false)
-    ORM_QUERY_AGG_EXPR_COMPARE(!=, NotEqual, false)
-    ORM_QUERY_AGG_EXPR_COMPARE(>, Greater, true)
-    ORM_QUERY_AGG_EXPR_COMPARE(>=, GreaterOrEqual, true)
-    ORM_QUERY_AGG_EXPR_COMPARE(<, Less, true)
-    ORM_QUERY_AGG_EXPR_COMPARE(<=, LessOrEqual, true)
-#undef ORM_QUERY_AGG_EXPR_COMPARE
+
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
+    constexpr auto operator!=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+    constexpr auto operator>(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+    constexpr auto operator>=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+    constexpr auto operator<(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+    constexpr auto operator<=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
+    }
 
 private:
     friend struct detail::TypedAccess;

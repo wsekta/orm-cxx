@@ -6,13 +6,26 @@ if(NOT ORM_CXX_SOURCE_DIR)
     message(FATAL_ERROR "ORM_CXX_SOURCE_DIR must identify the orm-cxx checkout.")
 endif()
 
+if(NOT ORM_CXX_GENERATED_INCLUDE_DIR)
+    include("${ORM_CXX_SOURCE_DIR}/cmake/OrmCxxBuildConfig.cmake")
+    set(ORM_CXX_GENERATED_INCLUDE_DIR "${PROJECT_BINARY_DIR}/generated/include")
+    orm_cxx_generate_build_config("${ORM_CXX_GENERATED_INCLUDE_DIR}" OFF OFF)
+endif()
+foreach(generated_header IN ITEMS orm-cxx/BuildConfig.hpp orm-cxx/database/detail/SqliteRelationDeclarations.hpp)
+    if(NOT EXISTS "${ORM_CXX_GENERATED_INCLUDE_DIR}/${generated_header}")
+        message(FATAL_ERROR "ORM_CXX_GENERATED_INCLUDE_DIR is missing ${generated_header}.")
+    endif()
+endforeach()
+
 add_library(orm-cxx-reflection INTERFACE)
 target_compile_features(orm-cxx-reflection INTERFACE cxx_std_20)
 target_include_directories(orm-cxx-reflection INTERFACE "${ORM_CXX_SOURCE_DIR}/include")
 
 string(REPLACE "|" ";" orm_cxx_dependency_include_paths "${ORM_CXX_DEPENDENCY_INCLUDE_PATHS}")
 set(orm_cxx_compile_include_flags)
-foreach(include_directory IN ITEMS "${ORM_CXX_SOURCE_DIR}/include" ${orm_cxx_dependency_include_paths})
+foreach(include_directory IN ITEMS "${ORM_CXX_GENERATED_INCLUDE_DIR}" "${ORM_CXX_SOURCE_DIR}/include"
+                                   ${orm_cxx_dependency_include_paths}
+)
     if(MSVC)
         list(APPEND orm_cxx_compile_include_flags "/I${include_directory}")
     else()

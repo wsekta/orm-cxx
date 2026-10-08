@@ -3,23 +3,22 @@
 #include <stdexcept>
 #include <utility>
 
-#if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
-#endif
-#if defined(ORM_CXX_ENABLE_POSTGRESQL_BACKEND) && ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+#include "orm-cxx/BuildConfig.hpp"
 #include "orm-cxx/database/postgresql/PostgresqlBackend.hpp"
-#endif
+#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
 
 namespace orm::db
 {
 CommandGeneratorFactory::CommandGeneratorFactory()
 {
-#if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
-    registerBackend(std::make_unique<sqlite::SqliteBackend>());
-#endif
-#if defined(ORM_CXX_ENABLE_POSTGRESQL_BACKEND) && ORM_CXX_ENABLE_POSTGRESQL_BACKEND
-    registerBackend(std::make_unique<postgresql::PostgresqlBackend>());
-#endif
+    if constexpr (config::sqliteBackendEnabled)
+    {
+        registerBackend(std::make_unique<sqlite::SqliteBackend>());
+    }
+    if constexpr (config::postgresqlBackendEnabled)
+    {
+        registerBackend(std::make_unique<postgresql::PostgresqlBackend>());
+    }
 }
 
 auto CommandGeneratorFactory::registerBackend(std::unique_ptr<BackendProvider> backend) -> void

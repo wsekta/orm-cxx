@@ -24,7 +24,7 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 ✅ 100% test coverage with unit tests and integration tests<br>
 🗂️ SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
 ⚙️ Support for multiple compilers<br>
-☠️ No macros (currently few 😕)<br>
+✅ No project-defined macros; [policy and configuration migration](docs/migration-macro-free.md)<br>
 🚀 As low as possible runtime overhead<br>
 👶 Easy to use<br>
 📉 As few dependencies as possible<br>

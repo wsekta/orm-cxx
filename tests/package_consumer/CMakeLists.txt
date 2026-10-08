@@ -12,15 +12,25 @@ else()
     target_compile_options(orm-cxx-package-consumer PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()
 
-# CI supplies these expectations independently of the package's exported macros.
+# CI supplies expectations independently of the package's generated configuration.
+set(orm_cxx_expected_sqlite std::nullopt)
+set(orm_cxx_expected_postgresql std::nullopt)
 if(DEFINED ORM_CXX_EXPECT_SQLITE)
-    target_compile_definitions(orm-cxx-package-consumer PRIVATE ORM_CXX_EXPECT_SQLITE=$<BOOL:${ORM_CXX_EXPECT_SQLITE}>)
+    if(ORM_CXX_EXPECT_SQLITE)
+        set(orm_cxx_expected_sqlite true)
+    else()
+        set(orm_cxx_expected_sqlite false)
+    endif()
 endif()
 if(DEFINED ORM_CXX_EXPECT_POSTGRESQL)
-    target_compile_definitions(
-        orm-cxx-package-consumer PRIVATE ORM_CXX_EXPECT_POSTGRESQL=$<BOOL:${ORM_CXX_EXPECT_POSTGRESQL}>
-    )
+    if(ORM_CXX_EXPECT_POSTGRESQL)
+        set(orm_cxx_expected_postgresql true)
+    else()
+        set(orm_cxx_expected_postgresql false)
+    endif()
 endif()
+configure_file(BackendExpectations.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/BackendExpectations.hpp" @ONLY)
+target_include_directories(orm-cxx-package-consumer PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 enable_testing()
 add_test(NAME orm-cxx-package-consumer COMMAND orm-cxx-package-consumer)

@@ -548,7 +548,6 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
     }
 }
 
-#if defined(ORM_CXX_ENABLE_SQLITE_BACKEND) && ORM_CXX_ENABLE_SQLITE_BACKEND
 TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceCompleteStatements)
 {
     const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
@@ -580,4 +579,3 @@ TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceComple
     ASSERT_EQ(select.parameters.size(), 1);
     EXPECT_EQ(select.parameters.front().value, orm::query::QueryValue{1});
 }
-#endif

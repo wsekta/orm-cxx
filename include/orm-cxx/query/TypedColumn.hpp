@@ -141,20 +141,47 @@ public:
     inline static constexpr bool writeSafe = Traits::writeSafe;
     inline static constexpr bool containsCollection = false;
     inline static constexpr bool staticSqlEligible = true;
-#define ORM_QUERY_COLUMN_COMPARE(symbol, op, ordered)                                                                  \
-    template <typename T>                                                                                              \
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && (!(ordered) || detail::ORM_QUERY_ORDERABLE<Value>)  \
-    constexpr auto operator symbol(T&& value) const                                                                    \
-    {                                                                                                                  \
-        return detail::comparison<detail::ComparisonOperator::op>(*this, std::forward<T>(value));                      \
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    constexpr auto operator==(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
     }
-    ORM_QUERY_COLUMN_COMPARE(==, Equal, false)
-    ORM_QUERY_COLUMN_COMPARE(!=, NotEqual, false)
-    ORM_QUERY_COLUMN_COMPARE(>, Greater, true)
-    ORM_QUERY_COLUMN_COMPARE(>=, GreaterOrEqual, true)
-    ORM_QUERY_COLUMN_COMPARE(<, Less, true)
-    ORM_QUERY_COLUMN_COMPARE(<=, LessOrEqual, true)
-#undef ORM_QUERY_COLUMN_COMPARE
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    constexpr auto operator!=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+    constexpr auto operator>(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+    constexpr auto operator>=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+    constexpr auto operator<(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
+    }
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+    constexpr auto operator<=(T&& value) const
+    {
+        return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
+    }
     template <typename T>
         requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>
     constexpr auto like(T&& value) const
@@ -199,37 +226,61 @@ public:
     {
         return isNotNull();
     }
-#define ORM_QUERY_COLUMN_LIST(method, op)                                                                              \
-    template <typename T>                                                                                              \
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>                                                        \
-    auto method(std::initializer_list<T> values) const                                                                 \
-    {                                                                                                                  \
-        return detail::containerList<detail::ListOperator::op>(*this, values);                                         \
-    }                                                                                                                  \
-    template <typename T>                                                                                              \
-        requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&                                 \
-                 detail::ORM_QUERY_VALUE_OR_PARAMETER<                                                                 \
-                     Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>                     \
-    constexpr auto method(const T& values) const                                                                       \
-    {                                                                                                                  \
-        return detail::containerList<detail::ListOperator::op>(*this, values);                                         \
-    }                                                                                                                  \
-    template <typename T, std::size_t N>                                                                               \
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>                                                        \
-    constexpr auto method(const T(&values)[N]) const                                                                   \
-    {                                                                                                                  \
-        return [&]<std::size_t... I>(std::index_sequence<I...>)                                                        \
-        { return detail::fixedList<detail::ListOperator::op>(*this, values[I]...); }(std::make_index_sequence<N>{});   \
-    }                                                                                                                  \
-    template <typename... T>                                                                                           \
-        requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)                          \
-    constexpr auto method(T&&... values) const                                                                         \
-    {                                                                                                                  \
-        return detail::fixedList<detail::ListOperator::op>(*this, std::forward<T>(values)...);                         \
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    auto in(std::initializer_list<T> values) const
+    {
+        return detail::containerList<detail::ListOperator::In>(*this, values);
     }
-    ORM_QUERY_COLUMN_LIST(in, In)
-    ORM_QUERY_COLUMN_LIST(notIn, NotIn)
-#undef ORM_QUERY_COLUMN_LIST
+    template <typename T>
+        requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
+                 detail::ORM_QUERY_VALUE_OR_PARAMETER<
+                     Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
+    constexpr auto in(const T& values) const
+    {
+        return detail::containerList<detail::ListOperator::In>(*this, values);
+    }
+    template <typename T, std::size_t N>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    constexpr auto in(const T (&values)[N]) const
+    {
+        return [&]<std::size_t... I>(std::index_sequence<I...>)
+        { return detail::fixedList<detail::ListOperator::In>(*this, values[I]...); }(std::make_index_sequence<N>{});
+    }
+    template <typename... T>
+        requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
+    constexpr auto in(T&&... values) const
+    {
+        return detail::fixedList<detail::ListOperator::In>(*this, std::forward<T>(values)...);
+    }
+
+    template <typename T>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    auto notIn(std::initializer_list<T> values) const
+    {
+        return detail::containerList<detail::ListOperator::NotIn>(*this, values);
+    }
+    template <typename T>
+        requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
+                 detail::ORM_QUERY_VALUE_OR_PARAMETER<
+                     Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
+    constexpr auto notIn(const T& values) const
+    {
+        return detail::containerList<detail::ListOperator::NotIn>(*this, values);
+    }
+    template <typename T, std::size_t N>
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+    constexpr auto notIn(const T (&values)[N]) const
+    {
+        return [&]<std::size_t... I>(std::index_sequence<I...>)
+        { return detail::fixedList<detail::ListOperator::NotIn>(*this, values[I]...); }(std::make_index_sequence<N>{});
+    }
+    template <typename... T>
+        requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
+    constexpr auto notIn(T&&... values) const
+    {
+        return detail::fixedList<detail::ListOperator::NotIn>(*this, std::forward<T>(values)...);
+    }
     template <typename L, typename U>
         requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, L> && detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, U> &&
                  detail::ORM_QUERY_ORDERABLE<Value>

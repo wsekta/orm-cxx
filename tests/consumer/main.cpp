@@ -1,6 +1,37 @@
+#include <concepts>
+
 #include "orm-cxx/database.hpp"
 #include "orm-cxx/projection_query.hpp"
 #include "orm-cxx/update.hpp"
+
+template <typename Owner>
+consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
+{
+    constexpr bool create = requires(Owner owner) {
+        { orm::db::relations::createTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool drop = requires(Owner owner) {
+        { orm::db::relations::dropTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
+    };
+    constexpr bool link =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool unlink =
+        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
+            { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+        };
+    constexpr bool select = requires(Owner owner, orm::model::RelationView relation, std::string sql,
+                                     const std::vector<orm::db::binding::PrimaryKey>& keys) {
+        {
+            orm::db::relations::collectionSelectStatement(owner, relation, sql, keys, true)
+        } -> std::same_as<orm::db::Statement>;
+    };
+    constexpr bool enabled = orm::config::sqliteBackendEnabled;
+    return create == enabled and drop == enabled and link == enabled and unlink == enabled and select == enabled;
+}
+
+static_assert(sqliteRelationOverloadsMatchConfiguration<orm::model::ModelView>());
 
 namespace consumer_models
 {
@@ -97,29 +128,15 @@ int main()
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
 
-#if ORM_CXX_ENABLE_SQLITE_BACKEND
-    if (sqlite == nullptr)
+    if ((sqlite != nullptr) != orm::config::sqliteBackendEnabled)
     {
         return 1;
     }
-#else
-    if (sqlite != nullptr)
-    {
-        return 1;
-    }
-#endif
-
-#if ORM_CXX_ENABLE_POSTGRESQL_BACKEND
-    if (postgresql == nullptr or postgresql->type() != orm::db::BackendType::Postgres)
+    if ((postgresql != nullptr) != orm::config::postgresqlBackendEnabled or
+        (postgresql != nullptr and postgresql->type() != orm::db::BackendType::Postgres))
     {
         return 2;
     }
-#else
-    if (postgresql != nullptr)
-    {
-        return 2;
-    }
-#endif
 
     const ConsumerDialect dialect;
 
