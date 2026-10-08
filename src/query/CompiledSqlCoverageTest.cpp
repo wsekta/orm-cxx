@@ -268,7 +268,7 @@ TEST(CompiledSqlCoverageTest, sharedEmitterDefendsAggregateOperatorsAndIncomplet
         (void)sql::emitSql(program.view(), orm::modelView<Schema, User>(), sql::StaticSqlPolicy<Flavor::SQLite>{}),
         std::invalid_argument);
     program = ast::compiled::program<std::remove_cvref_t<decltype(aggregate)>>();
-    program.nodes[program.having].kind = static_cast<sql::SqlNodeKind>(static_cast<int>(sql::SqlNodeKind::Raw) + 1);
+    program.nodes[program.having].kind = sql::SqlNodeKind::Invalid;
     EXPECT_THROW(
         (void)sql::emitSql(program.view(), orm::modelView<Schema, User>(), sql::StaticSqlPolicy<Flavor::SQLite>{}),
         std::logic_error);

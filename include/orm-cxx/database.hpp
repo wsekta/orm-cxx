@@ -121,15 +121,15 @@ protected:
         if constexpr (query::detail::compiledSqlEligible<Plan>)
         {
             const auto values = std::forward_as_tuple(args...);
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            const auto flavor = getBackend().compiledSqlFlavor();
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
             {
-                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                if (flavor == db::CompiledSqlFlavor::SQLite)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
             }
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
             {
-                if constexpr (
-                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                if (flavor == db::CompiledSqlFlavor::PostgreSQL)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }
@@ -143,15 +143,15 @@ protected:
         if constexpr (query::detail::compiledSqlEligible<Plan>)
         {
             const auto values = std::forward_as_tuple(args...);
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            const auto flavor = getBackend().compiledSqlFlavor();
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
             {
-                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                if (flavor == db::CompiledSqlFlavor::SQLite)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
             }
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
             {
-                if constexpr (
-                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                if (flavor == db::CompiledSqlFlavor::PostgreSQL)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }
@@ -165,15 +165,15 @@ protected:
         if constexpr (query::detail::compiledSqlEligible<Plan>)
         {
             const auto values = std::forward_as_tuple(args...);
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::SQLite)
+            const auto flavor = getBackend().compiledSqlFlavor();
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
             {
-                if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
+                if (flavor == db::CompiledSqlFlavor::SQLite)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>(plan, values);
             }
-            if (getBackend().compiledSqlFlavor() == db::CompiledSqlFlavor::PostgreSQL)
+            if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
             {
-                if constexpr (
-                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>.valid)
+                if (flavor == db::CompiledSqlFlavor::PostgreSQL)
                     return executeCompiledPlan<SchemaType, Plan, db::CompiledSqlFlavor::PostgreSQL>(plan, values);
             }
         }

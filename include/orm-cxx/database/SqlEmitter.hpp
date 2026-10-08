@@ -40,7 +40,8 @@ enum class SqlNodeKind
     Or,
     Not,
     Collection,
-    Raw
+    Raw,
+    Invalid
 };
 
 struct SqlSource
@@ -633,6 +634,8 @@ template <typename Policy>
         return std::string{node.rawSql};
     case SqlNodeKind::Collection:
         return emitSqlCollection(query, node, scope, policy);
+    case SqlNodeKind::Invalid:
+        break;
     }
     throw std::logic_error{"Unknown SQL predicate node"};
 }
