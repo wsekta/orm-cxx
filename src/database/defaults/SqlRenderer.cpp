@@ -26,23 +26,7 @@ using detail::SqlSource;
 
 auto source(const query::detail::Column& column) -> SqlSource
 {
-    const auto& path = column.getPath();
-    SqlSource result;
-    std::size_t start = 0;
-    while (start <= path.size())
-    {
-        const auto dot = path.find('.', start);
-        const auto part = std::string_view{path}.substr(start, dot - start);
-        if (part.empty())
-            throw std::invalid_argument{"Column path contains an empty segment: " + path};
-        if (result.pathSize == 2)
-            throw std::invalid_argument{"Only one level of related model paths is supported: " + path};
-        result.pathParts[result.pathSize++] = part;
-        if (dot == std::string::npos)
-            break;
-        start = dot + 1;
-    }
-    return result;
+    return detail::parseSqlSource(column.getPath());
 }
 auto source(const query::detail::AggregateExpression& expression) -> SqlSource
 {

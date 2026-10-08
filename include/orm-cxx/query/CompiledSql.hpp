@@ -106,7 +106,7 @@ constexpr auto appendExpression(SqlProgram& program) -> std::size_t
     return index;
 }
 template <typename P>
-inline constexpr bool eligible = []
+inline constexpr bool eligible = []() consteval
 {
     bool result = true;
     if constexpr (P::hasPredicate)
@@ -150,7 +150,7 @@ constexpr auto program() -> SqlProgram
     return result;
 }
 
-[[nodiscard]] constexpr auto validSource(const SqlSource& value, model::ModelView model, bool write, bool joins) -> bool
+[[nodiscard]] consteval auto validSource(const SqlSource& value, model::ModelView model, bool write, bool joins) -> bool
 {
     if (value.isAggregate && value.function == AggregateFunction::CountAll)
         return true;
@@ -170,7 +170,7 @@ constexpr auto program() -> SqlProgram
     return child != nullptr && child->kind == model::FieldKind::Scalar && child->type.has_value() &&
            (!(write || !joins) || child->isPrimaryKey);
 }
-[[nodiscard]] constexpr auto validKeys(model::ModelView model) -> bool
+[[nodiscard]] consteval auto validKeys(model::ModelView model) -> bool
 {
     bool found = false;
     for (const auto& column : model->columns)
@@ -182,7 +182,7 @@ constexpr auto program() -> SqlProgram
         }
     return found;
 }
-[[nodiscard]] constexpr auto validNode(const SqlQueryView& view, std::size_t index, model::ModelView model, bool write,
+[[nodiscard]] consteval auto validNode(const SqlQueryView& view, std::size_t index, model::ModelView model, bool write,
                                        bool joins, bool collectionAllowed = true) -> bool
 {
     if (index == noSqlNode)
@@ -313,7 +313,7 @@ struct FrozenProgram
 template <typename P>
 consteval auto freeze()
 {
-    constexpr auto sizes = []
+    constexpr auto sizes = []() consteval
     {
         auto data = program<P>();
         return std::array{data.nodes.size(),       data.orders.size(),   data.groups.size(),  data.projections.size(),
@@ -354,7 +354,7 @@ template <typename Schema, typename P, db::CompiledSqlFlavor Flavor>
 consteval auto compile()
 {
     constexpr bool accepted = valid<Schema, P, Flavor>();
-    constexpr auto length = []
+    constexpr auto length = []() consteval
     {
         if constexpr (accepted)
         {

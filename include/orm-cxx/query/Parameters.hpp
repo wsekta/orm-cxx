@@ -309,15 +309,28 @@ consteval auto validateParameters() -> void
 {
     using Slots = ParameterTypes<Root>;
     constexpr auto slots = parameterSlots<Root>;
-    constexpr auto count = [slots]
+    constexpr bool indicesInRange = [slots]() consteval
+    {
+        for (const auto slot : slots)
+            if (slot >= slots.size())
+                return false;
+        return true;
+    }();
+    constexpr auto count = [slots]() consteval
     {
         std::size_t result = 0;
         for (const auto slot : slots)
+        {
+            if (slot >= slots.size())
+                return std::size_t{0};
             result = std::max(result, slot + 1);
+        }
         return result;
     }();
-    constexpr bool continuous = [slots]
+    constexpr bool continuous = [slots]() consteval
     {
+        if (!indicesInRange)
+            return false;
         for (std::size_t i = 0; i < count; ++i)
             if (std::ranges::find(slots, i) == slots.end())
                 return false;
@@ -325,13 +338,13 @@ consteval auto validateParameters() -> void
     }();
     static_assert(continuous, "ORM_QUERY_PARAMETER_INDEX: parameter indices must be continuous from zero");
     static_assert(sizeof...(Args) == count, "ORM_QUERY_PARAMETER_COUNT: wrong number of bound arguments");
-    constexpr bool typesMatch = []<typename... P>(std::tuple<P...>*)
+    constexpr bool typesMatch = []<typename... P>(std::tuple<P...>*) consteval
     { return (SlotTypesCompatible<P, Slots>::value && ...); }(static_cast<Slots*>(nullptr));
     static_assert(typesMatch, "ORM_QUERY_PARAMETER_TYPE: one index must declare exactly one type");
-    if constexpr (sizeof...(Args) == count)
+    if constexpr (continuous && typesMatch && sizeof...(Args) == count)
     {
         using Values = std::tuple<Args...>;
-        constexpr bool compatible = []<std::size_t... I>(std::index_sequence<I...>)
+        constexpr bool compatible = []<std::size_t... I>(std::index_sequence<I...>) consteval
         {
             return (parameterCompatible<typename std::tuple_element_t<I, Slots>::Value,
                                         std::tuple_element_t<std::tuple_element_t<I, Slots>::index, Values>>() &&

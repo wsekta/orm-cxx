@@ -262,6 +262,25 @@ struct RuntimeSqlPolicy
     return source.pathSize == 1 ? std::string{source.pathParts[0]} :
                                   sqlConcat(source.pathParts[0], ".", source.pathParts[1]);
 }
+[[nodiscard]] constexpr auto parseSqlSource(std::string_view path) -> SqlSource
+{
+    SqlSource result;
+    std::size_t start = 0;
+    while (start <= path.size())
+    {
+        const auto dot = path.find('.', start);
+        const auto part = path.substr(start, dot - start);
+        if (part.empty())
+            throw std::invalid_argument{sqlConcat("Column path contains an empty segment: ", path)};
+        if (result.pathSize == result.pathParts.size())
+            throw std::invalid_argument{sqlConcat("Only one level of related model paths is supported: ", path)};
+        result.pathParts[result.pathSize++] = part;
+        if (dot == std::string_view::npos)
+            break;
+        start = dot + 1;
+    }
+    return result;
+}
 [[nodiscard]] constexpr auto requireSqlColumn(model::ModelView model, std::string_view name) -> const model::ColumnView&
 {
     const auto* column = model.findColumn(name);

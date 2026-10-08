@@ -52,17 +52,18 @@ public:
 
 #define ORM_QUERY_AGG_EXPR_COMPARE(symbol, op, ordered)                                                                \
     template <typename T>                                                                                              \
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>         \
-    ordered constexpr auto operator symbol(T&& value) const                                                            \
+        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&      \
+                (!(ordered) || detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)                                      \
+    constexpr auto operator symbol(T&& value) const                                                                    \
     {                                                                                                                  \
         return detail::comparison<detail::ComparisonOperator::op>(*this, std::forward<T>(value));                      \
     }
-    ORM_QUERY_AGG_EXPR_COMPARE(==, Equal, )
-    ORM_QUERY_AGG_EXPR_COMPARE(!=, NotEqual, )
-    ORM_QUERY_AGG_EXPR_COMPARE(>, Greater, &&detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)
-    ORM_QUERY_AGG_EXPR_COMPARE(>=, GreaterOrEqual, &&detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)
-    ORM_QUERY_AGG_EXPR_COMPARE(<, Less, &&detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)
-    ORM_QUERY_AGG_EXPR_COMPARE(<=, LessOrEqual, &&detail::ORM_QUERY_ORDERABLE<typename Meta::Value>)
+    ORM_QUERY_AGG_EXPR_COMPARE(==, Equal, false)
+    ORM_QUERY_AGG_EXPR_COMPARE(!=, NotEqual, false)
+    ORM_QUERY_AGG_EXPR_COMPARE(>, Greater, true)
+    ORM_QUERY_AGG_EXPR_COMPARE(>=, GreaterOrEqual, true)
+    ORM_QUERY_AGG_EXPR_COMPARE(<, Less, true)
+    ORM_QUERY_AGG_EXPR_COMPARE(<=, LessOrEqual, true)
 #undef ORM_QUERY_AGG_EXPR_COMPARE
 
 private:

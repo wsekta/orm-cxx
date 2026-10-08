@@ -856,20 +856,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
                                         const query::detail::SelectSpec& spec) const -> void
 {
     auto columnSource = [](const query::detail::Column& column)
-    {
-        const std::string_view path = column.getPath();
-        const auto dot = path.find('.');
-        db::detail::SqlSource result;
-        result.pathSize = dot == std::string_view::npos ? 1 : 2;
-        result.pathParts[0] = path.substr(0, dot);
-        if (dot != std::string_view::npos)
-        {
-            result.pathParts[1] = path.substr(dot + 1);
-            if (result.pathParts[1].find('.') != std::string_view::npos)
-                result.pathSize = 3;
-        }
-        return result;
-    };
+    { return db::detail::parseSqlSource(column.getPath()); };
     db::detail::SqlProgram requirements;
     requirements.isDistinct = spec.isDistinct;
     requirements.shouldJoin = spec.shouldJoin;

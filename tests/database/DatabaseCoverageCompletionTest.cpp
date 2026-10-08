@@ -854,6 +854,29 @@ TEST(DatabaseCoverageCompletionTest, strictProjectionGroupingRejectsUngroupedPro
     }
 }
 
+TEST(DatabaseCoverageCompletionTest, distinctProjectionRejectsRelatedNonKeyOrderingWithoutJoining)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.query.distinctOrderByRequiresProjectedColumn = true;
+    bundle.connect();
+    orm::ProjectionQuery<collection_models::Book, ScalarProjection> query;
+    query.project(as("value", col<&collection_models::Book::author, &collection_models::Author::name>()))
+        .distinct()
+        .disableJoining()
+        .orderBy(asc(col<&collection_models::Book::author, &collection_models::Author::name>()));
+
+    try
+    {
+        (void)bundle.database->select(query);
+        FAIL() << "Expected std::invalid_argument";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_EQ(std::string{error.what()},
+                  "Cannot filter by non-id related field when joining is disabled: author.name");
+    }
+}
+
 TEST(DatabaseCoverageCompletionTest, statementBindLimitIsEnforcedBeforeExecution)
 {
     DatabaseBundle bundle;

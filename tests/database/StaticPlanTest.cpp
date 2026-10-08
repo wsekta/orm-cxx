@@ -44,6 +44,30 @@ public:
     }
 };
 
+TEST_P(StaticPlanTest, fullModelGroupingFollowsTheBackendCapability)
+{
+    constexpr auto plan =
+        select<User>().groupBy(col<&User::age>()).having(countAll<User>() > 0).orderBy(asc(col<&User::age>()));
+    if (database.getBackendCapabilities().query.fullModelGrouping)
+    {
+        const auto result = database.select(plan);
+        EXPECT_EQ(ids(result), (std::vector<int>{3, 1, 2}));
+    }
+    else
+    {
+        try
+        {
+            (void)database.select(plan);
+            FAIL() << "Expected an unsupported full-model grouping error";
+        }
+        catch (const orm::DatabaseError& error)
+        {
+            EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::UnsupportedFeature);
+            EXPECT_EQ(error.getOperation(), "select");
+        }
+    }
+}
+
 TEST_P(StaticPlanTest, reusableSlotsMatchMutableQueriesAndRetainPagination)
 {
     constexpr auto adults = select<User>()
@@ -218,8 +242,9 @@ TEST_P(StaticPlanTest, runtimeCardinalityRawSqlAndAliasesKeepFallbackParity)
         select<User>().where(col<&User::id>().in(param<std::vector<int>, 0>())).orderBy(asc(col<&User::id>()));
     EXPECT_EQ(ids(database.select(listSlot, std::vector{1, 3})), ids(database.select(runtime)));
     EXPECT_THROW((void)database.select(listSlot, std::vector<int>{}), std::invalid_argument);
-    const auto rawPlan =
-        select<User>().where(raw<User>("id >= :id", param("id", 2))).orderBy(rawOrder<User>("id DESC"));
+    const auto rawPlan = select<User>()
+                             .where(raw<User>("static_plan_users.id >= :id", param("id", 2)))
+                             .orderBy(rawOrder<User>("static_plan_users.id DESC"));
     EXPECT_EQ(ids(database.select(rawPlan)), (std::vector<int>{3, 2}));
     const auto alias =
         selectAs<User, UserName>(as(std::string{"name"}, col<&User::name>())).where(col<&User::id>() == 1);
@@ -392,6 +417,13 @@ TEST(StaticPlanRendererTest, unknownProviderAndRuntimeShapesRetainTheRuntimeRend
     constexpr auto byId = select<User>().where(col<&User::id>() == param<int, 0>());
     EXPECT_EQ(custom.database->select(byId, 1).size(), 1);
     EXPECT_EQ(custom.backend->calls.selects, 1);
+    constexpr auto patch =
+        update<User>().set(col<&User::age>(), param<int, 0>()).where(col<&User::id>() == param<int, 1>());
+    constexpr auto erase = remove<User>().where(col<&User::id>() == param<int, 0>());
+    EXPECT_EQ(custom.database->update(patch, 21, 1), 1);
+    EXPECT_EQ(custom.backend->calls.updates, 1);
+    EXPECT_EQ(custom.database->remove(erase, 1), 1);
+    EXPECT_EQ(custom.backend->calls.removes, 1);
 
     ObserverBundle cached{std::make_unique<CachedObservedBackend>()};
     const auto runtime = select<User>().where(col<&User::id>().in(std::vector{1}));
@@ -400,4 +432,7 @@ TEST(StaticPlanRendererTest, unknownProviderAndRuntimeShapesRetainTheRuntimeRend
     auto dynamic = byId.toDynamic(1);
     EXPECT_EQ(cached.database->select(dynamic).size(), 1);
     EXPECT_EQ(cached.backend->calls.selects, 2);
+    constexpr auto invalidJoin =
+        select<User>().where(col<&User::profile, &Profile::city>() == "Paris").disableJoining();
+    EXPECT_THROW((void)cached.database->select(invalidJoin), orm::DatabaseError);
 }

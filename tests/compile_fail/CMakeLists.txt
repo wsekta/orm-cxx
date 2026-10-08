@@ -147,7 +147,9 @@ orm_cxx_expect_compile_failure(
 # Positive controls use the same headers and dependency include paths as the failures.
 orm_cxx_expect_compile_success(typed-query-positive TypedQueryPositive.cpp)
 orm_cxx_expect_compile_success(static-plan-positive StaticPlanPositive.cpp)
-orm_cxx_expect_compile_failure(static-plan-array-argument-size StaticPlanArrayArgumentSize.cpp "ORM_QUERY_PARAMETER_VALUE")
+orm_cxx_expect_compile_failure(
+    static-plan-array-argument-size StaticPlanArrayArgumentSize.cpp "ORM_QUERY_PARAMETER_VALUE"
+)
 orm_cxx_expect_compile_failure(static-plan-optional-argument StaticPlanOptionalArgument.cpp "ORM_QUERY_PARAMETER_VALUE")
 orm_cxx_expect_compile_failure(static-plan-wrong-order-model StaticPlanWrongOrderModel.cpp "ORM_QUERY_MODEL")
 orm_cxx_expect_compile_failure(static-plan-wrong-group-model StaticPlanWrongGroupModel.cpp "ORM_QUERY_MODEL")
@@ -156,14 +158,19 @@ orm_cxx_expect_compile_failure(static-plan-wrong-having-model StaticPlanWrongHav
 orm_cxx_expect_compile_failure(static-plan-unsafe-delete-path StaticPlanUnsafeDeletePath.cpp "ORM_QUERY_WRITE_SAFE")
 orm_cxx_expect_compile_failure(static-plan-projection-include StaticPlanProjectionInclude.cpp "include")
 orm_cxx_expect_compile_failure(static-plan-slot-gap StaticPlanSlotGap.cpp "ORM_QUERY_PARAMETER_INDEX")
+orm_cxx_expect_compile_failure(static-plan-slot-overflow StaticPlanSlotOverflow.cpp "ORM_QUERY_PARAMETER_INDEX")
 orm_cxx_expect_compile_failure(static-plan-slot-conflict StaticPlanSlotConflict.cpp "ORM_QUERY_PARAMETER_TYPE")
 orm_cxx_expect_compile_failure(static-plan-missing-argument StaticPlanMissingArgument.cpp "ORM_QUERY_PARAMETER_COUNT")
 orm_cxx_expect_compile_failure(static-plan-extra-argument StaticPlanExtraArgument.cpp "ORM_QUERY_PARAMETER_COUNT")
 orm_cxx_expect_compile_failure(static-plan-argument-type StaticPlanArgumentType.cpp "ORM_QUERY_PARAMETER_VALUE")
-orm_cxx_expect_compile_failure(static-plan-narrowing-argument StaticPlanNarrowingArgument.cpp "ORM_QUERY_PARAMETER_VALUE")
+orm_cxx_expect_compile_failure(
+    static-plan-narrowing-argument StaticPlanNarrowingArgument.cpp "ORM_QUERY_PARAMETER_VALUE"
+)
 orm_cxx_expect_compile_failure(static-plan-optional-filter StaticPlanOptionalFilter.cpp "ORM_QUERY_VALUE")
 orm_cxx_expect_compile_failure(static-plan-narrowing-filter StaticPlanNarrowingFilter.cpp "ORM_QUERY_VALUE")
-orm_cxx_expect_compile_failure(static-plan-unbound-expression StaticPlanUnboundExpression.cpp "ORM_QUERY_UNBOUND_PARAMETER")
+orm_cxx_expect_compile_failure(
+    static-plan-unbound-expression StaticPlanUnboundExpression.cpp "ORM_QUERY_UNBOUND_PARAMETER"
+)
 orm_cxx_expect_compile_failure(static-plan-unbound-dynamic StaticPlanUnboundDynamic.cpp "ORM_QUERY_UNBOUND_PARAMETER")
 orm_cxx_expect_compile_failure(static-plan-empty-update StaticPlanEmptyUpdate.cpp "ORM_QUERY_UPDATE_ASSIGNMENTS")
 orm_cxx_expect_compile_failure(static-plan-unfiltered-update StaticPlanUnfilteredUpdate.cpp "ORM_QUERY_REQUIRED_WHERE")
@@ -172,9 +179,13 @@ orm_cxx_expect_compile_failure(static-plan-empty-in StaticPlanEmptyIn.cpp "ORM_Q
 orm_cxx_expect_compile_failure(static-plan-wrong-model StaticPlanWrongModel.cpp "ORM_QUERY_MODEL")
 orm_cxx_expect_compile_failure(static-plan-wrong-write-path StaticPlanWrongWritePath.cpp "ORM_QUERY_WRITE_SAFE")
 orm_cxx_expect_compile_failure(static-plan-floating-count StaticPlanFloatingCount.cpp "ORM_QUERY_VALUE")
-orm_cxx_expect_compile_failure(static-plan-unbound-aggregate StaticPlanUnboundAggregate.cpp "ORM_QUERY_UNBOUND_PARAMETER")
+orm_cxx_expect_compile_failure(
+    static-plan-unbound-aggregate StaticPlanUnboundAggregate.cpp "ORM_QUERY_UNBOUND_PARAMETER"
+)
 orm_cxx_expect_compile_failure(static-plan-unbound-update StaticPlanUnboundUpdate.cpp "ORM_QUERY_UNBOUND_PARAMETER")
-orm_cxx_expect_compile_failure(static-plan-vector-argument-shape StaticPlanVectorArgumentShape.cpp "ORM_QUERY_PARAMETER_VALUE")
+orm_cxx_expect_compile_failure(
+    static-plan-vector-argument-shape StaticPlanVectorArgumentShape.cpp "ORM_QUERY_PARAMETER_VALUE"
+)
 orm_cxx_expect_compile_failure(query-missing-member QueryMissingMember.cpp "missingAge")
 orm_cxx_expect_compile_failure(query-invalid-member QueryInvalidMember.cpp "ORM_QUERY_MEMBER")
 orm_cxx_expect_compile_failure(query-collection-column QueryCollectionColumn.cpp "ORM_QUERY_COLUMN")

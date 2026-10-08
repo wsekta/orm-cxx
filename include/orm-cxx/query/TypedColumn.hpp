@@ -143,17 +143,17 @@ public:
     inline static constexpr bool staticSqlEligible = true;
 #define ORM_QUERY_COLUMN_COMPARE(symbol, op, ordered)                                                                  \
     template <typename T>                                                                                              \
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>                                                        \
-    ordered constexpr auto operator symbol(T&& value) const                                                            \
+        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && (!(ordered) || detail::ORM_QUERY_ORDERABLE<Value>)  \
+    constexpr auto operator symbol(T&& value) const                                                                    \
     {                                                                                                                  \
         return detail::comparison<detail::ComparisonOperator::op>(*this, std::forward<T>(value));                      \
     }
-    ORM_QUERY_COLUMN_COMPARE(==, Equal, )
-    ORM_QUERY_COLUMN_COMPARE(!=, NotEqual, )
-    ORM_QUERY_COLUMN_COMPARE(>, Greater, &&detail::ORM_QUERY_ORDERABLE<Value>)
-    ORM_QUERY_COLUMN_COMPARE(>=, GreaterOrEqual, &&detail::ORM_QUERY_ORDERABLE<Value>)
-    ORM_QUERY_COLUMN_COMPARE(<, Less, &&detail::ORM_QUERY_ORDERABLE<Value>)
-    ORM_QUERY_COLUMN_COMPARE(<=, LessOrEqual, &&detail::ORM_QUERY_ORDERABLE<Value>)
+    ORM_QUERY_COLUMN_COMPARE(==, Equal, false)
+    ORM_QUERY_COLUMN_COMPARE(!=, NotEqual, false)
+    ORM_QUERY_COLUMN_COMPARE(>, Greater, true)
+    ORM_QUERY_COLUMN_COMPARE(>=, GreaterOrEqual, true)
+    ORM_QUERY_COLUMN_COMPARE(<, Less, true)
+    ORM_QUERY_COLUMN_COMPARE(<=, LessOrEqual, true)
 #undef ORM_QUERY_COLUMN_COMPARE
     template <typename T>
         requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>

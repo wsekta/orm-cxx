@@ -20,6 +20,8 @@ set(ORM_CXX_TEST_SOURCES
     ../src/query/TypedQueryTest.cpp
     ../src/query/StaticPlanTest.cpp
     ../src/query/ExpressionRuntimeTest.cpp
+    ../src/query/StaticPlanCoverageTest.cpp
+    ../src/query/CompiledSqlCoverageTest.cpp
     CollectionRelationCoverageTest.cpp
     database/BackendConformanceTest.cpp
     database/DatabaseCoverageCompletionTest.cpp
@@ -68,6 +70,12 @@ add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})
 set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
 target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}")
+
+add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp)
+target_link_libraries(orm-cxx-static-plan-allocations PRIVATE orm-cxx::orm-cxx orm-cxx-project-warnings)
+set_target_properties(orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+add_test(NAME orm-cxx-static-plan-allocations COMMAND orm-cxx-static-plan-allocations)
+set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES LABELS "unit;query;allocation")
 target_compile_definitions(
     orm-cxx-UT
     PRIVATE ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS=$<BOOL:${ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS}>
@@ -107,7 +115,8 @@ set_tests_properties(
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
     add_test(
         NAME orm-cxx-postgresql-conformance
-        COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql
+        COMMAND orm-cxx-UT
+                --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     add_test(

@@ -8,8 +8,8 @@
 #include <variant>
 #include <vector>
 
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
 #include "orm-cxx/database/CommandGenerator.hpp"
+#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
 #include "orm-cxx/query/CompiledSql.hpp"
 #include "tests/compile_fail/StaticPlanModels.hpp"
 #include "tests/utils/FakeDatabase.hpp"

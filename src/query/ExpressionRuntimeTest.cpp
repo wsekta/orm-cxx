@@ -92,6 +92,22 @@ TEST(ExpressionRuntimeTest, optionalTextCaptureOwnsViewsAndPointers)
     EXPECT_THROW((void)expression_detail::captureValue(std::optional<const char*>{nullptr}), std::invalid_argument);
 }
 
+TEST(ExpressionRuntimeTest, stringPointersAreCopiedAndNullPointersAreRejected)
+{
+    char backing[]{'b', 'e', 'f', 'o', 'r', 'e', '\0'};
+    const char* pointer = backing;
+    const auto captured = col<&User::name>() == pointer;
+    backing[0] = 'z';
+    EXPECT_EQ(std::get<std::string>(valuesOf(captured, std::tuple<>{}).front().get()), "before");
+
+    const char* nullPointer = nullptr;
+    EXPECT_THROW((void)(col<&User::name>() == nullPointer), std::invalid_argument);
+    const auto slotted = col<&User::name>() == param<std::string, 0>();
+    expression_detail::validateParameters<decltype(slotted), const char*>();
+    EXPECT_THROW((void)valuesOf(slotted, std::tuple{nullPointer}), std::invalid_argument);
+    EXPECT_THROW((void)expression_detail::bindExpression(slotted, std::tuple{nullPointer}), std::invalid_argument);
+}
+
 TEST(ExpressionRuntimeTest, fixedAndVariableListsOwnTextElements)
 {
     std::string backing{"before"};
