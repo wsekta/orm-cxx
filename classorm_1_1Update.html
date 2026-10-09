@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Up
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::Update&lt; T &gt; Class Template Reference</div></div>
+  <div class="headertitle"><div class="title">orm::Update&lt; T &gt; Class Template Reference<span class="mlabels"><span class="mlabel export">export</span></span><div class="ingroups">module <a class="el" href="module__orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
@@ -118,20 +118,20 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Up
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a666e5c512f9b9023179a65f732a6d3cc" id="r_a666e5c512f9b9023179a65f732a6d3cc"><td class="memTemplParams" colspan="2"><a id="a666e5c512f9b9023179a65f732a6d3cc" name="a666e5c512f9b9023179a65f732a6d3cc"></a>
 template&lt;auto... Members, typename Value&gt; <br />
-requires query::detail::ColumnFor&lt;query::TypedColumn&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;query::TypedColumn<br class="typebreak" />
-&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_VALUE&lt;typename query::TypedColumn&lt;Members...&gt;::Value, Value&gt;</td></tr>
-<tr class="memitem:a666e5c512f9b9023179a65f732a6d3cc template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (query::TypedColumn&lt; Members... &gt; column, Value &amp;&amp;value) -&gt; Update&lt; T &gt; &amp;</td></tr>
+requires query::detail::ColumnFor&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a><br class="typebreak" />
+&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_VALUE&lt;typename <a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;::Value, Value&gt;</td></tr>
+<tr class="memitem:a666e5c512f9b9023179a65f732a6d3cc template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt; Members... &gt; column, Value &amp;&amp;value) -&gt; Update&lt; T &gt; &amp;</td></tr>
 <tr class="memitem:a4712a5e3cd6379539e436fd8f1b012d7" id="r_a4712a5e3cd6379539e436fd8f1b012d7"><td class="memTemplParams" colspan="2"><a id="a4712a5e3cd6379539e436fd8f1b012d7" name="a4712a5e3cd6379539e436fd8f1b012d7"></a>
 template&lt;auto... Members, typename Value&gt; <br />
-requires query::detail::ColumnFor&lt;query::TypedColumn&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;query::TypedColumn<br class="typebreak" />
-&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_NULLABLE&lt;query::TypedColumn&lt;Members...&gt;::nullable&gt; &amp;&amp;<br class="typebreak" />
- query::detail::ORM_QUERY_VALUE&lt;typename query::TypedColumn&lt;Members...&gt;::Value, Value&gt;</td></tr>
-<tr class="memitem:a4712a5e3cd6379539e436fd8f1b012d7 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (query::TypedColumn&lt; Members... &gt; column, const std::optional&lt; Value &gt; &amp;value) -&gt; Update&lt; T &gt; &amp;</td></tr>
+requires query::detail::ColumnFor&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a><br class="typebreak" />
+&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_NULLABLE&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;::nullable&gt; &amp;&amp;<br class="typebreak" />
+ query::detail::ORM_QUERY_VALUE&lt;typename <a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;::Value, Value&gt;</td></tr>
+<tr class="memitem:a4712a5e3cd6379539e436fd8f1b012d7 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt; Members... &gt; column, const std::optional&lt; Value &gt; &amp;value) -&gt; Update&lt; T &gt; &amp;</td></tr>
 <tr class="memitem:a8414c70d080a06c13441b9c9145145cb" id="r_a8414c70d080a06c13441b9c9145145cb"><td class="memTemplParams" colspan="2"><a id="a8414c70d080a06c13441b9c9145145cb" name="a8414c70d080a06c13441b9c9145145cb"></a>
 template&lt;auto... Members&gt; <br />
-requires query::detail::ColumnFor&lt;query::TypedColumn&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;query::TypedColumn<br class="typebreak" />
-&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_NULLABLE&lt;query::TypedColumn&lt;Members...&gt;::nullable&gt;</td></tr>
-<tr class="memitem:a8414c70d080a06c13441b9c9145145cb template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (query::TypedColumn&lt; Members... &gt; column, std::nullopt_t) -&gt; Update&lt; T &gt; &amp;</td></tr>
+requires query::detail::ColumnFor&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a><br class="typebreak" />
+&lt;Members...&gt;&gt; &amp;&amp; query::detail::ORM_QUERY_NULLABLE&lt;<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt;Members...&gt;::nullable&gt;</td></tr>
+<tr class="memitem:a8414c70d080a06c13441b9c9145145cb template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>set</b> (<a class="el" href="classorm_1_1query_1_1TypedColumn.html">query::TypedColumn</a>&lt; Members... &gt; column, std::nullopt_t) -&gt; Update&lt; T &gt; &amp;</td></tr>
 <tr class="memitem:a7fff87bbdb1b5e450b6f2eec59d14ba6" id="r_a7fff87bbdb1b5e450b6f2eec59d14ba6"><td class="memTemplParams" colspan="2"><a id="a7fff87bbdb1b5e450b6f2eec59d14ba6" name="a7fff87bbdb1b5e450b6f2eec59d14ba6"></a>
 template&lt;typename P&gt; <br />
 requires query::detail::PredicateFor&lt;P, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;P&gt;</td></tr>
@@ -154,7 +154,7 @@ template&lt;typename&gt; </td></tr>
 class&#160;</td><td class="memItemRight"><b>orm::DatabaseCore</b></td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/orm-cxx/<a class="el" href="update_8hpp_source.html">update.hpp</a></li>
+<li>modules/<b>orm.dynamic_query.cppm</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

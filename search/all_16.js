@@ -1,11 +1,9 @@
 var searchData=
 [
-  ['queries_0',['queries',['../md_docs_2query.html#autotoc_md105',1,'Aggregate projection queries'],['../md_docs_2partial-result-queries.html#autotoc_md90',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md103',1,'Partial-result queries']]],
-  ['queries_20in_200_202_1',['Migrating to typed queries in 0.2',['../md_docs_2migration-typed-queries.html',1,'']]],
-  ['queries_20to_200_203_2',['Migrating queries to 0.3',['../md_docs_2migration-static-queries.html',1,'']]],
-  ['query_3',['Query',['../classorm_1_1Query.html',1,'orm::Query&lt; T &gt;'],['../classorm_1_1Query.html#a50d327c6dd8f7900418c2495e4d624d0',1,'orm::Query::Query()'],['../md_docs_2query.html',1,'Query']]],
-  ['query_20behavior_4',['Query behavior',['../md_docs_2partial-result-queries.html#autotoc_md89',1,'']]],
-  ['query_20fields_20and_20relations_5',['5. Migrate query fields and relations',['../md_docs_2migration-static-schema.html#autotoc_md60',1,'']]],
-  ['query_20objects_6',['Query objects',['../md_docs_2database.html#autotoc_md45',1,'']]],
-  ['query_20plans_7',['Static query plans',['../md_docs_2static-queries.html',1,'']]]
+  ['validation_20and_20unsupported_20mappings_0',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md105',1,'']]],
+  ['vcpkg_20after_20acceptance_1',['Consume from vcpkg after acceptance',['../md_docs_2packaging.html#autotoc_md67',1,'']]],
+  ['verification_2',['Local package verification',['../md_docs_2packaging.html#autotoc_md71',1,'']]],
+  ['verification_20model_3',['Verification model',['../md_docs_2backend-portability.html#autotoc_md16',1,'']]],
+  ['versions_4',['Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'Adding New Compiler Versions'],['../md_docs_2ci-compiler-matrix.html#autotoc_md29',1,'Tested Compiler Versions']]],
+  ['versus_20dialect_5',['Capabilities versus dialect',['../md_docs_2backend-extension.html#autotoc_md3',1,'']]]
 ];

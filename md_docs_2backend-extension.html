@@ -128,11 +128,15 @@ Concrete extension points</h1>
 </ul>
 <p><span class="tt">Database</span> consumes these interfaces and does not branch on individual backend types. A provider is registered once by <span class="tt">BackendType</span>; automatic selection must recognize exactly one provider. Overlapping connection-string recognizers are treated as ambiguous instead of depending on registry iteration order.</p>
 <p>Applications embedding an additional source-level provider pass an owned registry into <span class="tt">Database</span>:</p>
-<div class="fragment"><div class="line">orm::db::CommandGeneratorFactory backends;</div>
+<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1db_1_1CommandGeneratorFactory.html">orm::db::CommandGeneratorFactory</a> backends;</div>
 <div class="line">backends.registerBackend(std::make_unique&lt;MyBackend&gt;());</div>
 <div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;orm::Schema&lt;&gt;</a>&gt; database{std::move(backends)};</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:775</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> orm.database.cppm:2150</div></div>
+<div class="ttc" id="aclassorm_1_1db_1_1CommandGeneratorFactory_html"><div class="ttname"><a href="classorm_1_1db_1_1CommandGeneratorFactory.html">orm::db::CommandGeneratorFactory</a></div><div class="ttdef"><b>Definition</b> orm.sql.cppm:442</div></div>
 </div><!-- fragment --><p>The registry and its providers become owned by the database object. In-tree backends may also be registered by the factory's default construction path.</p>
+<p>An extension translation unit uses <span class="tt">import orm;</span>. The command override types are <span class="tt">orm::db::SelectSpec</span>, <span class="tt">orm::db::UpdateSpec</span>, and <span class="tt">orm::db::Predicate</span>. <span class="tt">orm::db::ast</span> provides the runtime column, predicate-node, aggregate, ordering, projection, and assignment types needed to inspect those inputs. Endpoint keys use <span class="tt">orm::db::PrimaryKey</span>. These names define the backend input contract; application queries continue to use the typed <span class="tt">orm::query</span> builders.</p>
+<p>The external import compile control verifies that a consumer can override all three command signatures, inspect predicate nodes, and register a provider without joining the library's module implementation.</p>
+<p>Built-in provider and dialect declarations are exported only when their backend is enabled in the library build. <span class="tt">orm::config::sqliteBackendEnabled</span> and <span class="tt">orm::config::postgresqlBackendEnabled</span> report that build configuration.</p>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md2"></a>
 Required backend responsibilities</h1>
 <p>A backend implementation owns the following responsibilities behind one centrally selected adapter or equivalent contract:</p>

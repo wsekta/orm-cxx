@@ -1,14 +1,11 @@
 var searchData=
 [
-  ['layers_0',['Portability layers',['../md_docs_2backend-portability.html#autotoc_md11',1,'']]],
-  ['lifecycle_1',['Schema lifecycle',['../md_docs_2relations.html#autotoc_md113',1,'']]],
-  ['limit_2',['limit',['../classorm_1_1Query.html#a73f6efaddec024eed6b8dcd1e71dd4d4',1,'orm::Query']]],
-  ['limit_20and_20offset_3',['Limit and offset',['../md_docs_2query.html#autotoc_md101',1,'']]],
-  ['limitations_4',['Limitations',['../md_docs_2partial-result-queries.html#autotoc_md92',1,'Limitations'],['../md_docs_2query.html#autotoc_md107',1,'Limitations']]],
-  ['limitations_5',['Current limitations',['../md_docs_2model.html#autotoc_md79',1,'']]],
-  ['link_20and_20unlink_6',['Link and unlink',['../md_docs_2relations.html#autotoc_md114',1,'']]],
-  ['link_20and_20unlink_20relations_7',['Link and unlink relations',['../md_docs_2database.html#autotoc_md44',1,'']]],
-  ['linkimpl_8',['linkImpl',['../classorm_1_1DatabaseCore.html#ac79c01ec161840a63a1a189202a92944',1,'orm::DatabaseCore']]],
-  ['loading_20collections_9',['Loading collections',['../md_docs_2query.html#autotoc_md95',1,'Loading collections'],['../md_docs_2relations.html#autotoc_md115',1,'Loading collections']]],
-  ['local_20package_20verification_10',['Local package verification',['../md_docs_2packaging.html#autotoc_md85',1,'']]]
+  ['queries_0',['queries',['../md_docs_2query.html#autotoc_md91',1,'Aggregate projection queries'],['../md_docs_2partial-result-queries.html#autotoc_md76',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md89',1,'Partial-result queries']]],
+  ['query_1',['Query',['../classorm_1_1Query.html',1,'orm::Query&lt; T &gt;'],['../classorm_1_1Query.html#a50d327c6dd8f7900418c2495e4d624d0',1,'orm::Query::Query()'],['../md_docs_2query.html',1,'Query']]],
+  ['query_20behavior_2',['Query behavior',['../md_docs_2partial-result-queries.html#autotoc_md75',1,'']]],
+  ['query_20objects_3',['Query objects',['../md_docs_2database.html#autotoc_md45',1,'']]],
+  ['query_20plans_4',['Static query plans',['../md_docs_2static-queries.html',1,'']]],
+  ['querycapabilities_5',['QueryCapabilities',['../structorm_1_1db_1_1QueryCapabilities.html',1,'orm::db']]],
+  ['queryparameter_6',['QueryParameter',['../structorm_1_1query_1_1QueryParameter.html',1,'orm::query']]],
+  ['queryvalue_7',['QueryValue',['../classorm_1_1query_1_1QueryValue.html',1,'orm::query']]]
 ];

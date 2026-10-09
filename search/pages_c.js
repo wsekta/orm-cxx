@@ -1,6 +1,12 @@
 var searchData=
 [
-  ['gcc_0',['GCC',['../md_docs_2ci-compiler-matrix.html#autotoc_md30',1,'']]],
-  ['glance_1',['Compatibility at a glance',['../md_docs_2backends.html#autotoc_md21',1,'']]],
-  ['grouping_20and_20having_2',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md104',1,'']]]
+  ['layers_0',['Portability layers',['../md_docs_2backend-portability.html#autotoc_md11',1,'']]],
+  ['lifecycle_1',['Schema lifecycle',['../md_docs_2relations.html#autotoc_md99',1,'']]],
+  ['limit_20and_20offset_2',['Limit and offset',['../md_docs_2query.html#autotoc_md87',1,'']]],
+  ['limitations_3',['Limitations',['../md_docs_2partial-result-queries.html#autotoc_md78',1,'Limitations'],['../md_docs_2query.html#autotoc_md93',1,'Limitations']]],
+  ['limitations_4',['Current limitations',['../md_docs_2model.html#autotoc_md62',1,'']]],
+  ['link_20and_20unlink_5',['Link and unlink',['../md_docs_2relations.html#autotoc_md100',1,'']]],
+  ['link_20and_20unlink_20relations_6',['Link and unlink relations',['../md_docs_2database.html#autotoc_md44',1,'']]],
+  ['loading_20collections_7',['Loading collections',['../md_docs_2query.html#autotoc_md81',1,'Loading collections'],['../md_docs_2relations.html#autotoc_md101',1,'Loading collections']]],
+  ['local_20package_20verification_8',['Local package verification',['../md_docs_2packaging.html#autotoc_md71',1,'']]]
 ];

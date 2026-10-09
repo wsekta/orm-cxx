@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['removeimpl_0',['removeImpl',['../classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c',1,'orm::DatabaseCore']]],
-  ['rollbacktransaction_1',['rollbackTransaction',['../classorm_1_1DatabaseCore.html#a5ca1f8fd77ea6d27226a2cb2e4451442',1,'orm::DatabaseCore']]]
+  ['predicate_0',['Predicate',['../classorm_1_1query_1_1detail_1_1Predicate.html#ac2c127d544cff99eba703fcdfc1ea592',1,'orm::query::detail::Predicate']]]
 ];

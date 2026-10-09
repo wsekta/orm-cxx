@@ -110,14 +110,12 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Da
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::Database&lt; SchemaType &gt; Class Template Reference<span class="mlabels"><span class="mlabel final">final</span></span></div></div>
+  <div class="headertitle"><div class="title">orm::Database&lt; SchemaType &gt; Class Template Reference<span class="mlabels"><span class="mlabel final">final</span><span class="mlabel export">export</span></span><div class="ingroups">module <a class="el" href="module__orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
 <p><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> facade bound to one closed compile-time model schema.  
  <a href="#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="database_8hpp_source.html">database.hpp</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for orm::Database&lt; SchemaType &gt;:</div>
 <div class="dyncontent">
@@ -143,10 +141,10 @@ Collaboration diagram for orm::Database&lt; SchemaType &gt;:</div>
 Public Types</h2></td></tr>
 <tr class="memitem:ab91a42042e362465719a267187bb27cb" id="r_ab91a42042e362465719a267187bb27cb"><td class="memTemplParams" colspan="2"><a id="ab91a42042e362465719a267187bb27cb" name="ab91a42042e362465719a267187bb27cb"></a>
 template&lt;typename T&gt; </td></tr>
-<tr class="memitem:ab91a42042e362465719a267187bb27cb template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>Payload</b> = db::binding::BindingPayload&lt;T, SchemaType&gt;</td></tr>
+<tr class="memitem:ab91a42042e362465719a267187bb27cb template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>Payload</b> = <a class="el" href="structorm_1_1db_1_1binding_1_1BindingPayload.html">db::binding::BindingPayload</a>&lt;T, SchemaType&gt;</td></tr>
 <tr class="memitem:af41c327c0bf1ec6e54b1f90a1f550c7d" id="r_af41c327c0bf1ec6e54b1f90a1f550c7d"><td class="memTemplParams" colspan="2"><a id="af41c327c0bf1ec6e54b1f90a1f550c7d" name="af41c327c0bf1ec6e54b1f90a1f550c7d"></a>
 template&lt;typename T&gt; </td></tr>
-<tr class="memitem:af41c327c0bf1ec6e54b1f90a1f550c7d template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>ProjectionPayload</b> = db::binding::ProjectionPayload&lt;T&gt;</td></tr>
+<tr class="memitem:af41c327c0bf1ec6e54b1f90a1f550c7d template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><b>ProjectionPayload</b> = <a class="el" href="structorm_1_1db_1_1binding_1_1ProjectionPayload.html">db::binding::ProjectionPayload</a>&lt;T&gt;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -196,20 +194,20 @@ template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf" id="r_a66e6e8556e49b459824922c8bd0ac6bf"><td class="memTemplParams" colspan="2"><a id="a66e6e8556e49b459824922c8bd0ac6bf" name="a66e6e8556e49b459824922c8bd0ac6bf"></a>
 template&lt;auto Member, typename Owner, typename Target&gt; <br />
 requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <br class="typebreak" />
-query::detail::CollectionTraits&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
-query::detail::CollectionTraits&lt;Member&gt;::Target&gt;</td></tr>
+<a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
+<a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Target&gt;</td></tr>
 <tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>link</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
 <tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8" id="r_a3329d6482ff53ae7209f94e37e7cc0f8"><td class="memTemplParams" colspan="2"><a id="a3329d6482ff53ae7209f94e37e7cc0f8" name="a3329d6482ff53ae7209f94e37e7cc0f8"></a>
 template&lt;auto Member, typename Owner, typename Target&gt; <br />
 requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <br class="typebreak" />
-query::detail::CollectionTraits&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
-query::detail::CollectionTraits&lt;Member&gt;::Target&gt;</td></tr>
+<a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <br class="typebreak" />
+<a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Target&gt;</td></tr>
 <tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>unlink</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
 <tr class="memitem:a918187290120417d85097a787b05153f" id="r_a918187290120417d85097a787b05153f"><td class="memItemLeft"><a id="a918187290120417d85097a787b05153f" name="a918187290120417d85097a787b05153f"></a>
 &#160;</td><td class="memItemRight"><b>DatabaseCore</b> ()</td></tr>
 <tr class="memdesc:a918187290120417d85097a787b05153f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> object. <br /></td></tr>
 <tr class="memitem:a454c22e6671a38b7a93ed091f4c5f79f" id="r_a454c22e6671a38b7a93ed091f4c5f79f"><td class="memItemLeft"><a id="a454c22e6671a38b7a93ed091f4c5f79f" name="a454c22e6671a38b7a93ed091f4c5f79f"></a>
-&#160;</td><td class="memItemRight"><b>DatabaseCore</b> (db::CommandGeneratorFactory factory)</td></tr>
+&#160;</td><td class="memItemRight"><b>DatabaseCore</b> (<a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a> factory)</td></tr>
 <tr class="memdesc:a454c22e6671a38b7a93ed091f4c5f79f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
 <tr class="memitem:ace03a86ed577f1864111d370bb5aa2f9" id="r_ace03a86ed577f1864111d370bb5aa2f9"><td class="memItemLeft"><a id="ace03a86ed577f1864111d370bb5aa2f9" name="ace03a86ed577f1864111d370bb5aa2f9"></a>
 &#160;</td><td class="memItemRight"><b>DatabaseCore</b> (const DatabaseCore &amp;)=delete</td></tr>
@@ -220,7 +218,7 @@ query::detail::CollectionTraits&lt;Member&gt;::Target&gt;</td></tr>
 &#160;</td><td class="memItemRight"><b>DatabaseCore</b> ()</td></tr>
 <tr class="memdesc:a918187290120417d85097a787b05153f pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> object. <br /></td></tr>
 <tr class="memitem:a454c22e6671a38b7a93ed091f4c5f79f pub_methods_classorm_1_1DatabaseCore" id="r_a454c22e6671a38b7a93ed091f4c5f79f"><td class="memItemLeft">
-&#160;</td><td class="memItemRight"><b>DatabaseCore</b> (db::CommandGeneratorFactory factory)</td></tr>
+&#160;</td><td class="memItemRight"><b>DatabaseCore</b> (<a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a> factory)</td></tr>
 <tr class="memdesc:a454c22e6671a38b7a93ed091f4c5f79f pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
 <tr class="memitem:ace03a86ed577f1864111d370bb5aa2f9 pub_methods_classorm_1_1DatabaseCore" id="r_ace03a86ed577f1864111d370bb5aa2f9"><td class="memItemLeft">
 &#160;</td><td class="memItemRight"><b>DatabaseCore</b> (const DatabaseCore &amp;)=delete</td></tr>
@@ -243,7 +241,7 @@ auto&#160;</td><td class="memItemRight"><b>disconnect</b> () -&gt; void</td></tr
 <tr class="memitem:a33f02aa54e939bacab83fcf6146d1cfb pub_methods_classorm_1_1DatabaseCore" id="r_a33f02aa54e939bacab83fcf6146d1cfb"><td class="memItemLeft">
 auto&#160;</td><td class="memItemRight"><b>isConnected</b> () const noexcept -&gt; bool</td></tr>
 <tr class="memdesc:a33f02aa54e939bacab83fcf6146d1cfb pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether a backend session is currently open. <br /></td></tr>
-<tr class="memitem:a64475066f3a5cbee97fa3149bbf497b3 pub_methods_classorm_1_1DatabaseCore" id="r_a64475066f3a5cbee97fa3149bbf497b3"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3">getBackendCapabilities</a> () const -&gt; const db::BackendCapabilities &amp;</td></tr>
+<tr class="memitem:a64475066f3a5cbee97fa3149bbf497b3 pub_methods_classorm_1_1DatabaseCore" id="r_a64475066f3a5cbee97fa3149bbf497b3"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3">getBackendCapabilities</a> () const -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">db::BackendCapabilities</a> &amp;</td></tr>
 <tr class="memdesc:a64475066f3a5cbee97fa3149bbf497b3 pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the capabilities advertised by the connected backend.  <br /></td></tr>
 <tr class="memitem:a97f7b62ddae43ba47fb43bce0d420cfa pub_methods_classorm_1_1DatabaseCore" id="r_a97f7b62ddae43ba47fb43bce0d420cfa"><td class="memItemLeft">
 auto&#160;</td><td class="memItemRight"><b>beginTransaction</b> () -&gt; void</td></tr>
@@ -281,7 +279,7 @@ template&lt;typename SchemaType, typename Source, typename Result&gt; </td></tr>
 <tr class="memitem:a71fd9763cb799bf21a58b255016aac01 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>selectImpl</b> (<a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a>&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
 <tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec pro_methods_classorm_1_1DatabaseCore" id="r_a6e233618ac3e5a54ff3a33010a301eec"><td class="memTemplParams" colspan="2">
 template&lt;typename SchemaType, typename Source, typename Result, bool Projection, typename Loader&gt; </td></tr>
-<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>executeSelectStatement</b> (db::StatementView statement, bool shouldJoin, Loader loadIncludes) -&gt; std::vector&lt; Result &gt;</td></tr>
+<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><b>executeSelectStatement</b> (<a class="el" href="structorm_1_1db_1_1StatementView.html">db::StatementView</a> statement, bool shouldJoin, Loader loadIncludes) -&gt; std::vector&lt; Result &gt;</td></tr>
 <tr class="memitem:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore" id="r_a449a757e1722ec84af9aed218e8ae254"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254">insertImpl</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
 <tr class="memdesc:a449a757e1722ec84af9aed218e8ae254 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for multiple objects.  <br /></td></tr>
@@ -292,7 +290,7 @@ template&lt;typename SchemaType, typename Source, typename Result, bool Projecti
 <tr class="memitem:a3ff773773243b59718df615485543699 pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699">updateImpl</a> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
 <tr class="memdesc:a3ff773773243b59718df615485543699 pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes an update query.  <br /></td></tr>
 <tr class="memitem:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore" id="r_a52e2d23d75aad96891051c9dbc08365c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
-<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c">removeImpl</a> (const query::detail::Predicate &amp;predicate) -&gt; std::size_t</td></tr>
+<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c">removeImpl</a> (const <a class="el" href="classorm_1_1query_1_1detail_1_1Predicate.html">query::detail::Predicate</a> &amp;predicate) -&gt; std::size_t</td></tr>
 <tr class="memdesc:a52e2d23d75aad96891051c9dbc08365c pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f pro_methods_classorm_1_1DatabaseCore" id="r_ad7cb162365dcbcfc96a39a6146d5958f"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType, typename T&gt; </td></tr>
 <tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f pro_methods_classorm_1_1DatabaseCore template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseCore.html#ad7cb162365dcbcfc96a39a6146d5958f">createTableImpl</a> () -&gt; void</td></tr>
@@ -320,7 +318,7 @@ class orm::Database&lt; SchemaType &gt;</div><p><a class="el" href="classorm_1_1
 <p>Backend selection and connection state remain runtime concerns. Every model operation is checked against SchemaType before the implementation is</p>
 <p>instantiated. </p>
 </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/orm-cxx/<a class="el" href="database_8hpp_source.html">database.hpp</a></li>
+<li>modules/<b>orm.database.cppm</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

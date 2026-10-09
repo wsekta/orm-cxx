@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structorm_1_1OneToManyDescriptor.html" title="Typed one&#45;to&#45;many mapping. The descriptor stores no runtime strings: every member and fallback name i..." alt="" coords="5,5,204,61"/>
+<area shape="rect" id="Node000000" href="$structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html" title=" " alt="" coords="5,5,209,61"/>
+<area shape="rect" id="Node000001" href="$structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html" title=" " alt="" coords="257,125,434,181"/>
+<area shape="poly" id="edge3_Node000000_Node000001" title=" " alt="" coords="199,65,210,71,301,122,299,127,207,76,196,70"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html" title=" " alt="" coords="5,85,209,141"/>
+<area shape="poly" id="edge4_Node000002_Node000001" title=" " alt="" coords="225,130,257,136,256,141,224,135"/>
+<area shape="rect" id="Node000003" href="$structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html" title=" " alt="" coords="5,165,209,221"/>
+<area shape="poly" id="edge5_Node000003_Node000001" title=" " alt="" coords="224,171,256,165,257,171,225,176"/>
+<area shape="rect" id="Node000004" href="$structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html" title=" " alt="" coords="5,244,209,315"/>
+<area shape="poly" id="edge6_Node000004_Node000001" title=" " alt="" coords="200,235,207,231,298,179,300,184,210,236,202,240"/>
 </map>

@@ -110,14 +110,12 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('structorm_1_1O
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; Struct Template Reference</div></div>
+  <div class="headertitle"><div class="title">orm::OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; Struct Template Reference<span class="mlabels"><span class="mlabel export">export</span></span><div class="ingroups">module <a class="el" href="module__orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Typed one-to-many mapping. The descriptor stores no runtime strings: every member and fallback name is encoded in its type.  
  <a href="#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="relations_8hpp_source.html">relations.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -126,7 +124,7 @@ template&lt;auto TargetMember&gt; <br />
 requires std::is_member_object_pointer_v&lt;decltype(TargetMember)&gt;</td></tr>
 <tr class="memitem:a91be3df13ebe2310637f304045bce436 template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><b>mappedBy</b> () const -&gt; <a class="el" href="structorm_1_1OneToManyDescriptor.html">OneToManyDescriptor</a>&lt; Member, TargetMember, detail::emptyRelationName &gt;</td></tr>
 <tr class="memitem:a99019283602d5ad800eed8f44164ac80" id="r_a99019283602d5ad800eed8f44164ac80"><td class="memTemplParams" colspan="2"><a id="a99019283602d5ad800eed8f44164ac80" name="a99019283602d5ad800eed8f44164ac80"></a>
-template&lt;reflection::FixedString TargetField&gt; </td></tr>
+template&lt;<a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> TargetField&gt; </td></tr>
 <tr class="memitem:a99019283602d5ad800eed8f44164ac80 template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><b>mappedBy</b> () const -&gt; <a class="el" href="structorm_1_1OneToManyDescriptor.html">OneToManyDescriptor</a>&lt; Member, nullptr, TargetField &gt;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-attribs" class="groupheader"><a id="pub-static-attribs" name="pub-static-attribs"></a>
@@ -139,11 +137,11 @@ static constexpr auto&#160;</td><td class="memItemRight"><b>mappedByMember</b> =
 static constexpr auto&#160;</td><td class="memItemRight"><b>mappedByName</b> = MappedByName</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;auto Member, auto MappedByMember = nullptr, <a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> MappedByName = detail::emptyRelationName&gt;<br />
 requires std::is_member_object_pointer_v&lt;decltype(Member)&gt;<br />
 struct orm::OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt;</div><p>Typed one-to-many mapping. The descriptor stores no runtime strings: every member and fallback name is encoded in its type. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/orm-cxx/<a class="el" href="relations_8hpp_source.html">relations.hpp</a></li>
+<li>modules/<b>orm.foundation.cppm</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

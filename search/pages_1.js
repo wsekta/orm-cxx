@@ -1,5 +1,31 @@
 var searchData=
 [
-  ['1_20expressions_0',['Replace 0.1 expressions',['../md_docs_2migration-typed-queries.html#autotoc_md63',1,'']]],
-  ['1_20keep_20models_20reflectable_1',['1. Keep models reflectable',['../md_docs_2migration-static-schema.html#autotoc_md56',1,'']]]
+  ['a_20glance_0',['Compatibility at a glance',['../md_docs_2backends.html#autotoc_md21',1,'']]],
+  ['a_20model_1',['Create a model',['../md_docs_2model.html#autotoc_md52',1,'']]],
+  ['acceptance_2',['acceptance',['../md_docs_2packaging.html#autotoc_md68',1,'Consume from ConanCenter after acceptance'],['../md_docs_2packaging.html#autotoc_md67',1,'Consume from vcpkg after acceptance']]],
+  ['adding_20new_20compiler_20versions_3',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
+  ['after_20acceptance_4',['after acceptance',['../md_docs_2packaging.html#autotoc_md68',1,'Consume from ConanCenter after acceptance'],['../md_docs_2packaging.html#autotoc_md67',1,'Consume from vcpkg after acceptance']]],
+  ['aggregate_20projection_20queries_5',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md91',1,'']]],
+  ['aggregate_20result_20queries_6',['Aggregate result queries',['../md_docs_2partial-result-queries.html#autotoc_md76',1,'']]],
+  ['an_20existing_20schema_7',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md107',1,'']]],
+  ['and_20ci_20integration_8',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
+  ['and_20consistency_9',['Transactions and consistency',['../md_docs_2relations.html#autotoc_md104',1,'']]],
+  ['and_20delete_20relation_20tables_10',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md42',1,'']]],
+  ['and_20dialect_20differences_11',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
+  ['and_20errors_12',['Capabilities and errors',['../md_docs_2database.html#autotoc_md39',1,'']]],
+  ['and_20explicit_20conversion_13',['Runtime shapes and explicit conversion',['../md_docs_2static-queries.html#autotoc_md110',1,'']]],
+  ['and_20having_14',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md90',1,'']]],
+  ['and_20installation_15',['CMake consumers and installation',['../md_docs_2modules.html#autotoc_md65',1,'']]],
+  ['and_20macro_20policy_16',['Build configuration and macro policy',['../index.html#autotoc_md50',1,'']]],
+  ['and_20offset_17',['Limit and offset',['../md_docs_2query.html#autotoc_md87',1,'']]],
+  ['and_20publishing_18',['Maintainer setup and publishing',['../md_docs_2packaging.html#autotoc_md69',1,'']]],
+  ['and_20relations_19',['Column names and relations',['../md_docs_2query.html#autotoc_md84',1,'']]],
+  ['and_20releases_20',['Package managers and releases',['../md_docs_2packaging.html',1,'']]],
+  ['and_20soci_21',['Binding and SOCI',['../md_docs_2backend-portability.html#autotoc_md14',1,'']]],
+  ['and_20unlink_22',['Link and unlink',['../md_docs_2relations.html#autotoc_md100',1,'']]],
+  ['and_20unlink_20relations_23',['Link and unlink relations',['../md_docs_2database.html#autotoc_md44',1,'']]],
+  ['and_20unsupported_20mappings_24',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md105',1,'']]],
+  ['and_20writes_25',['Projections and writes',['../md_docs_2static-queries.html#autotoc_md109',1,'']]],
+  ['at_20a_20glance_26',['Compatibility at a glance',['../md_docs_2backends.html#autotoc_md21',1,'']]],
+  ['auto_20increment_20primary_20key_27',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md59',1,'']]]
 ];

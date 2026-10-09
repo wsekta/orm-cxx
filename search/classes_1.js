@@ -1,10 +1,15 @@
 var searchData=
 [
-  ['ismanytomanydescriptor_0',['IsManyToManyDescriptor',['../structorm_1_1detail_1_1IsManyToManyDescriptor.html',1,'orm::detail']]],
-  ['ismanytomanydescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_1',['IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMfa910bcc35e07f6cd9a576dac2955950.html',1,'orm::detail']]],
-  ['isonetomanydescriptor_2',['IsOneToManyDescriptor',['../structorm_1_1detail_1_1IsOneToManyDescriptor.html',1,'orm::detail']]],
-  ['isonetomanydescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_3',['IsOneToManyDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsOneToManyDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]],
-  ['isrelationdescriptor_4',['IsRelationDescriptor',['../structorm_1_1detail_1_1IsRelationDescriptor.html',1,'orm::detail']]],
-  ['isrelationdescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_5',['IsRelationDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMemdc34019d2abea938502bc7c526da741a.html',1,'orm::detail']]],
-  ['isrelationdescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_6',['IsRelationDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]]
+  ['backendcapabilities_0',['BackendCapabilities',['../structorm_1_1db_1_1BackendCapabilities.html',1,'orm::db']]],
+  ['backendprovider_1',['BackendProvider',['../classorm_1_1db_1_1BackendProvider.html',1,'orm::db']]],
+  ['backendruntime_2',['BackendRuntime',['../classorm_1_1db_1_1BackendRuntime.html',1,'orm::db']]],
+  ['backendruntimelimits_3',['BackendRuntimeLimits',['../structorm_1_1db_1_1BackendRuntimeLimits.html',1,'orm::db']]],
+  ['backendvaluelimits_4',['BackendValueLimits',['../structorm_1_1db_1_1BackendValueLimits.html',1,'orm::db']]],
+  ['betweenexpression_5',['BetweenExpression',['../structorm_1_1query_1_1detail_1_1BetweenExpression.html',1,'orm::query::detail']]],
+  ['betweenmeta_6',['BetweenMeta',['../structorm_1_1query_1_1detail_1_1BetweenMeta.html',1,'orm::query::detail']]],
+  ['bindinginfo_7',['BindingInfo',['../structorm_1_1db_1_1binding_1_1BindingInfo.html',1,'orm::db::binding']]],
+  ['bindingpayload_8',['BindingPayload',['../structorm_1_1db_1_1binding_1_1BindingPayload.html',1,'orm::db::binding']]],
+  ['bindingpayload_3c_20t_2c_20schematype_2c_20joinedvalues_20_3e_9',['BindingPayload&lt; T, SchemaType, JoinedValues &gt;',['../structorm_1_1db_1_1binding_1_1BindingPayload.html',1,'orm::db::binding']]],
+  ['bindingtraits_10',['BindingTraits',['../structorm_1_1reflection_1_1detail_1_1BindingTraits.html',1,'orm::reflection::detail']]],
+  ['boundvalue_11',['BoundValue',['../structorm_1_1db_1_1BoundValue.html',1,'orm::db']]]
 ];

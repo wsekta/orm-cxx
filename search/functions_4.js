@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['getbackendcapabilities_0',['getBackendCapabilities',['../classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3',1,'orm::DatabaseCore']]],
-  ['getbackendtype_1',['getBackendType',['../classorm_1_1DatabaseCore.html#acebe4fa46933e2610fe83ea2a7b37a45',1,'orm::DatabaseCore']]],
-  ['groupby_2',['groupBy',['../classorm_1_1Query.html#a32a55bb33ff9e45f02be71033ad095ca',1,'orm::Query']]]
+  ['fromstorage_0',['fromStorage',['../classorm_1_1query_1_1QueryValue.html#adcf879e2f13067b007413452121c73c3',1,'orm::query::QueryValue']]]
 ];

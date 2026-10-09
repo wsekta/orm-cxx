@@ -1,15 +1,7 @@
 var searchData=
 [
-  ['database_0',['Database',['../md_docs_2database.html',1,'']]],
-  ['database_20boundary_1',['Retain runtime validation at the database boundary',['../md_docs_2migration-typed-queries.html#autotoc_md67',1,'']]],
-  ['define_20the_20closed_20schema_2',['4. Define the closed schema',['../md_docs_2migration-static-schema.html#autotoc_md59',1,'']]],
-  ['definition_20of_20done_3',['Definition of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['delete_20relation_20tables_4',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md42',1,'']]],
-  ['delete_20table_5',['Delete table',['../md_docs_2database.html#autotoc_md41',1,'']]],
-  ['dialect_6',['Capabilities versus dialect',['../md_docs_2backend-extension.html#autotoc_md3',1,'']]],
-  ['dialect_20differences_7',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
-  ['differences_8',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
-  ['distinct_9',['Distinct',['../md_docs_2query.html#autotoc_md100',1,'']]],
-  ['done_10',['Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['dto_20rules_11',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md91',1,'']]]
+  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md59',1,'']]],
+  ['insert_20objects_1',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
+  ['installation_2',['installation',['../md_docs_2modules.html#autotoc_md65',1,'CMake consumers and installation'],['../md_docs_2packaging.html#autotoc_md72',1,'Native CMake installation']]],
+  ['integration_3',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]]
 ];

@@ -1,19 +1,14 @@
 var searchData=
 [
-  ['in_200_202_0',['Migrating to typed queries in 0.2',['../md_docs_2migration-typed-queries.html',1,'']]],
-  ['in_20c_1',['Read the configuration in C++',['../md_docs_2migration-macro-free.html#autotoc_md50',1,'']]],
-  ['include_2',['include',['../classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c',1,'orm::Query']]],
-  ['increment_20primary_20key_3',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md76',1,'']]],
-  ['insert_20objects_4',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
-  ['insertimpl_5',['insertImpl',['../classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254',1,'orm::DatabaseCore::insertImpl(const std::vector&lt; T &gt; &amp;objects) -&gt; void'],['../classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944',1,'orm::DatabaseCore::insertImpl(T object) -&gt; void']]],
-  ['installation_6',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md86',1,'']]],
-  ['integration_7',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]],
-  ['isconnected_8',['isConnected',['../classorm_1_1DatabaseCore.html#a33f02aa54e939bacab83fcf6146d1cfb',1,'orm::DatabaseCore']]],
-  ['ismanytomanydescriptor_9',['IsManyToManyDescriptor',['../structorm_1_1detail_1_1IsManyToManyDescriptor.html',1,'orm::detail']]],
-  ['ismanytomanydescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_10',['IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsManyToManyDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMfa910bcc35e07f6cd9a576dac2955950.html',1,'orm::detail']]],
-  ['isonetomanydescriptor_11',['IsOneToManyDescriptor',['../structorm_1_1detail_1_1IsOneToManyDescriptor.html',1,'orm::detail']]],
-  ['isonetomanydescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_12',['IsOneToManyDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsOneToManyDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]],
-  ['isrelationdescriptor_13',['IsRelationDescriptor',['../structorm_1_1detail_1_1IsRelationDescriptor.html',1,'orm::detail']]],
-  ['isrelationdescriptor_3c_20manytomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_2c_20throughtable_2c_20ownercolumnnames_2c_20targetcolumnnames_20_3e_20_3e_14',['IsRelationDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01ManyToManyDescriptor_3_01Member_00_01MappedByMemdc34019d2abea938502bc7c526da741a.html',1,'orm::detail']]],
-  ['isrelationdescriptor_3c_20onetomanydescriptor_3c_20member_2c_20mappedbymember_2c_20mappedbyname_20_3e_20_3e_15',['IsRelationDescriptor&lt; OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt; &gt;',['../structorm_1_1detail_1_1IsRelationDescriptor_3_01OneToManyDescriptor_3_01Member_00_01MappedByMember_00_01MappedByName_01_4_01_4.html',1,'orm::detail']]]
+  ['name_0',['Table name',['../md_docs_2model.html#autotoc_md56',1,'']]],
+  ['names_1',['names',['../md_docs_2model.html#autotoc_md57',1,'Column names'],['../md_docs_2relations.html#autotoc_md98',1,'Junction column names']]],
+  ['names_20and_20relations_2',['Column names and relations',['../md_docs_2query.html#autotoc_md84',1,'']]],
+  ['namesignaturesentinel_3',['NameSignatureSentinel',['../structorm_1_1reflection_1_1detail_1_1NameSignatureSentinel.html',1,'orm::reflection::detail']]],
+  ['native_20cmake_20installation_4',['Native CMake installation',['../md_docs_2packaging.html#autotoc_md72',1,'']]],
+  ['new_20compiler_20versions_5',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
+  ['noclause_6',['NoClause',['../structorm_1_1query_1_1detail_1_1NoClause.html',1,'orm::query::detail']]],
+  ['notexpression_7',['NotExpression',['../structorm_1_1query_1_1detail_1_1NotExpression.html',1,'orm::query::detail']]],
+  ['notmeta_8',['NotMeta',['../structorm_1_1query_1_1detail_1_1NotMeta.html',1,'orm::query::detail']]],
+  ['nullexpression_9',['NullExpression',['../structorm_1_1query_1_1detail_1_1NullExpression.html',1,'orm::query::detail']]],
+  ['nullmeta_10',['NullMeta',['../structorm_1_1query_1_1detail_1_1NullMeta.html',1,'orm::query::detail']]]
 ];

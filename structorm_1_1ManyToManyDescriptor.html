@@ -110,14 +110,12 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('structorm_1_1M
 </div>
 
 <div class="header">
-  <div class="headertitle"><div class="title">orm::ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; Struct Template Reference</div></div>
+  <div class="headertitle"><div class="title">orm::ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; Struct Template Reference<span class="mlabels"><span class="mlabel export">export</span></span><div class="ingroups">module <a class="el" href="module__orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
 
 <p>Typed many-to-many mapping and its compile-time builder.  
  <a href="#details">More...</a></p>
-
-<p><code>#include &lt;<a class="el" href="relations_8hpp_source.html">relations.hpp</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -129,14 +127,14 @@ using&#160;</td><td class="memItemRight"><b>TargetColumns</b> = TargetColumnName
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a8c2882e51e79b978a3ddb63cca70a66f" id="r_a8c2882e51e79b978a3ddb63cca70a66f"><td class="memTemplParams" colspan="2"><a id="a8c2882e51e79b978a3ddb63cca70a66f" name="a8c2882e51e79b978a3ddb63cca70a66f"></a>
-template&lt;reflection::FixedString TableName&gt; </td></tr>
+template&lt;<a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> TableName&gt; </td></tr>
 <tr class="memitem:a8c2882e51e79b978a3ddb63cca70a66f template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><b>through</b> () const -&gt; <a class="el" href="structorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a>&lt; Member, MappedByMember, MappedByName, TableName, OwnerColumnNames, TargetColumnNames &gt;</td></tr>
 <tr class="memitem:a01997b434c87f0f39820d03e84604a56" id="r_a01997b434c87f0f39820d03e84604a56"><td class="memTemplParams" colspan="2"><a id="a01997b434c87f0f39820d03e84604a56" name="a01997b434c87f0f39820d03e84604a56"></a>
 template&lt;auto TargetMember&gt; <br />
 requires std::is_member_object_pointer_v&lt;decltype(TargetMember)&gt;</td></tr>
 <tr class="memitem:a01997b434c87f0f39820d03e84604a56 template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><b>mappedBy</b> () const -&gt; <a class="el" href="structorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a>&lt; Member, TargetMember, detail::emptyRelationName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt;</td></tr>
 <tr class="memitem:a6be3f05ca56bf1e0218b1d7156fde45d" id="r_a6be3f05ca56bf1e0218b1d7156fde45d"><td class="memTemplParams" colspan="2"><a id="a6be3f05ca56bf1e0218b1d7156fde45d" name="a6be3f05ca56bf1e0218b1d7156fde45d"></a>
-template&lt;reflection::FixedString TargetField&gt; </td></tr>
+template&lt;<a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> TargetField&gt; </td></tr>
 <tr class="memitem:a6be3f05ca56bf1e0218b1d7156fde45d template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><b>mappedBy</b> () const -&gt; <a class="el" href="structorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a>&lt; Member, nullptr, TargetField, ThroughTable, OwnerColumnNames, TargetColumnNames &gt;</td></tr>
 <tr class="memitem:a67fc9b3fef79e59b0aa8d70da33dbdd2" id="r_a67fc9b3fef79e59b0aa8d70da33dbdd2"><td class="memTemplParams" colspan="2"><a id="a67fc9b3fef79e59b0aa8d70da33dbdd2" name="a67fc9b3fef79e59b0aa8d70da33dbdd2"></a>
 template&lt;reflection::FixedString... Names&gt; </td></tr>
@@ -157,11 +155,11 @@ static constexpr auto&#160;</td><td class="memItemRight"><b>mappedByName</b> = M
 static constexpr auto&#160;</td><td class="memItemRight"><b>throughTable</b> = ThroughTable</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName, reflection::FixedString ThroughTable = detail::emptyRelationName, typename OwnerColumnNames = detail::RelationColumnNames&lt;&gt;, typename TargetColumnNames = detail::RelationColumnNames&lt;&gt;&gt;<br />
+<div class="textblock"><div class="compoundTemplParams">template&lt;auto Member, auto MappedByMember = nullptr, <a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> MappedByName = detail::emptyRelationName, <a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> ThroughTable = detail::emptyRelationName, typename OwnerColumnNames = detail::RelationColumnNames&lt;&gt;, typename TargetColumnNames = detail::RelationColumnNames&lt;&gt;&gt;<br />
 requires std::is_member_object_pointer_v&lt;decltype(Member)&gt;<br />
 struct orm::ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt;</div><p>Typed many-to-many mapping and its compile-time builder. </p>
 </div><hr/>The documentation for this struct was generated from the following file:<ul>
-<li>include/orm-cxx/<a class="el" href="relations_8hpp_source.html">relations.hpp</a></li>
+<li>modules/<b>orm.foundation.cppm</b></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

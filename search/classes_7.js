@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['update_0',['Update',['../classorm_1_1Update.html',1,'orm']]]
+  ['junctionstorage_0',['JunctionStorage',['../structorm_1_1model_1_1detail_1_1JunctionStorage.html',1,'orm::model::detail']]],
+  ['junctionview_1',['JunctionView',['../structorm_1_1model_1_1JunctionView.html',1,'orm::model']]]
 ];

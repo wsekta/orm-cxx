@@ -121,7 +121,7 @@ CI Status</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Workflow  </th><th class="markdownTableHeadNone">Status  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">GCC (13, 14)  </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main" alt="GCC" style="pointer-events: none;" class="inline"/></a>  </td></tr>
+<td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main" alt="GCC" style="pointer-events: none;" class="inline"/></a>  </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Clang (18–20)  </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main" alt="Clang" style="pointer-events: none;" class="inline"/></a>  </td></tr>
 <tr class="markdownTableRowOdd">
@@ -135,17 +135,17 @@ CI Status</h1>
 </table>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md29"></a>
 Tested Compiler Versions</h1>
-<p>All Linux CI runs on <b>Ubuntu 24.04 (Noble)</b>. GCC and Clang versions are installed from the default Ubuntu repositories.</p>
+<p>Linux CI uses <b>Ubuntu 24.04 (Noble)</b> runners. GCC jobs run inside the official <span class="tt">gcc:15-trixie</span> image; Clang jobs install compiler packages from the Ubuntu repositories. Linux package-manager jobs use Clang 18.</p>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md30"></a>
 GCC</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Version  </th><th class="markdownTableHeadNone">Package  </th><th class="markdownTableHeadNone">Workflow  </th><th class="markdownTableHeadNone">Status  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">GCC 13  </td><td class="markdownTableBodyNone"><span class="tt">gcc-13</span> / <span class="tt">g++-13</span>  </td><td class="markdownTableBodyNone"><span class="tt">linux-gxx-build.yml</span>  </td><td class="markdownTableBodyNone">Tested  </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">GCC 14  </td><td class="markdownTableBodyNone"><span class="tt">gcc-14</span> / <span class="tt">g++-14</span>  </td><td class="markdownTableBodyNone"><span class="tt">linux-gxx-build.yml</span>  </td><td class="markdownTableBodyNone">Tested  </td></tr>
+<td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone"><span class="tt">gcc-15</span> / <span class="tt">g++-15</span>  </td><td class="markdownTableBodyNone"><span class="tt">linux-gxx-build.yml</span>  </td><td class="markdownTableBodyNone">Tested  </td></tr>
 </table>
+<p>GCC 15.3.0 and 16.2.0 were validated with the full module build. GCC 14 exceeds its imported source-location limit. GCC 15 and 16 require <span class="tt">-fno-module-lazy</span> on both module producers and importers to avoid <span class="tt">Bad file data</span> from the lazy reader; both CMake targets propagate this option, including installed interfaces rebuilt by consumers.</p>
+<p>The GCC workflow also installs ORM and SOCI into an isolated prefix and builds the <span class="tt">find_package</span> consumer with warnings treated as errors. A separate installed reflection consumer disables SOCI discovery. Both checks rebuild their module interfaces using the targets' public options and then run the resulting programs.</p>
 <h2 class="doxsection"><a class="anchor" id="autotoc_md31"></a>
 Clang</h2>
 <table class="markdownTable">
@@ -167,7 +167,7 @@ MSVC</h2>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Version  </th><th class="markdownTableHeadNone">Runner  </th><th class="markdownTableHeadNone">Workflow  </th><th class="markdownTableHeadNone">Status  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MSVC latest  </td><td class="markdownTableBodyNone"><span class="tt">windows-2022</span>  </td><td class="markdownTableBodyNone"><span class="tt">windows-msvc-build.yml</span>  </td><td class="markdownTableBodyNone">Tested  </td></tr>
+<td class="markdownTableBodyNone">MSVC latest  </td><td class="markdownTableBodyNone"><span class="tt">windows-2025-vs2026</span>  </td><td class="markdownTableBodyNone"><span class="tt">windows-msvc-build.yml</span>  </td><td class="markdownTableBodyNone">Tested  </td></tr>
 </table>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md33"></a>
 PostgreSQL Compiler Matrix</h1>
@@ -176,14 +176,12 @@ PostgreSQL Compiler Matrix</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Compiler  </th><th class="markdownTableHeadNone">PostgreSQL  </th><th class="markdownTableHeadNone">Coverage  </th><th class="markdownTableHeadNone">Workflow  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">GCC 13  </td><td class="markdownTableBodyNone">15  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
+<td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone">15  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">GCC 14  </td><td class="markdownTableBodyNone">15  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
-<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Clang 18  </td><td class="markdownTableBodyNone">18  </td><td class="markdownTableBodyNone">Yes  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Clang 19  </td><td class="markdownTableBodyNone">18  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Clang 19  </td><td class="markdownTableBodyNone">18  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Clang 20  </td><td class="markdownTableBodyNone">18  </td><td class="markdownTableBodyNone">No  </td><td class="markdownTableBodyNone"><span class="tt">postgresql-build.yml</span>  </td></tr>
 </table>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md34"></a>
@@ -193,20 +191,21 @@ Coverage Policy</h1>
 <li><b>SQLite coverage:</b> <span class="tt">linux-clang-build.yml</span> — Clang 18 with <span class="tt">linux-clang-coverage</span> preset</li>
 <li><b>PostgreSQL coverage:</b> <span class="tt">postgresql-build.yml</span> — Clang 18 with <span class="tt">linux-clang-postgresql-coverage</span> preset</li>
 </ul>
+<p>The LLVM exporter removes compiler-synthesized implicit-member maps only when every zero-count region exactly covers a class name on a plain <span class="tt">class</span> or <span class="tt">struct</span> declaration line in a project module, and LLVM profdata has no instrumentation record for that function. It verifies that all profile records were read. Explicit method bodies and instrumented functions with zero hits remain coverage failures. The exporter reports how many maps and declaration lines it normalized. Python is required only for coverage builds.</p>
 <p>Coverage flags uploaded to Codecov:</p><ul>
 <li><span class="tt">linux-clang-coverage</span> — SQLite coverage</li>
 <li><span class="tt">linux-clang-postgresql-coverage</span> — PostgreSQL coverage</li>
 </ul>
 <h1 class="doxsection"><a class="anchor" id="autotoc_md35"></a>
 CMake Presets</h1>
-<p>Each compiler version has dedicated CMake presets. The existing presets (<span class="tt">linux-gcc-debug</span>, <span class="tt">linux-clang-debug</span>, etc.) remain for backward compatibility with local development workflows.</p>
+<p>Each compiler version has dedicated CMake presets. All library and consumer builds use native C++20 modules through Ninja 1.11+ and CMake 3.31+. CI installs CMake 3.31.6 and Ninja 1.13.0 explicitly. The default GCC presets select GCC 15; Clang 18 remains the coverage compiler.</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Preset  </th><th class="markdownTableHeadNone">Compiler  </th><th class="markdownTableHeadNone">Purpose  </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">linux-gcc-debug</span>  </td><td class="markdownTableBodyNone">GCC 13  </td><td class="markdownTableBodyNone">Local development (default)  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">linux-gcc-debug</span>  </td><td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone">Local development (default)  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><span class="tt">linux-gcc-14-debug</span>  </td><td class="markdownTableBodyNone">GCC 14  </td><td class="markdownTableBodyNone">CI matrix  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">linux-gcc-15-debug</span>  </td><td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone">CI matrix  </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><span class="tt">linux-clang-debug</span>  </td><td class="markdownTableBodyNone">Clang 18  </td><td class="markdownTableBodyNone">Local development (default)  </td></tr>
 <tr class="markdownTableRowEven">
@@ -220,9 +219,9 @@ CMake Presets</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><span class="tt">linux-clang-20-debug</span>  </td><td class="markdownTableBodyNone">Clang 20  </td><td class="markdownTableBodyNone">CI matrix  </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><span class="tt">linux-gcc-postgresql</span>  </td><td class="markdownTableBodyNone">GCC 13  </td><td class="markdownTableBodyNone">PostgreSQL (default)  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">linux-gcc-postgresql</span>  </td><td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone">PostgreSQL (default)  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><span class="tt">linux-gcc-14-postgresql</span>  </td><td class="markdownTableBodyNone">GCC 14  </td><td class="markdownTableBodyNone">PostgreSQL CI matrix  </td></tr>
+<td class="markdownTableBodyNone"><span class="tt">linux-gcc-15-postgresql</span>  </td><td class="markdownTableBodyNone">GCC 15  </td><td class="markdownTableBodyNone">PostgreSQL CI matrix  </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><span class="tt">linux-clang-postgresql-coverage</span>  </td><td class="markdownTableBodyNone">Clang 18  </td><td class="markdownTableBodyNone">PostgreSQL coverage  </td></tr>
 <tr class="markdownTableRowEven">
@@ -238,7 +237,8 @@ CMake Presets</h1>
 Adding New Compiler Versions</h1>
 <p>To add a new compiler version to CI:</p>
 <ol type="1">
-<li>Verify the compiler's consteval/constexpr support matches Clang 18+</li>
+<li>Verify module scanning, module ownership, and consteval/constexpr support</li>
+<li>Build and install both modules, then run a relocated installed consumer</li>
 <li>Add new CMake presets in <span class="tt">CMakePresets.json</span> (configure, build, test, workflow)</li>
 <li>Add a new job in the relevant workflow in <span class="tt">.github/workflows/</span></li>
 <li>Update this document with the new version</li>

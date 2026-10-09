@@ -1,0 +1,5 @@
+<map id="orm::model::ModelView" name="orm::model::ModelView">
+<area shape="rect" id="Node000001" title="Trivially&#45;copyable handle to one model in immutable Schema storage." alt="" coords="12,102,166,128"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1SchemaView.html" title="Immutable view over a statically materialized schema." alt="" coords="5,5,173,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,46,92,101,86,101,86,46"/>
+</map>
