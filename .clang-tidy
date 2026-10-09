@@ -27,7 +27,7 @@ Checks: >-
   portability-simd-intrinsics,
   portability-std-allocator-const
 WarningsAsErrors: '*'
-HeaderFilterRegex: '.*[/\\]include[/\\]orm-cxx[/\\].*'
+HeaderFilterRegex: '.*[/\\]modules[/\\].*'
 SystemHeaders: false
 FormatStyle: file
 ...

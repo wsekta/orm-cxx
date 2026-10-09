@@ -3,7 +3,7 @@
 ## reflect-cpp
 
 The aggregate arity detection, generated structured-binding dispatch, and
-compiler-signature field-name extraction in `include/orm-cxx/reflection/` are
+compiler-signature field-name extraction in `modules/orm.reflection*.cppm` are
 adapted from reflect-cpp commit
 `5c81e40f097e0c91fddded584ba8f2d9bf7a49cd`:
 

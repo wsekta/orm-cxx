@@ -11,6 +11,9 @@ contracts, then expand expressiveness and database support deliberately.
 - A dedicated local C++20 aggregate-reflection layer with structural
   `FixedString` names, generated field access for aggregates with up to 128
   fields, and no runtime reflection dependency.
+- Named C++20 modules `orm` and `orm.reflection` as the sole public interface,
+  with source module file sets for installed consumers and private implementation
+  partitions.
 - Closed `orm::Schema<Models...>` definitions, typed member-pointer mappings,
   and compile-time validation for model metadata and relation graphs.
 - A documented portable model contract for supported scalar fields, nullable
@@ -69,7 +72,7 @@ contracts, then expand expressiveness and database support deliberately.
   workflow.
 - CI coverage for GCC, Clang, MSVC, Codecov, formatting, and static analysis.
 - GitHub Actions CI matrix strategy testing all supported compiler versions
-  (GCC 13, 14; Clang 18, 19, 20; MSVC latest) with per-version job isolation
+  (GCC 14; Clang 18, 19, 20; MSVC 19.50+) with per-version job isolation
   and explicit coverage on Clang 18.
 - A source-level backend provider contract that centralizes backend selection,
   capabilities, runtime limits, session hooks, value binding, SQL dialect

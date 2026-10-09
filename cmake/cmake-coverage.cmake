@@ -505,7 +505,7 @@ function(target_code_coverage TARGET_NAME)
             add_custom_command(
                     TARGET ccov-${target_code_coverage_COVERAGE_TARGET_NAME}
                     POST_BUILD
-                    COMMAND ;
+                    COMMAND ${CMAKE_COMMAND} -E true
                     COMMENT
                     "Open ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/${target_code_coverage_COVERAGE_TARGET_NAME}/index.html in your browser to view the coverage report."
             )
@@ -742,7 +742,7 @@ function(add_code_coverage_all_targets)
         add_custom_command(
                 TARGET orm-cxx-ccov-all
                 POST_BUILD
-                COMMAND ;
+                COMMAND ${CMAKE_COMMAND} -E true
                 COMMENT
                 "Open ${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged/index.html in your browser to view the coverage report."
         )
