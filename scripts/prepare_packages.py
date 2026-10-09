@@ -32,7 +32,8 @@ def create_archive(root, archive, version):
     # and database client libraries. Normalize metadata and text line endings
     # so checked-out CRLF files produce the same release bytes as an LF checkout.
     entries = [root / name for name in (
-        "CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md"
+        "CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md",
+        "scripts/export_llvm_coverage.py"
     )]
     for directory in ("cmake", "include", "modules", "src"):
         entries.extend(p for p in (root / directory).rglob("*") if p.is_file())

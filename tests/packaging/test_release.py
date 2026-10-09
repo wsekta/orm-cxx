@@ -40,6 +40,7 @@ class PackageReleaseTests(unittest.TestCase):
             names = archive.getnames()
         self.assertIn("orm-cxx-0.1.0/modules/orm.cppm", names)
         self.assertIn("orm-cxx-0.1.0/modules/orm.reflection.cppm", names)
+        self.assertIn("orm-cxx-0.1.0/scripts/export_llvm_coverage.py", names)
         self.assertIn("orm-cxx-0.1.0/VERSION.txt", names)
         self.assertFalse(any("/externals/" in name or "/.git/" in name for name in names))
         self.assertFalse(any("/include/orm-cxx/" in name for name in names))
@@ -47,10 +48,11 @@ class PackageReleaseTests(unittest.TestCase):
 
     def test_sources_normalize_checkout_line_endings(self):
         source = self.directory / "source"
-        for directory in ("cmake", "include", "src", "modules"):
+        for directory in ("cmake", "include", "src", "modules", "scripts"):
             (source / directory).mkdir(parents=True)
         for name in ("CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md"):
             (source / name).write_text("line one\nline two\n", encoding="utf-8", newline="\n")
+        (source / "scripts/export_llvm_coverage.py").write_text("# coverage exporter\n", encoding="utf-8")
         candidate = source / "src" / "sample.cpp"
         candidate.write_bytes(b"line one\r\nline two\r\n")
         crlf_archive = self.directory / "crlf.tar.gz"

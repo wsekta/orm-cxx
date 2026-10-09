@@ -67,6 +67,9 @@ add_library(orm-cxx-reflection STATIC)
 add_library(orm-cxx::reflection ALIAS orm-cxx-reflection)
 set_target_properties(orm-cxx-reflection PROPERTIES EXPORT_NAME reflection CXX_SCAN_FOR_MODULES ON)
 target_compile_features(orm-cxx-reflection PUBLIC cxx_std_20)
+# GCC's lazy module reader corrupts this partition graph. Apply the option to producers, importers, and rebuilt
+# installed interfaces through the public compile options.
+target_compile_options(orm-cxx-reflection PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
 target_sources(
     orm-cxx-reflection
     PUBLIC FILE_SET
@@ -88,6 +91,7 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
     set_target_properties(orm-cxx orm-cxx-reflection PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
+target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
 target_sources(
     orm-cxx
     PUBLIC FILE_SET

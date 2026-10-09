@@ -118,6 +118,41 @@ concept CanPointRvalue = requires(T&& value) { fieldPointers(std::move(value)); 
 template <typename T>
 concept CanViewTemporary = requires { T{}.view(); };
 
+template <FixedString Spelling>
+consteval auto normalizedSpelling()
+{
+    constexpr auto size = detail::normalizedTypeNameSize(Spelling.view());
+    return detail::normalizeTypeName<size>(Spelling.view());
+}
+
+static_assert(normalizedSpelling<"models::Record@orm">() == "models::Record"sv);
+static_assert(normalizedSpelling<"models::Record@orm.reflection">() == "models::Record"sv);
+static_assert(normalizedSpelling<"models::Record@orm:test_support">() == "models::Record"sv);
+static_assert(normalizedSpelling<"models::Record@orm.tests:support.models">() == "models::Record"sv);
+static_assert(normalizedSpelling<"models::Outer@orm:test_support::Inner">() == "models::Outer::Inner"sv);
+static_assert(normalizedSpelling<"Wrapper<models::Record@orm:test_support, Other@another>*">() ==
+              "Wrapper<models::Record, Other>*"sv);
+static_assert(normalizedSpelling<"std::__cxx11::basic_string<char, models::Traits@orm> const&">() ==
+              "std::basic_string<char, models::Traits> const&"sv);
+static_assert(normalizedSpelling<"user::__cxx11::Record@orm">() == "user::__cxx11::Record"sv);
+static_assert(normalizedSpelling<"Record@_orm2:test_3">() == "Record"sv);
+static_assert(normalizedSpelling<"Record@2orm">() == "Record@2orm"sv);
+static_assert(normalizedSpelling<"Record@orm.">() == "Record@orm."sv);
+static_assert(normalizedSpelling<"Record@orm:">() == "Record@orm:"sv);
+static_assert(normalizedSpelling<"Record@orm:part:another">() == "Record@orm:part:another"sv);
+static_assert(normalizedSpelling<"Literal<\"record@orm:test_support\", '@'>">() ==
+              "Literal<\"record@orm:test_support\", '@'>"sv);
+static_assert(normalizedSpelling<"Literal<\"class std::__cxx11::name@orm\">">() ==
+              "Literal<\"class std::__cxx11::name@orm\">"sv);
+static_assert(normalizedSpelling<"Literal<\"escaped\\\"quote@orm\", Record@orm>">() ==
+              "Literal<\"escaped\\\"quote@orm\", Record>"sv);
+static_assert(normalizedSpelling<"`anonymous namespace'::Wrapper<struct Record@orm>">() ==
+              "`anonymous namespace'::Wrapper<Record>"sv);
+static_assert(normalizedSpelling<"`unnamed type(1)'::Wrapper<class Record@orm>">() ==
+              "`unnamed type(1)'::Wrapper<Record>"sv);
+static_assert(normalizedSpelling<"Literal<L'@', u'@', U'@', u8'@', Record@orm>">() ==
+              "Literal<L'@', u'@', U'@', u8'@', Record>"sv);
+
 static_assert(CompileTimeName<"entity">::value == "entity"sv);
 static_assert(FixedString{"same"} == FixedString{"same"});
 static_assert(FixedString{"short"} != FixedString{"longer"});
@@ -126,6 +161,8 @@ static_assert(typeName<int>() == "int"sv);
 static_assert(getTypeName<int>() == "int"sv);
 static_assert(getTypeName<TypeWrapper<Record>>().find("class ") == std::string_view::npos);
 static_assert(getTypeName<TypeWrapper<Record>>().find("struct ") == std::string_view::npos);
+static_assert(getTypeName<Record>().find('@') == std::string_view::npos);
+static_assert(getTypeName<TypeWrapper<Record>>().find('@') == std::string_view::npos);
 static_assert(memberName<&Record::id>() == "id"sv);
 static_assert(memberName<&Record::reset>() == "reset"sv);
 inline constexpr auto redName = valueName<Colour::red>();

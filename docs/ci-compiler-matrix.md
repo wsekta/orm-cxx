@@ -62,6 +62,14 @@ avoid redundant coverage reports and keep Codecov integration simple:
 - **SQLite coverage:** `linux-clang-build.yml` — Clang 18 with `linux-clang-coverage` preset
 - **PostgreSQL coverage:** `postgresql-build.yml` — Clang 18 with `linux-clang-postgresql-coverage` preset
 
+The LLVM exporter removes compiler-synthesized implicit-member maps only when
+every zero-count region exactly covers a class name on a plain `class` or
+`struct` declaration line in a project module, and LLVM profdata has no
+instrumentation record for that function. It verifies that all profile records
+were read. Explicit method bodies and instrumented functions with zero hits
+remain coverage failures. The exporter reports how many maps and declaration
+lines it normalized. Python is required only for coverage builds.
+
 Coverage flags uploaded to Codecov:
 - `linux-clang-coverage` — SQLite coverage
 - `linux-clang-postgresql-coverage` — PostgreSQL coverage

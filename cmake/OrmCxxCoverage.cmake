@@ -24,11 +24,17 @@ function(orm_cxx_enable_coverage library_target test_target)
     target_code_coverage("${test_target}" ALL)
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang")
+        find_package(
+            Python3
+            COMPONENTS Interpreter
+            REQUIRED
+        )
         add_custom_target(
             orm-cxx-coverage
             COMMAND
                 "${CMAKE_COMMAND}" "-DLLVM_COV_EXECUTABLE=${LLVM_COV_PATH}"
-                "-DTARGET_BINARY=$<TARGET_FILE:${test_target}>"
+                "-DLLVM_PROFDATA_EXECUTABLE=${LLVM_PROFDATA_PATH}" "-DPYTHON_EXECUTABLE=${Python3_EXECUTABLE}"
+                "-DSOURCE_ROOT=${PROJECT_SOURCE_DIR}" "-DTARGET_BINARY=$<TARGET_FILE:${test_target}>"
                 "-DPROFILE_DATA=${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.profdata"
                 "-DOUTPUT_FILE=${CMAKE_BINARY_DIR}/coverage.lcov" -P
                 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/OrmCxxExportLlvmCoverage.cmake"
