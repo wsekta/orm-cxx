@@ -1,6 +1,25 @@
 # syntax=docker/dockerfile:1
 
-FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+FROM gcc:15-trixie AS gcc-dev
+
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends \
+        ca-certificates libsqlite3-dev libpq-dev postgresql-client \
+        python3 python3-venv pkg-config sqlite3 \
+    && python3 -m venv /opt/orm-cxx-tools \
+    && /opt/orm-cxx-tools/bin/pip install --no-cache-dir cmake==3.31.6 ninja==1.13.0 \
+    && ln -sf /usr/local/bin/gcc /usr/local/bin/gcc-15 \
+    && ln -sf /usr/local/bin/g++ /usr/local/bin/g++-15 \
+    && useradd --create-home --uid 1000 vscode \
+    && git config --system --add safe.directory /workspaces/orm-cxx \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/opt/orm-cxx-tools/bin:${PATH}"
+WORKDIR /workspaces/orm-cxx
+USER vscode
+CMD ["sleep", "infinity"]
+
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04 AS dev
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -34,8 +53,6 @@ RUN apt-get update \
     && ln -sf /usr/bin/clang-tidy-18 /usr/local/bin/clang-tidy \
     && ln -sf /usr/bin/llvm-cov-18 /usr/local/bin/llvm-cov \
     && ln -sf /usr/bin/llvm-profdata-18 /usr/local/bin/llvm-profdata \
-    && ln -sf /usr/bin/gcc-14 /usr/local/bin/gcc \
-    && ln -sf /usr/bin/g++-14 /usr/local/bin/g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY tools/requirements-dev.txt /tmp/orm-cxx-requirements-dev.txt
@@ -47,6 +64,7 @@ RUN python3 -m venv /opt/orm-cxx-tools \
     && git config --system --add safe.directory /workspaces/orm-cxx
 
 ENV PATH="/opt/orm-cxx-tools/bin:${PATH}"
+ENV CC=clang CXX=clang++
 
 WORKDIR /workspaces/orm-cxx
 USER vscode

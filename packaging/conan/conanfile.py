@@ -55,7 +55,7 @@ class OrmCxxConan(ConanFile):
 
     def validate(self):
         check_min_cppstd(self, 20)
-        minimum_compiler = {"gcc": "14", "clang": "18", "msvc": "195"}.get(str(self.settings.compiler))
+        minimum_compiler = {"gcc": "15", "clang": "18", "msvc": "195"}.get(str(self.settings.compiler))
         if minimum_compiler and Version(self.settings.compiler.version) < minimum_compiler:
             raise ConanInvalidConfiguration(
                 f"orm-cxx requires {self.settings.compiler} {minimum_compiler} or newer"

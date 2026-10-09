@@ -15,7 +15,7 @@ the central installation examples below will not resolve `orm-cxx`.
 
 No private registry or Conan remote is required. SOCI and enabled database client
 libraries are dependencies of the package and are installed by the manager.
-Consumers require GCC 14+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and the selected package manager. Standard-library headers
+Consumers require GCC 15+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and the selected package manager. Standard-library headers
 are included normally; header units and `import std` are not required.
 On a minimal Linux host, vcpkg also needs its ordinary host tool
 `pkg-config`; the Packages workflow installs it. No manual SOCI/SQLite/libpq

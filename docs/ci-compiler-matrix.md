@@ -7,7 +7,7 @@ policy for the `orm-cxx` project.
 
 | Workflow | Status |
 |----------|--------|
-| GCC 14 | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
+| GCC 15 | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
 | Clang (18–20) | [![Clang](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml) |
 | PostgreSQL | [![PostgreSQL](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml) |
 | MSVC | [![MSVC](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml) |
@@ -16,14 +16,21 @@ policy for the `orm-cxx` project.
 
 ## Tested Compiler Versions
 
-All Linux CI runs on **Ubuntu 24.04 (Noble)**. GCC and Clang versions are
-installed from the default Ubuntu repositories.
+Linux CI uses **Ubuntu 24.04 (Noble)** runners. GCC jobs run inside the
+official `gcc:15-trixie` image; Clang jobs install compiler packages from
+the Ubuntu repositories. Linux package-manager jobs use Clang 18.
 
 ### GCC
 
 | Version | Package | Workflow | Status |
 |---------|---------|----------|--------|
-| GCC 14 | `gcc-14` / `g++-14` | `linux-gxx-build.yml` | Tested |
+| GCC 15 | `gcc-15` / `g++-15` | `linux-gxx-build.yml` | Tested |
+
+GCC 15.3.0 and 16.2.0 were validated with the full module build. GCC 14
+exceeds its imported source-location limit. GCC 15 and 16 require
+`-fno-module-lazy` on both module producers and importers to avoid
+`Bad file data` from the lazy reader; both CMake targets propagate this
+option, including installed interfaces rebuilt by consumers.
 
 ### Clang
 
@@ -49,7 +56,7 @@ combinations:
 
 | Compiler | PostgreSQL | Coverage | Workflow |
 |----------|-----------|----------|----------|
-| GCC 14 | 15 | No | `postgresql-build.yml` |
+| GCC 15 | 15 | No | `postgresql-build.yml` |
 | Clang 18 | 18 | Yes | `postgresql-build.yml` |
 | Clang 19 | 18 | No | `postgresql-build.yml` |
 | Clang 20 | 18 | No | `postgresql-build.yml` |
@@ -79,20 +86,20 @@ Coverage flags uploaded to Codecov:
 Each compiler version has dedicated CMake presets. All library and consumer
 builds use native C++20 modules through Ninja 1.11+ and
 CMake 3.31+. CI installs CMake 3.31.6 and Ninja 1.13.0 explicitly. The default
-GCC presets select GCC 14; Clang 18 remains the coverage compiler.
+GCC presets select GCC 15; Clang 18 remains the coverage compiler.
 
 | Preset | Compiler | Purpose |
 |--------|----------|---------|
-| `linux-gcc-debug` | GCC 14 | Local development (default) |
-| `linux-gcc-14-debug` | GCC 14 | CI matrix |
+| `linux-gcc-debug` | GCC 15 | Local development (default) |
+| `linux-gcc-15-debug` | GCC 15 | CI matrix |
 | `linux-clang-debug` | Clang 18 | Local development (default) |
 | `linux-clang-coverage` | Clang 18 | CI coverage |
 | `linux-clang-19-debug` | Clang 19 | CI matrix |
 | `linux-clang-19-coverage` | Clang 19 | Local coverage (optional) |
 | `linux-clang-19-postgresql` | Clang 19 | PostgreSQL CI matrix |
 | `linux-clang-20-debug` | Clang 20 | CI matrix |
-| `linux-gcc-postgresql` | GCC 14 | PostgreSQL (default) |
-| `linux-gcc-14-postgresql` | GCC 14 | PostgreSQL CI matrix |
+| `linux-gcc-postgresql` | GCC 15 | PostgreSQL (default) |
+| `linux-gcc-15-postgresql` | GCC 15 | PostgreSQL CI matrix |
 | `linux-clang-postgresql-coverage` | Clang 18 | PostgreSQL coverage |
 | `linux-clang-19-postgresql-coverage` | Clang 19 | PostgreSQL local (optional) |
 | `linux-clang-20-postgresql` | Clang 20 | PostgreSQL CI matrix |

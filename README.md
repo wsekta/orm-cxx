@@ -5,7 +5,7 @@
 [![C++](https://img.shields.io/badge/C++20-grey.svg?style=flat&logo=c%2B%2B&logoColor=blue)](https://en.cppreference.com/w/cpp/20)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wsekta/orm-cxx/graphs/commit-activity)
-[![Generic badge](https://img.shields.io/badge/gcc-14+-blue.svg)](https://gcc.gnu.org/)
+[![Generic badge](https://img.shields.io/badge/gcc-15+-blue.svg)](https://gcc.gnu.org/)
 [![Generic badge](https://img.shields.io/badge/clang-18+-blue.svg)](https://clang.llvm.org/)
 [![Generic badge](https://img.shields.io/badge/MSVC-19.50+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/wsekta/orm-cxx/issues/new)
@@ -278,8 +278,8 @@ contract.
 
 ## Development quick start
 
-The supported container includes the Linux compilers and tools used by the
-project. From a clean machine with Git and Docker:
+The default container includes the Clang tools used by the project; the
+separate `gcc` service provides GCC 15. From a clean machine with Git and Docker:
 
 ```bash
 git clone --recurse-submodules https://github.com/wsekta/orm-cxx.git
@@ -289,10 +289,11 @@ docker compose run --build --rm dev bash ./scripts/check-fast.sh
 
 That command builds the library and examples, runs the test suite with Clang
 18, and runs the quality workflow. To reproduce the non-server Linux checks,
-including GCC 14 and SQLite coverage, run:
+including SQLite coverage, run:
 
 ```bash
 docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
+docker compose run --build --rm gcc cmake --workflow --preset linux-gcc-debug
 ```
 
 Live PostgreSQL verification needs the Compose database service and an explicit
@@ -303,8 +304,10 @@ docker compose --profile postgresql up --detach --wait postgres
 docker compose run --build --rm \
   -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
   dev bash -lc \
-  'cmake --workflow --preset linux-gcc-postgresql &&
-   cmake --workflow --preset linux-clang-postgresql-coverage'
+  'cmake --workflow --preset linux-clang-postgresql-coverage'
+docker compose run --build --rm \
+  -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
+  gcc cmake --workflow --preset linux-gcc-postgresql
 docker compose --profile postgresql down
 ```
 

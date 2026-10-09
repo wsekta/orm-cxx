@@ -24,8 +24,8 @@
             "displayName": "Linux GCC Debug",
             "inherits": "developer-base",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc-14",
-                "CMAKE_CXX_COMPILER": "g++-14"
+                "CMAKE_C_COMPILER": "gcc-15",
+                "CMAKE_CXX_COMPILER": "g++-15"
             },
             "condition": {
                 "type": "equals",
@@ -123,12 +123,12 @@
             }
         },
         {
-            "name": "linux-gcc-14-debug",
-            "displayName": "Linux GCC 14 Debug",
+            "name": "linux-gcc-15-debug",
+            "displayName": "Linux GCC 15 Debug",
             "inherits": "developer-base",
             "cacheVariables": {
-                "CMAKE_C_COMPILER": "gcc-14",
-                "CMAKE_CXX_COMPILER": "g++-14"
+                "CMAKE_C_COMPILER": "gcc-15",
+                "CMAKE_CXX_COMPILER": "g++-15"
             },
             "condition": {
                 "type": "equals",
@@ -161,9 +161,9 @@
             }
         },
         {
-            "name": "linux-gcc-14-postgresql",
-            "displayName": "Linux GCC 14 with PostgreSQL",
-            "inherits": "linux-gcc-14-debug",
+            "name": "linux-gcc-15-postgresql",
+            "displayName": "Linux GCC 15 with PostgreSQL",
+            "inherits": "linux-gcc-15-debug",
             "cacheVariables": {
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
                 "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
@@ -264,8 +264,8 @@
             "configuration": "Debug"
         },
         {
-            "name": "linux-gcc-14-debug",
-            "configurePreset": "linux-gcc-14-debug",
+            "name": "linux-gcc-15-debug",
+            "configurePreset": "linux-gcc-15-debug",
             "configuration": "Debug"
         },
         {
@@ -282,8 +282,8 @@
             ]
         },
         {
-            "name": "linux-gcc-14-postgresql",
-            "configurePreset": "linux-gcc-14-postgresql",
+            "name": "linux-gcc-15-postgresql",
+            "configurePreset": "linux-gcc-15-postgresql",
             "configuration": "Debug"
         },
         {
@@ -406,8 +406,8 @@
             }
         },
         {
-            "name": "linux-gcc-14-debug",
-            "configurePreset": "linux-gcc-14-debug",
+            "name": "linux-gcc-15-debug",
+            "configurePreset": "linux-gcc-15-debug",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -442,8 +442,8 @@
             }
         },
         {
-            "name": "linux-gcc-14-postgresql",
-            "configurePreset": "linux-gcc-14-postgresql",
+            "name": "linux-gcc-15-postgresql",
+            "configurePreset": "linux-gcc-15-postgresql",
             "configuration": "Debug",
             "output": {
                 "outputOnFailure": true
@@ -638,19 +638,19 @@
             ]
         },
         {
-            "name": "linux-gcc-14-debug",
+            "name": "linux-gcc-15-debug",
             "steps": [
                 {
                     "type": "configure",
-                    "name": "linux-gcc-14-debug"
+                    "name": "linux-gcc-15-debug"
                 },
                 {
                     "type": "build",
-                    "name": "linux-gcc-14-debug"
+                    "name": "linux-gcc-15-debug"
                 },
                 {
                     "type": "test",
-                    "name": "linux-gcc-14-debug"
+                    "name": "linux-gcc-15-debug"
                 }
             ]
         },
@@ -689,19 +689,19 @@
             ]
         },
         {
-            "name": "linux-gcc-14-postgresql",
+            "name": "linux-gcc-15-postgresql",
             "steps": [
                 {
                     "type": "configure",
-                    "name": "linux-gcc-14-postgresql"
+                    "name": "linux-gcc-15-postgresql"
                 },
                 {
                     "type": "build",
-                    "name": "linux-gcc-14-postgresql"
+                    "name": "linux-gcc-15-postgresql"
                 },
                 {
                     "type": "test",
-                    "name": "linux-gcc-14-postgresql"
+                    "name": "linux-gcc-15-postgresql"
                 }
             ]
         },

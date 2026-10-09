@@ -16,7 +16,7 @@ import orm;
 targets. Standard-library headers remain ordinary includes.
 
 **Build requirements:** CMake 3.31+, Ninja 1.11+,
-GCC 14+, Clang 18+, or MSVC 19.50+. Installed packages include module interface
+GCC 15+, Clang 18+, or MSVC 19.50+. Installed packages include module interface
 sources and native CMake metadata; CMake builds BMIs locally.
 
 1. [Model](model.md)

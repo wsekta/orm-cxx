@@ -22,9 +22,11 @@ changes in the same pull request as user-facing changes.
 
 ## Fastest supported setup
 
-The development image contains GCC 14, Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
+The default development image contains Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
 clang-format, clang-tidy, and cmake-format. Docker Compose and the devcontainer
-both build that image from the repository's single `Dockerfile`.
+both build that image from the repository's single `Dockerfile`. The separate
+`gcc` Compose service uses the official GCC 15 image and the same pinned
+CMake and Ninja versions, while preserving the Clang image's standard library.
 
 Run the normal Clang build, tests, and quality checks from a clean checkout:
 
@@ -58,11 +60,11 @@ configures, builds, and tests its own directory under `build/`.
 | Check | Local command | Output directory |
 | --- | --- | --- |
 | Fast Linux check | `bash ./scripts/check-fast.sh` | `build/linux-clang-debug`, `build/quality` |
-| GCC 14 build and tests | `cmake --workflow --preset linux-gcc-debug` | `build/linux-gcc-debug` |
+| GCC 15 build and tests | `docker compose run --build --rm gcc cmake --workflow --preset linux-gcc-debug` | `build/linux-gcc-debug` |
 | Clang 18 build and tests | `cmake --workflow --preset linux-clang-debug` | `build/linux-clang-debug` |
 | Clang 18 coverage | `cmake --workflow --preset linux-clang-coverage` | `build/linux-clang-coverage` |
 | Format and static analysis | `bash ./scripts/check-quality.sh` | `build/quality` |
-| Non-server Linux verification | `bash ./scripts/check-linux-ci.sh` | core Linux directories above |
+| Clang Linux verification | `bash ./scripts/check-linux-ci.sh` | core Linux directories above |
 | MSVC build and tests | `./scripts/check-msvc.ps1` | `build/msvc-debug` |
 | PostgreSQL 15 profile | `cmake --workflow --preset linux-gcc-postgresql` | `build/linux-gcc-postgresql` |
 | PostgreSQL 18 coverage profile | `cmake --workflow --preset linux-clang-postgresql-coverage` | `build/linux-clang-postgresql-coverage` |
@@ -114,7 +116,7 @@ itself is not a backend support claim.
 ## Native Linux setup
 
 Install CMake 3.31 or newer, Ninja 1.11 or newer, SQLite development headers, `libpq`
-development headers, the PostgreSQL client, GCC 14, Clang/LLVM 18, and the
+development headers, the PostgreSQL client, GCC 15, Clang/LLVM 18, and the
 Python tools pinned in `tools/requirements-dev.txt`.
 Then invoke the same workflow presets shown above. The container is the
 reference environment when host package names or versions differ.

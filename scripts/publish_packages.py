@@ -81,7 +81,7 @@ def release_notes(metadata):
         "loading, and collection predicates.\n"
         "- Named modules `orm` and `orm.reflection` with compiled CMake targets.\n\n"
         "## Installation and requirements\n\n"
-        "Requires C++20, CMake 3.31+, Ninja 1.11+, and GCC 14+, Clang 18+, or MSVC 19.50+. "
+        "Requires C++20, CMake 3.31+, Ninja 1.11+, and GCC 15+, Clang 18+, or MSVC 19.50+. "
         "The vcpkg and Conan recipes install SOCI and the enabled database client "
         "dependencies automatically. PostgreSQL applications need a running server.\n\n"
         f"[Package installation and backend options](https://github.com/"

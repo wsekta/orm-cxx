@@ -49,7 +49,7 @@ the generated aggregate binding machinery.
 
 ## CMake consumers and installation
 
-Use CMake 3.31+, Ninja 1.11+, and GCC 14+, Clang 18+, or
+Use CMake 3.31+, Ninja 1.11+, and GCC 15+, Clang 18+, or
 MSVC 19.50+. Use separate build directories for Debug and Release.
 Link the target matching the imported module:
 
@@ -66,6 +66,10 @@ For an application that imports only `orm.reflection`, use
 `find_package(orm-cxx-reflection CONFIG REQUIRED)` and
 `target_link_libraries(application PRIVATE orm-cxx::reflection)`.
 Both targets are compiled libraries and propagate the C++20 requirement.
+For GCC they also propagate `-fno-module-lazy` to producers, importers, and
+installed interfaces rebuilt by CMake. GCC 14 exceeds its imported source
+location limit; GCC 15 and 16 need this option to avoid the lazy reader
+reporting `Bad file data`.
 
 Installed packages provide the libraries, the `.cppm` source interfaces and
 their private source includes under `share/orm-cxx/modules`, and native CMake

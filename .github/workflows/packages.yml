@@ -94,13 +94,13 @@ jobs:
       - name: Install the supported Linux compiler
         if: runner.os == 'Linux'
         shell: bash
-        run: sudo apt-get update && sudo apt-get install --yes gcc-14 g++-14
+        run: sudo apt-get update && sudo apt-get install --yes clang-18 clang-tools-18 g++-14
       - name: Select the supported Linux compiler
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          echo "CC=gcc-14" >> "$GITHUB_ENV"
-          echo "CXX=g++-14" >> "$GITHUB_ENV"
+          echo "CC=clang-18" >> "$GITHUB_ENV"
+          echo "CXX=clang++-18" >> "$GITHUB_ENV"
       - name: Install vcpkg host prerequisites on Linux
         if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
         shell: bash

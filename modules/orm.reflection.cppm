@@ -84,8 +84,8 @@ template <std::size_t N>
 FixedString(const char (&)[N]) -> FixedString<N - 1>;
 
 template <std::size_t LeftSize, std::size_t RightSize>
-[[nodiscard]] constexpr auto operator==(const FixedString<LeftSize>& left, const FixedString<RightSize>& right) noexcept
-    -> bool
+[[nodiscard]] constexpr auto operator==(const FixedString<LeftSize>& left,
+                                        const FixedString<RightSize>& right) noexcept -> bool
     requires(LeftSize != RightSize)
 {
     return left.view() == right.view();
@@ -226,8 +226,8 @@ namespace orm::reflection::detail
            (character >= '0' && character <= '9') || character == '_' || byte >= 0x80U;
 }
 
-[[nodiscard]] consteval auto parseGccTemplateArgument(std::string_view signature, std::string_view marker) noexcept
-    -> std::string_view
+[[nodiscard]] consteval auto parseGccTemplateArgument(std::string_view signature,
+                                                      std::string_view marker) noexcept -> std::string_view
 {
     const auto markerPosition = signature.find(marker);
     if (markerPosition == std::string_view::npos)
@@ -311,8 +311,8 @@ template <typename T>
            (character >= '0' && character <= '9') || character == '_' || byte >= 0x80U;
 }
 
-[[nodiscard]] consteval auto elaboratedTypePrefixSize(std::string_view spelling, std::size_t position) noexcept
-    -> std::size_t
+[[nodiscard]] consteval auto elaboratedTypePrefixSize(std::string_view spelling,
+                                                      std::size_t position) noexcept -> std::size_t
 {
     if (position != 0 && isTypeIdentifierCharacter(spelling[position - 1]))
     {
@@ -332,8 +332,8 @@ template <typename T>
 
 // The same standard type can include its ABI namespace in one importing unit and omit it in another.
 // Normalize that spelling before sizing inline storage shared by those units.
-[[nodiscard]] consteval auto standardAbiNamespacePrefixSize(std::string_view spelling, std::size_t position) noexcept
-    -> std::size_t
+[[nodiscard]] consteval auto standardAbiNamespacePrefixSize(std::string_view spelling,
+                                                            std::size_t position) noexcept -> std::size_t
 {
     const auto suffix = spelling.substr(position);
     std::size_t prefixSize{};
@@ -372,8 +372,8 @@ template <typename T>
     return scope.starts_with("std::") || scope.starts_with("::std::") ? prefixSize : 0;
 }
 
-[[nodiscard]] consteval auto ignoredTypePrefixSize(std::string_view spelling, std::size_t position) noexcept
-    -> std::size_t
+[[nodiscard]] consteval auto ignoredTypePrefixSize(std::string_view spelling,
+                                                   std::size_t position) noexcept -> std::size_t
 {
     // GCC prints module ownership after a declaration's name. It is metadata,
     // rather than part of the C++ type or its enclosing scopes.
@@ -503,7 +503,8 @@ template <std::size_t Size>
 }
 } // namespace detail
 
-export {
+export
+{
     template <typename T>
     [[nodiscard]] consteval auto typeName() noexcept
     {
@@ -617,7 +618,8 @@ template <auto Member>
 }
 } // namespace detail
 
-export {
+export
+{
     template <auto Value>
     [[nodiscard]] consteval auto valueName() noexcept
     {
@@ -668,7 +670,8 @@ static_assert(valueSignatureSentinelName.view().ends_with("enumerator"),
 
 namespace orm::reflection
 {
-export {
+export
+{
     inline constexpr std::size_t maxFieldCount = 128;
 
     struct FieldDescriptor
@@ -770,12 +773,13 @@ template <typename T>
 }
 } // namespace detail
 
-export {
+export
+{
     template <typename T>
     inline constexpr std::size_t fieldCount = detail::ReflectionTraits<detail::ReflectedType<T>>::count;
 
     template <typename T>
-    [[nodiscard]] constexpr auto tieFields(T& value) noexcept
+    [[nodiscard]] constexpr auto tieFields(T & value) noexcept
         requires(!std::is_const_v<T>)
     {
         using Type = detail::ReflectedType<T>;
@@ -795,7 +799,7 @@ export {
     = delete;
 
     template <typename T>
-    [[nodiscard]] constexpr auto fieldPointers(T& value) noexcept
+    [[nodiscard]] constexpr auto fieldPointers(T & value) noexcept
         requires(!std::is_const_v<T>)
     {
         return std::apply([]<typename... Fields>(Fields&... fields) { return std::tuple{std::addressof(fields)...}; },
@@ -840,7 +844,8 @@ inline constexpr auto fieldNameStorage = makeFieldName<T, Index>();
 #endif
 } // namespace detail
 
-export {
+export
+{
     template <typename T, std::size_t Index>
     [[nodiscard]] consteval auto fieldName() noexcept
     {
@@ -855,7 +860,8 @@ static_assert(fieldName<NameSignatureSentinel, 0>() == "member",
               "ORM_REFLECTION_FIELD_SIGNATURE_FORMAT: unsupported compiler field-signature format");
 } // namespace detail
 
-export {
+export
+{
     template <typename T, std::size_t Index>
     using field_type_t = std::remove_reference_t<
         std::tuple_element_t<Index, typename detail::ReflectionTraits<detail::ReflectedType<T>>::Tuple>>;
@@ -883,7 +889,8 @@ template <typename T>
 inline constexpr auto fieldDescriptorStorage = makeFieldDescriptors<T>(std::make_index_sequence<fieldCount<T>>{});
 } // namespace detail
 
-export {
+export
+{
     template <typename T>
     [[nodiscard]] consteval auto fieldNames() noexcept
     {
@@ -936,9 +943,10 @@ constexpr void forEachFieldImpl(T& object, Function& function, std::index_sequen
 }
 } // namespace detail
 
-export {
+export
+{
     template <typename T, typename Function>
-    constexpr void forEachField(T& object, Function&& function)
+    constexpr void forEachField(T & object, Function && function)
         requires(!std::is_const_v<T>)
     {
         detail::forEachFieldImpl(object, function, std::make_index_sequence<fieldCount<T>>{});
