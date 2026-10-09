@@ -52,6 +52,7 @@ set(ORM_CXX_TEST_SOURCES
     reflection/GeneratedBindingArity128To128Test.cpp
     reflection/MemberNameModuleTest.cpp
     reflection/TypeNameTest.cpp
+    reflection/TypeNameStorageConsumer.cpp
     utils/ConstexprForTest.cpp
 )
 

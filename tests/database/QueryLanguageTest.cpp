@@ -190,3 +190,39 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, QueryLanguageTest, backendTestConfigs, backendTestName);
+
+TEST(QueryPredicateAssignmentTest, copyAssignmentRetainsPredicateAfterSourceIsDestroyed)
+{
+    using Predicate = orm::query::detail::Predicate;
+    using Assignment = Predicate& (Predicate::*)(const Predicate&);
+    Assignment volatile assign = &Predicate::operator=;
+    auto assigned = orm::query::detail::Column{"old_field"} == 1;
+    {
+        const auto replacement = orm::query::detail::Column{"new_field"} > 2;
+        (assigned.*assign)(replacement);
+    }
+
+    const auto& comparison = std::get<orm::query::detail::ComparisonExpression>(assigned.getNode().expression);
+    EXPECT_EQ(comparison.column.getPath(), "new_field");
+    EXPECT_EQ(comparison.comparisonOperator, orm::query::detail::ComparisonOperator::Greater);
+    EXPECT_EQ(comparison.value, orm::query::QueryValue{2});
+}
+
+TEST(QueryPredicateAssignmentTest, copyAssignmentRetainsAggregatePredicateAfterSourceIsDestroyed)
+{
+    using Predicate = orm::query::detail::AggregatePredicate;
+    using Assignment = Predicate& (Predicate::*)(const Predicate&);
+    Assignment volatile assign = &Predicate::operator=;
+    auto assigned = orm::query::detail::countAll() == 0;
+    {
+        const auto replacement = orm::query::detail::sum(orm::query::detail::Column{"amount"}) > 9;
+        (assigned.*assign)(replacement);
+    }
+
+    const auto& comparison = std::get<orm::query::detail::AggregateComparisonExpression>(assigned.getNode().expression);
+    EXPECT_EQ(comparison.aggregate.function, orm::query::detail::AggregateFunction::Sum);
+    ASSERT_TRUE(comparison.aggregate.column);
+    EXPECT_EQ(comparison.aggregate.column->getPath(), "amount");
+    EXPECT_EQ(comparison.comparisonOperator, orm::query::detail::ComparisonOperator::Greater);
+    EXPECT_EQ(comparison.value, orm::query::QueryValue{9});
+}

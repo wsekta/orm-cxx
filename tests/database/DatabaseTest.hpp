@@ -59,8 +59,6 @@ auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) ->
 }
 } // namespace
 
-using orm::generateSomeDataModels;
-
 template <typename SchemaType = models::Schema>
 class DatabaseTest : public ::testing::TestWithParam<BackendTestConfig>
 {

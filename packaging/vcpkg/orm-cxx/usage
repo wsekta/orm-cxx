@@ -1,4 +1,4 @@
-orm-cxx requires CMake 3.31+, Ninja (or Ninja Multi-Config) 1.11+,
+orm-cxx requires CMake 3.31+, Ninja 1.11+,
 and GCC 14+, Clang 18+, or MSVC 19.50+ with C++20.
 
     find_package(orm-cxx CONFIG REQUIRED)

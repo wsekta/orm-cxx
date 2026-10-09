@@ -10,8 +10,10 @@ project(
     LANGUAGES CXX
 )
 
-if(NOT CMAKE_GENERATOR MATCHES "^Ninja")
-    message(FATAL_ERROR "orm-cxx requires Ninja or Ninja Multi-Config for its C++20 modules.")
+# CMake 3.31 loses nested imported-module dependencies after the first configuration. Use separate Ninja builds for
+# Debug and Release so orm can import orm.reflection.
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    message(FATAL_ERROR "orm-cxx requires Ninja for its C++20 modules.")
 endif()
 execute_process(
     COMMAND "${CMAKE_MAKE_PROGRAM}" --version

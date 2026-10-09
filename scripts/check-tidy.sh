@@ -14,5 +14,5 @@ run-clang-tidy-18 \
     -j 2 \
     -p "$repo_root/build/quality" \
     -quiet \
-    -header-filter "^${repo_root}/(include|modules|src|tests|examples)/" \
-    "^${repo_root}/(modules|src|tests|examples)/(?!compile_fail/).*\\.(c|cc|cpp|cppm|ixx|cxx)$"
+    -header-filter "^${repo_root}/(include|modules|src|tests|examples|build/quality/generated/modules)/" \
+    "^${repo_root}/((modules|src|tests|examples)/(?!compile_fail/)|build/quality/generated/modules/).*\\.(c|cc|cpp|cppm|ixx|cxx)$"

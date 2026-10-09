@@ -19,6 +19,11 @@ module orm.reflection;
 
 import :generated;
 
+extern "C" auto orm_cxx_global_string_type_name_data() -> const char*;
+extern "C" auto orm_cxx_global_string_type_name_size() -> std::size_t;
+extern "C" auto orm_cxx_global_optional_string_type_name_data() -> const char*;
+extern "C" auto orm_cxx_global_optional_string_type_name_size() -> std::size_t;
+
 namespace
 {
 using namespace orm::reflection;
@@ -228,6 +233,21 @@ TEST(ReflectionNamesTest, exposesCompilerNamesThroughStableStorage)
     const auto secondNames = fieldNames<Person>();
     EXPECT_EQ(firstNames, secondNames);
     EXPECT_EQ(firstNames[0].data(), secondNames[0].data());
+}
+
+TEST(ReflectionNamesTest, sharesCompleteStandardTypeNamesWithGlobalImporters)
+{
+    const std::string_view globalString{orm_cxx_global_string_type_name_data(), orm_cxx_global_string_type_name_size()};
+    const std::string_view globalOptional{orm_cxx_global_optional_string_type_name_data(),
+                                          orm_cxx_global_optional_string_type_name_size()};
+    EXPECT_EQ(globalString, getTypeName<std::string>());
+    EXPECT_EQ(globalString.data(), getTypeName<std::string>().data());
+    EXPECT_THAT(globalString, ::testing::HasSubstr("string"));
+    EXPECT_TRUE(globalString.ends_with('>'));
+    EXPECT_EQ(globalOptional, getTypeName<std::optional<std::string>>());
+    EXPECT_EQ(globalOptional.data(), getTypeName<std::optional<std::string>>().data());
+    EXPECT_THAT(globalOptional, ::testing::HasSubstr("string"));
+    EXPECT_TRUE(globalOptional.ends_with('>'));
 }
 
 TEST(ReflectionFieldsTest, tiesAndAddressesMutableFields)

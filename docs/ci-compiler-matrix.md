@@ -69,7 +69,7 @@ Coverage flags uploaded to Codecov:
 ## CMake Presets
 
 Each compiler version has dedicated CMake presets. All library and consumer
-builds use native C++20 modules through Ninja or Ninja Multi-Config 1.11+ and
+builds use native C++20 modules through Ninja 1.11+ and
 CMake 3.31+. CI installs CMake 3.31.6 and Ninja 1.13.0 explicitly. The default
 GCC presets select GCC 14; Clang 18 remains the coverage compiler.
 

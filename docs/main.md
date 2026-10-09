@@ -15,7 +15,7 @@ import orm;
 `orm-cxx::orm-cxx` or `orm-cxx::reflection` respectively. Both are compiled CMake
 targets. Standard-library headers remain ordinary includes.
 
-**Build requirements:** CMake 3.31+, Ninja or Ninja Multi-Config 1.11+,
+**Build requirements:** CMake 3.31+, Ninja 1.11+,
 GCC 14+, Clang 18+, or MSVC 19.50+. Installed packages include module interface
 sources and native CMake metadata; CMake builds BMIs locally.
 

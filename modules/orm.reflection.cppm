@@ -330,12 +330,61 @@ template <typename T>
     return 0;
 }
 
+// The same standard type can include its ABI namespace in one importing unit and omit it in another.
+// Normalize that spelling before sizing inline storage shared by those units.
+[[nodiscard]] consteval auto standardAbiNamespacePrefixSize(std::string_view spelling,
+                                                            std::size_t position) noexcept -> std::size_t
+{
+    const auto suffix = spelling.substr(position);
+    std::size_t prefixSize{};
+    if (suffix.starts_with("__cxx11::"))
+    {
+        prefixSize = std::string_view{"__cxx11::"}.size();
+    }
+    else if (suffix.starts_with("__ndk1::"))
+    {
+        prefixSize = std::string_view{"__ndk1::"}.size();
+    }
+    else if (suffix.starts_with("__"))
+    {
+        std::size_t end = 2;
+        while (end < suffix.size() && suffix[end] >= '0' && suffix[end] <= '9')
+        {
+            ++end;
+        }
+        if (end > 2 && suffix.substr(end).starts_with("::"))
+        {
+            prefixSize = end + 2;
+        }
+    }
+    if (prefixSize == 0)
+    {
+        return 0;
+    }
+
+    auto qualifiedBegin = position;
+    while (qualifiedBegin > 0 &&
+           (isTypeIdentifierCharacter(spelling[qualifiedBegin - 1]) || spelling[qualifiedBegin - 1] == ':'))
+    {
+        --qualifiedBegin;
+    }
+    const auto scope = spelling.substr(qualifiedBegin, position - qualifiedBegin);
+    return scope.starts_with("std::") || scope.starts_with("::std::") ? prefixSize : 0;
+}
+
+[[nodiscard]] consteval auto ignoredTypePrefixSize(std::string_view spelling,
+                                                   std::size_t position) noexcept -> std::size_t
+{
+    const auto elaboratedPrefixSize = elaboratedTypePrefixSize(spelling, position);
+    return elaboratedPrefixSize != 0 ? elaboratedPrefixSize : standardAbiNamespacePrefixSize(spelling, position);
+}
+
 [[nodiscard]] consteval auto normalizedTypeNameSize(std::string_view spelling) noexcept -> std::size_t
 {
     std::size_t result{};
     for (std::size_t index = 0; index < spelling.size();)
     {
-        const auto prefixSize = elaboratedTypePrefixSize(spelling, index);
+        const auto prefixSize = ignoredTypePrefixSize(spelling, index);
         if (prefixSize != 0)
         {
             index += prefixSize;
@@ -356,7 +405,7 @@ template <std::size_t Size>
     std::size_t output{};
     for (std::size_t index = 0; index < spelling.size();)
     {
-        const auto prefixSize = elaboratedTypePrefixSize(spelling, index);
+        const auto prefixSize = ignoredTypePrefixSize(spelling, index);
         if (prefixSize != 0)
         {
             index += prefixSize;

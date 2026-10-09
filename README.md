@@ -325,7 +325,7 @@ presets, and the CI-to-local command matrix.
 
 The library exposes two named modules: `orm` and the backend-independent
 `orm.reflection`. Both source builds and installed packages require CMake 3.31+,
-Ninja or Ninja Multi-Config 1.11+, and a supported C++20 compiler. Link the
+Ninja 1.11+, and a supported C++20 compiler. Link the
 provided target and import the module in your source:
 
 ```cmake
@@ -351,7 +351,7 @@ a portable package interface. The compiled static libraries must still match the
 consumer's toolchain, standard library, CRT, and ABI settings. The public API is
 provided through modules; there is no public-header fallback.
 
-Configure consumers with `-G Ninja` (or `-G "Ninja Multi-Config"`). Standard-library
+Configure consumers with `-G Ninja`. Standard-library
 headers remain ordinary `#include`s; `import std` and header units are not used.
 
 1. For the full ORM, add the repository and initialize its nested dependencies:

@@ -3,8 +3,10 @@
 if(CMAKE_VERSION VERSION_LESS 3.31)
     message(FATAL_ERROR "orm-cxx requires CMake 3.31 or newer.")
 endif()
-if(NOT CMAKE_GENERATOR MATCHES "^Ninja( Multi-Config)?$")
-    message(FATAL_ERROR "orm-cxx modules require Ninja or Ninja Multi-Config.")
+# CMake 3.31 loses nested imported-module dependencies after the first configuration. Use separate Ninja builds for
+# Debug and Release so orm can import orm.reflection.
+if(NOT CMAKE_GENERATOR STREQUAL "Ninja")
+    message(FATAL_ERROR "orm-cxx modules require Ninja.")
 endif()
 execute_process(
     COMMAND "${CMAKE_MAKE_PROGRAM}" --version
@@ -40,4 +42,19 @@ set(orm-cxx_sqlite3_FOUND @ORM_CXX_ENABLE_SQLITE_BACKEND@)
 set(orm-cxx_postgresql_FOUND @ORM_CXX_ENABLE_POSTGRESQL_BACKEND@)
 
 include("${CMAKE_CURRENT_LIST_DIR}/orm-cxx-targets.cmake")
+if(MSVC AND "@MSVC@")
+    # CMake's imported BMI targets do not inherit MSVC_RUNTIME_LIBRARY. Apply the producer's CRT to those targets
+    # without changing consumer flags.
+    set(orm_cxx_module_runtime "@ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY@")
+    set_property(
+        TARGET orm-cxx::orm-cxx
+        APPEND
+        PROPERTY IMPORTED_CXX_MODULES_COMPILE_OPTIONS
+                 "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreaded>:/MT>"
+                 "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDebug>:/MTd>"
+                 "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDLL>:/MD>"
+                 "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDebugDLL>:/MDd>"
+    )
+    unset(orm_cxx_module_runtime)
+endif()
 check_required_components(orm-cxx)

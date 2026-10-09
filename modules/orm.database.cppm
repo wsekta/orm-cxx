@@ -455,7 +455,6 @@ auto getNumericValue(const soci::values& values, const std::string& fieldName) -
         // Locally assembled soci::values instances have no column properties.
         // Try the canonical SOCI arithmetic holders used by orm-cxx instead.
     }
-
     auto result = Result{};
 
     if (tryGetNumericValue<Result, int>(&result, values, fieldName) or
@@ -1046,64 +1045,68 @@ struct ObjectFieldToValues
 } // namespace orm::db::binding
 
 // database/binding/Binding.hpp
+// These SOCI customization points must retain one visible specialization through every module import path.
 namespace soci
 {
 template <typename T, typename SchemaType, bool JoinedValues = false>
 using BindingPayload = orm::db::binding::BindingPayload<T, SchemaType, JoinedValues>;
 
-template <typename T, typename SchemaType, bool JoinedValues>
-struct type_conversion<BindingPayload<T, SchemaType, JoinedValues>>
+export
 {
-    using base_type = values;
-
-    [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/,
-                                           BindingPayload<T, SchemaType, JoinedValues>& model)
+    template <typename T, typename SchemaType, bool JoinedValues>
+    struct type_conversion<BindingPayload<T, SchemaType, JoinedValues>>
     {
-        auto& modelValue = model.value;
-        auto modelAsTuple = orm::reflection::fieldPointers(modelValue);
+        using base_type = values;
 
-        auto getObjectFromValues = [&model, &values](auto fieldIndex, auto* field)
+        [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/,
+                                               BindingPayload<T, SchemaType, JoinedValues>& model)
         {
-            using field_t = std::decay_t<decltype(*field)>;
+            auto& modelValue = model.value;
+            auto modelAsTuple = orm::reflection::fieldPointers(modelValue);
 
-            if constexpr (orm::is_relation_collection_v<field_t>)
+            auto getObjectFromValues = [&model, &values](auto fieldIndex, auto* field)
             {
-                return;
-            }
-            else
-            {
-                orm::db::binding::ObjectFieldFromValues<field_t>::get(field, model, fieldIndex, values);
-            }
-        };
+                using field_t = std::decay_t<decltype(*field)>;
 
-        orm::utils::constexpr_for_tuple(modelAsTuple, getObjectFromValues);
-    }
+                if constexpr (orm::is_relation_collection_v<field_t>)
+                {
+                    return;
+                }
+                else
+                {
+                    orm::db::binding::ObjectFieldFromValues<field_t>::get(field, model, fieldIndex, values);
+                }
+            };
 
-    [[maybe_unused]] static void to_base(const BindingPayload<T, SchemaType, JoinedValues>& model, soci::values& values,
-                                         indicator& ind)
-    {
-        auto& modelValue = model.value;
-        auto modelAsTuple = orm::reflection::fieldPointers(modelValue);
+            orm::utils::constexpr_for_tuple(modelAsTuple, getObjectFromValues);
+        }
 
-        auto setObjectToValues = [&model, &values](auto fieldIndex, const auto* field)
+        [[maybe_unused]] static void to_base(const BindingPayload<T, SchemaType, JoinedValues>& model,
+                                             soci::values& values, indicator& ind)
         {
-            using field_t = std::decay_t<decltype(*field)>;
+            auto& modelValue = model.value;
+            auto modelAsTuple = orm::reflection::fieldPointers(modelValue);
 
-            if constexpr (orm::is_relation_collection_v<field_t>)
+            auto setObjectToValues = [&model, &values](auto fieldIndex, const auto* field)
             {
-                return;
-            }
-            else
-            {
-                orm::db::binding::ObjectFieldToValues<field_t>::set(field, model, fieldIndex, values);
-            }
-        };
+                using field_t = std::decay_t<decltype(*field)>;
 
-        orm::utils::constexpr_for_tuple(modelAsTuple, setObjectToValues);
+                if constexpr (orm::is_relation_collection_v<field_t>)
+                {
+                    return;
+                }
+                else
+                {
+                    orm::db::binding::ObjectFieldToValues<field_t>::set(field, model, fieldIndex, values);
+                }
+            };
 
-        ind = i_ok;
-    }
-};
+            orm::utils::constexpr_for_tuple(modelAsTuple, setObjectToValues);
+
+            ind = i_ok;
+        }
+    };
+}
 } // namespace soci
 
 // database/binding/BindingInfo.hpp
@@ -1135,39 +1138,42 @@ struct CollectionPayload
 
 namespace soci
 {
-template <typename Owner, typename Target, typename SchemaType, bool JoinedValues>
-struct type_conversion<orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>>
+export
 {
-    using base_type = values;
-
-    [[maybe_unused]] static void
-    from_base(const soci::values& values, indicator ind,
-              orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>& payload)
+    template <typename Owner, typename Target, typename SchemaType, bool JoinedValues>
+    struct type_conversion<orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>>
     {
-        orm::db::binding::BindingPayload<Target, SchemaType, JoinedValues> targetPayload{};
-        type_conversion<orm::db::binding::BindingPayload<Target, SchemaType, JoinedValues>>::from_base(values, ind,
-                                                                                                       targetPayload);
-        payload.value = std::move(targetPayload.value);
+        using base_type = values;
 
-        constexpr auto owner = orm::model::modelView<SchemaType, Owner>();
-        const auto ownerColumns = orm::db::binding::getPrimaryKeyColumns(owner);
-        payload.ownerKey.clear();
-        payload.ownerKey.reserve(ownerColumns.size());
-
-        for (const auto* column : ownerColumns)
+        [[maybe_unused]] static void
+        from_base(const soci::values& values, indicator ind,
+                  orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>& payload)
         {
-            const auto alias = orm::db::binding::relationOwnerAlias(*column);
-            payload.ownerKey.push_back(orm::db::binding::getPrimaryKeyValue(values, alias, column->type.value()));
-        }
-    }
+            orm::db::binding::BindingPayload<Target, SchemaType, JoinedValues> targetPayload{};
+            type_conversion<orm::db::binding::BindingPayload<Target, SchemaType, JoinedValues>>::from_base(
+                values, ind, targetPayload);
+            payload.value = std::move(targetPayload.value);
 
-    [[maybe_unused]] static void
-    to_base(const orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>& /*payload*/,
-            soci::values& /*values*/, indicator& ind)
-    {
-        ind = i_ok;
-    }
-};
+            constexpr auto owner = orm::model::modelView<SchemaType, Owner>();
+            const auto ownerColumns = orm::db::binding::getPrimaryKeyColumns(owner);
+            payload.ownerKey.clear();
+            payload.ownerKey.reserve(ownerColumns.size());
+
+            for (const auto* column : ownerColumns)
+            {
+                const auto alias = orm::db::binding::relationOwnerAlias(*column);
+                payload.ownerKey.push_back(orm::db::binding::getPrimaryKeyValue(values, alias, column->type.value()));
+            }
+        }
+
+        [[maybe_unused]] static void
+        to_base(const orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>& /*payload*/,
+                soci::values& /*values*/, indicator& ind)
+        {
+            ind = i_ok;
+        }
+    };
+}
 } // namespace soci
 
 // database/binding/ProjectionBinding.hpp
@@ -1290,32 +1296,36 @@ namespace soci
 template <typename T>
 using ProjectionPayload = orm::db::binding::ProjectionPayload<T>;
 
-template <typename T>
-struct type_conversion<ProjectionPayload<T>>
+export
 {
-    using base_type = values;
-
-    [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/, ProjectionPayload<T>& payload)
+    template <typename T>
+    struct type_conversion<ProjectionPayload<T>>
     {
-        auto resultAsTuple = orm::reflection::fieldPointers(payload.value);
-        constexpr auto fields = orm::reflection::fields<T>();
+        using base_type = values;
 
-        auto getObjectFromValues = [&fields, &values](auto index, auto* field)
+        [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/,
+                                               ProjectionPayload<T>& payload)
         {
-            using field_t = std::decay_t<decltype(*field)>;
-            orm::db::binding::ObjectFieldFromProjectionValues<field_t>::get(field, std::string{fields[index].name},
-                                                                            values);
-        };
+            auto resultAsTuple = orm::reflection::fieldPointers(payload.value);
+            constexpr auto fields = orm::reflection::fields<T>();
 
-        orm::utils::constexpr_for_tuple(resultAsTuple, getObjectFromValues);
-    }
+            auto getObjectFromValues = [&fields, &values](auto index, auto* field)
+            {
+                using field_t = std::decay_t<decltype(*field)>;
+                orm::db::binding::ObjectFieldFromProjectionValues<field_t>::get(field, std::string{fields[index].name},
+                                                                                values);
+            };
 
-    [[maybe_unused]] static void to_base(const ProjectionPayload<T>& /*payload*/, soci::values& /*values*/,
-                                         indicator& ind)
-    {
-        ind = i_ok;
-    }
-};
+            orm::utils::constexpr_for_tuple(resultAsTuple, getObjectFromValues);
+        }
+
+        [[maybe_unused]] static void to_base(const ProjectionPayload<T>& /*payload*/, soci::values& /*values*/,
+                                             indicator& ind)
+        {
+            ind = i_ok;
+        }
+    };
+}
 } // namespace soci
 
 // database/binding/StatementBinding.hpp

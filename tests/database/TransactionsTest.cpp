@@ -23,7 +23,7 @@ class TransactionsTest : public DatabaseTest<models::Schema>
 TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
 {
     createTable<models::SomeDataModel>();
-    auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    auto models = orm::generateSomeDataModels<models::SomeDataModel>(modelCount);
     orm::Query<models::SomeDataModel> query;
 
     for (std::size_t i = 0; i < models.size(); ++i)
@@ -52,7 +52,7 @@ TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
 TEST_P(TransactionsTest, insertInRolledBackTransaction_shouldNotInsertObjects)
 {
     createTable<models::SomeDataModel>();
-    auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    auto models = orm::generateSomeDataModels<models::SomeDataModel>(modelCount);
     orm::Query<models::SomeDataModel> query;
 
     database.beginTransaction();

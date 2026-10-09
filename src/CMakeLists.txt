@@ -131,6 +131,10 @@ endforeach()
 
 include(CMakePackageConfigHelpers)
 foreach(package orm-cxx orm-cxx-reflection)
+    get_target_property(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY ${package} MSVC_RUNTIME_LIBRARY)
+    if(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY STREQUAL "ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY-NOTFOUND")
+        set(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+    endif()
     configure_package_config_file(
         "${PROJECT_SOURCE_DIR}/cmake/${package}-config.cmake.in" "${PROJECT_BINARY_DIR}/${package}-config.cmake"
         INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${package}"

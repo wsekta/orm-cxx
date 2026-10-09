@@ -35,7 +35,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQuery)
     createTable<models::SomeDataModel>();
     orm::Query<models::SomeDataModel> query;
 
-    database.insert(generateSomeDataModels<models::SomeDataModel>(modelCount));
+    database.insert(orm::generateSomeDataModels<models::SomeDataModel>(modelCount));
 
     EXPECT_EQ(database.select(query).size(), modelCount);
 }
@@ -44,7 +44,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryWithOptional)
 {
     createTable<models::ModelWithOptional>();
 
-    database.insert(generateSomeDataModels<models::ModelWithOptional>(modelCount));
+    database.insert(orm::generateSomeDataModels<models::ModelWithOptional>(modelCount));
 
     orm::Query<models::ModelWithOptional> queryForOptional;
     EXPECT_EQ(database.select(queryForOptional).size(), modelCount);
@@ -53,7 +53,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryWithOptional)
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSame)
 {
     createTable<models::SomeDataModel>();
-    auto models = generateSomeDataModels<models::SomeDataModel>(modelCount);
+    auto models = orm::generateSomeDataModels<models::SomeDataModel>(modelCount);
     orm::Query<models::SomeDataModel> query;
 
     for (std::size_t i = 0; i < models.size(); ++i)
@@ -76,7 +76,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQuery_valuesShouldBeSam
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithOptional_valuesShouldBeSame)
 {
     createTable<models::ModelWithOptional>();
-    auto models = generateSomeDataModels<models::ModelWithOptional>(modelCount);
+    auto models = orm::generateSomeDataModels<models::ModelWithOptional>(modelCount);
 
     for (std::size_t i = 0; i < models.size(); ++i)
     {
@@ -131,7 +131,7 @@ TEST_P(SimpleModelTest, shouldRoundTripExplicitNullAndPresentOptionalValues)
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesShouldBeSame)
 {
     createTable<models::ModelWithFloat>();
-    auto models = generateSomeDataModels<models::ModelWithFloat>(modelCount);
+    auto models = orm::generateSomeDataModels<models::ModelWithFloat>(modelCount);
 
     for (std::size_t i = 0; i < models.size(); ++i)
     {
@@ -154,7 +154,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloat_valuesSh
 TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithFloatAndOptional_valuesShouldBeSame)
 {
     createTable<models::ModelWithOptionalFloat>();
-    auto models = generateSomeDataModels<models::ModelWithOptionalFloat>(modelCount);
+    auto models = orm::generateSomeDataModels<models::ModelWithOptionalFloat>(modelCount);
 
     for (std::size_t i = 0; i < models.size(); ++i)
     {

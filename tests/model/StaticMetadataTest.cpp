@@ -387,6 +387,27 @@ TEST(StaticMetadataTest, runtimeLookupsDistinguishFieldNamesSqlNamesAndMissingMo
     EXPECT_FALSE(junction.owningSide);
 }
 
+TEST(StaticMetadataTest, moveAssignmentRetainsResolvedJunctionMetadata)
+{
+    const auto& schema = orm::model::schemaView<TestSchema>();
+    const auto role = schema.find(orm::model::typeId<Role>());
+    ASSERT_TRUE(role);
+    auto resolved = role.resolveJunction(role->relations[0]);
+    using Junction = orm::model::JunctionView;
+    using Assignment = Junction& (Junction::*)(Junction&&);
+    Assignment volatile assign = &Junction::operator=;
+    Junction assigned;
+    (assigned.*assign)(std::move(resolved));
+
+    ASSERT_TRUE(assigned.isConfigured());
+    EXPECT_EQ(assigned.tableName, "user_roles");
+    ASSERT_EQ(assigned.ownerColumns.size(), 1);
+    ASSERT_EQ(assigned.targetColumns.size(), 1);
+    EXPECT_EQ(assigned.ownerColumns[0], "role_id");
+    EXPECT_EQ(assigned.targetColumns[0], "user_id");
+    EXPECT_FALSE(assigned.owningSide);
+}
+
 TEST(StaticMetadataTest, invalidModelViewsReturnEmptyLookupsAndTargets)
 {
     const auto& schema = orm::model::schemaView<TestSchema>();

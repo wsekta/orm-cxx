@@ -59,8 +59,11 @@ template <auto Member>
 using member_value_t = typename MemberPointerTraits<std::remove_cv_t<decltype(Member)>>::ValueType;
 
 template <auto Member>
-inline constexpr bool isPersistentColumnMember = !orm::is_relation_collection_v<member_value_t<Member>> &&
-                                                 !orm::is_optional_relation_collection_v<member_value_t<Member>>;
+[[nodiscard]] consteval auto isPersistentColumnMember() noexcept -> bool
+{
+    return !orm::is_relation_collection_v<member_value_t<Member>> &&
+           !orm::is_optional_relation_collection_v<member_value_t<Member>>;
+}
 
 template <auto Member>
 inline constexpr auto reflectedMemberNameStorage = reflection::memberName<Member>();
@@ -183,7 +186,7 @@ export
             {
                 return false;
             }
-            else if constexpr (not(detail::isPersistentColumnMember<Definitions::member> && ...))
+            else if constexpr (not(detail::isPersistentColumnMember<Definitions::member>() && ...))
             {
                 return false;
             }
@@ -239,7 +242,7 @@ export
             {
                 return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
                        (detail::memberExists<Model, Members>() && ...) &&
-                       (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
+                       (detail::isPersistentColumnMember<Members>() && ...) && detail::uniqueMemberNames<Members...>();
             }
         }
 
@@ -292,7 +295,7 @@ export
             {
                 return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
                        (detail::memberExists<Model, Members>() && ...) &&
-                       (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
+                       (detail::isPersistentColumnMember<Members>() && ...) && detail::uniqueMemberNames<Members...>();
             }
         }
 
