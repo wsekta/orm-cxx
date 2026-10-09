@@ -45,7 +45,7 @@ auto number = 1'000;
 
     def test_compiler_conditions_are_allowed_only_in_existing_adapters(self):
         source = "#if defined(_MSC_VER)\n#elif defined(__clang__) || defined(__GNUC__)\n#endif\n"
-        path = "include/orm-cxx/reflection/detail/SignatureParser.hpp"
+        path = "modules/orm.reflection.cppm"
         self.assertEqual(macros.check_cpp(path, source), [])
         self.assertEqual(len(macros.check_cpp("include/new.hpp", source)), 2)
         self.assertTrue(macros.check_cpp(path, "#if _MSC_VER && CUSTOM\n#endif\n"))

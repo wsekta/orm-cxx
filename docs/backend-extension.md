@@ -43,6 +43,21 @@ orm::Database<orm::Schema<>> database{std::move(backends)};
 The registry and its providers become owned by the database object. In-tree
 backends may also be registered by the factory's default construction path.
 
+An extension translation unit uses `import orm;`. The command override types
+are `orm::db::SelectSpec`, `orm::db::UpdateSpec`, and `orm::db::Predicate`.
+`orm::db::ast` provides the runtime column, predicate-node, aggregate, ordering,
+projection, and assignment types needed to inspect those inputs. Endpoint keys
+use `orm::db::PrimaryKey`. These names define the backend input contract;
+application queries continue to use the typed `orm::query` builders.
+
+The external import compile control verifies that a consumer can override all
+three command signatures, inspect predicate nodes, and register a provider
+without joining the library's module implementation.
+
+Built-in provider and dialect declarations are exported only when their backend
+is enabled in the library build. `orm::config::sqliteBackendEnabled` and
+`orm::config::postgresqlBackendEnabled` report that build configuration.
+
 ## Required backend responsibilities
 
 A backend implementation owns the following responsibilities behind one

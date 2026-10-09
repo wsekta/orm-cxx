@@ -1,6 +1,8 @@
 module;
 
+#include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 export module orm:backend_relations;
@@ -9,5 +11,8 @@ import :foundation;
 import :model;
 import :expressions;
 import :sql;
+
+@ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS@
+@ORM_CXX_SQLITE_BACKEND_DECLARATIONS@
 
 @ORM_CXX_SQLITE_RELATION_DECLARATIONS@

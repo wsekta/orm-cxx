@@ -14,9 +14,6 @@ ROOT = Path(__file__).resolve().parents[1]
 CPP_SUFFIXES = {".c", ".cc", ".cpp", ".cppm", ".ixx", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".inc", ".ipp", ".tpp"}
 COMPILER_CONDITIONS = {
     "modules/orm.reflection.cppm": {"_MSC_VER", "__clang__", "__GNUC__"},
-    "include/orm-cxx/reflection/Reflection.hpp": {"__clang__"},
-    "include/orm-cxx/reflection/MemberName.hpp": {"_MSC_VER"},
-    "include/orm-cxx/reflection/detail/SignatureParser.hpp": {"_MSC_VER", "__clang__", "__GNUC__"},
     "tests/static_plan_allocations/main.cpp": {"_MSC_VER"},
     "tests/database/ProjectionQueryTest.cpp": {"__SIZEOF_INT128__"},
 }

@@ -31,6 +31,7 @@ module;
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include "soci/soci.h"
 
 module orm:internal;
@@ -277,4 +278,3 @@ public:
     [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
 };
 }
-

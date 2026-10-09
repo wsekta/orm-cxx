@@ -1,36 +1,16 @@
 module;
 
-#include <algorithm>
 #include <array>
-#include <bit>
-#include <cassert>
-#include <charconv>
-#include <cmath>
-#include <compare>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
-#include <format>
-#include <functional>
-#include <initializer_list>
 #include <limits>
-#include <map>
-#include <memory>
 #include <optional>
-#include <set>
 #include <span>
-#include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <variant>
-#include <vector>
 
 export module orm:model;
 
@@ -156,552 +136,556 @@ constexpr auto uniqueMemberNames() -> bool
     return true;
 }
 }
-export {
- // namespace detail
-
-/**
- * @brief Compile-time override of one aggregate member's SQL column name.
- */
-template <auto Member, reflection::FixedString SqlName>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-struct ColumnName
+export
 {
-    inline static constexpr auto member = Member;
-    inline static constexpr auto sqlName = SqlName;
-};
+    // namespace detail
 
-/**
- * @brief Creates a typed SQL column-name override.
- */
-template <auto Member, reflection::FixedString SqlName>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-consteval auto columnName() -> ColumnName<Member, SqlName>
-{
-    static_assert(not SqlName.view().empty(), "ORM_MODEL_COLUMN_MAPPING: a mapped SQL column name must not be empty");
-    return {};
-}
-
-template <typename... Definitions>
-struct ColumnNames
-{
-    static_assert((requires {
-                      Definitions::member;
-                      Definitions::sqlName;
-                  } && ...),
-                  "ORM_MODEL_COLUMN_MAPPING: columnNames() accepts only columnName<Member, SqlName>() definitions");
-
-    template <typename Model>
-    [[nodiscard]] static consteval auto isValidFor() -> bool
+    /**
+     * @brief Compile-time override of one aggregate member's SQL column name.
+     */
+    template <auto Member, reflection::FixedString SqlName>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    struct ColumnName
     {
-        if constexpr (not(std::same_as<detail::member_owner_t<Definitions::member>, Model> && ...))
-        {
-            return false;
-        }
-        else if constexpr (not(detail::memberExists<Model, Definitions::member>() && ...))
-        {
-            return false;
-        }
-        else if constexpr (not(detail::isPersistentColumnMember<Definitions::member> && ...))
-        {
-            return false;
-        }
-        else if constexpr (not detail::uniqueMemberNames<Definitions::member...>())
-        {
-            return false;
-        }
-        else
-        {
-            return ((not Definitions::sqlName.view().empty()) && ...);
-        }
+        inline static constexpr auto member = Member;
+        inline static constexpr auto sqlName = SqlName;
+    };
+
+    /**
+     * @brief Creates a typed SQL column-name override.
+     */
+    template <auto Member, reflection::FixedString SqlName>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    consteval auto columnName() -> ColumnName<Member, SqlName>
+    {
+        static_assert(not SqlName.view().empty(),
+                      "ORM_MODEL_COLUMN_MAPPING: a mapped SQL column name must not be empty");
+        return {};
     }
 
-    [[nodiscard]] consteval auto find(std::string_view memberName) const -> std::optional<std::string_view>
+    template <typename... Definitions>
+    struct ColumnNames
     {
-        std::optional<std::string_view> result;
-        (
-            [&]
+        static_assert((requires {
+                          Definitions::member;
+                          Definitions::sqlName;
+                      } && ...),
+                      "ORM_MODEL_COLUMN_MAPPING: columnNames() accepts only columnName<Member, SqlName>() definitions");
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto isValidFor() -> bool
+        {
+            if constexpr (not(std::same_as<detail::member_owner_t<Definitions::member>, Model> && ...))
             {
-                if (detail::reflectedMemberName<Definitions::member>() == memberName)
+                return false;
+            }
+            else if constexpr (not(detail::memberExists<Model, Definitions::member>() && ...))
+            {
+                return false;
+            }
+            else if constexpr (not(detail::isPersistentColumnMember<Definitions::member> && ...))
+            {
+                return false;
+            }
+            else if constexpr (not detail::uniqueMemberNames<Definitions::member...>())
+            {
+                return false;
+            }
+            else
+            {
+                return ((not Definitions::sqlName.view().empty()) && ...);
+            }
+        }
+
+        [[nodiscard]] consteval auto find(std::string_view memberName) const -> std::optional<std::string_view>
+        {
+            std::optional<std::string_view> result;
+            (
+                [&]
                 {
-                    result = Definitions::sqlName.view();
-                }
-            }(),
-            ...);
-        return result;
-    }
-};
+                    if (detail::reflectedMemberName<Definitions::member>() == memberName)
+                    {
+                        result = Definitions::sqlName.view();
+                    }
+                }(),
+                ...);
+            return result;
+        }
+    };
 
-/**
- * @brief Groups typed SQL column-name overrides.
- */
-template <typename... Definitions>
-consteval auto columnNames(Definitions...) -> ColumnNames<Definitions...>
-{
-    return {};
-}
-
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-struct PrimaryKey
-{
-    inline static constexpr std::size_t size = sizeof...(Members);
-
-    template <typename Model>
-    [[nodiscard]] static consteval auto isValidFor() -> bool
+    /**
+     * @brief Groups typed SQL column-name overrides.
+     */
+    template <typename... Definitions>
+    consteval auto columnNames(Definitions...) -> ColumnNames<Definitions...>
     {
-        if constexpr (sizeof...(Members) == 0)
+        return {};
+    }
+
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    struct PrimaryKey
+    {
+        inline static constexpr std::size_t size = sizeof...(Members);
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto isValidFor() -> bool
         {
-            return true;
+            if constexpr (sizeof...(Members) == 0)
+            {
+                return true;
+            }
+            else
+            {
+                return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
+                       (detail::memberExists<Model, Members>() && ...) &&
+                       (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
+            }
+        }
+
+        [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
+        {
+            if constexpr (sizeof...(Members) == 0)
+            {
+                return false;
+            }
+            else
+            {
+                const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
+                return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
+                                  nameStorage);
+            }
+        }
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto indices()
+        {
+            return std::array<std::size_t, sizeof...(Members)>{detail::memberIndex<Model, Members>()...};
+        }
+    };
+
+    /**
+     * @brief Defines an ordered, typed primary key. An empty definition makes the
+     * model explicitly keyless.
+     */
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    consteval auto primaryKey() -> PrimaryKey<Members...>
+    {
+        return {};
+    }
+
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    struct AutoIncrement
+    {
+        inline static constexpr std::size_t size = sizeof...(Members);
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto isValidFor() -> bool
+        {
+            if constexpr (sizeof...(Members) == 0)
+            {
+                return true;
+            }
+            else
+            {
+                return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
+                       (detail::memberExists<Model, Members>() && ...) &&
+                       (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
+            }
+        }
+
+        [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
+        {
+            if constexpr (sizeof...(Members) == 0)
+            {
+                return false;
+            }
+            else
+            {
+                const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
+                return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
+                                  nameStorage);
+            }
+        }
+    };
+
+    /**
+     * @brief Defines typed auto-increment members. Static-model validation further
+     * restricts this to one non-null int primary-key member.
+     */
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    consteval auto autoIncrement() -> AutoIncrement<Members...>
+    {
+        return {};
+    }
+
+    template <typename T>
+    struct LogicalTypeTraits;
+
+    template <>
+    struct LogicalTypeTraits<bool>
+    {
+        inline static constexpr auto value = ColumnType::Bool;
+    };
+
+    template <>
+    struct LogicalTypeTraits<char>
+    {
+        inline static constexpr auto value = ColumnType::Char;
+    };
+
+    template <>
+    struct LogicalTypeTraits<signed char>
+    {
+        inline static constexpr auto value = ColumnType::Char;
+    };
+
+    template <>
+    struct LogicalTypeTraits<unsigned char>
+    {
+        inline static constexpr auto value = ColumnType::UnsignedChar;
+    };
+
+    template <>
+    struct LogicalTypeTraits<short>
+    {
+        inline static constexpr auto value = ColumnType::Short;
+    };
+
+    template <>
+    struct LogicalTypeTraits<unsigned short>
+    {
+        inline static constexpr auto value = ColumnType::UnsignedShort;
+    };
+
+    template <>
+    struct LogicalTypeTraits<int>
+    {
+        inline static constexpr auto value = ColumnType::Int;
+    };
+
+    template <>
+    struct LogicalTypeTraits<unsigned int>
+    {
+        inline static constexpr auto value = ColumnType::UnsignedInt;
+    };
+
+    template <>
+    struct LogicalTypeTraits<long>
+    {
+        inline static constexpr auto value = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
+    };
+
+    template <>
+    struct LogicalTypeTraits<unsigned long>
+    {
+        inline static constexpr auto value =
+            sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
+    };
+
+    template <>
+    struct LogicalTypeTraits<long long>
+    {
+        inline static constexpr auto value = ColumnType::LongLong;
+    };
+
+    template <>
+    struct LogicalTypeTraits<unsigned long long>
+    {
+        inline static constexpr auto value = ColumnType::UnsignedLongLong;
+    };
+
+    template <>
+    struct LogicalTypeTraits<float>
+    {
+        inline static constexpr auto value = ColumnType::Float;
+    };
+
+    template <>
+    struct LogicalTypeTraits<double>
+    {
+        inline static constexpr auto value = ColumnType::Double;
+    };
+
+    template <>
+    struct LogicalTypeTraits<std::string>
+    {
+        inline static constexpr auto value = ColumnType::String;
+    };
+
+    /**
+     * @brief Resolves a C++ field type to its logical database type at compile
+     * time. Users may extend the closed set through LogicalTypeTraits<T>.
+     */
+    template <typename T>
+    consteval auto logicalType() -> ColumnType
+    {
+        using field_t = std::remove_cvref_t<T>;
+        using value_t = std::remove_cv_t<detail::static_optional_value_t<field_t>>;
+
+        if constexpr (requires { LogicalTypeTraits<value_t>::value; })
+        {
+            return LogicalTypeTraits<value_t>::value;
         }
         else
         {
-            return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
-                   (detail::memberExists<Model, Members>() && ...) &&
-                   (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
+            static_assert(detail::alwaysFalse<value_t>,
+                          "ORM_MODEL_LOGICAL_TYPE: unsupported model field type; specialize "
+                          "orm::model::LogicalTypeTraits<T>.");
         }
     }
 
-    [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
-    {
-        if constexpr (sizeof...(Members) == 0)
-        {
-            return false;
-        }
-        else
-        {
-            const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
-            return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
-                              nameStorage);
-        }
-    }
-
-    template <typename Model>
-    [[nodiscard]] static consteval auto indices()
-    {
-        return std::array<std::size_t, sizeof...(Members)>{detail::memberIndex<Model, Members>()...};
-    }
-};
-
-/**
- * @brief Defines an ordered, typed primary key. An empty definition makes the
- * model explicitly keyless.
- */
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-consteval auto primaryKey() -> PrimaryKey<Members...>
-{
-    return {};
-}
-
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-struct AutoIncrement
-{
-    inline static constexpr std::size_t size = sizeof...(Members);
-
-    template <typename Model>
-    [[nodiscard]] static consteval auto isValidFor() -> bool
-    {
-        if constexpr (sizeof...(Members) == 0)
-        {
-            return true;
-        }
-        else
-        {
-            return (std::same_as<detail::member_owner_t<Members>, Model> && ...) &&
-                   (detail::memberExists<Model, Members>() && ...) &&
-                   (detail::isPersistentColumnMember<Members> && ...) && detail::uniqueMemberNames<Members...>();
-        }
-    }
-
-    [[nodiscard]] constexpr auto contains(std::string_view memberName) const -> bool
-    {
-        if constexpr (sizeof...(Members) == 0)
-        {
-            return false;
-        }
-        else
-        {
-            const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
-            return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
-                              nameStorage);
-        }
-    }
-};
-
-/**
- * @brief Defines typed auto-increment members. Static-model validation further
- * restricts this to one non-null int primary-key member.
- */
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-consteval auto autoIncrement() -> AutoIncrement<Members...>
-{
-    return {};
-}
-
-template <typename T>
-struct LogicalTypeTraits;
-
-template <>
-struct LogicalTypeTraits<bool>
-{
-    inline static constexpr auto value = ColumnType::Bool;
-};
-
-template <>
-struct LogicalTypeTraits<char>
-{
-    inline static constexpr auto value = ColumnType::Char;
-};
-
-template <>
-struct LogicalTypeTraits<signed char>
-{
-    inline static constexpr auto value = ColumnType::Char;
-};
-
-template <>
-struct LogicalTypeTraits<unsigned char>
-{
-    inline static constexpr auto value = ColumnType::UnsignedChar;
-};
-
-template <>
-struct LogicalTypeTraits<short>
-{
-    inline static constexpr auto value = ColumnType::Short;
-};
-
-template <>
-struct LogicalTypeTraits<unsigned short>
-{
-    inline static constexpr auto value = ColumnType::UnsignedShort;
-};
-
-template <>
-struct LogicalTypeTraits<int>
-{
-    inline static constexpr auto value = ColumnType::Int;
-};
-
-template <>
-struct LogicalTypeTraits<unsigned int>
-{
-    inline static constexpr auto value = ColumnType::UnsignedInt;
-};
-
-template <>
-struct LogicalTypeTraits<long>
-{
-    inline static constexpr auto value = sizeof(long) > sizeof(int) ? ColumnType::LongLong : ColumnType::Int;
-};
-
-template <>
-struct LogicalTypeTraits<unsigned long>
-{
-    inline static constexpr auto
-        value = sizeof(unsigned long) > sizeof(unsigned int) ? ColumnType::UnsignedLongLong : ColumnType::UnsignedInt;
-};
-
-template <>
-struct LogicalTypeTraits<long long>
-{
-    inline static constexpr auto value = ColumnType::LongLong;
-};
-
-template <>
-struct LogicalTypeTraits<unsigned long long>
-{
-    inline static constexpr auto value = ColumnType::UnsignedLongLong;
-};
-
-template <>
-struct LogicalTypeTraits<float>
-{
-    inline static constexpr auto value = ColumnType::Float;
-};
-
-template <>
-struct LogicalTypeTraits<double>
-{
-    inline static constexpr auto value = ColumnType::Double;
-};
-
-template <>
-struct LogicalTypeTraits<std::string>
-{
-    inline static constexpr auto value = ColumnType::String;
-};
-
-/**
- * @brief Resolves a C++ field type to its logical database type at compile
- * time. Users may extend the closed set through LogicalTypeTraits<T>.
- */
-template <typename T>
-consteval auto logicalType() -> ColumnType
-{
-    using field_t = std::remove_cvref_t<T>;
-    using value_t = std::remove_cv_t<detail::static_optional_value_t<field_t>>;
-
-    if constexpr (requires { LogicalTypeTraits<value_t>::value; })
-    {
-        return LogicalTypeTraits<value_t>::value;
-    }
-    else
-    {
-        static_assert(detail::alwaysFalse<value_t>, "ORM_MODEL_LOGICAL_TYPE: unsupported model field type; specialize "
-                                                    "orm::model::LogicalTypeTraits<T>.");
-    }
-}
-
-template <typename T>
-inline constexpr bool isNullable = detail::StaticOptionalTraits<std::remove_cvref_t<T>>::isOptional;
-
+    template <typename T>
+    inline constexpr bool isNullable = detail::StaticOptionalTraits<std::remove_cvref_t<T>>::isOptional;
 }
 } // namespace orm::model
 
 namespace orm
 {
-export {
-
-template <auto Member, reflection::FixedString SqlName>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-consteval auto columnName()
+export
 {
-    return model::columnName<Member, SqlName>();
-}
 
-template <typename... Definitions>
-consteval auto columnNames(Definitions... definitions)
-{
-    return model::columnNames(definitions...);
-}
+    template <auto Member, reflection::FixedString SqlName>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    consteval auto columnName()
+    {
+        return model::columnName<Member, SqlName>();
+    }
 
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-consteval auto primaryKey()
-{
-    return model::primaryKey<Members...>();
-}
+    template <typename... Definitions>
+    consteval auto columnNames(Definitions... definitions)
+    {
+        return model::columnNames(definitions...);
+    }
 
-template <auto... Members>
-    requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
-consteval auto autoIncrement()
-{
-    return model::autoIncrement<Members...>();
-}
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    consteval auto primaryKey()
+    {
+        return model::primaryKey<Members...>();
+    }
 
-template <typename T>
-consteval auto logicalType() -> model::ColumnType
-{
-    return model::logicalType<T>();
-}
+    template <auto... Members>
+        requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
+    consteval auto autoIncrement()
+    {
+        return model::autoIncrement<Members...>();
+    }
 
+    template <typename T>
+    consteval auto logicalType() -> model::ColumnType
+    {
+        return model::logicalType<T>();
+    }
 }
 } // namespace orm
 
 // model/ModelView.hpp
 namespace orm::model
 {
-export {
-
-struct TypeId
+export
 {
-    const void* value{};
 
-    constexpr auto operator==(const TypeId&) const noexcept -> bool = default;
-};
+    struct TypeId
+    {
+        const void* value{};
 
-
+        constexpr auto operator==(const TypeId&) const noexcept -> bool = default;
+    };
 }
 namespace detail
 {
 template <typename T>
 inline constexpr unsigned char typeToken{};
 }
-export {
- // namespace detail
-
-template <typename T>
-consteval auto typeId() noexcept -> TypeId
+export
 {
-    return TypeId{&detail::typeToken<T>};
-}
+    // namespace detail
 
-enum class FieldKind
-{
-    Scalar,
-    ToOne,
-};
+    template <typename T>
+    consteval auto typeId() noexcept -> TypeId
+    {
+        return TypeId{&detail::typeToken<T>};
+    }
 
-inline constexpr auto noTargetModel = std::numeric_limits<std::size_t>::max();
+    enum class FieldKind
+    {
+        Scalar,
+        ToOne,
+    };
 
-struct ColumnView
-{
-    std::size_t fieldIndex{};
-    std::string_view fieldName;
-    std::string_view name;
+    inline constexpr auto noTargetModel = std::numeric_limits<std::size_t>::max();
+
+    struct ColumnView
+    {
+        std::size_t fieldIndex{};
+        std::string_view fieldName;
+        std::string_view name;
+        /**
+         * Scalar logical type. To-one fields intentionally have no single type:
+         * their physical foreign-key columns inherit the types of the target
+         * model's primary-key columns.
+         */
+        std::optional<ColumnType> type;
+        FieldKind kind{FieldKind::Scalar};
+        std::size_t targetModelIndex{noTargetModel};
+        bool isPrimaryKey{};
+        bool isAutoIncrement{};
+        bool isNotNull{};
+
+        constexpr auto operator==(const ColumnView&) const noexcept -> bool = default;
+    };
+
+    struct JunctionView
+    {
+        std::string_view tableName;
+        std::span<const std::string_view> ownerColumns;
+        std::span<const std::string_view> targetColumns;
+        bool owningSide{};
+
+        [[nodiscard]] constexpr auto isConfigured() const noexcept -> bool
+        {
+            return not tableName.empty();
+        }
+    };
+
+    struct RelationView
+    {
+        std::size_t fieldIndex{};
+        std::string_view fieldName;
+        std::string_view columnName;
+        RelationKind kind{RelationKind::ToOne};
+        std::string_view mappedBy;
+        bool nullable{};
+        std::size_t targetModelIndex{noTargetModel};
+        JunctionView junction{};
+    };
+
     /**
-     * Scalar logical type. To-one fields intentionally have no single type:
-     * their physical foreign-key columns inherit the types of the target
-     * model's primary-key columns.
+     * @brief Immutable data stored once for a model inside a closed schema.
      */
-    std::optional<ColumnType> type;
-    FieldKind kind{FieldKind::Scalar};
-    std::size_t targetModelIndex{noTargetModel};
-    bool isPrimaryKey{};
-    bool isAutoIncrement{};
-    bool isNotNull{};
-
-    constexpr auto operator==(const ColumnView&) const noexcept -> bool = default;
-};
-
-struct JunctionView
-{
-    std::string_view tableName;
-    std::span<const std::string_view> ownerColumns;
-    std::span<const std::string_view> targetColumns;
-    bool owningSide{};
-
-    [[nodiscard]] constexpr auto isConfigured() const noexcept -> bool
+    struct ModelDataView
     {
-        return not tableName.empty();
-    }
-};
+        TypeId type;
+        std::size_t schemaIndex{};
+        std::string_view typeName;
+        std::string_view tableName;
+        std::span<const ColumnView> columns;
+        std::span<const std::size_t> primaryKeyIndices;
+        std::span<const RelationView> relations;
 
-struct RelationView
-{
-    std::size_t fieldIndex{};
-    std::string_view fieldName;
-    std::string_view columnName;
-    RelationKind kind{RelationKind::ToOne};
-    std::string_view mappedBy;
-    bool nullable{};
-    std::size_t targetModelIndex{noTargetModel};
-    JunctionView junction{};
-};
-
-/**
- * @brief Immutable data stored once for a model inside a closed schema.
- */
-struct ModelDataView
-{
-    TypeId type;
-    std::size_t schemaIndex{};
-    std::string_view typeName;
-    std::string_view tableName;
-    std::span<const ColumnView> columns;
-    std::span<const std::size_t> primaryKeyIndices;
-    std::span<const RelationView> relations;
-
-    [[nodiscard]] constexpr auto findColumn(std::string_view fieldOrSqlName) const noexcept -> const ColumnView*
-    {
-        for (const auto& column : columns)
+        [[nodiscard]] constexpr auto findColumn(std::string_view fieldOrSqlName) const noexcept -> const ColumnView*
         {
-            if (column.fieldName == fieldOrSqlName || column.name == fieldOrSqlName)
+            for (const auto& column : columns)
             {
-                return &column;
+                if (column.fieldName == fieldOrSqlName || column.name == fieldOrSqlName)
+                {
+                    return &column;
+                }
             }
+            return nullptr;
         }
-        return nullptr;
-    }
 
-    [[nodiscard]] constexpr auto findRelation(std::string_view fieldOrSqlName) const noexcept -> const RelationView*
-    {
-        for (const auto& relation : relations)
+        [[nodiscard]] constexpr auto findRelation(std::string_view fieldOrSqlName) const noexcept -> const RelationView*
         {
-            if (relation.fieldName == fieldOrSqlName)
+            for (const auto& relation : relations)
             {
-                return &relation;
+                if (relation.fieldName == fieldOrSqlName)
+                {
+                    return &relation;
+                }
             }
+            for (const auto& relation : relations)
+            {
+                if (relation.columnName == fieldOrSqlName)
+                {
+                    return &relation;
+                }
+            }
+            return nullptr;
         }
-        for (const auto& relation : relations)
+
+        [[nodiscard]] constexpr auto findRelationField(std::string_view fieldName) const noexcept -> const RelationView*
         {
-            if (relation.columnName == fieldOrSqlName)
+            for (const auto& relation : relations)
             {
-                return &relation;
+                if (relation.fieldName == fieldName)
+                {
+                    return &relation;
+                }
             }
+            return nullptr;
         }
-        return nullptr;
-    }
+    };
 
-    [[nodiscard]] constexpr auto findRelationField(std::string_view fieldName) const noexcept -> const RelationView*
+    struct SchemaView;
+
+    /**
+     * @brief Trivially-copyable handle to one model in immutable Schema storage.
+     */
+    struct ModelView
     {
-        for (const auto& relation : relations)
+        const SchemaView* schema{};
+        std::size_t modelIndex{noTargetModel};
+
+        [[nodiscard]] constexpr auto valid() const noexcept -> bool;
+        [[nodiscard]] constexpr explicit operator bool() const noexcept;
+        [[nodiscard]] constexpr auto operator==(std::nullptr_t) const noexcept -> bool;
+        [[nodiscard]] constexpr auto operator==(const ModelView&) const noexcept -> bool = default;
+        [[nodiscard]] constexpr auto operator*() const noexcept -> const ModelView&;
+        [[nodiscard]] constexpr auto operator->() const noexcept -> const ModelDataView*;
+        [[nodiscard]] constexpr auto data() const noexcept -> const ModelDataView&;
+
+        [[nodiscard]] constexpr auto findColumn(std::string_view fieldOrSqlName) const noexcept -> const ColumnView*;
+        [[nodiscard]] constexpr auto
+        findRelation(std::string_view fieldOrSqlName) const noexcept -> const RelationView*;
+        [[nodiscard]] constexpr auto
+        findRelationField(std::string_view fieldName) const noexcept -> const RelationView*;
+        [[nodiscard]] constexpr auto resolveTarget(const ColumnView& column) const noexcept -> ModelView;
+        [[nodiscard]] constexpr auto resolveTarget(const RelationView& relation) const noexcept -> ModelView;
+        [[nodiscard]] constexpr auto resolveJunction(const RelationView& relation) const noexcept -> JunctionView;
+        [[nodiscard]] constexpr auto primaryKeySize() const noexcept -> std::size_t;
+    };
+
+    /**
+     * @brief Immutable view over a statically materialized schema.
+     */
+    struct SchemaView
+    {
+        std::span<const ModelDataView* const> models;
+
+        [[nodiscard]] constexpr auto at(std::size_t index) const noexcept -> ModelView
         {
-            if (relation.fieldName == fieldName)
-            {
-                return &relation;
-            }
+            return ModelView{this, index < models.size() ? index : noTargetModel};
         }
-        return nullptr;
-    }
-};
 
-struct SchemaView;
-
-/**
- * @brief Trivially-copyable handle to one model in immutable Schema storage.
- */
-struct ModelView
-{
-    const SchemaView* schema{};
-    std::size_t modelIndex{noTargetModel};
-
-    [[nodiscard]] constexpr auto valid() const noexcept -> bool;
-    [[nodiscard]] constexpr explicit operator bool() const noexcept;
-    [[nodiscard]] constexpr auto operator==(std::nullptr_t) const noexcept -> bool;
-    [[nodiscard]] constexpr auto operator==(const ModelView&) const noexcept -> bool = default;
-    [[nodiscard]] constexpr auto operator*() const noexcept -> const ModelView&;
-    [[nodiscard]] constexpr auto operator->() const noexcept -> const ModelDataView*;
-    [[nodiscard]] constexpr auto data() const noexcept -> const ModelDataView&;
-
-    [[nodiscard]] constexpr auto findColumn(std::string_view fieldOrSqlName) const noexcept -> const ColumnView*;
-    [[nodiscard]] constexpr auto findRelation(std::string_view fieldOrSqlName) const noexcept -> const RelationView*;
-    [[nodiscard]] constexpr auto findRelationField(std::string_view fieldName) const noexcept -> const RelationView*;
-    [[nodiscard]] constexpr auto resolveTarget(const ColumnView& column) const noexcept -> ModelView;
-    [[nodiscard]] constexpr auto resolveTarget(const RelationView& relation) const noexcept -> ModelView;
-    [[nodiscard]] constexpr auto resolveJunction(const RelationView& relation) const noexcept -> JunctionView;
-    [[nodiscard]] constexpr auto primaryKeySize() const noexcept -> std::size_t;
-};
-
-/**
- * @brief Immutable view over a statically materialized schema.
- */
-struct SchemaView
-{
-    std::span<const ModelDataView* const> models;
-
-    [[nodiscard]] constexpr auto at(std::size_t index) const noexcept -> ModelView
-    {
-        return ModelView{this, index < models.size() ? index : noTargetModel};
-    }
-
-    [[nodiscard]] constexpr auto find(TypeId type) const noexcept -> ModelView
-    {
-        for (std::size_t index = 0; index < models.size(); ++index)
+        [[nodiscard]] constexpr auto find(TypeId type) const noexcept -> ModelView
         {
-            if (models[index]->type == type)
+            for (std::size_t index = 0; index < models.size(); ++index)
             {
-                return at(index);
+                if (models[index]->type == type)
+                {
+                    return at(index);
+                }
             }
+            return ModelView{this, noTargetModel};
         }
-        return ModelView{this, noTargetModel};
-    }
 
-    [[nodiscard]] constexpr auto findTable(std::string_view tableName) const noexcept -> ModelView
-    {
-        for (std::size_t index = 0; index < models.size(); ++index)
+        [[nodiscard]] constexpr auto findTable(std::string_view tableName) const noexcept -> ModelView
         {
-            if (models[index]->tableName == tableName)
+            for (std::size_t index = 0; index < models.size(); ++index)
             {
-                return at(index);
+                if (models[index]->tableName == tableName)
+                {
+                    return at(index);
+                }
             }
+            return ModelView{this, noTargetModel};
         }
-        return ModelView{this, noTargetModel};
-    }
-};
+    };
 
 } // exported model view types
 
@@ -808,12 +792,11 @@ static_assert(std::is_trivially_copyable_v<SchemaView>);
 // model/StaticModel.hpp
 namespace orm::model
 {
-export {
+export
+{
 
-template <typename... Models>
-struct Schema;
-
-
+    template <typename... Models>
+    struct Schema;
 }
 namespace detail
 {
@@ -1727,91 +1710,92 @@ consteval auto hasUniqueTypes() -> bool
     return unique;
 }
 }
-export {
- // namespace detail
-
-/**
- * @brief Materializes one aggregate model's complete scalar metadata in static
- * storage.
- */
-template <typename T, typename SchemaType>
-struct StaticModel
+export
 {
-    static_assert(detail::StaticSchemaTraits<SchemaType>::template contains<T>,
-                  "ORM_SCHEMA_MODEL_MISSING: a static descriptor requires its model to belong to Schema");
-    static_assert(std::is_aggregate_v<T>, "ORM_MODEL_AGGREGATE: an ORM model must be an aggregate");
-    static_assert(reflection::fieldCount<T> <= 128,
-                  "ORM_MODEL_FIELD_LIMIT: automatic model reflection supports at most 128 fields");
-    static_assert(detail::hasValidTableNameDefinition<T>(),
-                  "ORM_MODEL_TABLE_NAME: table_name must be a non-empty orm::reflection::FixedString");
-    static_assert(detail::hasValidColumnNamesDefinition<T>(),
-                  "ORM_MODEL_COLUMN_MAPPING: columns_names must be a valid typed columnNames(...) definition");
-    static_assert(
-        detail::hasValidPrimaryKeyDefinition<T>(),
-        "ORM_MODEL_PRIMARY_KEY_DEFINITION: id_columns must be a valid typed primaryKey<Members...>() definition");
-    static_assert(detail::hasValidAutoIncrementDefinition<T>(),
-                  "ORM_MODEL_AUTO_INCREMENT_DEFINITION: auto_increment_columns must be a valid typed "
-                  "autoIncrement<Members...>() definition");
-    static_assert(detail::hasValidRelationsDefinition<T>(),
-                  "ORM_MODEL_RELATIONS_DEFINITION: relations must be a typed orm::relations(...) definition");
-    static_assert(detail::hasCompleteRelationDefinitions<T>(),
-                  "ORM_RELATION_DESCRIPTOR_COUNT: every collection requires exactly one matching descriptor");
+    // namespace detail
 
-    inline static constexpr auto columns = detail::staticColumns<T, SchemaType>;
+    /**
+     * @brief Materializes one aggregate model's complete scalar metadata in static
+     * storage.
+     */
+    template <typename T, typename SchemaType>
+    struct StaticModel
+    {
+        static_assert(detail::StaticSchemaTraits<SchemaType>::template contains<T>,
+                      "ORM_SCHEMA_MODEL_MISSING: a static descriptor requires its model to belong to Schema");
+        static_assert(std::is_aggregate_v<T>, "ORM_MODEL_AGGREGATE: an ORM model must be an aggregate");
+        static_assert(reflection::fieldCount<T> <= 128,
+                      "ORM_MODEL_FIELD_LIMIT: automatic model reflection supports at most 128 fields");
+        static_assert(detail::hasValidTableNameDefinition<T>(),
+                      "ORM_MODEL_TABLE_NAME: table_name must be a non-empty orm::reflection::FixedString");
+        static_assert(detail::hasValidColumnNamesDefinition<T>(),
+                      "ORM_MODEL_COLUMN_MAPPING: columns_names must be a valid typed columnNames(...) definition");
+        static_assert(
+            detail::hasValidPrimaryKeyDefinition<T>(),
+            "ORM_MODEL_PRIMARY_KEY_DEFINITION: id_columns must be a valid typed primaryKey<Members...>() definition");
+        static_assert(detail::hasValidAutoIncrementDefinition<T>(),
+                      "ORM_MODEL_AUTO_INCREMENT_DEFINITION: auto_increment_columns must be a valid typed "
+                      "autoIncrement<Members...>() definition");
+        static_assert(detail::hasValidRelationsDefinition<T>(),
+                      "ORM_MODEL_RELATIONS_DEFINITION: relations must be a typed orm::relations(...) definition");
+        static_assert(detail::hasCompleteRelationDefinitions<T>(),
+                      "ORM_RELATION_DESCRIPTOR_COUNT: every collection requires exactly one matching descriptor");
 
-    static_assert(detail::hasValidColumnNames(columns),
-                  "ORM_MODEL_COLUMN_NAME: model field and SQL column names must be non-empty and unique");
-    static_assert(detail::hasValidPrimaryKey(columns),
-                  "ORM_MODEL_PRIMARY_KEY: primary-key members must be non-null scalar fields");
-    static_assert(detail::hasValidAutoIncrement(columns), "ORM_MODEL_AUTO_INCREMENT: auto increment requires one "
-                                                          "non-null int member which is the model's only primary key");
+        inline static constexpr auto columns = detail::staticColumns<T, SchemaType>;
 
-    inline static constexpr auto primaryKeyIndices = detail::staticPrimaryKeyIndices<T, SchemaType>;
-    static_assert(
-        []
-        {
-            for (const auto index : primaryKeyIndices)
+        static_assert(detail::hasValidColumnNames(columns),
+                      "ORM_MODEL_COLUMN_NAME: model field and SQL column names must be non-empty and unique");
+        static_assert(detail::hasValidPrimaryKey(columns),
+                      "ORM_MODEL_PRIMARY_KEY: primary-key members must be non-null scalar fields");
+        static_assert(detail::hasValidAutoIncrement(columns),
+                      "ORM_MODEL_AUTO_INCREMENT: auto increment requires one "
+                      "non-null int member which is the model's only primary key");
+
+        inline static constexpr auto primaryKeyIndices = detail::staticPrimaryKeyIndices<T, SchemaType>;
+        static_assert(
+            []
             {
-                if (index >= columns.size())
+                for (const auto index : primaryKeyIndices)
                 {
-                    return false;
+                    if (index >= columns.size())
+                    {
+                        return false;
+                    }
                 }
-            }
-            return true;
-        }(),
-        "ORM_MODEL_PRIMARY_KEY_RELATION: primary keys must refer to scalar columns");
+                return true;
+            }(),
+            "ORM_MODEL_PRIMARY_KEY_RELATION: primary keys must refer to scalar columns");
 
-    inline static constexpr auto relations = detail::makeRelations<T, SchemaType>();
+        inline static constexpr auto relations = detail::makeRelations<T, SchemaType>();
 
-    inline static constexpr ModelDataView data{
-        .type = typeId<T>(),
-        .schemaIndex = detail::StaticSchemaTraits<SchemaType>::template indexOf<T>(),
-        .typeName = detail::modelTypeName<T>(),
-        .tableName = detail::mappedTableName<T>(),
-        .columns = columns,
-        .primaryKeyIndices = primaryKeyIndices,
-        .relations = relations,
+        inline static constexpr ModelDataView data{
+            .type = typeId<T>(),
+            .schemaIndex = detail::StaticSchemaTraits<SchemaType>::template indexOf<T>(),
+            .typeName = detail::modelTypeName<T>(),
+            .tableName = detail::mappedTableName<T>(),
+            .columns = columns,
+            .primaryKeyIndices = primaryKeyIndices,
+            .relations = relations,
+        };
     };
-};
 
-template <typename SchemaType, typename T>
-[[nodiscard]] consteval auto modelDescriptor() noexcept -> StaticModel<T, SchemaType>
-{
-    return {};
-}
+    template <typename SchemaType, typename T>
+    [[nodiscard]] consteval auto modelDescriptor() noexcept -> StaticModel<T, SchemaType>
+    {
+        return {};
+    }
 
-template <typename SchemaType, typename T>
-[[nodiscard]] constexpr auto modelView() noexcept -> ModelView
-{
-    return ModelView{&SchemaType::view, detail::StaticSchemaTraits<SchemaType>::template indexOf<T>()};
-}
+    template <typename SchemaType, typename T>
+    [[nodiscard]] constexpr auto modelView() noexcept -> ModelView
+    {
+        return ModelView{&SchemaType::view, detail::StaticSchemaTraits<SchemaType>::template indexOf<T>()};
+    }
 
-template <typename T>
-[[nodiscard]] consteval auto tableName() -> std::string_view
-{
-    return detail::mappedTableName<T>();
-}
-
+    template <typename T>
+    [[nodiscard]] consteval auto tableName() -> std::string_view
+    {
+        return detail::mappedTableName<T>();
+    }
 }
 } // namespace orm::model
 
@@ -2102,92 +2086,93 @@ consteval auto hasValidJunctions(const std::array<const ModelDataView*, Size>& m
     return true;
 }
 }
-export {
- // namespace detail
-
-/**
- * @brief A closed compile-time set of ORM models.
- */
-template <typename... Models>
-struct Schema
+export
 {
-    static_assert(detail::hasUniqueTypes<Models...>(),
-                  "ORM_SCHEMA_DUPLICATE_MODEL: a schema may list a model type only once");
-    static_assert(detail::hasUniqueTableNames<Models...>(),
-                  "ORM_SCHEMA_DUPLICATE_TABLE: every model in a schema must use a unique table name");
+    // namespace detail
 
-    template <typename Model>
-    inline static constexpr bool contains = (std::same_as<Model, Models> || ...);
-
-    template <typename Model>
-    [[nodiscard]] static consteval auto indexOf() -> std::size_t
+    /**
+     * @brief A closed compile-time set of ORM models.
+     */
+    template <typename... Models>
+    struct Schema
     {
-        static_assert(contains<Model>, "ORM_SCHEMA_MODEL_MISSING: requested model type does not belong to this schema");
-        constexpr std::array<bool, sizeof...(Models)> matches{std::same_as<Model, Models>...};
-        for (std::size_t index = 0; index < matches.size(); ++index)
+        static_assert(detail::hasUniqueTypes<Models...>(),
+                      "ORM_SCHEMA_DUPLICATE_MODEL: a schema may list a model type only once");
+        static_assert(detail::hasUniqueTableNames<Models...>(),
+                      "ORM_SCHEMA_DUPLICATE_TABLE: every model in a schema must use a unique table name");
+
+        template <typename Model>
+        inline static constexpr bool contains = (std::same_as<Model, Models> || ...);
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto indexOf() -> std::size_t
         {
-            if (matches[index])
+            static_assert(contains<Model>,
+                          "ORM_SCHEMA_MODEL_MISSING: requested model type does not belong to this schema");
+            constexpr std::array<bool, sizeof...(Models)> matches{std::same_as<Model, Models>...};
+            for (std::size_t index = 0; index < matches.size(); ++index)
             {
-                return index;
+                if (matches[index])
+                {
+                    return index;
+                }
             }
+            return 0;
         }
-        return 0;
-    }
 
-    [[nodiscard]] static constexpr auto modelAt(std::size_t index) noexcept -> ModelView
+        [[nodiscard]] static constexpr auto modelAt(std::size_t index) noexcept -> ModelView
+        {
+            return view.at(index);
+        }
+
+        inline static constexpr std::array<const ModelDataView*, sizeof...(Models)> modelStorage{
+            &StaticModel<Models, Schema<Models...>>::data...};
+
+        static_assert(detail::hasUniquePhysicalColumnNames(modelStorage),
+                      "ORM_SCHEMA_COLUMN_COLLISION: scalar and generated foreign-key column names must be unique");
+
+        static_assert(detail::hasValidRelationTargets(modelStorage),
+                      "ORM_SCHEMA_RELATION_GRAPH: mappedBy must resolve to a compatible relation in the closed schema");
+        static_assert(
+            detail::hasValidJunctions(modelStorage),
+            "ORM_SCHEMA_JUNCTION: junction tables and columns must be unique and match endpoint primary keys");
+
+        inline static constexpr SchemaView view{.models = modelStorage};
+    };
+
+    template <typename SchemaType>
+    [[nodiscard]] constexpr auto schemaView() noexcept -> const SchemaView&
     {
-        return view.at(index);
+        return SchemaType::view;
     }
 
-    inline static constexpr std::array<const ModelDataView*, sizeof...(Models)> modelStorage{
-        &StaticModel<Models, Schema<Models...>>::data...};
-
-    static_assert(detail::hasUniquePhysicalColumnNames(modelStorage),
-                  "ORM_SCHEMA_COLUMN_COLLISION: scalar and generated foreign-key column names must be unique");
-
-    static_assert(detail::hasValidRelationTargets(modelStorage),
-                  "ORM_SCHEMA_RELATION_GRAPH: mappedBy must resolve to a compatible relation in the closed schema");
-    static_assert(detail::hasValidJunctions(modelStorage),
-                  "ORM_SCHEMA_JUNCTION: junction tables and columns must be unique and match endpoint primary keys");
-
-    inline static constexpr SchemaView view{.models = modelStorage};
-};
-
-template <typename SchemaType>
-[[nodiscard]] constexpr auto schemaView() noexcept -> const SchemaView&
-{
-    return SchemaType::view;
-}
-
-template <typename SchemaType, typename T>
-consteval auto requireSchemaModel() -> void
-{
-    static_assert(SchemaType::template contains<std::remove_cv_t<T>>,
-                  "ORM_SCHEMA_MODEL_MISSING: requested model type does not belong to the closed schema");
-}
-
+    template <typename SchemaType, typename T>
+    consteval auto requireSchemaModel() -> void
+    {
+        static_assert(SchemaType::template contains<std::remove_cv_t<T>>,
+                      "ORM_SCHEMA_MODEL_MISSING: requested model type does not belong to the closed schema");
+    }
 }
 } // namespace orm::model
 
 namespace orm
 {
-export {
-
-template <typename... Models>
-using Schema = model::Schema<Models...>;
-
-template <typename SchemaType, typename T>
-[[nodiscard]] consteval auto modelDescriptor() noexcept -> model::StaticModel<T, SchemaType>
+export
 {
-    return model::modelDescriptor<SchemaType, T>();
-}
 
-template <typename SchemaType, typename T>
-[[nodiscard]] constexpr auto modelView() noexcept -> model::ModelView
-{
-    return model::modelView<SchemaType, T>();
-}
+    template <typename... Models>
+    using Schema = model::Schema<Models...>;
 
+    template <typename SchemaType, typename T>
+    [[nodiscard]] consteval auto modelDescriptor() noexcept -> model::StaticModel<T, SchemaType>
+    {
+        return model::modelDescriptor<SchemaType, T>();
+    }
+
+    template <typename SchemaType, typename T>
+    [[nodiscard]] constexpr auto modelView() noexcept -> model::ModelView
+    {
+        return model::modelView<SchemaType, T>();
+    }
 }
 } // namespace orm
-

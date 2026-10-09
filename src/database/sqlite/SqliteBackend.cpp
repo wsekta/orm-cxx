@@ -1,7 +1,5 @@
 module;
 
-#include "soci/soci.h"
-#include "soci/sqlite3/soci-sqlite3.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -34,6 +32,9 @@ module;
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include "soci/soci.h"
+#include "soci/sqlite3/soci-sqlite3.h"
 
 module orm;
 

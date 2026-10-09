@@ -41,187 +41,196 @@ import :model;
 // query/QueryValue.hpp
 namespace orm::query
 {
-export {
-
-/**
- * @brief A value that can be bound as a query parameter.
- *
- * QueryValue stores the subset of C++ values supported by the SELECT query DSL.
- * Values are rendered as SOCI bind parameters, not interpolated into SQL.
- */
-class QueryValue
+export
 {
-public:
-    using Value = std::variant<int, long long, unsigned long long, double, std::string>;
-
-    QueryValue(bool inputValue) : logicalType{model::ColumnType::Bool}, value{static_cast<int>(inputValue)} {}
-    QueryValue(char inputValue) : logicalType{model::ColumnType::Char}, value{static_cast<int>(inputValue)} {}
-    QueryValue(signed char inputValue) : logicalType{model::ColumnType::Char}, value{static_cast<int>(inputValue)} {}
-    QueryValue(unsigned char inputValue)
-        : logicalType{model::ColumnType::UnsignedChar}, value{static_cast<int>(inputValue)}
-    {
-    }
-    QueryValue(short inputValue) : logicalType{model::ColumnType::Short}, value{static_cast<int>(inputValue)} {}
-    QueryValue(unsigned short inputValue)
-        : logicalType{model::ColumnType::UnsignedShort}, value{static_cast<int>(inputValue)}
-    {
-    }
-    QueryValue(int inputValue) : logicalType{model::ColumnType::Int}, value{inputValue} {}
-    QueryValue(unsigned int inputValue)
-        : logicalType{model::ColumnType::UnsignedInt}, value{static_cast<unsigned long long>(inputValue)}
-    {
-    }
-    QueryValue(long inputValue)
-        : logicalType{sizeof(long) > sizeof(int) ? model::ColumnType::LongLong : model::ColumnType::Int},
-          value{storeLong(inputValue)}
-    {
-    }
-    QueryValue(unsigned long inputValue)
-        : logicalType{sizeof(unsigned long) > sizeof(unsigned int) ? model::ColumnType::UnsignedLongLong :
-                                                                     model::ColumnType::UnsignedInt},
-          value{static_cast<unsigned long long>(inputValue)}
-    {
-    }
-    QueryValue(long long inputValue) : logicalType{model::ColumnType::LongLong}, value{inputValue} {}
-    QueryValue(unsigned long long inputValue) : logicalType{model::ColumnType::UnsignedLongLong}, value{inputValue} {}
-    QueryValue(float inputValue) : logicalType{model::ColumnType::Float}, value{static_cast<double>(inputValue)} {}
-    QueryValue(double inputValue) : logicalType{model::ColumnType::Double}, value{inputValue} {}
-    QueryValue(const char* inputValue) : logicalType{model::ColumnType::String}, value{std::string{inputValue}} {}
-    QueryValue(std::string inputValue) : logicalType{model::ColumnType::String}, value{std::move(inputValue)} {}
-    QueryValue(std::string_view inputValue) : logicalType{model::ColumnType::String}, value{std::string{inputValue}} {}
-
-    template <std::size_t Size>
-    QueryValue(const char (&inputValue)[Size]) : logicalType{model::ColumnType::String}, value{std::string{inputValue}}
-    {
-    }
-
-    template <typename T>
-    QueryValue(const std::optional<T>& optionalValue) : QueryValue(optionalValue.value())
-    {
-    }
 
     /**
-     * @brief Restores a canonical transport value with its model-level type.
+     * @brief A value that can be bound as a query parameter.
      *
-     * Hydration and backend adapters use this factory when several logical
-     * column types share the same SOCI exchange representation.
+     * QueryValue stores the subset of C++ values supported by the SELECT query DSL.
+     * Values are rendered as SOCI bind parameters, not interpolated into SQL.
      */
-    [[nodiscard]] static auto fromStorage(model::ColumnType logicalType, Value value) -> QueryValue
+    class QueryValue
     {
-        if (not isCompatibleStorage(logicalType, value))
+    public:
+        using Value = std::variant<int, long long, unsigned long long, double, std::string>;
+
+        QueryValue(bool inputValue) : logicalType{model::ColumnType::Bool}, value{static_cast<int>(inputValue)} {}
+        QueryValue(char inputValue) : logicalType{model::ColumnType::Char}, value{static_cast<int>(inputValue)} {}
+        QueryValue(signed char inputValue) : logicalType{model::ColumnType::Char}, value{static_cast<int>(inputValue)}
         {
-            throw std::invalid_argument{"Query value storage does not match its logical column type"};
+        }
+        QueryValue(unsigned char inputValue)
+            : logicalType{model::ColumnType::UnsignedChar}, value{static_cast<int>(inputValue)}
+        {
+        }
+        QueryValue(short inputValue) : logicalType{model::ColumnType::Short}, value{static_cast<int>(inputValue)} {}
+        QueryValue(unsigned short inputValue)
+            : logicalType{model::ColumnType::UnsignedShort}, value{static_cast<int>(inputValue)}
+        {
+        }
+        QueryValue(int inputValue) : logicalType{model::ColumnType::Int}, value{inputValue} {}
+        QueryValue(unsigned int inputValue)
+            : logicalType{model::ColumnType::UnsignedInt}, value{static_cast<unsigned long long>(inputValue)}
+        {
+        }
+        QueryValue(long inputValue)
+            : logicalType{sizeof(long) > sizeof(int) ? model::ColumnType::LongLong : model::ColumnType::Int},
+              value{storeLong(inputValue)}
+        {
+        }
+        QueryValue(unsigned long inputValue)
+            : logicalType{sizeof(unsigned long) > sizeof(unsigned int) ? model::ColumnType::UnsignedLongLong :
+                                                                         model::ColumnType::UnsignedInt},
+              value{static_cast<unsigned long long>(inputValue)}
+        {
+        }
+        QueryValue(long long inputValue) : logicalType{model::ColumnType::LongLong}, value{inputValue} {}
+        QueryValue(unsigned long long inputValue) : logicalType{model::ColumnType::UnsignedLongLong}, value{inputValue}
+        {
+        }
+        QueryValue(float inputValue) : logicalType{model::ColumnType::Float}, value{static_cast<double>(inputValue)} {}
+        QueryValue(double inputValue) : logicalType{model::ColumnType::Double}, value{inputValue} {}
+        QueryValue(const char* inputValue) : logicalType{model::ColumnType::String}, value{std::string{inputValue}} {}
+        QueryValue(std::string inputValue) : logicalType{model::ColumnType::String}, value{std::move(inputValue)} {}
+        QueryValue(std::string_view inputValue) : logicalType{model::ColumnType::String}, value{std::string{inputValue}}
+        {
         }
 
-        return QueryValue{logicalType, std::move(value), StorageValueTag{}};
-    }
-
-    /**
-     * @brief Checks both the canonical variant alternative and its logical range.
-     */
-    [[nodiscard]] static auto isCompatibleStorage(model::ColumnType logicalType,
-                                                  const Value& storedValue) noexcept -> bool
-    {
-        const auto* intValue = std::get_if<int>(&storedValue);
-        const auto* unsignedValue = std::get_if<unsigned long long>(&storedValue);
-        const auto* doubleValue = std::get_if<double>(&storedValue);
-
-        switch (logicalType)
+        template <std::size_t Size>
+        QueryValue(const char (&inputValue)[Size])
+            : logicalType{model::ColumnType::String}, value{std::string{inputValue}}
         {
-        case model::ColumnType::Bool:
-            return intValue != nullptr and (*intValue == 0 or *intValue == 1);
-        case model::ColumnType::Char:
-            return intValue != nullptr and *intValue >= std::numeric_limits<signed char>::lowest() and
-                   *intValue <= std::numeric_limits<unsigned char>::max();
-        case model::ColumnType::UnsignedChar:
-            return intValue != nullptr and *intValue >= 0 and *intValue <= std::numeric_limits<unsigned char>::max();
-        case model::ColumnType::Short:
-            return intValue != nullptr and *intValue >= std::numeric_limits<short>::lowest() and
-                   *intValue <= std::numeric_limits<short>::max();
-        case model::ColumnType::UnsignedShort:
-            return intValue != nullptr and *intValue >= 0 and *intValue <= std::numeric_limits<unsigned short>::max();
-        case model::ColumnType::Int:
-            return intValue != nullptr;
-        case model::ColumnType::UnsignedInt:
-            return unsignedValue != nullptr and *unsignedValue <= std::numeric_limits<unsigned int>::max();
-        case model::ColumnType::LongLong:
-            return std::holds_alternative<long long>(storedValue);
-        case model::ColumnType::UnsignedLongLong:
-            return unsignedValue != nullptr;
-        case model::ColumnType::Float:
-            return doubleValue != nullptr and std::isfinite(*doubleValue) and
-                   *doubleValue >= static_cast<double>(std::numeric_limits<float>::lowest()) and
-                   *doubleValue <= static_cast<double>(std::numeric_limits<float>::max()) and
-                   static_cast<double>(static_cast<float>(*doubleValue)) == *doubleValue;
-        case model::ColumnType::Double:
-            return doubleValue != nullptr and std::isfinite(*doubleValue);
-        case model::ColumnType::String:
-            return std::holds_alternative<std::string>(storedValue);
-        case model::ColumnType::Uuid:
+        }
+
+        template <typename T>
+        QueryValue(const std::optional<T>& optionalValue) : QueryValue(optionalValue.value())
+        {
+        }
+
+        /**
+         * @brief Restores a canonical transport value with its model-level type.
+         *
+         * Hydration and backend adapters use this factory when several logical
+         * column types share the same SOCI exchange representation.
+         */
+        [[nodiscard]] static auto fromStorage(model::ColumnType logicalType, Value value) -> QueryValue
+        {
+            if (not isCompatibleStorage(logicalType, value))
+            {
+                throw std::invalid_argument{"Query value storage does not match its logical column type"};
+            }
+
+            return QueryValue{logicalType, std::move(value), StorageValueTag{}};
+        }
+
+        /**
+         * @brief Checks both the canonical variant alternative and its logical range.
+         */
+        [[nodiscard]] static auto isCompatibleStorage(model::ColumnType logicalType,
+                                                      const Value& storedValue) noexcept -> bool
+        {
+            const auto* intValue = std::get_if<int>(&storedValue);
+            const auto* unsignedValue = std::get_if<unsigned long long>(&storedValue);
+            const auto* doubleValue = std::get_if<double>(&storedValue);
+
+            switch (logicalType)
+            {
+            case model::ColumnType::Bool:
+                return intValue != nullptr and (*intValue == 0 or *intValue == 1);
+            case model::ColumnType::Char:
+                return intValue != nullptr and *intValue >= std::numeric_limits<signed char>::lowest() and
+                       *intValue <= std::numeric_limits<unsigned char>::max();
+            case model::ColumnType::UnsignedChar:
+                return intValue != nullptr and *intValue >= 0 and
+                       *intValue <= std::numeric_limits<unsigned char>::max();
+            case model::ColumnType::Short:
+                return intValue != nullptr and *intValue >= std::numeric_limits<short>::lowest() and
+                       *intValue <= std::numeric_limits<short>::max();
+            case model::ColumnType::UnsignedShort:
+                return intValue != nullptr and *intValue >= 0 and
+                       *intValue <= std::numeric_limits<unsigned short>::max();
+            case model::ColumnType::Int:
+                return intValue != nullptr;
+            case model::ColumnType::UnsignedInt:
+                return unsignedValue != nullptr and *unsignedValue <= std::numeric_limits<unsigned int>::max();
+            case model::ColumnType::LongLong:
+                return std::holds_alternative<long long>(storedValue);
+            case model::ColumnType::UnsignedLongLong:
+                return unsignedValue != nullptr;
+            case model::ColumnType::Float:
+                return doubleValue != nullptr and std::isfinite(*doubleValue) and
+                       *doubleValue >= static_cast<double>(std::numeric_limits<float>::lowest()) and
+                       *doubleValue <= static_cast<double>(std::numeric_limits<float>::max()) and
+                       static_cast<double>(static_cast<float>(*doubleValue)) == *doubleValue;
+            case model::ColumnType::Double:
+                return doubleValue != nullptr and std::isfinite(*doubleValue);
+            case model::ColumnType::String:
+                return std::holds_alternative<std::string>(storedValue);
+            case model::ColumnType::Uuid:
+                return false;
+            }
+
             return false;
         }
 
-        return false;
-    }
+        [[nodiscard]] auto getLogicalType() const noexcept -> model::ColumnType
+        {
+            return logicalType;
+        }
 
-    [[nodiscard]] auto getLogicalType() const noexcept -> model::ColumnType
-    {
-        return logicalType;
-    }
+        [[nodiscard]] auto get() const -> const Value&
+        {
+            return value;
+        }
 
-    [[nodiscard]] auto get() const -> const Value&
-    {
-        return value;
-    }
+        auto operator<=>(const QueryValue&) const -> std::partial_ordering = default;
 
-    auto operator<=>(const QueryValue&) const -> std::partial_ordering = default;
+    private:
+        struct StorageValueTag
+        {
+        };
 
-private:
-    struct StorageValueTag
-    {
+        [[nodiscard]] static auto storeLong(long inputValue) -> Value
+        {
+            if constexpr (sizeof(long) > sizeof(int))
+            {
+                return Value{static_cast<long long>(inputValue)};
+            }
+            else
+            {
+                return Value{static_cast<int>(inputValue)};
+            }
+        }
+
+        QueryValue(model::ColumnType logicalTypeInit, Value valueInit, StorageValueTag)
+            : logicalType{logicalTypeInit}, value{std::move(valueInit)}
+        {
+        }
+
+        model::ColumnType logicalType;
+        Value value;
     };
 
-    [[nodiscard]] static auto storeLong(long inputValue) -> Value
+    /**
+     * @brief A named parameter for raw query fragments.
+     */
+    struct QueryParameter
     {
-        if constexpr (sizeof(long) > sizeof(int))
-        {
-            return Value{static_cast<long long>(inputValue)};
-        }
-        else
-        {
-            return Value{static_cast<int>(inputValue)};
-        }
-    }
+        std::string name;
+        QueryValue value;
+    };
 
-    QueryValue(model::ColumnType logicalTypeInit, Value valueInit, StorageValueTag)
-        : logicalType{logicalTypeInit}, value{std::move(valueInit)}
+    /**
+     * @brief Creates a named parameter for a raw SQL fragment.
+     *
+     * The name must not include the leading ':'.
+     */
+    template <typename T>
+    auto param(std::string name, T value) -> QueryParameter
     {
+        return QueryParameter{.name = std::move(name), .value = QueryValue{std::move(value)}};
     }
-
-    model::ColumnType logicalType;
-    Value value;
-};
-
-/**
- * @brief A named parameter for raw query fragments.
- */
-struct QueryParameter
-{
-    std::string name;
-    QueryValue value;
-};
-
-/**
- * @brief Creates a named parameter for a raw SQL fragment.
- *
- * The name must not include the leading ':'.
- */
-template <typename T>
-auto param(std::string name, T value) -> QueryParameter
-{
-    return QueryParameter{.name = std::move(name), .value = QueryValue{std::move(value)}};
-}
-
 }
 } // namespace orm::query
 
@@ -674,11 +683,11 @@ auto raw(std::string sql, Parameters... parameters) -> Predicate
 // query/Parameters.hpp
 namespace orm::query
 {
-export {
+export
+{
 
-template <typename T, std::size_t Index>
-class Parameter;
-
+    template <typename T, std::size_t Index>
+    class Parameter;
 }
 }
 
@@ -1026,27 +1035,27 @@ consteval auto validateParameters() -> void
 
 namespace orm::query
 {
-export {
-
-template <typename T, std::size_t Index>
-class Parameter
+export
 {
-public:
-    using Value = T;
-    using ParameterTypes = std::tuple<Parameter>;
-    inline static constexpr std::size_t index = Index;
-    inline static constexpr std::array<std::size_t, 1> parameterSlots{Index};
 
-private:
-    friend struct detail::TypedAccess;
-    constexpr Parameter() = default;
-};
-template <typename T, std::size_t Index>
-constexpr auto param() -> Parameter<T, Index>
-{
-    return detail::TypedAccess::make<Parameter<T, Index>>();
-}
+    template <typename T, std::size_t Index>
+    class Parameter
+    {
+    public:
+        using Value = T;
+        using ParameterTypes = std::tuple<Parameter>;
+        inline static constexpr std::size_t index = Index;
+        inline static constexpr std::array<std::size_t, 1> parameterSlots{Index};
 
+    private:
+        friend struct detail::TypedAccess;
+        constexpr Parameter() = default;
+    };
+    template <typename T, std::size_t Index>
+    constexpr auto param() -> Parameter<T, Index>
+    {
+        return detail::TypedAccess::make<Parameter<T, Index>>();
+    }
 }
 } // namespace orm::query
 
@@ -1059,109 +1068,109 @@ constexpr auto comparison(const S& source, T&& value);
 
 namespace orm::query
 {
-export {
-
-template <typename Owner, bool WriteSafe, bool ContainsCollection>
-class TypedPredicate;
-template <typename Owner>
-class TypedAggregatePredicate;
-
-enum class ExprKind
+export
 {
-    Column,
-    Comparison,
-    Null,
-    List,
-    Between,
-    Logical,
-    Not,
-    Collection,
-    Aggregate,
-    Order,
-    Projection,
-    DynamicPredicate,
-    DynamicAggregatePredicate,
-    DynamicAggregate,
-    DynamicOrder,
-    DynamicProjection,
-};
 
-template <ExprKind Kind, typename Meta, typename... Children>
-class Expression : public Meta
-{
-public:
-    inline static constexpr ExprKind kind = Kind;
-    using ParameterTypes = detail::ConcatTuples<detail::ParameterTypes<Children>...>;
-    inline static constexpr auto parameterSlots = detail::SlotIndices<ParameterTypes>::value;
+    template <typename Owner, bool WriteSafe, bool ContainsCollection>
+    class TypedPredicate;
+    template <typename Owner>
+    class TypedAggregatePredicate;
 
-    auto dynamic() const
-        requires detail::ORM_QUERY_UNBOUND_PARAMETER<Expression>
+    enum class ExprKind
     {
-        return detail::TypedAccess::make<typename Meta::Dynamic>(runtime());
-    }
+        Column,
+        Comparison,
+        Null,
+        List,
+        Between,
+        Logical,
+        Not,
+        Collection,
+        Aggregate,
+        Order,
+        Projection,
+        DynamicPredicate,
+        DynamicAggregatePredicate,
+        DynamicAggregate,
+        DynamicOrder,
+        DynamicProjection,
+    };
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
-    constexpr auto operator==(T&& value) const
+    template <ExprKind Kind, typename Meta, typename... Children>
+    class Expression : public Meta
     {
-        return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
-    }
+    public:
+        inline static constexpr ExprKind kind = Kind;
+        using ParameterTypes = detail::ConcatTuples<detail::ParameterTypes<Children>...>;
+        inline static constexpr auto parameterSlots = detail::SlotIndices<ParameterTypes>::value;
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
-    constexpr auto operator!=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
-    }
+        auto dynamic() const
+            requires detail::ORM_QUERY_UNBOUND_PARAMETER<Expression>
+        {
+            return detail::TypedAccess::make<typename Meta::Dynamic>(runtime());
+        }
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
-                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
-    constexpr auto operator>(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
+        constexpr auto operator==(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
-                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
-    constexpr auto operator>=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T>
+        constexpr auto operator!=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
-                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
-    constexpr auto operator<(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                    detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+        constexpr auto operator>(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
-                detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
-    constexpr auto operator<=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                    detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+        constexpr auto operator>=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    constexpr explicit Expression(Children... childrenInit) : children{std::move(childrenInit)...} {}
-    auto runtime() const
-        requires detail::ORM_QUERY_UNBOUND_PARAMETER<Expression>
-    {
-        return runtime(std::tuple<>{});
-    }
-    template <typename Args>
-    auto runtime(const Args& args) const
-    {
-        return Meta::render(children, args);
-    }
-    std::tuple<Children...> children;
-};
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                    detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+        constexpr auto operator<(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
+        }
 
+        template <typename T>
+            requires(Kind == ExprKind::Aggregate) && detail::ORM_QUERY_VALUE_OR_PARAMETER<typename Meta::Value, T> &&
+                    detail::ORM_QUERY_ORDERABLE<typename Meta::Value>
+        constexpr auto operator<=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
+        }
+
+    private:
+        friend struct detail::TypedAccess;
+        constexpr explicit Expression(Children... childrenInit) : children{std::move(childrenInit)...} {}
+        auto runtime() const
+            requires detail::ORM_QUERY_UNBOUND_PARAMETER<Expression>
+        {
+            return runtime(std::tuple<>{});
+        }
+        template <typename Args>
+        auto runtime(const Args& args) const
+        {
+            return Meta::render(children, args);
+        }
+        std::tuple<Children...> children;
+    };
 }
 } // namespace orm::query
 
@@ -1525,245 +1534,246 @@ struct CollectionTraits
 
 namespace orm::query
 {
-export {
-
-template <typename Owner, bool WriteSafe = true, bool ContainsCollection = false>
-class TypedPredicate
+export
 {
-public:
-    using Model = Owner;
-    using ParameterTypes = std::tuple<>;
-    inline static constexpr auto kind = ExprKind::DynamicPredicate;
-    inline static constexpr bool isPredicate = true;
-    inline static constexpr bool isAggregatePredicate = false;
-    inline static constexpr bool isAggregate = false;
-    inline static constexpr bool writeSafe = WriteSafe;
-    inline static constexpr bool containsCollection = ContainsCollection;
-    inline static constexpr bool staticSqlEligible = false;
-    template <typename E>
-        requires detail::isExpression<E> && E::isPredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
-                 (E::writeSafe == WriteSafe) &&
-                 (E::containsCollection == ContainsCollection) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    TypedPredicate(const E& expression) : data{detail::erase(expression)}
+
+    template <typename Owner, bool WriteSafe = true, bool ContainsCollection = false>
+    class TypedPredicate
     {
-    }
-    template <typename E>
-        requires detail::isExpression<E> && E::isPredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+    public:
+        using Model = Owner;
+        using ParameterTypes = std::tuple<>;
+        inline static constexpr auto kind = ExprKind::DynamicPredicate;
+        inline static constexpr bool isPredicate = true;
+        inline static constexpr bool isAggregatePredicate = false;
+        inline static constexpr bool isAggregate = false;
+        inline static constexpr bool writeSafe = WriteSafe;
+        inline static constexpr bool containsCollection = ContainsCollection;
+        inline static constexpr bool staticSqlEligible = false;
+        template <typename E>
+            requires detail::isExpression<E> && E::isPredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
                      (E::writeSafe == WriteSafe) &&
                      (E::containsCollection == ContainsCollection) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    auto operator=(const E& expression) -> TypedPredicate&
-    {
-        data = detail::erase(expression);
-        return *this;
-    }
-    auto dynamic() const -> TypedPredicate
-    {
-        return *this;
-    }
+        TypedPredicate(const E& expression) : data{detail::erase(expression)}
+        {
+        }
+        template <typename E>
+            requires detail::isExpression<E> && E::isPredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                         (E::writeSafe == WriteSafe) &&
+                         (E::containsCollection == ContainsCollection) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+        auto operator=(const E& expression) -> TypedPredicate&
+        {
+            data = detail::erase(expression);
+            return *this;
+        }
+        auto dynamic() const -> TypedPredicate
+        {
+            return *this;
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    explicit TypedPredicate(detail::Predicate value) : data{std::move(value)} {}
-    auto runtime() const -> detail::Predicate
-    {
-        return data;
-    }
-    detail::Predicate data;
-};
+    private:
+        friend struct detail::TypedAccess;
+        explicit TypedPredicate(detail::Predicate value) : data{std::move(value)} {}
+        auto runtime() const -> detail::Predicate
+        {
+            return data;
+        }
+        detail::Predicate data;
+    };
 
-template <auto... Members>
-class TypedColumn
-{
-    static_assert(sizeof...(Members) >= 1 && sizeof...(Members) <= 2,
-                  "ORM_QUERY_PATH: columns support a direct member or one to-one relation level");
-    using Traits = detail::ColumnTraits<Members...>;
+    template <auto... Members>
+    class TypedColumn
+    {
+        static_assert(sizeof...(Members) >= 1 && sizeof...(Members) <= 2,
+                      "ORM_QUERY_PATH: columns support a direct member or one to-one relation level");
+        using Traits = detail::ColumnTraits<Members...>;
 
-public:
-    using Model = typename Traits::Model;
-    using Value = typename Traits::Value;
-    using ParameterTypes = std::tuple<>;
-    inline static constexpr auto kind = ExprKind::Column;
-    inline static constexpr auto pathParts = Traits::pathParts;
-    inline static constexpr bool isColumn = true;
-    inline static constexpr bool isAggregate = false;
-    inline static constexpr bool nullable = Traits::nullable;
-    inline static constexpr bool writeSafe = Traits::writeSafe;
-    inline static constexpr bool containsCollection = false;
-    inline static constexpr bool staticSqlEligible = true;
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto operator==(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
-    }
+    public:
+        using Model = typename Traits::Model;
+        using Value = typename Traits::Value;
+        using ParameterTypes = std::tuple<>;
+        inline static constexpr auto kind = ExprKind::Column;
+        inline static constexpr auto pathParts = Traits::pathParts;
+        inline static constexpr bool isColumn = true;
+        inline static constexpr bool isAggregate = false;
+        inline static constexpr bool nullable = Traits::nullable;
+        inline static constexpr bool writeSafe = Traits::writeSafe;
+        inline static constexpr bool containsCollection = false;
+        inline static constexpr bool staticSqlEligible = true;
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto operator==(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto operator!=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto operator!=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator>(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator>(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator>=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator>=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator<(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator<(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator<=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>
-    constexpr auto like(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Like>(*this, std::forward<T>(value));
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>
-    constexpr auto notLike(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::NotLike>(*this, std::forward<T>(value));
-    }
-    constexpr auto isNull() const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return detail::makeExpression<ExprKind::Null, detail::NullMeta<TypedColumn, detail::NullOperator::IsNull>>(
-            *this);
-    }
-    constexpr auto isNotNull() const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return detail::makeExpression<ExprKind::Null, detail::NullMeta<TypedColumn, detail::NullOperator::IsNotNull>>(
-            *this);
-    }
-    constexpr auto operator==(std::nullptr_t) const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return isNull();
-    }
-    constexpr auto operator!=(std::nullptr_t) const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return isNotNull();
-    }
-    constexpr auto operator==(std::nullopt_t) const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return isNull();
-    }
-    constexpr auto operator!=(std::nullopt_t) const
-        requires detail::ORM_QUERY_NULLABLE<nullable>
-    {
-        return isNotNull();
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    auto in(std::initializer_list<T> values) const
-    {
-        return detail::containerList<detail::ListOperator::In>(*this, values);
-    }
-    template <typename T>
-        requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
-                 detail::ORM_QUERY_VALUE_OR_PARAMETER<
-                     Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
-    constexpr auto in(const T& values) const
-    {
-        return detail::containerList<detail::ListOperator::In>(*this, values);
-    }
-    template <typename T, std::size_t N>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto in(const T (&values)[N]) const
-    {
-        return [&]<std::size_t... I>(std::index_sequence<I...>)
-        { return detail::fixedList<detail::ListOperator::In>(*this, values[I]...); }(std::make_index_sequence<N>{});
-    }
-    template <typename... T>
-        requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
-    constexpr auto in(T&&... values) const
-    {
-        return detail::fixedList<detail::ListOperator::In>(*this, std::forward<T>(values)...);
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator<=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
+        }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>
+        constexpr auto like(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Like>(*this, std::forward<T>(value));
+        }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_STRING<Value>
+        constexpr auto notLike(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::NotLike>(*this, std::forward<T>(value));
+        }
+        constexpr auto isNull() const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return detail::makeExpression<ExprKind::Null, detail::NullMeta<TypedColumn, detail::NullOperator::IsNull>>(
+                *this);
+        }
+        constexpr auto isNotNull() const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return detail::makeExpression<ExprKind::Null,
+                                          detail::NullMeta<TypedColumn, detail::NullOperator::IsNotNull>>(*this);
+        }
+        constexpr auto operator==(std::nullptr_t) const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return isNull();
+        }
+        constexpr auto operator!=(std::nullptr_t) const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return isNotNull();
+        }
+        constexpr auto operator==(std::nullopt_t) const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return isNull();
+        }
+        constexpr auto operator!=(std::nullopt_t) const
+            requires detail::ORM_QUERY_NULLABLE<nullable>
+        {
+            return isNotNull();
+        }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        auto in(std::initializer_list<T> values) const
+        {
+            return detail::containerList<detail::ListOperator::In>(*this, values);
+        }
+        template <typename T>
+            requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
+                     detail::ORM_QUERY_VALUE_OR_PARAMETER<
+                         Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
+        constexpr auto in(const T& values) const
+        {
+            return detail::containerList<detail::ListOperator::In>(*this, values);
+        }
+        template <typename T, std::size_t N>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto in(const T (&values)[N]) const
+        {
+            return [&]<std::size_t... I>(std::index_sequence<I...>)
+            { return detail::fixedList<detail::ListOperator::In>(*this, values[I]...); }(std::make_index_sequence<N>{});
+        }
+        template <typename... T>
+            requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
+        constexpr auto in(T&&... values) const
+        {
+            return detail::fixedList<detail::ListOperator::In>(*this, std::forward<T>(values)...);
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    auto notIn(std::initializer_list<T> values) const
-    {
-        return detail::containerList<detail::ListOperator::NotIn>(*this, values);
-    }
-    template <typename T>
-        requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
-                 detail::ORM_QUERY_VALUE_OR_PARAMETER<
-                     Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
-    constexpr auto notIn(const T& values) const
-    {
-        return detail::containerList<detail::ListOperator::NotIn>(*this, values);
-    }
-    template <typename T, std::size_t N>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto notIn(const T (&values)[N]) const
-    {
-        return [&]<std::size_t... I>(std::index_sequence<I...>)
-        { return detail::fixedList<detail::ListOperator::NotIn>(*this, values[I]...); }(std::make_index_sequence<N>{});
-    }
-    template <typename... T>
-        requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
-    constexpr auto notIn(T&&... values) const
-    {
-        return detail::fixedList<detail::ListOperator::NotIn>(*this, std::forward<T>(values)...);
-    }
-    template <typename L, typename U>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, L> && detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, U> &&
-                 detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto between(L&& lower, U&& upper) const
-    {
-        return detail::makeExpression<ExprKind::Between,
-                                      detail::BetweenMeta<TypedColumn, detail::BetweenOperator::Between>>(
-            *this, detail::captureValue(std::forward<L>(lower)), detail::captureValue(std::forward<U>(upper)));
-    }
-    template <typename L, typename U>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, L> && detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, U> &&
-                 detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto notBetween(L&& lower, U&& upper) const
-    {
-        return detail::makeExpression<ExprKind::Between,
-                                      detail::BetweenMeta<TypedColumn, detail::BetweenOperator::NotBetween>>(
-            *this, detail::captureValue(std::forward<L>(lower)), detail::captureValue(std::forward<U>(upper)));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        auto notIn(std::initializer_list<T> values) const
+        {
+            return detail::containerList<detail::ListOperator::NotIn>(*this, values);
+        }
+        template <typename T>
+            requires detail::ContainerTraits<detail::parameter_value_t<T>>::isContainer &&
+                     detail::ORM_QUERY_VALUE_OR_PARAMETER<
+                         Value, typename detail::ContainerTraits<detail::parameter_value_t<T>>::Value>
+        constexpr auto notIn(const T& values) const
+        {
+            return detail::containerList<detail::ListOperator::NotIn>(*this, values);
+        }
+        template <typename T, std::size_t N>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto notIn(const T (&values)[N]) const
+        {
+            return [&]<std::size_t... I>(std::index_sequence<I...>) {
+                return detail::fixedList<detail::ListOperator::NotIn>(*this, values[I]...);
+            }(std::make_index_sequence<N>{});
+        }
+        template <typename... T>
+            requires(sizeof...(T) > 0) && (detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && ...)
+        constexpr auto notIn(T&&... values) const
+        {
+            return detail::fixedList<detail::ListOperator::NotIn>(*this, std::forward<T>(values)...);
+        }
+        template <typename L, typename U>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, L> && detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, U> &&
+                     detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto between(L&& lower, U&& upper) const
+        {
+            return detail::makeExpression<ExprKind::Between,
+                                          detail::BetweenMeta<TypedColumn, detail::BetweenOperator::Between>>(
+                *this, detail::captureValue(std::forward<L>(lower)), detail::captureValue(std::forward<U>(upper)));
+        }
+        template <typename L, typename U>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, L> && detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, U> &&
+                     detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto notBetween(L&& lower, U&& upper) const
+        {
+            return detail::makeExpression<ExprKind::Between,
+                                          detail::BetweenMeta<TypedColumn, detail::BetweenOperator::NotBetween>>(
+                *this, detail::captureValue(std::forward<L>(lower)), detail::captureValue(std::forward<U>(upper)));
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    constexpr TypedColumn() = default;
-    auto runtime() const -> detail::Column
+    private:
+        friend struct detail::TypedAccess;
+        constexpr TypedColumn() = default;
+        auto runtime() const -> detail::Column
+        {
+            return detail::col(Traits::path());
+        }
+    };
+    template <auto... Members>
+        requires detail::ORM_QUERY_MEMBER<Members...>
+    constexpr auto col() -> TypedColumn<Members...>
     {
-        return detail::col(Traits::path());
+        return detail::TypedAccess::make<TypedColumn<Members...>>();
     }
-};
-template <auto... Members>
-    requires detail::ORM_QUERY_MEMBER<Members...>
-constexpr auto col() -> TypedColumn<Members...>
-{
-    return detail::TypedAccess::make<TypedColumn<Members...>>();
-}
-
 }
 } // namespace orm::query
 
@@ -1840,69 +1850,68 @@ struct CollectionMeta : ExpressionMeta<typename CollectionTraits<Member>::Model,
 
 namespace orm::query
 {
-export {
+export
+{
 
-template <typename L, typename R>
-    requires detail::LogicalPredicate<L> && detail::LogicalPredicate<R> &&
-             detail::ORM_QUERY_MODEL<std::remove_cvref_t<R>, typename std::remove_cvref_t<L>::Model> &&
-             (std::remove_cvref_t<L>::isAggregatePredicate == std::remove_cvref_t<R>::isAggregatePredicate)
-constexpr auto operator&&(const L& left, const R& right)
-{
-    return detail::makeExpression<ExprKind::Logical, detail::LogicalMeta<L, R, detail::LogicalOperator::And>>(left,
-                                                                                                              right);
-}
-template <typename L, typename R>
-    requires detail::LogicalPredicate<L> && detail::LogicalPredicate<R> &&
-             detail::ORM_QUERY_MODEL<std::remove_cvref_t<R>, typename std::remove_cvref_t<L>::Model> &&
-             (std::remove_cvref_t<L>::isAggregatePredicate == std::remove_cvref_t<R>::isAggregatePredicate)
-constexpr auto operator||(const L& left, const R& right)
-{
-    return detail::makeExpression<ExprKind::Logical, detail::LogicalMeta<L, R, detail::LogicalOperator::Or>>(left,
-                                                                                                             right);
-}
-template <typename E>
-    requires detail::LogicalPredicate<E>
-constexpr auto operator!(const E& value)
-{
-    return detail::makeExpression<ExprKind::Not, detail::NotMeta<E>>(value);
-}
-template <auto Member, typename E>
-    requires detail::ORM_QUERY_COLLECTION<Member> &&
-             detail::AnyPredicateFor<E, typename detail::CollectionTraits<Member>::Target> &&
-             detail::ORM_QUERY_NO_NESTED_COLLECTION<E::containsCollection>
-constexpr auto any(const E& predicate)
-{
-    return detail::makeExpression<ExprKind::Collection,
-                                  detail::CollectionMeta<Member, detail::CollectionOperator::Any, E>>(predicate);
-}
-template <auto Member, typename E>
-    requires detail::ORM_QUERY_COLLECTION<Member> &&
-             detail::AnyPredicateFor<E, typename detail::CollectionTraits<Member>::Target> &&
-             detail::ORM_QUERY_NO_NESTED_COLLECTION<E::containsCollection>
-constexpr auto none(const E& predicate)
-{
-    return detail::makeExpression<ExprKind::Collection,
-                                  detail::CollectionMeta<Member, detail::CollectionOperator::None, E>>(predicate);
-}
-template <auto Member>
-    requires detail::ORM_QUERY_COLLECTION<Member>
-constexpr auto exists()
-{
-    return detail::makeExpression<ExprKind::Collection,
-                                  detail::CollectionMeta<Member, detail::CollectionOperator::Exists, void>>();
-}
-template <typename M, typename... P>
-    requires(std::same_as<std::remove_cvref_t<P>, QueryParameter> && ...)
-auto raw(std::string sql, P... params) -> TypedPredicate<M>
-{
-    return detail::TypedAccess::make<TypedPredicate<M>>(detail::raw(std::move(sql), std::move(params)...));
-}
-
+    template <typename L, typename R>
+        requires detail::LogicalPredicate<L> && detail::LogicalPredicate<R> &&
+                 detail::ORM_QUERY_MODEL<std::remove_cvref_t<R>, typename std::remove_cvref_t<L>::Model> &&
+                 (std::remove_cvref_t<L>::isAggregatePredicate == std::remove_cvref_t<R>::isAggregatePredicate)
+    constexpr auto operator&&(const L& left, const R& right)
+    {
+        return detail::makeExpression<ExprKind::Logical, detail::LogicalMeta<L, R, detail::LogicalOperator::And>>(
+            left, right);
+    }
+    template <typename L, typename R>
+        requires detail::LogicalPredicate<L> && detail::LogicalPredicate<R> &&
+                 detail::ORM_QUERY_MODEL<std::remove_cvref_t<R>, typename std::remove_cvref_t<L>::Model> &&
+                 (std::remove_cvref_t<L>::isAggregatePredicate == std::remove_cvref_t<R>::isAggregatePredicate)
+    constexpr auto operator||(const L& left, const R& right)
+    {
+        return detail::makeExpression<ExprKind::Logical, detail::LogicalMeta<L, R, detail::LogicalOperator::Or>>(left,
+                                                                                                                 right);
+    }
+    template <typename E>
+        requires detail::LogicalPredicate<E>
+    constexpr auto operator!(const E& value)
+    {
+        return detail::makeExpression<ExprKind::Not, detail::NotMeta<E>>(value);
+    }
+    template <auto Member, typename E>
+        requires detail::ORM_QUERY_COLLECTION<Member> &&
+                 detail::AnyPredicateFor<E, typename detail::CollectionTraits<Member>::Target> &&
+                 detail::ORM_QUERY_NO_NESTED_COLLECTION<E::containsCollection>
+    constexpr auto any(const E& predicate)
+    {
+        return detail::makeExpression<ExprKind::Collection,
+                                      detail::CollectionMeta<Member, detail::CollectionOperator::Any, E>>(predicate);
+    }
+    template <auto Member, typename E>
+        requires detail::ORM_QUERY_COLLECTION<Member> &&
+                 detail::AnyPredicateFor<E, typename detail::CollectionTraits<Member>::Target> &&
+                 detail::ORM_QUERY_NO_NESTED_COLLECTION<E::containsCollection>
+    constexpr auto none(const E& predicate)
+    {
+        return detail::makeExpression<ExprKind::Collection,
+                                      detail::CollectionMeta<Member, detail::CollectionOperator::None, E>>(predicate);
+    }
+    template <auto Member>
+        requires detail::ORM_QUERY_COLLECTION<Member>
+    constexpr auto exists()
+    {
+        return detail::makeExpression<ExprKind::Collection,
+                                      detail::CollectionMeta<Member, detail::CollectionOperator::Exists, void>>();
+    }
+    template <typename M, typename... P>
+        requires(std::same_as<std::remove_cvref_t<P>, QueryParameter> && ...)
+    auto raw(std::string sql, P... params) -> TypedPredicate<M>
+    {
+        return detail::TypedAccess::make<TypedPredicate<M>>(detail::raw(std::move(sql), std::move(params)...));
+    }
 }
 } // namespace orm::query
 
 // query/Predicate.hpp
-
 
 // query/Aggregate.hpp
 namespace orm::query::detail
@@ -2089,134 +2098,134 @@ inline auto operator!(const AggregatePredicate& predicate) -> AggregatePredicate
 
 namespace orm::query
 {
-export {
-
-template <typename Owner>
-class TypedAggregatePredicate
+export
 {
-public:
-    using Model = Owner;
-    using ParameterTypes = std::tuple<>;
-    using DynamicAggregateMarker = void;
-    inline static constexpr auto kind = ExprKind::DynamicAggregatePredicate;
-    inline static constexpr bool isPredicate = false;
-    inline static constexpr bool isAggregatePredicate = true;
-    inline static constexpr bool writeSafe = false;
-    inline static constexpr bool containsCollection = false;
-    inline static constexpr bool staticSqlEligible = false;
-    template <typename E>
-        requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
-                 detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    TypedAggregatePredicate(const E& expression) : data{detail::erase(expression)}
+
+    template <typename Owner>
+    class TypedAggregatePredicate
     {
-    }
-    template <typename E>
-        requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+    public:
+        using Model = Owner;
+        using ParameterTypes = std::tuple<>;
+        using DynamicAggregateMarker = void;
+        inline static constexpr auto kind = ExprKind::DynamicAggregatePredicate;
+        inline static constexpr bool isPredicate = false;
+        inline static constexpr bool isAggregatePredicate = true;
+        inline static constexpr bool writeSafe = false;
+        inline static constexpr bool containsCollection = false;
+        inline static constexpr bool staticSqlEligible = false;
+        template <typename E>
+            requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
                      detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    auto operator=(const E& expression) -> TypedAggregatePredicate&
-    {
-        data = detail::erase(expression);
-        return *this;
-    }
-    auto dynamic() const -> TypedAggregatePredicate
-    {
-        return *this;
-    }
+        TypedAggregatePredicate(const E& expression) : data{detail::erase(expression)}
+        {
+        }
+        template <typename E>
+            requires detail::isExpression<E> && E::isAggregatePredicate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+        auto operator=(const E& expression) -> TypedAggregatePredicate&
+        {
+            data = detail::erase(expression);
+            return *this;
+        }
+        auto dynamic() const -> TypedAggregatePredicate
+        {
+            return *this;
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    explicit TypedAggregatePredicate(detail::AggregatePredicate value) : data{std::move(value)} {}
-    auto runtime() const -> detail::AggregatePredicate
+    private:
+        friend struct detail::TypedAccess;
+        explicit TypedAggregatePredicate(detail::AggregatePredicate value) : data{std::move(value)} {}
+        auto runtime() const -> detail::AggregatePredicate
+        {
+            return data;
+        }
+        detail::AggregatePredicate data;
+    };
+    template <typename Owner, typename ResultValue, bool Nullable>
+    class TypedAggregate
     {
-        return data;
-    }
-    detail::AggregatePredicate data;
-};
-template <typename Owner, typename ResultValue, bool Nullable>
-class TypedAggregate
-{
-public:
-    using Model = Owner;
-    using Value = ResultValue;
-    using ParameterTypes = std::tuple<>;
-    inline static constexpr auto kind = ExprKind::DynamicAggregate;
-    inline static constexpr bool nullable = Nullable;
-    inline static constexpr bool isAggregate = true;
-    inline static constexpr bool writeSafe = false;
-    inline static constexpr bool containsCollection = false;
-    inline static constexpr bool staticSqlEligible = false;
-    template <typename E>
-        requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
-                 std::same_as<typename E::Value, Value> &&
-                 (E::nullable == Nullable) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    TypedAggregate(const E& expression) : data{detail::erase(expression)}
-    {
-    }
-    template <typename E>
-        requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
+    public:
+        using Model = Owner;
+        using Value = ResultValue;
+        using ParameterTypes = std::tuple<>;
+        inline static constexpr auto kind = ExprKind::DynamicAggregate;
+        inline static constexpr bool nullable = Nullable;
+        inline static constexpr bool isAggregate = true;
+        inline static constexpr bool writeSafe = false;
+        inline static constexpr bool containsCollection = false;
+        inline static constexpr bool staticSqlEligible = false;
+        template <typename E>
+            requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
                      std::same_as<typename E::Value, Value> &&
                      (E::nullable == Nullable) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    auto operator=(const E& expression) -> TypedAggregate&
-    {
-        data = detail::erase(expression);
-        return *this;
-    }
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto operator==(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
-    }
+        TypedAggregate(const E& expression) : data{detail::erase(expression)}
+        {
+        }
+        template <typename E>
+            requires detail::isExpression<E> && E::isAggregate && detail::ORM_QUERY_MODEL<E, Owner> &&
+                         std::same_as<typename E::Value, Value> &&
+                         (E::nullable == Nullable) && detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+        auto operator=(const E& expression) -> TypedAggregate&
+        {
+            data = detail::erase(expression);
+            return *this;
+        }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto operator==(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Equal>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
-    constexpr auto operator!=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T>
+        constexpr auto operator!=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::NotEqual>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator>(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator>(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Greater>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator>=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator>=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::GreaterOrEqual>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator<(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator<(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::Less>(*this, std::forward<T>(value));
+        }
 
-    template <typename T>
-        requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
-    constexpr auto operator<=(T&& value) const
-    {
-        return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
-    }
-    auto dynamic() const -> TypedAggregate
-    {
-        return *this;
-    }
+        template <typename T>
+            requires detail::ORM_QUERY_VALUE_OR_PARAMETER<Value, T> && detail::ORM_QUERY_ORDERABLE<Value>
+        constexpr auto operator<=(T&& value) const
+        {
+            return detail::comparison<detail::ComparisonOperator::LessOrEqual>(*this, std::forward<T>(value));
+        }
+        auto dynamic() const -> TypedAggregate
+        {
+            return *this;
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    explicit TypedAggregate(detail::AggregateExpression value) : data{std::move(value)} {}
-    auto runtime() const -> detail::AggregateExpression
-    {
-        return data;
-    }
-    detail::AggregateExpression data;
-};
-
+    private:
+        friend struct detail::TypedAccess;
+        explicit TypedAggregate(detail::AggregateExpression value) : data{std::move(value)} {}
+        auto runtime() const -> detail::AggregateExpression
+        {
+            return data;
+        }
+        detail::AggregateExpression data;
+    };
 }
 } // namespace orm::query
 
@@ -2272,60 +2281,62 @@ concept PlanAggregatePredicateFor = AnyAggregatePredicateFor<E, M>;
 
 namespace orm::query
 {
-export {
+export
+{
 
-template <auto... Members>
-constexpr auto count(TypedColumn<Members...> column)
-{
-    using C = TypedColumn<Members...>;
-    return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Count, C,
-                                                                             typename C::Model, long long, false>>(
-        column);
-}
-template <typename Model>
-constexpr auto countAll()
-{
-    return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::CountAll, void,
-                                                                             Model, long long, false>>();
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
-constexpr auto sum(TypedColumn<Members...> column)
-{
-    using C = TypedColumn<Members...>;
-    using V = std::conditional_t<std::is_integral_v<typename C::Value>, long long, double>;
-    return detail::makeExpression<ExprKind::Aggregate,
-                                  detail::AggregateMeta<detail::AggregateFunction::Sum, C, typename C::Model, V, true>>(
-        column);
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
-constexpr auto avg(TypedColumn<Members...> column)
-{
-    using C = TypedColumn<Members...>;
-    return detail::makeExpression<
-        ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Avg, C, typename C::Model, double, true>>(
-        column);
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
-constexpr auto min(TypedColumn<Members...> column)
-{
-    using C = TypedColumn<Members...>;
-    return detail::makeExpression<
-        ExprKind::Aggregate,
-        detail::AggregateMeta<detail::AggregateFunction::Min, C, typename C::Model, typename C::Value, true>>(column);
-}
-template <auto... Members>
-    requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
-constexpr auto max(TypedColumn<Members...> column)
-{
-    using C = TypedColumn<Members...>;
-    return detail::makeExpression<
-        ExprKind::Aggregate,
-        detail::AggregateMeta<detail::AggregateFunction::Max, C, typename C::Model, typename C::Value, true>>(column);
-}
-
+    template <auto... Members>
+    constexpr auto count(TypedColumn<Members...> column)
+    {
+        using C = TypedColumn<Members...>;
+        return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Count, C,
+                                                                                 typename C::Model, long long, false>>(
+            column);
+    }
+    template <typename Model>
+    constexpr auto countAll()
+    {
+        return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::CountAll,
+                                                                                 void, Model, long long, false>>();
+    }
+    template <auto... Members>
+        requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
+    constexpr auto sum(TypedColumn<Members...> column)
+    {
+        using C = TypedColumn<Members...>;
+        using V = std::conditional_t<std::is_integral_v<typename C::Value>, long long, double>;
+        return detail::makeExpression<
+            ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Sum, C, typename C::Model, V, true>>(
+            column);
+    }
+    template <auto... Members>
+        requires detail::ORM_QUERY_NUMERIC<typename TypedColumn<Members...>::Value>
+    constexpr auto avg(TypedColumn<Members...> column)
+    {
+        using C = TypedColumn<Members...>;
+        return detail::makeExpression<ExprKind::Aggregate, detail::AggregateMeta<detail::AggregateFunction::Avg, C,
+                                                                                 typename C::Model, double, true>>(
+            column);
+    }
+    template <auto... Members>
+        requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
+    constexpr auto min(TypedColumn<Members...> column)
+    {
+        using C = TypedColumn<Members...>;
+        return detail::makeExpression<
+            ExprKind::Aggregate,
+            detail::AggregateMeta<detail::AggregateFunction::Min, C, typename C::Model, typename C::Value, true>>(
+            column);
+    }
+    template <auto... Members>
+        requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
+    constexpr auto max(TypedColumn<Members...> column)
+    {
+        using C = TypedColumn<Members...>;
+        return detail::makeExpression<
+            ExprKind::Aggregate,
+            detail::AggregateMeta<detail::AggregateFunction::Max, C, typename C::Model, typename C::Value, true>>(
+            column);
+    }
 }
 } // namespace orm::query
 
@@ -2376,46 +2387,46 @@ inline auto rawOrder(std::string sql) -> OrderBy
 
 namespace orm::query
 {
-export {
-
-template <typename Owner>
-class TypedOrderBy
+export
 {
-public:
-    using Model = Owner;
-    using ParameterTypes = std::tuple<>;
-    inline static constexpr auto kind = ExprKind::DynamicOrder;
-    inline static constexpr bool isOrder = true;
-    inline static constexpr bool staticSqlEligible = false;
-    template <typename E>
-        requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
-                 detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    TypedOrderBy(const E& expression) : data{detail::erase(expression)}
+
+    template <typename Owner>
+    class TypedOrderBy
     {
-    }
-    template <typename E>
-        requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
+    public:
+        using Model = Owner;
+        using ParameterTypes = std::tuple<>;
+        inline static constexpr auto kind = ExprKind::DynamicOrder;
+        inline static constexpr bool isOrder = true;
+        inline static constexpr bool staticSqlEligible = false;
+        template <typename E>
+            requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
                      detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    auto operator=(const E& expression) -> TypedOrderBy&
-    {
-        data = detail::erase(expression);
-        return *this;
-    }
-    auto dynamic() const -> TypedOrderBy
-    {
-        return *this;
-    }
+        TypedOrderBy(const E& expression) : data{detail::erase(expression)}
+        {
+        }
+        template <typename E>
+            requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
+                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+        auto operator=(const E& expression) -> TypedOrderBy&
+        {
+            data = detail::erase(expression);
+            return *this;
+        }
+        auto dynamic() const -> TypedOrderBy
+        {
+            return *this;
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    explicit TypedOrderBy(detail::OrderBy value) : data{std::move(value)} {}
-    auto runtime() const -> detail::OrderBy
-    {
-        return data;
-    }
-    detail::OrderBy data;
-};
-
+    private:
+        friend struct detail::TypedAccess;
+        explicit TypedOrderBy(detail::OrderBy value) : data{std::move(value)} {}
+        auto runtime() const -> detail::OrderBy
+        {
+            return data;
+        }
+        detail::OrderBy data;
+    };
 }
 } // namespace orm::query
 
@@ -2457,26 +2468,26 @@ concept ORM_QUERY_MODEL_ORDERS = (OrderFor<Orders, M> && ...);
 
 namespace orm::query
 {
-export {
+export
+{
 
-template <auto... Members>
-constexpr auto asc(TypedColumn<Members...> column)
-{
-    return detail::makeExpression<ExprKind::Order,
-                                  detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Asc>>(column);
-}
-template <auto... Members>
-constexpr auto desc(TypedColumn<Members...> column)
-{
-    return detail::makeExpression<ExprKind::Order,
-                                  detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Desc>>(column);
-}
-template <typename M>
-auto rawOrder(std::string sql) -> TypedOrderBy<M>
-{
-    return detail::TypedAccess::make<TypedOrderBy<M>>(detail::rawOrder(std::move(sql)));
-}
-
+    template <auto... Members>
+    constexpr auto asc(TypedColumn<Members...> column)
+    {
+        return detail::makeExpression<ExprKind::Order,
+                                      detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Asc>>(column);
+    }
+    template <auto... Members>
+    constexpr auto desc(TypedColumn<Members...> column)
+    {
+        return detail::makeExpression<ExprKind::Order,
+                                      detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Desc>>(column);
+    }
+    template <typename M>
+    auto rawOrder(std::string sql) -> TypedOrderBy<M>
+    {
+        return detail::TypedAccess::make<TypedOrderBy<M>>(detail::rawOrder(std::move(sql)));
+    }
 }
 } // namespace orm::query
 
@@ -2514,46 +2525,46 @@ inline auto as(std::string resultField, AggregateExpression aggregate) -> Projec
 
 namespace orm::query
 {
-export {
-
-template <typename Owner>
-class TypedProjection
+export
 {
-public:
-    using Model = Owner;
-    using ParameterTypes = std::tuple<>;
-    inline static constexpr auto kind = ExprKind::DynamicProjection;
-    inline static constexpr bool isProjection = true;
-    inline static constexpr bool staticSqlEligible = false;
-    template <typename E>
-        requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
-                 detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    TypedProjection(const E& expression) : data{detail::erase(expression)}
+
+    template <typename Owner>
+    class TypedProjection
     {
-    }
-    template <typename E>
-        requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
+    public:
+        using Model = Owner;
+        using ParameterTypes = std::tuple<>;
+        inline static constexpr auto kind = ExprKind::DynamicProjection;
+        inline static constexpr bool isProjection = true;
+        inline static constexpr bool staticSqlEligible = false;
+        template <typename E>
+            requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
                      detail::ORM_QUERY_UNBOUND_PARAMETER<E>
-    auto operator=(const E& expression) -> TypedProjection&
-    {
-        data = detail::erase(expression);
-        return *this;
-    }
-    auto dynamic() const -> TypedProjection
-    {
-        return *this;
-    }
+        TypedProjection(const E& expression) : data{detail::erase(expression)}
+        {
+        }
+        template <typename E>
+            requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
+                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+        auto operator=(const E& expression) -> TypedProjection&
+        {
+            data = detail::erase(expression);
+            return *this;
+        }
+        auto dynamic() const -> TypedProjection
+        {
+            return *this;
+        }
 
-private:
-    friend struct detail::TypedAccess;
-    explicit TypedProjection(detail::Projection value) : data{std::move(value)} {}
-    auto runtime() const -> detail::Projection
-    {
-        return data;
-    }
-    detail::Projection data;
-};
-
+    private:
+        friend struct detail::TypedAccess;
+        explicit TypedProjection(detail::Projection value) : data{std::move(value)} {}
+        auto runtime() const -> detail::Projection
+        {
+            return data;
+        }
+        detail::Projection data;
+    };
 }
 } // namespace orm::query
 
@@ -2614,21 +2625,21 @@ concept ProjectionSourceExpression = IsTypedColumn<std::remove_cvref_t<S>>::valu
 
 namespace orm::query
 {
-export {
-
-template <typename S>
-    requires detail::ProjectionSourceExpression<S>
-constexpr auto as(std::string alias, S source)
+export
 {
-    return detail::makeExpression<ExprKind::Projection, detail::RuntimeProjectionMeta<S>>(source, std::move(alias));
-}
-template <reflection::FixedString Alias, typename S>
-    requires detail::ProjectionSourceExpression<S>
-constexpr auto as(S source)
-{
-    return detail::makeExpression<ExprKind::Projection, detail::ProjectionMeta<S, Alias>>(source);
-}
 
+    template <typename S>
+        requires detail::ProjectionSourceExpression<S>
+    constexpr auto as(std::string alias, S source)
+    {
+        return detail::makeExpression<ExprKind::Projection, detail::RuntimeProjectionMeta<S>>(source, std::move(alias));
+    }
+    template <reflection::FixedString Alias, typename S>
+        requires detail::ProjectionSourceExpression<S>
+    constexpr auto as(S source)
+    {
+        return detail::makeExpression<ExprKind::Projection, detail::ProjectionMeta<S, Alias>>(source);
+    }
 }
 } // namespace orm::query
 
@@ -2676,4 +2687,3 @@ struct UpdateSpec
     std::optional<Predicate> predicate = std::nullopt;
 };
 } // namespace orm::query::detail
-

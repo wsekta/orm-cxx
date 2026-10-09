@@ -1,7 +1,5 @@
 module;
 
-#include "soci/postgresql/soci-postgresql.h"
-#include "soci/soci.h"
 #include <algorithm>
 #include <array>
 #include <bit>
@@ -33,6 +31,9 @@ module;
 #include <utility>
 #include <variant>
 #include <vector>
+
+#include "soci/postgresql/soci-postgresql.h"
+#include "soci/soci.h"
 
 module orm;
 

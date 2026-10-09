@@ -113,11 +113,13 @@ class OrmCxxConan(ConanFile):
         reflection.set_property("cmake_target_name", "orm-cxx::reflection")
         reflection.libs = ["orm-cxx-reflection"]
         reflection.includedirs = []
+        reflection.builddirs = [os.path.join("lib", "cmake", "orm-cxx-reflection")]
 
         core = self.cpp_info.components["core"]
         core.set_property("cmake_target_name", "orm-cxx::orm-cxx")
         core.libs = ["orm-cxx"]
         core.includedirs = []
+        core.builddirs = [os.path.join("lib", "cmake", "orm-cxx")]
         core.requires = ["reflection", "soci::soci_core"]
         if self.options.with_sqlite3:
             core.requires.append("soci::soci_sqlite3")

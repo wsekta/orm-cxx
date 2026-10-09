@@ -224,7 +224,11 @@ concurrent invocation. The Conan check defaults `CONAN_HOME` to
 `build/conan-home` and detects a profile there. To use an existing profile, pass
 `--conan-profile=PROFILE`. `--conan-setting` and `--conan-conf` are repeatable
 overrides (for example, `--conan-setting=compiler.version=195` when multiple
-Visual Studio versions are installed). Explicit `CONAN_HOME` values are honored.
+Visual Studio versions are installed). Use
+`--conan-conf=tools.microsoft.msbuild:vs_version=18` to select Visual Studio 2026
+explicitly. The vcpkg check follows the active developer shell's Visual Studio
+installation; an explicit `VCPKG_VISUAL_STUDIO_PATH` overrides that selection.
+Explicit `CONAN_HOME` values are honored.
 
 The scripts generate an archive containing only this project's library sources
 and metadata, normalizing CRLF to LF so its bytes and checksums are stable across

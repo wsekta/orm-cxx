@@ -62,6 +62,10 @@ def check_conan(args, metadata, work):
 
 
 def check_vcpkg(args, metadata, work):
+    # vcpkg starts a clean compiler environment. Keep it aligned with the
+    # developer shell, including when a newer Visual Studio is a preview.
+    if os.name == "nt" and os.environ.get("VSINSTALLDIR"):
+        os.environ.setdefault("VCPKG_VISUAL_STUDIO_PATH", os.environ["VSINSTALLDIR"].rstrip("\\/"))
     vcpkg_root = args.vcpkg_root.resolve()
     vcpkg = vcpkg_root / ("vcpkg.exe" if os.name == "nt" else "vcpkg")
     triplet = args.triplet or ("x64-windows-static" if os.name == "nt" else "x64-linux")

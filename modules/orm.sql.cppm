@@ -31,6 +31,7 @@ module;
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include "soci/soci.h"
 #include "soci/values.h"
 
@@ -43,468 +44,518 @@ import :expressions;
 import :dynamic_query;
 import :static_plan;
 
+// Runtime command inputs form the source-level backend extension contract.
+export namespace orm::db
+{
+using SelectSpec = query::detail::SelectSpec;
+using UpdateSpec = query::detail::UpdateSpec;
+using Predicate = query::detail::Predicate;
+}
+
+export namespace orm::db::ast
+{
+using Column = orm::query::detail::Column;
+using PredicateNode = orm::query::detail::PredicateNode;
+using PredicateNodePtr = orm::query::detail::PredicateNodePtr;
+using ComparisonOperator = orm::query::detail::ComparisonOperator;
+using NullOperator = orm::query::detail::NullOperator;
+using ListOperator = orm::query::detail::ListOperator;
+using BetweenOperator = orm::query::detail::BetweenOperator;
+using LogicalOperator = orm::query::detail::LogicalOperator;
+using CollectionOperator = orm::query::detail::CollectionOperator;
+using ComparisonExpression = orm::query::detail::ComparisonExpression;
+using NullExpression = orm::query::detail::NullExpression;
+using ListExpression = orm::query::detail::ListExpression;
+using BetweenExpression = orm::query::detail::BetweenExpression;
+using LogicalExpression = orm::query::detail::LogicalExpression;
+using NotExpression = orm::query::detail::NotExpression;
+using RawExpression = orm::query::detail::RawExpression;
+using CollectionExpression = orm::query::detail::CollectionExpression;
+using AggregateFunction = orm::query::detail::AggregateFunction;
+using AggregateExpression = orm::query::detail::AggregateExpression;
+using AggregatePredicate = orm::query::detail::AggregatePredicate;
+using AggregatePredicateNode = orm::query::detail::AggregatePredicateNode;
+using AggregatePredicateNodePtr = orm::query::detail::AggregatePredicateNodePtr;
+using AggregateComparisonExpression = orm::query::detail::AggregateComparisonExpression;
+using AggregateLogicalExpression = orm::query::detail::AggregateLogicalExpression;
+using AggregateNotExpression = orm::query::detail::AggregateNotExpression;
+using OrderDirection = orm::query::detail::OrderDirection;
+using OrderBy = orm::query::detail::OrderBy;
+using ProjectionSource = orm::query::detail::ProjectionSource;
+using Projection = orm::query::detail::Projection;
+using UpdateValue = orm::query::detail::UpdateValue;
+using UpdateAssignment = orm::query::detail::UpdateAssignment;
+}
+
 // database/BackendCapabilities.hpp
 namespace orm::db
 {
-export {
-
-enum class AffectedRowsSupport
+export
 {
-    Unavailable,
-    Reliable,
-};
 
-struct SchemaCapabilities
-{
-    bool createTableIfNotExists = false;
-    bool dropTableIfExists = false;
-    bool autoIncrementPrimaryKey = false;
-    bool compositePrimaryKeys = false;
-    bool foreignKeys = false;
-    bool onDeleteCascade = false;
-
-    auto operator==(const SchemaCapabilities&) const -> bool = default;
-};
-
-struct QueryCapabilities
-{
-    bool limit = false;
-    bool offset = false;
-    bool offsetWithoutLimit = false;
-    bool offsetRequiresOrderBy = false;
-    bool projections = false;
-    bool groupBy = false;
-    bool having = false;
-    bool collectionPredicates = false;
-    bool fullModelGrouping = false;
-    bool distinctOrderByRequiresProjectedColumn = false;
-    bool strictProjectionGrouping = false;
-
-    auto operator==(const QueryCapabilities&) const -> bool = default;
-};
-
-struct MutationCapabilities
-{
-    bool insert = false;
-    bool update = false;
-    bool remove = false;
-    bool atomicInsertIfAbsent = false;
-    AffectedRowsSupport affectedRows = AffectedRowsSupport::Unavailable;
-
-    auto operator==(const MutationCapabilities&) const -> bool = default;
-};
-
-struct RelationCapabilities
-{
-    bool toOne = false;
-    bool oneToMany = false;
-    bool manyToMany = false;
-    bool collectionIncludes = false;
-    bool collectionPredicates = false;
-    bool junctionTables = false;
-    bool compositeEndpointKeys = false;
-
-    auto operator==(const RelationCapabilities&) const -> bool = default;
-};
-
-struct BackendValueLimits
-{
-    /**
-     * Largest unsigned 64-bit value that can be exchanged without loss.
-     * An empty value means that the full C++ range is supported.
-     */
-    std::optional<unsigned long long> maxUnsignedLongLong;
-
-    auto operator==(const BackendValueLimits&) const -> bool = default;
-};
-
-struct BackendCapabilities
-{
-    SchemaCapabilities schema;
-    QueryCapabilities query;
-    MutationCapabilities mutations;
-    RelationCapabilities relations;
-    BackendValueLimits valueLimits;
-    std::vector<model::ColumnType> supportedColumnTypes;
-    bool transactions = false;
-
-    [[nodiscard]] auto supportsColumnType(model::ColumnType type) const -> bool
+    enum class AffectedRowsSupport
     {
-        return std::ranges::find(supportedColumnTypes, type) != supportedColumnTypes.end();
-    }
+        Unavailable,
+        Reliable,
+    };
 
-    auto operator==(const BackendCapabilities&) const -> bool = default;
-};
+    struct SchemaCapabilities
+    {
+        bool createTableIfNotExists = false;
+        bool dropTableIfExists = false;
+        bool autoIncrementPrimaryKey = false;
+        bool compositePrimaryKeys = false;
+        bool foreignKeys = false;
+        bool onDeleteCascade = false;
 
-struct BackendRuntimeLimits
-{
-    std::optional<std::size_t> maxBindParameters;
+        auto operator==(const SchemaCapabilities&) const -> bool = default;
+    };
 
-    auto operator==(const BackendRuntimeLimits&) const -> bool = default;
-};
+    struct QueryCapabilities
+    {
+        bool limit = false;
+        bool offset = false;
+        bool offsetWithoutLimit = false;
+        bool offsetRequiresOrderBy = false;
+        bool projections = false;
+        bool groupBy = false;
+        bool having = false;
+        bool collectionPredicates = false;
+        bool fullModelGrouping = false;
+        bool distinctOrderByRequiresProjectedColumn = false;
+        bool strictProjectionGrouping = false;
 
+        auto operator==(const QueryCapabilities&) const -> bool = default;
+    };
+
+    struct MutationCapabilities
+    {
+        bool insert = false;
+        bool update = false;
+        bool remove = false;
+        bool atomicInsertIfAbsent = false;
+        AffectedRowsSupport affectedRows = AffectedRowsSupport::Unavailable;
+
+        auto operator==(const MutationCapabilities&) const -> bool = default;
+    };
+
+    struct RelationCapabilities
+    {
+        bool toOne = false;
+        bool oneToMany = false;
+        bool manyToMany = false;
+        bool collectionIncludes = false;
+        bool collectionPredicates = false;
+        bool junctionTables = false;
+        bool compositeEndpointKeys = false;
+
+        auto operator==(const RelationCapabilities&) const -> bool = default;
+    };
+
+    struct BackendValueLimits
+    {
+        /**
+         * Largest unsigned 64-bit value that can be exchanged without loss.
+         * An empty value means that the full C++ range is supported.
+         */
+        std::optional<unsigned long long> maxUnsignedLongLong;
+
+        auto operator==(const BackendValueLimits&) const -> bool = default;
+    };
+
+    struct BackendCapabilities
+    {
+        SchemaCapabilities schema;
+        QueryCapabilities query;
+        MutationCapabilities mutations;
+        RelationCapabilities relations;
+        BackendValueLimits valueLimits;
+        std::vector<model::ColumnType> supportedColumnTypes;
+        bool transactions = false;
+
+        [[nodiscard]] auto supportsColumnType(model::ColumnType type) const -> bool
+        {
+            return std::ranges::find(supportedColumnTypes, type) != supportedColumnTypes.end();
+        }
+
+        auto operator==(const BackendCapabilities&) const -> bool = default;
+    };
+
+    struct BackendRuntimeLimits
+    {
+        std::optional<std::size_t> maxBindParameters;
+
+        auto operator==(const BackendRuntimeLimits&) const -> bool = default;
+    };
 }
 } // namespace orm::db
 
 // database/BackendProvider.hpp
 namespace orm::db
 {
-export {
-
-class BackendRuntime;
-class CommandGenerator;
-class SqlDialect;
-
-class BackendProvider
+export
 {
-public:
-    virtual ~BackendProvider() = default;
 
-    [[nodiscard]] virtual auto type() const noexcept -> BackendType = 0;
-    [[nodiscard]] virtual auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool = 0;
-    [[nodiscard]] virtual auto capabilities() const noexcept -> const BackendCapabilities& = 0;
-    [[nodiscard]] virtual auto dialect() const noexcept -> const SqlDialect& = 0;
-    [[nodiscard]] virtual auto runtime() const noexcept -> const BackendRuntime& = 0;
-    [[nodiscard]] virtual auto commandGenerator() const noexcept -> const CommandGenerator& = 0;
-    [[nodiscard]] virtual auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
+    class BackendRuntime;
+    class CommandGenerator;
+    class SqlDialect;
+
+    class BackendProvider
     {
-        return CompiledSqlFlavor::None;
-    }
-};
+    public:
+        virtual ~BackendProvider() = default;
 
+        [[nodiscard]] virtual auto type() const noexcept -> BackendType = 0;
+        [[nodiscard]] virtual auto
+        acceptsConnectionString(std::string_view connectionString) const noexcept -> bool = 0;
+        [[nodiscard]] virtual auto capabilities() const noexcept -> const BackendCapabilities& = 0;
+        [[nodiscard]] virtual auto dialect() const noexcept -> const SqlDialect& = 0;
+        [[nodiscard]] virtual auto runtime() const noexcept -> const BackendRuntime& = 0;
+        [[nodiscard]] virtual auto commandGenerator() const noexcept -> const CommandGenerator& = 0;
+        [[nodiscard]] virtual auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
+        {
+            return CompiledSqlFlavor::None;
+        }
+    };
 }
 } // namespace orm::db
 
 // database/Statement.hpp
 namespace orm::db
 {
-export {
-
-struct BoundValue
+export
 {
-    model::ColumnType logicalType;
-    std::optional<query::QueryValue::Value> value;
 
-    [[nodiscard]] auto isNull() const noexcept -> bool
+    struct BoundValue
     {
-        return not value.has_value();
-    }
-};
+        model::ColumnType logicalType;
+        std::optional<query::QueryValue::Value> value;
 
-struct StatementParameter
-{
-    std::string name;
-    std::optional<query::QueryValue> value;
-    std::optional<model::ColumnType> nullType;
-
-    [[nodiscard]] auto getLogicalType() const -> model::ColumnType
-    {
-        if (value.has_value())
+        [[nodiscard]] auto isNull() const noexcept -> bool
         {
-            return value->getLogicalType();
+            return not value.has_value();
         }
-        if (nullType.has_value())
-        {
-            return nullType.value();
-        }
-        throw std::invalid_argument{"A NULL statement parameter requires an explicit logical type"};
-    }
+    };
 
-    [[nodiscard]] auto getBoundValue() const -> BoundValue
+    struct StatementParameter
     {
-        if (value.has_value())
+        std::string name;
+        std::optional<query::QueryValue> value;
+        std::optional<model::ColumnType> nullType;
+
+        [[nodiscard]] auto getLogicalType() const -> model::ColumnType
         {
-            return BoundValue{.logicalType = value->getLogicalType(), .value = value->get()};
+            if (value.has_value())
+            {
+                return value->getLogicalType();
+            }
+            if (nullType.has_value())
+            {
+                return nullType.value();
+            }
+            throw std::invalid_argument{"A NULL statement parameter requires an explicit logical type"};
         }
 
-        return BoundValue{.logicalType = getLogicalType(), .value = std::nullopt};
-    }
-};
+        [[nodiscard]] auto getBoundValue() const -> BoundValue
+        {
+            if (value.has_value())
+            {
+                return BoundValue{.logicalType = value->getLogicalType(), .value = value->get()};
+            }
 
-struct Statement
-{
-    std::string sql;
-    std::vector<StatementParameter> parameters;
-};
+            return BoundValue{.logicalType = getLogicalType(), .value = std::nullopt};
+        }
+    };
 
-/** Non-owning statement input; compiled SQL has static storage duration. */
-struct StatementView
-{
-    std::string_view sql;
-    std::span<const StatementParameter> parameters;
-};
+    struct Statement
+    {
+        std::string sql;
+        std::vector<StatementParameter> parameters;
+    };
 
+    /** Non-owning statement input; compiled SQL has static storage duration. */
+    struct StatementView
+    {
+        std::string_view sql;
+        std::span<const StatementParameter> parameters;
+    };
 }
 } // namespace orm::db
 
 // database/BackendRuntime.hpp
 namespace orm::db
 {
-export {
-
-class BackendRuntime
+export
 {
-public:
-    virtual ~BackendRuntime() = default;
 
-    virtual auto open(soci::session& session, std::string_view connectionString) const -> void = 0;
-    virtual auto onConnect(soci::session& session) const -> void = 0;
-    [[nodiscard]] virtual auto tableExists(soci::session& session, std::string_view tableName) const -> bool = 0;
-    [[nodiscard]] virtual auto limits(soci::session& session) const -> BackendRuntimeLimits = 0;
-    [[nodiscard]] virtual auto normalizeAffectedRows(long long affectedRows) const -> std::size_t = 0;
-    [[nodiscard]] virtual auto
-    statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept -> bool
+    class BackendRuntime
     {
-        return false;
-    }
-    virtual auto bind(soci::values& values, std::string_view name, const BoundValue& value) const -> void = 0;
-    [[nodiscard]] virtual auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
-                                              std::string_view operation) const -> DatabaseError = 0;
-};
+    public:
+        virtual ~BackendRuntime() = default;
 
+        virtual auto open(soci::session& session, std::string_view connectionString) const -> void = 0;
+        virtual auto onConnect(soci::session& session) const -> void = 0;
+        [[nodiscard]] virtual auto tableExists(soci::session& session, std::string_view tableName) const -> bool = 0;
+        [[nodiscard]] virtual auto limits(soci::session& session) const -> BackendRuntimeLimits = 0;
+        [[nodiscard]] virtual auto normalizeAffectedRows(long long affectedRows) const -> std::size_t = 0;
+        [[nodiscard]] virtual auto
+        statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept -> bool
+        {
+            return false;
+        }
+        virtual auto bind(soci::values& values, std::string_view name, const BoundValue& value) const -> void = 0;
+        [[nodiscard]] virtual auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
+                                                  std::string_view operation) const -> DatabaseError = 0;
+    };
 }
 } // namespace orm::db
 
 // database/commands/CreateTableCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class CreateTableCommand
+export
 {
-public:
-    virtual ~CreateTableCommand() = default;
 
-    [[nodiscard]] virtual auto createTable(model::ModelView model) const -> std::string = 0;
-};
+    class CreateTableCommand
+    {
+    public:
+        virtual ~CreateTableCommand() = default;
 
+        [[nodiscard]] virtual auto createTable(model::ModelView model) const -> std::string = 0;
+    };
 }
 } // namespace orm::db
 
 // database/commands/DeleteCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class DeleteCommand
+export
 {
-public:
-    virtual ~DeleteCommand() = default;
 
-    [[nodiscard]] virtual auto remove(model::ModelView model,
-                                      const query::detail::Predicate& predicate) const -> Statement = 0;
-};
+    class DeleteCommand
+    {
+    public:
+        virtual ~DeleteCommand() = default;
 
+        [[nodiscard]] virtual auto remove(model::ModelView model, const Predicate& predicate) const -> Statement = 0;
+    };
 }
 } // namespace orm::db::commands
 
 // database/commands/DropTableCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class DropTableCommand
+export
 {
-public:
-    virtual ~DropTableCommand() = default;
 
-    [[nodiscard]] virtual auto dropTable(model::ModelView model) const -> std::string = 0;
-};
+    class DropTableCommand
+    {
+    public:
+        virtual ~DropTableCommand() = default;
 
+        [[nodiscard]] virtual auto dropTable(model::ModelView model) const -> std::string = 0;
+    };
 }
 }
 
 // database/commands/InsertCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class InsertCommand
+export
 {
-public:
-    virtual ~InsertCommand() = default;
 
-    [[nodiscard]] virtual auto insert(model::ModelView model) const -> std::string = 0;
-};
+    class InsertCommand
+    {
+    public:
+        virtual ~InsertCommand() = default;
 
+        [[nodiscard]] virtual auto insert(model::ModelView model) const -> std::string = 0;
+    };
 }
 }
 
 // database/SelectStatement.hpp
 namespace orm::db
 {
-export {
+export
+{
 
-using SelectStatement = Statement;
-
+    using SelectStatement = Statement;
 }
 } // namespace orm::db
 
 // database/commands/SelectCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class SelectCommand
+export
 {
-public:
-    virtual ~SelectCommand() = default;
 
-    [[nodiscard]] virtual auto select(model::ModelView model,
-                                      const query::detail::SelectSpec& spec) const -> SelectStatement = 0;
-};
+    class SelectCommand
+    {
+    public:
+        virtual ~SelectCommand() = default;
 
+        [[nodiscard]] virtual auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement = 0;
+    };
 }
 } // namespace orm::db::commands
 
 // database/commands/UpdateCommand.hpp
 namespace orm::db::commands
 {
-export {
-
-class UpdateCommand
+export
 {
-public:
-    virtual ~UpdateCommand() = default;
 
-    [[nodiscard]] virtual auto update(model::ModelView model,
-                                      const query::detail::UpdateSpec& spec) const -> Statement = 0;
-};
+    class UpdateCommand
+    {
+    public:
+        virtual ~UpdateCommand() = default;
 
+        [[nodiscard]] virtual auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement = 0;
+    };
 }
 } // namespace orm::db::commands
 
 // database/CommandGenerator.hpp
 namespace orm::db
 {
-export {
-
-class CommandGenerator
+export
 {
-public:
-    CommandGenerator(std::unique_ptr<commands::CreateTableCommand> createTableCommand,
-                     std::unique_ptr<commands::DropTableCommand> dropTableCommand,
-                     std::unique_ptr<commands::InsertCommand> insertCommand,
-                     std::unique_ptr<commands::SelectCommand> selectCommand,
-                     std::unique_ptr<commands::UpdateCommand> updateCommand,
-                     std::unique_ptr<commands::DeleteCommand> deleteCommand);
 
-    [[nodiscard]] auto createTable(model::ModelView model) const -> std::string;
-    [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string;
-    [[nodiscard]] auto insert(model::ModelView model) const -> std::string;
-    [[nodiscard]] auto select(model::ModelView model, const query::detail::SelectSpec& spec) const -> SelectStatement;
-    [[nodiscard]] auto update(model::ModelView model, const query::detail::UpdateSpec& spec) const -> Statement;
-    [[nodiscard]] auto remove(model::ModelView model, const query::detail::Predicate& predicate) const -> Statement;
+    class CommandGenerator
+    {
+    public:
+        CommandGenerator(std::unique_ptr<commands::CreateTableCommand> createTableCommand,
+                         std::unique_ptr<commands::DropTableCommand> dropTableCommand,
+                         std::unique_ptr<commands::InsertCommand> insertCommand,
+                         std::unique_ptr<commands::SelectCommand> selectCommand,
+                         std::unique_ptr<commands::UpdateCommand> updateCommand,
+                         std::unique_ptr<commands::DeleteCommand> deleteCommand);
 
-private:
-    std::unique_ptr<commands::CreateTableCommand> createTableCommand;
-    std::unique_ptr<commands::DropTableCommand> dropTableCommand;
-    std::unique_ptr<commands::InsertCommand> insertCommand;
-    std::unique_ptr<commands::SelectCommand> selectCommand;
-    std::unique_ptr<commands::UpdateCommand> updateCommand;
-    std::unique_ptr<commands::DeleteCommand> deleteCommand;
-};
+        [[nodiscard]] auto createTable(model::ModelView model) const -> std::string;
+        [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string;
+        [[nodiscard]] auto insert(model::ModelView model) const -> std::string;
+        [[nodiscard]] auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement;
+        [[nodiscard]] auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement;
+        [[nodiscard]] auto remove(model::ModelView model, const Predicate& predicate) const -> Statement;
 
+    private:
+        std::unique_ptr<commands::CreateTableCommand> createTableCommand;
+        std::unique_ptr<commands::DropTableCommand> dropTableCommand;
+        std::unique_ptr<commands::InsertCommand> insertCommand;
+        std::unique_ptr<commands::SelectCommand> selectCommand;
+        std::unique_ptr<commands::UpdateCommand> updateCommand;
+        std::unique_ptr<commands::DeleteCommand> deleteCommand;
+    };
 }
 } // namespace orm::db
 
 // database/CommandGeneratorFactory.hpp
 namespace orm::db
 {
-export {
-
-class CommandGeneratorFactory
+export
 {
-public:
-    CommandGeneratorFactory();
-    CommandGeneratorFactory(const CommandGeneratorFactory&) = delete;
-    CommandGeneratorFactory(CommandGeneratorFactory&&) = default;
-    auto operator=(const CommandGeneratorFactory&) -> CommandGeneratorFactory& = delete;
-    auto operator=(CommandGeneratorFactory&&) -> CommandGeneratorFactory& = default;
 
-    auto registerBackend(std::unique_ptr<BackendProvider> backend) -> void;
-    [[nodiscard]] auto getBackend(BackendType backendType) const -> const BackendProvider&;
-    [[nodiscard]] auto findBackend(std::string_view connectionString) const noexcept -> const BackendProvider*;
-    auto getCommandGenerator(BackendType backendType) const -> const CommandGenerator&;
+    class CommandGeneratorFactory
+    {
+    public:
+        CommandGeneratorFactory();
+        CommandGeneratorFactory(const CommandGeneratorFactory&) = delete;
+        CommandGeneratorFactory(CommandGeneratorFactory&&) = default;
+        auto operator=(const CommandGeneratorFactory&) -> CommandGeneratorFactory& = delete;
+        auto operator=(CommandGeneratorFactory&&) -> CommandGeneratorFactory& = default;
 
-private:
-    std::unordered_map<BackendType, std::unique_ptr<BackendProvider>> backends;
-};
+        auto registerBackend(std::unique_ptr<BackendProvider> backend) -> void;
+        [[nodiscard]] auto getBackend(BackendType backendType) const -> const BackendProvider&;
+        [[nodiscard]] auto findBackend(std::string_view connectionString) const noexcept -> const BackendProvider*;
+        auto getCommandGenerator(BackendType backendType) const -> const CommandGenerator&;
 
+    private:
+        std::unordered_map<BackendType, std::unique_ptr<BackendProvider>> backends;
+    };
 }
 } // namespace orm::db
 
 // Primary-key storage shared by SQL statements and model binding.
-namespace orm::db::binding { using PrimaryKey = std::vector<query::QueryValue>; }
+namespace orm::db::binding
+{
+using PrimaryKey = std::vector<query::QueryValue>;
+}
+
+export namespace orm::db
+{
+using PrimaryKey = binding::PrimaryKey;
+}
 
 // database/SqlDialect.hpp
 namespace orm::db
 {
-export {
-
-struct PaginationSpec
+export
 {
-    std::optional<std::size_t> limit;
-    std::optional<std::size_t> offset;
-    bool hasOrderBy = false;
 
-    auto operator==(const PaginationSpec&) const -> bool = default;
-};
-
-struct InsertIfAbsentSpec
-{
-    std::string tableName;
-    std::vector<std::string> columns;
-    std::vector<std::string> valueExpressions;
-    std::vector<std::string> conflictColumns;
-
-    auto operator==(const InsertIfAbsentSpec&) const -> bool = default;
-};
-
-class SqlDialect
-{
-public:
-    virtual ~SqlDialect() = default;
-
-    [[nodiscard]] virtual auto quoteIdentifier(std::string_view identifier) const -> std::string = 0;
-    [[nodiscard]] virtual auto bindMarker(std::string_view logicalName) const -> std::string = 0;
-    [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderCreateTablePrefix(std::string_view tableName,
-                                                       bool ifNotExists) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderPagination(const PaginationSpec& pagination) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string = 0;
-    [[nodiscard]] virtual auto renderAggregateResult(std::string_view expression,
-                                                     bool /*preserveExactNumeric*/) const -> std::string
+    struct PaginationSpec
     {
-        return std::string{expression};
-    }
-};
+        std::optional<std::size_t> limit;
+        std::optional<std::size_t> offset;
+        bool hasOrderBy = false;
 
+        auto operator==(const PaginationSpec&) const -> bool = default;
+    };
+
+    struct InsertIfAbsentSpec
+    {
+        std::string tableName;
+        std::vector<std::string> columns;
+        std::vector<std::string> valueExpressions;
+        std::vector<std::string> conflictColumns;
+
+        auto operator==(const InsertIfAbsentSpec&) const -> bool = default;
+    };
+
+    class SqlDialect
+    {
+    public:
+        virtual ~SqlDialect() = default;
+
+        [[nodiscard]] virtual auto quoteIdentifier(std::string_view identifier) const -> std::string = 0;
+        [[nodiscard]] virtual auto bindMarker(std::string_view logicalName) const -> std::string = 0;
+        [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderCreateTablePrefix(std::string_view tableName,
+                                                           bool ifNotExists) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderPagination(const PaginationSpec& pagination) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderAggregateResult(std::string_view expression,
+                                                         bool /*preserveExactNumeric*/) const -> std::string
+        {
+            return std::string{expression};
+        }
+    };
 }
 } // namespace orm::db
 
 // database/RelationStatements.hpp
 namespace orm::db::relations
 {
-export {
+export
+{
 
-[[nodiscard]] auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>;
-[[nodiscard]] auto dropTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>;
+    [[nodiscard]] auto createTableStatements(const SqlDialect& dialect,
+                                             model::ModelView owner) -> std::vector<std::string>;
+    [[nodiscard]] auto dropTableStatements(const SqlDialect& dialect,
+                                           model::ModelView owner) -> std::vector<std::string>;
 
-[[nodiscard]] auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                                 const binding::PrimaryKey& ownerKey,
-                                 const binding::PrimaryKey& targetKey) -> Statement;
-[[nodiscard]] auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                                   const binding::PrimaryKey& ownerKey,
-                                   const binding::PrimaryKey& targetKey) -> Statement;
+    [[nodiscard]] auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
+                                     const binding::PrimaryKey& ownerKey,
+                                     const binding::PrimaryKey& targetKey) -> Statement;
+    [[nodiscard]] auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
+                                       const binding::PrimaryKey& ownerKey,
+                                       const binding::PrimaryKey& targetKey) -> Statement;
 
-[[nodiscard]] auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner,
-                                             model::RelationView relation, std::string targetSelectSql,
-                                             const std::vector<binding::PrimaryKey>& ownerKeys,
-                                             bool joinedValues) -> Statement;
-
+    [[nodiscard]] auto collectionSelectStatement(
+        const SqlDialect& dialect, model::ModelView owner, model::RelationView relation, std::string targetSelectSql,
+        const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues) -> Statement;
 }
 } // namespace orm::db::relations
 
@@ -1260,128 +1311,18 @@ template <typename Policy>
 // database/TypeTranslator.hpp
 namespace orm::db
 {
-export {
-
-class TypeTranslator
+export
 {
-public:
-    virtual ~TypeTranslator() = default;
 
-    [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
-};
+    class TypeTranslator
+    {
+    public:
+        virtual ~TypeTranslator() = default;
 
+        [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
+    };
 }
 } // namespace orm::db
-
-// database/postgresql/PostgresqlDialect.hpp
-namespace orm::db::postgresql
-{
-export {
-
-class PostgresqlDialect final : public SqlDialect
-{
-public:
-    [[nodiscard]] auto quoteIdentifier(std::string_view identifier) const -> std::string override;
-    [[nodiscard]] auto bindMarker(std::string_view logicalName) const -> std::string override;
-    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
-                                               bool ifNotExists) const -> std::string override;
-    [[nodiscard]] auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string override;
-    [[nodiscard]] auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string override;
-    [[nodiscard]] auto renderPagination(const PaginationSpec& pagination) const -> std::string override;
-    [[nodiscard]] auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string override;
-    [[nodiscard]] auto renderAggregateResult(std::string_view expression,
-                                             bool preserveExactNumeric) const -> std::string override;
-};
-
-}
-} // namespace orm::db::postgresql
-
-// database/postgresql/PostgresqlBackend.hpp
-namespace orm::db::postgresql
-{
-export {
-
-class PostgresqlBackend final : public BackendProvider
-{
-public:
-    PostgresqlBackend();
-    ~PostgresqlBackend() override;
-
-    [[nodiscard]] auto type() const noexcept -> BackendType override;
-    [[nodiscard]] auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override;
-    [[nodiscard]] auto capabilities() const noexcept -> const BackendCapabilities& override;
-    [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
-    [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;
-    [[nodiscard]] auto commandGenerator() const noexcept -> const CommandGenerator& override;
-    [[nodiscard]] auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor override
-    {
-        return CompiledSqlFlavor::PostgreSQL;
-    }
-
-private:
-    BackendCapabilities backendCapabilities;
-    PostgresqlDialect postgresqlDialect;
-    std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> postgresqlCommandGenerator;
-};
-
-}
-} // namespace orm::db::postgresql
-
-// database/sqlite/SqliteDialect.hpp
-namespace orm::db::sqlite
-{
-export {
-
-class SqliteDialect final : public SqlDialect
-{
-public:
-    [[nodiscard]] auto quoteIdentifier(std::string_view identifier) const -> std::string override;
-    [[nodiscard]] auto bindMarker(std::string_view logicalName) const -> std::string override;
-    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
-    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
-                                               bool ifNotExists) const -> std::string override;
-    [[nodiscard]] auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string override;
-    [[nodiscard]] auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string override;
-    [[nodiscard]] auto renderPagination(const PaginationSpec& pagination) const -> std::string override;
-    [[nodiscard]] auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string override;
-};
-
-}
-} // namespace orm::db::sqlite
-
-// database/sqlite/SqliteBackend.hpp
-namespace orm::db::sqlite
-{
-export {
-
-class SqliteBackend final : public BackendProvider
-{
-public:
-    SqliteBackend();
-    ~SqliteBackend() override;
-
-    [[nodiscard]] auto type() const noexcept -> BackendType override;
-    [[nodiscard]] auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override;
-    [[nodiscard]] auto capabilities() const noexcept -> const BackendCapabilities& override;
-    [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
-    [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;
-    [[nodiscard]] auto commandGenerator() const noexcept -> const CommandGenerator& override;
-    [[nodiscard]] auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor override
-    {
-        return CompiledSqlFlavor::SQLite;
-    }
-
-private:
-    BackendCapabilities backendCapabilities;
-    SqliteDialect sqliteDialect;
-    std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> sqliteCommandGenerator;
-};
-
-}
-} // namespace orm::db::sqlite
 
 // query/CompiledSql.hpp
 namespace orm::query::detail
@@ -1819,4 +1760,3 @@ auto collectParameters(const P& plan, const Args& args) -> std::vector<db::State
     return result;
 }
 } // namespace orm::query::detail
-

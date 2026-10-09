@@ -1,35 +1,16 @@
 module;
 
-#include <algorithm>
 #include <array>
-#include <bit>
-#include <cassert>
-#include <charconv>
-#include <cmath>
-#include <compare>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
-#include <format>
-#include <functional>
-#include <initializer_list>
-#include <limits>
-#include <map>
 #include <memory>
 #include <optional>
-#include <set>
-#include <span>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <variant>
 #include <vector>
 
 export module orm:foundation;
@@ -39,221 +20,220 @@ import orm.reflection;
 // utils/ConstexprFor.hpp
 namespace orm::utils
 {
-export {
-
-template <auto Start, auto End, auto Inc, class F, class... Args>
-constexpr auto constexpr_for(F&& f, Args... args) -> void
+export
 {
-    if constexpr (Start < End)
+
+    template <auto Start, auto End, auto Inc, class F, class... Args>
+    constexpr auto constexpr_for(F && f, Args... args) -> void
     {
-        f(std::integral_constant<decltype(Start), Start>{}, std::forward<Args>(args)...);
-        constexpr_for<Start + Inc, End, Inc>(std::forward<F>(f), std::forward<Args>(args)...);
-    }
-}
-
-template <class Tuple, class F, class... Args>
-constexpr auto constexpr_for_tuple(Tuple&& t, F&& f, Args... args) -> void
-{
-    constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
-        [&t, &f, &args...](auto I) { f(I, std::get<I>(std::forward<Tuple>(t)), std::forward<Args>(args)...); });
-}
-
-template <class Tuple, class F, class... Args>
-constexpr auto constexpr_for_tuple(F&& f, Args... args) -> void
-{
-    constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
-        [&f, &args...](auto I)
+        if constexpr (Start < End)
         {
-            using field_t = std::tuple_element_t<I, std::decay_t<Tuple>>;
-            f(I, static_cast<field_t>(nullptr), std::forward<Args>(args)...);
-        });
-}
+            f(std::integral_constant<decltype(Start), Start>{}, std::forward<Args>(args)...);
+            constexpr_for<Start + Inc, End, Inc>(std::forward<F>(f), std::forward<Args>(args)...);
+        }
+    }
 
+    template <class Tuple, class F, class... Args>
+    constexpr auto constexpr_for_tuple(Tuple && t, F && f, Args... args) -> void
+    {
+        constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
+            [&t, &f, &args...](auto I) { f(I, std::get<I>(std::forward<Tuple>(t)), std::forward<Args>(args)...); });
+    }
+
+    template <class Tuple, class F, class... Args>
+    constexpr auto constexpr_for_tuple(F && f, Args... args) -> void
+    {
+        constexpr_for<std::size_t{0}, std::tuple_size_v<std::decay_t<Tuple>>, std::size_t{1}>(
+            [&f, &args...](auto I)
+            {
+                using field_t = std::tuple_element_t<I, std::decay_t<Tuple>>;
+                f(I, static_cast<field_t>(nullptr), std::forward<Args>(args)...);
+            });
+    }
 }
 } // namespace orm::utils
 
 // utils/StringUtils.hpp
 namespace orm::utils
 {
-export {
-
-constexpr auto replaceAll(std::string& text, const std::string& toReplace, const std::string& replaceWith) -> void
+export
 {
-    if (toReplace.empty())
+
+    constexpr auto replaceAll(std::string & text, const std::string& toReplace, const std::string& replaceWith) -> void
     {
-        return;
+        if (toReplace.empty())
+        {
+            return;
+        }
+
+        size_t start_pos = 0;
+
+        while ((start_pos = text.find(toReplace, start_pos)) != std::string::npos)
+        {
+            text.replace(start_pos, toReplace.length(), replaceWith);
+            start_pos += replaceWith.length();
+        }
     }
 
-    size_t start_pos = 0;
-
-    while ((start_pos = text.find(toReplace, start_pos)) != std::string::npos)
-    {
-        text.replace(start_pos, toReplace.length(), replaceWith);
-        start_pos += replaceWith.length();
-    }
-}
-
-auto removeLastComma(std::string& text) -> void;
-
+    auto removeLastComma(std::string & text)->void;
 }
 }
 
 // model/ColumnType.hpp
 namespace orm::model
 {
-export {
-
-enum class ColumnType
+export
 {
-    Bool,
-    Char,
-    UnsignedChar,
-    Short,
-    UnsignedShort,
-    Int,
-    UnsignedInt,
-    LongLong,
-    UnsignedLongLong,
-    Float,
-    Double,
-    String,
-    Uuid,
-};
 
-auto toString(ColumnType type) -> std::string;
+    enum class ColumnType
+    {
+        Bool,
+        Char,
+        UnsignedChar,
+        Short,
+        UnsignedShort,
+        Int,
+        UnsignedInt,
+        LongLong,
+        UnsignedLongLong,
+        Float,
+        Double,
+        String,
+        Uuid,
+    };
 
+    auto toString(ColumnType type) -> std::string;
 }
 } // namespace orm::model
 
 // model/RelationKind.hpp
 namespace orm::model
 {
-export {
-
-enum class RelationKind
+export
 {
-    ToOne,
-    OneToMany,
-    ManyToMany,
-};
 
+    enum class RelationKind
+    {
+        ToOne,
+        OneToMany,
+        ManyToMany,
+    };
 }
 } // namespace orm::model
 
 // database/BackendType.hpp
 namespace orm::db
 {
-export {
-
-enum class BackendType
+export
 {
-    Sqlite,
-    Postgres [[maybe_unused]],
-    Mysql [[maybe_unused]],
-    Oracle [[maybe_unused]],
-    Firebird [[maybe_unused]],
-    Db2 [[maybe_unused]],
-    Odbc [[maybe_unused]],
-    Empty
-};
 
+    enum class BackendType
+    {
+        Sqlite,
+        Postgres [[maybe_unused]],
+        Mysql [[maybe_unused]],
+        Oracle [[maybe_unused]],
+        Firebird [[maybe_unused]],
+        Db2 [[maybe_unused]],
+        Odbc [[maybe_unused]],
+        Empty
+    };
 }
 } // namespace orm::db
 
 // database/CompiledSqlFlavor.hpp
 namespace orm::db
 {
-export {
-
-enum class CompiledSqlFlavor
+export
 {
-    None,
-    SQLite,
-    PostgreSQL,
-};
 
+    enum class CompiledSqlFlavor
+    {
+        None,
+        SQLite,
+        PostgreSQL,
+    };
 }
 } // namespace orm::db
 
 // database/DatabaseError.hpp
 namespace orm
 {
-export {
-
-enum class DatabaseErrorCode
+export
 {
-    NotConnected,
-    AlreadyConnected,
-    UnsupportedBackend,
-    UnsupportedFeature,
-    Connection,
-    Statement,
-    Constraint,
-    Transaction,
-    Conversion,
-    AffectedRowsUnavailable,
-};
 
-/**
- * @brief A backend-neutral database runtime error.
- *
- * The structured context intentionally excludes connection strings and bound
- * parameter values. Backend adapters are responsible for passing a sanitized
- * message to the constructor.
- */
-class DatabaseError final : public std::runtime_error
-{
-public:
-    DatabaseError(DatabaseErrorCode codeInit, db::BackendType backendTypeInit, std::string operationInit,
-                  std::string message, std::optional<std::string> nativeCodeInit = std::nullopt)
-        : std::runtime_error{std::move(message)},
-          code{codeInit},
-          backendType{backendTypeInit},
-          operation{std::move(operationInit)},
-          nativeCode{std::move(nativeCodeInit)}
+    enum class DatabaseErrorCode
     {
-    }
+        NotConnected,
+        AlreadyConnected,
+        UnsupportedBackend,
+        UnsupportedFeature,
+        Connection,
+        Statement,
+        Constraint,
+        Transaction,
+        Conversion,
+        AffectedRowsUnavailable,
+    };
 
-    [[nodiscard]] auto getCode() const noexcept -> DatabaseErrorCode
+    /**
+     * @brief A backend-neutral database runtime error.
+     *
+     * The structured context intentionally excludes connection strings and bound
+     * parameter values. Backend adapters are responsible for passing a sanitized
+     * message to the constructor.
+     */
+    class DatabaseError final : public std::runtime_error
     {
-        return code;
-    }
+    public:
+        DatabaseError(DatabaseErrorCode codeInit, db::BackendType backendTypeInit, std::string operationInit,
+                      std::string message, std::optional<std::string> nativeCodeInit = std::nullopt)
+            : std::runtime_error{std::move(message)},
+              code{codeInit},
+              backendType{backendTypeInit},
+              operation{std::move(operationInit)},
+              nativeCode{std::move(nativeCodeInit)}
+        {
+        }
 
-    [[nodiscard]] auto getBackendType() const noexcept -> db::BackendType
-    {
-        return backendType;
-    }
+        [[nodiscard]] auto getCode() const noexcept -> DatabaseErrorCode
+        {
+            return code;
+        }
 
-    [[nodiscard]] auto getOperation() const noexcept -> const std::string&
-    {
-        return operation;
-    }
+        [[nodiscard]] auto getBackendType() const noexcept -> db::BackendType
+        {
+            return backendType;
+        }
 
-    [[nodiscard]] auto getNativeCode() const noexcept -> const std::optional<std::string>&
-    {
-        return nativeCode;
-    }
+        [[nodiscard]] auto getOperation() const noexcept -> const std::string&
+        {
+            return operation;
+        }
 
-private:
-    DatabaseErrorCode code;
-    db::BackendType backendType;
-    std::string operation;
-    std::optional<std::string> nativeCode;
-};
+        [[nodiscard]] auto getNativeCode() const noexcept -> const std::optional<std::string>&
+        {
+            return nativeCode;
+        }
 
+    private:
+        DatabaseErrorCode code;
+        db::BackendType backendType;
+        std::string operation;
+        std::optional<std::string> nativeCode;
+    };
 }
 } // namespace orm
 
 // relations.hpp
 namespace orm
 {
-export {
+export
+{
 
-class DatabaseCore;
-template <typename SchemaType>
-class Database;
-
-
+    class DatabaseCore;
+    template <typename SchemaType>
+    class Database;
 }
 namespace detail
 {
@@ -397,24 +377,23 @@ private:
     bool loaded_{};
 };
 }
-export {
- // namespace detail
-
-template <typename T>
-class OneToMany : public detail::RelationCollection<T>
+export
 {
-public:
-    using detail::RelationCollection<T>::RelationCollection;
-};
+    // namespace detail
 
-template <typename T>
-class ManyToMany : public detail::RelationCollection<T>
-{
-public:
-    using detail::RelationCollection<T>::RelationCollection;
-};
+    template <typename T>
+    class OneToMany : public detail::RelationCollection<T>
+    {
+    public:
+        using detail::RelationCollection<T>::RelationCollection;
+    };
 
-
+    template <typename T>
+    class ManyToMany : public detail::RelationCollection<T>
+    {
+    public:
+        using detail::RelationCollection<T>::RelationCollection;
+    };
 }
 namespace detail
 {
@@ -460,23 +439,23 @@ struct OptionalRelationCollectionTraits<std::optional<T>>
 template <typename T>
 inline constexpr bool isOptionalRelationCollection = OptionalRelationCollectionTraits<std::remove_cv_t<T>>::value;
 }
-export {
- // namespace detail
+export
+{
+    // namespace detail
 
-template <typename T>
-inline constexpr bool is_relation_collection_v = detail::isRelationCollection<std::remove_cvref_t<T>>;
+    template <typename T>
+    inline constexpr bool is_relation_collection_v = detail::isRelationCollection<std::remove_cvref_t<T>>;
 
-template <typename T>
-inline constexpr bool is_optional_relation_collection_v = detail::isOptionalRelationCollection<std::remove_cvref_t<T>>;
+    template <typename T>
+    inline constexpr bool is_optional_relation_collection_v =
+        detail::isOptionalRelationCollection<std::remove_cvref_t<T>>;
 
-template <typename T>
-using relation_target_t = typename detail::RelationCollectionTraits<std::remove_cvref_t<T>>::Target;
+    template <typename T>
+    using relation_target_t = typename detail::RelationCollectionTraits<std::remove_cvref_t<T>>::Target;
 
-template <typename T>
-inline constexpr bool is_one_to_many_v =
-    is_relation_collection_v<T> && detail::RelationCollectionTraits<std::remove_cvref_t<T>>::isOneToMany;
-
-
+    template <typename T>
+    inline constexpr bool is_one_to_many_v =
+        is_relation_collection_v<T> && detail::RelationCollectionTraits<std::remove_cvref_t<T>>::isOneToMany;
 }
 namespace detail
 {
@@ -520,43 +499,43 @@ struct IsManyToManyDescriptor : std::false_type
 {
 };
 }
-export {
- // namespace detail
-
-/**
- * @brief Typed one-to-many mapping. The descriptor stores no runtime strings:
- * every member and fallback name is encoded in its type.
- */
-template <auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-struct OneToManyDescriptor
+export
 {
-    inline static constexpr auto member = Member;
-    inline static constexpr auto mappedByMember = MappedByMember;
-    inline static constexpr auto mappedByName = MappedByName;
+    // namespace detail
 
-    template <auto TargetMember>
-        requires std::is_member_object_pointer_v<decltype(TargetMember)>
-    [[nodiscard]] consteval auto
-    mappedBy() const -> OneToManyDescriptor<Member, TargetMember, detail::emptyRelationName>
+    /**
+     * @brief Typed one-to-many mapping. The descriptor stores no runtime strings:
+     * every member and fallback name is encoded in its type.
+     */
+    template <auto Member, auto MappedByMember = nullptr,
+              reflection::FixedString MappedByName = detail::emptyRelationName>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    struct OneToManyDescriptor
     {
-        using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
-        using target_t = relation_target_t<collection_t>;
-        static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
-                      "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
-        return {};
-    }
+        inline static constexpr auto member = Member;
+        inline static constexpr auto mappedByMember = MappedByMember;
+        inline static constexpr auto mappedByName = MappedByName;
 
-    template <reflection::FixedString TargetField>
-    [[nodiscard]] consteval auto mappedBy() const -> OneToManyDescriptor<Member, nullptr, TargetField>
-    {
-        static_assert(not TargetField.view().empty(),
-                      "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
-        return {};
-    }
-};
+        template <auto TargetMember>
+            requires std::is_member_object_pointer_v<decltype(TargetMember)>
+        [[nodiscard]] consteval auto
+        mappedBy() const -> OneToManyDescriptor<Member, TargetMember, detail::emptyRelationName>
+        {
+            using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+            using target_t = relation_target_t<collection_t>;
+            static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
+                          "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
+            return {};
+        }
 
-
+        template <reflection::FixedString TargetField>
+        [[nodiscard]] consteval auto mappedBy() const -> OneToManyDescriptor<Member, nullptr, TargetField>
+        {
+            static_assert(not TargetField.view().empty(),
+                          "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
+            return {};
+        }
+    };
 }
 namespace detail
 {
@@ -570,83 +549,84 @@ struct IsOneToManyDescriptor<OneToManyDescriptor<Member, MappedByMember, MappedB
 {
 };
 }
-export {
- // namespace detail
-
-/**
- * @brief Typed many-to-many mapping and its compile-time builder.
- */
-template <auto Member, auto MappedByMember = nullptr, reflection::FixedString MappedByName = detail::emptyRelationName,
-          reflection::FixedString ThroughTable = detail::emptyRelationName,
-          typename OwnerColumnNames = detail::RelationColumnNames<>,
-          typename TargetColumnNames = detail::RelationColumnNames<>>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-struct ManyToManyDescriptor
+export
 {
-    inline static constexpr auto member = Member;
-    inline static constexpr auto mappedByMember = MappedByMember;
-    inline static constexpr auto mappedByName = MappedByName;
-    inline static constexpr auto throughTable = ThroughTable;
-    using OwnerColumns = OwnerColumnNames;
-    using TargetColumns = TargetColumnNames;
+    // namespace detail
 
-    template <reflection::FixedString TableName>
-    [[nodiscard]] consteval auto through() const
-        -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, TableName, OwnerColumnNames, TargetColumnNames>
+    /**
+     * @brief Typed many-to-many mapping and its compile-time builder.
+     */
+    template <auto Member, auto MappedByMember = nullptr,
+              reflection::FixedString MappedByName = detail::emptyRelationName,
+              reflection::FixedString ThroughTable = detail::emptyRelationName,
+              typename OwnerColumnNames = detail::RelationColumnNames<>,
+              typename TargetColumnNames = detail::RelationColumnNames<>>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    struct ManyToManyDescriptor
     {
-        static_assert(not TableName.view().empty(),
-                      "ORM_RELATION_JUNCTION_EMPTY: junction table name must not be empty");
-        return {};
-    }
+        inline static constexpr auto member = Member;
+        inline static constexpr auto mappedByMember = MappedByMember;
+        inline static constexpr auto mappedByName = MappedByName;
+        inline static constexpr auto throughTable = ThroughTable;
+        using OwnerColumns = OwnerColumnNames;
+        using TargetColumns = TargetColumnNames;
 
-    template <auto TargetMember>
-        requires std::is_member_object_pointer_v<decltype(TargetMember)>
-    [[nodiscard]] consteval auto
-    mappedBy() const -> ManyToManyDescriptor<Member, TargetMember, detail::emptyRelationName, ThroughTable,
-                                             OwnerColumnNames, TargetColumnNames>
-    {
-        using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
-        using target_t = relation_target_t<collection_t>;
-        static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
-                      "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
-        return {};
-    }
+        template <reflection::FixedString TableName>
+        [[nodiscard]] consteval auto
+        through() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, TableName, OwnerColumnNames,
+                                                TargetColumnNames>
+        {
+            static_assert(not TableName.view().empty(),
+                          "ORM_RELATION_JUNCTION_EMPTY: junction table name must not be empty");
+            return {};
+        }
 
-    template <reflection::FixedString TargetField>
-    [[nodiscard]] consteval auto mappedBy() const
-        -> ManyToManyDescriptor<Member, nullptr, TargetField, ThroughTable, OwnerColumnNames, TargetColumnNames>
-    {
-        static_assert(not TargetField.view().empty(),
-                      "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
-        return {};
-    }
+        template <auto TargetMember>
+            requires std::is_member_object_pointer_v<decltype(TargetMember)>
+        [[nodiscard]] consteval auto
+        mappedBy() const -> ManyToManyDescriptor<Member, TargetMember, detail::emptyRelationName, ThroughTable,
+                                                 OwnerColumnNames, TargetColumnNames>
+        {
+            using collection_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+            using target_t = relation_target_t<collection_t>;
+            static_assert(std::same_as<detail::relation_member_owner_t<TargetMember>, target_t>,
+                          "ORM_RELATION_MAPPED_BY_OWNER: mappedBy member must belong to the relation target");
+            return {};
+        }
 
-    template <reflection::FixedString... Names>
-    [[nodiscard]] consteval auto
-    ownerColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable,
-                                                 detail::RelationColumnNames<Names...>, TargetColumnNames>
-    {
-        static_assert(sizeof...(Names) > 0,
-                      "ORM_RELATION_OWNER_COLUMNS_EMPTY: owner junction columns must not be empty");
-        static_assert((not Names.view().empty() && ...),
-                      "ORM_RELATION_OWNER_COLUMN_EMPTY: junction column name must not be empty");
-        return {};
-    }
+        template <reflection::FixedString TargetField>
+        [[nodiscard]] consteval auto mappedBy() const
+            -> ManyToManyDescriptor<Member, nullptr, TargetField, ThroughTable, OwnerColumnNames, TargetColumnNames>
+        {
+            static_assert(not TargetField.view().empty(),
+                          "ORM_RELATION_MAPPED_BY_EMPTY: mappedBy field name must not be empty");
+            return {};
+        }
 
-    template <reflection::FixedString... Names>
-    [[nodiscard]] consteval auto
-    targetColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames,
-                                                  detail::RelationColumnNames<Names...>>
-    {
-        static_assert(sizeof...(Names) > 0,
-                      "ORM_RELATION_TARGET_COLUMNS_EMPTY: target junction columns must not be empty");
-        static_assert((not Names.view().empty() && ...),
-                      "ORM_RELATION_TARGET_COLUMN_EMPTY: junction column name must not be empty");
-        return {};
-    }
-};
+        template <reflection::FixedString... Names>
+        [[nodiscard]] consteval auto
+        ownerColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable,
+                                                     detail::RelationColumnNames<Names...>, TargetColumnNames>
+        {
+            static_assert(sizeof...(Names) > 0,
+                          "ORM_RELATION_OWNER_COLUMNS_EMPTY: owner junction columns must not be empty");
+            static_assert((not Names.view().empty() && ...),
+                          "ORM_RELATION_OWNER_COLUMN_EMPTY: junction column name must not be empty");
+            return {};
+        }
 
-
+        template <reflection::FixedString... Names>
+        [[nodiscard]] consteval auto
+        targetColumns() const -> ManyToManyDescriptor<Member, MappedByMember, MappedByName, ThroughTable,
+                                                      OwnerColumnNames, detail::RelationColumnNames<Names...>>
+        {
+            static_assert(sizeof...(Names) > 0,
+                          "ORM_RELATION_TARGET_COLUMNS_EMPTY: target junction columns must not be empty");
+            static_assert((not Names.view().empty() && ...),
+                          "ORM_RELATION_TARGET_COLUMN_EMPTY: junction column name must not be empty");
+            return {};
+        }
+    };
 }
 namespace detail
 {
@@ -666,36 +646,36 @@ struct IsManyToManyDescriptor<
 {
 };
 }
-export {
- // namespace detail
-
-template <auto Member>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-[[nodiscard]] consteval auto oneToMany() -> OneToManyDescriptor<Member>
+export
 {
-    using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
-    static_assert(is_one_to_many_v<field_t>, "ORM_RELATION_KIND: oneToMany<Member>() requires an OneToMany<T> member");
-    return {};
-}
+    // namespace detail
 
-template <auto Member>
-    requires std::is_member_object_pointer_v<decltype(Member)>
-[[nodiscard]] consteval auto manyToMany() -> ManyToManyDescriptor<Member>
-{
-    using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
-    static_assert(is_relation_collection_v<field_t> && not is_one_to_many_v<field_t>,
-                  "ORM_RELATION_KIND: manyToMany<Member>() requires a ManyToMany<T> member");
-    return {};
-}
+    template <auto Member>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    [[nodiscard]] consteval auto oneToMany() -> OneToManyDescriptor<Member>
+    {
+        using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+        static_assert(is_one_to_many_v<field_t>,
+                      "ORM_RELATION_KIND: oneToMany<Member>() requires an OneToMany<T> member");
+        return {};
+    }
 
-template <typename... Descriptors>
-[[nodiscard]] consteval auto relations(Descriptors... descriptors)
-{
-    static_assert((detail::IsRelationDescriptor<std::remove_cvref_t<Descriptors>>::value && ...),
-                  "ORM_MODEL_RELATIONS_DEFINITION: orm::relations accepts only typed relation descriptors");
-    return std::tuple<Descriptors...>{descriptors...};
-}
+    template <auto Member>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    [[nodiscard]] consteval auto manyToMany() -> ManyToManyDescriptor<Member>
+    {
+        using field_t = std::remove_cvref_t<detail::relation_member_value_t<Member>>;
+        static_assert(is_relation_collection_v<field_t> && not is_one_to_many_v<field_t>,
+                      "ORM_RELATION_KIND: manyToMany<Member>() requires a ManyToMany<T> member");
+        return {};
+    }
 
+    template <typename... Descriptors>
+    [[nodiscard]] consteval auto relations(Descriptors... descriptors)
+    {
+        static_assert((detail::IsRelationDescriptor<std::remove_cvref_t<Descriptors>>::value && ...),
+                      "ORM_MODEL_RELATIONS_DEFINITION: orm::relations accepts only typed relation descriptors");
+        return std::tuple<Descriptors...>{descriptors...};
+    }
 }
 } // namespace orm
-

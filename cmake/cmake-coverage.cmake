@@ -154,7 +154,7 @@ if (CODE_COVERAGE AND NOT CODE_COVERAGE_ADDED)
         # processing
         add_custom_target(
                 orm-cxx-ccov-libs
-                COMMAND ;
+                COMMAND ${CMAKE_COMMAND} -E true
                 COMMENT "libs ready for coverage report.")
 
     elseif (CMAKE_C_COMPILER_ID MATCHES "GNU" OR CMAKE_CXX_COMPILER_ID MATCHES
@@ -693,7 +693,7 @@ function(add_code_coverage_all_targets)
                     "${CMAKE_COVERAGE_OUTPUT_DIRECTORY}/all-merged.info")
 
             # Nothing required for gcov
-            add_custom_target(orm-cxx-ccov-all-processing COMMAND ;)
+            add_custom_target(orm-cxx-ccov-all-processing COMMAND ${CMAKE_COMMAND} -E true)
 
             # Exclusion regex string creation
             set(EXCLUDE_REGEX)

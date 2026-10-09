@@ -38,6 +38,10 @@ foreach(case IN LISTS orm_cxx_failure_cases)
     # and identify their source file. Never let a module graph failure satisfy
     # one of those broader checks.
     string(TOLOWER "${compiler_output}" lowercase_output)
+    if(lowercase_output MATCHES "internal compiler error|please submit a bug report|clang frontend command failed"
+       OR lowercase_output MATCHES "segmentation fault|fatal error c1001")
+        message(FATAL_ERROR "${target} crashed the compiler instead of producing a domain diagnostic.\n${compiler_output}")
+    endif()
     if(lowercase_output MATCHES "module[^\n]*(not found|cannot find|could not find|failed to load|unable to load)"
        OR lowercase_output MATCHES "failed to read compiled module|module file[^\n]*(out of date|not found)"
        OR lowercase_output MATCHES "module provider[^\n]*(not found|could not be found)"

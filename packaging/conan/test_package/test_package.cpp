@@ -15,16 +15,14 @@ consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
     constexpr bool drop = requires(Owner owner) {
         { orm::db::relations::dropTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
     };
-    constexpr bool link =
-        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
-            { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
-        };
-    constexpr bool unlink =
-        requires(Owner owner, orm::model::RelationView relation, const orm::db::binding::PrimaryKey& key) {
-            { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
-        };
+    constexpr bool link = requires(Owner owner, orm::model::RelationView relation, const orm::db::PrimaryKey& key) {
+        { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+    };
+    constexpr bool unlink = requires(Owner owner, orm::model::RelationView relation, const orm::db::PrimaryKey& key) {
+        { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
+    };
     constexpr bool select = requires(Owner owner, orm::model::RelationView relation, std::string sql,
-                                     const std::vector<orm::db::binding::PrimaryKey>& keys) {
+                                     const std::vector<orm::db::PrimaryKey>& keys) {
         {
             orm::db::relations::collectionSelectStatement(owner, relation, sql, keys, true)
         } -> std::same_as<orm::db::Statement>;

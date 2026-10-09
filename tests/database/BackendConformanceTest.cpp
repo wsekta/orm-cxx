@@ -1,18 +1,9 @@
-module;
-
 #include "tests/UnitTestPrelude.hpp"
 
-module orm;
+import orm;
 
-import :internal;
-import :test_support;
-import :foundation;
-import :model;
-import :expressions;
-import :dynamic_query;
-import :static_plan;
-import :sql;
-import :database;
+#include "tests/CollectionModelsDefinitions.hpp"
+#include "tests/database/DatabaseTest.hpp"
 
 using namespace orm::test::fixtures;
 

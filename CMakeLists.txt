@@ -13,6 +13,12 @@ project(
 if(NOT CMAKE_GENERATOR MATCHES "^Ninja")
     message(FATAL_ERROR "orm-cxx requires Ninja or Ninja Multi-Config for its C++20 modules.")
 endif()
+execute_process(COMMAND "${CMAKE_MAKE_PROGRAM}" --version
+                OUTPUT_VARIABLE ORM_CXX_NINJA_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE
+                COMMAND_ERROR_IS_FATAL ANY)
+if(ORM_CXX_NINJA_VERSION VERSION_LESS 1.11)
+    message(FATAL_ERROR "orm-cxx requires Ninja 1.11 or newer for C++20 modules.")
+endif()
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
     message(FATAL_ERROR "orm-cxx requires GCC 14 or newer for C++20 modules.")
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18)

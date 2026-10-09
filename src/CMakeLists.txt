@@ -29,12 +29,16 @@ file(MAKE_DIRECTORY "${ORM_CXX_GENERATED_MODULE_DIR}")
 set(ORM_CXX_SQLITE_BACKEND_ENABLED false)
 set(ORM_CXX_POSTGRESQL_BACKEND_ENABLED false)
 set(ORM_CXX_SQLITE_RELATION_DECLARATIONS "")
+set(ORM_CXX_SQLITE_BACKEND_DECLARATIONS "")
+set(ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS "")
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     set(ORM_CXX_SQLITE_BACKEND_ENABLED true)
     file(READ "${PROJECT_SOURCE_DIR}/cmake/SqliteRelationDeclarations.cppm.in" ORM_CXX_SQLITE_RELATION_DECLARATIONS)
+    file(READ "${PROJECT_SOURCE_DIR}/cmake/SqliteBackendDeclarations.cppm.in" ORM_CXX_SQLITE_BACKEND_DECLARATIONS)
 endif()
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     set(ORM_CXX_POSTGRESQL_BACKEND_ENABLED true)
+    file(READ "${PROJECT_SOURCE_DIR}/cmake/PostgresqlBackendDeclarations.cppm.in" ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS)
 endif()
 configure_file("${PROJECT_SOURCE_DIR}/cmake/BuildConfig.cppm.in"
                "${ORM_CXX_GENERATED_MODULE_DIR}/orm.config.cppm" @ONLY)
@@ -80,7 +84,8 @@ foreach(backend SQLITE3 POSTGRESQL)
         target_link_libraries(orm-cxx
             PUBLIC "$<BUILD_INTERFACE:${ORM_CXX_SOCI_${backend}_TARGET}>"
                    "$<INSTALL_INTERFACE:${ORM_CXX_SOCI_${backend}_INSTALLED_TARGET}>")
-        target_include_directories(orm-cxx PRIVATE "$<TARGET_PROPERTY:${ORM_CXX_SOCI_${backend}_TARGET},INCLUDE_DIRECTORIES>")
+        target_include_directories(orm-cxx PRIVATE
+            "$<BUILD_INTERFACE:$<TARGET_PROPERTY:${ORM_CXX_SOCI_${backend}_TARGET},INCLUDE_DIRECTORIES>>")
     endif()
 endforeach()
 

@@ -179,6 +179,10 @@ endif()
 if(CMAKE_TOOLCHAIN_FILE)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DCMAKE_TOOLCHAIN_FILE=${CMAKE_TOOLCHAIN_FILE}")
 endif()
+if(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT)
+    list(APPEND orm_cxx_consumer_common_configure_arguments
+         "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=${CMAKE_MSVC_DEBUG_INFORMATION_FORMAT}")
+endif()
 if(VCPKG_INSTALLED_DIR)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR}"
          -DVCPKG_MANIFEST_INSTALL=OFF

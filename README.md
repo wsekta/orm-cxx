@@ -7,7 +7,7 @@
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wsekta/orm-cxx/graphs/commit-activity)
 [![Generic badge](https://img.shields.io/badge/gcc-14+-blue.svg)](https://gcc.gnu.org/)
 [![Generic badge](https://img.shields.io/badge/clang-18+-blue.svg)](https://clang.llvm.org/)
-[![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
+[![Generic badge](https://img.shields.io/badge/MSVC-19.50+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/wsekta/orm-cxx/issues/new)
 
 [![clang++](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml?select=branch%3Amain)
@@ -16,20 +16,20 @@
 [![codecov](https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9)](https://codecov.io/github/wsekta/orm-cxx)
 </div>
 
-## đźŽŻ Goal
+## 🎯 Goal
 
 The goal of the ORM C++ is to provide a decent Object-Relational Mapping library for C++ community.
 
-đź†• Compile-time model reflection implemented with standard C++20<br>
-âś… 100% test coverage with unit tests and integration tests<br>
-đź—‚ď¸Ź SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
-âš™ď¸Ź Support for multiple compilers<br>
-âś… Native C++20 modules with no project-defined macros<br>
-đźš€ As low as possible runtime overhead<br>
-đź‘¶ Easy to use<br>
-đź“‰ As few dependencies as possible<br>
+🆕 Compile-time model reflection implemented with standard C++20<br>
+✅ 100% test coverage with unit tests and integration tests<br>
+🗂️ SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
+⚙️ Support for multiple compilers<br>
+✅ Native C++20 modules with no project-defined macros<br>
+🚀 As low as possible runtime overhead<br>
+👶 Easy to use<br>
+📉 As few dependencies as possible<br>
 
-## âš™ď¸Ź Usage
+## ⚙️ Usage
 
 ### Package installation
 
@@ -104,7 +104,7 @@ int main()
 }
 ```
 
-## đź“– Documentation
+## 📖 Documentation
 
 ## [Markdown](docs/main.md)
 
@@ -321,7 +321,7 @@ does not emulate Microsoft's compiler:
 See [CONTRIBUTING.md](CONTRIBUTING.md) for native prerequisites, individual
 presets, and the CI-to-local command matrix.
 
-## đź“ť Consuming library with CMake (CMake 3.31 or newer)
+## 📝 Consuming library with CMake (CMake 3.31 or newer)
 
 The library exposes two named modules: `orm` and the backend-independent
 `orm.reflection`. Both source builds and installed packages require CMake 3.31+,
@@ -386,21 +386,21 @@ repository's vcpkg manifest, the `sqlite` feature is enabled by default:
 `vcpkg install --x-no-default-features --x-feature=postgresql` provisions only
 PostgreSQL.
 
-## âš’ď¸Ź Compiler support
+## ⚒️ Compiler support
 
 - [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 19.50 or newer.
 - [GCC➚](https://gcc.gnu.org/) version 14 or newer.
 - [Clang➚](https://clang.llvm.org/) version 18 or newer.
 
-## đź“¦ Dependencies
+## 📦 Dependencies
 
 - [GTest](https://github.com/google/googletest) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
 - [SOCI](https://github.com/SOCI/soci)
 - SQLite development libraries (when `ORM_CXX_ENABLE_SQLITE_BACKEND=ON`)
 - PostgreSQL `libpq` development libraries (when `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON`)
 
-## âś¨ Contributing
+## ✨ Contributing
 
-Feel free to join ORM C++ development! đźš€
+Feel free to join ORM C++ development! 🚀
 
 Please check [CONTRIBUTING](https://github.com/wsekta/orm-cxx/blob/main/CONTRIBUTING.md) guide.

@@ -24,6 +24,14 @@ function(orm_cxx_expect_compile_failure name source expected_diagnostic)
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
+orm_cxx_expect_compile_success(backend-provider-import-positive BackendProviderImportPositive.cpp)
+
+if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND)
+    orm_cxx_expect_compile_failure(disabled-sqlite-backend DisabledSqliteBackend.cpp "SqliteBackend")
+endif()
+if(NOT ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
+    orm_cxx_expect_compile_failure(disabled-postgresql-backend DisabledPostgresqlBackend.cpp "PostgresqlBackend")
+endif()
 
 orm_cxx_expect_compile_failure(
     reflection-too-many-fields ReflectionTooManyFields.cpp

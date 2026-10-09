@@ -42,6 +42,8 @@ class PackageReleaseTests(unittest.TestCase):
         self.assertIn("orm-cxx-0.1.0/modules/orm.reflection.cppm", names)
         self.assertIn("orm-cxx-0.1.0/VERSION.txt", names)
         self.assertFalse(any("/externals/" in name or "/.git/" in name for name in names))
+        self.assertFalse(any("/include/orm-cxx/" in name for name in names))
+        self.assertFalse(any(Path(name).suffix in (".pcm", ".ifc", ".gcm") for name in names))
 
     def test_sources_normalize_checkout_line_endings(self):
         source = self.directory / "source"
