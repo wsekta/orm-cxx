@@ -1,9 +1,9 @@
 var searchData=
 [
   ['database_0',['Database',['../classorm_1_1Database.html',1,'orm::Database&lt; SchemaType &gt;'],['../md_docs_2database.html',1,'Database']]],
-  ['database_20boundary_1',['Retain runtime validation at the database boundary',['../md_docs_2migration-typed-queries.html#autotoc_md63',1,'']]],
+  ['database_20boundary_1',['Retain runtime validation at the database boundary',['../md_docs_2migration-typed-queries.html#autotoc_md67',1,'']]],
   ['databasecore_2',['DatabaseCore',['../classorm_1_1DatabaseCore.html',1,'orm::DatabaseCore'],['../classorm_1_1DatabaseCore.html#a918187290120417d85097a787b05153f',1,'orm::DatabaseCore::DatabaseCore()'],['../classorm_1_1DatabaseCore.html#a454c22e6671a38b7a93ed091f4c5f79f',1,'orm::DatabaseCore::DatabaseCore(db::CommandGeneratorFactory factory)'],['../classorm_1_1Database.html#a918187290120417d85097a787b05153f',1,'orm::Database::DatabaseCore()'],['../classorm_1_1Database.html#a454c22e6671a38b7a93ed091f4c5f79f',1,'orm::Database::DatabaseCore(db::CommandGeneratorFactory factory)']]],
-  ['define_20the_20closed_20schema_3',['4. Define the closed schema',['../md_docs_2migration-static-schema.html#autotoc_md55',1,'']]],
+  ['define_20the_20closed_20schema_3',['4. Define the closed schema',['../md_docs_2migration-static-schema.html#autotoc_md59',1,'']]],
   ['definition_20of_20done_4',['Definition of Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
   ['delete_20relation_20tables_5',['Create and delete relation tables',['../md_docs_2database.html#autotoc_md42',1,'']]],
   ['delete_20table_6',['Delete table',['../md_docs_2database.html#autotoc_md41',1,'']]],
@@ -14,8 +14,8 @@ var searchData=
   ['differences_11',['Capabilities and dialect differences',['../md_docs_2backend-portability.html#autotoc_md13',1,'']]],
   ['disablejoining_12',['disableJoining',['../classorm_1_1Query.html#ab7a1cc60776eeb29212199765e4eaaba',1,'orm::Query']]],
   ['disconnect_13',['disconnect',['../classorm_1_1DatabaseCore.html#a2c1f18188748bf3717d28444e4f46520',1,'orm::DatabaseCore']]],
-  ['distinct_14',['Distinct',['../md_docs_2query.html#autotoc_md96',1,'']]],
+  ['distinct_14',['Distinct',['../md_docs_2query.html#autotoc_md100',1,'']]],
   ['distinct_15',['distinct',['../classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2',1,'orm::Query']]],
   ['done_16',['Done',['../md_docs_2backend-extension.html#autotoc_md9',1,'Backend Definition of Done'],['../md_docs_2backend-portability.html#autotoc_md18',1,'Definition of Done']]],
-  ['dto_20rules_17',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md87',1,'']]]
+  ['dto_20rules_17',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md91',1,'']]]
 ];

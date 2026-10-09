@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2stati
   <div class="headertitle"><div class="title">Static query plans </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md118"></a></p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md122"></a></p>
 <p>Version <span class="tt">0.3.0</span> adds immutable plans alongside the mutable <span class="tt"><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;T&gt;</span>, <span class="tt"><a class="el" href="classorm_1_1ProjectionQuery.html" title="A select query that returns a user-defined DTO instead of the full source model.">orm::ProjectionQuery</a>&lt;Source, Result&gt;</span>, and <span class="tt"><a class="el" href="classorm_1_1Update.html">orm::Update</a>&lt;T&gt;</span> builders. A plan preserves the expression structure in its C++ type. SQLite and PostgreSQL use that structure to prepare SQL once for the schema, plan type, and SQL dialect. Execution binds the current values and hydrates the usual model or DTO result.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
@@ -135,14 +135,14 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('md_docs_2stati
 <div class="line"><span class="comment">// Connect and create/populate the table before executing the plan.</span></div>
 <div class="line"><span class="keyword">auto</span> first = database.select(adults, 18);</div>
 <div class="line"><span class="keyword">auto</span> second = database.select(adults, 21);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:774</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> database.hpp:775</div></div>
 </div><!-- fragment --><p><span class="tt">param&lt;T, I&gt;()</span> declares a typed argument slot. Indices start at zero and must be contiguous. Reusing an index reuses its execution argument; every occurrence must declare the same type. Calls must supply exactly one compatible argument per slot in index order. The existing rules for safe numeric widening, scalar filter values, nullable fields, model ownership, and writable paths also apply to plans. A filter on an optional field takes its scalar type; <span class="tt">std::optional</span> arguments are available for nullable <span class="tt">SET</span> values.</p>
 <p>Clause methods return a new plan. Keep the returned value:</p>
 <div class="fragment"><div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> base = select&lt;User&gt;();</div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> filtered = base.where(col&lt;&amp;User::age&gt;() &gt;= param&lt;int, 0&gt;());</div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> ordered = filtered.orderBy(asc(col&lt;&amp;User::name&gt;()));</div>
 </div><!-- fragment --><p>The objects may also carry ordinary runtime values. <span class="tt">constexpr</span> is useful for reusable templates with argument slots, but is not required for using a plan.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md119"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md123"></a>
 Projections and writes</h1>
 <p>The literal alias form <span class="tt">as&lt;"alias"&gt;(expression)</span> retains the alias in the plan type. The existing <span class="tt">as("alias", expression)</span> form supplies a runtime alias.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>UserName { std::string name; };</div>
@@ -160,7 +160,7 @@ Projections and writes</h1>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> erase = remove&lt;User&gt;().where(col&lt;&amp;User::id&gt;() == param&lt;int, 0&gt;());</div>
 <div class="line"><span class="keyword">auto</span> removed = database.remove(erase, 1);</div>
 </div><!-- fragment --><p>An <span class="tt">UPDATE</span> plan requires at least one <span class="tt">SET</span> assignment and a <span class="tt">WHERE</span> predicate. A <span class="tt">DELETE</span> plan requires a <span class="tt">WHERE</span> predicate. These checks happen when the plan is converted or executed. The full-model select supports collection <span class="tt">include</span> and the existing relation predicates; projection plans return flat DTOs.</p>
-<h1 class="doxsection"><a class="anchor" id="autotoc_md120"></a>
+<h1 class="doxsection"><a class="anchor" id="autotoc_md124"></a>
 Runtime shapes and explicit conversion</h1>
 <p>Fixed-size <span class="tt">std::array</span>, C arrays, and variadic <span class="tt">IN</span> arguments preserve their arity. Empty fixed-size <span class="tt">IN</span> expressions are rejected at compile time. Vectors and initializer lists have runtime cardinality and use the runtime SQL path. The same applies to raw predicates, raw ordering, and runtime aliases. Those forms retain the typed field and model checks.</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> fixed = select&lt;User&gt;().where(col&lt;&amp;User::id&gt;().in(std::array{1, 2, 3}));</div>

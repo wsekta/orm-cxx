@@ -80,86 +80,91 @@ var NAVTREE =
       [ "Remove objects", "md_docs_2database.html#autotoc_md47", null ],
       [ "Transactions", "md_docs_2database.html#autotoc_md48", null ]
     ] ],
+    [ "Backend configuration without macros", "md_docs_2migration-macro-free.html", [
+      [ "Read the configuration in C++", "md_docs_2migration-macro-free.html#autotoc_md50", null ],
+      [ "Compatibility changes", "md_docs_2migration-macro-free.html#autotoc_md51", null ],
+      [ "Policy and checks", "md_docs_2migration-macro-free.html#autotoc_md52", null ]
+    ] ],
     [ "Migrating queries to 0.3", "md_docs_2migration-static-queries.html", null ],
     [ "Migrating to compile-time mappings and static schemas", "md_docs_2migration-static-schema.html", [
-      [ "Migration summary", "md_docs_2migration-static-schema.html#autotoc_md51", null ],
-      [ "1. Keep models reflectable", "md_docs_2migration-static-schema.html#autotoc_md52", null ],
-      [ "2. Replace runtime model configuration", "md_docs_2migration-static-schema.html#autotoc_md53", null ],
-      [ "3. Convert collection mappings", "md_docs_2migration-static-schema.html#autotoc_md54", null ],
-      [ "4. Define the closed schema", "md_docs_2migration-static-schema.html#autotoc_md55", null ],
-      [ "5. Migrate query fields and relations", "md_docs_2migration-static-schema.html#autotoc_md56", null ],
-      [ "Suggested rollout", "md_docs_2migration-static-schema.html#autotoc_md57", null ]
+      [ "Migration summary", "md_docs_2migration-static-schema.html#autotoc_md55", null ],
+      [ "1. Keep models reflectable", "md_docs_2migration-static-schema.html#autotoc_md56", null ],
+      [ "2. Replace runtime model configuration", "md_docs_2migration-static-schema.html#autotoc_md57", null ],
+      [ "3. Convert collection mappings", "md_docs_2migration-static-schema.html#autotoc_md58", null ],
+      [ "4. Define the closed schema", "md_docs_2migration-static-schema.html#autotoc_md59", null ],
+      [ "5. Migrate query fields and relations", "md_docs_2migration-static-schema.html#autotoc_md60", null ],
+      [ "Suggested rollout", "md_docs_2migration-static-schema.html#autotoc_md61", null ]
     ] ],
     [ "Migrating to typed queries in 0.2", "md_docs_2migration-typed-queries.html", [
-      [ "Replace 0.1 expressions", "md_docs_2migration-typed-queries.html#autotoc_md59", null ],
-      [ "Keep expression ownership consistent", "md_docs_2migration-typed-queries.html#autotoc_md60", null ],
-      [ "Use values that preserve their entire type range", "md_docs_2migration-typed-queries.html#autotoc_md61", null ],
-      [ "Make NULL and writes explicit", "md_docs_2migration-typed-queries.html#autotoc_md62", null ],
-      [ "Retain runtime validation at the database boundary", "md_docs_2migration-typed-queries.html#autotoc_md63", null ]
+      [ "Replace 0.1 expressions", "md_docs_2migration-typed-queries.html#autotoc_md63", null ],
+      [ "Keep expression ownership consistent", "md_docs_2migration-typed-queries.html#autotoc_md64", null ],
+      [ "Use values that preserve their entire type range", "md_docs_2migration-typed-queries.html#autotoc_md65", null ],
+      [ "Make NULL and writes explicit", "md_docs_2migration-typed-queries.html#autotoc_md66", null ],
+      [ "Retain runtime validation at the database boundary", "md_docs_2migration-typed-queries.html#autotoc_md67", null ]
     ] ],
     [ "Model", "md_docs_2model.html", [
-      [ "Create a model", "md_docs_2model.html#autotoc_md65", null ],
-      [ "Static schema", "md_docs_2model.html#autotoc_md66", null ],
-      [ "Supported field types", "md_docs_2model.html#autotoc_md67", null ],
-      [ "Optional fields", "md_docs_2model.html#autotoc_md68", null ],
-      [ "Table name", "md_docs_2model.html#autotoc_md69", null ],
-      [ "Column names", "md_docs_2model.html#autotoc_md70", null ],
-      [ "Primary key", "md_docs_2model.html#autotoc_md71", null ],
-      [ "Auto-increment primary key", "md_docs_2model.html#autotoc_md72", null ],
-      [ "One-to-one relations", "md_docs_2model.html#autotoc_md73", null ],
-      [ "Collection relations", "md_docs_2model.html#autotoc_md74", null ],
-      [ "Current limitations", "md_docs_2model.html#autotoc_md75", null ]
+      [ "Create a model", "md_docs_2model.html#autotoc_md69", null ],
+      [ "Static schema", "md_docs_2model.html#autotoc_md70", null ],
+      [ "Supported field types", "md_docs_2model.html#autotoc_md71", null ],
+      [ "Optional fields", "md_docs_2model.html#autotoc_md72", null ],
+      [ "Table name", "md_docs_2model.html#autotoc_md73", null ],
+      [ "Column names", "md_docs_2model.html#autotoc_md74", null ],
+      [ "Primary key", "md_docs_2model.html#autotoc_md75", null ],
+      [ "Auto-increment primary key", "md_docs_2model.html#autotoc_md76", null ],
+      [ "One-to-one relations", "md_docs_2model.html#autotoc_md77", null ],
+      [ "Collection relations", "md_docs_2model.html#autotoc_md78", null ],
+      [ "Current limitations", "md_docs_2model.html#autotoc_md79", null ]
     ] ],
     [ "Package managers and releases", "md_docs_2packaging.html", [
-      [ "Consume from vcpkg after acceptance", "md_docs_2packaging.html#autotoc_md77", null ],
-      [ "Consume from ConanCenter after acceptance", "md_docs_2packaging.html#autotoc_md78", null ],
-      [ "Maintainer setup and publishing", "md_docs_2packaging.html#autotoc_md79", [
-        [ "Retry without changing the release", "md_docs_2packaging.html#autotoc_md80", null ]
+      [ "Consume from vcpkg after acceptance", "md_docs_2packaging.html#autotoc_md81", null ],
+      [ "Consume from ConanCenter after acceptance", "md_docs_2packaging.html#autotoc_md82", null ],
+      [ "Maintainer setup and publishing", "md_docs_2packaging.html#autotoc_md83", [
+        [ "Retry without changing the release", "md_docs_2packaging.html#autotoc_md84", null ]
       ] ],
-      [ "Local package verification", "md_docs_2packaging.html#autotoc_md81", null ],
-      [ "Native CMake installation", "md_docs_2packaging.html#autotoc_md82", null ]
+      [ "Local package verification", "md_docs_2packaging.html#autotoc_md85", null ],
+      [ "Native CMake installation", "md_docs_2packaging.html#autotoc_md86", null ]
     ] ],
     [ "Partial-result queries", "md_docs_2partial-result-queries.html", [
-      [ "Contract", "md_docs_2partial-result-queries.html#autotoc_md84", null ],
-      [ "Query behavior", "md_docs_2partial-result-queries.html#autotoc_md85", null ],
-      [ "Aggregate result queries", "md_docs_2partial-result-queries.html#autotoc_md86", null ],
-      [ "Result DTO rules", "md_docs_2partial-result-queries.html#autotoc_md87", null ],
-      [ "Limitations", "md_docs_2partial-result-queries.html#autotoc_md88", null ]
+      [ "Contract", "md_docs_2partial-result-queries.html#autotoc_md88", null ],
+      [ "Query behavior", "md_docs_2partial-result-queries.html#autotoc_md89", null ],
+      [ "Aggregate result queries", "md_docs_2partial-result-queries.html#autotoc_md90", null ],
+      [ "Result DTO rules", "md_docs_2partial-result-queries.html#autotoc_md91", null ],
+      [ "Limitations", "md_docs_2partial-result-queries.html#autotoc_md92", null ]
     ] ],
     [ "Query", "md_docs_2query.html", [
-      [ "Build select", "md_docs_2query.html#autotoc_md90", null ],
-      [ "Loading collections", "md_docs_2query.html#autotoc_md91", null ],
-      [ "Where predicates", "md_docs_2query.html#autotoc_md92", null ],
-      [ "Collection predicates", "md_docs_2query.html#autotoc_md93", null ],
-      [ "Column names and relations", "md_docs_2query.html#autotoc_md94", null ],
-      [ "Ordering", "md_docs_2query.html#autotoc_md95", null ],
-      [ "Distinct", "md_docs_2query.html#autotoc_md96", null ],
-      [ "Limit and offset", "md_docs_2query.html#autotoc_md97", null ],
-      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md98", null ],
-      [ "Partial-result queries", "md_docs_2query.html#autotoc_md99", null ],
-      [ "Full-model grouping and HAVING", "md_docs_2query.html#autotoc_md100", null ],
-      [ "Aggregate projection queries", "md_docs_2query.html#autotoc_md101", null ],
-      [ "Write predicates", "md_docs_2query.html#autotoc_md102", null ],
-      [ "Limitations", "md_docs_2query.html#autotoc_md103", null ]
+      [ "Build select", "md_docs_2query.html#autotoc_md94", null ],
+      [ "Loading collections", "md_docs_2query.html#autotoc_md95", null ],
+      [ "Where predicates", "md_docs_2query.html#autotoc_md96", null ],
+      [ "Collection predicates", "md_docs_2query.html#autotoc_md97", null ],
+      [ "Column names and relations", "md_docs_2query.html#autotoc_md98", null ],
+      [ "Ordering", "md_docs_2query.html#autotoc_md99", null ],
+      [ "Distinct", "md_docs_2query.html#autotoc_md100", null ],
+      [ "Limit and offset", "md_docs_2query.html#autotoc_md101", null ],
+      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md102", null ],
+      [ "Partial-result queries", "md_docs_2query.html#autotoc_md103", null ],
+      [ "Full-model grouping and HAVING", "md_docs_2query.html#autotoc_md104", null ],
+      [ "Aggregate projection queries", "md_docs_2query.html#autotoc_md105", null ],
+      [ "Write predicates", "md_docs_2query.html#autotoc_md106", null ],
+      [ "Limitations", "md_docs_2query.html#autotoc_md107", null ]
     ] ],
     [ "Collection relations", "md_docs_2relations.html", [
-      [ "Collection wrappers", "md_docs_2relations.html#autotoc_md105", null ],
-      [ "One-to-many", "md_docs_2relations.html#autotoc_md106", null ],
-      [ "Many-to-many", "md_docs_2relations.html#autotoc_md107", null ],
-      [ "Junction column names", "md_docs_2relations.html#autotoc_md108", null ],
-      [ "Schema lifecycle", "md_docs_2relations.html#autotoc_md109", null ],
-      [ "Link and unlink", "md_docs_2relations.html#autotoc_md110", null ],
-      [ "Loading collections", "md_docs_2relations.html#autotoc_md111", null ],
-      [ "Filtering by collections", "md_docs_2relations.html#autotoc_md112", null ],
-      [ "End-to-end workflow", "md_docs_2relations.html#autotoc_md113", null ],
-      [ "Transactions and consistency", "md_docs_2relations.html#autotoc_md114", null ],
-      [ "Validation and unsupported mappings", "md_docs_2relations.html#autotoc_md115", null ],
-      [ "Common mistakes", "md_docs_2relations.html#autotoc_md116", null ],
-      [ "Migrating an existing schema", "md_docs_2relations.html#autotoc_md117", null ]
+      [ "Collection wrappers", "md_docs_2relations.html#autotoc_md109", null ],
+      [ "One-to-many", "md_docs_2relations.html#autotoc_md110", null ],
+      [ "Many-to-many", "md_docs_2relations.html#autotoc_md111", null ],
+      [ "Junction column names", "md_docs_2relations.html#autotoc_md112", null ],
+      [ "Schema lifecycle", "md_docs_2relations.html#autotoc_md113", null ],
+      [ "Link and unlink", "md_docs_2relations.html#autotoc_md114", null ],
+      [ "Loading collections", "md_docs_2relations.html#autotoc_md115", null ],
+      [ "Filtering by collections", "md_docs_2relations.html#autotoc_md116", null ],
+      [ "End-to-end workflow", "md_docs_2relations.html#autotoc_md117", null ],
+      [ "Transactions and consistency", "md_docs_2relations.html#autotoc_md118", null ],
+      [ "Validation and unsupported mappings", "md_docs_2relations.html#autotoc_md119", null ],
+      [ "Common mistakes", "md_docs_2relations.html#autotoc_md120", null ],
+      [ "Migrating an existing schema", "md_docs_2relations.html#autotoc_md121", null ]
     ] ],
     [ "Static query plans", "md_docs_2static-queries.html", [
-      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md119", null ],
-      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md120", null ]
+      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md123", null ],
+      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md124", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
