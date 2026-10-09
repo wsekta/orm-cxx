@@ -44,16 +44,12 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     set(ORM_CXX_SQLITE_BACKEND_ENABLED true)
     file(READ "${PROJECT_SOURCE_DIR}/cmake/SqliteRelationDeclarations.cppm.in" ORM_CXX_SQLITE_RELATION_DECLARATIONS)
 else()
-    string(REPLACE "export namespace" "namespace" ORM_CXX_SQLITE_BACKEND_DECLARATIONS
-                   "${ORM_CXX_SQLITE_BACKEND_DECLARATIONS}"
-    )
+    set(ORM_CXX_SQLITE_BACKEND_DECLARATIONS "namespace orm::db::sqlite { class SqliteBackend; }")
 endif()
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     set(ORM_CXX_POSTGRESQL_BACKEND_ENABLED true)
 else()
-    string(REPLACE "export namespace" "namespace" ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS
-                   "${ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS}"
-    )
+    set(ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS "namespace orm::db::postgresql { class PostgresqlBackend; }")
 endif()
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/BuildConfig.cppm.in" "${ORM_CXX_GENERATED_MODULE_DIR}/orm.config.cppm" @ONLY

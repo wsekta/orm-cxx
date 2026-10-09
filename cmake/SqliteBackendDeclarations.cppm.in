@@ -42,3 +42,13 @@ private:
     std::unique_ptr<CommandGenerator> sqliteCommandGenerator;
 };
 } // namespace orm::db::sqlite
+
+// database/sqlite/SqliteTypeTranslator.hpp
+namespace orm::db::sqlite
+{
+class SqliteTypeTranslator : public TypeTranslator
+{
+public:
+    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
+};
+}

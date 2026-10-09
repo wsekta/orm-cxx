@@ -20,6 +20,7 @@ import :expressions;
 import :dynamic_query;
 import :static_plan;
 import :sql;
+import :backend_relations;
 import :database;
 
 // database/DatabaseValidation.hpp
@@ -236,23 +237,3 @@ namespace orm::db::aliases
     return std::format("{}_{}_{}", tableName, relationName, columnName);
 }
 } // namespace orm::db::aliases
-
-// database/postgresql/PostgresqlTypeTranslator.hpp
-namespace orm::db::postgresql
-{
-class PostgresqlTypeTranslator final : public TypeTranslator
-{
-public:
-    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
-};
-} // namespace orm::db::postgresql
-
-// database/sqlite/SqliteTypeTranslator.hpp
-namespace orm::db::sqlite
-{
-class SqliteTypeTranslator : public TypeTranslator
-{
-public:
-    [[nodiscard]] auto toSqlType(model::ColumnType type) const -> std::string override;
-};
-}

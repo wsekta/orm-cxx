@@ -39,7 +39,7 @@ beginning with `:` belong to `orm`, except `:generated` in `orm.reflection`.
 | `orm:config` | None |
 | `orm:backend_relations` | `:foundation`, `:model`, `:expressions`, `:sql` |
 | `orm:database` | `orm.reflection`, `:foundation`, `:model`, `:expressions`, `:dynamic_query`, `:static_plan`, `:sql`, `:config`, `:backend_relations` |
-| `orm:internal` | `:foundation`, `:model`, `:expressions`, `:dynamic_query`, `:static_plan`, `:sql`, `:database` |
+| `orm:internal` | `:foundation`, `:model`, `:expressions`, `:dynamic_query`, `:static_plan`, `:sql`, `:backend_relations`, `:database` |
 | `orm` | `orm.reflection` and all interface partitions of `orm` |
 
 This graph is acyclic. CMake generates `:config` and `:backend_relations` for

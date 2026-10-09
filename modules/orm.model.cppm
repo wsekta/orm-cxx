@@ -85,7 +85,7 @@ template <typename Model, auto Member, std::size_t... Indices>
 consteval auto memberExistsImpl(std::index_sequence<Indices...>) -> bool
 {
     constexpr auto memberName = reflectedMemberName<Member>();
-    return ((memberName.view() == reflectedFieldName<Model, Indices>()) || ...);
+    return ((memberName.view().compare(reflectedFieldName<Model, Indices>()) == 0) || ...);
 }
 
 template <typename Model, auto Member>
@@ -99,7 +99,7 @@ consteval auto memberIndexImpl(std::index_sequence<Indices...>) -> std::size_t
 {
     constexpr auto memberName = reflectedMemberName<Member>();
     constexpr std::array<bool, sizeof...(Indices)> matches{
-        (memberName.view() == reflectedFieldName<Model, Indices>())...};
+        (memberName.view().compare(reflectedFieldName<Model, Indices>()) == 0)...};
     for (std::size_t index = 0; index < matches.size(); ++index)
     {
         if (matches[index])
@@ -130,7 +130,7 @@ constexpr auto uniqueMemberNames() -> bool
     {
         for (std::size_t right = left + 1; right < names.size(); ++right)
         {
-            if (names[left] == names[right])
+            if (names[left].compare(names[right]) == 0)
             {
                 return false;
             }
@@ -202,17 +202,19 @@ export
 
         [[nodiscard]] consteval auto find(std::string_view memberName) const -> std::optional<std::string_view>
         {
-            std::optional<std::string_view> result;
+            std::string_view result;
+            bool found = false;
             (
                 [&]
                 {
                     if (detail::reflectedMemberName<Definitions::member>() == memberName)
                     {
                         result = Definitions::sqlName.view();
+                        found = true;
                     }
                 }(),
                 ...);
-            return result;
+            return found ? std::optional<std::string_view>{result} : std::nullopt;
         }
     };
 
@@ -255,8 +257,8 @@ export
             else
             {
                 const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
-                return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
-                                  nameStorage);
+                return std::apply([&memberName](const auto&... name)
+                                  { return ((name.view().compare(memberName) == 0) || ...); }, nameStorage);
             }
         }
 
@@ -308,8 +310,8 @@ export
             else
             {
                 const auto nameStorage = std::tuple{detail::reflectedMemberName<Members>()...};
-                return std::apply([&memberName](const auto&... name) { return ((name.view() == memberName) || ...); },
-                                  nameStorage);
+                return std::apply([&memberName](const auto&... name)
+                                  { return ((name.view().compare(memberName) == 0) || ...); }, nameStorage);
             }
         }
     };
@@ -582,9 +584,10 @@ export
 
         [[nodiscard]] constexpr auto findColumn(std::string_view fieldOrSqlName) const noexcept -> const ColumnView*
         {
-            for (const auto& column : columns)
+            for (std::size_t columnIndex = 0; columnIndex < columns.size(); ++columnIndex)
             {
-                if (column.fieldName == fieldOrSqlName || column.name == fieldOrSqlName)
+                const auto& column = columns[columnIndex];
+                if (column.fieldName.compare(fieldOrSqlName) == 0 || column.name.compare(fieldOrSqlName) == 0)
                 {
                     return &column;
                 }
@@ -594,16 +597,18 @@ export
 
         [[nodiscard]] constexpr auto findRelation(std::string_view fieldOrSqlName) const noexcept -> const RelationView*
         {
-            for (const auto& relation : relations)
+            for (std::size_t relationIndex = 0; relationIndex < relations.size(); ++relationIndex)
             {
-                if (relation.fieldName == fieldOrSqlName)
+                const auto& relation = relations[relationIndex];
+                if (relation.fieldName.compare(fieldOrSqlName) == 0)
                 {
                     return &relation;
                 }
             }
-            for (const auto& relation : relations)
+            for (std::size_t relationIndex = 0; relationIndex < relations.size(); ++relationIndex)
             {
-                if (relation.columnName == fieldOrSqlName)
+                const auto& relation = relations[relationIndex];
+                if (relation.columnName.compare(fieldOrSqlName) == 0)
                 {
                     return &relation;
                 }
@@ -613,9 +618,10 @@ export
 
         [[nodiscard]] constexpr auto findRelationField(std::string_view fieldName) const noexcept -> const RelationView*
         {
-            for (const auto& relation : relations)
+            for (std::size_t relationIndex = 0; relationIndex < relations.size(); ++relationIndex)
             {
-                if (relation.fieldName == fieldName)
+                const auto& relation = relations[relationIndex];
+                if (relation.fieldName.compare(fieldName) == 0)
                 {
                     return &relation;
                 }
@@ -681,7 +687,7 @@ export
         {
             for (std::size_t index = 0; index < models.size(); ++index)
             {
-                if (models[index]->tableName == tableName)
+                if (models[index]->tableName.compare(tableName) == 0)
                 {
                     return at(index);
                 }
@@ -1056,7 +1062,7 @@ consteval auto isPrimaryKey(std::string_view fieldName) -> bool
     }
     else
     {
-        return fieldName == "id";
+        return fieldName.compare("id") == 0;
     }
 }
 
@@ -1081,7 +1087,7 @@ consteval auto isAutoIncrement(std::string_view fieldName) -> bool
 template <typename Model, std::size_t... Indices>
 consteval auto hasDefaultPrimaryKey(std::index_sequence<Indices...>) -> bool
 {
-    return (((reflectedFieldName<Model, Indices>() == "id") &&
+    return (((reflectedFieldName<Model, Indices>().compare("id") == 0) &&
              not is_relation_collection_v<reflection::field_type_t<Model, Indices>> &&
              not is_optional_relation_collection_v<reflection::field_type_t<Model, Indices>>) ||
             ...);
@@ -1204,8 +1210,10 @@ consteval auto hasValidColumnNames(const std::array<ColumnView, Size>& columns) 
         }
         for (std::size_t right = left + 1; right < columns.size() && valid; ++right)
         {
-            if (columns[left].fieldName == columns[right].fieldName || columns[left].name == columns[right].name ||
-                columns[left].fieldName == columns[right].name || columns[left].name == columns[right].fieldName)
+            if (columns[left].fieldName.compare(columns[right].fieldName) == 0 ||
+                columns[left].name.compare(columns[right].name) == 0 ||
+                columns[left].fieldName.compare(columns[right].name) == 0 ||
+                columns[left].name.compare(columns[right].fieldName) == 0)
             {
                 valid = false;
                 break;
@@ -1433,7 +1441,7 @@ consteval auto hasUniqueValidRelationDescriptors(std::tuple<Descriptors...>) -> 
         {
             for (std::size_t right = left + 1; right < names.size() && unique; ++right)
             {
-                if (names[left] == names[right])
+                if (names[left].compare(names[right]) == 0)
                 {
                     unique = false;
                 }
@@ -1815,7 +1823,7 @@ consteval auto hasUniqueTableNames() -> bool
     {
         for (std::size_t right = left + 1; right < names.size(); ++right)
         {
-            if (names[left] == names[right])
+            if (names[left].compare(names[right]) == 0)
             {
                 return false;
             }
@@ -1829,8 +1837,9 @@ consteval auto hasValidRelationTargets(const std::array<const ModelDataView*, Si
 {
     for (const auto* owner : models)
     {
-        for (const auto& relation : owner->relations)
+        for (std::size_t relationIndex = 0; relationIndex < owner->relations.size(); ++relationIndex)
         {
+            const auto& relation = owner->relations[relationIndex];
             if (relation.targetModelIndex >= models.size())
             {
                 return false;
@@ -1936,21 +1945,25 @@ consteval auto hasUniquePhysicalColumnNames(const std::array<const ModelDataView
 {
     for (const auto* owner : models)
     {
-        for (const auto& scalar : owner->columns)
+        for (std::size_t scalarIndex = 0; scalarIndex < owner->columns.size(); ++scalarIndex)
         {
+            const auto& scalar = owner->columns[scalarIndex];
             if (scalar.kind != FieldKind::Scalar)
             {
                 continue;
             }
-            for (const auto& relation : owner->columns)
+            for (std::size_t relationColumnIndex = 0; relationColumnIndex < owner->columns.size();
+                 ++relationColumnIndex)
             {
+                const auto& relation = owner->columns[relationColumnIndex];
                 if (relation.kind != FieldKind::ToOne || relation.targetModelIndex >= models.size())
                 {
                     continue;
                 }
                 const auto* target = models[relation.targetModelIndex];
-                for (const auto primaryKeyIndex : target->primaryKeyIndices)
+                for (std::size_t keyIndex = 0; keyIndex < target->primaryKeyIndices.size(); ++keyIndex)
                 {
+                    const auto primaryKeyIndex = target->primaryKeyIndices[keyIndex];
                     if (primaryKeyIndex >= target->columns.size() ||
                         equalsForeignKeyColumnName(scalar.name, relation.name, target->columns[primaryKeyIndex].name))
                     {
@@ -1968,8 +1981,9 @@ consteval auto hasUniquePhysicalColumnNames(const std::array<const ModelDataView
                 continue;
             }
             const auto* leftTarget = models[leftRelation.targetModelIndex];
-            for (const auto leftPrimaryKeyIndex : leftTarget->primaryKeyIndices)
+            for (std::size_t leftKeyIndex = 0; leftKeyIndex < leftTarget->primaryKeyIndices.size(); ++leftKeyIndex)
             {
+                const auto leftPrimaryKeyIndex = leftTarget->primaryKeyIndices[leftKeyIndex];
                 if (leftPrimaryKeyIndex >= leftTarget->columns.size())
                 {
                     return false;
@@ -1983,8 +1997,10 @@ consteval auto hasUniquePhysicalColumnNames(const std::array<const ModelDataView
                         continue;
                     }
                     const auto* rightTarget = models[rightRelation.targetModelIndex];
-                    for (const auto rightPrimaryKeyIndex : rightTarget->primaryKeyIndices)
+                    for (std::size_t rightKeyIndex = 0; rightKeyIndex < rightTarget->primaryKeyIndices.size();
+                         ++rightKeyIndex)
                     {
+                        const auto rightPrimaryKeyIndex = rightTarget->primaryKeyIndices[rightKeyIndex];
                         if (rightPrimaryKeyIndex >= rightTarget->columns.size() ||
                             equalForeignKeyColumnNames(leftRelation.name, leftTarget->columns[leftPrimaryKeyIndex].name,
                                                        rightRelation.name,
@@ -2011,14 +2027,15 @@ consteval auto hasUniquePhysicalColumnNames(const std::array<const ModelDataView
         }
         for (std::size_t other = leftIndex + 1; other < left.size(); ++other)
         {
-            if (left[leftIndex] == left[other])
+            if (left[leftIndex].compare(left[other]) == 0)
             {
                 return false;
             }
         }
-        for (const auto rightName : right)
+        for (std::size_t rightIndex = 0; rightIndex < right.size(); ++rightIndex)
         {
-            if (rightName.empty() || left[leftIndex] == rightName)
+            const auto rightName = right[rightIndex];
+            if (rightName.empty() || left[leftIndex].compare(rightName) == 0)
             {
                 return false;
             }
@@ -2032,7 +2049,7 @@ consteval auto hasUniquePhysicalColumnNames(const std::array<const ModelDataView
         }
         for (std::size_t other = rightIndex + 1; other < right.size(); ++other)
         {
-            if (right[rightIndex] == right[other])
+            if (right[rightIndex].compare(right[other]) == 0)
             {
                 return false;
             }
@@ -2064,7 +2081,7 @@ consteval auto hasValidJunctions(const std::array<const ModelDataView*, Size>& m
             }
             for (const auto* model : models)
             {
-                if (model->tableName == relation.junction.tableName)
+                if (model->tableName.compare(relation.junction.tableName) == 0)
                 {
                     return false;
                 }
@@ -2078,7 +2095,7 @@ consteval auto hasValidJunctions(const std::array<const ModelDataView*, Size>& m
                 {
                     const auto& other = otherOwner->relations[otherRelationIndex];
                     if (other.kind == RelationKind::ManyToMany && other.junction.isConfigured() &&
-                        other.junction.tableName == relation.junction.tableName)
+                        other.junction.tableName.compare(relation.junction.tableName) == 0)
                     {
                         return false;
                     }

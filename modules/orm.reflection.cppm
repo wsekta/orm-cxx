@@ -88,19 +88,19 @@ template <std::size_t LeftSize, std::size_t RightSize>
                                         const FixedString<RightSize>& right) noexcept -> bool
     requires(LeftSize != RightSize)
 {
-    return left.view() == right.view();
+    return left.view().compare(right.view()) == 0;
 }
 
 template <std::size_t N>
 [[nodiscard]] constexpr auto operator==(const FixedString<N>& left, std::string_view right) noexcept -> bool
 {
-    return left.view() == right;
+    return left.view().compare(right) == 0;
 }
 
 template <std::size_t N>
 [[nodiscard]] constexpr auto operator==(std::string_view left, const FixedString<N>& right) noexcept -> bool
 {
-    return left == right.view();
+    return left.compare(right.view()) == 0;
 }
 } // namespace orm::reflection
 

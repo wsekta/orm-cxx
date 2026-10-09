@@ -40,16 +40,24 @@ import :internal;
 
 namespace orm::db
 {
+namespace
+{
+// Disabled providers remain incomplete. Instantiate their registration only when
+// the configured backend is enabled, so its vtable never enters a core-only build.
+template <bool Enabled, typename Backend>
+auto registerBuiltinBackend(CommandGeneratorFactory& factory) -> void
+{
+    if constexpr (Enabled)
+    {
+        factory.registerBackend(std::make_unique<Backend>());
+    }
+}
+}
+
 CommandGeneratorFactory::CommandGeneratorFactory()
 {
-    if constexpr (config::sqliteBackendEnabled)
-    {
-        registerBackend(std::make_unique<sqlite::SqliteBackend>());
-    }
-    if constexpr (config::postgresqlBackendEnabled)
-    {
-        registerBackend(std::make_unique<postgresql::PostgresqlBackend>());
-    }
+    registerBuiltinBackend<config::sqliteBackendEnabled, sqlite::SqliteBackend>(*this);
+    registerBuiltinBackend<config::postgresqlBackendEnabled, postgresql::PostgresqlBackend>(*this);
 }
 
 auto CommandGeneratorFactory::registerBackend(std::unique_ptr<BackendProvider> backend) -> void
