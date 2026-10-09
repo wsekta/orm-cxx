@@ -15,6 +15,8 @@ jobs:
     container: gcc:15-trixie
     timeout-minutes: 40
     name: GCC 15
+    env:
+      CMAKE_BUILD_PARALLEL_LEVEL: 2
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -34,3 +36,26 @@ jobs:
           printf '%s\n' "$GITHUB_WORKSPACE/.ci-tools/bin" >> "$GITHUB_PATH"
       - name: Build and test
         run: cmake --workflow --preset linux-gcc-15-debug
+      - name: Verify installed ORM modules
+        shell: bash
+        run: |
+          readonly prefix="$RUNNER_TEMP/orm-cxx-install"
+          readonly consumer="$RUNNER_TEMP/orm-cxx-consumer"
+          cmake --install build/linux-gcc-15-debug --prefix "$prefix"
+          cmake --install build/linux-gcc-15-debug/externals/soci --prefix "$prefix"
+          cmake -S tests/package_consumer -B "$consumer" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-15 \
+            "-DCMAKE_PREFIX_PATH=$prefix" \
+            -DORM_CXX_EXPECT_SQLITE=ON -DORM_CXX_EXPECT_POSTGRESQL=OFF
+          cmake --build "$consumer"
+          ctest --test-dir "$consumer" --output-on-failure
+      - name: Verify installed reflection without SOCI
+        shell: bash
+        run: |
+          readonly prefix="$RUNNER_TEMP/orm-cxx-install"
+          readonly consumer="$RUNNER_TEMP/orm-cxx-reflection-consumer"
+          cmake -S tests/reflection_consumer -B "$consumer" -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-15 \
+            "-DCMAKE_PREFIX_PATH=$prefix" -DCMAKE_DISABLE_FIND_PACKAGE_SOCI=TRUE
+          cmake --build "$consumer"
+          ctest --test-dir "$consumer" --output-on-failure

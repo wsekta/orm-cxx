@@ -794,7 +794,7 @@ auto typedValue(Source&& value) -> QueryValue
 {
     if constexpr (std::same_as<Target, std::string>)
     {
-        if constexpr (std::is_pointer_v<std::decay_t<Source>>)
+        if constexpr (std::is_pointer_v<std::remove_cvref_t<Source>>)
             if (value == nullptr)
                 throw std::invalid_argument{"A string query value must not be a null pointer"};
         return QueryValue{std::string{std::forward<Source>(value)}};

@@ -32,6 +32,11 @@ exceeds its imported source-location limit. GCC 15 and 16 require
 `Bad file data` from the lazy reader; both CMake targets propagate this
 option, including installed interfaces rebuilt by consumers.
 
+The GCC workflow also installs ORM and SOCI into an isolated prefix and builds
+the `find_package` consumer with warnings treated as errors. A separate installed
+reflection consumer disables SOCI discovery. Both checks rebuild their module
+interfaces using the targets' public options and then run the resulting programs.
+
 ### Clang
 
 | Version | Package | Workflow | Coverage | Status |
