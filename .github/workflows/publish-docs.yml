@@ -15,14 +15,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Install documentation tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes doxygen graphviz
+
       - name: Install doxygen css plugin
         run: git clone https://github.com/jothepro/doxygen-awesome-css.git && cd doxygen-awesome-css && sudo make install
 
       - name: Generate docs
-        uses: mattnotmitt/doxygen-action@v1.1.0
-        with:
-          doxyfile-path: "./Doxyfile"
-          working-directory: "."
+        run: doxygen Doxyfile
 
       - name: Deploy docs
         uses: peaceiris/actions-gh-pages@v4

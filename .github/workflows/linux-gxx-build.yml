@@ -12,7 +12,7 @@ permissions:
 jobs:
   gcc-15:
     runs-on: ubuntu-24.04
-    container: gcc:15-trixie
+    container: public.ecr.aws/docker/library/gcc:15-trixie
     timeout-minutes: 40
     name: GCC 15
     env:

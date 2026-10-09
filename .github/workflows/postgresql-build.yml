@@ -12,12 +12,12 @@ permissions:
 jobs:
   pg15-gcc-15:
     runs-on: ubuntu-24.04
-    container: gcc:15-trixie
+    container: public.ecr.aws/docker/library/gcc:15-trixie
     timeout-minutes: 40
     name: PG 15 / GCC 15
     services:
       postgres:
-        image: postgres:15
+        image: public.ecr.aws/docker/library/postgres:15
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_PASSWORD: orm_cxx
@@ -72,7 +72,7 @@ jobs:
     name: PG 18 / Clang 18
     services:
       postgres:
-        image: postgres:18
+        image: public.ecr.aws/docker/library/postgres:18
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_PASSWORD: orm_cxx
@@ -160,7 +160,7 @@ jobs:
     name: PG 18 / Clang 19
     services:
       postgres:
-        image: postgres:18
+        image: public.ecr.aws/docker/library/postgres:18
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_PASSWORD: orm_cxx
@@ -214,7 +214,7 @@ jobs:
     name: PG 18 / Clang 20
     services:
       postgres:
-        image: postgres:18
+        image: public.ecr.aws/docker/library/postgres:18
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_PASSWORD: orm_cxx
