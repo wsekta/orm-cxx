@@ -8,7 +8,9 @@ add_executable(orm-cxx-package-consumer main.cpp)
 set_target_properties(orm-cxx-package-consumer PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-package-consumer PRIVATE orm-cxx::orm-cxx)
 if(MSVC)
-    target_compile_options(orm-cxx-package-consumer PRIVATE /W4 /WX)
+    # SOCI's public headers trigger C4251 under /W4; this third-party
+    # DLL-interface warning is unrelated to the consumer or orm-cxx modules.
+    target_compile_options(orm-cxx-package-consumer PRIVATE /W4 /WX /wd4251)
 else()
     target_compile_options(orm-cxx-package-consumer PRIVATE -Wall -Wextra -Wpedantic -Werror)
 endif()

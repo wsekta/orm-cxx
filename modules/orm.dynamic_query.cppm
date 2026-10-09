@@ -7,7 +7,6 @@ module;
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -315,7 +314,8 @@ inline auto validateProjectionAliasNames(const Projections& projections,
         throw std::invalid_argument{"Projection query requires at least one projected field"};
     }
 
-    std::unordered_set<std::string> resultFields;
+    std::vector<std::string> resultFields;
+    resultFields.reserve(fields.size());
 
     for (const auto& field : fields)
     {
@@ -324,10 +324,11 @@ inline auto validateProjectionAliasNames(const Projections& projections,
             throw std::invalid_argument{"Unsupported projection result field type: " + field.name};
         }
 
-        resultFields.insert(field.name);
+        resultFields.push_back(field.name);
     }
 
-    std::unordered_set<std::string> projectedFields;
+    std::vector<std::string> projectedFields;
+    projectedFields.reserve(projections.size());
 
     for (const auto& projection : projections)
     {
@@ -337,20 +338,22 @@ inline auto validateProjectionAliasNames(const Projections& projections,
             throw std::invalid_argument{"Projection alias must not be empty"};
         }
 
-        if (not resultFields.contains(alias))
+        if (std::find(resultFields.begin(), resultFields.end(), alias) == resultFields.end())
         {
             throw std::invalid_argument{"Projection alias does not match a result field: " + alias};
         }
 
-        if (not projectedFields.insert(alias).second)
+        if (std::find(projectedFields.begin(), projectedFields.end(), alias) != projectedFields.end())
         {
             throw std::invalid_argument{"Duplicate projection alias: " + alias};
         }
+
+        projectedFields.push_back(alias);
     }
 
     for (const auto& resultField : resultFields)
     {
-        if (not projectedFields.contains(resultField))
+        if (std::find(projectedFields.begin(), projectedFields.end(), resultField) == projectedFields.end())
         {
             throw std::invalid_argument{"Missing projection alias for result field: " + resultField};
         }
