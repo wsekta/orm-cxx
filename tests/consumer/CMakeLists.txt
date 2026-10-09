@@ -14,7 +14,9 @@ endif()
 
 add_executable(orm-cxx-consumer main.cpp ModelIdentity.cpp)
 target_sources(orm-cxx-consumer PRIVATE FILE_SET consumer_modules TYPE CXX_MODULES FILES Models.cppm)
-set_target_properties(orm-cxx-consumer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CXX_SCAN_FOR_MODULES ON)
+set_target_properties(
+    orm-cxx-consumer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CXX_SCAN_FOR_MODULES ON
+)
 target_link_libraries(orm-cxx-consumer PRIVATE orm-cxx::orm-cxx)
 if(MSVC)
     target_compile_options(orm-cxx-consumer PRIVATE /W4 /WX)

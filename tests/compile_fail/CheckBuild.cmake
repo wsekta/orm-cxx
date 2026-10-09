@@ -15,12 +15,18 @@ function(orm_cxx_build_contract target result_variable output_variable)
         OUTPUT_VARIABLE build_stdout
         ERROR_VARIABLE build_stderr
     )
-    set(${result_variable} "${build_result}" PARENT_SCOPE)
-    set(${output_variable} "${build_stdout}\n${build_stderr}" PARENT_SCOPE)
+    set(${result_variable}
+        "${build_result}"
+        PARENT_SCOPE
+    )
+    set(${output_variable}
+        "${build_stdout}\n${build_stderr}"
+        PARENT_SCOPE
+    )
 endfunction()
 
-# Build real positive consumers first. A missing module, BMI or dependency must
-# fail the suite before any expected-failure source is evaluated.
+# Build real positive consumers first. A missing module, BMI or dependency must fail the suite before any
+# expected-failure source is evaluated.
 orm_cxx_build_contract(orm-cxx-compile-controls controls_result controls_output)
 if(NOT controls_result EQUAL 0)
     message(FATAL_ERROR "Module import controls failed to build.\n${controls_output}")
@@ -34,18 +40,21 @@ foreach(case IN LISTS orm_cxx_failure_cases)
     if(build_result EQUAL 0)
         message(FATAL_ERROR "${target} unexpectedly compiled successfully.")
     endif()
-    # Several deliberately removed overloads have compiler-dependent diagnostics
-    # and identify their source file. Never let a module graph failure satisfy
-    # one of those broader checks.
+    # Several deliberately removed overloads have compiler-dependent diagnostics and identify their source file. Never
+    # let a module graph failure satisfy one of those broader checks.
     string(TOLOWER "${compiler_output}" lowercase_output)
     if(lowercase_output MATCHES "internal compiler error|please submit a bug report|clang frontend command failed"
-       OR lowercase_output MATCHES "segmentation fault|fatal error c1001")
-        message(FATAL_ERROR "${target} crashed the compiler instead of producing a domain diagnostic.\n${compiler_output}")
+       OR lowercase_output MATCHES "segmentation fault|fatal error c1001"
+    )
+        message(
+            FATAL_ERROR "${target} crashed the compiler instead of producing a domain diagnostic.\n${compiler_output}"
+        )
     endif()
     if(lowercase_output MATCHES "module[^\n]*(not found|cannot find|could not find|failed to load|unable to load)"
        OR lowercase_output MATCHES "failed to read compiled module|module file[^\n]*(out of date|not found)"
        OR lowercase_output MATCHES "module provider[^\n]*(not found|could not be found)"
-       OR lowercase_output MATCHES "cannot open include file|fatal error:.*file not found")
+       OR lowercase_output MATCHES "cannot open include file|fatal error:.*file not found"
+    )
         message(FATAL_ERROR "${target} failed because a module or dependency was unavailable.\n${compiler_output}")
     endif()
     string(FIND "${compiler_output}" "${diagnostic}" diagnostic_position)

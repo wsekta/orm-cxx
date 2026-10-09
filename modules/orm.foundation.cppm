@@ -250,7 +250,7 @@ public:
     RelationCollection() = default;
 
     RelationCollection(const RelationCollection& other)
-        : values_(other.values_ == nullptr ? nullptr : std::make_shared<container_type>(*other.values_)),
+        : values_(not other.values_ ? nullptr : std::make_shared<container_type>(*other.values_)),
           loaded_(other.loaded_)
     {
     }
@@ -262,8 +262,8 @@ public:
             return *this;
         }
 
-        auto copiedValues = other.values_ == nullptr ? std::shared_ptr<container_type>{} :
-                                                       std::make_shared<container_type>(*other.values_);
+        auto copiedValues =
+            not other.values_ ? std::shared_ptr<container_type>{} : std::make_shared<container_type>(*other.values_);
         values_ = std::move(copiedValues);
         loaded_ = other.loaded_;
         return *this;
@@ -324,12 +324,12 @@ public:
 
     [[nodiscard]] auto size() const noexcept -> size_type
     {
-        return values_ == nullptr ? 0 : values_->size();
+        return not values_ ? 0 : values_->size();
     }
 
     [[nodiscard]] auto empty() const noexcept -> bool
     {
-        return values_ == nullptr or values_->empty();
+        return not values_ or values_->empty();
     }
 
     auto operator[](size_type index) -> T&
@@ -355,7 +355,7 @@ private:
 
     auto mutableValues() -> container_type&
     {
-        if (values_ == nullptr)
+        if (not values_)
         {
             values_ = std::make_shared<container_type>();
         }
@@ -365,7 +365,7 @@ private:
 
     auto readableValues() const -> const container_type&
     {
-        if (values_ == nullptr)
+        if (not values_)
         {
             values_ = std::make_shared<container_type>();
         }

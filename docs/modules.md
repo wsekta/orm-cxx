@@ -66,8 +66,9 @@ For an application that imports only `orm.reflection`, use
 `target_link_libraries(application PRIVATE orm-cxx::reflection)`.
 Both targets are compiled libraries and propagate the C++20 requirement.
 
-Installed packages provide the libraries, the `.cppm` source interfaces under
-`share/orm-cxx/modules`, and native CMake exports with `CXX_MODULES` file sets and
+Installed packages provide the libraries, the `.cppm` source interfaces and
+their private source includes under `share/orm-cxx/modules`, and native CMake
+exports with `CXX_MODULES` file sets and
 import metadata. CMake scans imports and compiles the required binary module
 interfaces (BMIs) in the consumer's build directory. The configured backend
 interface sources remain part of that installation.

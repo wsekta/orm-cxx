@@ -12,6 +12,7 @@ import :expressions;
 import :dynamic_query;
 import :static_plan;
 import :sql;
+import :backend_relations;
 import :database;
 
 #include "tests/CollectionModelsDefinitions.hpp"

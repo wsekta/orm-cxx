@@ -1,5 +1,5 @@
-# Compile contracts share the production CMake module graph. Failed targets are
-# excluded from the normal build and compiled individually by the CTest runner.
+# Compile contracts share the production CMake module graph. Failed targets are excluded from the normal build and
+# compiled individually by the CTest runner.
 set(orm_cxx_failure_cases)
 set(orm_cxx_positive_targets)
 
@@ -9,18 +9,27 @@ function(orm_cxx_contract_target name source)
     set_target_properties("${target}" PROPERTIES CXX_SCAN_FOR_MODULES ON)
     target_link_libraries("${target}" PRIVATE orm-cxx::orm-cxx)
     target_include_directories("${target}" PRIVATE "${PROJECT_SOURCE_DIR}")
-    set(orm_cxx_contract_target_name "${target}" PARENT_SCOPE)
+    set(orm_cxx_contract_target_name
+        "${target}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 function(orm_cxx_expect_compile_success name source)
     orm_cxx_contract_target("${name}" "${source}")
-    set(orm_cxx_positive_targets "${orm_cxx_positive_targets};${orm_cxx_contract_target_name}" PARENT_SCOPE)
+    set(orm_cxx_positive_targets
+        "${orm_cxx_positive_targets};${orm_cxx_contract_target_name}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 function(orm_cxx_expect_compile_failure name source expected_diagnostic)
     orm_cxx_contract_target("${name}" "${source}")
     list(APPEND orm_cxx_failure_cases "${orm_cxx_contract_target_name}|${expected_diagnostic}")
-    set(orm_cxx_failure_cases "${orm_cxx_failure_cases}" PARENT_SCOPE)
+    set(orm_cxx_failure_cases
+        "${orm_cxx_failure_cases}"
+        PARENT_SCOPE
+    )
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
@@ -295,13 +304,10 @@ foreach(case IN LISTS orm_cxx_failure_cases)
 endforeach()
 file(APPEND "${case_manifest}" ")\n")
 
-add_test(
-    NAME orm-cxx-compile-fail
-    COMMAND "${CMAKE_COMMAND}" "-DORM_CXX_BUILD_DIR=${PROJECT_BINARY_DIR}"
-            "-DORM_CXX_BUILD_CONFIG=$<CONFIG>" "-DORM_CXX_CASE_MANIFEST=${case_manifest}"
-            -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckBuild.cmake"
+add_test(NAME orm-cxx-compile-fail
+         COMMAND "${CMAKE_COMMAND}" "-DORM_CXX_BUILD_DIR=${PROJECT_BINARY_DIR}" "-DORM_CXX_BUILD_CONFIG=$<CONFIG>"
+                 "-DORM_CXX_CASE_MANIFEST=${case_manifest}" -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckBuild.cmake"
 )
 set_tests_properties(
-    orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema;query;modules"
-                                   RESOURCE_LOCK orm-cxx-build
+    orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema;query;modules" RESOURCE_LOCK orm-cxx-build
 )

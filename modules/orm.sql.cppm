@@ -2,38 +2,22 @@ module;
 
 #include <algorithm>
 #include <array>
-#include <bit>
-#include <cassert>
-#include <charconv>
-#include <cmath>
-#include <compare>
 #include <concepts>
 #include <cstddef>
-#include <cstdint>
-#include <format>
-#include <functional>
-#include <initializer_list>
 #include <limits>
-#include <map>
 #include <memory>
 #include <optional>
-#include <set>
 #include <span>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <string_view>
-#include <system_error>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
-#include <variant>
 #include <vector>
 
-#include "soci/soci.h"
-#include "soci/values.h"
+#include "detail/SociTypes.inc"
 
 export module orm:sql;
 
@@ -41,7 +25,6 @@ import orm.reflection;
 import :foundation;
 import :model;
 import :expressions;
-import :dynamic_query;
 import :static_plan;
 
 // Runtime command inputs form the source-level backend extension contract.

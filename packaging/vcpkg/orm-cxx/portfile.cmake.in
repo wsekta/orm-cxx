@@ -1,5 +1,8 @@
 vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 
+# The public interfaces are C++20 module sources, installed under share.
+set(VCPKG_POLICY_EMPTY_INCLUDE_FOLDER enabled)
+
 vcpkg_download_distfile(
     ARCHIVE
     URLS
@@ -40,7 +43,7 @@ vcpkg_cmake_config_fixup(PACKAGE_NAME orm-cxx-reflection CONFIG_PATH lib/cmake/o
 
 # CMake's module metadata is relocated recursively by both config fixups. Debug and Release share the installed source
 # interfaces; BMIs are built by the consumer rather than distributed as compiler-specific cache artifacts.
-foreach(module IN ITEMS orm.cppm orm.reflection.cppm orm.reflection.generated.cppm)
+foreach(module IN ITEMS orm.cppm orm.reflection.cppm orm.reflection.generated.cppm detail/SociTypes.inc)
     if(NOT EXISTS "${CURRENT_PACKAGES_DIR}/share/orm-cxx/modules/${module}")
         message(FATAL_ERROR "orm-cxx is missing its installed ${module} interface.")
     endif()

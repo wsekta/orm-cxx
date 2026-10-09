@@ -332,4 +332,9 @@ auto PostgresqlBackend::commandGenerator() const noexcept -> const CommandGenera
 {
     return *postgresqlCommandGenerator;
 }
+
+auto PostgresqlBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
+{
+    return CompiledSqlFlavor::PostgreSQL;
+}
 } // namespace orm::db::postgresql

@@ -19,7 +19,6 @@ module;
 #include <optional>
 #include <set>
 #include <span>
-#include <sqlite3.h>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -34,14 +33,17 @@ module;
 #include <vector>
 
 #include "soci/soci.h"
+
+// SOCI 4.0 includes SQLite's declarations inside sqlite_api before its include guard is set.
+// SOCI 4.1 leaves the C header to callers; both versions need the error-code macros below.
+// clang-format off
 #include "soci/sqlite3/soci-sqlite3.h"
+#include <sqlite3.h>
+// clang-format on
 
 module orm;
 
 import :internal;
-
-// Older SOCI releases include sqlite3.h inside sqlite_api; it must be included first.
-// Newer SOCI releases no longer include the header, but error classification needs its constants.
 
 namespace
 {
@@ -282,5 +284,10 @@ auto SqliteBackend::runtime() const noexcept -> const BackendRuntime&
 auto SqliteBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
     return *sqliteCommandGenerator;
+}
+
+auto SqliteBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
+{
+    return CompiledSqlFlavor::SQLite;
 }
 } // namespace orm::db::sqlite

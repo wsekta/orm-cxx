@@ -12,7 +12,7 @@ cpp_files=()
 for file in "${candidates[@]}"; do
     [[ -f "$file" ]] || continue
     case "$file" in
-        *.c | *.cc | *.cpp | *.cppm | *.ixx | *.cxx | *.h | *.hh | *.hpp | *.hxx)
+        *.c | *.cc | *.cpp | *.cppm | *.ixx | *.inc | *.cxx | *.h | *.hh | *.hpp | *.hxx)
             cpp_files+=("$file")
             ;;
     esac

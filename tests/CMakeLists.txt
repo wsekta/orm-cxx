@@ -82,7 +82,9 @@ target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}" "${PROJECT
 
 add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp static_plan_allocations/Plans.cpp)
 target_link_libraries(orm-cxx-static-plan-allocations PRIVATE orm-cxx::orm-cxx orm-cxx-project-warnings)
-set_target_properties(orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" CXX_SCAN_FOR_MODULES ON)
+set_target_properties(
+    orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" CXX_SCAN_FOR_MODULES ON
+)
 add_test(NAME orm-cxx-static-plan-allocations COMMAND orm-cxx-static-plan-allocations)
 set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES LABELS "unit;query;allocation")
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
@@ -181,7 +183,8 @@ if(CMAKE_TOOLCHAIN_FILE)
 endif()
 if(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT)
     list(APPEND orm_cxx_consumer_common_configure_arguments
-         "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=${CMAKE_MSVC_DEBUG_INFORMATION_FORMAT}")
+         "-DCMAKE_MSVC_DEBUG_INFORMATION_FORMAT=${CMAKE_MSVC_DEBUG_INFORMATION_FORMAT}"
+    )
 endif()
 if(VCPKG_INSTALLED_DIR)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DVCPKG_INSTALLED_DIR=${VCPKG_INSTALLED_DIR}"
