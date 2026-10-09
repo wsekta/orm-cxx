@@ -8,7 +8,5 @@ var searchData=
   ['new_20compiler_20versions_5',['Adding New Compiler Versions',['../md_docs_2ci-compiler-matrix.html#autotoc_md36',1,'']]],
   ['noclause_6',['NoClause',['../structorm_1_1query_1_1detail_1_1NoClause.html',1,'orm::query::detail']]],
   ['notexpression_7',['NotExpression',['../structorm_1_1query_1_1detail_1_1NotExpression.html',1,'orm::query::detail']]],
-  ['notmeta_8',['NotMeta',['../structorm_1_1query_1_1detail_1_1NotMeta.html',1,'orm::query::detail']]],
-  ['nullexpression_9',['NullExpression',['../structorm_1_1query_1_1detail_1_1NullExpression.html',1,'orm::query::detail']]],
-  ['nullmeta_10',['NullMeta',['../structorm_1_1query_1_1detail_1_1NullMeta.html',1,'orm::query::detail']]]
+  ['nullexpression_8',['NullExpression',['../structorm_1_1query_1_1detail_1_1NullExpression.html',1,'orm::query::detail']]]
 ];

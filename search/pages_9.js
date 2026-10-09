@@ -1,7 +1,6 @@
 var searchData=
 [
-  ['increment_20primary_20key_0',['Auto-increment primary key',['../md_docs_2model.html#autotoc_md59',1,'']]],
-  ['insert_20objects_1',['Insert objects',['../md_docs_2database.html#autotoc_md43',1,'']]],
-  ['installation_2',['installation',['../md_docs_2modules.html#autotoc_md65',1,'CMake consumers and installation'],['../md_docs_2packaging.html#autotoc_md72',1,'Native CMake installation']]],
-  ['integration_3',['Build and CI integration',['../md_docs_2backend-extension.html#autotoc_md8',1,'']]]
+  ['queries_0',['Partial-result queries',['../md_docs_2partial-result-queries.html',1,'']]],
+  ['query_1',['Query',['../md_docs_2query.html',1,'']]],
+  ['query_20plans_2',['Static query plans',['../md_docs_2static-queries.html',1,'']]]
 ];

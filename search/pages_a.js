@@ -1,4 +1,6 @@
 var searchData=
 [
-  ['junction_20column_20names_0',['Junction column names',['../md_docs_2relations.html#autotoc_md98',1,'']]]
+  ['relations_0',['Collection relations',['../md_docs_2relations.html',1,'']]],
+  ['releases_1',['Package managers and releases',['../md_docs_2packaging.html',1,'']]],
+  ['result_20queries_2',['Partial-result queries',['../md_docs_2partial-result-queries.html',1,'']]]
 ];

@@ -1,9 +1,9 @@
 <map id="orm::db::commands::RenderContext" name="orm::db::commands::RenderContext">
-<area shape="rect" id="Node000001" title=" " alt="" coords="143,199,283,239"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1ModelView.html" title="Trivially&#45;copyable handle to one model in immutable Schema storage." alt="" coords="12,102,166,128"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="117,136,191,196,188,200,114,140"/>
-<area shape="rect" id="Node000003" href="$structorm_1_1model_1_1SchemaView.html" title="Immutable view over a statically materialized schema." alt="" coords="5,5,173,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="92,46,92,101,86,101,86,46"/>
-<area shape="rect" id="Node000004" href="$classorm_1_1db_1_1SqlDialect.html" title=" " alt="" coords="190,102,318,128"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="246,143,223,199,218,197,241,141"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="113,181,273,221"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1ModelView.html" title="Trivially&#45;copyable handle to one model in immutable Schema storage." alt="" coords="11,93,189,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="123,126,176,179,172,183,119,130"/>
+<area shape="rect" id="Node000003" href="$structorm_1_1model_1_1SchemaView.html" title="Immutable view over a statically materialized schema." alt="" coords="5,5,195,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="103,45,103,93,97,93,97,45"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="213,93,360,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,130,214,183,210,179,264,126"/>
 </map>

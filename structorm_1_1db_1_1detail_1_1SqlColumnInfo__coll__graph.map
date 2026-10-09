@@ -1,5 +1,5 @@
 <map id="orm::db::detail::SqlColumnInfo" name="orm::db::detail::SqlColumnInfo">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,122,197,148"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1ColumnView.html" title=" " alt="" coords="19,5,183,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="104,47,104,122,98,122,98,47"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,108,225,133"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1ColumnView.html" title=" " alt="" coords="22,5,209,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="118,45,118,108,113,108,113,45"/>
 </map>

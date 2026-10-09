@@ -1,7 +1,5 @@
 <map id="orm::db::binding::IsOptionalScalarField&lt; std::optional&lt; T &gt; &gt;" name="orm::db::binding::IsOptionalScalarField&lt; std::optional&lt; T &gt; &gt;">
-<area shape="rect" id="Node000001" title=" " alt="" coords="16,79,224,120"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,5,110,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="78,41,107,77,103,80,74,45"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="134,5,232,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="166,45,138,80,134,77,162,41"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,79,248,119"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="71,5,183,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,44,129,79,124,79,124,44"/>
 </map>

@@ -1,7 +1,7 @@
 <map id="orm::query::detail::UpdateAssignment" name="orm::query::detail::UpdateAssignment">
-<area shape="rect" id="Node000001" title=" " alt="" coords="66,117,204,158"/>
-<area shape="rect" id="Node000002" href="$classorm_1_1query_1_1detail_1_1Column.html" title=" " alt="" coords="5,5,123,46"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="87,58,124,115,120,118,83,61"/>
-<area shape="rect" id="Node000003" href="$structorm_1_1query_1_1detail_1_1UpdateValue.html" title=" " alt="" coords="147,5,264,46"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="187,61,149,118,145,115,182,58"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="77,108,231,148"/>
+<area shape="rect" id="Node000002" href="$classorm_1_1query_1_1detail_1_1Column.html" title=" " alt="" coords="5,5,143,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="100,55,141,106,137,110,96,58"/>
+<area shape="rect" id="Node000003" href="$structorm_1_1query_1_1detail_1_1UpdateValue.html" title=" " alt="" coords="167,5,304,45"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="214,58,171,110,167,106,210,54"/>
 </map>

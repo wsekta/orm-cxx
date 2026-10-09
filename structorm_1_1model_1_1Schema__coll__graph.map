@@ -1,5 +1,5 @@
 <map id="orm::model::Schema&lt; Models &gt;" name="orm::model::Schema&lt; Models &gt;">
-<area shape="rect" id="Node000001" title="A closed compile&#45;time set of ORM models." alt="" coords="20,102,158,143"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1SchemaView.html" title="Immutable view over a statically materialized schema." alt="" coords="5,5,173,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="92,46,92,102,86,102,86,46"/>
+<area shape="rect" id="Node000001" title="A closed compile&#45;time set of ORM models." alt="" coords="21,93,179,133"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1SchemaView.html" title="Immutable view over a statically materialized schema." alt="" coords="5,5,195,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="103,44,103,93,97,93,97,44"/>
 </map>

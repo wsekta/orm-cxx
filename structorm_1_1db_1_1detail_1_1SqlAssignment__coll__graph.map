@@ -1,5 +1,5 @@
 <map id="orm::db::detail::SqlAssignment" name="orm::db::detail::SqlAssignment">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,102,200,128"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1db_1_1detail_1_1SqlSource.html" title=" " alt="" coords="19,5,186,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="105,46,105,101,100,101,100,46"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,93,228,119"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1db_1_1detail_1_1SqlSource.html" title=" " alt="" coords="22,5,211,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,45,119,93,114,93,114,45"/>
 </map>

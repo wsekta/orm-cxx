@@ -170,10 +170,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"md_docs_2database.html#autotoc_md47",
-"structorm_1_1model_1_1detail_1_1StaticOptionalTraits.html"
+"md_docs_2partial-result-queries.html#autotoc_md77",
+"structorm_1_1query_1_1detail_1_1compiled_1_1TupleEligible.html"
 ];
 
-const SYNCONMSG = 'click to disable panel synchronization';
-const SYNCOFFMSG = 'click to enable panel synchronization';
-const LISTOFALLMEMBERS = 'List of all members';
+var SYNCONMSG = 'click to disable panel synchronisation';
+var SYNCOFFMSG = 'click to enable panel synchronisation';

@@ -1,26 +1,8 @@
 var searchData=
 [
-  ['listexpression_0',['ListExpression',['../structorm_1_1query_1_1detail_1_1ListExpression.html',1,'orm::query::detail']]],
-  ['listmeta_1',['ListMeta',['../structorm_1_1query_1_1detail_1_1ListMeta.html',1,'orm::query::detail']]],
-  ['listtraits_2',['ListTraits',['../structorm_1_1query_1_1detail_1_1ListTraits.html',1,'orm::query::detail']]],
-  ['listtraits_3c_20fixedvalues_3c_20v_2e_2e_2e_20_3e_20_3e_3',['ListTraits&lt; FixedValues&lt; V... &gt; &gt;',['../structorm_1_1query_1_1detail_1_1ListTraits_3_01FixedValues_3_01V_8_8_8_01_4_01_4.html',1,'orm::query::detail']]],
-  ['listtraits_3c_20parameter_3c_20std_3a_3aarray_3c_20v_2c_20n_20_3e_2c_20i_20_3e_20_3e_4',['ListTraits&lt; Parameter&lt; std::array&lt; V, N &gt;, I &gt; &gt;',['../structorm_1_1query_1_1detail_1_1ListTraits_3_01Parameter_3_01std_1_1array_3_01V_00_01N_01_4_00_01I_01_4_01_4.html',1,'orm::query::detail']]],
-  ['logicalexpression_5',['LogicalExpression',['../structorm_1_1query_1_1detail_1_1LogicalExpression.html',1,'orm::query::detail']]],
-  ['logicalmeta_6',['LogicalMeta',['../structorm_1_1query_1_1detail_1_1LogicalMeta.html',1,'orm::query::detail']]],
-  ['logicaltypetraits_7',['LogicalTypeTraits',['../structorm_1_1model_1_1LogicalTypeTraits.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20bool_20_3e_8',['LogicalTypeTraits&lt; bool &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20char_20_3e_9',['LogicalTypeTraits&lt; char &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01char_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20double_20_3e_10',['LogicalTypeTraits&lt; double &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01double_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20float_20_3e_11',['LogicalTypeTraits&lt; float &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01float_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20int_20_3e_12',['LogicalTypeTraits&lt; int &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01int_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20long_20_3e_13',['LogicalTypeTraits&lt; long &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01long_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20long_20long_20_3e_14',['LogicalTypeTraits&lt; long long &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01long_01long_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20short_20_3e_15',['LogicalTypeTraits&lt; short &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20signed_20char_20_3e_16',['LogicalTypeTraits&lt; signed char &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20std_3a_3astring_20_3e_17',['LogicalTypeTraits&lt; std::string &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20unsigned_20char_20_3e_18',['LogicalTypeTraits&lt; unsigned char &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20unsigned_20int_20_3e_19',['LogicalTypeTraits&lt; unsigned int &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20unsigned_20long_20_3e_20',['LogicalTypeTraits&lt; unsigned long &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20unsigned_20long_20long_20_3e_21',['LogicalTypeTraits&lt; unsigned long long &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01long_01_4.html',1,'orm::model']]],
-  ['logicaltypetraits_3c_20unsigned_20short_20_3e_22',['LogicalTypeTraits&lt; unsigned short &gt;',['../structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01short_01_4.html',1,'orm::model']]]
+  ['memberpointertraits_0',['MemberPointerTraits',['../structorm_1_1model_1_1detail_1_1MemberPointerTraits.html',1,'orm::model::detail']]],
+  ['memberpointertraits_3c_20value_20owner_3a_3a_2a_20_3e_1',['MemberPointerTraits&lt; Value Owner::* &gt;',['../structorm_1_1model_1_1detail_1_1MemberPointerTraits_3_01Value_01Owner_1_1_5_01_4.html',1,'orm::model::detail']]],
+  ['modeldataview_2',['ModelDataView',['../structorm_1_1model_1_1ModelDataView.html',1,'orm::model']]],
+  ['modelview_3',['ModelView',['../structorm_1_1model_1_1ModelView.html',1,'orm::model']]],
+  ['mutationcapabilities_4',['MutationCapabilities',['../structorm_1_1db_1_1MutationCapabilities.html',1,'orm::db']]]
 ];

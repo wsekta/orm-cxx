@@ -1,5 +1,5 @@
 <map id="orm::model::ModelDataView" name="orm::model::ModelDataView">
-<area shape="rect" id="Node000001" title="Immutable data stored once for a model inside a closed schema." alt="" coords="5,102,187,128"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1TypeId.html" title=" " alt="" coords="31,5,161,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,46,99,101,93,101,93,46"/>
+<area shape="rect" id="Node000001" title="Immutable data stored once for a model inside a closed schema." alt="" coords="5,93,213,119"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1model_1_1TypeId.html" title=" " alt="" coords="36,5,183,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="112,45,112,93,107,93,107,45"/>
 </map>

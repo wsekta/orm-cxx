@@ -1,9 +1,18 @@
 var searchData=
 [
-  ['namesignaturesentinel_0',['NameSignatureSentinel',['../structorm_1_1reflection_1_1detail_1_1NameSignatureSentinel.html',1,'orm::reflection::detail']]],
-  ['noclause_1',['NoClause',['../structorm_1_1query_1_1detail_1_1NoClause.html',1,'orm::query::detail']]],
-  ['notexpression_2',['NotExpression',['../structorm_1_1query_1_1detail_1_1NotExpression.html',1,'orm::query::detail']]],
-  ['notmeta_3',['NotMeta',['../structorm_1_1query_1_1detail_1_1NotMeta.html',1,'orm::query::detail']]],
-  ['nullexpression_4',['NullExpression',['../structorm_1_1query_1_1detail_1_1NullExpression.html',1,'orm::query::detail']]],
-  ['nullmeta_5',['NullMeta',['../structorm_1_1query_1_1detail_1_1NullMeta.html',1,'orm::query::detail']]]
+  ['objectfieldfromprojectionvalues_0',['ObjectFieldFromProjectionValues',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalues_3c_20resultfield_20_3e_1',['ObjectFieldFromProjectionValues&lt; ResultField &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalues_3c_20std_3a_3aoptional_3c_20resultfield_20_3e_20_3e_2',['ObjectFieldFromProjectionValues&lt; std::optional&lt; ResultField &gt; &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalueswithcast_3',['ObjectFieldFromProjectionValuesWithCast',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalueswithcast_3c_20resultfield_2c_20double_20_3e_4',['ObjectFieldFromProjectionValuesWithCast&lt; ResultField, double &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalueswithcast_3c_20resultfield_2c_20int_20_3e_5',['ObjectFieldFromProjectionValuesWithCast&lt; ResultField, int &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalueswithcast_3c_20resultfield_2c_20long_20long_20_3e_6',['ObjectFieldFromProjectionValuesWithCast&lt; ResultField, long long &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html',1,'orm::db::binding']]],
+  ['objectfieldfromprojectionvalueswithcast_3c_20resultfield_2c_20unsigned_20long_20long_20_3e_7',['ObjectFieldFromProjectionValuesWithCast&lt; ResultField, unsigned long long &gt;',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html',1,'orm::db::binding']]],
+  ['objectfieldfromvalues_8',['ObjectFieldFromValues',['../structorm_1_1db_1_1binding_1_1ObjectFieldFromValues.html',1,'orm::db::binding']]],
+  ['objectfieldtovalues_9',['ObjectFieldToValues',['../structorm_1_1db_1_1binding_1_1ObjectFieldToValues.html',1,'orm::db::binding']]],
+  ['optionalrelationcollectiontraits_10',['OptionalRelationCollectionTraits',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits.html',1,'orm::detail']]],
+  ['optionalrelationcollectiontraits_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_11',['OptionalRelationCollectionTraits&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::detail']]],
+  ['optionalvalue_12',['OptionalValue',['../structorm_1_1db_1_1binding_1_1OptionalValue.html',1,'orm::db::binding']]],
+  ['optionalvalue_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_13',['OptionalValue&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::db::binding']]],
+  ['orderby_14',['OrderBy',['../structorm_1_1query_1_1detail_1_1OrderBy.html',1,'orm::query::detail']]]
 ];

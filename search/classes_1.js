@@ -6,10 +6,8 @@ var searchData=
   ['backendruntimelimits_3',['BackendRuntimeLimits',['../structorm_1_1db_1_1BackendRuntimeLimits.html',1,'orm::db']]],
   ['backendvaluelimits_4',['BackendValueLimits',['../structorm_1_1db_1_1BackendValueLimits.html',1,'orm::db']]],
   ['betweenexpression_5',['BetweenExpression',['../structorm_1_1query_1_1detail_1_1BetweenExpression.html',1,'orm::query::detail']]],
-  ['betweenmeta_6',['BetweenMeta',['../structorm_1_1query_1_1detail_1_1BetweenMeta.html',1,'orm::query::detail']]],
-  ['bindinginfo_7',['BindingInfo',['../structorm_1_1db_1_1binding_1_1BindingInfo.html',1,'orm::db::binding']]],
-  ['bindingpayload_8',['BindingPayload',['../structorm_1_1db_1_1binding_1_1BindingPayload.html',1,'orm::db::binding']]],
-  ['bindingpayload_3c_20t_2c_20schematype_2c_20joinedvalues_20_3e_9',['BindingPayload&lt; T, SchemaType, JoinedValues &gt;',['../structorm_1_1db_1_1binding_1_1BindingPayload.html',1,'orm::db::binding']]],
-  ['bindingtraits_10',['BindingTraits',['../structorm_1_1reflection_1_1detail_1_1BindingTraits.html',1,'orm::reflection::detail']]],
-  ['boundvalue_11',['BoundValue',['../structorm_1_1db_1_1BoundValue.html',1,'orm::db']]]
+  ['bindinginfo_6',['BindingInfo',['../structorm_1_1db_1_1binding_1_1BindingInfo.html',1,'orm::db::binding']]],
+  ['bindingpayload_7',['BindingPayload',['../structorm_1_1db_1_1binding_1_1BindingPayload.html',1,'orm::db::binding']]],
+  ['bindingtraits_8',['BindingTraits',['../structorm_1_1reflection_1_1detail_1_1BindingTraits.html',1,'orm::reflection::detail']]],
+  ['boundvalue_9',['BoundValue',['../structorm_1_1db_1_1BoundValue.html',1,'orm::db']]]
 ];

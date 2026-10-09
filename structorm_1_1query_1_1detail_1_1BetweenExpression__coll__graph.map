@@ -1,7 +1,7 @@
 <map id="orm::query::detail::BetweenExpression" name="orm::query::detail::BetweenExpression">
-<area shape="rect" id="Node000001" title=" " alt="" coords="73,137,215,178"/>
-<area shape="rect" id="Node000002" href="$classorm_1_1query_1_1detail_1_1Column.html" title=" " alt="" coords="5,5,123,46"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="86,58,134,136,130,138,82,61"/>
-<area shape="rect" id="Node000003" href="$classorm_1_1query_1_1QueryValue.html" title="A value that can be bound as a query parameter." alt="" coords="147,13,301,38"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="211,53,173,115,158,138,154,136,168,112,207,50"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="84,123,243,163"/>
+<area shape="rect" id="Node000002" href="$classorm_1_1query_1_1detail_1_1Column.html" title=" " alt="" coords="5,5,143,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="99,55,151,121,146,124,95,58"/>
+<area shape="rect" id="Node000003" href="$classorm_1_1query_1_1QueryValue.html" title="A value that can be bound as a query parameter." alt="" coords="167,13,341,38"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="239,50,180,124,176,121,234,47"/>
 </map>
