@@ -50,7 +50,7 @@ set(ORM_CXX_TEST_SOURCES
     reflection/GeneratedBindingArity96To111Test.cpp
     reflection/GeneratedBindingArity112To127Test.cpp
     reflection/GeneratedBindingArity128To128Test.cpp
-    reflection/MemberNameHeaderTest.cpp
+    reflection/MemberNameModuleTest.cpp
     reflection/TypeNameTest.cpp
     utils/ConstexprForTest.cpp
 )
@@ -67,7 +67,8 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
 endif()
 
 add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})
-set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+target_sources(orm-cxx-UT PRIVATE FILE_SET test_modules TYPE CXX_MODULES FILES Support.cppm)
+set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
 set(orm_cxx_postgresql_integration_enabled false)
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
@@ -79,9 +80,9 @@ configure_file(
 )
 target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}/generated/test-include")
 
-add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp)
+add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp static_plan_allocations/Plans.cpp)
 target_link_libraries(orm-cxx-static-plan-allocations PRIVATE orm-cxx::orm-cxx orm-cxx-project-warnings)
-set_target_properties(orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set_target_properties(orm-cxx-static-plan-allocations PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" CXX_SCAN_FOR_MODULES ON)
 add_test(NAME orm-cxx-static-plan-allocations COMMAND orm-cxx-static-plan-allocations)
 set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES LABELS "unit;query;allocation")
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
@@ -148,23 +149,7 @@ if(orm_cxx_make_program AND NOT IS_ABSOLUTE "${orm_cxx_make_program}")
     endif()
 endif()
 
-set(orm_cxx_compile_fail_arguments
-    -S
-    "${CMAKE_CURRENT_SOURCE_DIR}/compile_fail"
-    -B
-    "${PROJECT_BINARY_DIR}/compile-fail-test"
-    -G
-    "${CMAKE_GENERATOR}"
-    "-DORM_CXX_SOURCE_DIR=${PROJECT_SOURCE_DIR}"
-    "-DORM_CXX_GENERATED_INCLUDE_DIR=${ORM_CXX_GENERATED_INCLUDE_DIR}"
-    "-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}"
-    "-DORM_CXX_DEPENDENCY_INCLUDE_PATHS=$<JOIN:$<TARGET_PROPERTY:${ORM_CXX_SOCI_CORE_TARGET},INTERFACE_INCLUDE_DIRECTORIES>,|>"
-)
-if(orm_cxx_make_program)
-    list(APPEND orm_cxx_compile_fail_arguments "-DCMAKE_MAKE_PROGRAM=${orm_cxx_make_program}")
-endif()
-add_test(NAME orm-cxx-compile-fail COMMAND "${CMAKE_COMMAND}" ${orm_cxx_compile_fail_arguments})
-set_tests_properties(orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema;query")
+add_subdirectory(compile_fail)
 
 set(orm_cxx_consumer_common_configure_arguments
     -S

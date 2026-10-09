@@ -30,9 +30,7 @@ database.connect("sqlite3://test.db");
 
 Every model used by `select`, `insert`, schema operations, or relation
 operations must belong to `AppSchema`. All relation targets must be listed as
-well. Missing models and invalid mappings fail during compilation. The former
-untyped `orm::Database` declaration is no longer supported; see
-[Migrating to static schemas](migration-static-schema.md).
+well. Missing models and invalid mappings fail during compilation.
 
 The remaining fragments are independent examples. In each case, the
 `database` object's schema must contain every model named by that operation.

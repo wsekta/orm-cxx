@@ -1,18 +1,18 @@
-#include <array>
-#include <gtest/gtest.h>
-#include <limits>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <type_traits>
-#include <variant>
-#include <vector>
+module;
 
-#include "orm-cxx/database/CommandGenerator.hpp"
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
-#include "orm-cxx/query/CompiledSql.hpp"
-#include "tests/compile_fail/StaticPlanModels.hpp"
-#include "tests/utils/FakeDatabase.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 using namespace orm::query;
 using namespace static_plan_models;

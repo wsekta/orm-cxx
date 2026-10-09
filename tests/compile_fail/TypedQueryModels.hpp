@@ -3,8 +3,6 @@
 #include <optional>
 #include <string>
 
-#include "orm-cxx/database.hpp"
-
 namespace typed_query_models
 {
 struct Profile

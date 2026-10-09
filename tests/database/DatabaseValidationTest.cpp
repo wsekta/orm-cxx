@@ -1,13 +1,20 @@
-#include "src/database/DatabaseValidation.hpp"
+module;
 
-#include <array>
-#include <cstddef>
-#include <gtest/gtest.h>
-#include <stdexcept>
-#include <string_view>
-#include <utility>
+#include "tests/UnitTestPrelude.hpp"
 
-#include "orm-cxx/database.hpp"
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 namespace
 {

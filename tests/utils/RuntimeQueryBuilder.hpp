@@ -5,10 +5,6 @@
 #include <string>
 #include <utility>
 
-#include "orm-cxx/projection_query.hpp"
-#include "orm-cxx/query/SelectSpec.hpp"
-#include "orm-cxx/query/UpdateSpec.hpp"
-
 namespace orm::tests
 {
 /** Test-only builders for exercising malformed renderer input independently of the public DSL. */

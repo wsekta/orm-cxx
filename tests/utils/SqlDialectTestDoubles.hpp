@@ -4,8 +4,6 @@
 #include <string>
 #include <string_view>
 
-#include "orm-cxx/database/sqlite/SqliteDialect.hpp"
-
 namespace orm::tests
 {
 class SnapshotSqliteDialect final : public db::SqlDialect

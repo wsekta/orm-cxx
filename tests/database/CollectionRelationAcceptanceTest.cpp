@@ -1,13 +1,20 @@
-#include <algorithm>
-#include <limits>
-#include <memory>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
+module;
 
-#include "DatabaseTest.hpp"
-#include "tests/CollectionModelsDefinitions.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 namespace acceptance_models
 {

@@ -1,6 +1,6 @@
-#include <string>
+#include "tests/StandardLibrary.hpp"
 
-#include "orm-cxx/model/Schema.hpp"
+import orm;
 
 struct InvalidAutoIncrement
 {

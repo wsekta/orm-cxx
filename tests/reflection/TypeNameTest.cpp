@@ -1,3 +1,5 @@
+module;
+
 #include <array>
 #include <cstddef>
 #include <gmock/gmock.h>
@@ -11,8 +13,11 @@
 #include <utility>
 #include <vector>
 
-#include "orm-cxx/reflection/Reflection.hpp"
 #include "tests/reflection/GeneratedFieldLimitModels.hpp"
+
+module orm.reflection;
+
+import :generated;
 
 namespace
 {

@@ -1,7 +1,6 @@
-#include <optional>
+#include "tests/StandardLibrary.hpp"
 
-#include "orm-cxx/model/Schema.hpp"
-#include "orm-cxx/relations.hpp"
+import orm;
 
 struct Child;
 

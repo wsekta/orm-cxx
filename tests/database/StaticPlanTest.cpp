@@ -1,12 +1,20 @@
-#include <array>
-#include <memory>
-#include <optional>
-#include <string>
-#include <vector>
+module;
 
-#include "DatabaseTest.hpp"
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
-#include "tests/compile_fail/StaticPlanModels.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 using namespace orm::query;
 using namespace static_plan_models;

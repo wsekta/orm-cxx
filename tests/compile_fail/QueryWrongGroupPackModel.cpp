@@ -1,3 +1,7 @@
+#include "tests/StandardLibrary.hpp"
+
+import orm;
+
 #include "TypedQueryModels.hpp"
 
 using namespace orm::query;

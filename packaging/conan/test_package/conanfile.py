@@ -14,14 +14,15 @@ class OrmCxxTestConan(ConanFile):
         self.requires(self.tested_reference_str)
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.22 <4]")
+        self.tool_requires("cmake/[>=3.31 <4]")
+        self.tool_requires("ninja/[>=1.11 <2]")
 
     def layout(self):
         cmake_layout(self)
 
     def generate(self):
         options = self.dependencies["orm-cxx"].options
-        tc = CMakeToolchain(self)
+        tc = CMakeToolchain(self, generator="Ninja")
         tc.variables["ORM_CXX_EXPECT_SQLITE"] = bool(options.with_sqlite3)
         tc.variables["ORM_CXX_EXPECT_POSTGRESQL"] = bool(options.with_postgresql)
         tc.generate()

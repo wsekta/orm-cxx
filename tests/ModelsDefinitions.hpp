@@ -3,9 +3,6 @@
 #include <optional>
 #include <string>
 
-#include "orm-cxx/model/Mapping.hpp"
-#include "orm-cxx/model/Schema.hpp"
-
 namespace models
 {
 struct ModelWithOneField

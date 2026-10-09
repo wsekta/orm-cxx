@@ -22,7 +22,7 @@ changes in the same pull request as user-facing changes.
 
 ## Fastest supported setup
 
-The development image contains GCC 13, Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
+The development image contains GCC 14, Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
 clang-format, clang-tidy, and cmake-format. Docker Compose and the devcontainer
 both build that image from the repository's single `Dockerfile`.
 
@@ -52,13 +52,13 @@ MSVC workflow natively on Windows as described below.
 
 ## Presets and CI-equivalent commands
 
-CMake 3.25 or newer is required for the workflow presets. Each workflow
+CMake 3.31 or newer is required for the workflow presets. Each workflow
 configures, builds, and tests its own directory under `build/`.
 
 | Check | Local command | Output directory |
 | --- | --- | --- |
 | Fast Linux check | `bash ./scripts/check-fast.sh` | `build/linux-clang-debug`, `build/quality` |
-| GCC 13 build and tests | `cmake --workflow --preset linux-gcc-debug` | `build/linux-gcc-debug` |
+| GCC 14 build and tests | `cmake --workflow --preset linux-gcc-debug` | `build/linux-gcc-debug` |
 | Clang 18 build and tests | `cmake --workflow --preset linux-clang-debug` | `build/linux-clang-debug` |
 | Clang 18 coverage | `cmake --workflow --preset linux-clang-coverage` | `build/linux-clang-coverage` |
 | Format and static analysis | `bash ./scripts/check-quality.sh` | `build/quality` |
@@ -113,16 +113,16 @@ itself is not a backend support claim.
 
 ## Native Linux setup
 
-Install CMake 3.25 or newer, Ninja, SQLite development headers, `libpq`
-development headers, the PostgreSQL client, GCC 13, Clang/LLVM 18, and the
+Install CMake 3.31 or newer, Ninja 1.11 or newer, SQLite development headers, `libpq`
+development headers, the PostgreSQL client, GCC 14, Clang/LLVM 18, and the
 Python tools pinned in `tools/requirements-dev.txt`.
 Then invoke the same workflow presets shown above. The container is the
 reference environment when host package names or versions differ.
 
 ## Native Windows and MSVC
 
-Install Visual Studio 2022 with the **Desktop development with C++** workload,
-CMake, Ninja, and PowerShell. Initialize the repository submodules, then open a
+Install Visual Studio 2026 with the **Desktop development with C++** workload,
+MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and PowerShell. Initialize the repository submodules, then open a
 Visual Studio Developer PowerShell and run:
 
 ```powershell

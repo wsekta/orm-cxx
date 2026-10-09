@@ -229,4 +229,4 @@ Aggregate `ORDER BY`, `COUNT(DISTINCT ...)`, raw aggregate expressions,
 and general subqueries are not part of this version. Correlated `EXISTS` is
 available only through the collection predicate helpers.
 
-Typed fields replace the 0.1 text-path API; see [Migration to typed queries](migration-typed-queries.md).
+Fields and relation paths use typed member pointers.

@@ -1,8 +1,7 @@
-#include <array>
-#include <type_traits>
-#include <vector>
+#include "tests/StandardLibrary.hpp"
 
-#include "orm-cxx/database.hpp"
+import orm;
+
 #include "StaticPlanModels.hpp"
 
 using namespace orm::query;

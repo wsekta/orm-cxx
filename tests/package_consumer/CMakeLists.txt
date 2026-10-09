@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 project(orm-cxx-package-consumer LANGUAGES CXX)
 
 find_package(orm-cxx CONFIG REQUIRED)
 
 add_executable(orm-cxx-package-consumer main.cpp)
+set_target_properties(orm-cxx-package-consumer PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-package-consumer PRIVATE orm-cxx::orm-cxx)
 if(MSVC)
     target_compile_options(orm-cxx-package-consumer PRIVATE /W4 /WX)

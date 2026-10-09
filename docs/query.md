@@ -2,8 +2,7 @@
 
 The mutable builder is described below. For reusable query shapes and typed
 argument slots, see [static query plans](static-queries.md). Expressions also
-offer `.dynamic()` when a named facade is needed; see the
-[0.3 migration guide](migration-static-queries.md).
+offer `.dynamic()` when a named facade is needed.
 
 1. [Build select](#build-select)
 2. [Loading collections](#loading-collections)
@@ -26,7 +25,7 @@ To query objects from a table use `orm::Query<Model>` and pass it to `orm::Datab
 The result is always `std::vector<Model>`.
 
 ```cpp
-#include "orm-cxx/orm.hpp"
+import orm;
 
 struct Profile
 {
@@ -461,4 +460,4 @@ expressions, aggregate `ORDER BY`, or `COUNT(DISTINCT ...)`. Fields, relation pa
 at compile time. DTO aliases, join settings, builder state, backend capabilities,
 and database errors remain runtime checks. Raw SQL uses `raw<Model>` and
 `rawOrder<Model>`; its SQL contents cannot be checked by C++ compilation.
-The text-field API is removed in 0.2; see [Migration to typed queries](migration-typed-queries.md).
+Fields and relation paths use typed member pointers.

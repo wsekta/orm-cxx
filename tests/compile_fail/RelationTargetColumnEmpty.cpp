@@ -1,4 +1,6 @@
-#include "orm-cxx/relations.hpp"
+#include "tests/StandardLibrary.hpp"
+
+import orm;
 
 struct Target
 {

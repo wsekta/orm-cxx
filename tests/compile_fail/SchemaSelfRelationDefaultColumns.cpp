@@ -1,5 +1,6 @@
-#include "orm-cxx/model/Schema.hpp"
-#include "orm-cxx/relations.hpp"
+#include "tests/StandardLibrary.hpp"
+
+import orm;
 
 struct SelfRelated
 {

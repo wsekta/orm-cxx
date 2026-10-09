@@ -116,11 +116,11 @@ of every compiler and every database:
 
 | Job | Environment | Required checks |
 | --- | --- | --- |
-| GCC core | Ubuntu, GCC 13, SQLite | Unit, SQLite conformance, consumer test |
+| GCC core | Ubuntu, GCC 14, SQLite | Unit, SQLite conformance, consumer test |
 | Clang coverage | Ubuntu, Clang 18, SQLite | The core checks and coverage export |
 | MSVC core | Windows, MSVC, SQLite | Unit, SQLite conformance, consumer test |
 | Quality and docs | Ubuntu, Clang 18, SQLite and PostgreSQL client libraries | Formatting, static analysis for both adapters, documentation validation |
-| PostgreSQL 15 | Ubuntu, GCC 13, real PostgreSQL service | Unit, dialect, common conformance, live integration |
+| PostgreSQL 15 | Ubuntu, GCC 14, real PostgreSQL service | Unit, dialect, common conformance, live integration |
 | PostgreSQL 18 | Ubuntu, Clang 18, real PostgreSQL service | Unit, dialect, common conformance, live integration, coverage |
 
 A backend receives additional operating-system or compiler jobs only when those

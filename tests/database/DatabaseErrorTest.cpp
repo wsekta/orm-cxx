@@ -1,13 +1,20 @@
-#include <gtest/gtest.h>
-#include <memory>
-#include <optional>
-#include <stdexcept>
-#include <string>
-#include <type_traits>
-#include <utility>
+module;
 
-#include "orm-cxx/database.hpp"
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 namespace
 {

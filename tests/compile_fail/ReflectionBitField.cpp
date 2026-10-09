@@ -1,4 +1,6 @@
-#include "orm-cxx/reflection/Reflection.hpp"
+#include "tests/StandardLibrary.hpp"
+
+import orm.reflection;
 
 struct BitField
 {

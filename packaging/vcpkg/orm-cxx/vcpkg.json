@@ -1,7 +1,7 @@
 {
   "name": "orm-cxx",
-  "version": "0.3.0",
-  "description": "A C++20 object-relational mapping library with compile-time reflection, SQLite, and PostgreSQL backends",
+  "version": "0.4.0",
+  "description": "A C++20 modules object-relational mapping library with compile-time reflection, SQLite, and PostgreSQL backends",
   "homepage": "https://github.com/wsekta/orm-cxx",
   "license": "MIT",
   "dependencies": [

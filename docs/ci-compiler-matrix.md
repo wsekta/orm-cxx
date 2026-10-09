@@ -7,7 +7,7 @@ policy for the `orm-cxx` project.
 
 | Workflow | Status |
 |----------|--------|
-| GCC (13, 14) | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
+| GCC 14 | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
 | Clang (18–20) | [![Clang](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml) |
 | PostgreSQL | [![PostgreSQL](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml) |
 | MSVC | [![MSVC](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml) |
@@ -23,7 +23,6 @@ installed from the default Ubuntu repositories.
 
 | Version | Package | Workflow | Status |
 |---------|---------|----------|--------|
-| GCC 13 | `gcc-13` / `g++-13` | `linux-gxx-build.yml` | Tested |
 | GCC 14 | `gcc-14` / `g++-14` | `linux-gxx-build.yml` | Tested |
 
 ### Clang
@@ -41,7 +40,7 @@ installed from the default Ubuntu repositories.
 
 | Version | Runner | Workflow | Status |
 |---------|--------|----------|--------|
-| MSVC latest | `windows-2022` | `windows-msvc-build.yml` | Tested |
+| MSVC latest | `windows-2025-vs2026` | `windows-msvc-build.yml` | Tested |
 
 ## PostgreSQL Compiler Matrix
 
@@ -50,7 +49,6 @@ combinations:
 
 | Compiler | PostgreSQL | Coverage | Workflow |
 |----------|-----------|----------|----------|
-| GCC 13 | 15 | No | `postgresql-build.yml` |
 | GCC 14 | 15 | No | `postgresql-build.yml` |
 | Clang 18 | 18 | Yes | `postgresql-build.yml` |
 | Clang 19 | 18 | No | `postgresql-build.yml` |
@@ -70,13 +68,14 @@ Coverage flags uploaded to Codecov:
 
 ## CMake Presets
 
-Each compiler version has dedicated CMake presets. The existing presets
-(`linux-gcc-debug`, `linux-clang-debug`, etc.) remain for backward
-compatibility with local development workflows.
+Each compiler version has dedicated CMake presets. All library and consumer
+builds use native C++20 modules through Ninja or Ninja Multi-Config 1.11+ and
+CMake 3.31+. CI installs CMake 3.31.6 and Ninja 1.13.0 explicitly. The default
+GCC presets select GCC 14; Clang 18 remains the coverage compiler.
 
 | Preset | Compiler | Purpose |
 |--------|----------|---------|
-| `linux-gcc-debug` | GCC 13 | Local development (default) |
+| `linux-gcc-debug` | GCC 14 | Local development (default) |
 | `linux-gcc-14-debug` | GCC 14 | CI matrix |
 | `linux-clang-debug` | Clang 18 | Local development (default) |
 | `linux-clang-coverage` | Clang 18 | CI coverage |
@@ -84,7 +83,7 @@ compatibility with local development workflows.
 | `linux-clang-19-coverage` | Clang 19 | Local coverage (optional) |
 | `linux-clang-19-postgresql` | Clang 19 | PostgreSQL CI matrix |
 | `linux-clang-20-debug` | Clang 20 | CI matrix |
-| `linux-gcc-postgresql` | GCC 13 | PostgreSQL (default) |
+| `linux-gcc-postgresql` | GCC 14 | PostgreSQL (default) |
 | `linux-gcc-14-postgresql` | GCC 14 | PostgreSQL CI matrix |
 | `linux-clang-postgresql-coverage` | Clang 18 | PostgreSQL coverage |
 | `linux-clang-19-postgresql-coverage` | Clang 19 | PostgreSQL local (optional) |
@@ -96,8 +95,9 @@ compatibility with local development workflows.
 
 To add a new compiler version to CI:
 
-1. Verify the compiler's consteval/constexpr support matches Clang 18+
-2. Add new CMake presets in `CMakePresets.json` (configure, build, test, workflow)
-3. Add a new job in the relevant workflow in `.github/workflows/`
-4. Update this document with the new version
-5. If the new version should collect coverage, update the coverage policy section
+1. Verify module scanning, module ownership, and consteval/constexpr support
+2. Build and install both modules, then run a relocated installed consumer
+3. Add new CMake presets in `CMakePresets.json` (configure, build, test, workflow)
+4. Add a new job in the relevant workflow in `.github/workflows/`
+5. Update this document with the new version
+6. If the new version should collect coverage, update the coverage policy section

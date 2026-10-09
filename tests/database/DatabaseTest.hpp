@@ -8,8 +8,6 @@
 #include <vector>
 
 #include "orm-cxx-tests/TestConfig.hpp"
-#include "orm-cxx/database.hpp"
-#include "orm-cxx/query.hpp"
 #include "tests/database/postgresql/PostgresqlTestSchema.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/GenerateModels.hpp"
@@ -22,18 +20,18 @@ struct BackendTestConfig
     bool supported;
 };
 
-namespace
+namespace orm::test::fixtures
 {
-const std::size_t modelCount = 10;
+inline constexpr std::size_t modelCount = 10;
 
-const auto sqliteBackendTestConfig = BackendTestConfig{
+inline const auto sqliteBackendTestConfig = BackendTestConfig{
     .type = orm::db::BackendType::Sqlite,
     .name = "Sqlite",
     .connectionString = "sqlite3://:memory:",
     .supported = true,
 };
 
-const auto postgresqlBackendTestConfig = BackendTestConfig{
+inline const auto postgresqlBackendTestConfig = BackendTestConfig{
     .type = orm::db::BackendType::Postgres,
     .name = "Postgresql",
     .connectionString = {},
@@ -43,8 +41,8 @@ const auto postgresqlBackendTestConfig = BackendTestConfig{
 // Keep the legacy integration fixtures SQLite-only. Backends added to the
 // reusable public conformance profile must not implicitly run suites that use
 // SQLite-specific assumptions or private driver instrumentation.
-[[maybe_unused]] const auto backendTestConfigs = ::testing::Values(sqliteBackendTestConfig);
-[[maybe_unused]] const auto conformanceBackendTestConfigs = ::testing::ValuesIn(
+[[maybe_unused]] inline const auto backendTestConfigs = ::testing::Values(sqliteBackendTestConfig);
+[[maybe_unused]] inline const auto conformanceBackendTestConfigs = ::testing::ValuesIn(
     []
     {
         std::vector<BackendTestConfig> configs{sqliteBackendTestConfig};

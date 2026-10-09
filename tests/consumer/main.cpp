@@ -1,8 +1,10 @@
 #include <concepts>
+#include <string>
+#include <string_view>
+#include <vector>
 
-#include "orm-cxx/database.hpp"
-#include "orm-cxx/projection_query.hpp"
-#include "orm-cxx/update.hpp"
+import orm;
+import orm_cxx_consumer.models;
 
 template <typename Owner>
 consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
@@ -33,18 +35,20 @@ consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
 
 static_assert(sqliteRelationOverloadsMatchConfiguration<orm::model::ModelView>());
 
-namespace consumer_models
-{
-struct ConsumerModel
-{
-    int id;
-};
-struct ConsumerSummary
+auto consumerModelTypeId() -> orm::model::TypeId;
+auto consumerModelView() -> orm::model::ModelView;
+
+struct GlobalConsumerModel
 {
     int id;
 };
-using Schema = orm::Schema<ConsumerModel>;
-} // namespace consumer_models
+
+using GlobalConsumerSchema = orm::Schema<GlobalConsumerModel>;
+
+static_assert(orm::reflection::fieldName<GlobalConsumerModel, 0>() == "id");
+static_assert(orm::modelView<GlobalConsumerSchema, GlobalConsumerModel>()->tableName == "GlobalConsumerModel");
+static_assert(orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>()->tableName ==
+              "consumer_models_ConsumerModel");
 
 namespace
 {
@@ -97,6 +101,13 @@ int main()
 {
     static_assert(orm::reflection::fieldCount<consumer_models::ConsumerModel> == 1);
     static_assert(orm::reflection::fieldName<consumer_models::ConsumerModel, 0>() == "id");
+
+    if (consumerModelTypeId() != orm::model::typeId<consumer_models::ConsumerModel>() ||
+        consumerModelView()->type != orm::model::typeId<consumer_models::ConsumerModel>() ||
+        consumerModelView() != orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>())
+    {
+        return 4;
+    }
 
     orm::Database<consumer_models::Schema> database;
     orm::Query<consumer_models::ConsumerModel> query;

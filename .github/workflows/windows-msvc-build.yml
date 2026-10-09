@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     timeout-minutes: 45
 
     steps:
@@ -20,6 +20,11 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Configure the MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
 
@@ -34,7 +39,7 @@ jobs:
 
   postgresql-build:
     name: PostgreSQL adapter and consumers
-    runs-on: windows-2022
+    runs-on: windows-2025-vs2026
     timeout-minutes: 60
 
     steps:
@@ -43,6 +48,11 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Configure the MSVC environment
         uses: ilammy/msvc-dev-cmd@v1
 

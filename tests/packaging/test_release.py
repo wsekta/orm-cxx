@@ -38,13 +38,14 @@ class PackageReleaseTests(unittest.TestCase):
         self.assertEqual(first.read_bytes(), second.read_bytes())
         with tarfile.open(first) as archive:
             names = archive.getnames()
-        self.assertIn("orm-cxx-0.1.0/include/orm-cxx/database.hpp", names)
+        self.assertIn("orm-cxx-0.1.0/modules/orm.cppm", names)
+        self.assertIn("orm-cxx-0.1.0/modules/orm.reflection.cppm", names)
         self.assertIn("orm-cxx-0.1.0/VERSION.txt", names)
         self.assertFalse(any("/externals/" in name or "/.git/" in name for name in names))
 
     def test_sources_normalize_checkout_line_endings(self):
         source = self.directory / "source"
-        for directory in ("cmake", "include", "src"):
+        for directory in ("cmake", "include", "src", "modules"):
             (source / directory).mkdir(parents=True)
         for name in ("CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md"):
             (source / name).write_text("line one\nline two\n", encoding="utf-8", newline="\n")

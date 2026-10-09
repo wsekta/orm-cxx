@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt" ORM_CXX_VERSION LIMIT_COUNT 1)
 if(NOT ORM_CXX_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
@@ -9,6 +9,22 @@ project(
     VERSION "${ORM_CXX_VERSION}"
     LANGUAGES CXX
 )
+
+if(NOT CMAKE_GENERATOR MATCHES "^Ninja")
+    message(FATAL_ERROR "orm-cxx requires Ninja or Ninja Multi-Config for its C++20 modules.")
+endif()
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+    message(FATAL_ERROR "orm-cxx requires GCC 14 or newer for C++20 modules.")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18)
+    message(FATAL_ERROR "orm-cxx requires Clang 18 or newer for C++20 modules.")
+elseif(MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.50)
+    message(FATAL_ERROR "orm-cxx requires MSVC 19.50 or newer for C++20 modules.")
+elseif(NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|MSVC)$")
+    message(FATAL_ERROR "orm-cxx supports GCC, Clang and MSVC with C++20 module dependency scanning.")
+endif()
+
+# Dependencies retain their traditional headers; module scanning is enabled per ORM target.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
 include(GNUInstallDirs)
 

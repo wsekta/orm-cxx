@@ -1,0 +1,7 @@
+export module orm:config;
+
+namespace orm::config
+{
+export inline constexpr bool sqliteBackendEnabled = @ORM_CXX_SQLITE_BACKEND_ENABLED@;
+export inline constexpr bool postgresqlBackendEnabled = @ORM_CXX_POSTGRESQL_BACKEND_ENABLED@;
+}

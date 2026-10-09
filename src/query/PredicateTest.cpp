@@ -1,9 +1,18 @@
-#include "orm-cxx/query/Predicate.hpp"
+module;
 
-#include <gtest/gtest.h>
-#include <stdexcept>
+#include "tests/UnitTestPrelude.hpp"
 
-#include "tests/ModelsDefinitions.hpp"
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 using namespace orm::query;
 

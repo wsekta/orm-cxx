@@ -8,7 +8,6 @@
 #include <type_traits>
 #include <utility>
 
-#include "orm-cxx/reflection/detail/GeneratedBindings.hpp"
 #include "tests/reflection/GeneratedFieldLimitModels.hpp"
 
 namespace reflection_binding_tests

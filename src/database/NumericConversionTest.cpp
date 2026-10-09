@@ -1,10 +1,18 @@
-#include "orm-cxx/database/binding/NumericConversion.hpp"
+module;
 
-#include <cmath>
-#include <gtest/gtest.h>
-#include <limits>
+#include "tests/UnitTestPrelude.hpp"
 
-#include "orm-cxx/database/binding/NumericValue.hpp"
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 using orm::db::binding::checkedNumericCast;
 using orm::db::binding::ConversionError;

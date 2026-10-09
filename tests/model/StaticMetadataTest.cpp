@@ -1,12 +1,18 @@
-#include <array>
-#include <gtest/gtest.h>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <type_traits>
+module;
 
-#include "orm-cxx/model/Schema.hpp"
-#include "orm-cxx/relations.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 namespace static_metadata_models
 {

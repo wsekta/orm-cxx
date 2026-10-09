@@ -1,12 +1,19 @@
-orm-cxx provides CMake targets:
+orm-cxx requires CMake 3.31+, Ninja (or Ninja Multi-Config) 1.11+,
+and GCC 14+, Clang 18+, or MSVC 19.50+ with C++20.
 
     find_package(orm-cxx CONFIG REQUIRED)
     target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
+
+    import orm;
 
 For reflection without database dependencies in the consuming target:
 
     find_package(orm-cxx-reflection CONFIG REQUIRED)
     target_link_libraries(main PRIVATE orm-cxx::reflection)
 
+    import orm.reflection;
+
+The package supplies interface sources and native CMake metadata. CMake builds
+BMIs for the consumer locally. Configure the consumer with -G Ninja.
 SQLite is enabled by default. Add the postgresql feature for PostgreSQL.
 Disable default features for a core-only build or a PostgreSQL-only build.

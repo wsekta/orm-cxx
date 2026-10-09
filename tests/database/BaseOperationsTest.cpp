@@ -1,9 +1,20 @@
-#include <map>
-#include <string>
-#include <string_view>
-#include <type_traits>
+module;
 
-#include "DatabaseTest.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 namespace base_operations_models
 {

@@ -1,14 +1,18 @@
-#include <array>
-#include <gtest/gtest.h>
-#include <optional>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <type_traits>
-#include <vector>
+module;
 
-#include "orm-cxx/query/OrderBy.hpp"
-#include "orm-cxx/query/Projection.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 namespace expression_runtime_models
 {

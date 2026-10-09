@@ -65,6 +65,15 @@ class MergedCoverageTests(unittest.TestCase):
         self.assertIn("src/example.cpp:2", result.stdout)
         self.assertIn("DA:2,0", self.output.read_text(encoding="utf-8"))
 
+    def test_module_sources_merge_across_windows_and_unix_prefixes(self):
+        (self.root / "modules").mkdir()
+        (self.root / "modules" / "orm.cppm").write_text("export module orm;\n", encoding="utf-8")
+        self.sqlite.write_text("SF:C:\\builder\\modules\\orm.cppm\nDA:1,0\nend_of_record\n", encoding="utf-8")
+        self.postgresql.write_text("SF:/builder/modules/orm.cppm\nDA:1,1\nend_of_record\n", encoding="utf-8")
+        result = self.run_gate()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("SF:modules/orm.cppm", self.output.read_text(encoding="utf-8"))
+
     def test_missing_input_fails(self):
         self.report(self.sqlite, "/builder/one", {1: 1})
         result = self.run_gate()

@@ -20,6 +20,7 @@ function(orm_cxx_enable_coverage library_target test_target)
 
     add_code_coverage_all_targets(EXCLUDE ${coverage_excludes})
     target_code_coverage("${library_target}")
+    target_code_coverage(orm-cxx-reflection)
     target_code_coverage("${test_target}" ALL)
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang")

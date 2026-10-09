@@ -1,19 +1,20 @@
-#include <algorithm>
-#include <array>
-#include <cstdint>
-#include <functional>
-#include <gtest/gtest.h>
-#include <memory>
-#include <optional>
-#include <string>
-#include <utility>
-#include <vector>
+module;
 
-#include "orm-cxx/database.hpp"
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
-#include "orm-cxx/query.hpp"
-#include "tests/CollectionModelsDefinitions.hpp"
-#include "tests/ModelsDefinitions.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
+
+using namespace orm::test::fixtures;
 
 namespace database_coverage_completion_models
 {

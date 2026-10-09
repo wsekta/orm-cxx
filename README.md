@@ -5,7 +5,7 @@
 [![C++](https://img.shields.io/badge/C++20-grey.svg?style=flat&logo=c%2B%2B&logoColor=blue)](https://en.cppreference.com/w/cpp/20)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/wsekta/orm-cxx/graphs/commit-activity)
-[![Generic badge](https://img.shields.io/badge/gcc-13+-blue.svg)](https://gcc.gnu.org/)
+[![Generic badge](https://img.shields.io/badge/gcc-14+-blue.svg)](https://gcc.gnu.org/)
 [![Generic badge](https://img.shields.io/badge/clang-18+-blue.svg)](https://clang.llvm.org/)
 [![Generic badge](https://img.shields.io/badge/MSVC-17+-blue.svg)](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](https://github.com/wsekta/orm-cxx/issues/new)
@@ -16,20 +16,20 @@
 [![codecov](https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9)](https://codecov.io/github/wsekta/orm-cxx)
 </div>
 
-## 🎯 Goal
+## đźŽŻ Goal
 
 The goal of the ORM C++ is to provide a decent Object-Relational Mapping library for C++ community.
 
-🆕 Compile-time model reflection implemented with standard C++20<br>
-✅ 100% test coverage with unit tests and integration tests<br>
-🗂️ SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
-⚙️ Support for multiple compilers<br>
-✅ No project-defined macros; [policy and configuration migration](docs/migration-macro-free.md)<br>
-🚀 As low as possible runtime overhead<br>
-👶 Easy to use<br>
-📉 As few dependencies as possible<br>
+đź†• Compile-time model reflection implemented with standard C++20<br>
+âś… 100% test coverage with unit tests and integration tests<br>
+đź—‚ď¸Ź SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
+âš™ď¸Ź Support for multiple compilers<br>
+âś… Native C++20 modules with no project-defined macros<br>
+đźš€ As low as possible runtime overhead<br>
+đź‘¶ Easy to use<br>
+đź“‰ As few dependencies as possible<br>
 
-## ⚙️ Usage
+## âš™ď¸Ź Usage
 
 ### Package installation
 
@@ -44,7 +44,7 @@ acceptance of the generated submissions to vcpkg and ConanCenter.
 #include <string>
 #include <vector>
 
-#include "orm-cxx/orm.hpp"
+import orm;
 
 struct ObjectModel
 {
@@ -104,13 +104,11 @@ int main()
 }
 ```
 
-## 📖 Documentation
+## đź“– Documentation
 
 ## [Markdown](docs/main.md)
 
 ## [Collection relations](docs/relations.md)
-
-## [Migrating to static schemas](docs/migration-static-schema.md)
 
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
@@ -118,7 +116,7 @@ int main()
 
 ### Query language
 
-Version 0.3 adds [immutable static query plans](docs/static-queries.md) with
+The library supports [immutable static query plans](docs/static-queries.md) with
 typed argument slots and SQL reuse for SQLite and PostgreSQL:
 
 ```cpp
@@ -131,9 +129,8 @@ constexpr auto adults = orm::query::select<PlanUser>()
 auto rows = database.select(adults, 18);
 ```
 
-See [the 0.3 migration guide](docs/migration-static-queries.md) for expression
-return types and `.dynamic()` conversions. Mutable query builders remain
-available for queries assembled through runtime branches.
+Expression `.dynamic()` conversions provide mutable query builders for queries
+assembled through runtime branches.
 
 `orm::Query<T>` supports ORM-style `SELECT` queries returning `std::vector<T>`.
 
@@ -173,8 +170,7 @@ query.where(raw<SearchUser>("LOWER(users.name) = :name", param("name", "wojtek")
 
 Fields, relation paths, root models, operators, and values are checked during
 compilation. Numeric values allow only safe widening and NULL operations require
-nullable fields. The 0.1 string-field API is removed in 0.2. See
-[Query documentation](docs/query.md) and [Migration to typed queries](docs/migration-typed-queries.md).
+nullable fields. See [Query documentation](docs/query.md).
 
 ### PostgreSQL
 
@@ -196,7 +192,7 @@ When the adapter and examples are enabled, `postgresql-example` provides a
 non-destructive connection smoke test:
 
 ```bash
-cmake -S . -B build/postgresql \
+cmake -S . -B build/postgresql -G Ninja \
   -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON \
   -DORM_CXX_BUILD_EXAMPLES=ON
 cmake --build build/postgresql --target postgresql-example
@@ -293,7 +289,7 @@ docker compose run --build --rm dev bash ./scripts/check-fast.sh
 
 That command builds the library and examples, runs the test suite with Clang
 18, and runs the quality workflow. To reproduce the non-server Linux checks,
-including GCC 13 and SQLite coverage, run:
+including GCC 14 and SQLite coverage, run:
 
 ```bash
 docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
@@ -325,24 +321,38 @@ does not emulate Microsoft's compiler:
 See [CONTRIBUTING.md](CONTRIBUTING.md) for native prerequisites, individual
 presets, and the CI-to-local command matrix.
 
-## 📝 Consuming library with CMake (CMake 3.22 or newer)
+## đź“ť Consuming library with CMake (CMake 3.31 or newer)
 
-The full ORM is currently consumed source-first with `add_subdirectory`; an
-installed `find_package(orm-cxx CONFIG)` package is not published yet. The
-standalone compile-time reflection layer is installable and can be consumed
-without any database backend or `reflect-cpp` checkout:
+The library exposes two named modules: `orm` and the backend-independent
+`orm.reflection`. Both source builds and installed packages require CMake 3.31+,
+Ninja or Ninja Multi-Config 1.11+, and a supported C++20 compiler. Link the
+provided target and import the module in your source:
 
 ```cmake
-find_package(orm-cxx-reflection CONFIG REQUIRED)
-
-target_link_libraries(main PRIVATE orm-cxx::reflection)
+cmake_minimum_required(VERSION 3.31)
+project(application LANGUAGES CXX)
+find_package(orm-cxx CONFIG REQUIRED)
+add_executable(main Main.cpp)
+target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
 ```
 
-Install it from an orm-cxx build with:
-
-```bash
-cmake --install build/<preset> --prefix <prefix>
+```cpp
+#include <string>
+import orm;
 ```
+
+Reflection-only applications use `find_package(orm-cxx-reflection CONFIG REQUIRED)`,
+link `orm-cxx::reflection`, and write `import orm.reflection;`. This compiled target
+has no database dependencies.
+
+Packages install their module interface sources and native CMake import metadata.
+CMake builds BMIs locally for the consumer's compiler. Prebuilt BMI files are not
+a portable package interface. The compiled static libraries must still match the
+consumer's toolchain, standard library, CRT, and ABI settings. The public API is
+provided through modules; there is no public-header fallback.
+
+Configure consumers with `-G Ninja` (or `-G "Ninja Multi-Config"`). Standard-library
+headers remain ordinary `#include`s; `import std` and header units are not used.
 
 1. For the full ORM, add the repository and initialize its nested dependencies:
 
@@ -376,21 +386,21 @@ repository's vcpkg manifest, the `sqlite` feature is enabled by default:
 `vcpkg install --x-no-default-features --x-feature=postgresql` provisions only
 PostgreSQL.
 
-## ⚒️ Compiler support
+## âš’ď¸Ź Compiler support
 
-- [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 143 or newer.
-- [GCC➚](https://gcc.gnu.org/) version 13 or newer.
+- [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 19.50 or newer.
+- [GCC➚](https://gcc.gnu.org/) version 14 or newer.
 - [Clang➚](https://clang.llvm.org/) version 18 or newer.
 
-## 📦 Dependencies
+## đź“¦ Dependencies
 
 - [GTest](https://github.com/google/googletest) (`ORM_CXX_BUILD_TESTS=OFF` CMake option to disable)
 - [SOCI](https://github.com/SOCI/soci)
 - SQLite development libraries (when `ORM_CXX_ENABLE_SQLITE_BACKEND=ON`)
 - PostgreSQL `libpq` development libraries (when `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON`)
 
-## ✨ Contributing
+## âś¨ Contributing
 
-Feel free to join ORM C++ development! 🚀
+Feel free to join ORM C++ development! đźš€
 
 Please check [CONTRIBUTING](https://github.com/wsekta/orm-cxx/blob/main/CONTRIBUTING.md) guide.

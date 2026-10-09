@@ -4,7 +4,7 @@ from conan import ConanFile
 from conan.errors import ConanInvalidConfiguration
 from conan.tools.build import check_min_cppstd
 from conan.tools.cmake import CMake, CMakeDeps, CMakeToolchain, cmake_layout
-from conan.tools.files import copy, get, rmdir
+from conan.tools.files import copy, get
 from conan.tools.scm import Version
 
 
@@ -50,21 +50,16 @@ class OrmCxxConan(ConanFile):
         )
 
     def build_requirements(self):
-        self.tool_requires("cmake/[>=3.22 <4]")
+        self.tool_requires("cmake/[>=3.31 <4]")
+        self.tool_requires("ninja/[>=1.11 <2]")
 
     def validate(self):
         check_min_cppstd(self, 20)
-        minimum_compiler = {"gcc": "13", "clang": "18", "msvc": "193"}.get(str(self.settings.compiler))
+        minimum_compiler = {"gcc": "14", "clang": "18", "msvc": "195"}.get(str(self.settings.compiler))
         if minimum_compiler and Version(self.settings.compiler.version) < minimum_compiler:
             raise ConanInvalidConfiguration(
                 f"orm-cxx requires {self.settings.compiler} {minimum_compiler} or newer"
             )
-        # Conan models MSVC 19.38 as version=193, update=8. Older profiles may
-        # omit update, so only reject an explicitly known unsupported update.
-        if str(self.settings.compiler) == "msvc" and str(self.settings.compiler.version) == "193":
-            update = self.settings.compiler.get_safe("update")
-            if update is not None and Version(update) < "8":
-                raise ConanInvalidConfiguration("orm-cxx requires MSVC 19.38 or newer")
         soci_options = self.dependencies["soci"].options
         for backend in ("with_sqlite3", "with_postgresql"):
             if self.options.get_safe(backend) and not soci_options.get_safe(backend):
@@ -78,7 +73,7 @@ class OrmCxxConan(ConanFile):
     def generate(self):
         deps = CMakeDeps(self)
         deps.generate()
-        tc = CMakeToolchain(self)
+        tc = CMakeToolchain(self, generator="Ninja")
         tc.variables["ORM_CXX_USE_SYSTEM_SOCI"] = True
         tc.variables["ORM_CXX_BUILD_TESTS"] = False
         tc.variables["ORM_CXX_BUILD_EXAMPLES"] = False
@@ -103,21 +98,26 @@ class OrmCxxConan(ConanFile):
             )
         cmake = CMake(self)
         cmake.install()
-        # Conan generates relocatable dependency-aware configs for each consumer.
-        rmdir(self, os.path.join(self.package_folder, "lib", "cmake"))
-        rmdir(self, os.path.join(self.package_folder, "share"))
+        # Native exports carry CXX_MODULES file sets and import metadata.
+        # Keep their installed sources so each consumer can build its own BMIs.
 
     def package_info(self):
-        self.cpp_info.set_property("cmake_file_name", "orm-cxx")
-        self.cpp_info.set_property("cmake_target_name", "orm-cxx::orm-cxx")
+        self.cpp_info.includedirs = []
+        self.cpp_info.set_property("cmake_find_mode", "none")
+        self.cpp_info.builddirs = [
+            os.path.join("lib", "cmake", "orm-cxx"),
+            os.path.join("lib", "cmake", "orm-cxx-reflection"),
+        ]
 
         reflection = self.cpp_info.components["reflection"]
         reflection.set_property("cmake_target_name", "orm-cxx::reflection")
-        reflection.libdirs = []
+        reflection.libs = ["orm-cxx-reflection"]
+        reflection.includedirs = []
 
         core = self.cpp_info.components["core"]
-        core.set_property("cmake_target_name", "orm-cxx::core")
+        core.set_property("cmake_target_name", "orm-cxx::orm-cxx")
         core.libs = ["orm-cxx"]
+        core.includedirs = []
         core.requires = ["reflection", "soci::soci_core"]
         if self.options.with_sqlite3:
             core.requires.append("soci::soci_sqlite3")

@@ -6,13 +6,13 @@ readonly repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$repo_root"
 
 mapfile -d '' -t candidates < <(
-    git ls-files -z --cached --others --exclude-standard -- include src tests examples
+    git ls-files -z --cached --others --exclude-standard -- include modules src tests examples packaging/conan/test_package
 )
 cpp_files=()
 for file in "${candidates[@]}"; do
     [[ -f "$file" ]] || continue
     case "$file" in
-        *.c | *.cc | *.cpp | *.cxx | *.h | *.hh | *.hpp | *.hxx)
+        *.c | *.cc | *.cpp | *.cppm | *.ixx | *.cxx | *.h | *.hh | *.hpp | *.hxx)
             cpp_files+=("$file")
             ;;
     esac

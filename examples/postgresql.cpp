@@ -2,7 +2,7 @@
 #include <iostream>
 #include <string_view>
 
-#include "orm-cxx/orm.hpp"
+import orm;
 
 int main() // NOLINT(bugprone-exception-escape)
 {

@@ -1,14 +1,11 @@
 #pragma once
 
-#include "orm-cxx/projection_query.hpp"
-#include "orm-cxx/query.hpp"
-#include "orm-cxx/update.hpp"
 #include "tests/utils/RuntimeQueryBuilder.hpp"
 
 namespace orm
 {
-template <typename SchemaType>
-class Database
+template <>
+class Database<void>
 {
 public:
     template <class T>

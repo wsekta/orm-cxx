@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-#include "orm-cxx/reflection/Reflection.hpp"
-
 namespace orm
 {
 inline auto& testRng()

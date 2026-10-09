@@ -1,4 +1,4 @@
-#include <orm-cxx/reflection/Reflection.hpp>
+import orm.reflection;
 
 struct ReflectedEntry
 {

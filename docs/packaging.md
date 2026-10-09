@@ -1,7 +1,7 @@
 # Package managers and releases
 
 `VERSION.txt` is the release version shared by CMake, vcpkg, and Conan. The current
-version is `0.3.0`; use a stable `major.minor.patch` value and increase it before
+version is `0.4.0`; use a stable `major.minor.patch` value and increase it before
 publishing changed sources. The library currently ships as a static library.
 
 The **Packages** workflow validates packages on `main`, pull requests, and
@@ -15,8 +15,10 @@ the central installation examples below will not resolve `orm-cxx`.
 
 No private registry or Conan remote is required. SOCI and enabled database client
 libraries are dependencies of the package and are installed by the manager.
-Consumers still need a supported C++20 compiler, CMake, and the selected package
-manager. On a minimal Linux host, vcpkg also needs its ordinary host tool
+Consumers require GCC 14+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja or
+Ninja Multi-Config 1.11+, and the selected package manager. Standard-library headers
+are included normally; header units and `import std` are not required.
+On a minimal Linux host, vcpkg also needs its ordinary host tool
 `pkg-config`; the Packages workflow installs it. No manual SOCI/SQLite/libpq
 development-package installation is needed.
 SQLite works in process; PostgreSQL applications still need a database server
@@ -40,7 +42,7 @@ For the core without database drivers, disable default features and omit
 reproducible builds; a baseline predating the initial submission cannot resolve it.
 
 ```cmake
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 project(application LANGUAGES CXX)
 find_package(orm-cxx CONFIG REQUIRED)
 add_executable(application main.cpp)
@@ -48,7 +50,7 @@ target_link_libraries(application PRIVATE orm-cxx::orm-cxx)
 ```
 
 ```sh
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
+cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
 cmake --build build
 ```
 
@@ -59,17 +61,17 @@ static Microsoft CRT:
 
 ```powershell
 vcpkg install --triplet x64-windows-static
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
+cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=C:\path\to\vcpkg\scripts\buildsystems\vcpkg.cmake -DVCPKG_TARGET_TRIPLET=x64-windows-static
 ```
 
 On Linux the default `x64-linux` triplet is suitable.
 
-The imported target propagates headers, C++20, and transitive linkage. The
-installed `orm-cxx/BuildConfig.hpp` exposes the enabled backends as C++ constants
-in `orm::config`; no compiler macro definitions are exported. See the
-[configuration migration](migration-macro-free.md) for replacing earlier flags.
-`find_package(orm-cxx-reflection CONFIG REQUIRED)` exposes
-`orm-cxx::reflection` for applications using only the header-only reflection layer.
+The imported target propagates C++20, module source file sets, import metadata,
+and transitive linkage. Applications write `import orm;`; the module exposes the
+enabled backends as `orm::config::sqliteBackendEnabled` and
+`orm::config::postgresqlBackendEnabled`. No compiler macro definitions are exported.
+`find_package(orm-cxx-reflection CONFIG REQUIRED)` exposes the compiled
+`orm-cxx::reflection` target for `import orm.reflection;` without SOCI dependencies.
 
 ## Consume from ConanCenter after acceptance
 
@@ -77,7 +79,7 @@ Use Conan 2 and a `conanfile.txt`:
 
 ```ini
 [requires]
-orm-cxx/0.3.0
+orm-cxx/0.4.0
 
 [generators]
 CMakeDeps
@@ -87,13 +89,14 @@ CMakeToolchain
 ```sh
 conan profile detect
 conan install . --output-folder=build --build=missing -s compiler.cppstd=20 -s build_type=Release
-cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Use the same `find_package(orm-cxx)` and target as above and explicitly set
-`target_compile_features(application PRIVATE cxx_std_20)` with Conan's generated
-CMake config. The generated config also exposes `orm-cxx::reflection`.
+Use the same `find_package(orm-cxx)` and target as above. Conan preserves the
+library's native CMake configs; CMakeDeps supplies the dependency configs and
+skips generating an orm-cxx replacement. The native config also exposes
+`orm-cxx::reflection`.
 Conan options are `orm-cxx/*:with_sqlite3=True` (default) and
 `orm-cxx/*:with_postgresql=False` (default). Pass `-o` to `conan install` to select
 the backends. ConanCenter supplies available binaries and `--build=missing`
@@ -131,8 +134,8 @@ builds configurations that do not have a matching binary.
 3. Give GitHub Actions permission to write repository contents (the release job
    requests `contents: write`). Branch protection rules and organization token
    policies may require an administrator's configuration.
-4. Use `VERSION.txt` as the sole release version. The breaking typed-query API
-   uses `0.3.0`; increase the minor version for incompatible changes while on `0.x`. For a later release,
+4. Use `VERSION.txt` as the sole release version. The current module API
+   uses `0.4.0`; increase the minor version for incompatible changes while on `0.x`. For a later release,
    increase it before preparing changed sources. Review the changes on `main`
    and wait for all its checks. Create `release` from that exact reviewed SHA,
    or fast-forward the existing branch to it. For example, for the **first**
@@ -186,8 +189,8 @@ successful release run and choose a new `--work` directory for each retry:
 
 ```sh
 gh run download <release-run-id> --name package-distribution --dir build/retry-distribution
-python scripts/publish_packages.py vcpkg --distribution build/retry-distribution --work build/retry-vcpkg-0.3.0
-python scripts/publish_packages.py conan --distribution build/retry-distribution --work build/retry-conan-0.3.0 --conan-issue <issue-number>
+python scripts/publish_packages.py vcpkg --distribution build/retry-distribution --work build/retry-vcpkg-0.4.0
+python scripts/publish_packages.py conan --distribution build/retry-distribution --work build/retry-conan-0.4.0 --conan-issue <issue-number>
 ```
 
 Authenticate these local commands as `wsekta`, or provide `GH_TOKEN` for that
@@ -220,7 +223,7 @@ use `x64-windows-static` when validating a fully static CRT configuration.
 concurrent invocation. The Conan check defaults `CONAN_HOME` to
 `build/conan-home` and detects a profile there. To use an existing profile, pass
 `--conan-profile=PROFILE`. `--conan-setting` and `--conan-conf` are repeatable
-overrides (for example, `--conan-setting=compiler.version=193` when multiple
+overrides (for example, `--conan-setting=compiler.version=195` when multiple
 Visual Studio versions are installed). Explicit `CONAN_HOME` values are honored.
 
 The scripts generate an archive containing only this project's library sources
@@ -234,8 +237,8 @@ warnings-as-errors privately; those flags are not exported to applications.
 SQLite checks execute CRUD and DTO projections;
 PostgreSQL checks verify linking and backend registration without requiring a
 server. Existing backend integration workflows provide live database coverage.
-Linux tests cover all four backend selections; Windows tests cover SQLite and
-the combined backends. Recipes under `packaging/` are templates: the prepared
+Linux and Windows tests cover all four backend selections. Windows vcpkg
+additionally verifies SQLite and both backends with the dynamic CRT triplet. Recipes under `packaging/` are templates: the prepared
 submission under `build/distribution` contains the release version, URL, and hashes.
 
 ## Native CMake installation
@@ -248,7 +251,15 @@ in this mode. Installed configs provide `orm-cxx::orm-cxx` and
 component fails at configuration time. Compatibility is limited to the same
 minor release series while the library is at version `0.x`.
 
-The normal repository/submodule build remains available for development.
+Packages install `.cppm` interface sources under `share/orm-cxx/modules` and
+CMake export metadata alongside their native configs. CMake generates BMIs in
+the consumer's build tree using that consumer's compiler. The package does not
+ship prebuilt BMIs as a portable API, and the static libraries still require a
+compatible compiler, standard library, CRT, and ABI configuration. Use the same
+C++20 standard and build type for package creation and consumption.
+
+Both modules are the sole public API; public ORM headers are not installed.
+The normal repository/submodule build uses the same module targets.
 
 References: [GitHub CLI authentication](https://cli.github.com/manual/gh_auth_login),
 [GitHub token scopes](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps),

@@ -1,23 +1,18 @@
-#include <algorithm>
-#include <gtest/gtest.h>
-#include <optional>
-#include <span>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
+module;
 
-#include "orm-cxx/database/binding/PrimaryKey.hpp"
-#include "orm-cxx/database/RelationStatements.hpp"
-#include "orm-cxx/database/sqlite/SqliteDialect.hpp"
-#include "orm-cxx/query.hpp"
-#include "src/database/defaults/DefaultCreateTableCommand.hpp"
-#include "src/database/defaults/DefaultInsertCommand.hpp"
-#include "src/database/defaults/DefaultSelectCommand.hpp"
-#include "src/database/defaults/SqlRenderer.hpp"
-#include "tests/CollectionModelsDefinitions.hpp"
-#include "tests/ModelsDefinitions.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 namespace
 {

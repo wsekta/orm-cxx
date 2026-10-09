@@ -1,4 +1,6 @@
-#include <vector>
+#include "tests/StandardLibrary.hpp"
+
+import orm;
 
 #include "TypedQueryModels.hpp"
 

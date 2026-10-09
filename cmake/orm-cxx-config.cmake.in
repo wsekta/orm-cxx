@@ -1,5 +1,30 @@
 @PACKAGE_INIT@
 
+if(CMAKE_VERSION VERSION_LESS 3.31)
+    message(FATAL_ERROR "orm-cxx requires CMake 3.31 or newer.")
+endif()
+if(NOT CMAKE_GENERATOR MATCHES "^Ninja( Multi-Config)?$")
+    message(FATAL_ERROR "orm-cxx modules require Ninja or Ninja Multi-Config.")
+endif()
+execute_process(
+    COMMAND "${CMAKE_MAKE_PROGRAM}" --version
+    OUTPUT_VARIABLE orm_cxx_ninja_version
+    OUTPUT_STRIP_TRAILING_WHITESPACE COMMAND_ERROR_IS_FATAL ANY
+)
+if(orm_cxx_ninja_version VERSION_LESS 1.11)
+    message(FATAL_ERROR "orm-cxx modules require Ninja 1.11 or newer.")
+endif()
+if((CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 14)
+   OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 18)
+   OR (MSVC AND MSVC_VERSION LESS 1950)
+)
+    message(FATAL_ERROR "orm-cxx requires GCC 14+, Clang 18+, or MSVC 19.50+.")
+endif()
+if(NOT CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Clang|MSVC)$")
+    message(FATAL_ERROR "orm-cxx modules support GCC, Clang, and MSVC.")
+endif()
+unset(orm_cxx_ninja_version)
+
 include(CMakeFindDependencyMacro)
 find_dependency(SOCI 4.0.3 CONFIG)
 if(@ORM_CXX_SOCI_NEEDS_OPENSSL@)

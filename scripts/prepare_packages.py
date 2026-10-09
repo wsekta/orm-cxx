@@ -34,7 +34,7 @@ def create_archive(root, archive, version):
     entries = [root / name for name in (
         "CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md"
     )]
-    for directory in ("cmake", "include", "src"):
+    for directory in ("cmake", "include", "modules", "src"):
         entries.extend(p for p in (root / directory).rglob("*") if p.is_file())
     archive.parent.mkdir(parents=True, exist_ok=True)
     with archive.open("wb") as raw, gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as gz:

@@ -132,7 +132,7 @@ disconnects without creating database objects. It is also built by the
 PostgreSQL CI profiles.
 
 The supported server range is PostgreSQL 15 through 18. CI verifies the lower
-boundary with GCC 13 and the upper boundary with Clang 18 and coverage. MSVC
+boundary with GCC 14 and the upper boundary with Clang 18 and coverage. MSVC
 builds and links the adapter and every consumer configuration; live server
 behavior is verified on Linux.
 

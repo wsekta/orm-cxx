@@ -11,6 +11,13 @@
 *.gch
 *.pch
 
+# C++20 module build artifacts
+*.pcm
+*.ifc
+*.ddi
+*.modmap
+gcm.cache/
+
 # Compiled Dynamic libraries
 *.so
 *.dylib

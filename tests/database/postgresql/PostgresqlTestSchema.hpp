@@ -1,18 +1,5 @@
 #pragma once
 
-#include <atomic>
-#include <chrono>
-#include <cstdlib>
-#include <iomanip>
-#include <random>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <utility>
-
-#include "soci/soci.h"
-
 namespace postgresql_test
 {
 inline constexpr std::string_view connectionStringPrefix{"postgresql://"};

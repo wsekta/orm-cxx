@@ -1,11 +1,18 @@
-#include "orm-cxx/database/CommandGeneratorFactory.hpp"
+module;
 
-#include <gtest/gtest.h>
-#include <memory>
-#include <stdexcept>
+#include "tests/UnitTestPrelude.hpp"
 
-#include "orm-cxx/BuildConfig.hpp"
-#include "orm-cxx/database/sqlite/SqliteBackend.hpp"
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 namespace
 {

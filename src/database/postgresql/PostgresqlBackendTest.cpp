@@ -1,16 +1,19 @@
-#include "orm-cxx/database/postgresql/PostgresqlBackend.hpp"
+module;
 
-#include <gtest/gtest.h>
-#include <limits>
-#include <optional>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-
-#include "orm-cxx/database/BackendRuntime.hpp"
-#include "orm-cxx/database/binding/ConversionError.hpp"
 #include "soci/postgresql/soci-postgresql.h"
-#include "soci/soci.h"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 namespace
 {

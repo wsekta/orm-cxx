@@ -3,10 +3,6 @@
 #include <optional>
 #include <string>
 
-#include "orm-cxx/model/Schema.hpp"
-#include "orm-cxx/projection_query.hpp"
-#include "orm-cxx/update.hpp"
-
 namespace static_plan_models
 {
 struct Profile

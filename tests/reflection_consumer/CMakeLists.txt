@@ -1,10 +1,11 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 3.31)
 
 project(orm-cxx-reflection-consumer LANGUAGES CXX)
 
 find_package(orm-cxx-reflection CONFIG REQUIRED)
 
 add_executable(orm-cxx-reflection-consumer main.cpp)
+set_target_properties(orm-cxx-reflection-consumer PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-reflection-consumer PRIVATE orm-cxx::reflection)
 
 enable_testing()

@@ -3,10 +3,6 @@
 #include <optional>
 #include <string>
 
-#include "orm-cxx/model/Mapping.hpp"
-#include "orm-cxx/model/Schema.hpp"
-#include "orm-cxx/relations.hpp"
-
 namespace collection_models
 {
 struct Book;

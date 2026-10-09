@@ -8,7 +8,7 @@ import re
 import sys
 
 
-SOURCE_MARKER = re.compile(r"(?:^|/)(include/orm-cxx/|src/)")
+SOURCE_MARKER = re.compile(r"(?:^|/)(include/orm-cxx/|modules/|src/)")
 
 
 def project_path(raw_path: str, source_root: Path) -> str:

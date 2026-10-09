@@ -53,18 +53,23 @@ jobs:
 
   test:
     needs: prepare
-    name: ${{ matrix.manager }} / ${{ matrix.os }} / ${{ matrix.backends }}
+    name: ${{ matrix.manager }} / ${{ matrix.os }} / ${{ matrix.backends }} / ${{ matrix.triplet || 'default' }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04, windows-2022]
+        os: [ubuntu-24.04, windows-2025-vs2026]
         manager: [conan, vcpkg]
         backends: [sqlite, both, core, postgresql]
-        exclude:
-          - os: windows-2022
-            backends: core
-          - os: windows-2022
-            backends: postgresql
+        triplet: [default]
+        include:
+          - os: windows-2025-vs2026
+            manager: vcpkg
+            backends: sqlite
+            triplet: x64-windows
+          - os: windows-2025-vs2026
+            manager: vcpkg
+            backends: both
+            triplet: x64-windows
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     env:
@@ -81,11 +86,21 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1
         if: runner.os == 'Windows'
       - name: Install package tools
-        run: python -m pip install -r tools/requirements-packaging.txt
+        run: python -m pip install -r tools/requirements-packaging.txt cmake==3.31.6
       - uses: actions/download-artifact@v4
         with:
           name: package-distribution
           path: build/distribution
+      - name: Install the supported Linux compiler
+        if: runner.os == 'Linux'
+        shell: bash
+        run: sudo apt-get update && sudo apt-get install --yes gcc-14 g++-14
+      - name: Select the supported Linux compiler
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          echo "CC=gcc-14" >> "$GITHUB_ENV"
+          echo "CXX=g++-14" >> "$GITHUB_ENV"
       - name: Install vcpkg host prerequisites on Linux
         if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
         shell: bash
@@ -103,7 +118,7 @@ jobs:
           git submodule update --init externals/vcpkg
           call .\externals\vcpkg\bootstrap-vcpkg.bat -disableMetrics
       - name: Build package and run installed consumer
-        run: python scripts/check_packages.py --manager ${{ matrix.manager }} --backends ${{ matrix.backends }}
+        run: python scripts/check_packages.py --manager ${{ matrix.manager }} --backends ${{ matrix.backends }} ${{ matrix.triplet != 'default' && format('--triplet {0}', matrix.triplet) || '' }}
       - name: Preserve failure logs
         if: failure()
         uses: actions/upload-artifact@v4
@@ -128,7 +143,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Install package tools
-        run: python -m pip install -r tools/requirements-packaging.txt
+        run: python -m pip install -r tools/requirements-packaging.txt cmake==3.31.6
       - name: Check central catalog credentials
         env:
           GH_TOKEN: ${{ secrets.PACKAGE_REGISTRY_TOKEN }}
@@ -164,7 +179,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.12'
-      - run: python -m pip install -r tools/requirements-packaging.txt
+      - run: python -m pip install -r tools/requirements-packaging.txt cmake==3.31.6
       - uses: actions/download-artifact@v4
         with:
           name: package-distribution

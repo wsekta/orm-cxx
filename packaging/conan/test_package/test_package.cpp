@@ -1,10 +1,10 @@
 #include <concepts>
-#include <orm-cxx/database.hpp>
-#include <orm-cxx/projection_query.hpp>
-#include <orm-cxx/update.hpp>
 #include <string>
+#include <vector>
 
 #include "BackendExpectations.hpp"
+
+import orm;
 
 template <typename Owner>
 consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool

@@ -2,7 +2,7 @@
 #include <optional>
 #include <string>
 
-#include "orm-cxx/orm.hpp"
+import orm;
 
 struct Book;
 

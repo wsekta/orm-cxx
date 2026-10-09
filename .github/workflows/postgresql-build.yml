@@ -10,54 +10,6 @@ permissions:
   contents: read
 
 jobs:
-  pg15-gcc-13:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
-    name: PG 15 / GCC 13
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: orm_cxx
-          POSTGRES_PASSWORD: orm_cxx
-          POSTGRES_USER: orm_cxx
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      PGPASSWORD: orm_cxx
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes \
-            gcc-13 g++-13 libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
-      - name: Configure
-        run: cmake --preset linux-gcc-postgresql
-      - name: Build
-        run: cmake --build build/linux-gcc-postgresql --parallel 2
-      - name: Test
-        run: ctest --preset linux-gcc-postgresql
-      - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/linux-gcc-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
-      - name: Verify isolated schemas were removed
-        run: |
-          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
-            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
-          if [ -n "$remaining" ]; then
-            echo "PostgreSQL test schemas were not removed: $remaining"
-            exit 1
-          fi
-
   pg15-gcc-14:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
@@ -84,6 +36,11 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -132,6 +89,11 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -215,6 +177,11 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Install dependencies
         run: |
           sudo apt-get update
@@ -264,6 +231,11 @@ jobs:
         uses: actions/checkout@v5
         with:
           submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Install dependencies
         run: |
           sudo apt-get update

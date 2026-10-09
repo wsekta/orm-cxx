@@ -1,70 +1,29 @@
-cmake_minimum_required(VERSION 3.22)
+# Compile contracts share the production CMake module graph. Failed targets are
+# excluded from the normal build and compiled individually by the CTest runner.
+set(orm_cxx_failure_cases)
+set(orm_cxx_positive_targets)
 
-project(orm-cxx-compile-fail LANGUAGES CXX)
-
-if(NOT ORM_CXX_SOURCE_DIR)
-    message(FATAL_ERROR "ORM_CXX_SOURCE_DIR must identify the orm-cxx checkout.")
-endif()
-
-if(NOT ORM_CXX_GENERATED_INCLUDE_DIR)
-    include("${ORM_CXX_SOURCE_DIR}/cmake/OrmCxxBuildConfig.cmake")
-    set(ORM_CXX_GENERATED_INCLUDE_DIR "${PROJECT_BINARY_DIR}/generated/include")
-    orm_cxx_generate_build_config("${ORM_CXX_GENERATED_INCLUDE_DIR}" OFF OFF)
-endif()
-foreach(generated_header IN ITEMS orm-cxx/BuildConfig.hpp orm-cxx/database/detail/SqliteRelationDeclarations.hpp)
-    if(NOT EXISTS "${ORM_CXX_GENERATED_INCLUDE_DIR}/${generated_header}")
-        message(FATAL_ERROR "ORM_CXX_GENERATED_INCLUDE_DIR is missing ${generated_header}.")
-    endif()
-endforeach()
-
-add_library(orm-cxx-reflection INTERFACE)
-target_compile_features(orm-cxx-reflection INTERFACE cxx_std_20)
-target_include_directories(orm-cxx-reflection INTERFACE "${ORM_CXX_SOURCE_DIR}/include")
-
-string(REPLACE "|" ";" orm_cxx_dependency_include_paths "${ORM_CXX_DEPENDENCY_INCLUDE_PATHS}")
-set(orm_cxx_compile_include_flags)
-foreach(include_directory IN ITEMS "${ORM_CXX_GENERATED_INCLUDE_DIR}" "${ORM_CXX_SOURCE_DIR}/include"
-                                   ${orm_cxx_dependency_include_paths}
-)
-    if(MSVC)
-        list(APPEND orm_cxx_compile_include_flags "/I${include_directory}")
-    else()
-        list(APPEND orm_cxx_compile_include_flags "-I${include_directory}")
-    endif()
-endforeach()
+function(orm_cxx_contract_target name source)
+    set(target "orm-cxx-contract-${name}")
+    add_library("${target}" OBJECT EXCLUDE_FROM_ALL "${source}")
+    set_target_properties("${target}" PROPERTIES CXX_SCAN_FOR_MODULES ON)
+    target_link_libraries("${target}" PRIVATE orm-cxx::orm-cxx)
+    target_include_directories("${target}" PRIVATE "${PROJECT_SOURCE_DIR}")
+    set(orm_cxx_contract_target_name "${target}" PARENT_SCOPE)
+endfunction()
 
 function(orm_cxx_expect_compile_success name source)
-    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-    try_compile(
-        compile_succeeded SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/${source}" CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
-        COMPILE_DEFINITIONS ${orm_cxx_compile_include_flags}
-        OUTPUT_VARIABLE compiler_output
-    )
-    if(NOT compile_succeeded)
-        message(FATAL_ERROR "${name} failed to compile.\nCompiler output:\n${compiler_output}")
-    endif()
+    orm_cxx_contract_target("${name}" "${source}")
+    set(orm_cxx_positive_targets "${orm_cxx_positive_targets};${orm_cxx_contract_target_name}" PARENT_SCOPE)
 endfunction()
 
 function(orm_cxx_expect_compile_failure name source expected_diagnostic)
-    set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-    try_compile(
-        compile_succeeded SOURCES
-        "${CMAKE_CURRENT_SOURCE_DIR}/${source}" CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON
-        COMPILE_DEFINITIONS ${orm_cxx_compile_include_flags}
-        OUTPUT_VARIABLE compiler_output
-    )
-    if(compile_succeeded)
-        message(FATAL_ERROR "${name} unexpectedly compiled successfully.")
-    endif()
-    string(FIND "${compiler_output}" "${expected_diagnostic}" diagnostic_position)
-    if(diagnostic_position EQUAL -1)
-        message(
-            FATAL_ERROR
-                "${name} failed without the required diagnostic '${expected_diagnostic}'.\nCompiler output:\n${compiler_output}"
-        )
-    endif()
+    orm_cxx_contract_target("${name}" "${source}")
+    list(APPEND orm_cxx_failure_cases "${orm_cxx_contract_target_name}|${expected_diagnostic}")
+    set(orm_cxx_failure_cases "${orm_cxx_failure_cases}" PARENT_SCOPE)
 endfunction()
+
+orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
 
 orm_cxx_expect_compile_failure(
     reflection-too-many-fields ReflectionTooManyFields.cpp
@@ -157,7 +116,7 @@ orm_cxx_expect_compile_failure(
     schema-unsupported-logical-type SchemaUnsupportedLogicalType.cpp "ORM_MODEL_LOGICAL_TYPE"
 )
 
-# Positive controls use the same headers and dependency include paths as the failures.
+# Positive controls use the same module graph as the failures.
 orm_cxx_expect_compile_success(typed-query-positive TypedQueryPositive.cpp)
 orm_cxx_expect_compile_success(static-plan-positive StaticPlanPositive.cpp)
 orm_cxx_expect_compile_failure(
@@ -318,4 +277,23 @@ orm_cxx_expect_compile_failure(query-projection-wrong-order-model QueryProjectio
 orm_cxx_expect_compile_failure(query-projection-wrong-group-model QueryProjectionWrongGroupModel.cpp "ORM_QUERY_MODEL")
 orm_cxx_expect_compile_failure(
     query-internal-ast-order-after-valid QueryInternalAstOrderAfterValid.cpp "ORM_QUERY_MODEL_ORDERS"
+)
+
+add_custom_target(orm-cxx-compile-controls DEPENDS ${orm_cxx_positive_targets})
+set(case_manifest "${CMAKE_CURRENT_BINARY_DIR}/CompileContracts.cmake")
+file(WRITE "${case_manifest}" "set(orm_cxx_failure_cases\n")
+foreach(case IN LISTS orm_cxx_failure_cases)
+    file(APPEND "${case_manifest}" "    [==[${case}]==]\n")
+endforeach()
+file(APPEND "${case_manifest}" ")\n")
+
+add_test(
+    NAME orm-cxx-compile-fail
+    COMMAND "${CMAKE_COMMAND}" "-DORM_CXX_BUILD_DIR=${PROJECT_BINARY_DIR}"
+            "-DORM_CXX_BUILD_CONFIG=$<CONFIG>" "-DORM_CXX_CASE_MANIFEST=${case_manifest}"
+            -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckBuild.cmake"
+)
+set_tests_properties(
+    orm-cxx-compile-fail PROPERTIES LABELS "compile-fail;reflection;schema;query;modules"
+                                   RESOURCE_LOCK orm-cxx-build
 )

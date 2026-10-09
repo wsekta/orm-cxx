@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "orm-cxx/orm.hpp"
+import orm;
 
 struct User
 {

@@ -36,7 +36,7 @@ and `::` is replaced with `_`.
 Every database is bound to a closed set of complete model types:
 
 ```cpp
-#include "orm-cxx/model.hpp"
+import orm;
 
 using AppSchema = orm::Schema<User>;
 orm::Database<AppSchema> database;
@@ -335,6 +335,4 @@ Model metadata supports to-one fields and explicitly mapped `OneToMany` and
 the old runtime `string`/`string_view`, `vector`, and `map` metadata forms are
 not accepted. It does not support nested collection loading, junction models
 with payload fields, ordered relations, custom converters, date/time fields,
-UUID fields, or `boost::optional`. See
-[Migrating to static schemas](migration-static-schema.md) for the breaking API
-changes.
+UUID fields, or `boost::optional`.

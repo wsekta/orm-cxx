@@ -1,6 +1,6 @@
 # Static query plans
 
-Version `0.3.0` adds immutable plans alongside the mutable `orm::Query<T>`,
+Immutable plans are available alongside the mutable `orm::Query<T>`,
 `orm::ProjectionQuery<Source, Result>`, and `orm::Update<T>` builders. A plan
 preserves the expression structure in its C++ type. SQLite and PostgreSQL use
 that structure to prepare SQL once for the schema, plan type, and SQL dialect.
@@ -102,7 +102,5 @@ auto rows = database.select(query);
 
 Expression `.dynamic()` creates the existing named typed facade and is
 available only after all expression values are concrete. Slot-bearing
-expressions must first be bound through their plan. See the
-[0.3 migration guide](migration-static-queries.md) for expression return types
-and mutable-expression variables, and
+expressions must first be bound through their plan. See
 [the runnable example](../examples/static_queries.cpp) for a complete program.

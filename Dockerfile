@@ -10,10 +10,10 @@ RUN apt-get update \
         clang-18 \
         clang-format-18 \
         clang-tidy-18 \
+        clang-tools-18 \
         libclang-rt-18-dev \
-        cmake \
-        g++-13 \
-        gcc-13 \
+        g++-14 \
+        gcc-14 \
         git \
         lcov \
         libc++-18-dev \
@@ -34,15 +34,15 @@ RUN apt-get update \
     && ln -sf /usr/bin/clang-tidy-18 /usr/local/bin/clang-tidy \
     && ln -sf /usr/bin/llvm-cov-18 /usr/local/bin/llvm-cov \
     && ln -sf /usr/bin/llvm-profdata-18 /usr/local/bin/llvm-profdata \
-    && ln -sf /usr/bin/gcc-13 /usr/local/bin/gcc \
-    && ln -sf /usr/bin/g++-13 /usr/local/bin/g++ \
+    && ln -sf /usr/bin/gcc-14 /usr/local/bin/gcc \
+    && ln -sf /usr/bin/g++-14 /usr/local/bin/g++ \
     && rm -rf /var/lib/apt/lists/*
 
 COPY tools/requirements-dev.txt /tmp/orm-cxx-requirements-dev.txt
 
 RUN python3 -m venv /opt/orm-cxx-tools \
     && /opt/orm-cxx-tools/bin/pip install --no-cache-dir \
-        --requirement /tmp/orm-cxx-requirements-dev.txt \
+        --requirement /tmp/orm-cxx-requirements-dev.txt cmake==3.31.6 ninja==1.13.0 \
     && rm /tmp/orm-cxx-requirements-dev.txt \
     && git config --system --add safe.directory /workspaces/orm-cxx
 

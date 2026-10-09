@@ -1,4 +1,6 @@
-#include "orm-cxx/model/Schema.hpp"
+#include "tests/StandardLibrary.hpp"
+
+import orm;
 
 struct Parent
 {

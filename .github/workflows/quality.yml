@@ -68,11 +68,17 @@ jobs:
           sudo apt-get install --no-install-recommends --yes \
             clang-18 \
             clang-tidy-18 \
+            clang-tools-18 \
             libpq-dev \
             ninja-build \
             sqlite3 \
             libsqlite3-dev
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
       - name: Run clang-tidy
         run: bash ./scripts/check-tidy.sh
 

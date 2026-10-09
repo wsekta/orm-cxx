@@ -1,9 +1,18 @@
-#include <gtest/gtest.h>
-#include <string>
-#include <variant>
+module;
 
-#include "tests/compile_fail/StaticPlanModels.hpp"
-#include "tests/utils/FakeDatabase.hpp"
+#include "tests/UnitTestPrelude.hpp"
+
+module orm;
+
+import :internal;
+import :test_support;
+import :foundation;
+import :model;
+import :expressions;
+import :dynamic_query;
+import :static_plan;
+import :sql;
+import :database;
 
 using namespace orm::query;
 using namespace static_plan_models;
