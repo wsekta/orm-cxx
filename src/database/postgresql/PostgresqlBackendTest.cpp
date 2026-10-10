@@ -1,5 +1,7 @@
 module;
 
+#include <libpq-fe.h>
+
 #include "soci/postgresql/soci-postgresql.h"
 #include "tests/UnitTestPrelude.hpp"
 

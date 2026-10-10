@@ -13,6 +13,7 @@ module;
 #include <format>
 #include <functional>
 #include <initializer_list>
+#include <libpq-fe.h>
 #include <limits>
 #include <map>
 #include <memory>
