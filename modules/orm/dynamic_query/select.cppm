@@ -1,0 +1,251 @@
+module;
+
+#include <algorithm>
+#include <cstddef>
+#include <optional>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+export module orm:dynamic_select;
+
+import orm.reflection;
+import :foundation;
+import :model;
+import :expressions;
+
+// query.hpp
+namespace orm::detail
+{
+class QueryTestAccess;
+}
+
+namespace orm
+{
+export
+{
+
+    /**
+     * @brief A template class representing a select query in the ORM framework.
+     *
+     * This class provides functionality for building a select query.
+     *
+     * @tparam T The type of the query.
+     */
+    template <typename T>
+    class Query
+    {
+    public:
+        /**
+         * @brief Constructs a Query object.
+         */
+        Query() = default;
+
+        /**
+         * @brief Replaces the WHERE predicate.
+         * @param predicate
+         */
+        template <typename P>
+            requires query::detail::PredicateFor<P, T>
+        auto where(const P& predicate) -> Query<T>&
+        {
+            data.predicate = query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Adds a predicate with AND.
+         * @param predicate
+         */
+        template <typename P>
+            requires query::detail::PredicateFor<P, T>
+        auto andWhere(const P& predicate) -> Query<T>&
+        {
+            data.predicate = data.predicate.has_value() ? data.predicate.value() && query::detail::erase(predicate) :
+                                                          query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Adds a predicate with OR.
+         * @param predicate
+         */
+        template <typename P>
+            requires query::detail::PredicateFor<P, T>
+        auto orWhere(const P& predicate) -> Query<T>&
+        {
+            data.predicate = data.predicate.has_value() ? data.predicate.value() || query::detail::erase(predicate) :
+                                                          query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Sets the ORDER BY clauses for the select query.
+         * @param orders The ORDER BY clauses.
+         *
+         * @return A reference to the QueryBuilder object.
+         */
+        template <typename... Orders>
+            requires query::detail::ORM_QUERY_MODEL_ORDERS<T, Orders...>
+        auto orderBy(Orders... orders) -> Query<T>&
+        {
+            data.orderBy = {query::detail::erase(orders)...};
+
+            return *this;
+        }
+
+        /**
+         * @brief Sets the GROUP BY columns for the select query.
+         * @param columns The model column paths to
+         * group by.
+         * @return A reference to this query.
+         */
+        template <typename... Columns>
+            requires query::detail::ORM_QUERY_MODEL_COLUMNS<T, Columns...>
+        auto groupBy(Columns... columns) -> Query<T>&
+        {
+            data.groupBy = {query::detail::erase(columns)...};
+
+            return *this;
+        }
+
+        /**
+         * @brief Replaces the HAVING predicate.
+         * @param predicate The aggregate predicate.
+         * @return A
+         * reference to this query.
+         */
+        template <typename P>
+            requires query::detail::AggregatePredicateFor<P, T>
+        auto having(const P& predicate) -> Query<T>&
+        {
+            data.having = query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Adds an aggregate predicate with AND.
+         * @param predicate The aggregate predicate.
+         *
+         * @return A reference to this query.
+         */
+        template <typename P>
+            requires query::detail::AggregatePredicateFor<P, T>
+        auto andHaving(const P& predicate) -> Query<T>&
+        {
+            data.having = data.having.has_value() ? data.having.value() && query::detail::erase(predicate) :
+                                                    query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Adds an aggregate predicate with OR.
+         * @param predicate The aggregate predicate.
+         *
+         * @return A reference to this query.
+         */
+        template <typename P>
+            requires query::detail::AggregatePredicateFor<P, T>
+        auto orHaving(const P& predicate) -> Query<T>&
+        {
+            data.having = data.having.has_value() ? data.having.value() || query::detail::erase(predicate) :
+                                                    query::detail::erase(predicate);
+
+            return *this;
+        }
+
+        /**
+         * @brief Select distinct rows.
+         * @return A reference to the QueryBuilder object.
+         */
+        inline auto distinct() -> Query<T>&
+        {
+            data.isDistinct = true;
+
+            return *this;
+        }
+
+        /**
+         * @brief Sets the OFFSET clause for the select query.
+         * @param offset The number of rows to skip.
+         * @return A reference to the QueryBuilder object.
+         */
+        inline auto offset(std::size_t offset) -> Query<T>&
+        {
+            data.offset = offset;
+
+            return *this;
+        }
+
+        /**
+         * @brief Sets the LIMIT clause for the select query.
+         * @param limit The maximum number of rows to return.
+         * @return A reference to the QueryBuilder object.
+         */
+        inline auto limit(std::size_t limit) -> Query<T>&
+        {
+            data.limit = limit;
+
+            return *this;
+        }
+
+        /**
+         * @brief Disables joining for the select query.
+         * @note Only ids fields will be set in related models.
+         * @return A reference to the QueryBuilder object.
+         */
+        inline auto disableJoining() -> Query<T>&
+        {
+            data.shouldJoin = false;
+
+            return *this;
+        }
+
+        /**
+         * @brief Explicitly loads a mapped OneToMany or ManyToMany collection.
+         *
+         * Repeating the same
+         * include is idempotent. Collection loading is performed
+         * after the root SELECT, so root pagination is
+         * preserved.
+         */
+        template <auto Member>
+            requires query::detail::ORM_QUERY_COLLECTION<Member> &&
+                         query::detail::ORM_QUERY_MODEL_TYPE<typename query::detail::CollectionTraits<Member>::Model, T>
+        auto include() -> Query<T>&
+        {
+            const auto relation = query::detail::CollectionTraits<Member>::name();
+            if (std::ranges::find(data.includes, relation) == data.includes.end())
+                data.includes.push_back(relation);
+            return *this;
+        }
+
+    private:
+        /**
+         * @brief Database class is a friend class of Query for access to the query data.
+         */
+        template <typename>
+        friend class orm::OrmContext;
+        friend class orm::detail::QueryTestAccess;
+
+        /**
+         * @brief Gets the query data.
+         * @return The query data.
+         */
+        [[nodiscard]] inline auto getData() const -> const query::detail::SelectSpec&
+        {
+            return data;
+        }
+
+        query::detail::SelectSpec data; /**< Runtime query options; model metadata comes from OrmContext<Schema>. */
+    };
+}
+} // namespace orm

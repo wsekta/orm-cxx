@@ -45,7 +45,7 @@ auto number = 1'000;
 
     def test_compiler_conditions_are_allowed_only_in_existing_adapters(self):
         source = "#if defined(_MSC_VER)\n#elif defined(__clang__) || defined(__GNUC__)\n#endif\n"
-        path = "modules/orm.reflection.cppm"
+        path = "modules/reflection/compiler_signatures.cppm"
         self.assertEqual(macros.check_cpp(path, source), [])
         self.assertEqual(len(macros.check_cpp("include/new.hpp", source)), 2)
         self.assertTrue(macros.check_cpp(path, "#if _MSC_VER && CUSTOM\n#endif\n"))
@@ -53,8 +53,11 @@ auto number = 1'000;
     def test_module_sources_are_checked_and_reflection_compiler_selector_is_permitted(self):
         self.assertEqual(macros.source_kind("modules/orm.cppm"), "cpp")
         source = "#if defined(_MSC_VER)\n#elif defined(__clang__) || defined(__GNUC__)\n#endif\n"
-        self.assertEqual(macros.check_cpp("modules/orm.reflection.cppm", source), [])
-        self.assertTrue(macros.check_cpp("modules/orm.model.cppm", "#define CUSTOM 1\n"))
+        for path in ("modules/reflection/compiler_signatures.cppm", "modules/reflection/value_names.cppm",
+                     "modules/reflection/field_metadata.cppm"):
+            self.assertEqual(macros.check_cpp(path, source), [])
+        self.assertTrue(macros.check_cpp("modules/orm/model/mapping.cppm", "#define CUSTOM 1\n"))
+        self.assertTrue(macros.check_cpp("modules/orm.reflection.cppm", source))
 
     def test_commented_cmake_commands_are_ignored(self):
         source = '# target_compile_definitions(x PRIVATE BAD)\n#[=[\nadd_definitions(-DBAD)\n]=]\nmessage("target_compile_definitions(x PRIVATE BAD)")\n'

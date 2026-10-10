@@ -43,7 +43,16 @@ vcpkg_cmake_config_fixup(PACKAGE_NAME orm-cxx-reflection CONFIG_PATH lib/cmake/o
 
 # CMake's module metadata is relocated recursively by both config fixups. Debug and Release share the installed source
 # interfaces; BMIs are built by the consumer rather than distributed as compiler-specific cache artifacts.
-foreach(module IN ITEMS orm.cppm orm.reflection.cppm orm.reflection.generated.cppm detail/SociTypes.inc)
+foreach(
+    module IN
+    ITEMS orm.cppm
+          orm.reflection.cppm
+          orm/model.cppm
+          orm/database/context.cppm
+          reflection/generated.cppm
+          reflection/generated/arity_128_128.cppm
+          detail/SociTypes.inc
+)
     if(NOT EXISTS "${CURRENT_PACKAGES_DIR}/share/orm-cxx/modules/${module}")
         message(FATAL_ERROR "orm-cxx is missing its installed ${module} interface.")
     endif()

@@ -40,6 +40,8 @@ class PackageReleaseTests(unittest.TestCase):
             names = archive.getnames()
         self.assertIn("orm-cxx-0.1.0/modules/orm.cppm", names)
         self.assertIn("orm-cxx-0.1.0/modules/orm.reflection.cppm", names)
+        for interface in (prepare.ROOT / "modules").rglob("*.cppm"):
+            self.assertIn("orm-cxx-0.1.0/" + interface.relative_to(prepare.ROOT).as_posix(), names)
         self.assertIn("orm-cxx-0.1.0/scripts/export_llvm_coverage.py", names)
         self.assertIn("orm-cxx-0.1.0/VERSION.txt", names)
         self.assertFalse(any("/externals/" in name or "/.git/" in name for name in names))

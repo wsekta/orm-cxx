@@ -21,31 +21,73 @@ Applications import these primary modules. The partitions below organize the
 implementation; they are not separate consumer entry points. Standard-library
 facilities used by application code still require their ordinary headers.
 
-## Partition dependencies
+## Source organization
 
-Each row lists the partitions that its module unit directly imports. Names
-beginning with `:` belong to `orm`, except `:generated` in `orm.reflection`.
+The two primary interfaces are short entry points. Their partitions live in
+subdirectories and remain attached to the same named module:
 
-| Module unit | Direct imports |
+```text
+modules/
+  orm.cppm
+  orm.reflection.cppm
+  orm/
+    foundation.cppm
+    foundation/
+    model.cppm
+    model/
+    expressions.cppm
+    query/
+    dynamic_query.cppm
+    dynamic_query/
+    static_plan.cppm
+    sql.cppm
+    sql/
+    database.cppm
+    database/
+    internal.cppm
+  reflection/
+    generated.cppm
+    generated/
+    ...
+```
+
+| Directory | Responsibilities |
 | --- | --- |
-| `orm.reflection:generated` | None |
-| `orm.reflection` | `:generated` |
-| `orm:foundation` | `orm.reflection` |
-| `orm:model` | `orm.reflection`, `:foundation` |
-| `orm:expressions` | `orm.reflection`, `:foundation`, `:model` |
-| `orm:dynamic_query` | `orm.reflection`, `:foundation`, `:model`, `:expressions` |
-| `orm:static_plan` | `orm.reflection`, `:foundation`, `:model`, `:expressions`, `:dynamic_query` |
-| `orm:sql` | `orm.reflection`, `:foundation`, `:model`, `:expressions`, `:static_plan` |
-| `orm:config` | None |
-| `orm:backend_relations` | `:foundation`, `:model`, `:expressions`, `:sql` |
-| `orm:database` | `orm.reflection`, `:foundation`, `:model`, `:expressions`, `:dynamic_query`, `:static_plan`, `:sql`, `:config`, `:backend_relations` |
-| `orm:internal` | `:foundation`, `:model`, `:expressions`, `:dynamic_query`, `:static_plan`, `:sql`, `:backend_relations`, `:database` |
-| `orm` | `orm.reflection` and all interface partitions of `orm` |
+| `orm/foundation` | Utilities, backend and column types, relation collections and descriptors |
+| `orm/model` | Mapping, metadata views, column and relation descriptors, static models and schemas |
+| `orm/query` | Values, runtime predicates, parameters, typed expressions, columns, aggregates and projections |
+| `orm/dynamic_query` | Select, projection and update builders |
+| `orm/sql` | Backend contracts, commands, SQL program representation, emitter and compiled SQL |
+| `orm/database` | Shared SOCI declarations, numeric conversion, binding payloads, object and result bindings, database and ORM contexts |
+| `reflection` | Fixed strings, compiler signatures, names, aggregate reflection, field metadata and visitation |
+| `reflection/generated` | Generated aggregate bindings, grouped by field count |
 
-This graph is acyclic. CMake generates `:config` and `:backend_relations` for
-the selected backend configuration. `:internal` is an implementation partition
-used by the library's implementation units. `orm.reflection:generated` contains
-the generated aggregate binding machinery.
+The small category interfaces such as `orm:model` and `orm:sql` re-export their
+leaf partitions. Dependencies flow from reflection and foundation through models,
+queries and SQL to database operations. Leaf partitions import the prerequisites
+they use; they never import their own category interface. Shared declarations
+such as schema traits stay below the units that depend on them, keeping the graph
+acyclic. `Database` owns the connection in a separate partition; its context
+factory uses the shared forward declaration of `OrmContext`. Both retain their
+friendship within the same named module.
+
+The binding partitions re-export their prerequisites along one chain. The
+`orm:database_soci` partition owns SOCI's full headers and exposes the original
+global-module declarations through using declarations. This avoids duplicate
+constructors and conversion specializations when GCC and MSVC import the
+bindings through multiple module units.
+The three SOCI conversion specializations are defined with `OrmContext`, which
+instantiates them, rather than being repeatedly imported through helper partitions.
+
+`tools/generate_reflection_bindings.py` regenerates the checked-in binding
+partitions for aggregates with 0–128 fields. It limits each group to at most
+eight field counts and a source-size budget. Python and the formatter are needed
+only when regenerating these sources, not when building the library.
+
+CMake lists every partition explicitly in its `CXX_MODULES` file sets and
+generates `orm:config` and `orm:backend_relations` for the selected backends.
+`orm:internal` is an implementation partition used by the library's implementation
+units. Applications continue to import only `orm` or `orm.reflection`.
 
 ## CMake consumers and installation
 
@@ -72,7 +114,7 @@ location limit; GCC 15 and 16 need this option to avoid the lazy reader
 reporting `Bad file data`.
 
 Installed packages provide the libraries, the `.cppm` source interfaces and
-their private source includes under `share/orm-cxx/modules`, and native CMake
+their subdirectories under `share/orm-cxx/modules`, and native CMake
 exports with `CXX_MODULES` file sets and import metadata. CMake scans imports
 and compiles the required binary module interfaces (BMIs) in the consumer's
 build directory. The configured backend interface sources remain part of that
