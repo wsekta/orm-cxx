@@ -12,7 +12,7 @@ auto function() -> int
     return 1;
 }
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     (void)col<&function>();

@@ -449,16 +449,18 @@ public:
         auto provider = std::make_unique<ConfigurableBackend>(std::move(generator));
         backend = provider.get();
         factory.registerBackend(std::move(provider));
-        database = std::make_unique<orm::Database<Schema>>(std::move(factory));
+        connection = std::make_unique<orm::Database>(std::move(factory));
+        database = std::make_unique<orm::OrmContext<Schema>>(connection->orm<Schema>());
     }
 
     auto connect() -> void
     {
-        database->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
+        connection->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
     }
 
     ConfigurableBackend* backend{};
-    std::unique_ptr<orm::Database<Schema>> database;
+    std::unique_ptr<orm::Database> connection;
+    std::unique_ptr<orm::OrmContext<Schema>> database;
 };
 
 template <typename Operation>
@@ -503,9 +505,9 @@ TEST(DatabaseCoverageCompletionTest, typedConnectRejectsAlreadyConnectedDatabase
     DatabaseBundle bundle;
     bundle.connect();
 
-    expectDatabaseError([&bundle]() { bundle.database->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:"); },
+    expectDatabaseError([&bundle]() { bundle.connection->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:"); },
                         orm::DatabaseErrorCode::AlreadyConnected, "connect");
-    bundle.database->disconnect();
+    bundle.connection->disconnect();
 }
 
 TEST(DatabaseCoverageCompletionTest, driverConnectFailureHandlesSessionAlreadyClosedByRuntime)
@@ -514,7 +516,7 @@ TEST(DatabaseCoverageCompletionTest, driverConnectFailureHandlesSessionAlreadyCl
     bundle.backend->runtimeStrategy.onConnectAction = OnConnectAction::CloseThenThrowDriverError;
 
     expectDatabaseError([&bundle]() { bundle.connect(); }, orm::DatabaseErrorCode::Connection, "connect");
-    EXPECT_FALSE(bundle.database->isConnected());
+    EXPECT_FALSE(bundle.connection->isConnected());
 }
 
 TEST(DatabaseCoverageCompletionTest, unknownConnectFailureClosesTheOpenedSession)
@@ -523,20 +525,20 @@ TEST(DatabaseCoverageCompletionTest, unknownConnectFailureClosesTheOpenedSession
     bundle.backend->runtimeStrategy.onConnectAction = OnConnectAction::ThrowUnknown;
 
     expectDatabaseError([&bundle]() { bundle.connect(); }, orm::DatabaseErrorCode::Connection, "connect");
-    EXPECT_FALSE(bundle.database->isConnected());
+    EXPECT_FALSE(bundle.connection->isConnected());
 
     bundle.backend->runtimeStrategy.onConnectAction = OnConnectAction::Delegate;
     EXPECT_NO_THROW(bundle.connect());
-    EXPECT_TRUE(bundle.database->isConnected());
-    bundle.database->disconnect();
+    EXPECT_TRUE(bundle.connection->isConnected());
+    bundle.connection->disconnect();
 }
 
 TEST(DatabaseCoverageCompletionTest, disconnectWithoutBackendIsIdempotent)
 {
-    orm::Database<Schema> database;
+    orm::Database databaseConnection;
 
-    EXPECT_NO_THROW(database.disconnect());
-    EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Empty);
+    EXPECT_NO_THROW(databaseConnection.disconnect());
+    EXPECT_EQ(databaseConnection.getBackendType(), orm::db::BackendType::Empty);
 }
 
 TEST(DatabaseCoverageCompletionTest, nestedDriverTransactionIsTranslatedByBeginTransaction)
@@ -545,7 +547,7 @@ TEST(DatabaseCoverageCompletionTest, nestedDriverTransactionIsTranslatedByBeginT
     bundle.backend->runtimeStrategy.onConnectAction = OnConnectAction::BeginTransaction;
     bundle.connect();
 
-    expectDatabaseError([&bundle]() { bundle.database->beginTransaction(); }, orm::DatabaseErrorCode::Transaction,
+    expectDatabaseError([&bundle]() { bundle.connection->beginTransaction(); }, orm::DatabaseErrorCode::Transaction,
                         "begin transaction");
 }
 
@@ -553,36 +555,36 @@ TEST(DatabaseCoverageCompletionTest, commitFailureResetsTheTransactionAndTransla
 {
     DatabaseBundle bundle{makeScriptedGenerator(CommandScripts{.create = "COMMIT;"})};
     bundle.connect();
-    bundle.database->beginTransaction();
+    bundle.connection->beginTransaction();
     bundle.database->createTable<models::ModelWithOneField>();
 
-    expectDatabaseError([&bundle]() { bundle.database->commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
+    expectDatabaseError([&bundle]() { bundle.connection->commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
                         "commit transaction");
-    EXPECT_NO_THROW(bundle.database->disconnect());
+    EXPECT_NO_THROW(bundle.connection->disconnect());
 }
 
 TEST(DatabaseCoverageCompletionTest, rollbackFailureResetsTheTransactionAndTranslatesTheDriverError)
 {
     DatabaseBundle bundle{makeScriptedGenerator(CommandScripts{.create = "ROLLBACK;"})};
     bundle.connect();
-    bundle.database->beginTransaction();
+    bundle.connection->beginTransaction();
     bundle.database->createTable<models::ModelWithOneField>();
 
-    expectDatabaseError([&bundle]() { bundle.database->rollbackTransaction(); }, orm::DatabaseErrorCode::Transaction,
+    expectDatabaseError([&bundle]() { bundle.connection->rollbackTransaction(); }, orm::DatabaseErrorCode::Transaction,
                         "rollback transaction");
-    EXPECT_NO_THROW(bundle.database->disconnect());
+    EXPECT_NO_THROW(bundle.connection->disconnect());
 }
 
 TEST(DatabaseCoverageCompletionTest, disconnectReportsRollbackFailureAfterTransactionWasHandledExternally)
 {
     DatabaseBundle bundle{makeScriptedGenerator(CommandScripts{.create = "COMMIT;"})};
     bundle.connect();
-    bundle.database->beginTransaction();
+    bundle.connection->beginTransaction();
     bundle.database->createTable<models::ModelWithOneField>();
 
-    expectDatabaseError([&bundle]() { bundle.database->disconnect(); }, orm::DatabaseErrorCode::Transaction,
+    expectDatabaseError([&bundle]() { bundle.connection->disconnect(); }, orm::DatabaseErrorCode::Transaction,
                         "rollback during disconnect");
-    EXPECT_FALSE(bundle.database->isConnected());
+    EXPECT_FALSE(bundle.connection->isConnected());
 }
 
 TEST(DatabaseCoverageCompletionTest, mutationTranslatesConversionAndAffectedRowFailures)
@@ -654,7 +656,7 @@ TEST(DatabaseCoverageCompletionTest, driverErrorAfterReentrantDisconnectUsesNotC
 {
     DatabaseBundle bundle;
     bundle.backend->runtimeStrategy.throwFromTableExists = true;
-    bundle.backend->runtimeStrategy.beforeTableExistsFailure = [&bundle]() { bundle.database->disconnect(); };
+    bundle.backend->runtimeStrategy.beforeTableExistsFailure = [&bundle]() { bundle.connection->disconnect(); };
     bundle.connect();
 
     expectDatabaseError([&bundle]() { bundle.database->createRelationTables<collection_models::User>(); },
@@ -926,14 +928,14 @@ TEST(DatabaseCoverageCompletionTest, failedSelectInvalidatesTransactionUntilRoll
     DatabaseBundle bundle{makeScriptedGenerator(std::move(scripts))};
     bundle.backend->runtimeStrategy.invalidateTransactionAfterStatementError = true;
     bundle.connect();
-    bundle.database->beginTransaction();
+    bundle.connection->beginTransaction();
     orm::Query<models::ModelWithOneField> query;
 
     expectDatabaseError([&bundle, &query]() { (void)bundle.database->select(query); },
                         orm::DatabaseErrorCode::Statement, "select");
-    expectDatabaseError([&bundle]() { bundle.database->commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
+    expectDatabaseError([&bundle]() { bundle.connection->commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
                         "commit transaction");
-    EXPECT_NO_THROW(bundle.database->rollbackTransaction());
+    EXPECT_NO_THROW(bundle.connection->rollbackTransaction());
 }
 
 TEST(DatabaseCoverageCompletionTest, modelIdentifierErrorsAreReportedAsUnsupportedFeatures)

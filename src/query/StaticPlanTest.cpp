@@ -40,7 +40,7 @@ static_assert(std::tuple_size_v<typename decltype(renameUser)::Assignments> == 1
 
 auto comparison(auto& query) -> const ast::ComparisonExpression&
 {
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     return std::get<ast::ComparisonExpression>(data.predicate->getNode().expression);
 }
 } // namespace
@@ -50,7 +50,7 @@ TEST(StaticPlanTest, clausesPreserveTheOriginalPlanAndOwnValues)
     const auto filtered = staticPlanBase.where(col<&User::name>() == std::string{"Ada"});
     auto original = staticPlanBase.toDynamic();
     auto query = filtered.toDynamic();
-    EXPECT_FALSE(orm::FakeDatabase::getSelectSpec(original).predicate.has_value());
+    EXPECT_FALSE(orm::detail::QueryTestAccess::getSelectSpec(original).predicate.has_value());
     EXPECT_EQ(std::get<std::string>(comparison(query).value.get()), "Ada");
 }
 
@@ -60,8 +60,8 @@ TEST(StaticPlanTest, executionArgumentsBindWithoutChangingTheReusablePlan)
     auto second = adults.toDynamic(21, std::size_t{20}, std::size_t{5});
     EXPECT_EQ(std::get<int>(comparison(first).value.get()), 18);
     EXPECT_EQ(std::get<int>(comparison(second).value.get()), 21);
-    const auto& firstData = orm::FakeDatabase::getSelectSpec(first);
-    const auto& secondData = orm::FakeDatabase::getSelectSpec(second);
+    const auto& firstData = orm::detail::QueryTestAccess::getSelectSpec(first);
+    const auto& secondData = orm::detail::QueryTestAccess::getSelectSpec(second);
     ASSERT_EQ(firstData.orderBy.size(), 1);
     EXPECT_EQ(firstData.orderBy.front().column.getPath(), "id");
     EXPECT_EQ(firstData.limit, 10);
@@ -75,7 +75,7 @@ TEST(StaticPlanTest, repeatedSlotsReuseOneArgumentAndPreserveEachOccurrence)
     constexpr auto plan =
         select<User>().where((col<&User::age>() >= param<int, 0>()) && (col<&User::id>() != param<int, 0>()));
     auto query = plan.toDynamic(18);
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     const auto& logical = std::get<ast::LogicalExpression>(data.predicate->getNode().expression);
     EXPECT_EQ(std::get<int>(std::get<ast::ComparisonExpression>(logical.left->expression).value.get()), 18);
     EXPECT_EQ(std::get<int>(std::get<ast::ComparisonExpression>(logical.right->expression).value.get()), 18);
@@ -85,8 +85,8 @@ TEST(StaticPlanTest, logicalClauseMethodsHandleAnEmptyAndAnExistingClause)
 {
     auto conjunction = select<User>().andWhere(col<&User::age>() > 18).andWhere(col<&User::id>() != 1).toDynamic();
     auto disjunction = select<User>().orWhere(col<&User::age>() > 18).orWhere(col<&User::id>() == 1).toDynamic();
-    const auto& andData = orm::FakeDatabase::getSelectSpec(conjunction);
-    const auto& orData = orm::FakeDatabase::getSelectSpec(disjunction);
+    const auto& andData = orm::detail::QueryTestAccess::getSelectSpec(conjunction);
+    const auto& orData = orm::detail::QueryTestAccess::getSelectSpec(disjunction);
     EXPECT_EQ(std::get<ast::LogicalExpression>(andData.predicate->getNode().expression).logicalOperator,
               ast::LogicalOperator::And);
     EXPECT_EQ(std::get<ast::LogicalExpression>(orData.predicate->getNode().expression).logicalOperator,
@@ -101,7 +101,7 @@ TEST(StaticPlanTest, projectionsRetainLiteralAliasesAndReplaceTheProjectionClaus
                               .distinct()
                               .disableJoining();
     auto query = plan.toDynamic(18);
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     ASSERT_EQ(data.projections.size(), 1);
     EXPECT_EQ(data.projections.front().resultField, "name");
     EXPECT_TRUE(data.isDistinct);
@@ -116,7 +116,7 @@ TEST(StaticPlanTest, groupingAndHavingHandleInitialAndComposedExpressions)
                               .andHaving(sum(col<&User::age>()) > 0)
                               .orHaving(max(col<&User::age>()) < 100);
     auto query = plan.toDynamic(1);
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     ASSERT_EQ(data.groupBy.size(), 1);
     EXPECT_EQ(data.groupBy.front().getPath(), "name");
     ASSERT_TRUE(data.having.has_value());
@@ -124,7 +124,7 @@ TEST(StaticPlanTest, groupingAndHavingHandleInitialAndComposedExpressions)
               ast::LogicalOperator::Or);
 
     auto initialOr = select<User>().orHaving(countAll<User>() > 0).toDynamic();
-    EXPECT_TRUE(orm::FakeDatabase::getSelectSpec(initialOr).having.has_value());
+    EXPECT_TRUE(orm::detail::QueryTestAccess::getSelectSpec(initialOr).having.has_value());
 }
 
 TEST(StaticPlanTest, collectionIncludesAreRetainedOnlyOnce)
@@ -132,7 +132,7 @@ TEST(StaticPlanTest, collectionIncludesAreRetainedOnlyOnce)
     constexpr auto included = select<User>().include<&User::roles>().include<&User::roles>();
     static_assert(std::tuple_size_v<typename decltype(included)::Includes> == 1);
     auto query = included.toDynamic();
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     ASSERT_EQ(data.includes.size(), 1);
     EXPECT_EQ(data.includes.front(), "roles");
 }
@@ -140,7 +140,7 @@ TEST(StaticPlanTest, collectionIncludesAreRetainedOnlyOnce)
 TEST(StaticPlanTest, mutationArgumentsAndOptionalValuesBecomeConcreteAssignments)
 {
     auto rename = renameUser.toDynamic(std::string{"Grace"}, 1);
-    const auto& renameData = orm::FakeDatabase::getUpdateSpec(rename);
+    const auto& renameData = orm::detail::QueryTestAccess::getUpdateSpec(rename);
     ASSERT_EQ(renameData.assignments.size(), 1);
     EXPECT_EQ(std::get<std::string>(renameData.assignments.front().value.value->get()), "Grace");
 
@@ -149,14 +149,15 @@ TEST(StaticPlanTest, mutationArgumentsAndOptionalValuesBecomeConcreteAssignments
                                   .where(col<&User::id>() == param<int, 1>());
     auto empty = nullable.toDynamic(std::optional<std::string>{}, 1);
     auto present = nullable.toDynamic(std::optional<std::string>{"ada@example.test"}, 1);
-    EXPECT_FALSE(orm::FakeDatabase::getUpdateSpec(empty).assignments.front().value.value.has_value());
-    EXPECT_EQ(std::get<std::string>(orm::FakeDatabase::getUpdateSpec(present).assignments.front().value.value->get()),
+    EXPECT_FALSE(orm::detail::QueryTestAccess::getUpdateSpec(empty).assignments.front().value.value.has_value());
+    EXPECT_EQ(std::get<std::string>(
+                  orm::detail::QueryTestAccess::getUpdateSpec(present).assignments.front().value.value->get()),
               "ada@example.test");
 
     auto nullPointer = update<User>().set(col<&User::email>(), nullptr).where(col<&User::id>() == 1).toDynamic();
     auto nullOptional = update<User>().set(col<&User::email>(), std::nullopt).where(col<&User::id>() == 1).toDynamic();
-    EXPECT_FALSE(orm::FakeDatabase::getUpdateSpec(nullPointer).assignments.front().value.value.has_value());
-    EXPECT_FALSE(orm::FakeDatabase::getUpdateSpec(nullOptional).assignments.front().value.value.has_value());
+    EXPECT_FALSE(orm::detail::QueryTestAccess::getUpdateSpec(nullPointer).assignments.front().value.value.has_value());
+    EXPECT_FALSE(orm::detail::QueryTestAccess::getUpdateSpec(nullOptional).assignments.front().value.value.has_value());
 }
 
 TEST(StaticPlanTest, removeConversionReturnsTheBoundTypedPredicate)
@@ -179,7 +180,7 @@ TEST(StaticPlanTest, fixedListsAndRuntimeListsBindTheirActualElements)
         select<User>().where(col<&User::id>().notIn(param<std::vector<int>, 0>())).toDynamic(std::vector{1, 2});
     for (auto* query : {&fixed, &cArray, &variadic, &runtime, &initializer, &parameter, &vectorParameter})
     {
-        const auto& data = orm::FakeDatabase::getSelectSpec(*query);
+        const auto& data = orm::detail::QueryTestAccess::getSelectSpec(*query);
         const auto& list = std::get<ast::ListExpression>(data.predicate->getNode().expression);
         ASSERT_EQ(list.values.size(), 2);
         EXPECT_EQ(std::get<int>(list.values[0].get()), 1);
@@ -191,7 +192,7 @@ TEST(StaticPlanTest, rawShapesRemainConvertibleToMutableQueries)
 {
     auto query =
         select<User>().where(raw<User>("age >= :age", param("age", 18))).orderBy(rawOrder<User>("id DESC")).toDynamic();
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
     EXPECT_TRUE(std::holds_alternative<ast::RawExpression>(data.predicate->getNode().expression));
     ASSERT_EQ(data.orderBy.size(), 1);
     EXPECT_TRUE(data.orderBy.front().isRaw);
@@ -245,8 +246,8 @@ TEST(StaticPlanTest, constexprCacheMatchesRuntimeSqlForRelationsCollectionsAndHa
     static_assert(sqlite.program.bindings.size() == 3);
     auto dynamic = plan.toDynamic(18, std::string{"reader"}, 2);
     const orm::db::sqlite::SqliteBackend backend;
-    const auto rendered =
-        backend.commandGenerator().select(orm::modelView<Schema, User>(), orm::FakeDatabase::getSelectSpec(dynamic));
+    const auto rendered = backend.commandGenerator().select(orm::modelView<Schema, User>(),
+                                                            orm::detail::QueryTestAccess::getSelectSpec(dynamic));
     EXPECT_EQ(sqlite.view(), rendered.sql);
     expectParametersEqual(ast::collectParameters(plan, std::tuple{18, std::string{"reader"}, 2}), rendered.parameters);
     EXPECT_EQ(sqlite.view().data(),
@@ -265,8 +266,8 @@ TEST(StaticPlanTest, cacheBindingsPreserveRepeatedSlotsAndNullableAssignments)
     static_assert(compiled.program.bindings.size() == 3);
     auto dynamic = patch.toDynamic(1, std::optional<std::string>{});
     const orm::db::sqlite::SqliteBackend backend;
-    const auto rendered =
-        backend.commandGenerator().update(orm::modelView<Schema, User>(), orm::FakeDatabase::getUpdateSpec(dynamic));
+    const auto rendered = backend.commandGenerator().update(orm::modelView<Schema, User>(),
+                                                            orm::detail::QueryTestAccess::getUpdateSpec(dynamic));
     EXPECT_EQ(compiled.view(), rendered.sql);
     const auto parameters = ast::collectParameters(patch, std::tuple{1, std::optional<std::string>{}});
     expectParametersEqual(parameters, rendered.parameters);

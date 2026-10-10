@@ -379,14 +379,14 @@ auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
     return static_cast<std::size_t>(affectedRows);
 }
 
-DatabaseCore::DatabaseCore() : backendType{db::BackendType::Empty} {}
+Database::Database() : backendType{db::BackendType::Empty} {}
 
-DatabaseCore::DatabaseCore(db::CommandGeneratorFactory factory)
+Database::Database(db::CommandGeneratorFactory factory)
     : backendType{db::BackendType::Empty}, commandGeneratorFactory{std::move(factory)}
 {
 }
 
-auto DatabaseCore::connect(const std::string& connectionString) -> void
+auto Database::connect(const std::string& connectionString) -> void
 {
     if (backend != nullptr)
     {
@@ -405,7 +405,7 @@ auto DatabaseCore::connect(const std::string& connectionString) -> void
     connect(selectedBackend->type(), connectionString);
 }
 
-auto DatabaseCore::connect(db::BackendType requestedBackend, const std::string& connectionString) -> void
+auto Database::connect(db::BackendType requestedBackend, const std::string& connectionString) -> void
 {
     if (backend != nullptr)
     {
@@ -468,7 +468,7 @@ auto DatabaseCore::connect(db::BackendType requestedBackend, const std::string& 
     backendType = requestedBackend;
 }
 
-auto DatabaseCore::disconnect() -> void
+auto Database::disconnect() -> void
 {
     if (backend == nullptr)
     {
@@ -507,22 +507,22 @@ auto DatabaseCore::disconnect() -> void
     }
 }
 
-auto DatabaseCore::getBackendType() const noexcept -> db::BackendType
+auto Database::getBackendType() const noexcept -> db::BackendType
 {
     return backendType;
 }
 
-auto DatabaseCore::isConnected() const noexcept -> bool
+auto Database::isConnected() const noexcept -> bool
 {
     return backend != nullptr and sql.is_connected();
 }
 
-auto DatabaseCore::getBackendCapabilities() const -> const db::BackendCapabilities&
+auto Database::getBackendCapabilities() const -> const db::BackendCapabilities&
 {
     return getBackend().capabilities();
 }
 
-auto DatabaseCore::beginTransaction() -> void
+auto Database::beginTransaction() -> void
 {
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "begin transaction", "transactions are not supported");
@@ -544,7 +544,7 @@ auto DatabaseCore::beginTransaction() -> void
     }
 }
 
-auto DatabaseCore::commitTransaction() -> void
+auto Database::commitTransaction() -> void
 {
     (void)getBackend();
 
@@ -574,7 +574,7 @@ auto DatabaseCore::commitTransaction() -> void
     }
 }
 
-auto DatabaseCore::rollbackTransaction() -> void
+auto Database::rollbackTransaction() -> void
 {
     (void)getBackend();
 
@@ -598,12 +598,12 @@ auto DatabaseCore::rollbackTransaction() -> void
     }
 }
 
-auto DatabaseCore::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
+auto Database::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
 {
     return executeMutation(db::StatementView{statement.sql, statement.parameters}, operation);
 }
 
-auto DatabaseCore::executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t
+auto Database::executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t
 {
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
@@ -651,7 +651,7 @@ auto DatabaseCore::executeMutation(db::StatementView statement, std::string_view
     }
 }
 
-auto DatabaseCore::executeSql(std::string_view statement, std::string_view operation) -> void
+auto Database::executeSql(std::string_view statement, std::string_view operation) -> void
 {
     (void)getBackend();
 
@@ -665,7 +665,7 @@ auto DatabaseCore::executeSql(std::string_view statement, std::string_view opera
     }
 }
 
-auto DatabaseCore::relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool
+auto Database::relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool
 {
     const auto primaryKeyColumns = detail::requireEndpointKeyColumns(model, key);
 
@@ -710,7 +710,7 @@ auto DatabaseCore::relationEndpointExists(model::ModelView model, const db::bind
     return count > 0;
 }
 
-auto DatabaseCore::tableExists(std::string_view tableName) -> bool
+auto Database::tableExists(std::string_view tableName) -> bool
 {
     try
     {
@@ -722,7 +722,7 @@ auto DatabaseCore::tableExists(std::string_view tableName) -> bool
     }
 }
 
-auto DatabaseCore::ensureRelationTableEndpointsExist(model::ModelView owner) -> void
+auto Database::ensureRelationTableEndpointsExist(model::ModelView owner) -> void
 {
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.schema.createTableIfNotExists, "create relation tables",
@@ -765,7 +765,7 @@ auto DatabaseCore::ensureRelationTableEndpointsExist(model::ModelView owner) -> 
     }
 }
 
-auto DatabaseCore::getBackend() const -> const db::BackendProvider&
+auto Database::getBackend() const -> const db::BackendProvider&
 {
     if (backend == nullptr or not sql.is_connected())
     {
@@ -776,12 +776,12 @@ auto DatabaseCore::getBackend() const -> const db::BackendProvider&
     return *backend;
 }
 
-auto DatabaseCore::getCommandGenerator() const -> const db::CommandGenerator&
+auto Database::getCommandGenerator() const -> const db::CommandGenerator&
 {
     return getBackend().commandGenerator();
 }
 
-auto DatabaseCore::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
+auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
 {
     try
     {
@@ -793,7 +793,7 @@ auto DatabaseCore::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
     }
 }
 
-auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string_view operation) const -> void
+auto Database::ensureModelSupported(model::ModelView descriptor, std::string_view operation) const -> void
 {
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
@@ -857,13 +857,13 @@ auto DatabaseCore::ensureModelSupported(model::ModelView descriptor, std::string
     }
 }
 
-auto DatabaseCore::ensurePredicateSupported(const query::detail::Predicate& predicate,
-                                            std::string_view operation) const -> void
+auto Database::ensurePredicateSupported(const query::detail::Predicate& predicate,
+                                        std::string_view operation) const -> void
 {
     ensurePredicateSupported(containsCollectionPredicate(predicate.getNode()), operation);
 }
 
-auto DatabaseCore::ensurePredicateSupported(bool containsCollection, std::string_view operation) const -> void
+auto Database::ensurePredicateSupported(bool containsCollection, std::string_view operation) const -> void
 {
     if (containsCollection)
     {
@@ -875,8 +875,7 @@ auto DatabaseCore::ensurePredicateSupported(bool containsCollection, std::string
     }
 }
 
-auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
-                                        const query::detail::SelectSpec& spec) const -> void
+auto Database::ensureQuerySupported(model::ModelView descriptor, const query::detail::SelectSpec& spec) const -> void
 {
     auto columnSource = [](const query::detail::Column& column)
     { return db::detail::parseSqlSource(column.getPath()); };
@@ -917,7 +916,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor,
     ensureQuerySupported(descriptor, requirements.view());
 }
 
-auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, db::detail::SqlQueryView spec) const -> void
+auto Database::ensureQuerySupported(model::ModelView descriptor, db::detail::SqlQueryView spec) const -> void
 {
     ensureModelSupported(descriptor, "select");
     const auto& capabilities = getBackendCapabilities();
@@ -1019,7 +1018,7 @@ auto DatabaseCore::ensureQuerySupported(model::ModelView descriptor, db::detail:
     }
 }
 
-auto DatabaseCore::ensureAffectedRowsAvailable(std::string_view operation) const -> void
+auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> void
 {
     if (getBackendCapabilities().mutations.affectedRows != db::AffectedRowsSupport::Reliable)
     {
@@ -1028,7 +1027,7 @@ auto DatabaseCore::ensureAffectedRowsAvailable(std::string_view operation) const
     }
 }
 
-auto DatabaseCore::requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void
+auto Database::requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void
 {
     if (not supported)
     {
@@ -1037,8 +1036,8 @@ auto DatabaseCore::requireCapability(bool supported, std::string_view operation,
     }
 }
 
-auto DatabaseCore::throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
-                                        std::string_view operation) -> void
+auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseErrorCode fallback,
+                                    std::string_view operation) -> void
 {
     if (backend == nullptr)
     {
@@ -1054,7 +1053,7 @@ auto DatabaseCore::throwTranslatedError(const soci::soci_error& error, DatabaseE
     throw backend->runtime().translateError(error, fallback, operation);
 }
 
-auto DatabaseCore::ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void
+auto Database::ensureStatementWithinBindLimit(std::size_t parameterCount, std::string_view operation) -> void
 {
     if (parameterCount == 0)
     {

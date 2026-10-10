@@ -32,7 +32,7 @@ struct ReservedIdentifierModel
 using Schema = orm::Schema<models::SomeDataModel, ReservedIdentifierModel>;
 } // namespace base_operations_models
 
-using BaseOperationsDatabase = orm::Database<base_operations_models::Schema>;
+using BaseOperationsDatabase = orm::Database;
 static_assert(not std::is_copy_constructible_v<BaseOperationsDatabase>);
 static_assert(not std::is_copy_assignable_v<BaseOperationsDatabase>);
 static_assert(not std::is_move_constructible_v<BaseOperationsDatabase>);
@@ -125,14 +125,15 @@ TEST(DatabaseConnectionLifecycleTest, operationWithoutConnectionShouldReportNotC
 {
     BaseOperationsDatabase database;
 
-    expectDatabaseError([&database]() { database.createTable<models::SomeDataModel>(); },
+    expectDatabaseError([&database]()
+                        { database.orm<base_operations_models::Schema>().createTable<models::SomeDataModel>(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");
 }
 
 TEST_P(BaseOperationsTest, shouldConnectToDatabase)
 {
-    EXPECT_TRUE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), GetParam().type);
+    EXPECT_TRUE(connection.isConnected());
+    EXPECT_EQ(connection.getBackendType(), GetParam().type);
 }
 
 TEST_P(BaseOperationsTest, shouldCreateTable)

@@ -18,6 +18,11 @@ import :model;
 import :expressions;
 
 // query.hpp
+namespace orm::detail
+{
+class QueryTestAccess;
+}
+
 namespace orm
 {
 export
@@ -228,8 +233,8 @@ export
          * @brief Database class is a friend class of Query for access to the query data.
          */
         template <typename>
-        friend class orm::Database;
-        friend class orm::DatabaseCore;
+        friend class orm::OrmContext;
+        friend class orm::detail::QueryTestAccess;
 
         /**
          * @brief Gets the query data.
@@ -240,7 +245,7 @@ export
             return data;
         }
 
-        query::detail::SelectSpec data; /**< Runtime query options; model metadata comes from Database<Schema>. */
+        query::detail::SelectSpec data; /**< Runtime query options; model metadata comes from OrmContext<Schema>. */
     };
 }
 } // namespace orm
@@ -512,8 +517,8 @@ export
 
     private:
         template <typename>
-        friend class orm::Database;
-        friend class orm::DatabaseCore;
+        friend class orm::OrmContext;
+        friend class orm::detail::QueryTestAccess;
 
         [[nodiscard]] inline auto getData() const -> const query::detail::SelectSpec&
         {
@@ -603,8 +608,8 @@ export
 
     private:
         template <typename>
-        friend class orm::Database;
-        friend class orm::DatabaseCore;
+        friend class orm::OrmContext;
+        friend class orm::detail::QueryTestAccess;
 
         [[nodiscard]] auto getData() const -> const query::detail::UpdateSpec&
         {

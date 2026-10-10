@@ -34,7 +34,7 @@ static_assert(std::same_as<decltype(countAll<User>().dynamic()), TypedAggregate<
 static_assert(std::same_as<decltype(sum(col<&User::age>()).dynamic()), TypedAggregate<User, long long, true>>);
 static_assert(std::same_as<decltype((countAll<User>() >= 1).dynamic()), TypedAggregatePredicate<User>>);
 
-[[maybe_unused]] auto instantiateStaticApi(Database& database) -> void
+[[maybe_unused]] auto instantiateStaticApi(Context& database) -> void
 {
     (void)database.select(adults, short{18});
     (void)database.select(userNamesPlan, 18);

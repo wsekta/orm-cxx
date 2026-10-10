@@ -2,10 +2,9 @@
 
 #include "tests/utils/RuntimeQueryBuilder.hpp"
 
-namespace orm
+namespace orm::detail
 {
-template <>
-class Database<void>
+class QueryTestAccess
 {
 public:
     template <class T>
@@ -46,5 +45,4 @@ public:
     }
 };
 
-using FakeDatabase = Database<void>;
-} // namespace orm
+} // namespace orm::detail

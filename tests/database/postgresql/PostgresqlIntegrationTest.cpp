@@ -162,10 +162,10 @@ TEST_P(PostgresqlIntegrationTest, isolatedSearchPathDrivesRuntimeTableInspection
     createTable<models::ModelWithOneField>();
     EXPECT_TRUE(backend.runtime().tableExists(inspectionSession, tableName));
 
-    database.disconnect();
-    database.connect(orm::db::BackendType::Postgres, testConnectionString());
-    EXPECT_TRUE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Postgres);
+    connection.disconnect();
+    connection.connect(orm::db::BackendType::Postgres, testConnectionString());
+    EXPECT_TRUE(connection.isConnected());
+    EXPECT_EQ(connection.getBackendType(), orm::db::BackendType::Postgres);
     EXPECT_TRUE(backend.runtime().tableExists(inspectionSession, tableName));
 }
 
@@ -361,18 +361,18 @@ TEST_P(PostgresqlIntegrationTest, transactionRollbackRecoversAfterConstraintFail
 {
     createTable<models::ModelWithId>();
     database.insert(models::ModelWithId{1, 10, "existing"});
-    database.beginTransaction();
+    connection.beginTransaction();
 
     expectPostgresqlError([this]() { database.insert(models::ModelWithId{1, 20, "duplicate"}); },
                           orm::DatabaseErrorCode::Constraint, "insert", "23505");
-    expectPostgresqlError([this]() { database.commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
+    expectPostgresqlError([this]() { connection.commitTransaction(); }, orm::DatabaseErrorCode::Transaction,
                           "commit transaction", std::nullopt);
-    EXPECT_NO_THROW(database.rollbackTransaction());
+    EXPECT_NO_THROW(connection.rollbackTransaction());
     EXPECT_NO_THROW(database.insert(models::ModelWithId{2, 20, "recovered"}));
 
-    database.beginTransaction();
+    connection.beginTransaction();
     database.insert(models::ModelWithId{3, 30, "committed"});
-    database.commitTransaction();
+    connection.commitTransaction();
 
     orm::Query<models::ModelWithId> query;
     query.orderBy(asc(col<&models::ModelWithId::id>()));

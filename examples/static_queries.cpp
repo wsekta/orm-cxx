@@ -34,21 +34,22 @@ int main()
 {
     try
     {
-        orm::Database<AppSchema> database;
+        orm::Database database;
+        auto context = database.orm<AppSchema>();
         database.connect("sqlite3://:memory:");
-        database.createTable<User>();
-        database.insert(std::vector<User>{{1, 18, "Ada", std::nullopt}, {2, 21, "Grace", "grace@example.test"}});
+        context.createTable<User>();
+        context.insert(std::vector<User>{{1, 18, "Ada", std::nullopt}, {2, 21, "Grace", "grace@example.test"}});
 
-        for (const auto& user : database.select(adults, 18))
+        for (const auto& user : context.select(adults, 18))
             std::cout << user.id << ": " << user.name << '\n';
 
-        database.update(renameUser, std::string{"Ada Lovelace"}, 1);
-        for (const auto& summary : database.select(userNamesPlan, 18))
+        context.update(renameUser, std::string{"Ada Lovelace"}, 1);
+        for (const auto& summary : context.select(userNamesPlan, 18))
             std::cout << summary.name << '\n';
 
         auto runtimeQuery = adults.toDynamic(18);
         runtimeQuery.andWhere(col<&User::name>().like("Ada%"));
-        if (database.select(runtimeQuery).size() != 1 || database.remove(eraseUser, 1) != 1)
+        if (context.select(runtimeQuery).size() != 1 || context.remove(eraseUser, 1) != 1)
             return 1;
 
         database.disconnect();

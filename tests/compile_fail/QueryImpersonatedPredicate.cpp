@@ -14,7 +14,7 @@ struct ImpersonatedPredicate
     inline static constexpr bool writeSafe = true;
 };
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     orm::Query<User> query;

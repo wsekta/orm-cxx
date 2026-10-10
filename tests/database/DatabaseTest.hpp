@@ -63,7 +63,8 @@ template <typename SchemaType = models::Schema>
 class DatabaseTest : public ::testing::TestWithParam<BackendTestConfig>
 {
 public:
-    orm::Database<SchemaType> database;
+    orm::Database connection;
+    orm::OrmContext<SchemaType> database = connection.orm<SchemaType>();
 
     auto SetUp() -> void override
     {
@@ -88,7 +89,7 @@ public:
             }
         }
 
-        database.connect(GetParam().type, activeConnectionString);
+        connection.connect(GetParam().type, activeConnectionString);
     }
 
     auto TearDown() -> void override
@@ -110,11 +111,11 @@ public:
             }
         }
 
-        if (database.isConnected())
+        if (connection.isConnected())
         {
             try
             {
-                database.disconnect();
+                connection.disconnect();
             }
             catch (const std::exception& error)
             {

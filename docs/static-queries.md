@@ -23,10 +23,11 @@ inline constexpr auto adults =
                   .orderBy(asc(col<&User::id>()))
                   .limit(10);
 
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 // Connect and create/populate the table before executing the plan.
-auto first = database.select(adults, 18);
-auto second = database.select(adults, 21);
+auto first = context.select(adults, 18);
+auto second = context.select(adults, 21);
 ```
 
 `param<T, I>()` declares a typed argument slot. Indices start at zero and must
@@ -59,15 +60,15 @@ struct UserName { std::string name; };
 constexpr auto names =
     selectAs<User, UserName>(as<"name">(col<&User::name>()))
         .where(col<&User::age>() >= param<int, 0>());
-auto summaries = database.select(names, 18);
+auto summaries = context.select(names, 18);
 
 constexpr auto rename =
     update<User>().set(col<&User::name>(), param<std::string, 0>())
                   .where(col<&User::id>() == param<int, 1>());
-auto changed = database.update(rename, std::string{"Ada"}, 1);
+auto changed = context.update(rename, std::string{"Ada"}, 1);
 
 constexpr auto erase = remove<User>().where(col<&User::id>() == param<int, 0>());
-auto removed = database.remove(erase, 1);
+auto removed = context.remove(erase, 1);
 ```
 
 An `UPDATE` plan requires at least one `SET` assignment and a `WHERE` predicate.
@@ -97,7 +98,7 @@ Use conversion when later clauses depend on a runtime branch:
 auto query = adults.toDynamic(18);
 if (searchByName)
     query.andWhere(col<&User::name>().like("A%"));
-auto rows = database.select(query);
+auto rows = context.select(query);
 ```
 
 Expression `.dynamic()` creates the existing named typed facade and is

@@ -18,7 +18,7 @@ using namespace orm::test::fixtures;
 
 namespace
 {
-using EmptyDatabase = orm::Database<orm::Schema<>>;
+using EmptyDatabase = orm::Database;
 
 class ThrowingConnectRuntime final : public orm::db::BackendRuntime
 {

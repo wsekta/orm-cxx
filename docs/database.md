@@ -14,8 +14,8 @@
 
 ## Connect
 
-Bind each database to a closed compile-time schema after declaring its model
-types, then connect it with a standard connection string:
+Create a database connection independently of model schemas. Obtain a borrowed
+ORM context for each closed compile-time schema:
 
 ```cpp
 struct User
@@ -24,7 +24,8 @@ struct User
 };
 
 using AppSchema = orm::Schema<User>;
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 database.connect("sqlite3://test.db");
 ```
 
@@ -32,8 +33,24 @@ Every model used by `select`, `insert`, schema operations, or relation
 operations must belong to `AppSchema`. All relation targets must be listed as
 well. Missing models and invalid mappings fail during compilation.
 
+`Database` owns the connection and transaction. `OrmContext<Schema>` borrows
+that database; it does not own a connection or cache a backend. Creating or
+copying a context requires no allocation. A context can be created before
+connecting, copied, moved, or assigned to another database's context of the same
+schema. Model operations require a connected database.
+
+The database must outlive every context that refers to it. Contexts cannot be
+default constructed or obtained from a temporary or const database. Destroying
+a context leaves the connection and transaction open. Disconnecting rolls back
+the transaction; existing contexts work again after reconnecting, using the
+current backend. The session is shared, so contexts do not enable concurrent
+access to a database.
+
+`orm::Schema<...>` describes a closed set of C++ models and their relations. It
+does not select a PostgreSQL namespace or verify the physical database layout.
+
 The remaining fragments are independent examples. In each case, the
-`database` object's schema must contain every model named by that operation.
+`context` object's schema must contain every model named by that operation.
 
 Automatic selection requires exactly one registered backend to accept the
 connection string. Select a known backend explicitly when desired:
@@ -58,7 +75,8 @@ passfile/`PGPASSFILE` for credentials that cannot be represented safely.
 
 Use `isConnected()` and `getBackendType()` to inspect lifecycle state. Calling
 `disconnect()` rolls back an active transaction before closing the session; the
-same `Database` object can then connect again. A `Database` is intentionally
+same `Database` object can then connect again; existing ORM contexts use its new
+session and backend. A `Database` is intentionally
 neither copyable nor movable because an active transaction is tied to its SOCI
 session.
 
@@ -96,7 +114,7 @@ struct ObjectModel
     std::string updated_at;
 };
 
-database.createTable<ObjectModel>();
+context.createTable<ObjectModel>();
 ```
 
 ## Delete table
@@ -104,7 +122,7 @@ database.createTable<ObjectModel>();
 To delete a table from the database, use `deleteTable` method and pass model as template argument:
 
 ```cpp
-database.deleteTable<ObjectModel>();
+context.deleteTable<ObjectModel>();
 ```
 
 ## Create and delete relation tables
@@ -114,9 +132,9 @@ Create both endpoint tables first, then create junction tables from the owning
 model:
 
 ```cpp
-database.createTable<User>();
-database.createTable<Role>();
-database.createRelationTables<User>();
+context.createTable<User>();
+context.createTable<Role>();
+context.createRelationTables<User>();
 ```
 
 `createRelationTables<T>()` creates only junction tables owned by `T`. It is a
@@ -126,9 +144,9 @@ are safe. Endpoint tables must already exist.
 Drop junction tables before either endpoint table:
 
 ```cpp
-database.deleteRelationTables<User>();
-database.deleteTable<Role>();
-database.deleteTable<User>();
+context.deleteRelationTables<User>();
+context.deleteTable<Role>();
+context.deleteTable<User>();
 ```
 
 `deleteRelationTables<T>()` is also idempotent and affects only junction tables
@@ -145,7 +163,7 @@ std::vector<ObjectModel> objects{
     {2, "name2", "email2", "password2", "created_at2", "updated_at2"}
 };
 
-database.insert(objects);
+context.insert(objects);
 ```
 
 You can also insert single object:
@@ -153,7 +171,7 @@ You can also insert single object:
 ```cpp
 ObjectModel object{1, "name", "email", "password", "created_at", "updated_at"};
 
-database.insert(object);
+context.insert(object);
 ```
 
 For models with an auto-increment primary key, the generated `INSERT` statement omits that primary-key column and
@@ -169,8 +187,8 @@ struct User
         orm::autoIncrement<&User::id>();
 };
 
-database.createTable<User>();
-database.insert(User{0, "Ann"});
+context.createTable<User>();
+context.insert(User{0, "Ann"});
 ```
 
 `insert` does not mutate the passed object. Select the row after insertion if you need the generated id.
@@ -190,7 +208,7 @@ struct User
     std::optional<Profile> profile;
 };
 
-database.insert(User{1, std::nullopt});
+context.insert(User{1, std::nullopt});
 ```
 
 `OneToMany` and `ManyToMany` wrapper fields are ignored by `insert`. Endpoint
@@ -205,8 +223,8 @@ Many-to-many mutations add or remove one junction row:
 User user{1, "Ada"};
 Role admin{10, "admin"};
 
-std::size_t linked = database.link<&User::roles>(user, admin);
-std::size_t unlinked = database.unlink<&User::roles>(user, admin);
+std::size_t linked = context.link<&User::roles>(user, admin);
+std::size_t unlinked = context.unlink<&User::roles>(user, admin);
 ```
 
 Each operation is idempotent: it returns `1` when the relation changed and `0`
@@ -216,8 +234,8 @@ be called through an inverse many-to-many field.
 For one-to-many, select the collection member in the template argument and pass the parent and child:
 
 ```cpp
-std::size_t assigned = database.link<&Author::books>(author, book);
-std::size_t detached = database.unlink<&Author::books>(author, book);
+std::size_t assigned = context.link<&Author::books>(author, book);
+std::size_t detached = context.unlink<&Author::books>(author, book);
 ```
 
 `link` updates the child's mapped foreign key, including moving it from another
@@ -246,7 +264,7 @@ query.where(col<&ObjectModel::name>().like("name%"))
      .orderBy(asc(col<&ObjectModel::id>()))
      .limit(10);
 
-auto queriedObjects = database.select(query);
+auto queriedObjects = context.select(query);
 ```
 
 PostgreSQL rejects full-model `GROUP BY`/`HAVING` queries before SQL execution,
@@ -265,7 +283,7 @@ update.set(col<&ObjectModel::email>(), "new-email@example.com")
       .set(col<&ObjectModel::updated_at>(), "updated_at")
       .where(col<&ObjectModel::id>() == 1);
 
-std::size_t updatedRows = database.update(update);
+std::size_t updatedRows = context.update(update);
 ```
 
 Use `std::nullopt` to store `NULL` in nullable columns:
@@ -290,7 +308,7 @@ To delete rows, call `remove` with the model type and a required predicate:
 ```cpp
 using namespace orm::query;
 
-std::size_t removedRows = database.remove<ObjectModel>(col<&ObjectModel::id>() == 1);
+std::size_t removedRows = context.remove<ObjectModel>(col<&ObjectModel::id>() == 1);
 ```
 
 `remove` returns the number of affected rows. There is no unfiltered public delete-row API.
@@ -298,12 +316,33 @@ std::size_t removedRows = database.remove<ObjectModel>(col<&ObjectModel::id>() =
 ## Transactions
 
 Start a transaction with `beginTransaction`, then call `commitTransaction` or
-`rollbackTransaction`:
+`rollbackTransaction` on the database. All contexts obtained from that database
+participate in the same transaction:
+
+```cpp
+struct AuditEntry
+{
+    int id;
+    std::string action;
+};
+
+using AuditSchema = orm::Schema<AuditEntry>;
+auto audit = database.orm<AuditSchema>();
+context.createTable<User>();
+audit.createTable<AuditEntry>();
+
+database.beginTransaction();
+context.insert(User{1});
+audit.insert(AuditEntry{1, "created user"});
+database.commitTransaction();
+```
+
+For a single context:
 
 ```cpp
 database.beginTransaction();
 
-database.insert(objects);
+context.insert(objects);
 
 database.commitTransaction();
 ```
@@ -313,7 +352,7 @@ or:
 ```cpp
 database.beginTransaction();
 
-database.insert(objects);
+context.insert(objects);
 
 database.rollbackTransaction();
 ```

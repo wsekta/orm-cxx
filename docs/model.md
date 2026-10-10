@@ -39,12 +39,13 @@ Every database is bound to a closed set of complete model types:
 import orm;
 
 using AppSchema = orm::Schema<User>;
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 ```
 
 The schema validates each model and the complete relation graph at compile
 time. A model operation fails to compile when its type is absent from the
-database's schema. Include every to-one and collection relation target in the
+ORM context's schema. Include every to-one and collection relation target in the
 same schema, even when only one endpoint is queried directly.
 
 ## Supported field types
@@ -319,7 +320,8 @@ Declare the complete relation graph in one schema:
 
 ```cpp
 using AppSchema = orm::Schema<Author, Book, User, Role>;
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 ```
 
 Collection fields are omitted from base-table DDL, insert statements, and

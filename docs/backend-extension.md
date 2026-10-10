@@ -37,7 +37,7 @@ registry into `Database`:
 ```cpp
 orm::db::CommandGeneratorFactory backends;
 backends.registerBackend(std::make_unique<MyBackend>());
-orm::Database<orm::Schema<>> database{std::move(backends)};
+orm::Database database{std::move(backends)};
 ```
 
 The registry and its providers become owned by the database object. In-tree

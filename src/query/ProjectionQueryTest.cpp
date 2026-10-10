@@ -135,7 +135,7 @@ TEST(ProjectionQueryTest, shouldStoreProjectionDataAndSupportChaining)
         .offset(5)
         .disableJoining();
 
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
 
     ASSERT_EQ(data.projections.size(), 2);
     EXPECT_EQ(data.projections[0].resultField, "id");
@@ -164,7 +164,7 @@ TEST(ProjectionQueryTest, shouldStoreGroupByAndHavingData)
         .andHaving(avg(col<&models::ModelWithId::field1>()) >= 10.0)
         .orHaving(max(col<&models::ModelWithId::id>()) == 3);
 
-    const auto& data = orm::FakeDatabase::getSelectSpec(query);
+    const auto& data = orm::detail::QueryTestAccess::getSelectSpec(query);
 
     ASSERT_EQ(data.groupBy.size(), 1);
     EXPECT_EQ(data.groupBy[0].getPath(), "field2");

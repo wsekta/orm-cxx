@@ -237,7 +237,7 @@ TEST_P(SimpleModelTest, shouldExecuteInsertQueryAndSelectQueryWithModelWithAllIn
 TEST_P(SimpleModelTest, shouldRejectUnsigned64BitInsertOutsideBackendValueLimit)
 {
     createTable<models::ModelWithAllInts>();
-    const auto maximum = database.getBackendCapabilities().valueLimits.maxUnsignedLongLong;
+    const auto maximum = connection.getBackendCapabilities().valueLimits.maxUnsignedLongLong;
 
     if (not maximum.has_value() or maximum.value() == std::numeric_limits<unsigned long long>::max())
     {

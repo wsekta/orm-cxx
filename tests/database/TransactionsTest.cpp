@@ -32,11 +32,11 @@ TEST_P(TransactionsTest, insertInCommitedTransaction_shouldInsertObjects)
     }
     query.orderBy(orm::query::asc(orm::query::col<&models::SomeDataModel::field1>()));
 
-    database.beginTransaction();
+    connection.beginTransaction();
 
     database.insert(models);
 
-    database.commitTransaction();
+    connection.commitTransaction();
 
     auto returnedModels = database.select(query);
 
@@ -55,11 +55,11 @@ TEST_P(TransactionsTest, insertInRolledBackTransaction_shouldNotInsertObjects)
     auto models = orm::generateSomeDataModels<models::SomeDataModel>(modelCount);
     orm::Query<models::SomeDataModel> query;
 
-    database.beginTransaction();
+    connection.beginTransaction();
 
     database.insert(models);
 
-    database.rollbackTransaction();
+    connection.rollbackTransaction();
 
     auto returnedModels = database.select(query);
 
@@ -68,11 +68,11 @@ TEST_P(TransactionsTest, insertInRolledBackTransaction_shouldNotInsertObjects)
 
 TEST_P(TransactionsTest, beginTransactionWithActiveTransaction_shouldThrowTransactionError)
 {
-    database.beginTransaction();
+    connection.beginTransaction();
 
     try
     {
-        database.beginTransaction();
+        connection.beginTransaction();
         FAIL() << "Expected DatabaseError";
     }
     catch (const orm::DatabaseError& error)
@@ -87,7 +87,7 @@ TEST_P(TransactionsTest, commitWithoutActiveTransaction_shouldThrowTransactionEr
 {
     try
     {
-        database.commitTransaction();
+        connection.commitTransaction();
         FAIL() << "Expected DatabaseError";
     }
     catch (const orm::DatabaseError& error)
@@ -102,7 +102,7 @@ TEST_P(TransactionsTest, rollbackWithoutActiveTransaction_shouldThrowTransaction
 {
     try
     {
-        database.rollbackTransaction();
+        connection.rollbackTransaction();
         FAIL() << "Expected DatabaseError";
     }
     catch (const orm::DatabaseError& error)
@@ -115,14 +115,14 @@ TEST_P(TransactionsTest, rollbackWithoutActiveTransaction_shouldThrowTransaction
 
 TEST_P(TransactionsTest, disconnectWithActiveTransaction_shouldClearTransactionState)
 {
-    database.beginTransaction();
+    connection.beginTransaction();
 
-    ASSERT_NO_THROW(database.disconnect());
-    EXPECT_FALSE(database.isConnected());
+    ASSERT_NO_THROW(connection.disconnect());
+    EXPECT_FALSE(connection.isConnected());
 
-    ASSERT_NO_THROW(database.connect(GetParam().type, GetParam().connectionString));
-    ASSERT_NO_THROW(database.beginTransaction());
-    EXPECT_NO_THROW(database.rollbackTransaction());
+    ASSERT_NO_THROW(connection.connect(GetParam().type, GetParam().connectionString));
+    ASSERT_NO_THROW(connection.beginTransaction());
+    EXPECT_NO_THROW(connection.rollbackTransaction());
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, TransactionsTest, backendTestConfigs, backendTestName);

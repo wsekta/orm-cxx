@@ -98,6 +98,6 @@ TEST(PostgresqlDialectTest, rejectsRawParameterNamesThatCannotBeRenderedAsPostgr
     query.where(orm::query::raw<models::ModelWithOneField>("field1 = :bad-name", orm::query::param("bad-name", 1)));
 
     EXPECT_THROW((void)command.select(orm::modelView<models::Schema, models::ModelWithOneField>(),
-                                      orm::FakeDatabase::getSelectSpec(query)),
+                                      orm::detail::QueryTestAccess::getSelectSpec(query)),
                  std::invalid_argument);
 }

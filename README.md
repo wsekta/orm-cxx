@@ -73,20 +73,21 @@ int main()
 {
     // connect with standard connection string
     using AppSchema = orm::Schema<ObjectModel, User>;
-    orm::Database<AppSchema> database;
+    orm::Database database;
+    auto context = database.orm<AppSchema>();
     database.connect("sqlite3://test.db");
 
     // drop table if exists
-    database.deleteTable<ObjectModel>();
+    context.deleteTable<ObjectModel>();
 
     // create table in database
-    database.createTable<ObjectModel>();
-    database.createTable<User>();
+    context.createTable<ObjectModel>();
+    context.createTable<User>();
 
     // create objects and insert them into table
     std::vector<ObjectModel> objects{{1, "test"}, {2, "text"}};
-    database.insert(objects);
-    database.insert(User{0, "Ann"});
+    context.insert(objects);
+    context.insert(User{0, "Ann"});
 
     // define select query with builder pattern
     using namespace orm::query;
@@ -98,7 +99,7 @@ int main()
          .offset(5);
 
     // execute query
-    auto queriedObjects = database.select(query);
+    auto queriedObjects = context.select(query);
 
     return 0;
 }
@@ -122,11 +123,12 @@ typed argument slots and SQL reuse for SQLite and PostgreSQL:
 ```cpp
 struct PlanUser { int id; int age; };
 using PlanSchema = orm::Schema<PlanUser>;
-orm::Database<PlanSchema> database;
+orm::Database database;
+auto context = database.orm<PlanSchema>();
 // Connect and populate the table before execution.
 constexpr auto adults = orm::query::select<PlanUser>()
     .where(orm::query::col<&PlanUser::age>() >= orm::query::param<int, 0>());
-auto rows = database.select(adults, 18);
+auto rows = context.select(adults, 18);
 ```
 
 Expression `.dynamic()` conversions provide mutable query builders for queries
@@ -148,7 +150,8 @@ struct SearchUser
 };
 
 using SearchSchema = orm::Schema<SearchUser>;
-orm::Database<SearchSchema> database;
+orm::Database database;
+auto context = database.orm<SearchSchema>();
 database.connect("sqlite3://test.db");
 
 orm::Query<SearchUser> query;
@@ -158,7 +161,7 @@ query.where((col<&SearchUser::age>() >= 18 && col<&SearchUser::name>().like("Ann
      .offset(40)
      .distinct();
 
-auto users = database.select(query);
+auto users = context.select(query);
 ```
 
 Values are passed as SOCI bind parameters. For advanced cases, raw SQL fragments can be used with explicit parameters:
@@ -179,7 +182,8 @@ keyword/value connection payload after the `postgresql://` selector:
 
 ```cpp
 using AppSchema = orm::Schema<>;
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 database.connect(
     "postgresql://host=localhost port=5432 dbname=application user=application password=secret");
 ```
@@ -256,13 +260,14 @@ struct Book
 };
 
 using RelationsSchema = orm::Schema<Author, Book>;
-orm::Database<RelationsSchema> database;
+orm::Database database;
+auto context = database.orm<RelationsSchema>();
 
 orm::Query<Author> query;
 query.include<&Author::books>()
      .where(orm::query::any<&Author::books>(orm::query::col<&Book::title>().like("C++%")));
 
-auto authors = database.select(query);
+auto authors = context.select(query);
 ```
 
 Many-to-many owning mappings use

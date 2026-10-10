@@ -457,9 +457,9 @@ TEST_P(CollectionRelationDatabaseTest, relationMutation_shouldParticipateInExpli
     database.insert(user);
     database.insert(role);
 
-    database.beginTransaction();
+    connection.beginTransaction();
     ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
-    database.rollbackTransaction();
+    connection.rollbackTransaction();
 
     orm::Query<collection_models::User> query;
     query.where(orm::query::exists<&collection_models::User::roles>());
@@ -540,7 +540,8 @@ TEST_P(CollectionRelationDatabaseTest, includeMetadata_shouldMatchCollectionWrap
 
 TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnection_shouldReportNotConnected)
 {
-    orm::Database<collection_models::Schema> disconnected;
+    orm::Database disconnectedConnection;
+    orm::OrmContext<collection_models::Schema> disconnected = disconnectedConnection.orm<collection_models::Schema>();
 
     try
     {
@@ -556,11 +557,12 @@ TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnec
 
 TEST(CollectionRelationDatabaseStandaloneTest, relationTableLifecycleWithoutOwnedJunctionShouldBeNoOp)
 {
-    orm::Database<collection_models::Schema> disconnected;
+    orm::Database disconnectedConnection;
+    orm::OrmContext<collection_models::Schema> disconnected = disconnectedConnection.orm<collection_models::Schema>();
 
     EXPECT_NO_THROW(disconnected.createRelationTables<collection_models::Role>());
     EXPECT_NO_THROW(disconnected.deleteRelationTables<collection_models::Role>());
-    EXPECT_FALSE(disconnected.isConnected());
+    EXPECT_FALSE(disconnectedConnection.isConnected());
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationDatabaseTest, backendTestConfigs, backendTestName);

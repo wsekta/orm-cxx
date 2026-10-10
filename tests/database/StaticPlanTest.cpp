@@ -56,7 +56,7 @@ TEST_P(StaticPlanTest, fullModelGroupingFollowsTheBackendCapability)
 {
     constexpr auto plan =
         select<User>().groupBy(col<&User::age>()).having(countAll<User>() > 0).orderBy(asc(col<&User::age>()));
-    if (database.getBackendCapabilities().query.fullModelGrouping)
+    if (connection.getBackendCapabilities().query.fullModelGrouping)
     {
         const auto result = database.select(plan);
         EXPECT_EQ(ids(result), (std::vector<int>{3, 1, 2}));
@@ -391,17 +391,35 @@ struct ObserverBundle
         backend = provider.get();
         orm::db::CommandGeneratorFactory factory;
         factory.registerBackend(std::move(provider));
-        database = std::make_unique<static_plan_models::Database>(std::move(factory));
-        database->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
+        connection = std::make_unique<orm::Database>(std::move(factory));
+        database = std::make_unique<static_plan_models::Context>(connection->orm<static_plan_models::Schema>());
+        connection->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
         database->createTable<Profile>();
         database->createTable<User>();
         database->insert(User{1, 18, "Ada", {}, {}, {}});
     }
 
     ObservedBackend* backend{};
-    std::unique_ptr<static_plan_models::Database> database;
+    std::unique_ptr<orm::Database> connection;
+    std::unique_ptr<static_plan_models::Context> database;
 };
 } // namespace
+
+TEST(StaticPlanRendererTest, existingContextUsesNewBackendAfterReconnect)
+{
+    ObserverBundle bundle{std::make_unique<CachedObservedBackend>()};
+    auto context = *bundle.database;
+    constexpr auto byId = select<User>().where(col<&User::id>() == param<int, 0>());
+    EXPECT_EQ(context.select(byId, 1).size(), 1);
+    bundle.connection->disconnect();
+    bundle.connection->connect(orm::db::BackendType::Sqlite, "sqlite3://:memory:");
+    context.createTable<Profile>();
+    context.createTable<User>();
+    context.insert(User{2, 21, "Grace", {}, {}, {}});
+    EXPECT_EQ(bundle.connection->getBackendType(), orm::db::BackendType::Sqlite);
+    EXPECT_TRUE(context.select(byId, 1).empty());
+    EXPECT_EQ(context.select(byId, 2).size(), 1);
+}
 
 TEST(StaticPlanRendererTest, supportedStaticPlansBypassTheRuntimeCommandGenerator)
 {

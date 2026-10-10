@@ -7,7 +7,7 @@ import orm;
 using namespace orm::query;
 using namespace typed_query_models;
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     auto plan = select<User>().where(col<&User::age>().in(param<std::array<int, 2>, 0>()));

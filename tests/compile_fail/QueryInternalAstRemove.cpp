@@ -18,7 +18,7 @@ import :database;
 using namespace orm::query;
 using namespace typed_query_models;
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     (void)database.remove<User>(detail::col("missing") == 1);

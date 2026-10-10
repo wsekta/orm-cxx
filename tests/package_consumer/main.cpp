@@ -82,7 +82,8 @@ int main()
         (void)projectionPlan.toDynamic(1);
         (void)removePlan.toDynamic(1);
 
-        orm::Database<PackageSchema> database;
+        orm::Database database;
+        auto context = database.orm<PackageSchema>();
         const orm::db::CommandGeneratorFactory factory;
         const auto* sqlite = factory.findBackend("sqlite3://:memory:");
         const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
@@ -100,34 +101,34 @@ int main()
         if constexpr (orm::config::sqliteBackendEnabled)
         {
             database.connect("sqlite3://:memory:");
-            database.createTable<PackageModel>();
-            database.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
+            context.createTable<PackageModel>();
+            context.insert(std::vector<PackageModel>{{1, "first"}, {2, "second"}});
 
-            auto rows = database.select(selectPlan, 1);
+            auto rows = context.select(selectPlan, 1);
             if (rows.size() != 1 or rows.front().name != "first")
             {
                 return 3;
             }
 
-            if (database.update(updatePlan, std::string{"updated"}, 1) != 1)
+            if (context.update(updatePlan, std::string{"updated"}, 1) != 1)
             {
                 return 4;
             }
-            rows = database.select(query);
+            rows = context.select(query);
             if (rows.size() != 1 or rows.front().name != "updated")
             {
                 return 5;
             }
-            const auto summaries = database.select(projectionPlan, 1);
+            const auto summaries = context.select(projectionPlan, 1);
             if (summaries.size() != 1 or summaries.front().name != "updated")
             {
                 return 8;
             }
-            if (database.remove(removePlan, 1) != 1 or not database.select(query).empty())
+            if (context.remove(removePlan, 1) != 1 or not context.select(query).empty())
             {
                 return 6;
             }
-            database.deleteTable<PackageModel>();
+            context.deleteTable<PackageModel>();
             database.disconnect();
         }
         return 0;

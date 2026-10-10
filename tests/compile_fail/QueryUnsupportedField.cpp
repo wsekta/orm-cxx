@@ -13,7 +13,7 @@ struct Unsupported
     std::vector<int> values;
 };
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     (void)col<&Unsupported::values>();

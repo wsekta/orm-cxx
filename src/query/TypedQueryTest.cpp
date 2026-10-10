@@ -153,7 +153,7 @@ TEST(TypedQueryTest, nullCStringValuesFailBeforeBinding)
 
     orm::Update<User> update;
     EXPECT_THROW((void)update.set(col<&User::email>(), absent), std::invalid_argument);
-    EXPECT_TRUE(orm::FakeDatabase::getUpdateSpec(update).assignments.empty());
+    EXPECT_TRUE(orm::detail::QueryTestAccess::getUpdateSpec(update).assignments.empty());
 }
 
 TEST(TypedQueryTest, nullableFieldAndNullableRelationProduceNullExpressions)
@@ -323,7 +323,7 @@ TEST(TypedQueryTest, nullableAssignmentsStorePresentAndAbsentOptionals)
         .set(col<&User::rank>(), std::nullopt)
         .set(col<&User::email>(), "Ada")
         .where(col<&User::id>() == 1);
-    const auto& data = orm::FakeDatabase::getUpdateSpec(update);
+    const auto& data = orm::detail::QueryTestAccess::getUpdateSpec(update);
     ASSERT_EQ(data.assignments.size(), 4);
     ASSERT_TRUE(data.assignments[0].value.value.has_value());
     EXPECT_EQ(std::get<int>(data.assignments[0].value.value->get()), 2);
@@ -336,29 +336,30 @@ TEST(TypedQueryTest, updateCompositionAcceptsInitialAndExistingPredicates)
 {
     orm::Update<User> conjunction;
     conjunction.andWhere(col<&User::id>() == 1);
-    ASSERT_TRUE(orm::FakeDatabase::getUpdateSpec(conjunction).predicate.has_value());
+    ASSERT_TRUE(orm::detail::QueryTestAccess::getUpdateSpec(conjunction).predicate.has_value());
     EXPECT_TRUE(std::holds_alternative<ast::ComparisonExpression>(
-        orm::FakeDatabase::getUpdateSpec(conjunction).predicate->getNode().expression));
+        orm::detail::QueryTestAccess::getUpdateSpec(conjunction).predicate->getNode().expression));
     conjunction.andWhere(col<&User::age>() >= 18);
-    EXPECT_EQ(
-        std::get<ast::LogicalExpression>(orm::FakeDatabase::getUpdateSpec(conjunction).predicate->getNode().expression)
-            .logicalOperator,
-        ast::LogicalOperator::And);
+    EXPECT_EQ(std::get<ast::LogicalExpression>(
+                  orm::detail::QueryTestAccess::getUpdateSpec(conjunction).predicate->getNode().expression)
+                  .logicalOperator,
+              ast::LogicalOperator::And);
 
     orm::Update<User> disjunction;
     disjunction.orWhere(col<&User::id>() == 1);
-    ASSERT_TRUE(orm::FakeDatabase::getUpdateSpec(disjunction).predicate.has_value());
+    ASSERT_TRUE(orm::detail::QueryTestAccess::getUpdateSpec(disjunction).predicate.has_value());
     EXPECT_TRUE(std::holds_alternative<ast::ComparisonExpression>(
-        orm::FakeDatabase::getUpdateSpec(disjunction).predicate->getNode().expression));
+        orm::detail::QueryTestAccess::getUpdateSpec(disjunction).predicate->getNode().expression));
     disjunction.orWhere(col<&User::id>() == 2);
-    EXPECT_EQ(
-        std::get<ast::LogicalExpression>(orm::FakeDatabase::getUpdateSpec(disjunction).predicate->getNode().expression)
-            .logicalOperator,
-        ast::LogicalOperator::Or);
+    EXPECT_EQ(std::get<ast::LogicalExpression>(
+                  orm::detail::QueryTestAccess::getUpdateSpec(disjunction).predicate->getNode().expression)
+                  .logicalOperator,
+              ast::LogicalOperator::Or);
 
     disjunction.where(col<&User::id>() == 3);
-    EXPECT_EQ(std::get<int>(std::get<ast::ComparisonExpression>(
-                                orm::FakeDatabase::getUpdateSpec(disjunction).predicate->getNode().expression)
-                                .value.get()),
-              3);
+    EXPECT_EQ(
+        std::get<int>(std::get<ast::ComparisonExpression>(
+                          orm::detail::QueryTestAccess::getUpdateSpec(disjunction).predicate->getNode().expression)
+                          .value.get()),
+        3);
 }

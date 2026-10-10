@@ -46,23 +46,24 @@ int main() // NOLINT(bugprone-exception-escape)
 
     // connect with standard connection string
     using AppSchema = orm::Schema<ObjectModel>;
-    orm::Database<AppSchema> database;
+    orm::Database database;
+    auto context = database.orm<AppSchema>();
     database.connect("sqlite3://test.db");
 
     // drop table if exists
-    database.deleteTable<ObjectModel>();
+    context.deleteTable<ObjectModel>();
 
     // create table in database
-    database.createTable<ObjectModel>();
+    context.createTable<ObjectModel>();
 
     // create objects and insert them into table
     std::vector<ObjectModel> objects{{1, "test-1"}, {2, "test-2"}, {std::nullopt, "text"}};
-    database.insert(objects);
+    context.insert(objects);
 
     // full-model select returns std::vector<ObjectModel>
     orm::Query<ObjectModel> fullQuery;
     fullQuery.limit(10).offset(5);
-    auto queriedObjects = database.select(fullQuery);
+    auto queriedObjects = context.select(fullQuery);
 
     // grouping and HAVING keep the full-model result type
     orm::Query<ObjectModel> groupedQuery;
@@ -70,13 +71,13 @@ int main() // NOLINT(bugprone-exception-escape)
         .groupBy(col<&ObjectModel::field2>())
         .having(countAll<ObjectModel>() > 0)
         .andHaving(avg(col<&ObjectModel::field1>()) >= 1.0);
-    auto groupedObjects = database.select(groupedQuery);
+    auto groupedObjects = context.select(groupedQuery);
 
     // projection select returns a flat DTO
     orm::ProjectionQuery<ObjectModel, ObjectSummary> summaryQuery;
     summaryQuery.project(as("number", col<&ObjectModel::field1>()), as("name", col<&ObjectModel::field2>()))
         .orderBy(asc(col<&ObjectModel::field2>()));
-    auto summaries = database.select(summaryQuery);
+    auto summaries = context.select(summaryQuery);
 
     // aggregate projection returns a flat DTO with aggregate fields
     orm::ProjectionQuery<ObjectModel, ObjectStats> statsQuery;
@@ -85,7 +86,7 @@ int main() // NOLINT(bugprone-exception-escape)
                  as("averageNumber", avg(col<&ObjectModel::field1>())))
         .groupBy(col<&ObjectModel::field2>())
         .having(countAll<ObjectModel>() > 0);
-    auto stats = database.select(statsQuery);
+    auto stats = context.select(statsQuery);
 
     return 0;
 }

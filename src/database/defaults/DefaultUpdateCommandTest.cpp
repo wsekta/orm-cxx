@@ -30,7 +30,7 @@ template <typename T>
 auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command,
                   orm::tests::RuntimeUpdate<T>& update) -> orm::db::Statement
 {
-    return command.update(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getUpdateSpec(update));
+    return command.update(orm::modelView<models::Schema, T>(), orm::detail::QueryTestAccess::getUpdateSpec(update));
 }
 } // namespace
 

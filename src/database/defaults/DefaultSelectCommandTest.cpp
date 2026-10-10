@@ -83,14 +83,14 @@ template <typename T>
 auto select(orm::db::commands::DefaultSelectCommand& command,
             orm::tests::RuntimeQuery<T>& query) -> orm::db::SelectStatement
 {
-    return command.select(orm::modelView<models::Schema, T>(), orm::FakeDatabase::getSelectSpec(query));
+    return command.select(orm::modelView<models::Schema, T>(), orm::detail::QueryTestAccess::getSelectSpec(query));
 }
 
 template <typename Source, typename Result>
 auto select(orm::db::commands::DefaultSelectCommand& command,
             orm::tests::RuntimeProjectionQuery<Source, Result>& query) -> orm::db::SelectStatement
 {
-    return command.select(orm::modelView<models::Schema, Source>(), orm::FakeDatabase::getSelectSpec(query));
+    return command.select(orm::modelView<models::Schema, Source>(), orm::detail::QueryTestAccess::getSelectSpec(query));
 }
 
 auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& command,

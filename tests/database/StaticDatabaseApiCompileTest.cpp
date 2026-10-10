@@ -37,18 +37,30 @@ struct EmployeeName
 };
 
 using ApplicationSchema = orm::Schema<Department, Employee>;
-using ApplicationDatabase = orm::Database<ApplicationSchema>;
+using ApplicationContext = orm::OrmContext<ApplicationSchema>;
 
 static_assert(ApplicationSchema::contains<Department>);
 static_assert(ApplicationSchema::contains<Employee>);
 static_assert(not ApplicationSchema::contains<EmployeeName>);
-static_assert(std::is_default_constructible_v<ApplicationDatabase>);
-static_assert(std::same_as<ApplicationDatabase::Payload<Employee>,
-                           orm::db::binding::BindingPayload<Employee, ApplicationSchema>>);
+static_assert(not std::is_default_constructible_v<ApplicationContext>);
+static_assert(std::is_default_constructible_v<orm::Database>);
+static_assert(not std::is_copy_constructible_v<orm::Database>);
+static_assert(not std::is_move_constructible_v<orm::Database>);
+static_assert(not std::is_copy_assignable_v<orm::Database>);
+static_assert(not std::is_move_assignable_v<orm::Database>);
+static_assert(std::is_nothrow_copy_constructible_v<ApplicationContext>);
+static_assert(std::is_nothrow_move_constructible_v<ApplicationContext>);
+static_assert(std::is_nothrow_copy_assignable_v<ApplicationContext>);
+static_assert(std::is_nothrow_move_assignable_v<ApplicationContext>);
+static_assert(sizeof(ApplicationContext) == sizeof(orm::Database*));
+static_assert(std::same_as<decltype(std::declval<orm::Database&>().orm<ApplicationSchema>()), ApplicationContext>);
+static_assert(noexcept(std::declval<orm::Database&>().orm<ApplicationSchema>()));
+static_assert(
+    std::same_as<ApplicationContext::Payload<Employee>, orm::db::binding::BindingPayload<Employee, ApplicationSchema>>);
 
 // This function is intentionally not executed. Compiling it instantiates the
 // public schema-bound facade and both SOCI conversion directions.
-[[maybe_unused]] auto instantiateSchemaBoundApi(ApplicationDatabase& database, soci::values& values) -> void
+[[maybe_unused]] auto instantiateSchemaBoundApi(ApplicationContext& database, soci::values& values) -> void
 {
     orm::Query<Employee> query;
     (void)database.select(query);
@@ -67,7 +79,7 @@ static_assert(std::same_as<ApplicationDatabase::Payload<Employee>,
     database.createTable<Employee>();
     database.deleteTable<Employee>();
 
-    using Payload = ApplicationDatabase::Payload<Employee>;
+    using Payload = ApplicationContext::Payload<Employee>;
     Payload payload{};
     auto indicator = soci::i_ok;
     soci::type_conversion<Payload>::to_base(payload, values, indicator);

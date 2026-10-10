@@ -122,6 +122,23 @@ int main(int argc, char**)
         if (allocationCount.load() != 1)
             return 2;
 
+        orm::Database database;
+        orm::Database otherDatabase;
+        using EmptySchema = orm::Schema<>;
+        allocationCount.store(0);
+        countAllocations.store(true);
+        auto context = database.orm<EmptySchema>();
+        auto copiedContext = context;
+        auto movedContext = std::move(copiedContext);
+        movedContext = otherDatabase.orm<EmptySchema>();
+        copiedContext = movedContext;
+        (void)copiedContext;
+        countAllocations.store(false);
+        const auto contextAllocations = allocationCount.load();
+        std::cout << "Created, copied and rebound ORM contexts; allocations: " << contextAllocations << '\n';
+        if (contextAllocations != 0)
+            return 3;
+
         allocationCount.store(0);
         countAllocations.store(true);
         for (int i = 0; i < 1000; ++i)

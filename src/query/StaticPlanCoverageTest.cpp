@@ -35,8 +35,8 @@ TEST(StaticPlanCoverageTest, runtimeConstructionKeepsEverySelectClauseAndUniqueI
                           .include<&User::roles>();
     auto original = base.toDynamic();
     auto dynamic = plan.toDynamic(std::size_t{2}, std::size_t{1});
-    const auto& untouched = orm::FakeDatabase::getSelectSpec(original);
-    const auto& spec = orm::FakeDatabase::getSelectSpec(dynamic);
+    const auto& untouched = orm::detail::QueryTestAccess::getSelectSpec(original);
+    const auto& spec = orm::detail::QueryTestAccess::getSelectSpec(dynamic);
     EXPECT_TRUE(untouched.orderBy.empty());
     EXPECT_TRUE(untouched.includes.empty());
     ASSERT_EQ(spec.orderBy.size(), 1);
@@ -67,7 +67,7 @@ TEST(StaticPlanCoverageTest, runtimeProjectionReplacementAndInitialHavingKeepThe
                           .limit(std::size_t{3})
                           .offset(std::size_t{2});
     auto dynamic = plan.toDynamic();
-    const auto& spec = orm::FakeDatabase::getSelectSpec(dynamic);
+    const auto& spec = orm::detail::QueryTestAccess::getSelectSpec(dynamic);
     ASSERT_EQ(spec.projections.size(), 1);
     EXPECT_EQ(spec.projections.front().resultField, "name");
     ASSERT_TRUE(spec.having.has_value());
@@ -78,7 +78,7 @@ TEST(StaticPlanCoverageTest, runtimeProjectionReplacementAndInitialHavingKeepThe
     EXPECT_EQ(spec.offset, 2);
 
     auto firstOr = select<User>().orHaving(countAll<User>() > 0).toDynamic();
-    EXPECT_TRUE(orm::FakeDatabase::getSelectSpec(firstOr).having.has_value());
+    EXPECT_TRUE(orm::detail::QueryTestAccess::getSelectSpec(firstOr).having.has_value());
 }
 
 TEST(StaticPlanCoverageTest, runtimeRemoveConstructionProducesTheBoundPredicate)
@@ -98,7 +98,7 @@ TEST(StaticPlanCoverageTest, convertedPlansAcceptAdditionalRuntimeFilters)
     const std::string searchName{"Ada"};
     if (!searchName.empty())
         query.andWhere(col<&User::name>() == searchName);
-    const auto& predicate = orm::FakeDatabase::getSelectSpec(query).predicate;
+    const auto& predicate = orm::detail::QueryTestAccess::getSelectSpec(query).predicate;
     ASSERT_TRUE(predicate.has_value());
     const auto& logical = std::get<ast::LogicalExpression>(predicate->getNode().expression);
     EXPECT_EQ(logical.logicalOperator, ast::LogicalOperator::And);
@@ -108,7 +108,7 @@ TEST(StaticPlanCoverageTest, convertedPlansAcceptAdditionalRuntimeFilters)
 
     auto unfiltered = select<User>().toDynamic();
     unfiltered.andWhere(col<&User::name>() == searchName);
-    const auto& initialPredicate = orm::FakeDatabase::getSelectSpec(unfiltered).predicate;
+    const auto& initialPredicate = orm::detail::QueryTestAccess::getSelectSpec(unfiltered).predicate;
     ASSERT_TRUE(initialPredicate.has_value());
     EXPECT_EQ(std::get<ast::ComparisonExpression>(initialPredicate->getNode().expression).column.getPath(), "name");
 }

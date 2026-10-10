@@ -7,7 +7,7 @@ import orm;
 using namespace orm::query;
 using namespace typed_query_models;
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     (void)update<User>().where(col<&User::id>() == 1).toDynamic();

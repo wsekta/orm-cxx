@@ -28,6 +28,7 @@ set(ORM_CXX_TEST_SOURCES
     database/DatabaseValidationTest.cpp
     database/DatabaseErrorTest.cpp
     database/StaticDatabaseApiCompileTest.cpp
+    database/OrmContextTest.cpp
     database/StaticPlanTest.cpp
     database/StatementParameterBindingTest.cpp
     database/ProjectionQueryTest.cpp
@@ -102,16 +103,18 @@ else()
     set(orm_cxx_test_working_directory "${PROJECT_SOURCE_DIR}")
 endif()
 
+set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES WORKING_DIRECTORY "${orm_cxx_test_working_directory}")
+
 add_test(
     NAME orm-cxx-UT
     COMMAND
         orm-cxx-UT
-        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
+        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:DatabaseTest/OrmContextTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 add_test(
     NAME orm-cxx-sqlite-conformance
-    COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite
+    COMMAND orm-cxx-UT --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite:DatabaseTest/OrmContextTest.*/Sqlite
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(
@@ -123,7 +126,7 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
     add_test(
         NAME orm-cxx-postgresql-conformance
         COMMAND orm-cxx-UT
-                --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql
+                --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql:DatabaseTest/OrmContextTest.*/Postgresql
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     add_test(

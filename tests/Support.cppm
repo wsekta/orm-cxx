@@ -20,7 +20,7 @@ import :database;
 #include "tests/compile_fail/TypedQueryModels.hpp"
 #include "tests/database/DatabaseTest.hpp"
 #include "tests/ModelsDefinitions.hpp"
-#include "tests/utils/FakeDatabase.hpp"
 #include "tests/utils/GenerateModels.hpp"
+#include "tests/utils/QueryTestAccess.hpp"
 #include "tests/utils/RuntimeQueryBuilder.hpp"
 #include "tests/utils/SqlDialectTestDoubles.hpp"

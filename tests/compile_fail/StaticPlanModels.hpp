@@ -51,5 +51,5 @@ struct UserStats
 };
 
 using Schema = orm::Schema<User, Profile, Role>;
-using Database = orm::Database<Schema>;
+using Context = orm::OrmContext<Schema>;
 } // namespace static_plan_models

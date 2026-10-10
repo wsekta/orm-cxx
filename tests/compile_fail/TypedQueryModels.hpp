@@ -75,5 +75,5 @@ struct UserName
 };
 
 using Schema = orm::Schema<User, Profile, Role, Author, Book, Other>;
-using Database = orm::Database<Schema>;
+using Context = orm::OrmContext<Schema>;
 } // namespace typed_query_models

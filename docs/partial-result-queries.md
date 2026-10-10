@@ -12,7 +12,7 @@ Full-model selects keep the existing API and result type:
 
 ```cpp
 orm::Query<User> query;
-std::vector<User> users = database.select(query);
+std::vector<User> users = context.select(query);
 ```
 
 Partial-result selects use a separate query type:
@@ -56,7 +56,7 @@ orm::ProjectionQuery<User, UserSummary> query;
 query.project(as("id", col<&User::id>()),
               as("name", col<&User::displayName>()));
 
-std::vector<UserSummary> rows = database.select(query);
+std::vector<UserSummary> rows = context.select(query);
 ```
 
 ## Query behavior

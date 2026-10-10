@@ -9,7 +9,7 @@ using namespace typed_query_models;
 
 constexpr int User::*nullMember = nullptr;
 
-[[maybe_unused]] auto rejected(Database& database) -> void
+[[maybe_unused]] auto rejected(Context& database) -> void
 {
     (void)database;
     (void)col<nullMember>();

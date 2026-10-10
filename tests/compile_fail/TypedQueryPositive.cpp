@@ -92,7 +92,7 @@ static_assert(not std::is_constructible_v<TypedProjection<User>, detail::Project
 static_assert(not std::is_constructible_v<TypedAggregate<User, long long, false>, detail::AggregateExpression>);
 static_assert(not std::is_constructible_v<TypedAggregatePredicate<User>, detail::AggregatePredicate>);
 
-[[maybe_unused]] auto instantiateTypedApi(Database& database) -> void
+[[maybe_unused]] auto instantiateTypedApi(Context& database) -> void
 {
     instantiateFloatingValue<long double>();
     orm::Query<User> query;

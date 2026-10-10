@@ -107,7 +107,8 @@ int main()
         return 4;
     }
 
-    orm::Database<consumer_models::Schema> database;
+    orm::Database database;
+    auto context = database.orm<consumer_models::Schema>();
     orm::Query<consumer_models::ConsumerModel> query;
     query.where(orm::query::col<&consumer_models::ConsumerModel::id>() == 7)
         .orderBy(orm::query::asc(orm::query::col<&consumer_models::ConsumerModel::id>()));

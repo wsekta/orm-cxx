@@ -26,7 +26,7 @@ import :database;
 // database/DatabaseValidation.hpp
 namespace orm::detail
 {
-// These validators are shared by DatabaseCore's operations. Keeping them separate
+// These validators are shared by Database's operations. Keeping them separate
 // also lets tests exercise defensive checks with immutable malformed descriptors.
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireToOneTarget(model::ModelView owner, const model::ColumnView& column) -> model::ModelView;

@@ -73,13 +73,13 @@ struct Target
 
 using AcceptanceSchema = orm::Schema<collection_models::User, collection_models::Role, acceptance_models::AutoUser,
                                      acceptance_models::AutoRole, long_key_models::Owner, long_key_models::Target>;
-using AcceptanceDatabase = orm::Database<AcceptanceSchema>;
+using AcceptanceContext = orm::OrmContext<AcceptanceSchema>;
 
 namespace
 {
 struct DatabaseSqlMember
 {
-    using type = soci::session orm::DatabaseCore::*;
+    using type = soci::session orm::Database::*;
 
     friend auto get(DatabaseSqlMember) -> type;
 };
@@ -93,9 +93,9 @@ struct PrivateMemberAccess
     }
 };
 
-template struct PrivateMemberAccess<DatabaseSqlMember, &orm::DatabaseCore::sql>;
+template struct PrivateMemberAccess<DatabaseSqlMember, &orm::Database::sql>;
 
-auto sqlSession(AcceptanceDatabase& database) -> soci::session&
+auto sqlSession(orm::Database& database) -> soci::session&
 {
     return database.*get(DatabaseSqlMember{});
 }
@@ -120,7 +120,7 @@ private:
 };
 } // namespace
 
-class CollectionRelationAcceptanceDatabaseTest : public DatabaseTest<AcceptanceSchema>
+class CollectionRelationAcceptanceContextTest : public DatabaseTest<AcceptanceSchema>
 {
 protected:
     auto createUserRoleSchema() -> void
@@ -153,7 +153,7 @@ TEST(SqliteCollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAnd
               ");");
 }
 
-TEST_P(CollectionRelationAcceptanceDatabaseTest, manyToManyUsesReloadedAutoIncrementEndpointKeys)
+TEST_P(CollectionRelationAcceptanceContextTest, manyToManyUsesReloadedAutoIncrementEndpointKeys)
 {
     database.createTable<acceptance_models::AutoUser>();
     database.createTable<acceptance_models::AutoRole>();
@@ -182,7 +182,7 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, manyToManyUsesReloadedAutoIncre
     EXPECT_EQ(users[0].roles[0].id, roles[0].id);
 }
 
-TEST_P(CollectionRelationAcceptanceDatabaseTest, includeUsesOneCollectionQueryInsteadOfOneQueryPerParent)
+TEST_P(CollectionRelationAcceptanceContextTest, includeUsesOneCollectionQueryInsteadOfOneQueryPerParent)
 {
     createUserRoleSchema();
     constexpr int parentCount = 25;
@@ -201,7 +201,7 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeUsesOneCollectionQueryIn
     }
 
     const auto executedQueries = std::make_shared<std::vector<std::string>>();
-    auto& session = sqlSession(database);
+    auto& session = sqlSession(connection);
     const auto originalLogger = session.get_logger();
     session.set_logger(soci::logger{new QueryCountingLogger{executedQueries}});
 
@@ -218,7 +218,7 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeUsesOneCollectionQueryIn
     EXPECT_TRUE(executedQueries->at(1).starts_with("SELECT "));
 }
 
-TEST_P(CollectionRelationAcceptanceDatabaseTest, includeGroupsLongPrimaryKeysUsingSqlRepresentation)
+TEST_P(CollectionRelationAcceptanceContextTest, includeGroupsLongPrimaryKeysUsingSqlRepresentation)
 {
     database.createTable<long_key_models::Owner>();
     database.createTable<long_key_models::Target>();
@@ -241,4 +241,4 @@ TEST_P(CollectionRelationAcceptanceDatabaseTest, includeGroupsLongPrimaryKeysUsi
     EXPECT_EQ(owners[0].targets[0].id, target.id);
 }
 
-INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationAcceptanceDatabaseTest, backendTestConfigs, backendTestName);
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, CollectionRelationAcceptanceContextTest, backendTestConfigs, backendTestName);

@@ -46,11 +46,12 @@ struct User
 };
 
 using AppSchema = orm::Schema<User, Profile>;
-orm::Database<AppSchema> database;
+orm::Database database;
+auto context = database.orm<AppSchema>();
 database.connect("sqlite3://test.db");
 
 orm::Query<User> query;
-auto users = database.select(query);
+auto users = context.select(query);
 ```
 
 The fragments below use these models unless a section declares its own
@@ -80,7 +81,7 @@ query.include<&Author::books>()
      .orderBy(orm::query::asc(orm::query::col<&Author::id>()))
      .limit(20);
 
-std::vector<Author> authors = database.select(query);
+std::vector<Author> authors = context.select(query);
 ```
 
 After selection, every returned `books` wrapper has `isLoaded() == true`, even
@@ -331,7 +332,7 @@ query.project(as("id", col<&User::id>()),
      .where(col<&User::email>().isNotNull())
      .orderBy(asc(col<&User::id>()));
 
-std::vector<UserSummary> users = database.select(query);
+std::vector<UserSummary> users = context.select(query);
 ```
 
 Projection aliases must match the DTO field names. See
@@ -353,7 +354,7 @@ query.where(col<&User::active>() == true)
      .andHaving(avg(col<&User::age>()) >= 18.0)
      .orderBy(asc(col<&User::profile, &Profile::city>()));
 
-std::vector<User> users = database.select(query);
+std::vector<User> users = context.select(query);
 ```
 
 The result remains `std::vector<Model>`. Aggregate expressions are used only
@@ -404,7 +405,7 @@ query.project(as("city", col<&User::profile, &Profile::city>()),
      .having(countAll<User>() > 1)
      .andHaving(avg(col<&User::age>()) >= 18.0);
 
-std::vector<CityStats> stats = database.select(query);
+std::vector<CityStats> stats = context.select(query);
 ```
 
 Supported aggregate helpers are `count(col(...))`, `countAll<User>()`,
@@ -434,8 +435,8 @@ orm::Update<User> update;
 update.set(col<&User::email>(), "new-email@example.com")
       .where(col<&User::id>() == 1);
 
-auto updatedRows = database.update(update);
-auto removedRows = database.remove<User>(col<&User::email>().isNull());
+auto updatedRows = context.update(update);
+auto removedRows = context.remove<User>(col<&User::email>().isNull());
 ```
 
 Write predicates do not generate joins. They support direct model fields and related primary-key paths that can be mapped

@@ -231,9 +231,9 @@ namespace orm
 export
 {
 
-    class DatabaseCore;
-    template <typename SchemaType>
     class Database;
+    template <typename SchemaType>
+    class OrmContext;
 }
 namespace detail
 {
@@ -343,9 +343,9 @@ public:
     }
 
 private:
-    friend class orm::DatabaseCore;
-    template <typename>
     friend class orm::Database;
+    template <typename>
+    friend class orm::OrmContext;
 
     auto setLoaded(container_type values) -> void
     {

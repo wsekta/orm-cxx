@@ -34,6 +34,9 @@ endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
 orm_cxx_expect_compile_success(backend-provider-import-positive BackendProviderImportPositive.cpp)
+orm_cxx_expect_compile_failure(context-temporary-database OrmContextTemporaryDatabase.cpp "orm")
+orm_cxx_expect_compile_failure(context-const-database OrmContextConstDatabase.cpp "orm")
+orm_cxx_expect_compile_failure(context-missing-model OrmContextMissingModel.cpp "ORM_SCHEMA_MODEL_MISSING")
 
 if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND)
     orm_cxx_expect_compile_failure(disabled-sqlite-backend DisabledSqliteBackend.cpp "SqliteBackend")

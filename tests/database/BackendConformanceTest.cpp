@@ -207,11 +207,11 @@ class BackendConformanceTest : public DatabaseTest<conformance_models::Schema>
 
 TEST_P(BackendConformanceTest, connectionReportsSelectedBackendAndCoreCapabilities)
 {
-    ASSERT_TRUE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), GetParam().type);
+    ASSERT_TRUE(connection.isConnected());
+    EXPECT_EQ(connection.getBackendType(), GetParam().type);
 
-    const auto& capabilities = database.getBackendCapabilities();
-    EXPECT_EQ(&capabilities, &database.getBackendCapabilities());
+    const auto& capabilities = connection.getBackendCapabilities();
+    EXPECT_EQ(&capabilities, &connection.getBackendCapabilities());
 }
 
 TEST_P(BackendConformanceTest, supportedBackendAdvertisesRequiredCoreCapabilities)
@@ -221,7 +221,7 @@ TEST_P(BackendConformanceTest, supportedBackendAdvertisesRequiredCoreCapabilitie
         GTEST_SKIP() << "Experimental backends may advertise a partial capability profile";
     }
 
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     EXPECT_TRUE(capabilities.schema.createTableIfNotExists);
     EXPECT_TRUE(capabilities.schema.dropTableIfExists);
@@ -237,27 +237,30 @@ TEST_P(BackendConformanceTest, supportedBackendAdvertisesRequiredCoreCapabilitie
 
 TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBackend)
 {
-    orm::Database<conformance_models::Schema> detectedDatabase;
+    orm::Database detectedDatabaseConnection;
 
-    detectedDatabase.connect(testConnectionString());
+    detectedDatabaseConnection.connect(testConnectionString());
 
-    EXPECT_TRUE(detectedDatabase.isConnected());
-    EXPECT_EQ(detectedDatabase.getBackendType(), GetParam().type);
-    detectedDatabase.disconnect();
+    EXPECT_TRUE(detectedDatabaseConnection.isConnected());
+    EXPECT_EQ(detectedDatabaseConnection.getBackendType(), GetParam().type);
+    detectedDatabaseConnection.disconnect();
 }
 
 TEST_P(BackendConformanceTest, connectedDatabaseRejectsSecondConnect)
 {
-    expectDatabaseError([this]() { database.connect(testConnectionString()); },
+    expectDatabaseError([this]() { connection.connect(testConnectionString()); },
                         orm::DatabaseErrorCode::AlreadyConnected, GetParam().type, "connect");
-    EXPECT_TRUE(database.isConnected());
+    EXPECT_TRUE(connection.isConnected());
 }
 
 TEST_P(BackendConformanceTest, disconnectedDatabaseRejectsCapabilitiesAndOperations)
 {
-    orm::Database<conformance_models::Schema> disconnectedDatabase;
+    orm::Database disconnectedDatabaseConnection;
+    orm::OrmContext<conformance_models::Schema> disconnectedDatabase =
+        disconnectedDatabaseConnection.orm<conformance_models::Schema>();
 
-    expectDatabaseError([&disconnectedDatabase]() { (void)disconnectedDatabase.getBackendCapabilities(); },
+    expectDatabaseError([&disconnectedDatabaseConnection]()
+                        { (void)disconnectedDatabaseConnection.getBackendCapabilities(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");
     expectDatabaseError([&disconnectedDatabase]() { disconnectedDatabase.createTable<models::SomeDataModel>(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");
@@ -265,19 +268,19 @@ TEST_P(BackendConformanceTest, disconnectedDatabaseRejectsCapabilitiesAndOperati
 
 TEST_P(BackendConformanceTest, disconnectAllowsReconnect)
 {
-    database.disconnect();
-    EXPECT_FALSE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Empty);
+    connection.disconnect();
+    EXPECT_FALSE(connection.isConnected());
+    EXPECT_EQ(connection.getBackendType(), orm::db::BackendType::Empty);
 
-    database.connect(GetParam().type, testConnectionString());
+    connection.connect(GetParam().type, testConnectionString());
 
-    EXPECT_TRUE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), GetParam().type);
+    EXPECT_TRUE(connection.isConnected());
+    EXPECT_EQ(connection.getBackendType(), GetParam().type);
 }
 
 TEST_P(BackendConformanceTest, tableLifecycleIsIdempotent)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.schema.createTableIfNotExists or not supportsSomeDataModel(capabilities))
     {
@@ -305,7 +308,7 @@ TEST_P(BackendConformanceTest, tableLifecycleIsIdempotent)
 
 TEST_P(BackendConformanceTest, crudRoundTripsSupportedScalarValues)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canCreateAndDropSomeDataModel(capabilities))
     {
@@ -338,7 +341,7 @@ TEST_P(BackendConformanceTest, crudRoundTripsSupportedScalarValues)
 
 TEST_P(BackendConformanceTest, advertisedScalarTypesRoundTripAtDeclaredBoundaries)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     if (not canPopulateModelWithId(capabilities) or not supportsAllBasicTypes(capabilities))
     {
         GTEST_SKIP() << "The backend does not advertise the complete built-in scalar profile";
@@ -401,7 +404,7 @@ TEST_P(BackendConformanceTest, advertisedScalarTypesRoundTripAtDeclaredBoundarie
 
 TEST_P(BackendConformanceTest, preparedValuesPreserveInjectionLikeText)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     if (not canPopulateSomeDataModel(capabilities))
     {
         GTEST_SKIP() << "Schema/type/insert rejection is covered by other conformance tests";
@@ -422,7 +425,7 @@ TEST_P(BackendConformanceTest, preparedValuesPreserveInjectionLikeText)
 
 TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateModelWithId(capabilities))
     {
@@ -443,7 +446,7 @@ TEST_P(BackendConformanceTest, mappedTableAndColumnNamesRoundTrip)
 
 TEST_P(BackendConformanceTest, createTableRejectsNonPortablePhysicalBindNames)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not supportsModelWithId(capabilities) or not capabilities.schema.createTableIfNotExists)
     {
@@ -456,7 +459,7 @@ TEST_P(BackendConformanceTest, createTableRejectsNonPortablePhysicalBindNames)
 
 TEST_P(BackendConformanceTest, reservedTableAndColumnNamesRoundTrip)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     if (not canPopulateModelWithId(capabilities))
     {
         GTEST_SKIP() << "Schema/type/insert rejection is covered by other conformance tests";
@@ -476,7 +479,7 @@ TEST_P(BackendConformanceTest, reservedTableAndColumnNamesRoundTrip)
 
 TEST_P(BackendConformanceTest, compositePrimaryKeysFollowAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (supportsModelWithId(capabilities) and capabilities.schema.createTableIfNotExists and
         not capabilities.schema.compositePrimaryKeys)
@@ -509,7 +512,7 @@ TEST_P(BackendConformanceTest, compositePrimaryKeysFollowAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, generatedPrimaryKeysFollowAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (supportsModelWithId(capabilities) and capabilities.schema.createTableIfNotExists and
         not capabilities.schema.autoIncrementPrimaryKey)
@@ -545,7 +548,7 @@ TEST_P(BackendConformanceTest, generatedPrimaryKeysFollowAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, nullableValuesRoundTripWithoutNullLoss)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateSomeDataModel(capabilities))
     {
@@ -579,7 +582,7 @@ TEST_P(BackendConformanceTest, nullableValuesRoundTripWithoutNullLoss)
 
 TEST_P(BackendConformanceTest, nullableToOneRelationRoundTripsWithoutNullLoss)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     if (not canPopulateModelWithId(capabilities) or not capabilities.schema.foreignKeys or
         not capabilities.relations.toOne)
     {
@@ -600,7 +603,7 @@ TEST_P(BackendConformanceTest, nullableToOneRelationRoundTripsWithoutNullLoss)
 
 TEST_P(BackendConformanceTest, projectionFollowsAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     orm::ProjectionQuery<models::ModelWithId, conformance_models::Projection> query;
     query.project(as("id", col<&models::ModelWithId::id>()), as("name", col<&models::ModelWithId::field2>()));
 
@@ -628,7 +631,7 @@ TEST_P(BackendConformanceTest, projectionFollowsAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, lossyProjectionHydrationReportsConversionError)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.query.projections)
     {
@@ -652,7 +655,7 @@ TEST_P(BackendConformanceTest, lossyProjectionHydrationReportsConversionError)
 
 TEST_P(BackendConformanceTest, duplicatePrimaryKeyReportsConstraintError)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateModelWithId(capabilities))
     {
@@ -673,7 +676,7 @@ TEST_P(BackendConformanceTest, duplicatePrimaryKeyReportsConstraintError)
 
 TEST_P(BackendConformanceTest, toOneRelationFollowsAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (supportsModelWithId(capabilities) and (not capabilities.schema.foreignKeys or not capabilities.relations.toOne))
     {
@@ -706,7 +709,7 @@ TEST_P(BackendConformanceTest, toOneRelationFollowsAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, toOneForeignKeyRejectsAMissingEndpoint)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateModelWithId(capabilities) or not capabilities.schema.foreignKeys or
         not capabilities.relations.toOne)
@@ -725,7 +728,7 @@ TEST_P(BackendConformanceTest, toOneForeignKeyRejectsAMissingEndpoint)
 
 TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabilities)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     const auto author = collection_models::Author{1, "author", {}};
     const auto book = collection_models::Book{10, "portable-book", std::nullopt};
 
@@ -788,7 +791,7 @@ TEST_P(BackendConformanceTest, oneToManyPredicateAndUnlinkFollowAdvertisedCapabi
 
 TEST_P(BackendConformanceTest, collectionRelationFollowsAdvertisedCapabilities)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateModelWithId(capabilities))
     {
@@ -854,7 +857,7 @@ TEST_P(BackendConformanceTest, collectionRelationFollowsAdvertisedCapabilities)
 
 TEST_P(BackendConformanceTest, compositeRelationKeysFollowAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateModelWithId(capabilities) or not capabilities.schema.compositePrimaryKeys)
     {
@@ -935,7 +938,7 @@ TEST_P(BackendConformanceTest, compositeRelationKeysFollowAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, deletingManyToManyEndpointCascadesOnlyTheJunctionLink)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     const auto relationSchemaSupported = capabilities.schema.compositePrimaryKeys and
                                          capabilities.schema.foreignKeys and capabilities.schema.onDeleteCascade and
                                          capabilities.relations.junctionTables and capabilities.relations.manyToMany;
@@ -972,7 +975,7 @@ TEST_P(BackendConformanceTest, deletingManyToManyEndpointCascadesOnlyTheJunction
 
 TEST_P(BackendConformanceTest, relationMutationRollsBackWithExplicitTransaction)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     const auto relationSchemaSupported = capabilities.schema.compositePrimaryKeys and
                                          capabilities.schema.foreignKeys and capabilities.schema.onDeleteCascade and
                                          capabilities.relations.junctionTables and capabilities.relations.manyToMany;
@@ -992,9 +995,9 @@ TEST_P(BackendConformanceTest, relationMutationRollsBackWithExplicitTransaction)
     database.insert(user);
     database.insert(role);
 
-    database.beginTransaction();
+    connection.beginTransaction();
     ASSERT_EQ(database.link<&collection_models::User::roles>(user, role), 1);
-    database.rollbackTransaction();
+    connection.rollbackTransaction();
 
     orm::Query<collection_models::User> query;
     query.where(col<&collection_models::User::id>() == user.id).include<&collection_models::User::roles>();
@@ -1007,27 +1010,27 @@ TEST_P(BackendConformanceTest, relationMutationRollsBackWithExplicitTransaction)
 
 TEST_P(BackendConformanceTest, explicitTransactionRollbackRestoresPreviousState)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.transactions)
     {
-        expectDatabaseError([this]() { database.beginTransaction(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+        expectDatabaseError([this]() { connection.beginTransaction(); }, orm::DatabaseErrorCode::UnsupportedFeature,
                             GetParam().type, "begin transaction");
         return;
     }
 
     if (not canPopulateSomeDataModel(capabilities))
     {
-        database.beginTransaction();
-        EXPECT_NO_THROW(database.rollbackTransaction());
+        connection.beginTransaction();
+        EXPECT_NO_THROW(connection.rollbackTransaction());
         return;
     }
 
     createTable<models::SomeDataModel>();
 
-    database.beginTransaction();
+    connection.beginTransaction();
     database.insert(models::SomeDataModel{1, "rolled-back", 1.0});
-    database.rollbackTransaction();
+    connection.rollbackTransaction();
 
     orm::Query<models::SomeDataModel> query;
     EXPECT_TRUE(database.select(query).empty());
@@ -1035,11 +1038,11 @@ TEST_P(BackendConformanceTest, explicitTransactionRollbackRestoresPreviousState)
 
 TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.transactions)
     {
-        expectDatabaseError([this]() { database.beginTransaction(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+        expectDatabaseError([this]() { connection.beginTransaction(); }, orm::DatabaseErrorCode::UnsupportedFeature,
                             GetParam().type, "begin transaction");
         return;
     }
@@ -1050,9 +1053,9 @@ TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
     }
 
     createTable<models::SomeDataModel>();
-    database.beginTransaction();
+    connection.beginTransaction();
     database.insert(models::SomeDataModel{1, "committed", 1.0});
-    database.commitTransaction();
+    connection.commitTransaction();
 
     orm::Query<models::SomeDataModel> query;
     query.where(col<&models::SomeDataModel::field1>() == 1);
@@ -1064,7 +1067,7 @@ TEST_P(BackendConformanceTest, explicitTransactionCommitPersistsChanges)
 
 TEST_P(BackendConformanceTest, disconnectRollsBackActiveTransactionAndAllowsReconnect)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.transactions or not canPopulateSomeDataModel(capabilities))
     {
@@ -1072,12 +1075,12 @@ TEST_P(BackendConformanceTest, disconnectRollsBackActiveTransactionAndAllowsReco
     }
 
     createTable<models::SomeDataModel>();
-    database.beginTransaction();
+    connection.beginTransaction();
     database.insert(models::SomeDataModel{1, "uncommitted", 1.0});
 
-    ASSERT_NO_THROW(database.disconnect());
-    EXPECT_FALSE(database.isConnected());
-    ASSERT_NO_THROW(database.connect(GetParam().type, testConnectionString()));
+    ASSERT_NO_THROW(connection.disconnect());
+    EXPECT_FALSE(connection.isConnected());
+    ASSERT_NO_THROW(connection.connect(GetParam().type, testConnectionString()));
 
     // Recreate SQLite's in-memory table while remaining a no-op for persistent
     // backends. In both cases the uncommitted row must be absent.
@@ -1085,13 +1088,13 @@ TEST_P(BackendConformanceTest, disconnectRollsBackActiveTransactionAndAllowsReco
     orm::Query<models::SomeDataModel> query;
     EXPECT_TRUE(database.select(query).empty());
 
-    ASSERT_NO_THROW(database.beginTransaction());
-    EXPECT_NO_THROW(database.rollbackTransaction());
+    ASSERT_NO_THROW(connection.beginTransaction());
+    EXPECT_NO_THROW(connection.rollbackTransaction());
 }
 
 TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     if (not capabilities.transactions or not canPopulateModelWithId(capabilities))
     {
         GTEST_SKIP() << "Transaction/schema/type rejection is covered by other conformance tests";
@@ -1099,11 +1102,11 @@ TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
 
     createTable<models::ModelWithId>();
     database.insert(models::ModelWithId{1, 10, "existing"});
-    database.beginTransaction();
+    connection.beginTransaction();
 
     expectDatabaseError([this]() { database.insert(models::ModelWithId{1, 20, "duplicate"}); },
                         orm::DatabaseErrorCode::Constraint, GetParam().type, "insert");
-    EXPECT_NO_THROW(database.rollbackTransaction());
+    EXPECT_NO_THROW(connection.rollbackTransaction());
     EXPECT_NO_THROW(database.insert(models::ModelWithId{2, 20, "recovered"}));
 
     orm::Query<models::ModelWithId> query;
@@ -1116,7 +1119,7 @@ TEST_P(BackendConformanceTest, rollbackRecoversConnectionAfterConstraintError)
 
 TEST_P(BackendConformanceTest, orderedLimitFollowsAdvertisedCapability)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     orm::Query<models::SomeDataModel> query;
     query.orderBy(asc(col<&models::SomeDataModel::field1>())).limit(2);
 
@@ -1144,7 +1147,7 @@ TEST_P(BackendConformanceTest, orderedLimitFollowsAdvertisedCapability)
 
 TEST_P(BackendConformanceTest, groupByAndHavingFollowAdvertisedCapabilities)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     orm::Query<models::ModelWithId> query;
     query.groupBy(col<&models::ModelWithId::field2>())
         .having(countAll<models::ModelWithId>() == 2)
@@ -1176,7 +1179,7 @@ TEST_P(BackendConformanceTest, groupByAndHavingFollowAdvertisedCapabilities)
 
 TEST_P(BackendConformanceTest, groupedProjectionWorksIndependentlyOfFullModelGrouping)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     orm::ProjectionQuery<models::ModelWithId, conformance_models::GroupedProjection> query;
     query.project(as("name", col<&models::ModelWithId::field2>()), as("users", countAll<models::ModelWithId>()))
         .groupBy(col<&models::ModelWithId::field2>())
@@ -1211,7 +1214,7 @@ TEST_P(BackendConformanceTest, groupedProjectionWorksIndependentlyOfFullModelGro
 
 TEST_P(BackendConformanceTest, nullableAverageProjectionReturnsNullForAnEmptyResult)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not capabilities.query.projections)
     {
@@ -1234,7 +1237,7 @@ TEST_P(BackendConformanceTest, nullableAverageProjectionReturnsNullForAnEmptyRes
 
 TEST_P(BackendConformanceTest, orderedOffsetWithoutLimitReturnsRemainingRows)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
     orm::Query<models::SomeDataModel> query;
     query.orderBy(asc(col<&models::SomeDataModel::field1>())).offset(1);
 
@@ -1263,7 +1266,7 @@ TEST_P(BackendConformanceTest, orderedOffsetWithoutLimitReturnsRemainingRows)
 
 TEST_P(BackendConformanceTest, mutationsReportExactAffectedRows)
 {
-    const auto& capabilities = database.getBackendCapabilities();
+    const auto& capabilities = connection.getBackendCapabilities();
 
     if (not canPopulateSomeDataModel(capabilities))
     {

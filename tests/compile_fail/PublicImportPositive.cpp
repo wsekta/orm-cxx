@@ -16,9 +16,11 @@ static_assert(std::same_as<typename decltype(orm::query::col<&PublicImportModel:
 
 [[maybe_unused]] auto publicImportsCompile() -> void
 {
-    orm::Database<PublicImportSchema> database;
+    orm::Database database;
+    auto context = database.orm<PublicImportSchema>();
     const auto plan = orm::query::select<PublicImportModel>().where(orm::query::col<&PublicImportModel::id>() ==
                                                                     orm::query::param<int, 0>());
     (void)database;
+    (void)context;
     (void)plan.toDynamic(1);
 }
