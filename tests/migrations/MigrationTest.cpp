@@ -417,6 +417,51 @@ TEST(MigrationRunnerTest, BaselineChecksThatHistoryWasActuallyRecorded)
     EXPECT_EQ(runner.status().currentVersion, 0);
 }
 
+TEST_P(MigrationTest, NativeRuntimeRequiresAnActiveTransaction)
+{
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    expectMigrationError([&] { runtime.executeMigrationScript(session(), "SELECT 1;"); }, ErrorCode::Execution);
+    if (GetParam().type == orm::db::BackendType::Sqlite)
+    {
+        session().begin();
+        EXPECT_THROW(runtime.beginMigration(session(), historyTable()), soci::soci_error);
+        session().rollback();
+    }
+}
+
+TEST(MigrationRunnerTest, SQLiteRebuildPreservesDataForeignKeysIndexesAndTriggers)
+{
+    orm::Database database;
+    database.connect("sqlite3://:memory:");
+    Runner runner{
+        database,
+        Catalog{
+            migration(1,
+                      "CREATE TABLE parent(id INTEGER PRIMARY KEY); INSERT INTO parent VALUES(1);"
+                      "CREATE TABLE child(id INTEGER PRIMARY KEY,parent_id INTEGER REFERENCES parent(id),value TEXT);"
+                      "INSERT INTO child VALUES(7,1,'42');"),
+            migration(
+                2,
+                "PRAGMA defer_foreign_keys=ON;"
+                "CREATE TABLE child_new(id INTEGER PRIMARY KEY,parent_id INTEGER REFERENCES parent(id),value INTEGER);"
+                "INSERT INTO child_new SELECT id,parent_id,CAST(value AS INTEGER) FROM child;"
+                "DROP TABLE child; ALTER TABLE child_new RENAME TO child;"
+                "CREATE INDEX child_parent ON child(parent_id);"
+                "CREATE TRIGGER child_positive BEFORE INSERT ON child WHEN NEW.value<0 "
+                "BEGIN SELECT RAISE(ABORT,'negative'); END;")}};
+    runner.up();
+    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
+    int value{};
+    session << "SELECT value FROM child WHERE id=7 AND parent_id=1", soci::into(value);
+    EXPECT_EQ(value, 42);
+    int indexes{};
+    session << "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='child_parent'", soci::into(indexes);
+    EXPECT_EQ(indexes, 1);
+    EXPECT_THROW((session << "INSERT INTO child VALUES(8,999,1)"), soci::soci_error);
+    EXPECT_THROW((session << "INSERT INTO child VALUES(8,1,-1)"), soci::soci_error);
+    EXPECT_EQ(runner.status().currentVersion, 2);
+}
+
 namespace
 {
 class InstrumentedRuntime final : public orm::db::BackendRuntime
@@ -693,17 +738,17 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     EXPECT_EQ(std::get<0>(call({}, std::nullopt)), 0);
     EXPECT_EQ(std::get<0>(call({"--help"}, std::nullopt)), 0);
     EXPECT_EQ(std::get<0>(call({"help"}, std::nullopt)), 0);
-    for (const auto args : {std::vector<std::string_view>{"invalid"},
-                            {"preview"},
-                            {"preview", "sideways"},
-                            {"down"},
-                            {"baseline"},
-                            {"status", "--to", "1"},
-                            {"up", "--to"},
-                            {"up", "--to", "bad"},
-                            {"up", "--to", "-1"},
-                            {"up", "--to", "1x"},
-                            {"up", "--other", "1"}})
+    for (const auto& args : {std::vector<std::string_view>{"invalid"},
+                             {"preview"},
+                             {"preview", "sideways"},
+                             {"down"},
+                             {"baseline"},
+                             {"status", "--to", "1"},
+                             {"up", "--to"},
+                             {"up", "--to", "bad"},
+                             {"up", "--to", "-1"},
+                             {"up", "--to", "1x"},
+                             {"up", "--other", "1"}})
     {
         std::ostringstream out, err;
         EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(), std::nullopt, out, err),
@@ -714,13 +759,13 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     const auto secretFailure = call({"status"}, "invalid://super-secret");
     EXPECT_EQ(std::get<0>(secretFailure), 1);
     EXPECT_EQ(std::get<2>(secretFailure).find("super-secret"), std::string::npos);
-    for (const auto args : {std::vector<std::string_view>{"status"},
-                            {"validate"},
-                            {"preview", "up"},
-                            {"preview", "down"},
-                            {"up"},
-                            {"down", "--to", "0"},
-                            {"baseline", "--to", "10"}})
+    for (const auto& args : {std::vector<std::string_view>{"status"},
+                             {"validate"},
+                             {"preview", "up"},
+                             {"preview", "down"},
+                             {"up"},
+                             {"down", "--to", "0"},
+                             {"baseline", "--to", "10"}})
     {
         std::ostringstream out, err;
         EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(),
