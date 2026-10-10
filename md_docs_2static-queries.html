@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2static-queries.html',''); ini
   <div class="headertitle"><div class="title">Static query plans</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md108"></a> Immutable plans are available alongside the mutable <code>orm::Query&lt;T&gt;</code>, <code>orm::ProjectionQuery&lt;Source, Result&gt;</code>, and <code>orm::Update&lt;T&gt;</code> builders. A plan preserves the expression structure in its C++ type. SQLite and PostgreSQL use that structure to prepare SQL once for the schema, plan type, and SQL dialect. Execution binds the current values and hydrates the usual model or DTO result.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md115"></a> Immutable plans are available alongside the mutable <code>orm::Query&lt;T&gt;</code>, <code>orm::ProjectionQuery&lt;Source, Result&gt;</code>, and <code>orm::Update&lt;T&gt;</code> builders. A plan preserves the expression structure in its C++ type. SQLite and PostgreSQL use that structure to prepare SQL once for the schema, plan type, and SQL dialect. Execution binds the current values and hydrates the usual model or DTO result.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>User</div>
@@ -122,7 +122,7 @@ $(document).ready(function(){initNavTree('md_docs_2static-queries.html',''); ini
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> filtered = base.where(col&lt;&amp;User::age&gt;() &gt;= param&lt;int, 0&gt;());</div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> ordered = filtered.orderBy(asc(col&lt;&amp;User::name&gt;()));</div>
 </div><!-- fragment --><p>The objects may also carry ordinary runtime values. <code>constexpr</code> is useful for reusable templates with argument slots, but is not required for using a plan.</p>
-<h1><a class="anchor" id="autotoc_md109"></a>
+<h1><a class="anchor" id="autotoc_md116"></a>
 Projections and writes</h1>
 <p>The literal alias form <code>as&lt;"alias"&gt;(expression)</code> retains the alias in the plan type. The existing <code>as("alias", expression)</code> form supplies a runtime alias.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>UserName { std::string name; };</div>
@@ -140,7 +140,7 @@ Projections and writes</h1>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> erase = remove&lt;User&gt;().where(col&lt;&amp;User::id&gt;() == param&lt;int, 0&gt;());</div>
 <div class="line"><span class="keyword">auto</span> removed = context.remove(erase, 1);</div>
 </div><!-- fragment --><p>An <code>UPDATE</code> plan requires at least one <code>SET</code> assignment and a <code>WHERE</code> predicate. A <code>DELETE</code> plan requires a <code>WHERE</code> predicate. These checks happen when the plan is converted or executed. The full-model select supports collection <code>include</code> and the existing relation predicates; projection plans return flat DTOs.</p>
-<h1><a class="anchor" id="autotoc_md110"></a>
+<h1><a class="anchor" id="autotoc_md117"></a>
 Runtime shapes and explicit conversion</h1>
 <p>Fixed-size <code>std::array</code>, C arrays, and variadic <code>IN</code> arguments preserve their arity. Empty fixed-size <code>IN</code> expressions are rejected at compile time. Vectors and initializer lists have runtime cardinality and use the runtime SQL path. The same applies to raw predicates, raw ordering, and runtime aliases. Those forms retain the typed field and model checks.</p>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> fixed = select&lt;User&gt;().where(col&lt;&amp;User::id&gt;().in(std::array{1, 2, 3}));</div>

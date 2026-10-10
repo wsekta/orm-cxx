@@ -15,5 +15,5 @@ var searchData=
   ['result_20queries_12',['result queries',['../md_docs_2partial-result-queries.html#autotoc_md76',1,'Aggregate result queries'],['../md_docs_2partial-result-queries.html',1,'Partial-result queries'],['../md_docs_2query.html#autotoc_md89',1,'Partial-result queries']]],
   ['retry_20without_20changing_20the_20release_13',['Retry without changing the release',['../md_docs_2packaging.html#autotoc_md70',1,'']]],
   ['rules_14',['Result DTO rules',['../md_docs_2partial-result-queries.html#autotoc_md77',1,'']]],
-  ['runtime_20shapes_20and_20explicit_20conversion_15',['Runtime shapes and explicit conversion',['../md_docs_2static-queries.html#autotoc_md110',1,'']]]
+  ['runtime_20shapes_20and_20explicit_20conversion_15',['Runtime shapes and explicit conversion',['../md_docs_2static-queries.html#autotoc_md117',1,'']]]
 ];

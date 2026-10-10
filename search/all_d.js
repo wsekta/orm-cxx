@@ -8,10 +8,11 @@ var searchData=
   ['mappings_5',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md105',1,'']]],
   ['matrix_6',['matrix',['../md_docs_2ci-compiler-matrix.html',1,'CI Compiler Matrix'],['../md_docs_2backend-portability.html#autotoc_md17',1,'Minimum CI matrix'],['../md_docs_2ci-compiler-matrix.html#autotoc_md33',1,'PostgreSQL Compiler Matrix']]],
   ['migrating_20an_20existing_20schema_7',['Migrating an existing schema',['../md_docs_2relations.html#autotoc_md107',1,'']]],
-  ['minimum_20ci_20matrix_8',['Minimum CI matrix',['../md_docs_2backend-portability.html#autotoc_md17',1,'']]],
-  ['mistakes_9',['Common mistakes',['../md_docs_2relations.html#autotoc_md106',1,'']]],
-  ['model_10',['model',['../md_docs_2model.html#autotoc_md52',1,'Create a model'],['../md_docs_2model.html',1,'Model'],['../md_docs_2backend-portability.html#autotoc_md16',1,'Verification model']]],
-  ['model_20grouping_20and_20having_11',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md90',1,'']]],
-  ['modules_12',['C++20 modules',['../md_docs_2modules.html',1,'']]],
-  ['msvc_13',['MSVC',['../md_docs_2ci-compiler-matrix.html#autotoc_md32',1,'']]]
+  ['migrations_8',['Schema migrations',['../md_docs_2schema-migrations.html',1,'']]],
+  ['minimum_20ci_20matrix_9',['Minimum CI matrix',['../md_docs_2backend-portability.html#autotoc_md17',1,'']]],
+  ['mistakes_10',['Common mistakes',['../md_docs_2relations.html#autotoc_md106',1,'']]],
+  ['model_11',['model',['../md_docs_2model.html#autotoc_md52',1,'Create a model'],['../md_docs_2model.html',1,'Model'],['../md_docs_2backend-portability.html#autotoc_md16',1,'Verification model']]],
+  ['model_20grouping_20and_20having_12',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md90',1,'']]],
+  ['modules_13',['C++20 modules',['../md_docs_2modules.html',1,'']]],
+  ['msvc_14',['MSVC',['../md_docs_2ci-compiler-matrix.html#autotoc_md32',1,'']]]
 ];

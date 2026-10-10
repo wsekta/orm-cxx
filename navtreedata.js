@@ -145,9 +145,17 @@ var NAVTREE =
       [ "Common mistakes", "md_docs_2relations.html#autotoc_md106", null ],
       [ "Migrating an existing schema", "md_docs_2relations.html#autotoc_md107", null ]
     ] ],
+    [ "Schema migrations", "md_docs_2schema-migrations.html", [
+      [ "Embedded SQL and the API", "md_docs_2schema-migrations.html#autotoc_md109", null ],
+      [ "SQL files", "md_docs_2schema-migrations.html#autotoc_md110", null ],
+      [ "Project CLI", "md_docs_2schema-migrations.html#autotoc_md111", null ],
+      [ "History and baseline", "md_docs_2schema-migrations.html#autotoc_md112", null ],
+      [ "Transactions, concurrency and errors", "md_docs_2schema-migrations.html#autotoc_md113", null ],
+      [ "SQL contract and limits", "md_docs_2schema-migrations.html#autotoc_md114", null ]
+    ] ],
     [ "Static query plans", "md_docs_2static-queries.html", [
-      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md109", null ],
-      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md110", null ]
+      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md116", null ],
+      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md117", null ]
     ] ],
     [ "Modules", "modules.html", [
       [ "Modules List", "modules.html", "modules_dup" ]

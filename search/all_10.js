@@ -14,7 +14,8 @@ var searchData=
   ['predicates_11',['predicates',['../md_docs_2query.html#autotoc_md83',1,'Collection predicates'],['../md_docs_2query.html#autotoc_md82',1,'Where predicates'],['../md_docs_2query.html#autotoc_md92',1,'Write predicates']]],
   ['presets_12',['CMake Presets',['../md_docs_2ci-compiler-matrix.html#autotoc_md35',1,'']]],
   ['primary_20key_13',['primary key',['../md_docs_2model.html#autotoc_md59',1,'Auto-increment primary key'],['../md_docs_2model.html#autotoc_md58',1,'Primary key']]],
-  ['projection_20queries_14',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md91',1,'']]],
-  ['projections_20and_20writes_15',['Projections and writes',['../md_docs_2static-queries.html#autotoc_md109',1,'']]],
-  ['publishing_16',['Maintainer setup and publishing',['../md_docs_2packaging.html#autotoc_md69',1,'']]]
+  ['project_20cli_14',['Project CLI',['../md_docs_2schema-migrations.html#autotoc_md111',1,'']]],
+  ['projection_20queries_15',['Aggregate projection queries',['../md_docs_2query.html#autotoc_md91',1,'']]],
+  ['projections_20and_20writes_16',['Projections and writes',['../md_docs_2static-queries.html#autotoc_md116',1,'']]],
+  ['publishing_17',['Maintainer setup and publishing',['../md_docs_2packaging.html#autotoc_md69',1,'']]]
 ];

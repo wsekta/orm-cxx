@@ -141,14 +141,16 @@ Compatibility at a glance</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Explicit transactions   </td><td class="markdownTableBodyNone">Supported   </td><td class="markdownTableBodyNone">Supported; a statement error requires rollback    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><a class="el" href="md_docs_2schema-migrations.html">Versioned SQL migrations</a>   </td><td class="markdownTableBodyNone">Transactional DDL and history; <code>BEGIN IMMEDIATE</code>   </td><td class="markdownTableBodyNone">Transactional DDL and history; advisory lock per history schema    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">ORM bind-parameter ceiling   </td><td class="markdownTableBodyNone">900   </td><td class="markdownTableBodyNone">65,535    </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">ORM identifier restriction   </td><td class="markdownTableBodyNone">No additional byte limit; bind-backed physical columns use portable ASCII names   </td><td class="markdownTableBodyNone">63 bytes; bind-backed physical columns use portable ASCII names    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Default <code>LIKE</code> behavior   </td><td class="markdownTableBodyNone">ASCII case-insensitive   </td><td class="markdownTableBodyNone">Case-sensitive    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Native NULL ordering   </td><td class="markdownTableBodyNone"><code>ASC</code>: first; <code>DESC</code>: last   </td><td class="markdownTableBodyNone"><code>ASC</code>: last; <code>DESC</code>: first    </td></tr>
+<td class="markdownTableBodyNone">Default <code>LIKE</code> behavior   </td><td class="markdownTableBodyNone">ASCII case-insensitive   </td><td class="markdownTableBodyNone">Case-sensitive    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Native NULL ordering   </td><td class="markdownTableBodyNone"><code>ASC</code>: first; <code>DESC</code>: last   </td><td class="markdownTableBodyNone"><code>ASC</code>: last; <code>DESC</code>: first    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Namespace selection   </td><td class="markdownTableBodyNone">SQLite database connection   </td><td class="markdownTableBodyNone">Active PostgreSQL <code>search_path</code>   </td></tr>
 </table>
 <p>Raw SQL remains backend-specific. Code that needs portable behavior should use the typed API and inspect <code>getBackendCapabilities()</code> for optional operations. For both bundled adapters, a physical non-identity column name used as a SOCI bind name may contain only ASCII letters, digits, and <code>_</code>. Connection strings and identifiers containing an embedded NUL byte are rejected before they reach either database driver's C API.</p>
@@ -190,7 +192,7 @@ PostgreSQL</h1>
 <li>a <code>DISTINCT</code> projection may order only by a typed column present in the projection; raw or unprojected ordering is rejected before SQL execution;</li>
 <li>PostgreSQL's native NULL ordering is preserved (<code>ASC</code> places NULL last and <code>DESC</code> places it first), which differs from SQLite; use an intentional backend-specific raw order when explicit NULL placement is required;</li>
 <li>PostgreSQL <code>LIKE</code> is case-sensitive, while SQLite's default ASCII <code>LIKE</code> is case-insensitive; the ORM preserves each backend's native behavior;</li>
-<li>UUID, date, time, binary/blob, converter, migration, async, and connection-pool APIs are not included;</li>
+<li>UUID, date, time, binary/blob, converter, async, and connection-pool APIs are not included;</li>
 <li>model table names are double-quoted identifiers, not schema-qualified paths; choose an application schema through PostgreSQL <code>search_path</code>;</li>
 <li>table, column, relation, and generated alias identifiers must fit PostgreSQL's 63-byte identifier limit and are rejected instead of being silently truncated;</li>
 <li>the maximum bind-parameter count is 65,535 and is checked before execution;</li>

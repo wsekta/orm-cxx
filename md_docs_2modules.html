@@ -147,8 +147,10 @@ Source organization</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>orm/database</code>   </td><td class="markdownTableBodyNone">Shared SOCI declarations, numeric conversion, binding payloads, object and result bindings, database and ORM contexts    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>reflection</code>   </td><td class="markdownTableBodyNone">Fixed strings, compiler signatures, names, aggregate reflection, field metadata and visitation    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/migrations</code>   </td><td class="markdownTableBodyNone">Versioned SQL catalogs, migration runner and project CLI; private database access and SQL validation    </td></tr>
 <tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>reflection</code>   </td><td class="markdownTableBodyNone">Fixed strings, compiler signatures, names, aggregate reflection, field metadata and visitation    </td></tr>
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>reflection/generated</code>   </td><td class="markdownTableBodyNone">Generated aggregate bindings, grouped by field count   </td></tr>
 </table>
 <p>The small category interfaces such as <code>orm:model</code> and <code>orm:sql</code> re-export their leaf partitions. Dependencies flow from reflection and foundation through models, queries and SQL to database operations. Leaf partitions import the prerequisites they use; they never import their own category interface. Shared declarations such as schema traits stay below the units that depend on them, keeping the graph acyclic. <code>Database</code> owns the connection in a separate partition; its context factory uses the shared forward declaration of <code>OrmContext</code>. Both retain their friendship within the same named module.</p>
