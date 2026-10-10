@@ -40,13 +40,13 @@ module;
 #include <sqlite3.h>
 // clang-format on
 
-namespace sqlite_api
-{
-}
-
 module orm;
 
 import :internal;
+
+namespace sqlite_api
+{
+}
 
 namespace
 {
