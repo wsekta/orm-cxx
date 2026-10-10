@@ -34,12 +34,15 @@ module;
 
 #include "soci/soci.h"
 
-// SOCI 4.0 includes SQLite's declarations inside sqlite_api before its include guard is set.
-// SOCI 4.1 leaves the C header to callers; both versions need the error-code macros below.
+// SOCI distributions expose either full C declarations or opaque types in sqlite_api.
 // clang-format off
 #include "soci/sqlite3/soci-sqlite3.h"
 #include <sqlite3.h>
 // clang-format on
+
+namespace sqlite_api
+{
+}
 
 module orm;
 
@@ -47,6 +50,15 @@ import :internal;
 
 namespace
 {
+using namespace sqlite_api;
+
+template <typename Handle, typename Result, typename Native, typename... Args>
+auto nativeSqliteConnection(Handle* handle, Result (*)(Native*, Args...)) -> Native*
+{
+    // SOCI's opaque handle and the C API's handle refer to the same SQLite connection.
+    return reinterpret_cast<Native*>(handle);
+}
+
 constexpr std::string_view connectionStringPrefix{"sqlite3://"};
 
 class SqliteRuntime final : public orm::db::BackendRuntime
@@ -77,7 +89,8 @@ public:
 
     auto executeMigrationScript(soci::session& session, std::string_view script) const -> void override
     {
-        auto* handle = static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_;
+        auto* handle = nativeSqliteConnection(static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_,
+                                              sqlite3_get_autocommit);
         struct Authorization
         {
             bool denied = false;
@@ -112,7 +125,7 @@ public:
         const char* const end = remaining + sql.size();
         while (remaining < end)
         {
-            decltype(soci::sqlite3_statement_backend::stmt_) statement = nullptr;
+            decltype(sqlite3_next_stmt(handle, nullptr)) statement = nullptr;
             const char* tail = nullptr;
             auto code = sqlite3_prepare_v2(handle, remaining, -1, &statement, &tail);
             if (code == SQLITE_OK && statement != nullptr)
