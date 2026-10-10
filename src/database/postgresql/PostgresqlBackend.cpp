@@ -71,6 +71,92 @@ auto codeFromSqlState(std::string_view sqlState, orm::DatabaseErrorCode fallback
 class PostgresqlRuntime final : public orm::db::BackendRuntime
 {
 public:
+    auto migrationTable(soci::session& session) const -> std::string override
+    {
+        std::string schema;
+        soci::indicator indicator{};
+        session << "SELECT current_schema()", soci::into(schema, indicator);
+        if (indicator == soci::i_null)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidHistory,
+                                                  "PostgreSQL migration history needs a current schema", 0,
+                                                  orm::db::BackendType::Postgres};
+        }
+        return orm::db::postgresql::PostgresqlDialect{}.quoteIdentifier(schema) + ".\"_orm_migrations\"";
+    }
+
+    auto beginMigration(soci::session& session, std::string_view historyTable) const -> void override
+    {
+        session.begin();
+        try
+        {
+            const std::string table{historyTable};
+            int locked{};
+            session << "SELECT CASE WHEN pg_try_advisory_xact_lock(1869770083, hashtext(:table)) THEN 1 ELSE 0 END",
+                soci::use(table, "table"), soci::into(locked);
+            if (!locked)
+            {
+                throw orm::migrations::MigrationError{orm::migrations::ErrorCode::LockUnavailable,
+                                                      "Migration history is locked", 0, orm::db::BackendType::Postgres};
+            }
+        }
+        catch (...)
+        {
+            session.rollback();
+            throw;
+        }
+    }
+
+    auto executeMigrationScript(soci::session& session, std::string_view script) const -> void override
+    {
+        const auto settings = [&session]
+        {
+            std::array<std::string, 4> values;
+            session << "SELECT "
+                       "current_setting('search_path'),current_setting('role'),current_setting('session_authorization')"
+                       ",current_setting('standard_conforming_strings')",
+                soci::into(values[0]), soci::into(values[1]), soci::into(values[2]), soci::into(values[3]);
+            return values;
+        };
+        const auto before = settings();
+        if (before[3] != "on")
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidSql,
+                                                  "Migration SQL requires standard_conforming_strings=on", 0,
+                                                  orm::db::BackendType::Postgres};
+        }
+        auto* handle = static_cast<soci::postgresql_session_backend*>(session.get_backend())->conn_;
+        const std::string sql{script};
+        auto* result = PQexec(handle, sql.c_str());
+        if (result == nullptr)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::Execution, "Migration SQL failed", 0,
+                                                  orm::db::BackendType::Postgres};
+        }
+        const auto status = PQresultStatus(result);
+        const auto* nativeCode = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+        const std::optional<std::string> code =
+            nativeCode == nullptr ? std::nullopt : std::optional<std::string>{nativeCode};
+        PQclear(result);
+        if (status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK && status != PGRES_EMPTY_QUERY)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::Execution, "Migration SQL failed", 0,
+                                                  orm::db::BackendType::Postgres, code};
+        }
+        if (PQtransactionStatus(handle) != PQTRANS_INTRANS)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::Execution,
+                                                  "Migration transaction ended unexpectedly", 0,
+                                                  orm::db::BackendType::Postgres};
+        }
+        if (settings() != before)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidSql,
+                                                  "Migration SQL changed connection settings", 0,
+                                                  orm::db::BackendType::Postgres};
+        }
+    }
+
     auto open(soci::session& session, std::string_view connectionString) const -> void override
     {
         if (connectionString.find('\0') != std::string_view::npos)
@@ -235,6 +321,7 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
                 .compositePrimaryKeys = true,
                 .foreignKeys = true,
                 .onDeleteCascade = true,
+                .transactionalMigrations = true,
             },
         .query =
             {

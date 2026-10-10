@@ -108,6 +108,9 @@ int main()
     }
 
     orm::Database database;
+    const orm::migrations::Catalog migrations{};
+    orm::migrations::Runner runner{database, migrations};
+    (void)runner;
     auto context = database.orm<consumer_models::Schema>();
     (void)context;
     orm::Query<consumer_models::ConsumerModel> query;

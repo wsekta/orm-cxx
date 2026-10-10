@@ -411,7 +411,7 @@ lazily from cached metadata rather than recursively copied.
 
 Lazy loading, nested includes, nested collection predicates, automatic
 collection synchronization, cascade-save, ordered collections, junction
-payload models, and schema migrations are outside the current contract.
+payload models, and automatic schema synchronization are outside the current contract.
 
 ## Common mistakes
 
@@ -438,7 +438,7 @@ payload models, and schema migrations are outside the current contract.
 ## Migrating an existing schema
 
 Adding relation metadata does not migrate an existing database. Apply schema
-changes manually:
+changes through handwritten [SQL migrations](schema-migrations.md):
 
 * for one-to-many, add or validate the child's mapped foreign-key columns and
   nullability;

@@ -101,6 +101,19 @@ int main()
     if constexpr (orm::config::sqliteBackendEnabled)
     {
         database.connect("sqlite3://:memory:");
+        orm::migrations::Runner migrations{
+            database, orm::migrations::Catalog{
+                          {1,
+                           "package_probe",
+                           {{orm::db::BackendType::Sqlite,
+                             {"CREATE TABLE migration_probe(id INTEGER); INSERT INTO migration_probe VALUES(1);",
+                              "DROP TABLE migration_probe;"}}}}}};
+        migrations.up();
+        if (migrations.status().currentVersion != 1)
+        {
+            return 7;
+        }
+        migrations.down(0);
         context.createTable<package_models::Entry>();
         context.insert(package_models::Entry{1, "packaged dependencies"});
         const auto entries = context.select(selectPlan, 1);

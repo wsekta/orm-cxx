@@ -43,6 +43,20 @@ orm::Database database{std::move(backends)};
 The registry and its providers become owned by the database object. In-tree
 backends may also be registered by the factory's default construction path.
 
+The `CommandGeneratorFactory(std::vector<std::unique_ptr<BackendProvider>>)`
+constructor registers exactly the supplied providers. Pass an empty vector to
+start an empty registry, or supply your own SQLite/PostgreSQL provider without
+the default built-in registration.
+
+Transactional migration support is opt-in through
+`BackendCapabilities::schema.transactionalMigrations`. A provider implementing
+SQLite or PostgreSQL must provide `migrationTable`, `beginMigration` and
+`executeMigrationScript`: resolve a qualified history table, begin and acquire
+the appropriate lock, and execute a complete script while preserving the
+transaction and session settings. Default hooks reject the operation. The
+runner owns commit/rollback and history updates. Other backend types remain
+unsupported by the migration executor.
+
 An extension translation unit uses `import orm;`. The command override types
 are `orm::db::SelectSpec`, `orm::db::UpdateSpec`, and `orm::db::Predicate`.
 `orm::db::ast` provides the runtime column, predicate-node, aggregate, ordering,

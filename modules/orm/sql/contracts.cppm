@@ -79,6 +79,7 @@ export
         bool compositePrimaryKeys = false;
         bool foreignKeys = false;
         bool onDeleteCascade = false;
+        bool transactionalMigrations = false;
 
         auto operator==(const SchemaCapabilities&) const -> bool = default;
     };
@@ -258,6 +259,23 @@ export
     {
     public:
         virtual ~BackendRuntime() = default;
+
+        /** Migration hooks are opt-in for application-supplied backends. */
+        virtual auto migrationTable(soci::session&) const -> std::string
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
+                                "Backend does not support transactional migrations"};
+        }
+        virtual auto beginMigration(soci::session&, std::string_view) const -> void
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
+                                "Backend does not support transactional migrations"};
+        }
+        virtual auto executeMigrationScript(soci::session&, std::string_view) const -> void
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
+                                "Backend does not support transactional migrations"};
+        }
 
         virtual auto open(soci::session& session, std::string_view connectionString) const -> void = 0;
         virtual auto onConnect(soci::session& session) const -> void = 0;

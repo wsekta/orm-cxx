@@ -527,7 +527,7 @@ auto Database::beginTransaction() -> void
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "begin transaction", "transactions are not supported");
 
-    if (transaction != nullptr)
+    if (transaction != nullptr || migrationActive)
     {
         throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "begin transaction",
                             "A transaction is already active"};

@@ -153,6 +153,8 @@ export
     {
     public:
         CommandGeneratorFactory();
+        /** Registers exactly the supplied providers, without adding built-ins. */
+        explicit CommandGeneratorFactory(std::vector<std::unique_ptr<BackendProvider>> providers);
         CommandGeneratorFactory(const CommandGeneratorFactory&) = delete;
         CommandGeneratorFactory(CommandGeneratorFactory&&) = default;
         auto operator=(const CommandGeneratorFactory&) -> CommandGeneratorFactory& = delete;

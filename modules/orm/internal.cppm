@@ -22,6 +22,7 @@ import :static_plan;
 import :sql;
 import :backend_relations;
 import :database;
+import :migrations_internal;
 
 // database/DatabaseValidation.hpp
 namespace orm::detail

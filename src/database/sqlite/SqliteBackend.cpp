@@ -52,6 +52,102 @@ constexpr std::string_view connectionStringPrefix{"sqlite3://"};
 class SqliteRuntime final : public orm::db::BackendRuntime
 {
 public:
+    auto migrationTable(soci::session&) const -> std::string override
+    {
+        return "main.\"_orm_migrations\"";
+    }
+
+    auto beginMigration(soci::session& session, std::string_view) const -> void override
+    {
+        try
+        {
+            session << "BEGIN IMMEDIATE";
+        }
+        catch (const soci::sqlite3_soci_error& error)
+        {
+            if ((error.result() & 0xff) == SQLITE_BUSY || (error.result() & 0xff) == SQLITE_LOCKED)
+            {
+                throw orm::migrations::MigrationError{orm::migrations::ErrorCode::LockUnavailable,
+                                                      "Migration database is locked", 0, orm::db::BackendType::Sqlite,
+                                                      std::to_string(error.result())};
+            }
+            throw;
+        }
+    }
+
+    auto executeMigrationScript(soci::session& session, std::string_view script) const -> void override
+    {
+        auto* handle = static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_;
+        struct Authorization
+        {
+            bool denied = false;
+            static auto check(void* context, int action, const char* first, const char* second, const char*,
+                              const char*) -> int
+            {
+                const auto matches = [](const char* value)
+                { return value != nullptr && std::string_view{value} == "_orm_migrations"; };
+                if (action == SQLITE_TRANSACTION || action == SQLITE_SAVEPOINT || action == SQLITE_ATTACH ||
+                    action == SQLITE_DETACH ||
+                    (action == SQLITE_PRAGMA &&
+                     (first == nullptr || std::string_view{first} != "defer_foreign_keys")) ||
+                    matches(first) || matches(second))
+                {
+                    static_cast<Authorization*>(context)->denied = true;
+                    return SQLITE_DENY;
+                }
+                return SQLITE_OK;
+            }
+        } authorization;
+        sqlite3_set_authorizer(handle, Authorization::check, &authorization);
+        struct Restore
+        {
+            decltype(handle) connection;
+            ~Restore()
+            {
+                sqlite3_set_authorizer(connection, nullptr, nullptr);
+            }
+        } restore{handle};
+        const std::string sql{script};
+        const char* remaining = sql.c_str();
+        const char* const end = remaining + sql.size();
+        while (remaining < end)
+        {
+            decltype(soci::sqlite3_statement_backend::stmt_) statement = nullptr;
+            const char* tail = nullptr;
+            auto code = sqlite3_prepare_v2(handle, remaining, -1, &statement, &tail);
+            if (code == SQLITE_OK && statement != nullptr)
+            {
+                do
+                {
+                    code = sqlite3_step(statement);
+                } while (code == SQLITE_ROW);
+                const auto finalCode = sqlite3_finalize(statement);
+                if (code == SQLITE_DONE)
+                {
+                    code = finalCode;
+                }
+            }
+            else if (statement != nullptr)
+            {
+                sqlite3_finalize(statement);
+            }
+            if (code != SQLITE_OK)
+            {
+                throw orm::migrations::MigrationError{authorization.denied ? orm::migrations::ErrorCode::InvalidSql :
+                                                                             orm::migrations::ErrorCode::Execution,
+                                                      "Migration SQL failed", 0, orm::db::BackendType::Sqlite,
+                                                      std::to_string(code)};
+            }
+            remaining = tail;
+        }
+        if (sqlite3_get_autocommit(handle) != 0)
+        {
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::Execution,
+                                                  "Migration transaction ended unexpectedly", 0,
+                                                  orm::db::BackendType::Sqlite};
+        }
+    }
+
     auto open(soci::session& session, std::string_view connectionString) const -> void override
     {
         if (connectionString.find('\0') != std::string_view::npos)
@@ -189,6 +285,7 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
                 .compositePrimaryKeys = true,
                 .foreignKeys = true,
                 .onDeleteCascade = true,
+                .transactionalMigrations = true,
             },
         .query =
             {

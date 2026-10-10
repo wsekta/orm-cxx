@@ -1,4 +1,5 @@
 set(ORM_CXX_TEST_SOURCES
+    migrations/MigrationTest.cpp
     ../src/database/BackendCapabilitiesTest.cpp
     ../src/database/CommandGeneratorFactoryTest.cpp
     ../src/database/NumericConversionTest.cpp
@@ -109,14 +110,14 @@ add_test(
     NAME orm-cxx-UT
     COMMAND
         orm-cxx-UT
-        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:DatabaseTest/OrmContextTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
+        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:DatabaseTest/OrmContextTest.*:DatabaseTest/MigrationTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 add_test(
     NAME orm-cxx-sqlite-conformance
     COMMAND
         orm-cxx-UT
-        --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite:DatabaseTest/OrmContextTest.*/Sqlite
+        --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite:DatabaseTest/OrmContextTest.*/Sqlite:DatabaseTest/MigrationTest.*/Sqlite
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(
@@ -129,7 +130,7 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
         NAME orm-cxx-postgresql-conformance
         COMMAND
             orm-cxx-UT
-            --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql:DatabaseTest/OrmContextTest.*/Postgresql
+            --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql:DatabaseTest/OrmContextTest.*/Postgresql:DatabaseTest/MigrationTest.*/Postgresql
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     add_test(

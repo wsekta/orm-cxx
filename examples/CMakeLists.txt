@@ -1,3 +1,7 @@
+add_executable(migrations-example migrations.cpp)
+set_target_properties(migrations-example PROPERTIES CXX_SCAN_FOR_MODULES ON)
+target_link_libraries(migrations-example PRIVATE orm-cxx::orm-cxx)
+
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     add_executable(example main.cpp)
     set_target_properties(example PROPERTIES CXX_SCAN_FOR_MODULES ON)

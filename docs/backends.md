@@ -41,6 +41,7 @@ intentional differences before SQL execution.
 | To-one, one-to-many, and many-to-many relations | Supported | Supported |
 | Foreign keys and junction-row cascade | Enabled per ORM session | Native PostgreSQL enforcement |
 | Explicit transactions | Supported | Supported; a statement error requires rollback |
+| [Versioned SQL migrations](schema-migrations.md) | Transactional DDL and history; `BEGIN IMMEDIATE` | Transactional DDL and history; advisory lock per history schema |
 | ORM bind-parameter ceiling | 900 | 65,535 |
 | ORM identifier restriction | No additional byte limit; bind-backed physical columns use portable ASCII names | 63 bytes; bind-backed physical columns use portable ASCII names |
 | Default `LIKE` behavior | ASCII case-insensitive | Case-sensitive |
@@ -154,7 +155,7 @@ There are deliberate v1 exclusions:
   backend-specific raw order when explicit NULL placement is required;
 - PostgreSQL `LIKE` is case-sensitive, while SQLite's default ASCII `LIKE` is
   case-insensitive; the ORM preserves each backend's native behavior;
-- UUID, date, time, binary/blob, converter, migration, async, and connection-pool
+- UUID, date, time, binary/blob, converter, async, and connection-pool
   APIs are not included;
 - model table names are double-quoted identifiers, not schema-qualified paths;
   choose an application schema through PostgreSQL `search_path`;

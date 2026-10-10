@@ -60,6 +60,14 @@ CommandGeneratorFactory::CommandGeneratorFactory()
     registerBuiltinBackend<config::postgresqlBackendEnabled, postgresql::PostgresqlBackend>(*this);
 }
 
+CommandGeneratorFactory::CommandGeneratorFactory(std::vector<std::unique_ptr<BackendProvider>> providers)
+{
+    for (auto& provider : providers)
+    {
+        registerBackend(std::move(provider));
+    }
+}
+
 auto CommandGeneratorFactory::registerBackend(std::unique_ptr<BackendProvider> backend) -> void
 {
     if (backend == nullptr)

@@ -12,6 +12,11 @@ import :model;
 import :sql;
 import :database_payload;
 
+namespace orm::migrations::detail
+{
+struct DatabaseAccess;
+}
+
 export namespace orm
 {
 class Database final
@@ -92,6 +97,7 @@ public:
     auto rollbackTransaction() -> void;
 
 private:
+    friend struct migrations::detail::DatabaseAccess;
     template <typename>
     friend class OrmContext;
 
@@ -118,6 +124,7 @@ private:
     soci::session sql;
     std::unique_ptr<soci::transaction> transaction;
     bool transactionFailed = false;
+    bool migrationActive = false;
     db::BackendType backendType;
     db::CommandGeneratorFactory commandGeneratorFactory;
     const db::BackendProvider* backend = nullptr;

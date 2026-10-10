@@ -29,6 +29,7 @@ sources and native CMake metadata; CMake builds BMIs locally.
 8. [Backend extension contract](backend-extension.md)
 9. [Package managers and releases](packaging.md)
 10. [C++20 modules and CMake consumers](modules.md)
+11. [Schema migrations](schema-migrations.md)
 
 ## Build configuration and macro policy
 

@@ -111,6 +111,13 @@ int main()
 
 ## [Collection relations](docs/relations.md)
 
+## [Schema migrations](docs/schema-migrations.md)
+
+Versioned SQL migrations support SQLite and PostgreSQL with transactional
+execution, checksum validation, optional downgrades, explicit baselines and a
+project CLI. Use `orm::migrations` through `import orm;`; see
+[`examples/migrations.cpp`](examples/migrations.cpp).
+
 ## [Doxygen](https://wsekta.github.io/orm-cxx/)
 
 ## [Roadmap](ROADMAP.md)

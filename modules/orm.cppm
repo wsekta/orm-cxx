@@ -13,4 +13,5 @@ export import :static_plan;
 export import :sql;
 export import :backend_relations;
 export import :database;
+export import :migrations;
 export import :config;

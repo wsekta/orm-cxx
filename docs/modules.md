@@ -59,6 +59,7 @@ modules/
 | `orm/dynamic_query` | Select, projection and update builders |
 | `orm/sql` | Backend contracts, commands, SQL program representation, emitter and compiled SQL |
 | `orm/database` | Shared SOCI declarations, numeric conversion, binding payloads, object and result bindings, database and ORM contexts |
+| `orm/migrations` | Versioned SQL catalogs, migration runner and project CLI; private database access and SQL validation |
 | `reflection` | Fixed strings, compiler signatures, names, aggregate reflection, field metadata and visitation |
 | `reflection/generated` | Generated aggregate bindings, grouped by field count |
 

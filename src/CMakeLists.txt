@@ -1,5 +1,9 @@
 set(ORM_CXX_SOURCES
     Database.cpp
+    migrations/Catalog.cpp
+    migrations/SqlValidation.cpp
+    migrations/Runner.cpp
+    migrations/CommandLine.cpp
     model/ColumnType.cpp
     database/CommandGeneratorFactory.cpp
     utils/StringUtils.cpp
@@ -138,6 +142,8 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/database/result_binding.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/soci.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/migrations.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/migrations/internal.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/dynamic_query/projection.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/dynamic_query/select.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/dynamic_query/update.cppm"
@@ -193,6 +199,11 @@ endforeach()
 install(FILES "${PROJECT_SOURCE_DIR}/modules/detail/SociTypes.inc"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/orm-cxx/modules/detail"
 )
+
+if(MSVC)
+    # The standard getenv API is portable and only reads a process-owned variable.
+    set_source_files_properties(migrations/CommandLine.cpp PROPERTIES COMPILE_OPTIONS /wd4996)
+endif()
 
 include(CMakePackageConfigHelpers)
 foreach(package orm-cxx orm-cxx-reflection)
