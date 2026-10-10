@@ -113,7 +113,7 @@ $(document).ready(function(){initNavTree('md_docs_2query.html',''); initResizabl
 </ol>
 <h1><a class="anchor" id="autotoc_md80"></a>
 Build select</h1>
-<p>To query objects from a table use <code><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;Model&gt;</code> and pass it to <code>orm::Database::select</code>. The result is always <code>std::vector&lt;Model&gt;</code>.</p>
+<p>To query objects from a table use <code>orm::Query&lt;Model&gt;</code> and pass it to <code>orm::Database::select</code>. The result is always <code>std::vector&lt;Model&gt;</code>.</p>
 <div class="fragment"><div class="line"><span class="keyword">import</span> <a class="code" href="module_orm.html">orm</a>;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>Profile</div>
@@ -131,42 +131,35 @@ Build select</h1>
 <div class="line">    <span class="keywordtype">bool</span> active;</div>
 <div class="line">    std::optional&lt;Profile&gt; profile;</div>
 <div class="line"> </div>
-<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <a class="code hl_struct" href="structorm_1_1reflection_1_1FixedString.html">orm::reflection::FixedString</a> table_name{<span class="stringliteral">&quot;users&quot;</span>};</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> orm::reflection::FixedString table_name{<span class="stringliteral">&quot;users&quot;</span>};</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">using </span>AppSchema = <a class="code hl_struct" href="structorm_1_1model_1_1Schema.html">orm::Schema&lt;User, Profile&gt;</a>;</div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line"><span class="keyword">using </span>AppSchema = orm::Schema&lt;User, Profile&gt;;</div>
+<div class="line">orm::Database database;</div>
 <div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
+<div class="line">database.connect(<span class="stringliteral">&quot;sqlite3://test.db&quot;</span>);</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
 <div class="line"><span class="keyword">auto</span> users = context.select(query);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> orm.database.cppm:1434</div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:39</div></div>
 <div class="ttc" id="amodule_orm_html"><div class="ttname"><a href="module_orm.html">orm</a></div></div>
-<div class="ttc" id="astructorm_1_1model_1_1Schema_html"><div class="ttname"><a href="structorm_1_1model_1_1Schema.html">orm::model::Schema</a></div><div class="ttdoc">A closed compile-time set of ORM models.</div><div class="ttdef"><b>Definition</b> orm.model.cppm:2117</div></div>
-<div class="ttc" id="astructorm_1_1reflection_1_1FixedString_html"><div class="ttname"><a href="structorm_1_1reflection_1_1FixedString.html">orm::reflection::FixedString</a></div><div class="ttdef"><b>Definition</b> orm.reflection.cppm:27</div></div>
 </div><!-- fragment --><p>The fragments below use these models unless a section declares its own independent example. Collection examples use the <code>Author</code> and <code>Book</code> mappings from <a class="el" href="md_docs_2relations.html">Collection relations</a>.</p>
 <p><code>Query</code> is a builder, so methods can be chained:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(col&lt;&amp;User::age&gt;() &gt;= 18)</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where(col&lt;&amp;User::age&gt;() &gt;= 18)</div>
 <div class="line">     .orderBy(desc(col&lt;&amp;User::id&gt;()))</div>
 <div class="line">     .limit(10)</div>
 <div class="line">     .offset(20);</div>
-<div class="ttc" id="aclassorm_1_1Query_html_aa2f954e69cd06804c80da9c482375e74"><div class="ttname"><a href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">orm::Query::where</a></div><div class="ttdeci">auto where(const P &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:52</div></div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md81"></a>
 Loading collections</h1>
 <p><code>OneToMany</code> and <code>ManyToMany</code> fields are unloaded by default. Request a collection explicitly on a full-model query:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c">include</a>&lt;&amp;Author::books&gt;()</div>
+<div class="fragment"><div class="line">orm::Query&lt;Author&gt; query;</div>
+<div class="line">query.include&lt;&amp;Author::books&gt;()</div>
 <div class="line">     .orderBy(orm::query::asc(orm::query::col&lt;&amp;Author::id&gt;()))</div>
 <div class="line">     .limit(20);</div>
 <div class="line"> </div>
 <div class="line">std::vector&lt;Author&gt; authors = context.select(query);</div>
-<div class="ttc" id="aclassorm_1_1Query_html_a111cc0fb76106ebf5e29d6f6577db14c"><div class="ttname"><a href="classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c">orm::Query::include</a></div><div class="ttdeci">auto include() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Explicitly loads a mapped OneToMany or ManyToMany collection.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:222</div></div>
 </div><!-- fragment --><p>After selection, every returned <code>books</code> wrapper has <code>isLoaded() == true</code>, even when it is empty. Collection wrappers that were not included remain empty with <code>isLoaded() == false</code>. Repeating the same include is idempotent.</p>
 <p>The main query is executed first, followed by one or more parameter-bounded batched queries for each unique included field. Results are grouped by the complete parent primary key, so parents are not duplicated and the implementation never issues one query per parent. Large key sets are split to respect the selected backend's parameter limit.</p>
 <p>Pagination, <code>DISTINCT</code>, and ordering apply to the parent query only. Included collections are complete for the selected parents, but their element order is not guaranteed. Includes support one level; collection wrappers within loaded elements stay unloaded.</p>
@@ -176,8 +169,8 @@ Where predicates</h1>
 <p>Use helpers from <code>orm::query</code> to build a predicate tree.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>((col&lt;&amp;User::age&gt;() &gt;= 18 &amp;&amp; col&lt;&amp;User::name&gt;().like(<span class="stringliteral">&quot;Ann%&quot;</span>)) || col&lt;&amp;User::email&gt;().isNull());</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where((col&lt;&amp;User::age&gt;() &gt;= 18 &amp;&amp; col&lt;&amp;User::name&gt;().like(<span class="stringliteral">&quot;Ann%&quot;</span>)) || col&lt;&amp;User::email&gt;().isNull());</div>
 </div><!-- fragment --><p>Supported operators:</p>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -212,9 +205,9 @@ Where predicates</h1>
 <td class="markdownTableBodyNone"><code>col&lt;&amp;User::age&gt;().notBetween(18, 30)</code>   </td><td class="markdownTableBodyNone"><code>NOT BETWEEN</code>   </td></tr>
 </table>
 <p>Logical operators are available with <code>&amp;&amp;</code>, <code>||</code> and <code>!</code>.</p>
-<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(!(col&lt;&amp;User::name&gt;().like(<span class="stringliteral">&quot;test%&quot;</span>) || col&lt;&amp;User::email&gt;().isNull()));</div>
+<div class="fragment"><div class="line">query.where(!(col&lt;&amp;User::name&gt;().like(<span class="stringliteral">&quot;test%&quot;</span>) || col&lt;&amp;User::email&gt;().isNull()));</div>
 </div><!-- fragment --><p>Calling <code>where</code> replaces the current predicate. Use <code>andWhere</code> or <code>orWhere</code> to append to the current predicate:</p>
-<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(col&lt;&amp;User::age&gt;() &gt;= 18)</div>
+<div class="fragment"><div class="line">query.where(col&lt;&amp;User::age&gt;() &gt;= 18)</div>
 <div class="line">     .andWhere(col&lt;&amp;User::email&gt;().isNotNull())</div>
 <div class="line">     .orWhere(col&lt;&amp;User::name&gt;() == <span class="stringliteral">&quot;admin&quot;</span>);</div>
 </div><!-- fragment --><p>All comparison values are sent to the database as SOCI bind parameters. They are not interpolated into SQL strings.</p>
@@ -223,12 +216,12 @@ Collection predicates</h1>
 <p>Use <code>any</code>, <code>exists</code>, and <code>none</code> to filter a model by a mapped collection:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(any&lt;&amp;Author::books&gt;(col&lt;&amp;Book::title&gt;().like(<span class="stringliteral">&quot;C++%&quot;</span>)) &amp;&amp;</div>
+<div class="line">orm::Query&lt;Author&gt; query;</div>
+<div class="line">query.where(any&lt;&amp;Author::books&gt;(col&lt;&amp;Book::title&gt;().like(<span class="stringliteral">&quot;C++%&quot;</span>)) &amp;&amp;</div>
 <div class="line">            none&lt;&amp;Author::books&gt;(col&lt;&amp;Book::title&gt;().like(<span class="stringliteral">&quot;Draft%&quot;</span>)));</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> nonEmpty;</div>
-<div class="line">nonEmpty.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(exists&lt;&amp;Author::books&gt;());</div>
+<div class="line">orm::Query&lt;Author&gt; nonEmpty;</div>
+<div class="line">nonEmpty.where(exists&lt;&amp;Author::books&gt;());</div>
 </div><!-- fragment --><p><code>any&lt;&amp;Author::books&gt;(predicate)</code> renders a correlated <code>EXISTS</code> subquery. <code>none&lt;&amp;Author::books&gt;(predicate)</code> renders <code>NOT EXISTS</code>, and <code>exists&lt;&amp;Author::books&gt;()</code> checks only whether at least one related row exists. They work for both <code>OneToMany</code> and <code>ManyToMany</code>, including inverse many-to-many mappings.</p>
 <p>The element predicate is resolved relative to the target model. It may contain target scalar fields and that model's existing one-level to-one paths. Values are bound normally; they are never interpolated into SQL. Nested collection predicates are rejected at compile time.</p>
 <p>A collection predicate filters only. It does not mark the wrapper loaded or fetch its elements; combine it with <code>include&lt;&amp;Author::books&gt;()</code> when both behaviors are needed.</p>
@@ -245,8 +238,8 @@ Column names and relations</h1>
 <div class="line">            orm::columnName&lt;&amp;User::displayName, &quot;display_name&quot;&gt;());</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(orm::query::col&lt;&amp;User::displayName&gt;() == <span class="stringliteral">&quot;Wojtek&quot;</span>);</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where(orm::query::col&lt;&amp;User::displayName&gt;() == <span class="stringliteral">&quot;Wojtek&quot;</span>);</div>
 </div><!-- fragment --><p>For one-to-one related models use a one-level path:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Profile</div>
 <div class="line">{</div>
@@ -260,10 +253,10 @@ Column names and relations</h1>
 <div class="line">    std::optional&lt;Profile&gt; profile;</div>
 <div class="line">};</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(orm::query::col&lt;&amp;User::profile, &amp;Profile::city&gt;() == <span class="stringliteral">&quot;Warsaw&quot;</span>);</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where(orm::query::col&lt;&amp;User::profile, &amp;Profile::city&gt;() == <span class="stringliteral">&quot;Warsaw&quot;</span>);</div>
 </div><!-- fragment --><p>Nullable one-to-one relations declared as <code>std::optional&lt;RelatedModel&gt;</code> use the same query paths. Their local foreign-key columns can be tested with <code>isNull()</code> through the related primary-key path:</p>
-<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(orm::query::col&lt;&amp;User::profile, &amp;Profile::id&gt;().isNull());</div>
+<div class="fragment"><div class="line">query.where(orm::query::col&lt;&amp;User::profile, &amp;Profile::id&gt;().isNull());</div>
 </div><!-- fragment --><p>By default related models are joined. If <code>disableJoining()</code> is used, only related id fields are available in query paths.</p>
 <p>Collection fields are not column-path prefixes. Use the collection predicate helpers instead of <code>col&lt;&amp;Author::books, &amp;Book::title&gt;()</code>; such paths are rejected. Collections also cannot be used as <code>ORDER BY</code> or <code>GROUP BY</code> expressions, projection fields, aggregate arguments, or update targets.</p>
 <p>Field references retain their root model and scalar type. Query predicates, ordering, grouping, projection sources, HAVING, and update assignments must belong to that model. Composing expressions from different root models is a compile error.</p>
@@ -274,22 +267,20 @@ Ordering</h1>
 <p>Use <code>asc</code> and <code>desc</code> to add <code>ORDER BY</code> clauses:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a465a0203fde67022b95fdc578a88796a">orderBy</a>(desc(col&lt;&amp;User::age&gt;()), asc(col&lt;&amp;User::id&gt;()));</div>
-<div class="ttc" id="aclassorm_1_1Query_html_a465a0203fde67022b95fdc578a88796a"><div class="ttname"><a href="classorm_1_1Query.html#a465a0203fde67022b95fdc578a88796a">orm::Query::orderBy</a></div><div class="ttdeci">auto orderBy(Orders... orders) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the ORDER BY clauses for the select query.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:95</div></div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.orderBy(desc(col&lt;&amp;User::age&gt;()), asc(col&lt;&amp;User::id&gt;()));</div>
 </div><!-- fragment --><p>Ordering can also use related field paths:</p>
-<div class="fragment"><div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a465a0203fde67022b95fdc578a88796a">orderBy</a>(asc(col&lt;&amp;User::profile, &amp;Profile::city&gt;()));</div>
+<div class="fragment"><div class="line">query.orderBy(asc(col&lt;&amp;User::profile, &amp;Profile::city&gt;()));</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md86"></a>
 Distinct</h1>
 <p>Use <code>distinct()</code> to render <code>SELECT DISTINCT</code>:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">distinct</a>();</div>
-<div class="ttc" id="aclassorm_1_1Query_html_a6b9e97270d5af0c1aebfcc6c408cf9e2"><div class="ttname"><a href="classorm_1_1Query.html#a6b9e97270d5af0c1aebfcc6c408cf9e2">orm::Query::distinct</a></div><div class="ttdeci">auto distinct() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Select distinct rows.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:168</div></div>
+<div class="fragment"><div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.distinct();</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md87"></a>
 Limit and offset</h1>
 <p>Use <code>limit</code> and <code>offset</code> to page through results:</p>
-<div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#a465a0203fde67022b95fdc578a88796a">orderBy</a>(orm::query::asc(orm::query::col&lt;&amp;User::id&gt;()))</div>
+<div class="fragment"><div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.orderBy(orm::query::asc(orm::query::col&lt;&amp;User::id&gt;()))</div>
 <div class="line">     .limit(25)</div>
 <div class="line">     .offset(50);</div>
 </div><!-- fragment --><p>SQL clauses are rendered in this order:</p>
@@ -299,8 +290,8 @@ Raw SQL fragments</h1>
 <p>Raw predicates and raw ordering are available for cases not covered by the ORM DSL.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(raw&lt;User&gt;(<span class="stringliteral">&quot;LOWER(users.name) = :name&quot;</span>, param(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;wojtek&quot;</span>)))</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where(raw&lt;User&gt;(<span class="stringliteral">&quot;LOWER(users.name) = :name&quot;</span>, param(<span class="stringliteral">&quot;name&quot;</span>, <span class="stringliteral">&quot;wojtek&quot;</span>)))</div>
 <div class="line">     .orderBy(rawOrder&lt;User&gt;(<span class="stringliteral">&quot;LOWER(users.name) ASC&quot;</span>));</div>
 </div><!-- fragment --><p>Raw SQL text is inserted into the generated query as-is. Values should still be passed as parameters with <code>param</code>.</p>
 <p>Raw parameter names:</p>
@@ -324,7 +315,7 @@ Partial-result queries</h1>
 <div class="line">orm::ProjectionQuery&lt;User, UserSummary&gt; query;</div>
 <div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
 <div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col&lt;&amp;User::name&gt;()))</div>
-<div class="line">     .<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(col&lt;&amp;User::email&gt;().isNotNull())</div>
+<div class="line">     .where(col&lt;&amp;User::email&gt;().isNotNull())</div>
 <div class="line">     .orderBy(asc(col&lt;&amp;User::id&gt;()));</div>
 <div class="line"> </div>
 <div class="line">std::vector&lt;UserSummary&gt; users = context.select(query);</div>
@@ -334,8 +325,8 @@ Full-model grouping and HAVING</h1>
 <p><code>Query&lt;Model&gt;</code> supports <code>GROUP BY</code> and aggregate <code>HAVING</code> predicates without changing its result type:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">query.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(col&lt;&amp;User::active&gt;() == <span class="keyword">true</span>)</div>
+<div class="line">orm::Query&lt;User&gt; query;</div>
+<div class="line">query.where(col&lt;&amp;User::active&gt;() == <span class="keyword">true</span>)</div>
 <div class="line">     .groupBy(col&lt;&amp;User::profile, &amp;Profile::city&gt;())</div>
 <div class="line">     .having(countAll&lt;User&gt;() &gt; 2)</div>
 <div class="line">     .andHaving(avg(col&lt;&amp;User::age&gt;()) &gt;= 18.0)</div>
@@ -363,12 +354,11 @@ Aggregate projection queries</h1>
 <div class="line">query.project(as(<span class="stringliteral">&quot;city&quot;</span>, col&lt;&amp;User::profile, &amp;Profile::city&gt;()),</div>
 <div class="line">              as(<span class="stringliteral">&quot;users&quot;</span>, countAll&lt;User&gt;()),</div>
 <div class="line">              as(<span class="stringliteral">&quot;averageAge&quot;</span>, avg(col&lt;&amp;User::age&gt;())))</div>
-<div class="line">     .<a class="code hl_function" href="classorm_1_1Query.html#a32a55bb33ff9e45f02be71033ad095ca">groupBy</a>(col&lt;&amp;User::profile, &amp;Profile::city&gt;())</div>
+<div class="line">     .groupBy(col&lt;&amp;User::profile, &amp;Profile::city&gt;())</div>
 <div class="line">     .having(countAll&lt;User&gt;() &gt; 1)</div>
 <div class="line">     .andHaving(avg(col&lt;&amp;User::age&gt;()) &gt;= 18.0);</div>
 <div class="line"> </div>
 <div class="line">std::vector&lt;CityStats&gt; stats = context.select(query);</div>
-<div class="ttc" id="aclassorm_1_1Query_html_a32a55bb33ff9e45f02be71033ad095ca"><div class="ttname"><a href="classorm_1_1Query.html#a32a55bb33ff9e45f02be71033ad095ca">orm::Query::groupBy</a></div><div class="ttdeci">auto groupBy(Columns... columns) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Sets the GROUP BY columns for the select query.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:110</div></div>
 </div><!-- fragment --><p>Supported aggregate helpers are <code>count(col(...))</code>, <code>countAll&lt;User&gt;()</code>, <code>sum(col(...))</code>, <code>avg(col(...))</code>, <code>min(col(...))</code>, and <code>max(col(...))</code>. <code>HAVING</code> predicates compare aggregate expressions to values and can be combined with <code>&amp;&amp;</code>, <code>||</code>, <code>!</code>, <code>having</code>, <code>andHaving</code>, and <code>orHaving</code>.</p>
 <p><code>GROUP BY</code> and aggregate column paths follow the same one-level relation rules as <code>WHERE</code>, <code>ORDER BY</code>, and column projections. With <code>disableJoining()</code>, related paths are limited to related primary-key fields.</p>
 <p>The aggregate predicate DSL is shared with full-model <code>Query&lt;Model&gt;</code>. Use a projection query only when aggregate values themselves must be returned.</p>

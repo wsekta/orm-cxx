@@ -107,39 +107,54 @@ $(document).ready(function(){initNavTree('md_docs_2modules.html',''); initResiza
 <div class="ttc" id="amodule_orm_html"><div class="ttname"><a href="module_orm.html">orm</a></div></div>
 </div><!-- fragment --><p>Applications import these primary modules. The partitions below organize the implementation; they are not separate consumer entry points. Standard-library facilities used by application code still require their ordinary headers.</p>
 <h1><a class="anchor" id="autotoc_md64"></a>
-Partition dependencies</h1>
-<p>Each row lists the partitions that its module unit directly imports. Names beginning with <code>:</code> belong to <code>orm</code>, except <code>:generated</code> in <code>orm.reflection</code>.</p>
-<table class="markdownTable">
+Source organization</h1>
+<p>The two primary interfaces are short entry points. Their partitions live in subdirectories and remain attached to the same named module:</p>
+<div class="fragment"><div class="line">modules/</div>
+<div class="line">  orm.cppm</div>
+<div class="line">  orm.reflection.cppm</div>
+<div class="line">  orm/</div>
+<div class="line">    foundation.cppm</div>
+<div class="line">    foundation/</div>
+<div class="line">    model.cppm</div>
+<div class="line">    model/</div>
+<div class="line">    expressions.cppm</div>
+<div class="line">    query/</div>
+<div class="line">    dynamic_query.cppm</div>
+<div class="line">    dynamic_query/</div>
+<div class="line">    static_plan.cppm</div>
+<div class="line">    sql.cppm</div>
+<div class="line">    sql/</div>
+<div class="line">    database.cppm</div>
+<div class="line">    database/</div>
+<div class="line">    internal.cppm</div>
+<div class="line">  reflection/</div>
+<div class="line">    generated.cppm</div>
+<div class="line">    generated/</div>
+<div class="line">    ...</div>
+</div><!-- fragment --><table class="markdownTable">
 <tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Module unit   </th><th class="markdownTableHeadNone">Direct imports    </th></tr>
+<th class="markdownTableHeadNone">Directory   </th><th class="markdownTableHeadNone">Responsibilities    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm.reflection:generated</code>   </td><td class="markdownTableBodyNone">None    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/foundation</code>   </td><td class="markdownTableBodyNone">Utilities, backend and column types, relation collections and descriptors    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm.reflection</code>   </td><td class="markdownTableBodyNone"><code>:generated</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/model</code>   </td><td class="markdownTableBodyNone">Mapping, metadata views, column and relation descriptors, static models and schemas    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm:foundation</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/query</code>   </td><td class="markdownTableBodyNone">Values, runtime predicates, parameters, typed expressions, columns, aggregates and projections    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm:model</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/dynamic_query</code>   </td><td class="markdownTableBodyNone">Select, projection and update builders    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm:expressions</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>, <code>:model</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/sql</code>   </td><td class="markdownTableBodyNone">Backend contracts, commands, SQL program representation, emitter and compiled SQL    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm:dynamic_query</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>, <code>:model</code>, <code>:expressions</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>orm/database</code>   </td><td class="markdownTableBodyNone">Shared SOCI declarations, numeric conversion, binding payloads, object and result bindings, database and ORM contexts    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm:static_plan</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>, <code>:model</code>, <code>:expressions</code>, <code>:dynamic_query</code>    </td></tr>
+<td class="markdownTableBodyNone"><code>reflection</code>   </td><td class="markdownTableBodyNone">Fixed strings, compiler signatures, names, aggregate reflection, field metadata and visitation    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm:sql</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>, <code>:model</code>, <code>:expressions</code>, <code>:static_plan</code>    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm:config</code>   </td><td class="markdownTableBodyNone">None    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm:backend_relations</code>   </td><td class="markdownTableBodyNone"><code>:foundation</code>, <code>:model</code>, <code>:expressions</code>, <code>:sql</code>    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm:database</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code>, <code>:foundation</code>, <code>:model</code>, <code>:expressions</code>, <code>:dynamic_query</code>, <code>:static_plan</code>, <code>:sql</code>, <code>:config</code>, <code>:backend_relations</code>    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>orm:internal</code>   </td><td class="markdownTableBodyNone"><code>:foundation</code>, <code>:model</code>, <code>:expressions</code>, <code>:dynamic_query</code>, <code>:static_plan</code>, <code>:sql</code>, <code>:backend_relations</code>, <code>:database</code>    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>orm</code>   </td><td class="markdownTableBodyNone"><code>orm.reflection</code> and all interface partitions of <code>orm</code>   </td></tr>
+<td class="markdownTableBodyNone"><code>reflection/generated</code>   </td><td class="markdownTableBodyNone">Generated aggregate bindings, grouped by field count   </td></tr>
 </table>
-<p>This graph is acyclic. CMake generates <code>:config</code> and <code>:backend_relations</code> for the selected backend configuration. <code>:internal</code> is an implementation partition used by the library's implementation units. <code>orm.reflection:generated</code> contains the generated aggregate binding machinery.</p>
+<p>The small category interfaces such as <code>orm:model</code> and <code>orm:sql</code> re-export their leaf partitions. Dependencies flow from reflection and foundation through models, queries and SQL to database operations. Leaf partitions import the prerequisites they use; they never import their own category interface. Shared declarations such as schema traits stay below the units that depend on them, keeping the graph acyclic. <code>Database</code> owns the connection in a separate partition; its context factory uses the shared forward declaration of <code>OrmContext</code>. Both retain their friendship within the same named module.</p>
+<p>The binding partitions re-export their prerequisites along one chain. The <code>orm:database_soci</code> partition owns SOCI's full headers and exposes the original global-module declarations through using declarations. This avoids duplicate constructors and conversion specializations when GCC and MSVC import the bindings through multiple module units. The three SOCI conversion specializations are defined with <code>OrmContext</code>, which instantiates them, rather than being repeatedly imported through helper partitions.</p>
+<p><code>tools/generate_reflection_bindings.py</code> regenerates the checked-in binding partitions for aggregates with 0–128 fields. It limits each group to at most eight field counts and a source-size budget. Python and the formatter are needed only when regenerating these sources, not when building the library.</p>
+<p>CMake lists every partition explicitly in its <code>CXX_MODULES</code> file sets and generates <code>orm:config</code> and <code>orm:backend_relations</code> for the selected backends. <code>orm:internal</code> is an implementation partition used by the library's implementation units. Applications continue to import only <code>orm</code> or <code>orm.reflection</code>.</p>
 <h1><a class="anchor" id="autotoc_md65"></a>
 CMake consumers and installation</h1>
 <p>Use CMake 3.31+, Ninja 1.11+, and GCC 15+, Clang 18+, or MSVC 19.50+. Use separate build directories for Debug and Release. Link the target matching the imported module:</p>
@@ -150,7 +165,7 @@ CMake consumers and installation</h1>
 <div class="line">add_executable(application main.cpp)</div>
 <div class="line">target_link_libraries(application PRIVATE orm-cxx::orm-cxx)</div>
 </div><!-- fragment --><p>For an application that imports only <code>orm.reflection</code>, use <code>find_package(orm-cxx-reflection CONFIG REQUIRED)</code> and <code>target_link_libraries(application PRIVATE orm-cxx::reflection)</code>. Both targets are compiled libraries and propagate the C++20 requirement. For GCC they also propagate <code>-fno-module-lazy</code> to producers, importers, and installed interfaces rebuilt by CMake. GCC 14 exceeds its imported source location limit; GCC 15 and 16 need this option to avoid the lazy reader reporting <code>Bad file data</code>.</p>
-<p>Installed packages provide the libraries, the <code>.cppm</code> source interfaces and their private source includes under <code>share/orm-cxx/modules</code>, and native CMake exports with <code>CXX_MODULES</code> file sets and import metadata. CMake scans imports and compiles the required binary module interfaces (BMIs) in the consumer's build directory. The configured backend interface sources remain part of that installation.</p>
+<p>Installed packages provide the libraries, the <code>.cppm</code> source interfaces and their subdirectories under <code>share/orm-cxx/modules</code>, and native CMake exports with <code>CXX_MODULES</code> file sets and import metadata. CMake scans imports and compiles the required binary module interfaces (BMIs) in the consumer's build directory. The configured backend interface sources remain part of that installation.</p>
 <p>BMIs depend on the compiler, compiler version, standard library, and build settings. They are not installed as portable package artifacts. Use compatible compiler and ABI settings for the installed libraries and the consuming application. The ORM's SOCI dependencies provide the headers and libraries needed to compile and link its module interfaces; the independent reflection target does not require SOCI.</p>
 <p>On MSVC, native metadata applies each library's CRT setting to its generated BMIs. Select the matching runtime for application targets with <code>MSVC_RUNTIME_LIBRARY</code>; a package's metadata does not change that application setting or the global <code>CMAKE_MSVC_RUNTIME_LIBRARY</code> value.</p>
 <p>See <a class="el" href="md_docs_2packaging.html">package managers and releases</a> for Conan and vcpkg usage. </p>

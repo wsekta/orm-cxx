@@ -110,8 +110,7 @@ Concrete extension points</h1>
 <p>Applications embedding an additional source-level provider pass an owned registry into <code>Database</code>:</p>
 <div class="fragment"><div class="line">orm::db::CommandGeneratorFactory backends;</div>
 <div class="line">backends.registerBackend(std::make_unique&lt;MyBackend&gt;());</div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database{std::move(backends)};</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> orm.database.cppm:1434</div></div>
+<div class="line">orm::Database database{std::move(backends)};</div>
 </div><!-- fragment --><p>The registry and its providers become owned by the database object. In-tree backends may also be registered by the factory's default construction path.</p>
 <p>An extension translation unit uses <code>import orm;</code>. The command override types are <code>orm::db::SelectSpec</code>, <code>orm::db::UpdateSpec</code>, and <code>orm::db::Predicate</code>. <code>orm::db::ast</code> provides the runtime column, predicate-node, aggregate, ordering, projection, and assignment types needed to inspect those inputs. Endpoint keys use <code>orm::db::PrimaryKey</code>. These names define the backend input contract; application queries continue to use the typed <code>orm::query</code> builders.</p>
 <p>The external import compile control verifies that a consumer can override all three command signatures, inspect predicate nodes, and register a provider without joining the library's module implementation.</p>

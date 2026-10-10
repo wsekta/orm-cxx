@@ -1,5 +1,0 @@
-<map id="orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;" name="orm::detail::IsManyToManyDescriptor&lt; ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt; &gt;">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,79,439,148"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="166,5,278,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="225,44,225,79,219,79,219,44"/>
-</map>

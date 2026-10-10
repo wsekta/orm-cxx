@@ -1,5 +1,0 @@
-<map id="orm::query::QueryParameter" name="orm::query::QueryParameter">
-<area shape="rect" id="Node000001" title="A named parameter for raw query fragments." alt="" coords="5,93,212,119"/>
-<area shape="rect" id="Node000002" href="$classorm_1_1query_1_1QueryValue.html" title="A value that can be bound as a query parameter." alt="" coords="21,5,196,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="111,45,111,93,106,93,106,45"/>
-</map>

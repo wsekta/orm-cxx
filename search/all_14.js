@@ -11,16 +11,5 @@ var searchData=
   ['to_20one_20relations_8',['One-to-one relations',['../md_docs_2model.html#autotoc_md60',1,'']]],
   ['transactions_9',['Transactions',['../md_docs_2database.html#autotoc_md48',1,'']]],
   ['transactions_20and_20consistency_10',['Transactions and consistency',['../md_docs_2relations.html#autotoc_md104',1,'']]],
-  ['tupleeligible_11',['TupleEligible',['../structorm_1_1query_1_1detail_1_1compiled_1_1TupleEligible.html',1,'orm::query::detail::compiled']]],
-  ['tupleeligible_3c_20std_3a_3atuple_3c_20items_2e_2e_2e_20_3e_20_3e_12',['TupleEligible&lt; std::tuple&lt; Items... &gt; &gt;',['../structorm_1_1query_1_1detail_1_1compiled_1_1TupleEligible_3_01std_1_1tuple_3_01Items_8_8_8_01_4_01_4.html',1,'orm::query::detail::compiled']]],
-  ['type_5fconversion_3c_20bindingpayload_3c_20t_2c_20schematype_2c_20joinedvalues_20_3e_20_3e_13',['type_conversion&lt; BindingPayload&lt; T, SchemaType, JoinedValues &gt; &gt;',['../structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html',1,'soci']]],
-  ['type_5fconversion_3c_20orm_3a_3adb_3a_3abinding_3a_3acollectionpayload_3c_20owner_2c_20target_2c_20schematype_2c_20joinedvalues_20_3e_20_3e_14',['type_conversion&lt; orm::db::binding::CollectionPayload&lt; Owner, Target, SchemaType, JoinedValues &gt; &gt;',['../structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html',1,'soci']]],
-  ['type_5fconversion_3c_20projectionpayload_3c_20t_20_3e_20_3e_15',['type_conversion&lt; ProjectionPayload&lt; T &gt; &gt;',['../structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html',1,'soci']]],
-  ['typedcolumn_16',['TypedColumn',['../classorm_1_1query_1_1TypedColumn.html',1,'orm::query']]],
-  ['typedorderby_17',['TypedOrderBy',['../classorm_1_1query_1_1TypedOrderBy.html',1,'orm::query']]],
-  ['typedprojection_18',['TypedProjection',['../classorm_1_1query_1_1TypedProjection.html',1,'orm::query']]],
-  ['typeid_19',['TypeId',['../structorm_1_1model_1_1TypeId.html',1,'orm::model']]],
-  ['typenamesignaturesentinel_20',['TypeNameSignatureSentinel',['../structorm_1_1reflection_1_1detail_1_1TypeNameSignatureSentinel.html',1,'orm::reflection::detail']]],
-  ['types_21',['Supported field types',['../md_docs_2model.html#autotoc_md54',1,'']]],
-  ['typetranslator_22',['TypeTranslator',['../classorm_1_1db_1_1TypeTranslator.html',1,'orm::db']]]
+  ['types_11',['Supported field types',['../md_docs_2model.html#autotoc_md54',1,'']]]
 ];

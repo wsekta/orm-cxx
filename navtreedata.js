@@ -95,7 +95,7 @@ var NAVTREE =
       [ "Current limitations", "md_docs_2model.html#autotoc_md62", null ]
     ] ],
     [ "C++20 modules", "md_docs_2modules.html", [
-      [ "Partition dependencies", "md_docs_2modules.html#autotoc_md64", null ],
+      [ "Source organization", "md_docs_2modules.html#autotoc_md64", null ],
       [ "CMake consumers and installation", "md_docs_2modules.html#autotoc_md65", null ]
     ] ],
     [ "Package managers and releases", "md_docs_2packaging.html", [
@@ -151,27 +151,13 @@ var NAVTREE =
     ] ],
     [ "Modules", "modules.html", [
       [ "Modules List", "modules.html", "modules_dup" ]
-    ] ],
-    [ "Concepts", "concepts.html", "concepts" ],
-    [ "Classes", "annotated.html", [
-      [ "Class List", "annotated.html", "annotated_dup" ],
-      [ "Class Index", "classes.html", null ],
-      [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
-      [ "Class Members", "functions.html", [
-        [ "All", "functions.html", null ],
-        [ "Functions", "functions_func.html", null ],
-        [ "Variables", "functions_vars.html", null ],
-        [ "Related Symbols", "functions_rela.html", null ]
-      ] ]
     ] ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"md_docs_2relations.html#autotoc_md95",
-"unionorm_1_1reflection_1_1detail_1_1InactiveStorage.html"
+"index.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

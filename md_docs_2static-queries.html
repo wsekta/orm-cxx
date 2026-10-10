@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2static-queries.html',''); ini
   <div class="headertitle"><div class="title">Static query plans</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md108"></a> Immutable plans are available alongside the mutable <code><a class="el" href="classorm_1_1Query.html" title="A template class representing a select query in the ORM framework.">orm::Query</a>&lt;T&gt;</code>, <code>orm::ProjectionQuery&lt;Source, Result&gt;</code>, and <code>orm::Update&lt;T&gt;</code> builders. A plan preserves the expression structure in its C++ type. SQLite and PostgreSQL use that structure to prepare SQL once for the schema, plan type, and SQL dialect. Execution binds the current values and hydrates the usual model or DTO result.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md108"></a> Immutable plans are available alongside the mutable <code>orm::Query&lt;T&gt;</code>, <code>orm::ProjectionQuery&lt;Source, Result&gt;</code>, and <code>orm::Update&lt;T&gt;</code> builders. A plan preserves the expression structure in its C++ type. SQLite and PostgreSQL use that structure to prepare SQL once for the schema, plan type, and SQL dialect. Execution binds the current values and hydrates the usual model or DTO result.</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">struct </span>User</div>
@@ -104,20 +104,18 @@ $(document).ready(function(){initNavTree('md_docs_2static-queries.html',''); ini
 <div class="line">    std::string name;</div>
 <div class="line">    std::optional&lt;std::string&gt; email;</div>
 <div class="line">};</div>
-<div class="line"><span class="keyword">using </span>AppSchema = <a class="code hl_struct" href="structorm_1_1model_1_1Schema.html">orm::Schema&lt;User&gt;</a>;</div>
+<div class="line"><span class="keyword">using </span>AppSchema = orm::Schema&lt;User&gt;;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">inline</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> adults =</div>
 <div class="line">    select&lt;User&gt;().where(col&lt;&amp;User::age&gt;() &gt;= param&lt;int, 0&gt;())</div>
 <div class="line">                  .orderBy(asc(col&lt;&amp;User::id&gt;()))</div>
 <div class="line">                  .limit(10);</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line">orm::Database database;</div>
 <div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
 <div class="line"><span class="comment">// Connect and create/populate the table before executing the plan.</span></div>
 <div class="line"><span class="keyword">auto</span> first = context.select(adults, 18);</div>
 <div class="line"><span class="keyword">auto</span> second = context.select(adults, 21);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> orm.database.cppm:1434</div></div>
-<div class="ttc" id="astructorm_1_1model_1_1Schema_html"><div class="ttname"><a href="structorm_1_1model_1_1Schema.html">orm::model::Schema</a></div><div class="ttdoc">A closed compile-time set of ORM models.</div><div class="ttdef"><b>Definition</b> orm.model.cppm:2117</div></div>
 </div><!-- fragment --><p><code>param&lt;T, I&gt;()</code> declares a typed argument slot. Indices start at zero and must be contiguous. Reusing an index reuses its execution argument; every occurrence must declare the same type. Calls must supply exactly one compatible argument per slot in index order. The existing rules for safe numeric widening, scalar filter values, nullable fields, model ownership, and writable paths also apply to plans. A filter on an optional field takes its scalar type; <code>std::optional</code> arguments are available for nullable <code>SET</code> values.</p>
 <p>Clause methods return a new plan. Keep the returned value:</p>
 <div class="fragment"><div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> base = select&lt;User&gt;();</div>

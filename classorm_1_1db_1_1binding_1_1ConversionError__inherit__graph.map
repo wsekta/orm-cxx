@@ -1,5 +1,0 @@
-<map id="orm::db::binding::ConversionError" name="orm::db::binding::ConversionError">
-<area shape="rect" id="Node000001" title="Internal signal for a result value that cannot be represented by the requested model or projection fi..." alt="" coords="5,79,215,119"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="41,5,179,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="113,44,113,79,107,79,107,44"/>
-</map>
