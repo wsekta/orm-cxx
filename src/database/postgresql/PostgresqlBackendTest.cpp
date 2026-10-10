@@ -35,6 +35,13 @@ private:
 };
 } // namespace
 
+TEST(PostgresqlBackendTest, nativeNullResultsReportFailureAndPermitCleanup)
+{
+    EXPECT_EQ(PQresultStatus(nullptr), PGRES_FATAL_ERROR);
+    EXPECT_EQ(PQresultErrorField(nullptr, PG_DIAG_SQLSTATE), nullptr);
+    PQclear(nullptr);
+}
+
 TEST(PostgresqlBackendTest, exposesPostgresqlIdentityAndCapabilities)
 {
     const orm::db::postgresql::PostgresqlBackend backend;

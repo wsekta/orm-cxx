@@ -14,7 +14,8 @@ CLASS_DECLARATION = re.compile(r"\s*(?:class|struct)\s+(?P<name>[A-Za-z_]\w*)\s*
 PROFILE_FUNCTION = re.compile(r"^  (.+):\r?\n    Hash: 0x[0-9a-fA-F]+\r?$", re.MULTILINE)
 PROFILE_TOTAL = re.compile(r"^Total functions: (\d+)\r?$", re.MULTILINE)
 PROFILE_SHOWN = re.compile(r"^Functions shown: (\d+)\r?$", re.MULTILINE)
-EXCLUDES = [r".*/externals/.*", r".*/tests/.*", r".*/src/.*Test\.cpp"]
+EXCLUDES = [r".*/externals/.*", r".*/tests/.*", r".*/src/.*Test\.cpp",
+            r".*/(postgres_ext|libpq-fe|libpq-events)\.h"]
 
 
 def instrumented_functions(profile_text: str) -> set[str]:

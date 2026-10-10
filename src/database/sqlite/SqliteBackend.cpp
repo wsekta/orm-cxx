@@ -127,10 +127,7 @@ public:
                     code = finalCode;
                 }
             }
-            else if (statement != nullptr)
-            {
-                sqlite3_finalize(statement);
-            }
+            // sqlite3_prepare_v2 guarantees a null statement on errors and empty input.
             if (code != SQLITE_OK)
             {
                 throw orm::migrations::MigrationError{authorization.denied ? orm::migrations::ErrorCode::InvalidSql :

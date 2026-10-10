@@ -11,8 +11,11 @@ function(orm_cxx_enable_coverage library_target test_target)
     include("${CMAKE_CURRENT_FUNCTION_LIST_DIR}/cmake-coverage.cmake")
 
     if(CMAKE_CXX_COMPILER_ID MATCHES "(Apple)?Clang")
-        # llvm-cov accepts regular expressions.
-        set(coverage_excludes ".*/externals/.*" ".*/tests/.*" ".*/src/.*Test\\.cpp")
+        # llvm-cov accepts regular expressions. Native libpq types can acquire compiler coverage maps in their external
+        # C headers.
+        set(coverage_excludes ".*/externals/.*" ".*/tests/.*" ".*/src/.*Test\\.cpp"
+                              ".*/(postgres_ext|libpq-fe|libpq-events)\\.h"
+        )
     elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         # lcov accepts shell-style glob patterns.
         set(coverage_excludes "*/externals/*" "*/tests/*" "*/src/*Test.cpp")

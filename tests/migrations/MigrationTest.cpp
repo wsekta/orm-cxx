@@ -681,6 +681,7 @@ TEST(MigrationCatalogTest, PostgresqlLexerRejectsUnsafeCommandsButAcceptsQuotedB
     EXPECT_NO_THROW(orm::migrations::detail::validateScript(
         "/* nested /* ok */ */ DO $$BEGIN NULL; END;$$; SELECT E'a\\\'b'; SELECT \"a\"\"b\";",
         orm::db::BackendType::Postgres, 1));
+    EXPECT_NO_THROW(orm::migrations::detail::validateScript("SELECT $1;", orm::db::BackendType::Postgres, 1));
 }
 
 TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
@@ -779,4 +780,36 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     EXPECT_EQ(runCommandLine(help, initialCatalog(), out, err), 0);
     const char* argv[]{"migrate", "--help"};
     EXPECT_EQ(runCommandLine(2, argv, initialCatalog()), 0);
+}
+
+TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
+{
+    TempDirectory directory;
+    const auto url = "sqlite3://" + (directory.path / "cli.db").generic_string();
+    const auto call = [&](std::initializer_list<std::string_view> args, const Catalog& catalog)
+    {
+        std::ostringstream output, errors;
+        const auto result = orm::migrations::detail::runCommandLineWithConnection(std::span{args.begin(), args.size()},
+                                                                                  catalog, url, output, errors);
+        return std::tuple{result, output.str(), errors.str()};
+    };
+    const auto catalog = initialCatalog();
+    EXPECT_EQ(std::get<0>(call({"up", "--to", "10"}, catalog)), 0);
+    EXPECT_NE(std::get<1>(call({"status"}, catalog)).find("applied"), std::string::npos);
+    EXPECT_EQ(std::get<0>(call({"down", "--to", "0"}, catalog)), 0);
+    EXPECT_EQ(std::get<0>(call({"baseline", "--to", "10"}, catalog)), 0);
+    EXPECT_NE(std::get<1>(call({"status"}, catalog)).find("step_10 baseline"), std::string::npos);
+    orm::Database database;
+    database.connect(url);
+    orm::migrations::detail::DatabaseAccess::session(database) << "UPDATE _orm_migrations SET checksum='changed'";
+    database.disconnect();
+    const auto diagnostic = call({"status"}, catalog);
+    EXPECT_EQ(std::get<0>(diagnostic), 1);
+    EXPECT_NE(std::get<2>(diagnostic).find("SQL has changed"), std::string::npos);
+    std::ostringstream output, errors;
+    const std::string_view up[]{"up"};
+    EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
+                                                                    "sqlite3://:memory:", output, errors),
+              1);
+    EXPECT_NE(errors.str().find("("), std::string::npos);
 }

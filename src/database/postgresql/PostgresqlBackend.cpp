@@ -128,11 +128,8 @@ public:
         auto* handle = static_cast<soci::postgresql_session_backend*>(session.get_backend())->conn_;
         const std::string sql{script};
         auto* result = PQexec(handle, sql.c_str());
-        if (result == nullptr)
-        {
-            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::Execution, "Migration SQL failed", 0,
-                                                  orm::db::BackendType::Postgres};
-        }
+        // libpq accepts null results: fatal status, absent fields, and no-op cleanup.
+        // https://www.postgresql.org/docs/current/libpq-exec.html
         const auto status = PQresultStatus(result);
         const auto* nativeCode = PQresultErrorField(result, PG_DIAG_SQLSTATE);
         const std::optional<std::string> code =

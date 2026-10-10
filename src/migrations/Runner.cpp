@@ -91,13 +91,8 @@ public:
             }
             catch (...)
             {
-                try
-                {
-                    database_.disconnect();
-                }
-                catch (...)
-                {
-                }
+                // No application transaction or pooled SOCI session is active here.
+                database_.disconnect();
             }
         }
         Access::setActive(database_, false);
@@ -113,13 +108,7 @@ public:
         catch (...)
         {
             // Do not retry a potentially committed migration using this session.
-            try
-            {
-                database_.disconnect();
-            }
-            catch (...)
-            {
-            }
+            database_.disconnect();
             finished_ = true;
             throw MigrationError{ErrorCode::CommitUncertain,
                                  "Migration commit outcome is uncertain; reconnect and inspect history", version,
