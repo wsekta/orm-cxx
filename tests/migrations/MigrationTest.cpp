@@ -811,5 +811,6 @@ TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
     EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
                                                                     "sqlite3://:memory:", output, errors),
               1);
-    EXPECT_NE(errors.str().find("("), std::string::npos);
+    EXPECT_NE(errors.str().find("(1)"), std::string::npos);
+    EXPECT_EQ(errors.str().find("NOT VALID SQL"), std::string::npos);
 }
