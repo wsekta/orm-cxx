@@ -33,7 +33,8 @@ and `::` is replaced with `_`.
 
 ## Static schema
 
-Every database is bound to a closed set of complete model types:
+Each ORM context is bound to a closed set of complete model types and borrows
+an independent database connection:
 
 ```cpp
 import orm;

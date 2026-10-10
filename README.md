@@ -227,7 +227,7 @@ unless they define `auto_increment_columns`. See [Model documentation](docs/mode
 SQLite and PostgreSQL models support common scalar C++ fields, nullable scalar
 fields through `std::optional<T>`, compile-time table and column mappings,
 default or explicit primary keys, to-one relations, and explicitly mapped
-`OneToMany` and `ManyToMany` collections. Every database is bound to a closed
+`OneToMany` and `ManyToMany` collections. Each ORM context is bound to a closed
 `orm::Schema<Models...>`, so invalid mappings and missing relation targets are
 reported during compilation. Nullable to-one relations can be modeled as
 `std::optional<RelatedModel>`.

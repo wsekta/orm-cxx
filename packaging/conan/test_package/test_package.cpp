@@ -83,7 +83,8 @@ int main()
     (void)projectionPlan.toDynamic(1);
     (void)removePlan.toDynamic(1);
 
-    orm::Database<package_models::Schema> database;
+    orm::Database database;
+    auto context = database.orm<package_models::Schema>();
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
@@ -100,23 +101,23 @@ int main()
     if constexpr (orm::config::sqliteBackendEnabled)
     {
         database.connect("sqlite3://:memory:");
-        database.createTable<package_models::Entry>();
-        database.insert(package_models::Entry{1, "packaged dependencies"});
-        const auto entries = database.select(selectPlan, 1);
+        context.createTable<package_models::Entry>();
+        context.insert(package_models::Entry{1, "packaged dependencies"});
+        const auto entries = context.select(selectPlan, 1);
         if (entries.size() != 1 || entries.front().id != 1 || entries.front().name != "packaged dependencies")
         {
             return 3;
         }
-        if (database.update(updatePlan, std::string{"updated dependencies"}, 1) != 1)
+        if (context.update(updatePlan, std::string{"updated dependencies"}, 1) != 1)
         {
             return 4;
         }
-        const auto summaries = database.select(projectionPlan, 1);
+        const auto summaries = context.select(projectionPlan, 1);
         if (summaries.size() != 1 || summaries.front().name != "updated dependencies")
         {
             return 5;
         }
-        if (database.remove(removePlan, 1) != 1 || !database.select(query).empty())
+        if (context.remove(removePlan, 1) != 1 || !context.select(query).empty())
         {
             return 6;
         }
