@@ -2288,11 +2288,11 @@ export
             return this->template unlinkImpl<>(owner, query::detail::CollectionTraits<Member>::name(), target);
         }
     };
+}
 
-    template <typename SchemaType>
-    auto Database::orm()& noexcept -> OrmContext<SchemaType>
-    {
-        return OrmContext<SchemaType>{*this};
-    }
+template <typename SchemaType>
+auto Database::orm() & noexcept -> OrmContext<SchemaType>
+{
+    return OrmContext<SchemaType>{*this};
 }
 } // namespace orm
