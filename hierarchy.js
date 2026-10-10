@@ -39,9 +39,7 @@ var hierarchy =
     [ "orm::db::commands::CreateTableCommand", "classorm_1_1db_1_1commands_1_1CreateTableCommand.html", [
       [ "orm::db::commands::DefaultCreateTableCommand", "classorm_1_1db_1_1commands_1_1DefaultCreateTableCommand.html", null ]
     ] ],
-    [ "orm::DatabaseCore", "classorm_1_1DatabaseCore.html", [
-      [ "orm::Database< SchemaType >", "classorm_1_1Database.html", null ]
-    ] ],
+    [ "orm::Database", "classorm_1_1Database.html", null ],
     [ "orm::model::detail::DefaultJunctionColumnStorage< Model, SchemaType >", "structorm_1_1model_1_1detail_1_1DefaultJunctionColumnStorage.html", null ],
     [ "orm::db::commands::DeleteCommand", "classorm_1_1db_1_1commands_1_1DeleteCommand.html", [
       [ "orm::db::commands::DefaultDeleteCommand", "classorm_1_1db_1_1commands_1_1DefaultDeleteCommand.html", null ]
@@ -117,6 +115,7 @@ var hierarchy =
     [ "orm::db::binding::OptionalValue< T >", "structorm_1_1db_1_1binding_1_1OptionalValue.html", null ],
     [ "orm::db::binding::OptionalValue< std::optional< T > >", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
     [ "orm::query::detail::OrderBy", "structorm_1_1query_1_1detail_1_1OrderBy.html", null ],
+    [ "orm::OrmContext< SchemaType >", "classorm_1_1OrmContext.html", null ],
     [ "orm::query::detail::PlanAccess", "structorm_1_1query_1_1detail_1_1PlanAccess.html", null ],
     [ "orm::reflection::detail::PointerWrapper< T >", "structorm_1_1reflection_1_1detail_1_1PointerWrapper.html", null ],
     [ "orm::query::detail::Predicate", "classorm_1_1query_1_1detail_1_1Predicate.html", null ],

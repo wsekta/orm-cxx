@@ -1,7 +1,7 @@
 var module_orm =
 [
     [ "DatabaseError", "classorm_1_1DatabaseError.html", null ],
-    [ "Database", "classorm_1_1Database.html", "classorm_1_1Database" ],
+    [ "OrmContext", "classorm_1_1OrmContext.html", null ],
     [ "RelationCollectionTraits", "structorm_1_1detail_1_1RelationCollectionTraits.html", null ],
     [ "RelationCollectionTraits< OneToMany< T > >", "structorm_1_1detail_1_1RelationCollectionTraits_3_01OneToMany_3_01T_01_4_01_4.html", null ],
     [ "RelationCollectionTraits< ManyToMany< T > >", "structorm_1_1detail_1_1RelationCollectionTraits_3_01ManyToMany_3_01T_01_4_01_4.html", null ],
@@ -92,6 +92,6 @@ var module_orm =
     [ "type_conversion< BindingPayload< T, SchemaType, JoinedValues > >", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", null ],
     [ "type_conversion< orm::db::binding::CollectionPayload< Owner, Target, SchemaType, JoinedValues > >", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html", null ],
     [ "type_conversion< ProjectionPayload< T > >", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html", null ],
-    [ "DatabaseCore", "classorm_1_1DatabaseCore.html", "classorm_1_1DatabaseCore" ],
+    [ "Database", "classorm_1_1Database.html", "classorm_1_1Database" ],
     [ "StaticPlanType", "conceptorm_1_1query_1_1detail_1_1StaticPlanType.html", null ]
 ];

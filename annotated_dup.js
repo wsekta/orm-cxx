@@ -199,8 +199,8 @@ var annotated_dup =
         [ "FixedString", "structorm_1_1reflection_1_1FixedString.html", null ]
       ] ],
       [ "Database", "classorm_1_1Database.html", "classorm_1_1Database" ],
-      [ "DatabaseCore", "classorm_1_1DatabaseCore.html", "classorm_1_1DatabaseCore" ],
       [ "DatabaseError", "classorm_1_1DatabaseError.html", null ],
+      [ "OrmContext", "classorm_1_1OrmContext.html", null ],
       [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ]
     ] ],
     [ "soci", null, [

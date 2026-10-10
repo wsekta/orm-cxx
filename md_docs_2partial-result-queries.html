@@ -100,8 +100,8 @@ $(document).ready(function(){initNavTree('md_docs_2partial-result-queries.html',
 Contract</h1>
 <p>Full-model selects keep the existing API and result type:</p>
 <div class="fragment"><div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;User&gt;</a> query;</div>
-<div class="line">std::vector&lt;User&gt; users = database.select(query);</div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:34</div></div>
+<div class="line">std::vector&lt;User&gt; users = context.select(query);</div>
+<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:39</div></div>
 </div><!-- fragment --><p>Partial-result selects use a separate query type:</p>
 <div class="fragment"><div class="line"><span class="keyword">template</span> &lt;<span class="keyword">typename</span> Source, <span class="keyword">typename</span> Result&gt;</div>
 <div class="line"><span class="keyword">class </span>orm::ProjectionQuery;</div>
@@ -127,7 +127,7 @@ Contract</h1>
 <div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
 <div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col&lt;&amp;User::displayName&gt;()));</div>
 <div class="line"> </div>
-<div class="line">std::vector&lt;UserSummary&gt; rows = database.select(query);</div>
+<div class="line">std::vector&lt;UserSummary&gt; rows = context.select(query);</div>
 </div><!-- fragment --><h1><a class="anchor" id="autotoc_md75"></a>
 Query behavior</h1>
 <p><code>ProjectionQuery</code> supports the same filtering, ordering, paging, distinct, and join controls as <code>Query</code>:</p>

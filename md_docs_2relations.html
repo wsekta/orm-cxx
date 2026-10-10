@@ -186,8 +186,9 @@ Many-to-many</h1>
 </div><!-- fragment --><p><code>through&lt;"user_roles"&gt;()</code> is required on the owning side. The inverse side is optional; when present, <code>mappedBy&lt;&amp;User::roles&gt;()</code> points to the owning collection field. Both sides support <code>include</code>, collection predicates, <code>link</code>, and <code>unlink</code>.</p>
 <p>Both endpoints and every other relation target must belong to the database's closed schema:</p>
 <div class="fragment"><div class="line"><span class="keyword">using </span>AppSchema = <a class="code hl_struct" href="structorm_1_1model_1_1Schema.html">orm::Schema&lt;Author, Book, User, Role&gt;</a>;</div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;AppSchema&gt;</a> database;</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> orm.database.cppm:2150</div></div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> orm.database.cppm:1434</div></div>
 <div class="ttc" id="astructorm_1_1model_1_1Schema_html"><div class="ttname"><a href="structorm_1_1model_1_1Schema.html">orm::model::Schema</a></div><div class="ttdoc">A closed compile-time set of ORM models.</div><div class="ttdef"><b>Definition</b> orm.model.cppm:2117</div></div>
 </div><!-- fragment --><p>The junction table contains only the complete primary keys of both endpoints. Every junction column is <code>NOT NULL</code>; all columns together form its composite primary key. It has one foreign key to each endpoint with <code>ON DELETE CASCADE</code>. Deleting an endpoint therefore deletes only its junction rows, never the model at the other endpoint. No surrogate id, ordering column, or payload columns are added.</p>
 <h1><a class="anchor" id="autotoc_md98"></a>
@@ -214,14 +215,14 @@ Junction column names</h1>
 <h1><a class="anchor" id="autotoc_md99"></a>
 Schema lifecycle</h1>
 <p>Create endpoint tables first, then create junction tables from the owning model:</p>
-<div class="fragment"><div class="line">database.createTable&lt;User&gt;();</div>
-<div class="line">database.createTable&lt;Role&gt;();</div>
-<div class="line">database.createRelationTables&lt;User&gt;();</div>
+<div class="fragment"><div class="line">context.createTable&lt;User&gt;();</div>
+<div class="line">context.createTable&lt;Role&gt;();</div>
+<div class="line">context.createRelationTables&lt;User&gt;();</div>
 </div><!-- fragment --><p><code>createRelationTables&lt;T&gt;()</code> creates only owning many-to-many junction tables declared by <code>T</code>. A one-to-many relation needs no relation table, and calling the method for a model that has only inverse mappings is a no-op. Endpoint tables must already exist before junction-table DDL can reference them.</p>
 <p>Drop junction tables before endpoint tables:</p>
-<div class="fragment"><div class="line">database.deleteRelationTables&lt;User&gt;();</div>
-<div class="line">database.deleteTable&lt;Role&gt;();</div>
-<div class="line">database.deleteTable&lt;User&gt;();</div>
+<div class="fragment"><div class="line">context.deleteRelationTables&lt;User&gt;();</div>
+<div class="line">context.deleteTable&lt;Role&gt;();</div>
+<div class="line">context.deleteTable&lt;User&gt;();</div>
 </div><!-- fragment --><p>Relation-table creation and deletion are idempotent. They remain explicit; <code>createTable&lt;T&gt;()</code> and <code>deleteTable&lt;T&gt;()</code> do not recursively alter relation tables. Connecting to SQLite enables <code>PRAGMA foreign_keys=ON</code> automatically.</p>
 <h1><a class="anchor" id="autotoc_md100"></a>
 Link and unlink</h1>
@@ -229,12 +230,12 @@ Link and unlink</h1>
 <div class="fragment"><div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
 <div class="line">Role role{10, <span class="stringliteral">&quot;admin&quot;</span>};</div>
 <div class="line"> </div>
-<div class="line">std::size_t inserted = database.link&lt;&amp;User::roles&gt;(user, role);</div>
-<div class="line">std::size_t removed = database.unlink&lt;&amp;User::roles&gt;(user, role);</div>
+<div class="line">std::size_t inserted = context.link&lt;&amp;User::roles&gt;(user, role);</div>
+<div class="line">std::size_t removed = context.unlink&lt;&amp;User::roles&gt;(user, role);</div>
 </div><!-- fragment --><p>For many-to-many, <code>link</code> inserts one junction row and <code>unlink</code> deletes it. Both are idempotent: they return <code>1</code> when the stored relation changed and <code>0</code> when it was already in the requested state. Foreign-key enforcement rejects missing endpoint rows.</p>
 <p>For one-to-many, pass the parent first and child last:</p>
-<div class="fragment"><div class="line">std::size_t changed = database.link&lt;&amp;Author::books&gt;(author, book);</div>
-<div class="line">std::size_t detached = database.unlink&lt;&amp;Author::books&gt;(author, book);</div>
+<div class="fragment"><div class="line">std::size_t changed = context.link&lt;&amp;Author::books&gt;(author, book);</div>
+<div class="line">std::size_t detached = context.unlink&lt;&amp;Author::books&gt;(author, book);</div>
 </div><!-- fragment --><p><code>link</code> assigns the child's mapped foreign key and may move the child from a different parent. <code>unlink</code> stores SQL <code>NULL</code> in that foreign key. It throws <code>std::invalid_argument</code> when the mapped child relation is non-nullable. As with many-to-many, the return value is <code>1</code> only when the stored foreign key changed and <code>0</code> when it was already in the requested state.</p>
 <p>These operations read primary keys only. They do not insert, update, or cascade-save either endpoint. All primary-key components must be present and non-null, including every component of a composite key. For an auto-increment model, select the inserted row to obtain its generated key before calling <code>link</code>.</p>
 <h1><a class="anchor" id="autotoc_md101"></a>
@@ -245,9 +246,9 @@ Loading collections</h1>
 <div class="line">     .orderBy(orm::query::asc(orm::query::col&lt;&amp;Author::id&gt;()))</div>
 <div class="line">     .limit(20);</div>
 <div class="line"> </div>
-<div class="line"><span class="keyword">auto</span> authors = database.select(query);</div>
-<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:34</div></div>
-<div class="ttc" id="aclassorm_1_1Query_html_a111cc0fb76106ebf5e29d6f6577db14c"><div class="ttname"><a href="classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c">orm::Query::include</a></div><div class="ttdeci">auto include() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Explicitly loads a mapped OneToMany or ManyToMany collection.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:217</div></div>
+<div class="line"><span class="keyword">auto</span> authors = context.select(query);</div>
+<div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:39</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_a111cc0fb76106ebf5e29d6f6577db14c"><div class="ttname"><a href="classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c">orm::Query::include</a></div><div class="ttdeci">auto include() -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Explicitly loads a mapped OneToMany or ManyToMany collection.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:222</div></div>
 </div><!-- fragment --><p>Duplicate includes are idempotent. The ORM first runs the unchanged parent query, then one or more parameter-bounded batched queries per included field and groups rows by the complete parent primary key. It never issues one relation query per parent.</p>
 <p><code>LIMIT</code>, <code>OFFSET</code>, <code>DISTINCT</code>, and parent ordering apply only to the main query, so each returned parent's collection is complete. Large primary-key sets are split into batches that respect the selected backend's parameter limit. Element order inside a collection is not guaranteed.</p>
 <p>Includes are available only on full-model <code>Query&lt;T&gt;</code>, not on flat <code>ProjectionQuery</code> results. Only one include level is supported: collection fields on included elements remain unloaded. <code>disableJoining()</code> still controls to-one hydration and is propagated to collection elements, but does not cancel an explicit collection include.</p>
@@ -264,7 +265,7 @@ Filtering by collections</h1>
 <div class="line"> </div>
 <div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> withoutDrafts;</div>
 <div class="line">withoutDrafts.<a class="code hl_function" href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">where</a>(none&lt;&amp;Author::books&gt;(col&lt;&amp;Book::title&gt;().like(<span class="stringliteral">&quot;Draft%&quot;</span>)));</div>
-<div class="ttc" id="aclassorm_1_1Query_html_aa2f954e69cd06804c80da9c482375e74"><div class="ttname"><a href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">orm::Query::where</a></div><div class="ttdeci">auto where(const P &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:47</div></div>
+<div class="ttc" id="aclassorm_1_1Query_html_aa2f954e69cd06804c80da9c482375e74"><div class="ttname"><a href="classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74">orm::Query::where</a></div><div class="ttdeci">auto where(const P &amp;predicate) -&gt; Query&lt; T &gt; &amp;</div><div class="ttdoc">Replaces the WHERE predicate.</div><div class="ttdef"><b>Definition</b> orm.dynamic_query.cppm:52</div></div>
 </div><!-- fragment --><p>The predicate passed to <code>any</code> or <code>none</code> is relative to the collection's target model. It may use scalar target fields and existing one-level to-one paths. <code>any</code> renders correlated <code>EXISTS</code>, <code>none</code> renders <code>NOT EXISTS</code>, and <code>exists</code> checks only whether the collection is non-empty. Values remain SOCI bind parameters.</p>
 <p>Filtering does not load the collection. Add <code>include&lt;&amp;Author::books&gt;()</code> separately when the result objects also need the elements. Nested collection predicates are not supported.</p>
 <p>A collection is not a flat column path. Expressions such as <code>col&lt;&amp;Author::books, &amp;Book::title&gt;()</code> are rejected, as are collection fields in <code>ORDER BY</code>, <code>GROUP BY</code>, projections, aggregate expressions, and <code>Update</code> assignments.</p>
@@ -272,15 +273,16 @@ Filtering by collections</h1>
 End-to-end workflow</h1>
 <p>The complete lifecycle below uses both relation kinds. Endpoint rows are inserted first, links are written explicitly, and collection values are loaded only by <code>include</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using </span>AppSchema = <a class="code hl_struct" href="structorm_1_1model_1_1Schema.html">orm::Schema&lt;Author, Book, User, Role&gt;</a>;</div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;AppSchema&gt;</a> database;</div>
-<div class="line">database.<a class="code hl_function" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a>(<span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
+<div class="line">database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://application.db&quot;</span>);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 1. Create base tables before the owning many-to-many junction table.</span></div>
-<div class="line">database.createTable&lt;Author&gt;();</div>
-<div class="line">database.createTable&lt;Book&gt;();</div>
-<div class="line">database.createTable&lt;User&gt;();</div>
-<div class="line">database.createTable&lt;Role&gt;();</div>
-<div class="line">database.createRelationTables&lt;User&gt;();</div>
+<div class="line">context.createTable&lt;Author&gt;();</div>
+<div class="line">context.createTable&lt;Book&gt;();</div>
+<div class="line">context.createTable&lt;User&gt;();</div>
+<div class="line">context.createTable&lt;Role&gt;();</div>
+<div class="line">context.createRelationTables&lt;User&gt;();</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 2. Store endpoints. Collection wrapper contents are ignored by insert().</span></div>
 <div class="line">Author author{1, <span class="stringliteral">&quot;Octavia Butler&quot;</span>};</div>
@@ -288,22 +290,22 @@ End-to-end workflow</h1>
 <div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
 <div class="line">Role role{10, <span class="stringliteral">&quot;admin&quot;</span>};</div>
 <div class="line"> </div>
-<div class="line">database.insert(author);</div>
-<div class="line">database.insert(book);</div>
-<div class="line">database.insert(user);</div>
-<div class="line">database.insert(role);</div>
+<div class="line">context.insert(author);</div>
+<div class="line">context.insert(book);</div>
+<div class="line">context.insert(user);</div>
+<div class="line">context.insert(role);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 3. Persist associations explicitly.</span></div>
-<div class="line">database.link&lt;&amp;Author::books&gt;(author, book); <span class="comment">// updates Book::author</span></div>
-<div class="line">database.link&lt;&amp;User::roles&gt;(user, role);   <span class="comment">// inserts into user_roles</span></div>
+<div class="line">context.link&lt;&amp;Author::books&gt;(author, book); <span class="comment">// updates Book::author</span></div>
+<div class="line">context.link&lt;&amp;User::roles&gt;(user, role);   <span class="comment">// inserts into user_roles</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// The inverse many-to-many side is equivalent for mutations:</span></div>
-<div class="line">database.link&lt;&amp;Role::users&gt;(role, user);  <span class="comment">// returns 0: the link already exists</span></div>
+<div class="line">context.link&lt;&amp;Role::users&gt;(role, user);  <span class="comment">// returns 0: the link already exists</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 4. Load collections explicitly.</span></div>
 <div class="line"><a class="code hl_class" href="classorm_1_1Query.html">orm::Query&lt;Author&gt;</a> authorQuery;</div>
 <div class="line">authorQuery.<a class="code hl_function" href="classorm_1_1Query.html#a111cc0fb76106ebf5e29d6f6577db14c">include</a>&lt;&amp;Author::books&gt;();</div>
-<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> authors = database.select(authorQuery);</div>
+<div class="line"><span class="keyword">const</span> <span class="keyword">auto</span> authors = context.select(authorQuery);</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordflow">if</span> (!authors.empty() &amp;&amp; authors[0].books.isLoaded())</div>
 <div class="line">{</div>
@@ -314,16 +316,16 @@ End-to-end workflow</h1>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 5. Detach links before removing rows when application rules require it.</span></div>
-<div class="line">database.unlink&lt;&amp;Author::books&gt;(author, book);</div>
-<div class="line">database.unlink&lt;&amp;User::roles&gt;(user, role);</div>
+<div class="line">context.unlink&lt;&amp;Author::books&gt;(author, book);</div>
+<div class="line">context.unlink&lt;&amp;User::roles&gt;(user, role);</div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// 6. Drop owning junction tables before endpoint tables.</span></div>
-<div class="line">database.deleteRelationTables&lt;User&gt;();</div>
-<div class="line">database.deleteTable&lt;Role&gt;();</div>
-<div class="line">database.deleteTable&lt;User&gt;();</div>
-<div class="line">database.deleteTable&lt;Book&gt;();</div>
-<div class="line">database.deleteTable&lt;Author&gt;();</div>
-<div class="ttc" id="aclassorm_1_1DatabaseCore_html_a4fd6a2b78915e33468c808e3e14f8319"><div class="ttname"><a href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">orm::DatabaseCore::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="line">context.deleteRelationTables&lt;User&gt;();</div>
+<div class="line">context.deleteTable&lt;Role&gt;();</div>
+<div class="line">context.deleteTable&lt;User&gt;();</div>
+<div class="line">context.deleteTable&lt;Book&gt;();</div>
+<div class="line">context.deleteTable&lt;Author&gt;();</div>
+<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
 </div><!-- fragment --><p>For generated primary keys, insert the endpoint and select it back before step</p><ol type="1">
 <li>Calling <code>link</code> with the original object whose auto-increment key is still empty is rejected.</li>
 </ol>
@@ -353,7 +355,7 @@ Common mistakes</h1>
 <ul>
 <li><code>oneToMany&lt;&amp;Author::books&gt;()</code> and <code>manyToMany&lt;&amp;User::roles&gt;()</code> require collection member pointers. Prefer a target member pointer for <code>mappedBy</code>; its <code>FixedString</code> fallback names a C++ field, not a SQL column.</li>
 <li>Query and mutation operations select collection member pointers. Their owner, target model, and nested predicate are checked at compile time.</li>
-<li>Adding an element with <code>model.roles.values().push_back(role)</code> changes only that in-memory wrapper. Call <code>database.link&lt;&amp;User::roles&gt;(model, role)</code> to persist the association.</li>
+<li>Adding an element with <code>model.roles.values().push_back(role)</code> changes only that in-memory wrapper. Call <code>context.link&lt;&amp;User::roles&gt;(model, role)</code> to persist the association.</li>
 <li><code>insert(model)</code> never inspects or stores collection wrapper contents. Insert both endpoints first and then call <code>link</code>.</li>
 <li>An empty wrapper with <code>isLoaded() == false</code> does not prove that the database relation is empty. Use <code>include</code> and check for <code>isLoaded() == true</code> before interpreting <code>empty()</code> as a database result.</li>
 <li><code>include&lt;&amp;User::roles&gt;()</code> and <code>where(exists&lt;&amp;User::roles&gt;())</code> are independent. The first hydrates the wrapper; the second filters parent rows.</li>

@@ -1,25 +1,7 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" title=" " alt="" coords="5,312,124,337"/>
-<area shape="rect" id="Node000001" href="$structorm_1_1db_1_1binding_1_1IsOptional.html" title=" " alt="" coords="187,5,427,31"/>
-<area shape="poly" id="edge11_Node000000_Node000001" title=" " alt="" coords="65,298,72,243,90,174,103,137,121,102,143,69,170,41,190,28,193,33,174,45,147,73,125,105,108,139,95,175,78,244,70,298"/>
-<area shape="rect" id="Node000002" href="$structorm_1_1db_1_1binding_1_1IsOptionalBoundField.html" title=" " alt="" coords="206,55,409,95"/>
-<area shape="poly" id="edge12_Node000000_Node000002" title=" " alt="" coords="69,298,80,255,100,203,129,150,148,126,170,105,205,86,207,91,174,109,152,130,134,153,105,205,85,257,74,299"/>
-<area shape="rect" id="Node000003" href="$structorm_1_1db_1_1binding_1_1IsOptionalScalarField.html" title=" " alt="" coords="206,119,409,159"/>
-<area shape="poly" id="edge13_Node000000_Node000003" title=" " alt="" coords="74,298,110,233,137,198,171,169,205,152,207,157,173,174,141,202,115,236,79,300"/>
-<area shape="rect" id="Node000004" href="$structorm_1_1detail_1_1IsManyToManyDescriptor.html" title=" " alt="" coords="208,183,407,223"/>
-<area shape="poly" id="edge14_Node000000_Node000004" title=" " alt="" coords="85,300,123,265,171,233,207,219,209,224,173,238,126,269,89,304"/>
-<area shape="rect" id="Node000005" href="$structorm_1_1detail_1_1IsOneToManyDescriptor.html" title=" " alt="" coords="213,247,401,287"/>
-<area shape="poly" id="edge15_Node000000_Node000005" title=" " alt="" coords="132,306,171,297,221,285,223,290,173,302,133,311"/>
-<area shape="rect" id="Node000006" href="$structorm_1_1detail_1_1IsRelationDescriptor.html" title=" " alt="" coords="172,312,443,337"/>
-<area shape="poly" id="edge16_Node000000_Node000006" title=" " alt="" coords="138,322,172,322,172,327,138,327"/>
-<area shape="rect" id="Node000007" href="$structorm_1_1model_1_1detail_1_1IsAutoIncrement.html" title=" " alt="" coords="191,362,424,402"/>
-<area shape="poly" id="edge17_Node000000_Node000007" title=" " alt="" coords="133,338,223,359,222,365,132,343"/>
-<area shape="rect" id="Node000008" href="$structorm_1_1model_1_1detail_1_1IsColumnNames.html" title=" " alt="" coords="191,426,424,466"/>
-<area shape="poly" id="edge18_Node000000_Node000008" title=" " alt="" coords="89,346,126,380,173,412,202,423,200,428,171,416,123,384,85,350"/>
-<area shape="rect" id="Node000009" href="$structorm_1_1model_1_1detail_1_1IsFixedString.html" title=" " alt="" coords="203,490,412,530"/>
-<area shape="poly" id="edge19_Node000000_Node000009" title=" " alt="" coords="79,349,115,414,141,447,173,476,204,491,201,496,171,480,137,451,110,417,74,352"/>
-<area shape="rect" id="Node000010" href="$structorm_1_1model_1_1detail_1_1IsPrimaryKey.html" title=" " alt="" coords="201,554,413,594"/>
-<area shape="poly" id="edge20_Node000000_Node000010" title=" " alt="" coords="74,350,85,392,105,444,134,496,152,520,174,540,202,556,200,561,170,544,148,523,129,499,100,446,80,394,69,352"/>
-<area shape="rect" id="Node000011" href="$structorm_1_1model_1_1detail_1_1IsRelations.html" title=" " alt="" coords="208,618,407,658"/>
-<area shape="poly" id="edge21_Node000000_Node000011" title=" " alt="" coords="71,351,78,404,96,473,109,509,126,544,148,576,174,604,190,616,209,624,207,629,188,620,170,608,143,579,122,547,104,511,90,475,73,405,65,351"/>
+<area shape="rect" id="Node000000" title=" " alt="" coords="5,60,147,85"/>
+<area shape="rect" id="Node000001" href="$structorm_1_1model_1_1detail_1_1IsRelations_3_01std_1_1tuple_3_01Descriptors_8_8_8_01_4_01_4.html" title=" " alt="" coords="197,5,384,60"/>
+<area shape="poly" id="edge8_Node000000_Node000001" title=" " alt="" coords="158,55,197,47,198,53,159,60"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1query_1_1detail_1_1compiled_1_1TupleEligible_3_01std_1_1tuple_3_01Items_8_8_8_01_4_01_4.html" title=" " alt="" coords="195,84,387,139"/>
+<area shape="poly" id="edge9_Node000000_Node000002" title=" " alt="" coords="161,85,195,91,194,97,160,90"/>
 </map>

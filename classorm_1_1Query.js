@@ -14,5 +14,5 @@ var classorm_1_1Query =
     [ "orHaving", "classorm_1_1Query.html#a7fd213e9328f2d27b94aab2dbbcc2232", null ],
     [ "orWhere", "classorm_1_1Query.html#a1280c34a4025e89600e25654c9513808", null ],
     [ "where", "classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74", null ],
-    [ "orm::Database", "classorm_1_1Query.html#ae0f742b2920b17d9a95c91c6239abc24", null ]
+    [ "orm::OrmContext", "classorm_1_1Query.html#a9f5552a74c1746497c68a9784ac2b600", null ]
 ];

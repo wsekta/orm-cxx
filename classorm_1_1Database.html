@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>ORM C++: orm::Database&lt; SchemaType &gt; Class Template Reference</title>
+<title>ORM C++: orm::Database Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -92,267 +92,192 @@ $(document).ready(function(){initNavTree('classorm_1_1Database.html',''); initRe
 
 <div class="header">
   <div class="summary">
-<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#friends">Friends</a> &#124;
 <a href="classorm_1_1Database-members.html">List of all members</a>  </div>
-  <div class="headertitle"><div class="title">orm::Database&lt; SchemaType &gt; Class Template Reference<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">export</span></span><div class="ingroups">module <a class="el" href="module_orm.html">orm</a></div></div></div>
+  <div class="headertitle"><div class="title">orm::Database Class Reference<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">export</span></span><div class="ingroups">module <a class="el" href="module_orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
-
-<p><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> facade bound to one closed compile-time model schema.  
- <a href="classorm_1_1Database.html#details">More...</a></p>
-<div class="dynheader">
-Inheritance diagram for orm::Database&lt; SchemaType &gt;:</div>
-<div class="dyncontent">
-<div class="center"><img src="classorm_1_1Database__inherit__graph.png" border="0" usemap="#aorm_1_1Database_3_01SchemaType_01_4_inherit__map" alt="Inheritance graph"/></div>
-<map name="aorm_1_1Database_3_01SchemaType_01_4_inherit__map" id="aorm_1_1Database_3_01SchemaType_01_4_inherit__map">
-<area shape="rect" title="Database facade bound to one closed compile&#45;time model schema." alt="" coords="5,79,236,104"/>
-<area shape="rect" href="classorm_1_1DatabaseCore.html" title="A class representing a database in the ORM framework." alt="" coords="47,5,195,31"/>
-<area shape="poly" title=" " alt="" coords="123,44,123,79,118,79,118,44"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
-<div class="dynheader">
-Collaboration diagram for orm::Database&lt; SchemaType &gt;:</div>
-<div class="dyncontent">
-<div class="center"><img src="classorm_1_1Database__coll__graph.png" border="0" usemap="#aorm_1_1Database_3_01SchemaType_01_4_coll__map" alt="Collaboration graph"/></div>
-<map name="aorm_1_1Database_3_01SchemaType_01_4_coll__map" id="aorm_1_1Database_3_01SchemaType_01_4_coll__map">
-<area shape="rect" title="Database facade bound to one closed compile&#45;time model schema." alt="" coords="5,79,236,104"/>
-<area shape="rect" href="classorm_1_1DatabaseCore.html" title="A class representing a database in the ORM framework." alt="" coords="47,5,195,31"/>
-<area shape="poly" title=" " alt="" coords="123,44,123,79,118,79,118,44"/>
-</map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
-Public Types</h2></td></tr>
-<tr class="memitem:ab91a42042e362465719a267187bb27cb" id="r_ab91a42042e362465719a267187bb27cb"><td class="memTemplParams" colspan="2"><a id="ab91a42042e362465719a267187bb27cb" name="ab91a42042e362465719a267187bb27cb"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ab91a42042e362465719a267187bb27cb"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Payload</b> = <a class="el" href="structorm_1_1db_1_1binding_1_1BindingPayload.html">db::binding::BindingPayload</a>&lt; T, SchemaType &gt;</td></tr>
-<tr class="separator:ab91a42042e362465719a267187bb27cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af41c327c0bf1ec6e54b1f90a1f550c7d" id="r_af41c327c0bf1ec6e54b1f90a1f550c7d"><td class="memTemplParams" colspan="2"><a id="af41c327c0bf1ec6e54b1f90a1f550c7d" name="af41c327c0bf1ec6e54b1f90a1f550c7d"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:af41c327c0bf1ec6e54b1f90a1f550c7d"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><b>ProjectionPayload</b> = <a class="el" href="structorm_1_1db_1_1binding_1_1ProjectionPayload.html">db::binding::ProjectionPayload</a>&lt; T &gt;</td></tr>
-<tr class="separator:af41c327c0bf1ec6e54b1f90a1f550c7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ac76e254e6b04854b9382103d5c9d5547" id="r_ac76e254e6b04854b9382103d5c9d5547"><td class="memTemplParams" colspan="2"><a id="ac76e254e6b04854b9382103d5c9d5547" name="ac76e254e6b04854b9382103d5c9d5547"></a>
-template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
-requires (Plan::operation == query::detail::PlanOperation::Select)</td></tr>
-<tr class="memitem:ac76e254e6b04854b9382103d5c9d5547"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>select</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::vector&lt; typename Plan::Result &gt;</td></tr>
-<tr class="separator:ac76e254e6b04854b9382103d5c9d5547"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3981f184c7328909221536a02f57cb82" id="r_a3981f184c7328909221536a02f57cb82"><td class="memTemplParams" colspan="2"><a id="a3981f184c7328909221536a02f57cb82" name="a3981f184c7328909221536a02f57cb82"></a>
-template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
-requires (Plan::operation == query::detail::PlanOperation::Update)</td></tr>
-<tr class="memitem:a3981f184c7328909221536a02f57cb82"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>update</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
-<tr class="separator:a3981f184c7328909221536a02f57cb82"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aad4e6a7209db29f1024f6e66b10d8ba3" id="r_aad4e6a7209db29f1024f6e66b10d8ba3"><td class="memTemplParams" colspan="2"><a id="aad4e6a7209db29f1024f6e66b10d8ba3" name="aad4e6a7209db29f1024f6e66b10d8ba3"></a>
-template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; <br />
-requires (Plan::operation == query::detail::PlanOperation::Remove)</td></tr>
-<tr class="memitem:aad4e6a7209db29f1024f6e66b10d8ba3"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>remove</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
-<tr class="separator:aad4e6a7209db29f1024f6e66b10d8ba3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0507b1c785e33b8a976a95cf36b44fa5" id="r_a0507b1c785e33b8a976a95cf36b44fa5"><td class="memTemplParams" colspan="2"><a id="a0507b1c785e33b8a976a95cf36b44fa5" name="a0507b1c785e33b8a976a95cf36b44fa5"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a0507b1c785e33b8a976a95cf36b44fa5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>select</b> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
-<tr class="separator:a0507b1c785e33b8a976a95cf36b44fa5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55e70915daff1098191d3fc1efec7bfe" id="r_a55e70915daff1098191d3fc1efec7bfe"><td class="memTemplParams" colspan="2"><a id="a55e70915daff1098191d3fc1efec7bfe" name="a55e70915daff1098191d3fc1efec7bfe"></a>
-template&lt;typename Source , typename Result &gt; </td></tr>
-<tr class="memitem:a55e70915daff1098191d3fc1efec7bfe"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>select</b> (ProjectionQuery&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
-<tr class="separator:a55e70915daff1098191d3fc1efec7bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a924d650ceb5377e25841d24662c0acf4" id="r_a924d650ceb5377e25841d24662c0acf4"><td class="memTemplParams" colspan="2"><a id="a924d650ceb5377e25841d24662c0acf4" name="a924d650ceb5377e25841d24662c0acf4"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a924d650ceb5377e25841d24662c0acf4"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>insert</b> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
-<tr class="separator:a924d650ceb5377e25841d24662c0acf4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f35168520434fbf62a199b5c861c447" id="r_a6f35168520434fbf62a199b5c861c447"><td class="memTemplParams" colspan="2"><a id="a6f35168520434fbf62a199b5c861c447" name="a6f35168520434fbf62a199b5c861c447"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a6f35168520434fbf62a199b5c861c447"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>insert</b> (T object) -&gt; void</td></tr>
-<tr class="separator:a6f35168520434fbf62a199b5c861c447"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:affdb3ac31435178e16447a0fba5b9060" id="r_affdb3ac31435178e16447a0fba5b9060"><td class="memTemplParams" colspan="2"><a id="affdb3ac31435178e16447a0fba5b9060" name="affdb3ac31435178e16447a0fba5b9060"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:affdb3ac31435178e16447a0fba5b9060"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>update</b> (const Update&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
-<tr class="separator:affdb3ac31435178e16447a0fba5b9060"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a44f491632748d0d6006d77aefeae283e" id="r_a44f491632748d0d6006d77aefeae283e"><td class="memTemplParams" colspan="2"><a id="a44f491632748d0d6006d77aefeae283e" name="a44f491632748d0d6006d77aefeae283e"></a>
-template&lt;typename T , typename P &gt; <br />
-requires query::detail::PredicateFor&lt;P, T&gt; &amp;&amp; query::detail::ORM_QUERY_WRITE_SAFE&lt;P&gt;</td></tr>
-<tr class="memitem:a44f491632748d0d6006d77aefeae283e"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>remove</b> (const P &amp;predicate) -&gt; std::size_t</td></tr>
-<tr class="separator:a44f491632748d0d6006d77aefeae283e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7fe438d5bc042e28b77b52198e8dc39e" id="r_a7fe438d5bc042e28b77b52198e8dc39e"><td class="memTemplParams" colspan="2"><a id="a7fe438d5bc042e28b77b52198e8dc39e" name="a7fe438d5bc042e28b77b52198e8dc39e"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a7fe438d5bc042e28b77b52198e8dc39e"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>createTable</b> () -&gt; void</td></tr>
-<tr class="separator:a7fe438d5bc042e28b77b52198e8dc39e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae0257967d569f8e3eee1860b0453d7cd" id="r_ae0257967d569f8e3eee1860b0453d7cd"><td class="memTemplParams" colspan="2"><a id="ae0257967d569f8e3eee1860b0453d7cd" name="ae0257967d569f8e3eee1860b0453d7cd"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:ae0257967d569f8e3eee1860b0453d7cd"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>deleteTable</b> () -&gt; void</td></tr>
-<tr class="separator:ae0257967d569f8e3eee1860b0453d7cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acecce9abcf6c4ca7ce56a8e29796fac5" id="r_acecce9abcf6c4ca7ce56a8e29796fac5"><td class="memTemplParams" colspan="2"><a id="acecce9abcf6c4ca7ce56a8e29796fac5" name="acecce9abcf6c4ca7ce56a8e29796fac5"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:acecce9abcf6c4ca7ce56a8e29796fac5"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>createRelationTables</b> () -&gt; void</td></tr>
-<tr class="separator:acecce9abcf6c4ca7ce56a8e29796fac5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a915d755afb5a4650c4bb48ce1522794b" id="r_a915d755afb5a4650c4bb48ce1522794b"><td class="memTemplParams" colspan="2"><a id="a915d755afb5a4650c4bb48ce1522794b" name="a915d755afb5a4650c4bb48ce1522794b"></a>
-template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a915d755afb5a4650c4bb48ce1522794b"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>deleteRelationTables</b> () -&gt; void</td></tr>
-<tr class="separator:a915d755afb5a4650c4bb48ce1522794b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf" id="r_a66e6e8556e49b459824922c8bd0ac6bf"><td class="memTemplParams" colspan="2"><a id="a66e6e8556e49b459824922c8bd0ac6bf" name="a66e6e8556e49b459824922c8bd0ac6bf"></a>
-template&lt;auto Member, typename Owner , typename Target &gt; <br />
-requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Target&gt;</td></tr>
-<tr class="memitem:a66e6e8556e49b459824922c8bd0ac6bf"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>link</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
-<tr class="separator:a66e6e8556e49b459824922c8bd0ac6bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8" id="r_a3329d6482ff53ae7209f94e37e7cc0f8"><td class="memTemplParams" colspan="2"><a id="a3329d6482ff53ae7209f94e37e7cc0f8" name="a3329d6482ff53ae7209f94e37e7cc0f8"></a>
-template&lt;auto Member, typename Owner , typename Target &gt; <br />
-requires query::detail::ORM_QUERY_COLLECTION&lt;Member&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Owner, typename <a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Model&gt; &amp;&amp; query::detail::ORM_QUERY_MODEL_TYPE&lt;Target, typename <a class="el" href="structorm_1_1query_1_1detail_1_1CollectionTraits.html">query::detail::CollectionTraits</a>&lt;Member&gt;::Target&gt;</td></tr>
-<tr class="memitem:a3329d6482ff53ae7209f94e37e7cc0f8"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>unlink</b> (const Owner &amp;owner, const Target &amp;target) -&gt; std::size_t</td></tr>
-<tr class="separator:a3329d6482ff53ae7209f94e37e7cc0f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a918187290120417d85097a787b05153f" id="r_a918187290120417d85097a787b05153f"><td class="memItemLeft" align="right" valign="top"><a id="a918187290120417d85097a787b05153f" name="a918187290120417d85097a787b05153f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> ()</td></tr>
-<tr class="memdesc:a918187290120417d85097a787b05153f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> object. <br /></td></tr>
-<tr class="separator:a918187290120417d85097a787b05153f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a454c22e6671a38b7a93ed091f4c5f79f" id="r_a454c22e6671a38b7a93ed091f4c5f79f"><td class="memItemLeft" align="right" valign="top"><a id="a454c22e6671a38b7a93ed091f4c5f79f" name="a454c22e6671a38b7a93ed091f4c5f79f"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (db::CommandGeneratorFactory factory)</td></tr>
-<tr class="memdesc:a454c22e6671a38b7a93ed091f4c5f79f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
-<tr class="separator:a454c22e6671a38b7a93ed091f4c5f79f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace03a86ed577f1864111d370bb5aa2f9" id="r_ace03a86ed577f1864111d370bb5aa2f9"><td class="memItemLeft" align="right" valign="top"><a id="ace03a86ed577f1864111d370bb5aa2f9" name="ace03a86ed577f1864111d370bb5aa2f9"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (const <a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;)=delete</td></tr>
-<tr class="separator:ace03a86ed577f1864111d370bb5aa2f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a8008f51307813453f33d8976b3480b" id="r_a3a8008f51307813453f33d8976b3480b"><td class="memItemLeft" align="right" valign="top"><a id="a3a8008f51307813453f33d8976b3480b" name="a3a8008f51307813453f33d8976b3480b"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (<a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;&amp;)=delete</td></tr>
-<tr class="separator:a3a8008f51307813453f33d8976b3480b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_methods_classorm_1_1DatabaseCore"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classorm_1_1DatabaseCore')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="classorm_1_1DatabaseCore.html">orm::DatabaseCore</a></td></tr>
-<tr class="memitem:a918187290120417d85097a787b05153f inherit pub_methods_classorm_1_1DatabaseCore" id="r_a918187290120417d85097a787b05153f"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> ()</td></tr>
-<tr class="memdesc:a918187290120417d85097a787b05153f inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> object. <br /></td></tr>
-<tr class="separator:a918187290120417d85097a787b05153f inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a454c22e6671a38b7a93ed091f4c5f79f inherit pub_methods_classorm_1_1DatabaseCore" id="r_a454c22e6671a38b7a93ed091f4c5f79f"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (db::CommandGeneratorFactory factory)</td></tr>
-<tr class="memdesc:a454c22e6671a38b7a93ed091f4c5f79f inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
-<tr class="separator:a454c22e6671a38b7a93ed091f4c5f79f inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ace03a86ed577f1864111d370bb5aa2f9 inherit pub_methods_classorm_1_1DatabaseCore" id="r_ace03a86ed577f1864111d370bb5aa2f9"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (const <a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;)=delete</td></tr>
-<tr class="separator:ace03a86ed577f1864111d370bb5aa2f9 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3a8008f51307813453f33d8976b3480b inherit pub_methods_classorm_1_1DatabaseCore" id="r_a3a8008f51307813453f33d8976b3480b"><td class="memItemLeft" align="right" valign="top">
-&#160;</td><td class="memItemRight" valign="bottom"><b>DatabaseCore</b> (<a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;&amp;)=delete</td></tr>
-<tr class="separator:a3a8008f51307813453f33d8976b3480b inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7805673b97d386e849d5f04ab7eb07ab inherit pub_methods_classorm_1_1DatabaseCore" id="r_a7805673b97d386e849d5f04ab7eb07ab"><td class="memItemLeft" align="right" valign="top">
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;) -&gt; <a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;=delete</td></tr>
-<tr class="separator:a7805673b97d386e849d5f04ab7eb07ab inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a150ec1ac4c7da6b817ba7fea386e68eb inherit pub_methods_classorm_1_1DatabaseCore" id="r_a150ec1ac4c7da6b817ba7fea386e68eb"><td class="memItemLeft" align="right" valign="top">
-auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;&amp;) -&gt; <a class="el" href="classorm_1_1DatabaseCore.html">DatabaseCore</a> &amp;=delete</td></tr>
-<tr class="separator:a150ec1ac4c7da6b817ba7fea386e68eb inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4fd6a2b78915e33468c808e3e14f8319 inherit pub_methods_classorm_1_1DatabaseCore" id="r_a4fd6a2b78915e33468c808e3e14f8319"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a4fd6a2b78915e33468c808e3e14f8319">connect</a> (const std::string &amp;connectionString) -&gt; void</td></tr>
-<tr class="memdesc:a4fd6a2b78915e33468c808e3e14f8319 inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
-<tr class="separator:a4fd6a2b78915e33468c808e3e14f8319 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9089cbdeb18b77659c89517f7df8c14e inherit pub_methods_classorm_1_1DatabaseCore" id="r_a9089cbdeb18b77659c89517f7df8c14e"><td class="memItemLeft" align="right" valign="top">
+<tr class="memitem:a0cf947c50ac4c47b8478d66ec49a104b" id="r_a0cf947c50ac4c47b8478d66ec49a104b"><td class="memItemLeft" align="right" valign="top"><a id="a0cf947c50ac4c47b8478d66ec49a104b" name="a0cf947c50ac4c47b8478d66ec49a104b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Database</b> ()</td></tr>
+<tr class="memdesc:a0cf947c50ac4c47b8478d66ec49a104b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="classorm_1_1Database.html">Database</a> object. <br /></td></tr>
+<tr class="separator:a0cf947c50ac4c47b8478d66ec49a104b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48021088c2e868b668340280e04c20b5" id="r_a48021088c2e868b668340280e04c20b5"><td class="memItemLeft" align="right" valign="top"><a id="a48021088c2e868b668340280e04c20b5" name="a48021088c2e868b668340280e04c20b5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Database</b> (db::CommandGeneratorFactory factory)</td></tr>
+<tr class="memdesc:a48021088c2e868b668340280e04c20b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry. <br /></td></tr>
+<tr class="separator:a48021088c2e868b668340280e04c20b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a8e0cab6afc9fa09b55065f4b0bda01" id="r_a4a8e0cab6afc9fa09b55065f4b0bda01"><td class="memItemLeft" align="right" valign="top"><a id="a4a8e0cab6afc9fa09b55065f4b0bda01" name="a4a8e0cab6afc9fa09b55065f4b0bda01"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Database</b> (const <a class="el" href="classorm_1_1Database.html">Database</a> &amp;)=delete</td></tr>
+<tr class="separator:a4a8e0cab6afc9fa09b55065f4b0bda01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a42a37cbd257520af833fbbf201811aee" id="r_a42a37cbd257520af833fbbf201811aee"><td class="memItemLeft" align="right" valign="top"><a id="a42a37cbd257520af833fbbf201811aee" name="a42a37cbd257520af833fbbf201811aee"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Database</b> (<a class="el" href="classorm_1_1Database.html">Database</a> &amp;&amp;)=delete</td></tr>
+<tr class="separator:a42a37cbd257520af833fbbf201811aee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aba0eb5e2b7cacdc0f61b13317a6c0451" id="r_aba0eb5e2b7cacdc0f61b13317a6c0451"><td class="memItemLeft" align="right" valign="top"><a id="aba0eb5e2b7cacdc0f61b13317a6c0451" name="aba0eb5e2b7cacdc0f61b13317a6c0451"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classorm_1_1Database.html">Database</a> &amp;) -&gt; <a class="el" href="classorm_1_1Database.html">Database</a> &amp;=delete</td></tr>
+<tr class="separator:aba0eb5e2b7cacdc0f61b13317a6c0451"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a270afca31a98d211b5a801e99adb0218" id="r_a270afca31a98d211b5a801e99adb0218"><td class="memItemLeft" align="right" valign="top"><a id="a270afca31a98d211b5a801e99adb0218" name="a270afca31a98d211b5a801e99adb0218"></a>
+auto&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (<a class="el" href="classorm_1_1Database.html">Database</a> &amp;&amp;) -&gt; <a class="el" href="classorm_1_1Database.html">Database</a> &amp;=delete</td></tr>
+<tr class="separator:a270afca31a98d211b5a801e99adb0218"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86f01ed300b1a8a7a74bedbf61e45fa2" id="r_a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a> (const std::string &amp;connectionString) -&gt; void</td></tr>
+<tr class="memdesc:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
+<tr class="separator:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a838dec6f6358add79205f223cd164e04" id="r_a838dec6f6358add79205f223cd164e04"><td class="memItemLeft" align="right" valign="top"><a id="a838dec6f6358add79205f223cd164e04" name="a838dec6f6358add79205f223cd164e04"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>connect</b> (db::BackendType requestedBackend, const std::string &amp;connectionString) -&gt; void</td></tr>
-<tr class="memdesc:a9089cbdeb18b77659c89517f7df8c14e inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects using an explicitly selected registered backend. <br /></td></tr>
-<tr class="separator:a9089cbdeb18b77659c89517f7df8c14e inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c1f18188748bf3717d28444e4f46520 inherit pub_methods_classorm_1_1DatabaseCore" id="r_a2c1f18188748bf3717d28444e4f46520"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:a838dec6f6358add79205f223cd164e04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects using an explicitly selected registered backend. <br /></td></tr>
+<tr class="separator:a838dec6f6358add79205f223cd164e04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed77524f1815ead26234adf09898f469" id="r_aed77524f1815ead26234adf09898f469"><td class="memItemLeft" align="right" valign="top"><a id="aed77524f1815ead26234adf09898f469" name="aed77524f1815ead26234adf09898f469"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>disconnect</b> () -&gt; void</td></tr>
-<tr class="memdesc:a2c1f18188748bf3717d28444e4f46520 inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnects from the database. <br /></td></tr>
-<tr class="separator:a2c1f18188748bf3717d28444e4f46520 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acebe4fa46933e2610fe83ea2a7b37a45 inherit pub_methods_classorm_1_1DatabaseCore" id="r_acebe4fa46933e2610fe83ea2a7b37a45"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#acebe4fa46933e2610fe83ea2a7b37a45">getBackendType</a> () const noexcept -&gt; db::BackendType</td></tr>
-<tr class="memdesc:acebe4fa46933e2610fe83ea2a7b37a45 inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
-<tr class="separator:acebe4fa46933e2610fe83ea2a7b37a45 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33f02aa54e939bacab83fcf6146d1cfb inherit pub_methods_classorm_1_1DatabaseCore" id="r_a33f02aa54e939bacab83fcf6146d1cfb"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:aed77524f1815ead26234adf09898f469"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnects from the database. <br /></td></tr>
+<tr class="separator:aed77524f1815ead26234adf09898f469"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21c93399fd9432c3ce395297d761034c" id="r_a21c93399fd9432c3ce395297d761034c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType &gt; </td></tr>
+<tr class="memitem:a21c93399fd9432c3ce395297d761034c"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c">orm</a> () &amp;noexcept -&gt; <a class="el" href="classorm_1_1OrmContext.html">OrmContext</a>&lt; SchemaType &gt;</td></tr>
+<tr class="separator:a21c93399fd9432c3ce395297d761034c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9bdc892f88433788c814fd4c00d3ec2c" id="r_a9bdc892f88433788c814fd4c00d3ec2c"><td class="memTemplParams" colspan="2"><a id="a9bdc892f88433788c814fd4c00d3ec2c" name="a9bdc892f88433788c814fd4c00d3ec2c"></a>
+template&lt;typename SchemaType &gt; </td></tr>
+<tr class="memitem:a9bdc892f88433788c814fd4c00d3ec2c"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>orm</b> () &amp;&amp;-&gt; <a class="el" href="classorm_1_1OrmContext.html">OrmContext</a>&lt; SchemaType &gt;=delete</td></tr>
+<tr class="separator:a9bdc892f88433788c814fd4c00d3ec2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa59f20483f628b4d0d73ebc4ec7bc57d" id="r_aa59f20483f628b4d0d73ebc4ec7bc57d"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html#aa59f20483f628b4d0d73ebc4ec7bc57d">getBackendType</a> () const noexcept -&gt; db::BackendType</td></tr>
+<tr class="memdesc:aa59f20483f628b4d0d73ebc4ec7bc57d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the backend type of the database.  <br /></td></tr>
+<tr class="separator:aa59f20483f628b4d0d73ebc4ec7bc57d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64d431e5f73bc213b6e16406d6c4516e" id="r_a64d431e5f73bc213b6e16406d6c4516e"><td class="memItemLeft" align="right" valign="top"><a id="a64d431e5f73bc213b6e16406d6c4516e" name="a64d431e5f73bc213b6e16406d6c4516e"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>isConnected</b> () const noexcept -&gt; bool</td></tr>
-<tr class="memdesc:a33f02aa54e939bacab83fcf6146d1cfb inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether a backend session is currently open. <br /></td></tr>
-<tr class="separator:a33f02aa54e939bacab83fcf6146d1cfb inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a64475066f3a5cbee97fa3149bbf497b3 inherit pub_methods_classorm_1_1DatabaseCore" id="r_a64475066f3a5cbee97fa3149bbf497b3"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a64475066f3a5cbee97fa3149bbf497b3">getBackendCapabilities</a> () const -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">db::BackendCapabilities</a> &amp;</td></tr>
-<tr class="memdesc:a64475066f3a5cbee97fa3149bbf497b3 inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the capabilities advertised by the connected backend.  <br /></td></tr>
-<tr class="separator:a64475066f3a5cbee97fa3149bbf497b3 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a97f7b62ddae43ba47fb43bce0d420cfa inherit pub_methods_classorm_1_1DatabaseCore" id="r_a97f7b62ddae43ba47fb43bce0d420cfa"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:a64d431e5f73bc213b6e16406d6c4516e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether a backend session is currently open. <br /></td></tr>
+<tr class="separator:a64d431e5f73bc213b6e16406d6c4516e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a083686788355dbaed24c690ca1be27e9" id="r_a083686788355dbaed24c690ca1be27e9"><td class="memItemLeft" align="right" valign="top">auto&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html#a083686788355dbaed24c690ca1be27e9">getBackendCapabilities</a> () const -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">db::BackendCapabilities</a> &amp;</td></tr>
+<tr class="memdesc:a083686788355dbaed24c690ca1be27e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the capabilities advertised by the connected backend.  <br /></td></tr>
+<tr class="separator:a083686788355dbaed24c690ca1be27e9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56318393652ad4c68c2bc71b5474b03c" id="r_a56318393652ad4c68c2bc71b5474b03c"><td class="memItemLeft" align="right" valign="top"><a id="a56318393652ad4c68c2bc71b5474b03c" name="a56318393652ad4c68c2bc71b5474b03c"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>beginTransaction</b> () -&gt; void</td></tr>
-<tr class="memdesc:a97f7b62ddae43ba47fb43bce0d420cfa inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a transaction. <br /></td></tr>
-<tr class="separator:a97f7b62ddae43ba47fb43bce0d420cfa inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab867a949d0b37aeb452955c28dcee72c inherit pub_methods_classorm_1_1DatabaseCore" id="r_ab867a949d0b37aeb452955c28dcee72c"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:a56318393652ad4c68c2bc71b5474b03c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a transaction. <br /></td></tr>
+<tr class="separator:a56318393652ad4c68c2bc71b5474b03c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e53db9a678a64b874158b175c02ff24" id="r_a8e53db9a678a64b874158b175c02ff24"><td class="memItemLeft" align="right" valign="top"><a id="a8e53db9a678a64b874158b175c02ff24" name="a8e53db9a678a64b874158b175c02ff24"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>commitTransaction</b> () -&gt; void</td></tr>
-<tr class="memdesc:ab867a949d0b37aeb452955c28dcee72c inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Commits a transaction. <br /></td></tr>
-<tr class="separator:ab867a949d0b37aeb452955c28dcee72c inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5ca1f8fd77ea6d27226a2cb2e4451442 inherit pub_methods_classorm_1_1DatabaseCore" id="r_a5ca1f8fd77ea6d27226a2cb2e4451442"><td class="memItemLeft" align="right" valign="top">
+<tr class="memdesc:a8e53db9a678a64b874158b175c02ff24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Commits a transaction. <br /></td></tr>
+<tr class="separator:a8e53db9a678a64b874158b175c02ff24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad51f3e557f8d8dce0c78ab8fb56a60cf" id="r_ad51f3e557f8d8dce0c78ab8fb56a60cf"><td class="memItemLeft" align="right" valign="top"><a id="ad51f3e557f8d8dce0c78ab8fb56a60cf" name="ad51f3e557f8d8dce0c78ab8fb56a60cf"></a>
 auto&#160;</td><td class="memItemRight" valign="bottom"><b>rollbackTransaction</b> () -&gt; void</td></tr>
-<tr class="memdesc:a5ca1f8fd77ea6d27226a2cb2e4451442 inherit pub_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rollbacks a transaction. <br /></td></tr>
-<tr class="separator:a5ca1f8fd77ea6d27226a2cb2e4451442 inherit pub_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memdesc:ad51f3e557f8d8dce0c78ab8fb56a60cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Rollbacks a transaction. <br /></td></tr>
+<tr class="separator:ad51f3e557f8d8dce0c78ab8fb56a60cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="inherited" name="inherited"></a>
-Additional Inherited Members</h2></td></tr>
-<tr class="inherit_header pro_methods_classorm_1_1DatabaseCore"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classorm_1_1DatabaseCore')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="classorm_1_1DatabaseCore.html">orm::DatabaseCore</a></td></tr>
-<tr class="memitem:a71cc2254b98daa4cc02394321c3c67b1 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a71cc2254b98daa4cc02394321c3c67b1"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename Plan , typename... Args&gt; </td></tr>
-<tr class="memitem:a71cc2254b98daa4cc02394321c3c67b1 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a71cc2254b98daa4cc02394321c3c67b1">selectPlanImpl</a> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::vector&lt; typename Plan::Result &gt;</td></tr>
-<tr class="memdesc:a71cc2254b98daa4cc02394321c3c67b1 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a select query and returns the result.  <br /></td></tr>
-<tr class="separator:a71cc2254b98daa4cc02394321c3c67b1 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a34653887798593d190a5c18e1f1afaf3 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a34653887798593d190a5c18e1f1afaf3"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Plan , typename... Args&gt; </td></tr>
-<tr class="memitem:a34653887798593d190a5c18e1f1afaf3 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>updatePlanImpl</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
-<tr class="separator:a34653887798593d190a5c18e1f1afaf3 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae7977e29a0c41a847d7dec32da6c5f2f inherit pro_methods_classorm_1_1DatabaseCore" id="r_ae7977e29a0c41a847d7dec32da6c5f2f"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Plan , typename... Args&gt; </td></tr>
-<tr class="memitem:ae7977e29a0c41a847d7dec32da6c5f2f inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>removePlanImpl</b> (const Plan &amp;plan, Args &amp;&amp;... args) -&gt; std::size_t</td></tr>
-<tr class="separator:ae7977e29a0c41a847d7dec32da6c5f2f inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a596a0fb6b11fbb578aa5a57254f2fadb inherit pro_methods_classorm_1_1DatabaseCore" id="r_a596a0fb6b11fbb578aa5a57254f2fadb"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Plan , typename... Args&gt; </td></tr>
-<tr class="memitem:a596a0fb6b11fbb578aa5a57254f2fadb inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>executeDynamicPlan</b> (const Plan &amp;plan, Args &amp;&amp;... args)</td></tr>
-<tr class="separator:a596a0fb6b11fbb578aa5a57254f2fadb inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3fd50979c4b6a5af4c6406b47f1831ff inherit pro_methods_classorm_1_1DatabaseCore" id="r_a3fd50979c4b6a5af4c6406b47f1831ff"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Plan , db::CompiledSqlFlavor Flavor, typename Args &gt; </td></tr>
-<tr class="memitem:a3fd50979c4b6a5af4c6406b47f1831ff inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>executeCompiledPlan</b> (const Plan &amp;plan, const Args &amp;values)</td></tr>
-<tr class="separator:a3fd50979c4b6a5af4c6406b47f1831ff inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a0620afc10145bf024748c71ee7cefb75"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a0620afc10145bf024748c71ee7cefb75 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>selectImpl</b> (<a class="el" href="classorm_1_1Query.html">Query</a>&lt; T &gt; &amp;query) -&gt; std::vector&lt; T &gt;</td></tr>
-<tr class="separator:a0620afc10145bf024748c71ee7cefb75 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a71fd9763cb799bf21a58b255016aac01"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Source , typename Result &gt; </td></tr>
-<tr class="memitem:a71fd9763cb799bf21a58b255016aac01 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>selectImpl</b> (ProjectionQuery&lt; Source, Result &gt; &amp;query) -&gt; std::vector&lt; Result &gt;</td></tr>
-<tr class="separator:a71fd9763cb799bf21a58b255016aac01 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec inherit pro_methods_classorm_1_1DatabaseCore" id="r_a6e233618ac3e5a54ff3a33010a301eec"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename Source , typename Result , bool Projection, typename Loader &gt; </td></tr>
-<tr class="memitem:a6e233618ac3e5a54ff3a33010a301eec inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>executeSelectStatement</b> (<a class="el" href="structorm_1_1db_1_1StatementView.html">db::StatementView</a> statement, bool shouldJoin, Loader loadIncludes) -&gt; std::vector&lt; Result &gt;</td></tr>
-<tr class="separator:a6e233618ac3e5a54ff3a33010a301eec inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a449a757e1722ec84af9aed218e8ae254 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a449a757e1722ec84af9aed218e8ae254"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a449a757e1722ec84af9aed218e8ae254 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a449a757e1722ec84af9aed218e8ae254">insertImpl</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
-<tr class="memdesc:a449a757e1722ec84af9aed218e8ae254 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for multiple objects.  <br /></td></tr>
-<tr class="separator:a449a757e1722ec84af9aed218e8ae254 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a575a70ed07a2359d607b31bce7462944 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a575a70ed07a2359d607b31bce7462944"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a575a70ed07a2359d607b31bce7462944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a575a70ed07a2359d607b31bce7462944">insertImpl</a> (T object) -&gt; void</td></tr>
-<tr class="memdesc:a575a70ed07a2359d607b31bce7462944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a insert query for a single object.  <br /></td></tr>
-<tr class="separator:a575a70ed07a2359d607b31bce7462944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ff773773243b59718df615485543699 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a3ff773773243b59718df615485543699"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a3ff773773243b59718df615485543699 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a3ff773773243b59718df615485543699">updateImpl</a> (const Update&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
-<tr class="memdesc:a3ff773773243b59718df615485543699 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes an update query.  <br /></td></tr>
-<tr class="separator:a3ff773773243b59718df615485543699 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c inherit pro_methods_classorm_1_1DatabaseCore" id="r_a52e2d23d75aad96891051c9dbc08365c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a52e2d23d75aad96891051c9dbc08365c inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a52e2d23d75aad96891051c9dbc08365c">removeImpl</a> (const <a class="el" href="classorm_1_1query_1_1detail_1_1Predicate.html">query::detail::Predicate</a> &amp;predicate) -&gt; std::size_t</td></tr>
-<tr class="memdesc:a52e2d23d75aad96891051c9dbc08365c inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Executes a delete query for rows matching a predicate.  <br /></td></tr>
-<tr class="separator:a52e2d23d75aad96891051c9dbc08365c inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f inherit pro_methods_classorm_1_1DatabaseCore" id="r_ad7cb162365dcbcfc96a39a6146d5958f"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:ad7cb162365dcbcfc96a39a6146d5958f inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#ad7cb162365dcbcfc96a39a6146d5958f">createTableImpl</a> () -&gt; void</td></tr>
-<tr class="memdesc:ad7cb162365dcbcfc96a39a6146d5958f inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a create table query for a model.  <br /></td></tr>
-<tr class="separator:ad7cb162365dcbcfc96a39a6146d5958f inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c03d81186257bee78003f51be24ff14 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a2c03d81186257bee78003f51be24ff14"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:a2c03d81186257bee78003f51be24ff14 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a2c03d81186257bee78003f51be24ff14">deleteTableImpl</a> () -&gt; void</td></tr>
-<tr class="memdesc:a2c03d81186257bee78003f51be24ff14 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Execute a delete table query for a model.  <br /></td></tr>
-<tr class="separator:a2c03d81186257bee78003f51be24ff14 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac278df3368bf370aedaa35d1da0f789a inherit pro_methods_classorm_1_1DatabaseCore" id="r_ac278df3368bf370aedaa35d1da0f789a"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:ac278df3368bf370aedaa35d1da0f789a inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#ac278df3368bf370aedaa35d1da0f789a">createRelationTablesImpl</a> () -&gt; void</td></tr>
-<tr class="memdesc:ac278df3368bf370aedaa35d1da0f789a inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates junction tables owned by a model's ManyToMany mappings.  <br /></td></tr>
-<tr class="separator:ac278df3368bf370aedaa35d1da0f789a inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac07741bddeeb1fe565c9b602bb85fc95 inherit pro_methods_classorm_1_1DatabaseCore" id="r_ac07741bddeeb1fe565c9b602bb85fc95"><td class="memTemplParams" colspan="2">
-template&lt;typename SchemaType , typename T &gt; </td></tr>
-<tr class="memitem:ac07741bddeeb1fe565c9b602bb85fc95 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>deleteRelationTablesImpl</b> () -&gt; void</td></tr>
-<tr class="memdesc:ac07741bddeeb1fe565c9b602bb85fc95 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Drops junction tables owned by a model's ManyToMany mappings. <br /></td></tr>
-<tr class="separator:ac07741bddeeb1fe565c9b602bb85fc95 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac79c01ec161840a63a1a189202a92944 inherit pro_methods_classorm_1_1DatabaseCore" id="r_ac79c01ec161840a63a1a189202a92944"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename Owner , typename Target &gt; </td></tr>
-<tr class="memitem:ac79c01ec161840a63a1a189202a92944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#ac79c01ec161840a63a1a189202a92944">linkImpl</a> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
-<tr class="memdesc:ac79c01ec161840a63a1a189202a92944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates or changes a OneToMany/ManyToMany association.  <br /></td></tr>
-<tr class="separator:ac79c01ec161840a63a1a189202a92944 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1284e1a622ebbb8ec1c7357e94189875 inherit pro_methods_classorm_1_1DatabaseCore" id="r_a1284e1a622ebbb8ec1c7357e94189875"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType , typename Owner , typename Target &gt; </td></tr>
-<tr class="memitem:a1284e1a622ebbb8ec1c7357e94189875 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html#a1284e1a622ebbb8ec1c7357e94189875">unlinkImpl</a> (const Owner &amp;owner, std::string_view relationField, const Target &amp;target) -&gt; std::size_t</td></tr>
-<tr class="memdesc:a1284e1a622ebbb8ec1c7357e94189875 inherit pro_methods_classorm_1_1DatabaseCore"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a OneToMany/ManyToMany association.  <br /></td></tr>
-<tr class="separator:a1284e1a622ebbb8ec1c7357e94189875 inherit pro_methods_classorm_1_1DatabaseCore"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="friends" name="friends"></a>
+Friends</h2></td></tr>
+<tr class="memitem:a84cf047a828198fce930ff24f503c719" id="r_a84cf047a828198fce930ff24f503c719"><td class="memTemplParams" colspan="2"><a id="a84cf047a828198fce930ff24f503c719" name="a84cf047a828198fce930ff24f503c719"></a>
+template&lt;typename &gt; </td></tr>
+<tr class="memitem:a84cf047a828198fce930ff24f503c719"><td class="memTemplItemLeft" align="right" valign="top">class&#160;</td><td class="memTemplItemRight" valign="bottom"><b>OrmContext</b></td></tr>
+<tr class="separator:a84cf047a828198fce930ff24f503c719"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><div class="compoundTemplParams">template&lt;typename SchemaType&gt;<br />
-class orm::Database&lt; SchemaType &gt;</div><p><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> facade bound to one closed compile-time model schema. </p>
-<p>Backend selection and connection state remain runtime concerns. Every model operation is checked against SchemaType before the implementation is</p>
-<p>instantiated. </p>
-</div><hr/>The documentation for this class was generated from the following file:<ul>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a86f01ed300b1a8a7a74bedbf61e45fa2" name="a86f01ed300b1a8a7a74bedbf61e45fa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86f01ed300b1a8a7a74bedbf61e45fa2">&#9670;&#160;</a></span>connect()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::connect </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>connectionString</em></td><td>)</td>
+          <td> -&gt;  void</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Connects to a database. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">connectionString</td><td>The connection string for the database. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a083686788355dbaed24c690ca1be27e9" name="a083686788355dbaed24c690ca1be27e9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a083686788355dbaed24c690ca1be27e9">&#9670;&#160;</a></span>getBackendCapabilities()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::getBackendCapabilities </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt;  const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">db::BackendCapabilities</a> &amp;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the capabilities advertised by the connected backend. </p>
+<dl class="exception"><dt>Exceptions</dt><dd>
+  <table class="exception">
+    <tr><td class="paramname"><a class="el" href="classorm_1_1DatabaseError.html" title="A backend-neutral database runtime error.">DatabaseError</a></td><td>when no backend is connected. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aa59f20483f628b4d0d73ebc4ec7bc57d" name="aa59f20483f628b4d0d73ebc4ec7bc57d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa59f20483f628b4d0d73ebc4ec7bc57d">&#9670;&#160;</a></span>getBackendType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::getBackendType </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const -&gt;  db::BackendType</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get the backend type of the database. </p>
+<dl class="section return"><dt>Returns</dt><dd>The backend type of the database. </dd></dl>
+
+</div>
+</div>
+<a id="a21c93399fd9432c3ce395297d761034c" name="a21c93399fd9432c3ce395297d761034c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a21c93399fd9432c3ce395297d761034c">&#9670;&#160;</a></span>orm()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SchemaType &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::orm </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> &amp; -&gt; <a class="el" href="classorm_1_1OrmContext.html">OrmContext</a>&lt;SchemaType&gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">export</span><span class="mlabel">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Creates a borrowed ORM context. This <a class="el" href="classorm_1_1Database.html">Database</a> must outlive the context. </p>
+
+</div>
+</div>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>modules/<b>orm.database.cppm</b></li>
 </ul>
 </div><!-- contents -->

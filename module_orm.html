@@ -118,8 +118,7 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseError.html">orm::DatabaseError</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A backend-neutral database runtime error.  <a href="classorm_1_1DatabaseError.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html">orm::Database&lt; SchemaType &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="classorm_1_1Database.html" title="Database facade bound to one closed compile-time model schema.">Database</a> facade bound to one closed compile-time model schema.  <a href="classorm_1_1Database.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1OrmContext.html">orm::OrmContext&lt; SchemaType &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structorm_1_1detail_1_1RelationCollectionTraits.html">orm::detail::RelationCollectionTraits&lt; T &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -310,8 +309,7 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html">soci::type_conversion&lt; ProjectionPayload&lt; T &gt; &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1DatabaseCore.html">orm::DatabaseCore</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A class representing a database in the ORM framework.  <a href="classorm_1_1DatabaseCore.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html">orm::Database</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="enum-members" name="enum-members"></a>
@@ -1097,6 +1095,9 @@ template&lt;typename Model &gt; </td></tr>
 template&lt;typename Model &gt; </td></tr>
 <tr class="memitem:a4abb332659767f86ca79b78817129f15"><td class="memTemplItemLeft" align="right" valign="top">constexpr auto&#160;</td><td class="memTemplItemRight" valign="bottom"><b>orm::query::remove</b> ()</td></tr>
 <tr class="separator:a4abb332659767f86ca79b78817129f15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a21c93399fd9432c3ce395297d761034c" id="r_a21c93399fd9432c3ce395297d761034c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType &gt; </td></tr>
+<tr class="memitem:a21c93399fd9432c3ce395297d761034c"><td class="memTemplItemLeft" align="right" valign="top">auto&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c">orm</a> () &amp;noexcept -&gt; OrmContext&lt; SchemaType &gt;</td></tr>
+<tr class="separator:a21c93399fd9432c3ce395297d761034c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="var-members" name="var-members"></a>
 Variables</h2></td></tr>

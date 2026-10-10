@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['selectplanimpl_0',['selectPlanImpl',['../classorm_1_1DatabaseCore.html#a71cc2254b98daa4cc02394321c3c67b1',1,'orm::DatabaseCore']]]
+  ['where_0',['where',['../classorm_1_1Query.html#aa2f954e69cd06804c80da9c482375e74',1,'orm::Query']]]
 ];

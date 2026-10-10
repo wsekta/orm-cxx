@@ -14,5 +14,6 @@ var searchData=
   ['optionalrelationcollectiontraits_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_11',['OptionalRelationCollectionTraits&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1detail_1_1OptionalRelationCollectionTraits_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::detail']]],
   ['optionalvalue_12',['OptionalValue',['../structorm_1_1db_1_1binding_1_1OptionalValue.html',1,'orm::db::binding']]],
   ['optionalvalue_3c_20std_3a_3aoptional_3c_20t_20_3e_20_3e_13',['OptionalValue&lt; std::optional&lt; T &gt; &gt;',['../structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html',1,'orm::db::binding']]],
-  ['orderby_14',['OrderBy',['../structorm_1_1query_1_1detail_1_1OrderBy.html',1,'orm::query::detail']]]
+  ['orderby_14',['OrderBy',['../structorm_1_1query_1_1detail_1_1OrderBy.html',1,'orm::query::detail']]],
+  ['ormcontext_15',['OrmContext',['../classorm_1_1OrmContext.html',1,'orm']]]
 ];

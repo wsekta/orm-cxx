@@ -10,7 +10,7 @@ var searchData=
   ['backendruntimelimits_7',['BackendRuntimeLimits',['../structorm_1_1db_1_1BackendRuntimeLimits.html',1,'orm::db']]],
   ['backends_8',['Backends',['../md_docs_2backends.html',1,'']]],
   ['backendvaluelimits_9',['BackendValueLimits',['../structorm_1_1db_1_1BackendValueLimits.html',1,'orm::db']]],
-  ['begintransaction_10',['beginTransaction',['../classorm_1_1DatabaseCore.html#a97f7b62ddae43ba47fb43bce0d420cfa',1,'orm::DatabaseCore']]],
+  ['begintransaction_10',['beginTransaction',['../classorm_1_1Database.html#a56318393652ad4c68c2bc71b5474b03c',1,'orm::Database']]],
   ['behavior_11',['behavior',['../md_docs_2backend-portability.html#autotoc_md12',1,'Portable behavior'],['../md_docs_2partial-result-queries.html#autotoc_md75',1,'Query behavior']]],
   ['betweenexpression_12',['BetweenExpression',['../structorm_1_1query_1_1detail_1_1BetweenExpression.html',1,'orm::query::detail']]],
   ['binding_20and_20soci_13',['Binding and SOCI',['../md_docs_2backend-portability.html#autotoc_md14',1,'']]],

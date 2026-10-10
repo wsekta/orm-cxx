@@ -111,11 +111,12 @@ $(document).ready(function(){initNavTree('md_docs_2static-queries.html',''); ini
 <div class="line">                  .orderBy(asc(col&lt;&amp;User::id&gt;()))</div>
 <div class="line">                  .limit(10);</div>
 <div class="line"> </div>
-<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database&lt;AppSchema&gt;</a> database;</div>
+<div class="line"><a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
 <div class="line"><span class="comment">// Connect and create/populate the table before executing the plan.</span></div>
-<div class="line"><span class="keyword">auto</span> first = database.select(adults, 18);</div>
-<div class="line"><span class="keyword">auto</span> second = database.select(adults, 21);</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdoc">Database facade bound to one closed compile-time model schema.</div><div class="ttdef"><b>Definition</b> orm.database.cppm:2150</div></div>
+<div class="line"><span class="keyword">auto</span> first = context.select(adults, 18);</div>
+<div class="line"><span class="keyword">auto</span> second = context.select(adults, 21);</div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> orm.database.cppm:1434</div></div>
 <div class="ttc" id="astructorm_1_1model_1_1Schema_html"><div class="ttname"><a href="structorm_1_1model_1_1Schema.html">orm::model::Schema</a></div><div class="ttdoc">A closed compile-time set of ORM models.</div><div class="ttdef"><b>Definition</b> orm.model.cppm:2117</div></div>
 </div><!-- fragment --><p><code>param&lt;T, I&gt;()</code> declares a typed argument slot. Indices start at zero and must be contiguous. Reusing an index reuses its execution argument; every occurrence must declare the same type. Calls must supply exactly one compatible argument per slot in index order. The existing rules for safe numeric widening, scalar filter values, nullable fields, model ownership, and writable paths also apply to plans. A filter on an optional field takes its scalar type; <code>std::optional</code> arguments are available for nullable <code>SET</code> values.</p>
 <p>Clause methods return a new plan. Keep the returned value:</p>
@@ -131,15 +132,15 @@ Projections and writes</h1>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> names =</div>
 <div class="line">    selectAs&lt;User, UserName&gt;(as&lt;&quot;name&quot;&gt;(col&lt;&amp;User::name&gt;()))</div>
 <div class="line">        .where(col&lt;&amp;User::age&gt;() &gt;= param&lt;int, 0&gt;());</div>
-<div class="line"><span class="keyword">auto</span> summaries = database.select(names, 18);</div>
+<div class="line"><span class="keyword">auto</span> summaries = context.select(names, 18);</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> rename =</div>
 <div class="line">    update&lt;User&gt;().set(col&lt;&amp;User::name&gt;(), param&lt;std::string, 0&gt;())</div>
 <div class="line">                  .where(col&lt;&amp;User::id&gt;() == param&lt;int, 1&gt;());</div>
-<div class="line"><span class="keyword">auto</span> changed = database.update(rename, std::string{<span class="stringliteral">&quot;Ada&quot;</span>}, 1);</div>
+<div class="line"><span class="keyword">auto</span> changed = context.update(rename, std::string{<span class="stringliteral">&quot;Ada&quot;</span>}, 1);</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">constexpr</span> <span class="keyword">auto</span> erase = remove&lt;User&gt;().where(col&lt;&amp;User::id&gt;() == param&lt;int, 0&gt;());</div>
-<div class="line"><span class="keyword">auto</span> removed = database.remove(erase, 1);</div>
+<div class="line"><span class="keyword">auto</span> removed = context.remove(erase, 1);</div>
 </div><!-- fragment --><p>An <code>UPDATE</code> plan requires at least one <code>SET</code> assignment and a <code>WHERE</code> predicate. A <code>DELETE</code> plan requires a <code>WHERE</code> predicate. These checks happen when the plan is converted or executed. The full-model select supports collection <code>include</code> and the existing relation predicates; projection plans return flat DTOs.</p>
 <h1><a class="anchor" id="autotoc_md110"></a>
 Runtime shapes and explicit conversion</h1>
@@ -151,7 +152,7 @@ Runtime shapes and explicit conversion</h1>
 <div class="fragment"><div class="line"><span class="keyword">auto</span> query = adults.toDynamic(18);</div>
 <div class="line"><span class="keywordflow">if</span> (searchByName)</div>
 <div class="line">    query.andWhere(col&lt;&amp;User::name&gt;().like(<span class="stringliteral">&quot;A%&quot;</span>));</div>
-<div class="line"><span class="keyword">auto</span> rows = database.select(query);</div>
+<div class="line"><span class="keyword">auto</span> rows = context.select(query);</div>
 </div><!-- fragment --><p>Expression <code>.dynamic()</code> creates the existing named typed facade and is available only after all expression values are concrete. Slot-bearing expressions must first be bound through their plan. See <a href="../examples/static_queries.cpp">the runnable example</a> for a complete program. </p>
 </div></div><!-- contents -->
 </div><!-- PageDoc -->
