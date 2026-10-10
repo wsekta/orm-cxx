@@ -335,6 +335,20 @@ TEST_P(MigrationTest, InvalidHistoryFlagsAndBaselineOrder)
     expectMigrationError([&] { runner.validate(); }, ErrorCode::InvalidHistory);
 }
 
+TEST_P(MigrationTest, MalformedHistoryColumnTypesAndFlags)
+{
+    session() << "CREATE TABLE _orm_migrations(version BIGINT,name TEXT,backend TEXT,checksum TEXT,applied_at "
+                 "TEXT,baseline INTEGER)";
+    session() << "INSERT INTO _orm_migrations VALUES(10,'step_10','bad','bad','now',0)";
+    Runner runner{connection, initialCatalog()};
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+    session() << "DROP TABLE _orm_migrations";
+    session() << "CREATE TABLE _orm_migrations(version BIGINT,name TEXT,backend INTEGER,checksum TEXT,applied_at "
+                 "TEXT,baseline INTEGER)";
+    session() << "INSERT INTO _orm_migrations VALUES(10,'step_10',0,'bad','now',2)";
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+}
+
 TEST_P(MigrationTest, PostgreSqlScriptsCannotChangeSessionsOrCorruptHistory)
 {
     if (GetParam().type != orm::db::BackendType::Postgres)
@@ -387,6 +401,19 @@ TEST(MigrationRunnerTest, FailedCommitDisconnectsAndRequiresReinspection)
     }
     EXPECT_FALSE(database.isConnected());
     database.connect(url);
+    EXPECT_EQ(runner.status().currentVersion, 0);
+}
+
+TEST(MigrationRunnerTest, BaselineChecksThatHistoryWasActuallyRecorded)
+{
+    orm::Database database;
+    database.connect("sqlite3://:memory:");
+    Runner runner{database, initialCatalog()};
+    runner.up(10);
+    runner.down(0);
+    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
+    session << "CREATE TRIGGER ignore_baseline BEFORE INSERT ON _orm_migrations BEGIN SELECT RAISE(IGNORE); END;";
+    expectMigrationError([&] { runner.baseline(10); }, ErrorCode::InvalidHistory);
     EXPECT_EQ(runner.status().currentVersion, 0);
 }
 

@@ -6,6 +6,7 @@ module;
 #include <optional>
 #include <string>
 #include <string_view>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 
@@ -153,22 +154,29 @@ auto readHistory(soci::session& session, const std::string& table) -> std::vecto
     soci::rowset<soci::row> rows =
         (session.prepare << "SELECT version,name,backend,checksum,applied_at,baseline FROM " + table +
                                 " ORDER BY version");
-    for (const auto& row : rows)
+    try
     {
-        const auto flag = row.get<int>(5);
-        const auto backend = row.get<int>(2);
-        if ((flag != 0 && flag != 1) || (backend != static_cast<int>(db::BackendType::Sqlite) &&
-                                         backend != static_cast<int>(db::BackendType::Postgres)))
+        for (const auto& row : rows)
         {
-            throw MigrationError{ErrorCode::InvalidHistory, "Invalid migration history record"};
+            const auto flag = row.get<int>(5);
+            const auto backend = row.get<int>(2);
+            if ((flag != 0 && flag != 1) || (backend != static_cast<int>(db::BackendType::Sqlite) &&
+                                             backend != static_cast<int>(db::BackendType::Postgres)))
+            {
+                throw MigrationError{ErrorCode::InvalidHistory, "Invalid migration history record"};
+            }
+            // SQLite reports its BIGINT values as long long; PostgreSQL BIGINT does too.
+            history.push_back(AppliedMigration{.version = row.get<long long>(0),
+                                               .name = row.get<std::string>(1),
+                                               .backend = static_cast<db::BackendType>(backend),
+                                               .checksum = row.get<std::string>(3),
+                                               .appliedAt = row.get<std::string>(4),
+                                               .baseline = flag != 0});
         }
-        // SQLite reports its BIGINT values as long long; PostgreSQL BIGINT does too.
-        history.push_back(AppliedMigration{.version = row.get<long long>(0),
-                                           .name = row.get<std::string>(1),
-                                           .backend = static_cast<db::BackendType>(backend),
-                                           .checksum = row.get<std::string>(3),
-                                           .appliedAt = row.get<std::string>(4),
-                                           .baseline = flag != 0});
+    }
+    catch (const std::bad_cast&)
+    {
+        throw MigrationError{ErrorCode::InvalidHistory, "Migration history has incompatible column types"};
     }
     return history;
 }
@@ -307,6 +315,10 @@ auto Runner::status() const -> Status
     {
         databaseFailure(error, runtime, backend, 0);
     }
+    catch (const MigrationError& error)
+    {
+        throw MigrationError{error.getCode(), error.what(), error.getVersion(), backend, error.getNativeCode()};
+    }
 }
 auto Runner::validate() const -> void
 {
@@ -393,7 +405,7 @@ auto Runner::baseline(Version target) -> void
         throw MigrationError{ErrorCode::InvalidTarget, "Baseline requires empty history and a positive target", target,
                              backend};
     }
-    (void)makePlan(catalog_, backend, initial, Direction::Up, target);
+    const auto plan = makePlan(catalog_, backend, initial, Direction::Up, target);
     const auto& runtime = Access::runtime(*database_);
     try
     {
@@ -413,6 +425,14 @@ auto Runner::baseline(Version target) -> void
                 break;
             }
             recordHistory(session, table, migration, backend, true);
+        }
+        const auto recorded = evaluate(catalog_, backend, readHistory(session, table));
+        requireValid(recorded, backend);
+        if (recorded.applied.size() != plan.migrations.size() || recorded.currentVersion != target ||
+            recorded.baselineVersion != target)
+        {
+            throw MigrationError{ErrorCode::InvalidHistory, "Baseline history was not recorded as expected", target,
+                                 backend};
         }
         transaction.commit(target);
     }

@@ -187,17 +187,20 @@ auto readSql(const std::filesystem::path& path) -> std::string
     {
         throw MigrationError{ErrorCode::InvalidCatalog, "Migration SQL must be a regular file"};
     }
-    std::ifstream stream(path, std::ios::binary);
-    if (!stream)
+    try
+    {
+        std::ifstream stream(path, std::ios::binary | std::ios::ate);
+        stream.exceptions(std::ios::badbit | std::ios::failbit);
+        const auto size = static_cast<std::streamsize>(stream.tellg());
+        std::string sql(static_cast<std::size_t>(size), '\0');
+        stream.seekg(0);
+        stream.read(sql.data(), size);
+        return sql;
+    }
+    catch (const std::ios_base::failure&)
     {
         throw MigrationError{ErrorCode::InvalidCatalog, "Cannot read migration SQL"};
     }
-    std::string sql{std::istreambuf_iterator<char>{stream}, std::istreambuf_iterator<char>{}};
-    if (stream.bad())
-    {
-        throw MigrationError{ErrorCode::InvalidCatalog, "Cannot read migration SQL"};
-    }
-    return sql;
 }
 } // namespace
 
