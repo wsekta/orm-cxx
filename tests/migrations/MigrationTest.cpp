@@ -331,7 +331,7 @@ TEST_P(MigrationTest, InvalidHistoryFlagsAndBaselineOrder)
     runner.up();
     session() << "UPDATE " + historyTable() + " SET baseline=1 WHERE version=30";
     expectMigrationError([&] { runner.validate(); }, ErrorCode::InvalidHistory);
-    session() << "UPDATE " + historyTable() + " SET baseline=0,backend=0";
+    session() << "UPDATE " + historyTable() + " SET baseline=0,backend=-1";
     expectMigrationError([&] { runner.validate(); }, ErrorCode::InvalidHistory);
 }
 
