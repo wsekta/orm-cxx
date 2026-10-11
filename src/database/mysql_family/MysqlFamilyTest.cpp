@@ -225,7 +225,8 @@ TEST_P(MysqlFamilyLinkTest, LinkLockTimeoutRequiresRollbackAndDisconnectReleases
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Transaction);
         EXPECT_EQ(error.getOperation(), "link relation");
     }
-    EXPECT_THROW((void)database.select(orm::Query<collection_models::User>{}), orm::DatabaseError);
+    orm::Query<collection_models::User> blockedQuery;
+    EXPECT_THROW((void)database.select(blockedQuery), orm::DatabaseError);
     EXPECT_THROW(connection.commitTransaction(), orm::DatabaseError);
     connection.rollbackTransaction();
     second.disconnect();
@@ -241,7 +242,7 @@ TEST_P(MysqlFamilyLinkTest, NativeDeadlockBlocksTheVictimUntilRollback)
     auto secondContext = second.orm<LinkSchema>();
     const auto updateName = [](auto& context, int id, std::string name)
     {
-        orm::UpdateQuery<collection_models::User> update;
+        orm::Update<collection_models::User> update;
         update.set(orm::query::col<&collection_models::User::name>(), std::move(name))
             .where(orm::query::col<&collection_models::User::id>() == id);
         return context.update(update);
@@ -290,14 +291,16 @@ TEST_P(MysqlFamilyLinkTest, NativeDeadlockBlocksTheVictimUntilRollback)
         EXPECT_EQ(error.getNativeCode(), std::optional<std::string>{"1213"});
         auto& victim = firstError ? connection : second;
         auto victimContext = victim.orm<LinkSchema>();
-        EXPECT_THROW((void)victimContext.select(orm::Query<collection_models::User>{}), orm::DatabaseError);
+        orm::Query<collection_models::User> blockedQuery;
+        EXPECT_THROW((void)victimContext.select(blockedQuery), orm::DatabaseError);
         EXPECT_THROW((void)updateName(victimContext, 1, "blocked"), orm::DatabaseError);
         EXPECT_THROW(victim.commitTransaction(), orm::DatabaseError);
     }
     connection.rollbackTransaction();
     second.rollbackTransaction();
-    EXPECT_EQ(database.select(orm::Query<collection_models::User>{}).size(), 2);
-    EXPECT_EQ(secondContext.select(orm::Query<collection_models::User>{}).size(), 2);
+    orm::Query<collection_models::User> recoveredQuery;
+    EXPECT_EQ(database.select(recoveredQuery).size(), 2);
+    EXPECT_EQ(secondContext.select(recoveredQuery).size(), 2);
     EXPECT_EQ(updateName(database, 1, "recovered"), 1);
 }
 
