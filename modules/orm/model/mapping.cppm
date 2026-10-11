@@ -266,7 +266,7 @@ export
         [[nodiscard]] consteval auto find(std::string_view memberName) const -> std::optional<std::size_t>
         {
             std::optional<std::size_t> result;
-            ((detail::reflectedMemberName<Definitions::member>().view() == memberName ?
+            ((detail::reflectedMemberName<Definitions::member>() == memberName ?
                   static_cast<void>(result = Definitions::length) :
                   static_cast<void>(0)),
              ...);

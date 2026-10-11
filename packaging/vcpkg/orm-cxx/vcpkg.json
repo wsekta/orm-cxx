@@ -8,7 +8,7 @@
     {
       "name": "soci",
       "default-features": false,
-      "version>=": "4.1.0"
+      "version>=": "4.1.4"
     },
     {
       "name": "vcpkg-cmake",
