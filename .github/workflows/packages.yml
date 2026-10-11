@@ -104,7 +104,12 @@ jobs:
       - name: Install vcpkg host prerequisites on Linux
         if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
         shell: bash
-        run: sudo apt-get update && sudo apt-get install --yes pkg-config bison flex perl
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes pkg-config bison flex perl
+          case '+${{ matrix.backends }}+' in
+            *'+mysql+'*|*'+mariadb+'*) sudo apt-get install --yes libtirpc-dev ;;
+          esac
       - name: Initialize pinned vcpkg on Linux
         if: matrix.manager == 'vcpkg' && runner.os == 'Linux'
         shell: bash
