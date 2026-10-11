@@ -57,6 +57,7 @@ struct OrderedRecord
 {
     int id;
     std::string value;
+    inline static constexpr orm::reflection::FixedString table_name{"mysql_family_ordered"};
     inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&OrderedRecord::value, 1500>());
 };
 using LinkSchema = orm::Schema<collection_models::User, collection_models::Role, OrderedRecord>;
@@ -124,6 +125,36 @@ TEST_P(MysqlFamilyLinkTest, ConcurrentAutocommitLinksReturnOneAndZero)
     EXPECT_EQ(firstResult + secondResult, 1);
     EXPECT_LE(firstResult, 1);
     EXPECT_LE(secondResult, 1);
+}
+
+TEST_P(MysqlFamilyLinkTest, NativeVectorBindingsExecuteOnceAndKeepStatementAffectedRows)
+{
+    createTable<OrderedRecord>();
+    std::vector<int> ids{1, 2, 3};
+    std::vector<std::string> values{"first", "second", "third"};
+    soci::statement insert =
+        (session().prepare << "INSERT INTO mysql_family_ordered (`id`, `value`) VALUES (:id, :value)",
+         soci::use(ids, "id"), soci::use(values, "value"));
+    insert.execute(true);
+    EXPECT_EQ(insert.get_affected_rows(), 3);
+    EXPECT_TRUE(connection.isConnected());
+    EXPECT_EQ(insert.get_affected_rows(), 3);
+
+    int first = 1;
+    std::vector<int> readIds(3);
+    std::vector<std::string> readValues(3);
+    soci::statement select =
+        (session().prepare << "SELECT `id`, `value` FROM mysql_family_ordered WHERE `id` >= :first ORDER BY `id`",
+         soci::use(first, "first"), soci::into(readIds), soci::into(readValues));
+    ASSERT_TRUE(select.execute(true));
+    EXPECT_EQ(readIds, ids);
+    EXPECT_EQ(readValues, values);
+    EXPECT_FALSE(select.fetch());
+    EXPECT_EQ(insert.get_affected_rows(), 3);
+
+    int scalar{};
+    soci::statement invalid = (session().prepare << "SELECT :id", soci::use(ids, "id"), soci::into(scalar));
+    EXPECT_THROW(invalid.execute(true), soci::soci_error);
 }
 
 TEST_P(MysqlFamilyLinkTest, BoundedLongStringsSortBeyondTheDefaultServerPrefix)

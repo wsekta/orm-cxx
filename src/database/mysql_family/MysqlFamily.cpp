@@ -266,6 +266,7 @@ public:
     auto clean_up() -> void override
     {
         native_->clean_up();
+        affectedRows_ = -1;
     }
     auto prepare(const std::string& sql, soci::details::statement_type /*type*/) -> void override
     {
@@ -273,10 +274,16 @@ public:
         auto& statement = *static_cast<soci::mysql_statement_backend*>(native_.get());
         statement.queryChunks_ = std::move(tokens.chunks);
         statement.names_ = std::move(tokens.names);
+        affectedRows_ = -1;
     }
     auto execute(int number) -> exec_fetch_result override
     {
-        return native_->execute(number);
+        const bool alreadyExecuted = static_cast<soci::mysql_statement_backend*>(native_.get())->justDescribed_;
+        const auto result = native_->execute(number);
+        // MySQL stores this count on the connection. Even a later mysql_ping() resets it.
+        if (!alreadyExecuted || affectedRows_ < 0)
+            affectedRows_ = native_->get_affected_rows();
+        return result;
     }
     auto fetch(int number) -> exec_fetch_result override
     {
@@ -284,7 +291,7 @@ public:
     }
     auto get_affected_rows() -> long long override
     {
-        return native_->get_affected_rows();
+        return affectedRows_;
     }
     auto get_number_of_rows() -> int override
     {
@@ -300,7 +307,9 @@ public:
     }
     auto prepare_for_describe() -> int override
     {
-        return native_->prepare_for_describe();
+        const auto count = native_->prepare_for_describe();
+        affectedRows_ = native_->get_affected_rows();
+        return count;
     }
     auto describe_column(int column, soci::data_type& type, std::string& name) -> void override
     {
@@ -325,6 +334,7 @@ public:
 
 private:
     std::unique_ptr<soci::details::statement_backend> native_;
+    long long affectedRows_ = -1;
 };
 
 class SessionBackend final : public soci::details::session_backend
@@ -337,6 +347,14 @@ public:
     [[nodiscard]] auto connectionHandle() const noexcept -> MYSQL*
     {
         return static_cast<soci::mysql_session_backend*>(native_.get())->conn_;
+    }
+    auto setIndexByteLimit(std::size_t value) -> void
+    {
+        maxIndexBytes_ = value;
+    }
+    [[nodiscard]] auto indexByteLimit() const noexcept -> std::optional<std::size_t>
+    {
+        return maxIndexBytes_;
     }
     auto is_connected() -> bool override
     {
@@ -456,6 +474,7 @@ private:
         }
     }
     bool transactionActive_ = false;
+    std::optional<std::size_t> maxIndexBytes_;
     std::vector<std::string> linkLocks_;
     std::unique_ptr<soci::details::session_backend> native_;
 };
@@ -541,6 +560,11 @@ public:
         session << "SET SESSION autocommit = 1";
         if (type_ == BackendType::Mariadb)
             session << "SET SESSION max_sort_length = 65536";
+        // This global setting is fixed when the server starts, so querying it per SQL operation is unnecessary.
+        int pageSize{};
+        session << "SELECT @@innodb_page_size", soci::into(pageSize);
+        static_cast<SessionBackend*>(session.get_backend())
+            ->setIndexByteLimit(std::min<std::size_t>(3072, (static_cast<std::size_t>(pageSize) / 16) * 3));
     }
     auto tableExists(soci::session& session, std::string_view tableName) const -> bool override
     {
@@ -553,10 +577,8 @@ public:
     }
     auto limits(soci::session& session) const -> BackendRuntimeLimits override
     {
-        int pageSize{};
-        session << "SELECT @@innodb_page_size", soci::into(pageSize);
         return {.maxBindParameters = std::nullopt,
-                .maxIndexBytes = std::min<std::size_t>(3072, (static_cast<std::size_t>(pageSize) / 16) * 3)};
+                .maxIndexBytes = static_cast<SessionBackend*>(session.get_backend())->indexByteLimit()};
     }
     auto normalizeAffectedRows(long long value) const -> std::size_t override
     {
@@ -685,7 +707,12 @@ public:
              soci::use(values), soci::into(exists));
         if (probe.execute(true) && exists == 1)
             return 0;
-        soci::statement prepared = (session.prepare << statement.sql, soci::use(values));
+        soci::values insertValues;
+        for (const auto& parameter : statement.parameters)
+        {
+            bind(insertValues, parameter.name, parameter.getBoundValue());
+        }
+        soci::statement prepared = (session.prepare << statement.sql, soci::use(insertValues));
         prepared.execute(true);
         return normalizeAffectedRows(prepared.get_affected_rows());
     }
