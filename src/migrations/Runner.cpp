@@ -1,11 +1,12 @@
 module;
 
 #include <algorithm>
-#include <array>
 #include <cstdint>
 #include <ctime>
 #include <exception>
+#include <iomanip>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <typeinfo>
@@ -213,12 +214,9 @@ auto readHistory(soci::session& session, const db::BackendRuntime& runtime,
             if (row.get_properties(4).get_data_type() == soci::dt_date)
             {
                 const auto timestamp = row.get<std::tm>(4);
-                std::array<char, 32> text{};
-                if (std::strftime(text.data(), text.size(), "%Y-%m-%d %H:%M:%S", &timestamp) == 0)
-                {
-                    throw MigrationError{ErrorCode::InvalidHistory, "Invalid migration history timestamp"};
-                }
-                appliedAt = text.data();
+                std::ostringstream text;
+                text << std::put_time(&timestamp, "%Y-%m-%d %H:%M:%S");
+                appliedAt = text.str();
             }
             else
             {

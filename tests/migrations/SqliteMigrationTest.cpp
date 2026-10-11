@@ -204,19 +204,57 @@ public:
         {
             beforeBegin(session);
         }
-        delegate.beginMigration(session, table);
+        if (!nonTransactional)
+        {
+            delegate.beginMigration(session, table);
+        }
     }
     auto migrationHistoryExists(soci::session& session, std::string_view table) const -> bool override
     {
+        if (nonTransactional && table.ends_with("\"_orm_migrations_incomplete\""))
+        {
+            int count{};
+            session << "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='_orm_migrations_incomplete'",
+                soci::into(count);
+            return count != 0;
+        }
         return delegate.migrationHistoryExists(session, table);
     }
     auto createMigrationHistory(soci::session& session, std::string_view table) const -> void override
     {
         delegate.createMigrationHistory(session, table);
+        if (nonTransactional)
+        {
+            session << "CREATE TABLE IF NOT EXISTS _orm_migrations_incomplete(slot INTEGER PRIMARY KEY CHECK(slot=1),"
+                       "version BIGINT NOT NULL,name TEXT NOT NULL,backend INTEGER NOT NULL,direction INTEGER NOT NULL,"
+                       "checksum TEXT NOT NULL)";
+        }
+        if (afterCreate)
+        {
+            afterCreate(session);
+        }
+    }
+    auto migrationJournalTable(soci::session&, std::string_view) const -> std::string override
+    {
+        return nonTransactional && !omitJournal ? "main.\"_orm_migrations_incomplete\"" : "";
+    }
+    auto endMigration(soci::session& session, std::string_view) const -> void override
+    {
+        if (beforeEnd)
+        {
+            beforeEnd(session);
+        }
     }
     auto executeMigrationScript(soci::session& session, std::string_view sql) const -> void override
     {
-        delegate.executeMigrationScript(session, sql);
+        if (nonTransactional)
+        {
+            session << std::string{sql};
+        }
+        else
+        {
+            delegate.executeMigrationScript(session, sql);
+        }
         if (afterScript)
         {
             afterScript(session);
@@ -233,8 +271,8 @@ public:
         EXPECT_TRUE(BackendRuntime::migrationJournalTable(session, "history").empty());
         EXPECT_NO_THROW(BackendRuntime::endMigration(session, "history"));
     }
-    bool failTable = false, failValidation = false;
-    std::function<void(soci::session&)> beforeBegin, afterScript;
+    bool failTable = false, failValidation = false, nonTransactional = false, omitJournal = false;
+    std::function<void(soci::session&)> beforeBegin, afterCreate, afterScript, beforeEnd;
 
 private:
     const BackendRuntime& delegate;
@@ -274,7 +312,191 @@ public:
     orm::db::BackendCapabilities capabilitiesValue;
     orm::db::BackendType backendType = orm::db::BackendType::Sqlite;
 };
+
+// Exercise the nontransactional protocol with deterministic provider faults.
+// SQLite supplies durable storage; the wrapper exposes the MySQL journal contract
+// and deliberately bypasses its transactional migration script executor.
+class NontransactionalMigrationTest : public ::testing::Test
+{
+public:
+    NontransactionalMigrationTest() : database{factory()}, runner{database, catalog}
+    {
+        database.connect("sqlite3://:memory:");
+    }
+    auto session() -> soci::session&
+    {
+        return orm::migrations::detail::DatabaseAccess::session(database);
+    }
+    auto hasDurableStep() -> bool
+    {
+        return orm::migrations::detail::DatabaseAccess::runtime(database).tableExists(session(), "durable_step");
+    }
+    auto checksum() const -> std::string
+    {
+        return orm::migrations::detail::checksum(catalog.migrations().front().scripts.at(orm::db::BackendType::Mysql));
+    }
+    auto failAfterSql() -> void
+    {
+        backend->runtimeValue.afterScript = [](soci::session&)
+        { throw soci::soci_error{"injected failure after durable DDL"}; };
+        expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+        backend->runtimeValue.afterScript = {};
+        ASSERT_TRUE(runner.status().incomplete);
+    }
+    InstrumentedBackend* backend = nullptr;
+    orm::Database database;
+    Catalog catalog{migration(1, "CREATE TABLE durable_step(id INTEGER PRIMARY KEY);", "DROP TABLE durable_step;")};
+    Runner runner;
+
+private:
+    auto factory() -> orm::db::CommandGeneratorFactory
+    {
+        auto provider = std::make_unique<InstrumentedBackend>();
+        backend = provider.get();
+        backend->backendType = orm::db::BackendType::Mysql;
+        backend->capabilitiesValue.migrations.atomicity = orm::db::MigrationAtomicity::NonTransactional;
+        backend->runtimeValue.nonTransactional = true;
+        std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
+        providers.push_back(std::move(provider));
+        return orm::db::CommandGeneratorFactory{std::move(providers)};
+    }
+};
 } // namespace
+
+TEST_F(NontransactionalMigrationTest, RejectsProviderWithoutDurableJournalBeforeExecutingSql)
+{
+    backend->runtimeValue.omitJournal = true;
+    expectMigrationError([&] { runner.up(); }, ErrorCode::UnsupportedBackend);
+    EXPECT_FALSE(hasDurableStep());
+    EXPECT_EQ(runner.status().currentVersion, 0);
+    backend->runtimeValue.omitJournal = false;
+    runner.up();
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, RechecksHistoryAfterCreatingLedger)
+{
+    backend->runtimeValue.afterCreate = [&](soci::session& active)
+    {
+        const auto digest = checksum();
+        const auto type = static_cast<int>(orm::db::BackendType::Mysql);
+        active << "INSERT INTO _orm_migrations(version,name,backend,checksum,baseline) "
+                  "VALUES(1,'step_1',:backend,:checksum,0)",
+            soci::use(type, "backend"), soci::use(digest, "checksum");
+    };
+    expectMigrationError([&] { runner.up(); }, ErrorCode::HistoryChanged);
+    backend->runtimeValue.afterCreate = {};
+    EXPECT_FALSE(hasDurableStep());
+    EXPECT_FALSE(runner.status().incomplete);
+    session() << "DELETE FROM _orm_migrations";
+    runner.up();
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, VerifiesMarkerInsertBeforeExecutingSql)
+{
+    backend->runtimeValue.afterCreate = [](soci::session& active)
+    {
+        active << "CREATE TRIGGER ignore_marker BEFORE INSERT ON _orm_migrations_incomplete "
+                  "BEGIN SELECT RAISE(IGNORE); END";
+    };
+    expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidHistory);
+    backend->runtimeValue.afterCreate = {};
+    EXPECT_FALSE(hasDurableStep());
+    EXPECT_FALSE(runner.status().incomplete);
+    session() << "DROP TRIGGER ignore_marker";
+    runner.up();
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, DetectsMarkerCorruptionAfterDurableSql)
+{
+    backend->runtimeValue.afterScript = [](soci::session& active)
+    { active << "UPDATE _orm_migrations_incomplete SET name='corrupted'"; };
+    expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidHistory);
+    backend->runtimeValue.afterScript = {};
+    EXPECT_TRUE(hasDurableStep());
+    EXPECT_FALSE(runner.status().problems.empty());
+    session() << "UPDATE _orm_migrations_incomplete SET name='step_1'";
+    runner.resolve(1, checksum(), Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, VerifiesMarkerDeletionAndRollsBackFinalization)
+{
+    backend->runtimeValue.afterCreate = [](soci::session& active)
+    {
+        active << "CREATE TRIGGER keep_marker BEFORE DELETE ON _orm_migrations_incomplete "
+                  "BEGIN SELECT RAISE(IGNORE); END";
+    };
+    expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidHistory);
+    backend->runtimeValue.afterCreate = {};
+    auto state = runner.status();
+    ASSERT_TRUE(state.incomplete);
+    EXPECT_TRUE(state.applied.empty());
+    EXPECT_TRUE(hasDurableStep());
+    expectMigrationError([&] { runner.resolve(1, checksum(), Resolution::Completed); }, ErrorCode::InvalidHistory);
+    EXPECT_TRUE(runner.status().applied.empty());
+    EXPECT_TRUE(runner.status().incomplete);
+    session() << "DROP TRIGGER keep_marker";
+    runner.resolve(1, checksum(), Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    EXPECT_FALSE(runner.status().incomplete);
+}
+
+TEST_F(NontransactionalMigrationTest, ResolutionVerifiesHistoryInsert)
+{
+    failAfterSql();
+    session() << "CREATE TRIGGER ignore_history BEFORE INSERT ON _orm_migrations BEGIN SELECT RAISE(IGNORE); END";
+    expectMigrationError([&] { runner.resolve(1, checksum(), Resolution::Completed); }, ErrorCode::InvalidHistory);
+    EXPECT_TRUE(runner.status().incomplete);
+    EXPECT_TRUE(runner.status().applied.empty());
+    session() << "DROP TRIGGER ignore_history";
+    runner.resolve(1, checksum(), Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, ResolutionRechecksMarkerAfterAcquiringLock)
+{
+    failAfterSql();
+    backend->runtimeValue.beforeBegin = [](soci::session& active)
+    { active << "UPDATE _orm_migrations_incomplete SET name='concurrent_edit'"; };
+    expectMigrationError([&] { runner.resolve(1, checksum(), Resolution::Completed); }, ErrorCode::HistoryChanged);
+    backend->runtimeValue.beforeBegin = {};
+    EXPECT_TRUE(runner.status().applied.empty());
+    session() << "UPDATE _orm_migrations_incomplete SET name='step_1'";
+    runner.resolve(1, checksum(), Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_F(NontransactionalMigrationTest, CleanupPreservesOriginalFailureEvenWhenLockReleaseAndDisconnectFail)
+{
+    TempDirectory temporary;
+    const auto url = "sqlite3://" + (temporary.path / "cleanup.db").generic_string();
+    database.disconnect();
+    database.connect(url);
+    backend->runtimeValue.beforeEnd = [&](soci::session& active)
+    {
+        // Simulate a broken provider that starts an application transaction and
+        // loses the session while releasing its migration lock. Disconnect must
+        // still clear ownership when rollback also fails.
+        orm::migrations::detail::DatabaseAccess::setActive(database, false);
+        database.beginTransaction();
+        active.close();
+        throw soci::soci_error{"injected release failure"};
+    };
+    backend->runtimeValue.afterScript = [](soci::session&) { throw soci::soci_error{"original script failure"}; };
+    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+    EXPECT_FALSE(database.isConnected());
+    backend->runtimeValue.beforeEnd = {};
+    backend->runtimeValue.afterScript = {};
+    database.connect(url);
+    ASSERT_TRUE(runner.status().incomplete);
+    EXPECT_TRUE(hasDurableStep());
+    runner.resolve(1, checksum(), Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    database.disconnect();
+}
 
 TEST(MigrationRunnerTest, OptInHooksAndDriverFailures)
 {

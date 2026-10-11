@@ -2,6 +2,7 @@ module;
 
 #include <filesystem>
 #include <fstream>
+#include <locale>
 #include <thread>
 
 #include "tests/UnitTestPrelude.hpp"
@@ -73,6 +74,36 @@ public:
         std::ofstream stream(path / relative, std::ios::binary);
         stream << sql;
     }
+};
+class FailingReadCodecvt final : public std::codecvt<char, char, std::mbstate_t>
+{
+protected:
+    auto do_always_noconv() const noexcept -> bool override
+    {
+        return false;
+    }
+    auto do_in(std::mbstate_t&, const char* first, const char*, const char*& next, char* destination, char*,
+               char*& destinationNext) const -> result override
+    {
+        next = first;
+        destinationNext = destination;
+        return error;
+    }
+};
+class ScopedReadFailureLocale
+{
+public:
+    ScopedReadFailureLocale()
+    {
+        std::locale::global(std::locale{original_, new FailingReadCodecvt});
+    }
+    ~ScopedReadFailureLocale()
+    {
+        std::locale::global(original_);
+    }
+
+private:
+    std::locale original_;
 };
 } // namespace
 
@@ -452,6 +483,8 @@ TEST_P(MigrationTest, NontransactionalUpRequiresRepairAndExplicitResolution)
     expectMigrationError([&] { (void)runner.preview(Direction::Up); }, ErrorCode::IncompleteMigration);
     expectMigrationError([&] { runner.resolve(2, checksum, Resolution::Reverted); }, ErrorCode::InvalidResolution);
     expectMigrationError([&] { runner.resolve(1, "incorrect", Resolution::Completed); }, ErrorCode::InvalidResolution);
+    // Deliberately exercise rejection of a value outside the named resolution choices.
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
     expectMigrationError([&] { runner.resolve(1, checksum, static_cast<Resolution>(99)); },
                          ErrorCode::InvalidResolution);
     Runner edited{connection, Catalog{migration(1, "SELECT 1;")}};
@@ -880,6 +913,35 @@ TEST(MigrationCatalogTest, MysqlFamilyLexerChecksExecutableCommentsAndRoutines)
             "CASE 1 WHEN 1 THEN BEGIN SELECT 2; END; END CASE; END;",
             backend, 1));
     }
+}
+
+TEST(MigrationCatalogTest, ExecutableCommentDelimitersRespectEscapesQuotesAndInnerComments)
+{
+    for (const auto backend : {orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb})
+    {
+        for (const auto sql : {"/*! SELECT 'it\\'s */ still a literal', \"double\"\"quote\", `tick``quote` */;",
+                               "/*M! SELECT 1 # a line comment containing */\n */;",
+                               "/*! SELECT 1 -- a line comment containing */\r\n */;"})
+        {
+            EXPECT_NO_THROW(orm::migrations::detail::validateScript(sql, backend, 1)) << sql;
+        }
+        for (const auto sql : {"/*! SELECT 1", "/*M! SELECT 'unterminated */", "/*! SELECT /* unterminated",
+                               "/*! SELECT 1 # unterminated */", "/*M! SELECT 1 -- unterminated */"})
+        {
+            expectMigrationError([&] { orm::migrations::detail::validateScript(sql, backend, 1); },
+                                 ErrorCode::InvalidSql);
+        }
+    }
+}
+
+TEST(MigrationCatalogTest, ReportsStreamReadFailureAsInvalidCatalog)
+{
+    TempDirectory temporary;
+    temporary.write("1_name/sqlite/up.sql", "SELECT 1;");
+    // File permissions do not induce a read failure when tests run as root.
+    // A scoped file-stream conversion error gives a deterministic I/O failure.
+    ScopedReadFailureLocale locale;
+    expectMigrationError([&] { (void)Catalog::fromDirectory(temporary.path); }, ErrorCode::InvalidCatalog);
 }
 
 TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)

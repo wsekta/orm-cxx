@@ -79,6 +79,54 @@ struct RelatedToWideTarget
     inline static constexpr orm::reflection::FixedString table_name{"coverage_related_to_wide_target"};
 };
 
+template <typename T>
+struct NarrowKey
+{
+    T id;
+    inline static constexpr auto table_name = []
+    {
+        if constexpr (std::same_as<T, bool>)
+            return orm::reflection::FixedString{"narrow_bool"};
+        else if constexpr (std::same_as<T, unsigned char>)
+            return orm::reflection::FixedString{"narrow_byte"};
+        else if constexpr (std::same_as<T, char>)
+            return orm::reflection::FixedString{"narrow_char"};
+        else if constexpr (std::same_as<T, short>)
+            return orm::reflection::FixedString{"narrow_short"};
+        else
+            return orm::reflection::FixedString{"narrow_unsigned_short"};
+    }();
+};
+
+struct OverflowKey
+{
+    std::string first;
+    std::string second;
+    inline static constexpr auto id_columns = orm::primaryKey<&OverflowKey::first, &OverflowKey::second>();
+    inline static constexpr auto string_lengths =
+        orm::stringLengths(orm::stringLength<&OverflowKey::first, std::numeric_limits<std::size_t>::max() / 4>(),
+                           orm::stringLength<&OverflowKey::second, std::numeric_limits<std::size_t>::max() / 4>());
+};
+
+struct LargeKeyTarget
+{
+    std::string id;
+    inline static constexpr auto string_lengths =
+        orm::stringLengths(orm::stringLength<&LargeKeyTarget::id, std::numeric_limits<std::size_t>::max() / 4>());
+};
+
+struct LargeKeyOwner
+{
+    std::string id;
+    orm::ManyToMany<LargeKeyTarget> targets;
+    inline static constexpr auto string_lengths =
+        orm::stringLengths(orm::stringLength<&LargeKeyOwner::id, std::numeric_limits<std::size_t>::max() / 4>());
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&LargeKeyOwner::targets>()
+                                                                .through<"large_key_links">()
+                                                                .ownerColumns<"owner_id">()
+                                                                .targetColumns<"target_id">());
+};
+
 using Schema = orm::Schema<models::ModelWithOneField, models::SomeDataModel, models::ModelWithId,
                            models::ModelWithIdAndNamesMapping, collection_models::Author, collection_models::Book,
                            collection_models::User, collection_models::Role, AutoOnly, NarrowModel, StringTarget,
@@ -369,6 +417,14 @@ public:
         delegate.bind(values, name, value);
     }
 
+    auto executeInsertIfAbsent(soci::session& session, orm::db::StatementView statement,
+                               const orm::db::InsertIfAbsentSpec& conflict) const -> std::size_t override
+    {
+        if (throwFromInsertIfAbsent)
+            throw orm::db::binding::ConversionError{"coverage junction binding failure"};
+        return orm::db::BackendRuntime::executeInsertIfAbsent(session, statement, conflict);
+    }
+
     auto translateError(const soci::soci_error& /*error*/, orm::DatabaseErrorCode fallback,
                         std::string_view operation) const -> orm::DatabaseError override
     {
@@ -379,6 +435,7 @@ public:
     OnConnectAction onConnectAction = OnConnectAction::Delegate;
     NormalizeAction normalizeAction = NormalizeAction::Delegate;
     bool throwFromBind = false;
+    bool throwFromInsertIfAbsent = false;
     bool throwFromTableExists = false;
     bool throwFromLimits = false;
     bool overrideLimits = false;
@@ -1020,4 +1077,55 @@ TEST(DatabaseCoverageCompletionTest, modelBindingRejectsToOneColumnWithoutSchema
 
     EXPECT_THROW((void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized, schema.at(0)),
                  std::invalid_argument);
+}
+
+TEST(DatabaseCoverageCompletionTest, junctionInsertTranslatesConversionErrorsAfterEndpointValidation)
+{
+    DatabaseBundle bundle;
+    bundle.connect();
+    bundle.database->createTable<collection_models::User>();
+    bundle.database->createTable<collection_models::Role>();
+    bundle.database->createRelationTables<collection_models::User>();
+    const collection_models::User user{.id = 1, .name = "user", .roles = {}};
+    const collection_models::Role role{.id = 2, .name = "role", .users = {}};
+    bundle.database->insert(user);
+    bundle.database->insert(role);
+    bundle.backend->runtimeStrategy.throwFromInsertIfAbsent = true;
+    expectDatabaseError([&] { (void)bundle.database->link<&collection_models::User::roles>(user, role); },
+                        orm::DatabaseErrorCode::Conversion, "link relation");
+    bundle.backend->runtimeStrategy.throwFromInsertIfAbsent = false;
+    EXPECT_EQ(bundle.database->link<&collection_models::User::roles>(user, role), 1U);
+}
+
+TEST(DatabaseCoverageCompletionTest, indexBudgetUsesBackendWidthsForNarrowKeys)
+{
+    using KeySchema = orm::Schema<NarrowKey<bool>, NarrowKey<unsigned char>, NarrowKey<char>, NarrowKey<short>,
+                                  NarrowKey<unsigned short>>;
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.schema.boundedStringKeys = true;
+    bundle.backend->runtimeStrategy.overrideLimits = true;
+    bundle.backend->runtimeStrategy.limitsValue.maxIndexBytes = 1;
+    bundle.connect();
+    auto context = bundle.connection->orm<KeySchema>();
+    EXPECT_NO_THROW(context.createTable<NarrowKey<bool>>());
+    EXPECT_NO_THROW(context.createTable<NarrowKey<unsigned char>>());
+    expectDatabaseError([&] { context.createTable<NarrowKey<char>>(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                        "create table");
+    expectDatabaseError([&] { context.createTable<NarrowKey<short>>(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                        "create table");
+    expectDatabaseError([&] { context.createTable<NarrowKey<unsigned short>>(); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "create table");
+}
+
+TEST(DatabaseCoverageCompletionTest, oversizedCompositeKeysAreRejectedWithoutWrapping)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.schema.boundedStringKeys = true;
+    bundle.backend->runtimeStrategy.overrideLimits = true;
+    bundle.connect();
+    auto context = bundle.connection->orm<orm::Schema<OverflowKey, LargeKeyOwner, LargeKeyTarget>>();
+    expectDatabaseError([&] { context.createTable<OverflowKey>(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                        "create table");
+    expectDatabaseError([&] { context.createRelationTables<LargeKeyOwner>(); },
+                        orm::DatabaseErrorCode::UnsupportedFeature, "create relation tables");
 }

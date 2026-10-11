@@ -14,6 +14,7 @@ module;
 #include <utility>
 #include <vector>
 
+#include "NativeApi.hpp"
 #include "soci/mysql/soci-mysql.h"
 #include "soci/soci.h"
 
@@ -308,7 +309,10 @@ protected:
 class StatementBackend final : public OptionalStatementHooks<soci::details::statement_backend, DescribedColumnType>
 {
 public:
-    explicit StatementBackend(soci::details::session_backend& session) : native_{session.make_statement_backend()} {}
+    explicit StatementBackend(soci::details::session_backend& session)
+        : native_{session.make_statement_backend()}, nativeSession_{static_cast<soci::mysql_session_backend&>(session)}
+    {
+    }
     auto alloc() -> void override
     {
         native_->alloc();
@@ -330,6 +334,8 @@ public:
     {
         synchronizeBindingFlags(*native_, static_cast<const soci::details::statement_backend&>(*this));
         const bool alreadyExecuted = static_cast<soci::mysql_statement_backend*>(native_.get())->justDescribed_;
+        if (!alreadyExecuted)
+            beforeStatement();
         const auto result = native_->execute(number);
         // MySQL stores this count on the connection. Even a later mysql_ping() resets it.
         if (!alreadyExecuted || affectedRows_ < 0)
@@ -359,6 +365,7 @@ public:
     auto prepare_for_describe() -> int override
     {
         synchronizeBindingFlags(*native_, static_cast<const soci::details::statement_backend&>(*this));
+        beforeStatement();
         const auto count = native_->prepare_for_describe();
         affectedRows_ = native_->get_affected_rows();
         return count;
@@ -385,11 +392,19 @@ public:
     }
 
 private:
+    auto beforeStatement() const -> void
+    {
+        const auto& chunks = static_cast<soci::mysql_statement_backend*>(native_.get())->queryChunks_;
+        if (chunks.empty())
+            throw soci::soci_error{"MySQL-family statement must be prepared before execution"};
+        orm_mysql_native::calls().beforeStatement(nativeSession_.conn_, chunks.front());
+    }
     [[nodiscard]] auto nativeBackend() const -> const soci::details::statement_backend& override
     {
         return *native_;
     }
     std::unique_ptr<soci::details::statement_backend> native_;
+    soci::mysql_session_backend& nativeSession_;
     long long affectedRows_ = -1;
 };
 
@@ -447,7 +462,7 @@ public:
         auto& native = *static_cast<soci::mysql_session_backend*>(native_.get());
         if (native.conn_ != nullptr)
         {
-            mysql_close(native.conn_);
+            orm_mysql_native::calls().close(native.conn_);
             native.conn_ = nullptr;
         }
         transactionActive_ = false;
@@ -500,16 +515,17 @@ public:
         {
             // Names contain only a fixed ASCII prefix and a SHA-256 fragment.
             const auto query = "SELECT RELEASE_LOCK('" + name + "')";
-            if (mysql_real_query(connection, query.data(), static_cast<unsigned long>(query.size())) != 0)
+            if (orm_mysql_native::calls().realQuery(connection, query.data(),
+                                                    static_cast<unsigned long>(query.size())) != 0)
             {
                 clean_up();
                 return;
             }
-            auto* result = mysql_store_result(connection);
-            const auto row = result != nullptr ? mysql_fetch_row(result) : nullptr;
+            auto* result = orm_mysql_native::calls().storeResult(connection);
+            const auto row = result != nullptr ? orm_mysql_native::calls().fetchRow(result) : nullptr;
             const bool released = row != nullptr && row[0] != nullptr && std::string_view{row[0]} == "1";
             if (result != nullptr)
-                mysql_free_result(result);
+                orm_mysql_native::calls().freeResult(result);
             if (!released)
             {
                 clean_up();
@@ -605,9 +621,10 @@ public:
             throw std::invalid_argument{"Connected server does not match the selected backend"};
         }
         const auto collation = type_ == BackendType::Mariadb ? "utf8mb4_nopad_bin" : "utf8mb4_0900_bin";
-        if (mysql_set_character_set(handle(session), "utf8mb4") != 0)
+        if (orm_mysql_native::calls().setCharacterSet(handle(session), "utf8mb4") != 0)
         {
-            throw soci::mysql_soci_error{"Could not select utf8mb4", static_cast<int>(mysql_errno(handle(session)))};
+            throw soci::mysql_soci_error{"Could not select utf8mb4",
+                                         static_cast<int>(orm_mysql_native::calls().errorNumber(handle(session)))};
         }
         session << std::string{"SET SESSION collation_connection = '"} + collation + "'";
         session << "SET SESSION sql_mode = "
@@ -863,6 +880,15 @@ public:
             throw migrations::MigrationError{migrations::ErrorCode::LockUnavailable,
                                              "Migration lock release could not be confirmed", 0, type_};
         }
+        int stillOwned{};
+        session << "SELECT IF(IS_USED_LOCK(:name)=CONNECTION_ID(),1,0)", soci::use(lock, "name"),
+            soci::into(stillOwned);
+        if (stillOwned == 1)
+        {
+            session.close();
+            throw migrations::MigrationError{migrations::ErrorCode::LockUnavailable,
+                                             "Migration SQL acquired a reentrant history lock", 0, type_};
+        }
     }
     auto executeMigrationScript(soci::session& session, std::string_view script) const -> void override
     {
@@ -875,49 +901,52 @@ public:
         {
             return;
         }
-        if (script.size() > std::numeric_limits<unsigned long>::max())
+        if constexpr (std::numeric_limits<std::size_t>::max() > std::numeric_limits<unsigned long>::max())
         {
-            throw migrations::MigrationError{migrations::ErrorCode::InvalidSql,
-                                             "Migration SQL exceeds the client query-length limit", 0, type_};
+            if (script.size() > std::numeric_limits<unsigned long>::max())
+            {
+                throw migrations::MigrationError{migrations::ErrorCode::InvalidSql,
+                                                 "Migration SQL exceeds the client query-length limit", 0, type_};
+            }
         }
         auto* connection = handle(session);
-        if (mysql_set_server_option(connection, MYSQL_OPTION_MULTI_STATEMENTS_ON) != 0)
+        if (orm_mysql_native::calls().setServerOption(connection, MYSQL_OPTION_MULTI_STATEMENTS_ON) != 0)
         {
-            migrationFailure(mysql_errno(connection));
+            migrationFailure(orm_mysql_native::calls().errorNumber(connection));
         }
         unsigned int error = 0;
         const std::string sql{script};
-        if (mysql_real_query(connection, sql.data(), static_cast<unsigned long>(sql.size())) != 0)
+        if (orm_mysql_native::calls().realQuery(connection, sql.data(), static_cast<unsigned long>(sql.size())) != 0)
         {
-            error = mysql_errno(connection);
+            error = orm_mysql_native::calls().errorNumber(connection);
         }
         else
         {
             while (true)
             {
-                auto* result = mysql_store_result(connection);
+                auto* result = orm_mysql_native::calls().storeResult(connection);
                 if (result != nullptr)
                 {
-                    mysql_free_result(result);
+                    orm_mysql_native::calls().freeResult(result);
                 }
-                else if (mysql_field_count(connection) != 0)
+                else if (orm_mysql_native::calls().fieldCount(connection) != 0)
                 {
-                    error = mysql_errno(connection);
+                    error = orm_mysql_native::calls().errorNumber(connection);
                     break;
                 }
-                const auto next = mysql_next_result(connection);
+                const auto next = orm_mysql_native::calls().nextResult(connection);
                 if (next == -1)
                     break;
                 if (next > 0)
                 {
-                    error = mysql_errno(connection);
+                    error = orm_mysql_native::calls().errorNumber(connection);
                     break;
                 }
             }
         }
-        if (mysql_set_server_option(connection, MYSQL_OPTION_MULTI_STATEMENTS_OFF) != 0)
+        if (orm_mysql_native::calls().setServerOption(connection, MYSQL_OPTION_MULTI_STATEMENTS_OFF) != 0)
         {
-            const auto disableError = mysql_errno(connection);
+            const auto disableError = orm_mysql_native::calls().errorNumber(connection);
             session.close();
             migrationFailure(disableError);
         }

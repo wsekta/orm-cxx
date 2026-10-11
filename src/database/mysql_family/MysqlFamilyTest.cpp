@@ -2,6 +2,7 @@ module;
 
 #include <future>
 
+#include "NativeApi.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -51,6 +52,106 @@ TEST(MysqlFamilyTest, emptyMigrationScriptsAcceptInertCommentsAndSeparators)
         EXPECT_FALSE(orm::db::mysql_family::isEmptyScript(sql));
 }
 
+TEST(MysqlFamilyTest, categorizedDriverErrorsPreserveFallbackAndSanitizeMessages)
+{
+    class CategorizedError final : public soci::soci_error
+    {
+    public:
+        explicit CategorizedError(error_category category) : soci_error{"password=secret"}, category_{category} {}
+        auto get_error_category() const -> error_category override
+        {
+            return category_;
+        }
+
+    private:
+        error_category category_;
+    };
+    const auto runtime = orm::db::mysql_family::makeRuntime(orm::db::BackendType::Mysql, "mysql://");
+    for (const auto& [category, expected] :
+         std::array<std::pair<soci::soci_error::error_category, orm::DatabaseErrorCode>, 4>{
+             {{soci::soci_error::connection_error, orm::DatabaseErrorCode::Connection},
+              {soci::soci_error::constraint_violation, orm::DatabaseErrorCode::Constraint},
+              {soci::soci_error::unknown_transaction_state, orm::DatabaseErrorCode::Transaction},
+              {soci::soci_error::unknown, orm::DatabaseErrorCode::Statement}}})
+    {
+        const CategorizedError native{category};
+        const auto translated = runtime->translateError(native, orm::DatabaseErrorCode::Statement, "test statement");
+        EXPECT_EQ(translated.getCode(), expected);
+        EXPECT_FALSE(translated.getNativeCode().has_value());
+        EXPECT_EQ(std::string_view{translated.what()}.find("secret"), std::string_view::npos);
+        EXPECT_EQ(runtime->statementErrorInvalidatesTransaction(native),
+                  category == soci::soci_error::connection_error);
+    }
+}
+
+TEST(MysqlFamilyTest, reconnectOptionScannerHandlesSpacesEscapesAndMalformedOptions)
+{
+    const auto runtime = orm::db::mysql_family::makeRuntime(orm::db::BackendType::Mysql, "mysql://");
+    soci::session session;
+    for (const auto dsn : {"mysql:// \t reconnect = 0", "mysql://user = 'quoted\\'value' \t reconnect=1",
+                           "mysql://password = 'back\\\\slash' db = test reconnect=0"})
+        EXPECT_THROW(runtime->open(session, dsn), std::invalid_argument);
+    EXPECT_THROW(runtime->open(session, "mysql://broken_option"), soci::soci_error);
+    EXPECT_FALSE(session.is_connected());
+}
+
+TEST(MysqlFamilyTest, relationInsertSpecificationRejectsIncompleteMetadata)
+{
+    const auto owner = orm::modelView<collection_models::Schema, collection_models::User>();
+    const auto relation = *owner.findRelation("roles");
+    const orm::db::binding::PrimaryKey ownerKey{orm::query::QueryValue{1}};
+    const orm::db::binding::PrimaryKey targetKey{orm::query::QueryValue{2}};
+    const auto spec = orm::db::relations::linkInsertSpec(owner, relation, ownerKey, targetKey);
+    EXPECT_EQ(spec.tableName, "collection_user_roles");
+    EXPECT_EQ(spec.columns, (std::vector<std::string>{"user_id", "role_id"}));
+    EXPECT_EQ(spec.conflictColumns, spec.columns);
+    EXPECT_EQ(spec.valueExpressions, (std::vector<std::string>{":orm_rel_owner_0", ":orm_rel_target_0"}));
+
+    auto invalid = relation;
+    invalid.targetModelIndex = orm::model::noTargetModel;
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, invalid, ownerKey, targetKey), std::invalid_argument);
+    invalid = relation;
+    invalid.kind = orm::model::RelationKind::ToOne;
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, invalid, ownerKey, targetKey), std::invalid_argument);
+    invalid = relation;
+    invalid.junction = {};
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, invalid, ownerKey, targetKey), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, relation, {}, targetKey), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, relation, ownerKey, {}), std::invalid_argument);
+    invalid = relation;
+    const std::array<std::string_view, 2> twoColumns{"user_id", "extra"};
+    invalid.junction.ownerColumns = twoColumns;
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, invalid, ownerKey, targetKey), std::invalid_argument);
+    invalid = relation;
+    invalid.junction.targetColumns = twoColumns;
+    EXPECT_THROW((void)orm::db::relations::linkInsertSpec(owner, invalid, ownerKey, targetKey), std::invalid_argument);
+}
+
+TEST(MysqlFamilyTest, nativeClientOverridesRestoreNestedScopesExceptionsAndWorkerThreads)
+{
+    EXPECT_EQ(&orm_mysql_native::calls(), &orm_mysql_native::defaultCalls);
+    orm_mysql_native::Calls outer;
+    outer.errorNumber = +[](MYSQL*) -> unsigned int { return 7; };
+    orm_mysql_native::Calls inner;
+    inner.errorNumber = +[](MYSQL*) -> unsigned int { return 11; };
+    {
+        const orm_mysql_native::ScopedCalls outerScope{outer};
+        EXPECT_EQ(orm_mysql_native::calls().errorNumber(nullptr), 7);
+        auto worker = std::async(std::launch::async, [] { return &orm_mysql_native::calls(); });
+        EXPECT_EQ(worker.get(), &orm_mysql_native::defaultCalls);
+        EXPECT_THROW(
+            [&]
+            {
+                const orm_mysql_native::ScopedCalls innerScope{inner};
+                EXPECT_EQ(orm_mysql_native::calls().errorNumber(nullptr), 11);
+                throw std::runtime_error{"failure inside override"};
+            }(),
+            std::runtime_error);
+        EXPECT_EQ(orm_mysql_native::calls().errorNumber(nullptr), 7);
+    }
+    EXPECT_EQ(&orm_mysql_native::calls(), &orm_mysql_native::defaultCalls);
+}
+
 namespace
 {
 struct OrderedRecord
@@ -77,6 +178,26 @@ public:
     auto session() -> soci::session&
     {
         return orm::migrations::detail::DatabaseAccess::session(connection);
+    }
+    auto runtime() -> const orm::db::BackendRuntime&
+    {
+        return orm::migrations::detail::DatabaseAccess::runtime(connection);
+    }
+    template <typename Operation>
+    auto expectMigrationFailure(Operation&& operation, orm::migrations::ErrorCode expected,
+                                std::optional<std::string> native = std::nullopt) -> void
+    {
+        try
+        {
+            std::forward<Operation>(operation)();
+            FAIL() << "Expected a migration failure";
+        }
+        catch (const orm::migrations::MigrationError& error)
+        {
+            EXPECT_EQ(error.getCode(), expected);
+            EXPECT_EQ(error.getBackendType(), GetParam().type);
+            EXPECT_EQ(error.getNativeCode(), native);
+        }
     }
     auto link(int role = 1) -> std::size_t
     {
@@ -112,6 +233,321 @@ public:
         return result;
     }
 };
+
+thread_local unsigned int migrationMetadataQueries{};
+}
+
+TEST_P(MysqlFamilyLinkTest, ClientCharsetSetupFailurePreservesItsNativeError)
+{
+    orm_mysql_native::Calls faults;
+    faults.setCharacterSet = +[](MYSQL*, const char*) -> int { return 1; };
+    faults.errorNumber = +[](MYSQL*) -> unsigned int { return 2019; };
+    {
+        const orm_mysql_native::ScopedCalls scope{faults};
+        try
+        {
+            runtime().onConnect(session());
+            FAIL() << "Expected the native charset setup failure";
+        }
+        catch (const soci::mysql_soci_error& error)
+        {
+            EXPECT_EQ(error.err_num_, 2019);
+            EXPECT_EQ(runtime().translateError(error, orm::DatabaseErrorCode::Connection, "connect").getCode(),
+                      orm::DatabaseErrorCode::Connection);
+        }
+    }
+    EXPECT_TRUE(connection.isConnected());
+}
+
+TEST_P(MysqlFamilyLinkTest, ClientLinkLockErrorsPreserveNativeCauseAndRequireRollback)
+{
+    createEndpoints();
+    for (const unsigned int number : {1064U, 2006U})
+    {
+        connection.beginTransaction();
+        orm_mysql_native::Calls faults;
+        faults.beforeStatement = number == 1064 ?
+                                     +[](MYSQL*, std::string_view query)
+        {
+            if (query.starts_with("SELECT GET_LOCK"))
+                throw soci::mysql_soci_error{"injected lock failure", 1064};
+        } :
+                                     +[](MYSQL*, std::string_view query)
+        {
+            if (query.starts_with("SELECT GET_LOCK"))
+                throw soci::mysql_soci_error{"injected connection failure", 2006};
+        };
+        {
+            const orm_mysql_native::ScopedCalls scope{faults};
+            try
+            {
+                (void)link();
+                FAIL() << "Expected the lock acquisition failure";
+            }
+            catch (const orm::DatabaseError& error)
+            {
+                EXPECT_EQ(error.getCode(),
+                          number == 1064 ? orm::DatabaseErrorCode::Transaction : orm::DatabaseErrorCode::Connection);
+                EXPECT_EQ(error.getNativeCode(), std::optional<std::string>{std::to_string(number)});
+            }
+        }
+        EXPECT_THROW(connection.commitTransaction(), orm::DatabaseError);
+        connection.rollbackTransaction();
+        EXPECT_TRUE(connection.isConnected());
+    }
+    EXPECT_EQ(link(), 1);
+}
+
+TEST_P(MysqlFamilyLinkTest, ClientMigrationProtocolFailuresPreserveLockAndDrainResults)
+{
+    const auto history = runtime().migrationTable(session());
+    runtime().createMigrationHistory(session(), history);
+    runtime().beginMigration(session(), history);
+    expectMigrationFailure(
+        [&] { runtime().executeMigrationScript(session(), "SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='failed'"); },
+        orm::migrations::ErrorCode::Execution, "1644");
+    for (const int failure : {0, 1, 2})
+    {
+        orm_mysql_native::Calls faults;
+        faults.errorNumber = +[](MYSQL*) -> unsigned int { return 1227; };
+        if (failure == 0)
+            faults.setServerOption = +[](MYSQL* handle, enum_mysql_set_option option) -> int
+            {
+                return option == MYSQL_OPTION_MULTI_STATEMENTS_ON ?
+                           1 :
+                           orm_mysql_native::defaultCalls.setServerOption(handle, option);
+            };
+        else if (failure == 1)
+            faults.realQuery = +[](MYSQL*, const char*, unsigned long) -> int { return 1; };
+        else
+            faults.storeResult = +[](MYSQL* handle) -> MYSQL_RES*
+            {
+                auto* result = orm_mysql_native::defaultCalls.storeResult(handle);
+                if (result != nullptr)
+                    orm_mysql_native::defaultCalls.freeResult(result);
+                return nullptr;
+            };
+        {
+            const orm_mysql_native::ScopedCalls scope{faults};
+            expectMigrationFailure([&] { runtime().executeMigrationScript(session(), "SELECT 1"); },
+                                   orm::migrations::ErrorCode::Execution, "1227");
+        }
+        EXPECT_TRUE(connection.isConnected());
+        int answer{};
+        session() << "SELECT 42", soci::into(answer);
+        EXPECT_EQ(answer, 42);
+    }
+    runtime().endMigration(session(), history);
+}
+
+TEST_P(MysqlFamilyLinkTest, ClientFailureDisablingMultiStatementsDisconnectsAfterCommittedDdl)
+{
+    const auto history = runtime().migrationTable(session());
+    runtime().createMigrationHistory(session(), history);
+    runtime().beginMigration(session(), history);
+    orm_mysql_native::Calls faults;
+    faults.errorNumber = +[](MYSQL*) -> unsigned int { return 1227; };
+    faults.setServerOption = +[](MYSQL* handle, enum_mysql_set_option option) -> int
+    {
+        return option == MYSQL_OPTION_MULTI_STATEMENTS_OFF ?
+                   1 :
+                   orm_mysql_native::defaultCalls.setServerOption(handle, option);
+    };
+    {
+        const orm_mysql_native::ScopedCalls scope{faults};
+        expectMigrationFailure(
+            [&] { runtime().executeMigrationScript(session(), "CREATE TABLE committed_before_failure(id INT)"); },
+            orm::migrations::ErrorCode::Execution, "1227");
+    }
+    EXPECT_FALSE(session().is_connected());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_TRUE(runtime().tableExists(session(), "committed_before_failure"));
+    runtime().beginMigration(session(), history);
+    runtime().endMigration(session(), history);
+}
+
+TEST_P(MysqlFamilyLinkTest, HistoryCreationChecksThatTablesSurvivedBeforeReturning)
+{
+    const auto history = runtime().migrationTable(session());
+    migrationMetadataQueries = 0;
+    orm_mysql_native::Calls faults;
+    faults.beforeStatement = +[](MYSQL* handle, std::string_view query)
+    {
+        if (query.starts_with("SELECT TABLE_TYPE") && ++migrationMetadataQueries == 3)
+        {
+            constexpr std::string_view drop = "DROP TABLE _orm_migrations";
+            if (orm_mysql_native::defaultCalls.realQuery(handle, drop.data(),
+                                                         static_cast<unsigned long>(drop.size())) != 0)
+                throw soci::mysql_soci_error{"Could not emulate concurrent history removal", 1064};
+        }
+    };
+    {
+        const orm_mysql_native::ScopedCalls scope{faults};
+        expectMigrationFailure([&] { runtime().createMigrationHistory(session(), history); },
+                               orm::migrations::ErrorCode::InvalidHistory);
+    }
+    EXPECT_FALSE(runtime().migrationHistoryExists(session(), history));
+    EXPECT_TRUE(runtime().migrationHistoryExists(session(), runtime().migrationJournalTable(session(), history)));
+}
+
+TEST_P(MysqlFamilyLinkTest, ReentrantMigrationLocksAreReleasedByDisconnectAndCanBeReacquired)
+{
+    const auto history = runtime().migrationTable(session());
+    runtime().beginMigration(session(), history);
+    runtime().beginMigration(session(), history);
+    expectMigrationFailure([&] { runtime().endMigration(session(), history); },
+                           orm::migrations::ErrorCode::LockUnavailable);
+    EXPECT_FALSE(session().is_connected());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    runtime().beginMigration(session(), history);
+    runtime().endMigration(session(), history);
+}
+
+TEST_P(MysqlFamilyLinkTest, NativeBackendForwardsMetadataProceduresAndUnsupportedFactories)
+{
+    session() << "CREATE TABLE native_identity(id BIGINT PRIMARY KEY AUTO_INCREMENT) ENGINE=InnoDB";
+    session() << "INSERT INTO native_identity VALUES()";
+    long long identity{};
+    EXPECT_TRUE(session().get_last_insert_id("native_identity", identity));
+    EXPECT_EQ(identity, 1);
+    EXPECT_TRUE(session().get_dummy_from_table().empty());
+    EXPECT_EQ(session().get_backend_name(), "mysql");
+    std::vector<std::string> tables;
+    soci::rowset<std::string> tableRows = (session().prepare << session().get_backend()->get_table_names_query());
+    for (const auto& name : tableRows)
+        tables.push_back(name);
+    EXPECT_NE(std::ranges::find(tables, "native_identity"), tables.end());
+    EXPECT_THROW((void)session().make_rowid_backend(), soci::soci_error);
+    EXPECT_THROW((void)session().make_blob_backend(), soci::soci_error);
+
+    std::unique_ptr<soci::details::statement_backend> statement{session().get_backend()->make_statement_backend()};
+    statement->alloc();
+    EXPECT_THROW((void)statement->execute(1), soci::soci_error);
+    EXPECT_THROW((void)statement->prepare_for_describe(), soci::soci_error);
+    statement->prepare("SELECT :first, ':ignored', :second", soci::details::st_repeatable_query);
+    EXPECT_EQ(statement->get_parameter_name(0), "first");
+    EXPECT_EQ(statement->get_parameter_name(1), "second");
+    EXPECT_THROW((void)statement->get_parameter_name(2), std::out_of_range);
+    EXPECT_EQ(statement->rewrite_for_procedure_call("ABS(-7)"), "select ABS(-7)");
+    statement->clean_up();
+}
+
+TEST_P(MysqlFamilyLinkTest, ServerIdentityAndMalformedJunctionMappingsFailBeforeInsert)
+{
+    const auto other =
+        GetParam().type == orm::db::BackendType::Mysql ? orm::db::BackendType::Mariadb : orm::db::BackendType::Mysql;
+    const auto mismatched = orm::db::mysql_family::makeRuntime(other, "unused://");
+    EXPECT_THROW(mismatched->onConnect(session()), std::invalid_argument);
+    createEndpoints();
+    const auto owner = orm::modelView<LinkSchema, collection_models::User>();
+    const auto relation = *owner.findRelation("roles");
+    const orm::db::binding::PrimaryKey key{orm::query::QueryValue{1}};
+    orm::db::CommandGeneratorFactory factory;
+    const auto statement =
+        orm::db::relations::linkStatement(factory.getBackend(GetParam().type).dialect(), owner, relation, key, key);
+    auto spec = orm::db::relations::linkInsertSpec(owner, relation, key, key);
+    spec.valueExpressions.clear();
+    EXPECT_THROW((void)runtime().executeInsertIfAbsent(session(), {statement.sql, statement.parameters}, spec),
+                 orm::DatabaseError);
+    spec = orm::db::relations::linkInsertSpec(owner, relation, key, key);
+    spec.columns.pop_back();
+    spec.valueExpressions.pop_back();
+    EXPECT_THROW((void)runtime().executeInsertIfAbsent(session(), {statement.sql, statement.parameters}, spec),
+                 std::invalid_argument);
+    session() << "ALTER TABLE collection_user_roles DROP PRIMARY KEY, ADD PRIMARY KEY(user_id)";
+    EXPECT_THROW((void)link(), orm::DatabaseError);
+    int rows{};
+    session() << "SELECT COUNT(*) FROM collection_user_roles", soci::into(rows);
+    EXPECT_EQ(rows, 0);
+}
+
+TEST_P(MysqlFamilyLinkTest, FailedRollbackDisconnectsAndReleasesHeldLinkLocks)
+{
+    createEndpoints();
+    connection.beginTransaction();
+    EXPECT_EQ(link(), 1);
+    int id{};
+    session() << "SELECT CONNECTION_ID()", soci::into(id);
+    orm::Database killer;
+    killer.connect(GetParam().type, testConnectionString());
+    orm::migrations::detail::DatabaseAccess::session(killer) << "KILL " + std::to_string(id);
+    EXPECT_THROW(session().get_backend()->rollback(), soci::soci_error);
+    EXPECT_FALSE(session().get_backend()->is_connected());
+    EXPECT_NO_THROW(session().get_backend()->rollback());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_EQ(link(), 1);
+}
+
+TEST_P(MysqlFamilyLinkTest, MissingLinkLockOnCommitDisconnectsInsteadOfTrustingRelease)
+{
+    createEndpoints();
+    connection.beginTransaction();
+    EXPECT_EQ(link(), 1);
+    int released{};
+    session() << "SELECT RELEASE_ALL_LOCKS()", soci::into(released);
+    EXPECT_EQ(released, 1);
+    EXPECT_NO_THROW(session().get_backend()->commit());
+    EXPECT_FALSE(session().get_backend()->is_connected());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_EQ(link(), 0);
+}
+
+TEST_P(MysqlFamilyLinkTest, ConnectionLossDuringJunctionWriteCleansUpTheAutocommitLock)
+{
+    createEndpoints();
+    const auto owner = orm::modelView<LinkSchema, collection_models::User>();
+    const auto relation = *owner.findRelation("roles");
+    const orm::db::binding::PrimaryKey key{orm::query::QueryValue{1}};
+    orm::db::CommandGeneratorFactory factory;
+    auto statement =
+        orm::db::relations::linkStatement(factory.getBackend(GetParam().type).dialect(), owner, relation, key, key);
+    const auto spec = orm::db::relations::linkInsertSpec(owner, relation, key, key);
+    int id{};
+    session() << "SELECT CONNECTION_ID()", soci::into(id);
+    statement.sql = "KILL " + std::to_string(id);
+    EXPECT_THROW((void)runtime().executeInsertIfAbsent(session(), {statement.sql, statement.parameters}, spec),
+                 soci::soci_error);
+    EXPECT_FALSE(session().get_backend()->is_connected());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_EQ(link(), 1);
+}
+
+TEST_P(MysqlFamilyLinkTest, MigrationHooksRejectWrongNamespacesMissingLocksAndDeletedHistory)
+{
+    const auto history = runtime().migrationTable(session());
+    EXPECT_THROW((void)runtime().migrationHistoryExists(session(), "`foreign`.`_orm_migrations`"),
+                 orm::migrations::MigrationError);
+    EXPECT_THROW(runtime().endMigration(session(), history), orm::migrations::MigrationError);
+    runtime().createMigrationHistory(session(), history);
+    runtime().beginMigration(session(), history);
+    EXPECT_THROW(runtime().executeMigrationScript(session(), "DROP TABLE " + history), orm::migrations::MigrationError);
+    EXPECT_FALSE(runtime().migrationHistoryExists(session(), history));
+    runtime().endMigration(session(), history);
+    EXPECT_THROW(runtime().executeMigrationScript(session(), "SELECT 1"), orm::migrations::MigrationError);
+    EXPECT_FALSE(session().is_connected());
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_TRUE(connection.isConnected());
+}
+
+TEST_P(MysqlFamilyLinkTest, MigrationHooksRequireAnExplicitDatabaseSelection)
+{
+    auto dsn = testConnectionString();
+    const auto databaseOption = dsn.rfind("db=");
+    ASSERT_NE(databaseOption, std::string::npos);
+    dsn.erase(databaseOption);
+    orm::Database noDatabase;
+    noDatabase.connect(GetParam().type, dsn);
+    auto& selectedSession = orm::migrations::detail::DatabaseAccess::session(noDatabase);
+    const auto& selectedRuntime = orm::migrations::detail::DatabaseAccess::runtime(noDatabase);
+    EXPECT_THROW((void)selectedRuntime.migrationTable(selectedSession), orm::migrations::MigrationError);
+    EXPECT_THROW(selectedRuntime.validateMigrationSession(selectedSession), orm::migrations::MigrationError);
+    EXPECT_TRUE(noDatabase.isConnected());
 }
 
 TEST_P(MysqlFamilyLinkTest, ConcurrentAutocommitLinksReturnOneAndZero)

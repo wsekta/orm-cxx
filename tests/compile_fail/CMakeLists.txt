@@ -33,6 +33,7 @@ function(orm_cxx_expect_compile_failure name source expected_diagnostic)
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
+orm_cxx_expect_compile_success(schema-bound-api-positive SchemaBoundApiPositive.cpp)
 foreach(case Zero NonString Duplicate OtherModel)
     orm_cxx_expect_compile_failure("string-length-${case}" "StringLength${case}.cpp" "ORM_MODEL_STRING_LENGTH")
 endforeach()

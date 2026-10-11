@@ -58,31 +58,4 @@ static_assert(noexcept(std::declval<orm::Database&>().orm<ApplicationSchema>()))
 static_assert(
     std::same_as<ApplicationContext::Payload<Employee>, orm::db::binding::BindingPayload<Employee, ApplicationSchema>>);
 
-// This function is intentionally not executed. Compiling it instantiates the
-// public schema-bound facade and both SOCI conversion directions.
-[[maybe_unused]] auto instantiateSchemaBoundApi(ApplicationContext& database, soci::values& values) -> void
-{
-    orm::Query<Employee> query;
-    (void)database.select(query);
-
-    orm::ProjectionQuery<Employee, EmployeeName> projection;
-    projection.project(orm::query::as("name", orm::query::col<&Employee::department, &Department::name>()));
-    (void)database.select(projection);
-
-    database.insert(Employee{});
-    database.insert(std::vector<Employee>{});
-
-    orm::Update<Employee> update;
-    update.set(orm::query::col<&Employee::rank>(), 2).where(orm::query::col<&Employee::id>() == 1);
-    (void)database.update(update);
-    (void)database.remove<Employee>(orm::query::col<&Employee::id>() == 1);
-    database.createTable<Employee>();
-    database.deleteTable<Employee>();
-
-    using Payload = ApplicationContext::Payload<Employee>;
-    Payload payload{};
-    auto indicator = soci::i_ok;
-    soci::type_conversion<Payload>::to_base(payload, values, indicator);
-    soci::type_conversion<Payload>::from_base(values, indicator, payload);
-}
 } // namespace

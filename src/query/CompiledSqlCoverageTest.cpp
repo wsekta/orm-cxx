@@ -310,4 +310,21 @@ TEST(CompiledSqlCoverageTest, collectorRejectsPaginationAboveTheSignedBackendRan
         EXPECT_THROW((void)ast::collectParameters(offset, std::tuple{excessive}), std::out_of_range);
     }
 }
+TEST(CompiledIdentifierPolicyTest, mysqlIdentifierLimitCountsUnicodeCharacters)
+{
+    bool valid = true;
+    const orm::query::detail::compiled::CheckingPolicy<orm::db::CompiledSqlFlavor::MySQLFamily> policy{{}, &valid};
+    const auto character = std::string{"\xc4\x85"};
+    std::string identifier;
+    for (int index = 0; index < 64; ++index)
+        identifier += character;
+    EXPECT_EQ(policy.quoteIdentifier(identifier), "`" + identifier + "`");
+    EXPECT_TRUE(valid);
+    (void)policy.quoteIdentifier(identifier + character);
+    EXPECT_FALSE(valid);
+    valid = true;
+    EXPECT_EQ(policy.quoteIdentifier("a`b"), "`a``b`");
+    EXPECT_TRUE(valid);
+}
+
 } // namespace
