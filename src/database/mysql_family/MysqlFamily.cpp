@@ -255,43 +255,110 @@ auto capabilities() -> BackendCapabilities
 
 namespace
 {
-class StatementBackend final : public soci::mysql_statement_backend
+class StatementBackend final : public soci::details::statement_backend
 {
 public:
-    explicit StatementBackend(soci::mysql_session_backend& session) : mysql_statement_backend{session} {}
+    explicit StatementBackend(soci::details::session_backend& session) : native_{session.make_statement_backend()} {}
+    auto alloc() -> void override
+    {
+        native_->alloc();
+    }
+    auto clean_up() -> void override
+    {
+        native_->clean_up();
+    }
     auto prepare(const std::string& sql, soci::details::statement_type /*type*/) -> void override
     {
         auto tokens = tokenizeStatement(sql);
-        queryChunks_ = std::move(tokens.chunks);
-        names_ = std::move(tokens.names);
+        auto& statement = *static_cast<soci::mysql_statement_backend*>(native_.get());
+        statement.queryChunks_ = std::move(tokens.chunks);
+        statement.names_ = std::move(tokens.names);
     }
+    auto execute(int number) -> exec_fetch_result override
+    {
+        return native_->execute(number);
+    }
+    auto fetch(int number) -> exec_fetch_result override
+    {
+        return native_->fetch(number);
+    }
+    auto get_affected_rows() -> long long override
+    {
+        return native_->get_affected_rows();
+    }
+    auto get_number_of_rows() -> int override
+    {
+        return native_->get_number_of_rows();
+    }
+    auto get_parameter_name(int index) const -> std::string override
+    {
+        return native_->get_parameter_name(index);
+    }
+    auto rewrite_for_procedure_call(const std::string& sql) -> std::string override
+    {
+        return native_->rewrite_for_procedure_call(sql);
+    }
+    auto prepare_for_describe() -> int override
+    {
+        return native_->prepare_for_describe();
+    }
+    auto describe_column(int column, soci::data_type& type, std::string& name) -> void override
+    {
+        native_->describe_column(column, type, name);
+    }
+    auto make_into_type_backend() -> soci::details::standard_into_type_backend* override
+    {
+        return native_->make_into_type_backend();
+    }
+    auto make_use_type_backend() -> soci::details::standard_use_type_backend* override
+    {
+        return native_->make_use_type_backend();
+    }
+    auto make_vector_into_type_backend() -> soci::details::vector_into_type_backend* override
+    {
+        return native_->make_vector_into_type_backend();
+    }
+    auto make_vector_use_type_backend() -> soci::details::vector_use_type_backend* override
+    {
+        return native_->make_vector_use_type_backend();
+    }
+
+private:
+    std::unique_ptr<soci::details::statement_backend> native_;
 };
 
-class SessionBackend final : public soci::mysql_session_backend
+class SessionBackend final : public soci::details::session_backend
 {
 public:
-    explicit SessionBackend(const soci::connection_parameters& parameters) : mysql_session_backend{parameters} {}
+    explicit SessionBackend(const soci::connection_parameters& parameters)
+        : native_{soci::factory_mysql()->make_session(parameters)}
+    {
+    }
+    [[nodiscard]] auto connectionHandle() const noexcept -> MYSQL*
+    {
+        return static_cast<soci::mysql_session_backend*>(native_.get())->conn_;
+    }
     auto is_connected() -> bool override
     {
-        return conn_ != nullptr && mysql_session_backend::is_connected();
+        return connectionHandle() != nullptr && native_->is_connected();
     }
     auto begin() -> void override
     {
-        mysql_session_backend::begin();
+        native_->begin();
         transactionActive_ = true;
     }
     auto commit() -> void override
     {
-        mysql_session_backend::commit();
+        native_->commit();
         finishLinkLocks();
     }
     auto rollback() -> void override
     {
-        if (conn_ != nullptr)
+        if (connectionHandle() != nullptr)
         {
             try
             {
-                mysql_session_backend::rollback();
+                native_->rollback();
             }
             catch (...)
             {
@@ -303,13 +370,42 @@ public:
     }
     auto clean_up() -> void
     {
-        mysql_session_backend::clean_up();
+        auto& native = *static_cast<soci::mysql_session_backend*>(native_.get());
+        if (native.conn_ != nullptr)
+        {
+            mysql_close(native.conn_);
+            native.conn_ = nullptr;
+        }
         transactionActive_ = false;
         linkLocks_.clear();
     }
     auto make_statement_backend() -> StatementBackend* override
     {
-        return new StatementBackend{*this};
+        return new StatementBackend{*native_};
+    }
+    auto get_last_insert_id(soci::session& session, const std::string& table, long long& value) -> bool override
+    {
+        return native_->get_last_insert_id(session, table, value);
+    }
+    auto get_dummy_from_table() const -> std::string override
+    {
+        return native_->get_dummy_from_table();
+    }
+    auto get_backend_name() const -> std::string override
+    {
+        return native_->get_backend_name();
+    }
+    auto get_table_names_query() const -> std::string override
+    {
+        return native_->get_table_names_query();
+    }
+    auto make_rowid_backend() -> soci::details::rowid_backend* override
+    {
+        return native_->make_rowid_backend();
+    }
+    auto make_blob_backend() -> soci::details::blob_backend* override
+    {
+        return native_->make_blob_backend();
     }
     [[nodiscard]] auto ownsLinkLock(const std::string& name) const -> bool
     {
@@ -325,16 +421,17 @@ public:
     }
     auto releaseLinkLock(const std::string& name) noexcept -> void
     {
-        if (conn_ != nullptr)
+        auto* connection = connectionHandle();
+        if (connection != nullptr)
         {
             // Names contain only a fixed ASCII prefix and a SHA-256 fragment.
             const auto query = "SELECT RELEASE_LOCK('" + name + "')";
-            if (mysql_real_query(conn_, query.data(), static_cast<unsigned long>(query.size())) != 0)
+            if (mysql_real_query(connection, query.data(), static_cast<unsigned long>(query.size())) != 0)
             {
                 clean_up();
                 return;
             }
-            auto* result = mysql_store_result(conn_);
+            auto* result = mysql_store_result(connection);
             const auto row = result != nullptr ? mysql_fetch_row(result) : nullptr;
             const bool released = row != nullptr && row[0] != nullptr && std::string_view{row[0]} == "1";
             if (result != nullptr)
@@ -360,6 +457,7 @@ private:
     }
     bool transactionActive_ = false;
     std::vector<std::string> linkLocks_;
+    std::unique_ptr<soci::details::session_backend> native_;
 };
 
 class LinkLockError final : public soci::soci_error
@@ -479,8 +577,8 @@ public:
     {
         binding::bindBoundValue(values, name, value);
     }
-    auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
-                        std::string_view operation) const -> DatabaseError override
+    auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback, std::string_view operation) const
+        -> DatabaseError override
     {
         auto code = fallback;
         std::optional<std::string> native;
@@ -519,8 +617,8 @@ public:
         return DatabaseError{code, type_, std::string{operation},
                              "Database operation failed: " + std::string{operation}, native};
     }
-    auto executeInsertIfAbsent(soci::session& session, StatementView statement,
-                               const InsertIfAbsentSpec& spec) const -> std::size_t override
+    auto executeInsertIfAbsent(soci::session& session, StatementView statement, const InsertIfAbsentSpec& spec) const
+        -> std::size_t override
     {
         soci::values values;
         for (const auto& parameter : statement.parameters)
@@ -801,7 +899,7 @@ private:
     }
     static auto handle(soci::session& session) -> MYSQL*
     {
-        return static_cast<soci::mysql_session_backend*>(session.get_backend())->conn_;
+        return static_cast<SessionBackend*>(session.get_backend())->connectionHandle();
     }
     static auto lockName(std::string_view table) -> std::string
     {
