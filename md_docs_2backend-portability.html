@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2backend-portability.html','')
   <div class="headertitle"><div class="title">Backend portability</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md10"></a> <code>orm-cxx</code> remains SQLite-first and also provides an optional PostgreSQL backend. Its portability layer requires live behavior verification instead of treating an enum value or a generated SQL string as proof of backend support.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md10"></a> <code>orm-cxx</code> treats SQLite, PostgreSQL, MySQL and MariaDB as equal adapters. All backend selections are explicit and default to disabled. Its portability layer requires live behavior verification instead of treating an enum value or a generated SQL string as proof of backend support.</p>
 <p>This document defines the portability boundary. See <a class="el" href="md_docs_2backends.html">Backends</a> for the support status visible to users and <a class="el" href="md_docs_2backend-extension.html">Backend extension</a>contract" for the contributor-facing implementation
 requirements.
 
@@ -187,25 +187,23 @@ Minimum CI matrix</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Job   </th><th class="markdownTableHeadNone">Environment   </th><th class="markdownTableHeadNone">Required checks    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">GCC core   </td><td class="markdownTableBodyNone">Official <code>gcc:15-trixie</code> container, GCC 15, SQLite   </td><td class="markdownTableBodyNone">Unit, SQLite conformance, consumer test    </td></tr>
+<td class="markdownTableBodyNone">Core   </td><td class="markdownTableBodyNone">GCC 15, Clang 18–20 and MSVC without database clients   </td><td class="markdownTableBodyNone">Unit, compile contracts and core consumer    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Clang coverage   </td><td class="markdownTableBodyNone">Ubuntu, Clang 18, SQLite   </td><td class="markdownTableBodyNone">The core checks and coverage export    </td></tr>
+<td class="markdownTableBodyNone">All adapters   </td><td class="markdownTableBodyNone">GCC 15 and Clang 18–20 with real services; MSVC compile/link   </td><td class="markdownTableBodyNone">Equal conformance profiles and all 16 consumer subsets    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">MSVC core   </td><td class="markdownTableBodyNone">Windows, MSVC, SQLite   </td><td class="markdownTableBodyNone">Unit, SQLite conformance, consumer test    </td></tr>
+<td class="markdownTableBodyNone">Quality and docs   </td><td class="markdownTableBodyNone">Clang 18 with every selected client   </td><td class="markdownTableBodyNone">Formatting, static analysis for every adapter, documentation validation    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Quality and docs   </td><td class="markdownTableBodyNone">Ubuntu, Clang 18, SQLite and PostgreSQL client libraries   </td><td class="markdownTableBodyNone">Formatting, static analysis for both adapters, documentation validation    </td></tr>
+<td class="markdownTableBodyNone">Coverage   </td><td class="markdownTableBodyNone">Clang 18, core plus four independent adapters   </td><td class="markdownTableBodyNone">Merge every report; require 100% lines    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">PostgreSQL 15   </td><td class="markdownTableBodyNone">Official <code>gcc:15-trixie</code> container, GCC 15, real PostgreSQL service   </td><td class="markdownTableBodyNone">Unit, dialect, common conformance, live integration    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">PostgreSQL 18   </td><td class="markdownTableBodyNone">Ubuntu, Clang 18, real PostgreSQL service   </td><td class="markdownTableBodyNone">Unit, dialect, common conformance, live integration, coverage   </td></tr>
+<td class="markdownTableBodyNone">Packages   </td><td class="markdownTableBodyNone">Conan/vcpkg, Linux/Windows, all 16 subsets   </td><td class="markdownTableBodyNone">Positive and disabled-provider compile contracts; live CRUD and migrations on Linux   </td></tr>
 </table>
 <p>A backend receives additional operating-system or compiler jobs only when those combinations are publicly supported. A claimed server-version range must be represented at its boundaries in CI; otherwise documentation must name only the version actually verified.</p>
 <h1><a class="anchor" id="autotoc_md18"></a>
 Definition of Done</h1>
-<p>The Mid Term portability milestone is complete when:</p>
+<p>Backend support is complete when:</p>
 <ul>
-<li>SQLite passes reusable conformance tests on the supported GCC, Clang, and MSVC workflows;</li>
-<li>common conformance sources contain no SQLite catalog queries, pragmas, exact SQL snapshots, or private access to a SOCI session;</li>
+<li>every advertised adapter passes the same reusable public conformance tests;</li>
+<li>common conformance sources contain no vendor catalog queries, pragmas, exact SQL snapshots, or private access to a SOCI session;</li>
 <li>capabilities and limits are obtained from one backend contract rather than scattered backend enum branches;</li>
 <li>command generation, binding, session setup, affected rows, and errors have documented backend responsibilities;</li>
 <li>adding a backend requires its adapter, dependency target, test harness, registry entry, and documentation entry, without copying common tests or changing public ORM semantics;</li>

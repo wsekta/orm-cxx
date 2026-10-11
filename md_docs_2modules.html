@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2modules.html',''); initResiza
   <div class="headertitle"><div class="title">C++20 modules</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md63"></a> The public API has two named modules. <code>orm</code> provides models, query expressions, static query plans, database operations, and the configured backends. It also re-exports the reflection API. <code>orm.reflection</code> provides compile-time reflection independently of SOCI and database backends.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md65"></a> The public API has two named modules. <code>orm</code> provides models, query expressions, static query plans, database operations, and the configured backends. It also re-exports the reflection API. <code>orm.reflection</code> provides compile-time reflection independently of SOCI and database backends.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">import</span> <a class="code" href="module_orm.html">orm</a>;</div>
@@ -106,7 +106,7 @@ $(document).ready(function(){initNavTree('md_docs_2modules.html',''); initResiza
 <div class="line">};</div>
 <div class="ttc" id="amodule_orm_html"><div class="ttname"><a href="module_orm.html">orm</a></div></div>
 </div><!-- fragment --><p>Applications import these primary modules. The partitions below organize the implementation; they are not separate consumer entry points. Standard-library facilities used by application code still require their ordinary headers.</p>
-<h1><a class="anchor" id="autotoc_md64"></a>
+<h1><a class="anchor" id="autotoc_md66"></a>
 Source organization</h1>
 <p>The two primary interfaces are short entry points. Their partitions live in subdirectories and remain attached to the same named module:</p>
 <div class="fragment"><div class="line">modules/</div>
@@ -157,7 +157,7 @@ Source organization</h1>
 <p>The binding partitions re-export their prerequisites along one chain. The <code>orm:database_soci</code> partition owns SOCI's full headers and exposes the original global-module declarations through using declarations. This avoids duplicate constructors and conversion specializations when GCC and MSVC import the bindings through multiple module units. The three SOCI conversion specializations are defined with <code>OrmContext</code>, which instantiates them, rather than being repeatedly imported through helper partitions.</p>
 <p><code>tools/generate_reflection_bindings.py</code> regenerates the checked-in binding partitions for aggregates with 0–128 fields. It limits each group to at most eight field counts and a source-size budget. Python and the formatter are needed only when regenerating these sources, not when building the library.</p>
 <p>CMake lists every partition explicitly in its <code>CXX_MODULES</code> file sets and generates <code>orm:config</code> and <code>orm:backend_relations</code> for the selected backends. <code>orm:internal</code> is an implementation partition used by the library's implementation units. Applications continue to import only <code>orm</code> or <code>orm.reflection</code>.</p>
-<h1><a class="anchor" id="autotoc_md65"></a>
+<h1><a class="anchor" id="autotoc_md67"></a>
 CMake consumers and installation</h1>
 <p>Use CMake 3.31+, Ninja 1.11+, and GCC 15+, Clang 18+, or MSVC 19.50+. Use separate build directories for Debug and Release. Link the target matching the imported module:</p>
 <div class="fragment"><div class="line">cmake_minimum_required(VERSION 3.31)</div>

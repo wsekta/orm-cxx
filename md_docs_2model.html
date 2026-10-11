@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2model.html',''); initResizabl
   <div class="headertitle"><div class="title">Model</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md51"></a></p><ol type="1">
+<div class="textblock"><p><a class="anchor" id="autotoc_md52"></a></p><ol type="1">
 <li>Create a model</li>
 <li>Static schema</li>
 <li>Supported field types</li>
@@ -107,7 +107,7 @@ $(document).ready(function(){initNavTree('md_docs_2model.html',''); initResizabl
 <li>Collection relations</li>
 <li>Current limitations</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md52"></a>
+<h1><a class="anchor" id="autotoc_md53"></a>
 Create a model</h1>
 <p>A model is a reflected C++ struct whose fields can be mapped to database columns.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -116,7 +116,7 @@ Create a model</h1>
 <div class="line">    std::string email;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>Models must be C++ aggregates. Their field names and types are reflected during compilation; unions, raw C-array fields, bit-fields, and non-aggregate classes are rejected. Inherited aggregates are outside the supported contract and must use composition instead, even if a compiler happens to accept a particular structured binding. By default the table name is derived from the C++ type name and <code>::</code> is replaced with <code>_</code>.</p>
-<h1><a class="anchor" id="autotoc_md53"></a>
+<h1><a class="anchor" id="autotoc_md54"></a>
 Static schema</h1>
 <p>Each ORM context is bound to a closed set of complete model types and borrows an independent database connection:</p>
 <div class="fragment"><div class="line"><span class="keyword">import</span> <a class="code" href="module_orm.html">orm</a>;</div>
@@ -126,9 +126,9 @@ Static schema</h1>
 <div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
 <div class="ttc" id="amodule_orm_html"><div class="ttname"><a href="module_orm.html">orm</a></div></div>
 </div><!-- fragment --><p>The schema validates each model and the complete relation graph at compile time. A model operation fails to compile when its type is absent from the ORM context's schema. Include every to-one and collection relation target in the same schema, even when only one endpoint is queried directly.</p>
-<h1><a class="anchor" id="autotoc_md54"></a>
+<h1><a class="anchor" id="autotoc_md55"></a>
 Supported field types</h1>
-<p>The bundled SQLite and PostgreSQL backends support these scalar C++ field types:</p>
+<p>The bundled SQLite, PostgreSQL, MySQL and MariaDB backends support these scalar C++ field types:</p>
 <ul>
 <li><code>bool</code></li>
 <li><code>char</code>, <code>signed char</code>, <code>unsigned char</code></li>
@@ -141,9 +141,22 @@ Supported field types</h1>
 <li><code>double</code></li>
 <li><code>std::string</code></li>
 </ul>
-<p>Each backend maps these types to its native SQL types. SQLite uses its integer, real, and text affinities. PostgreSQL uses <code>BOOLEAN</code>, width-appropriate <code>SMALLINT</code>/<code>INTEGER</code>/<code>BIGINT</code>, <code>DOUBLE PRECISION</code>, and <code>TEXT</code>. See the <a class="el" href="md_docs_2backends.html">backend matrix</a> for backend-specific limits and semantics. Types outside this list are not supported as scalar columns.</p>
-<p>Both bundled SOCI backends exchange the widest integer values through signed 64-bit storage. Consequently, <code>unsigned long long</code> and 64-bit <code>unsigned long</code> values are supported through <code>INT64_MAX</code>; larger values fail with <code>DatabaseErrorCode::Conversion</code> instead of being silently wrapped. The selected backend reports this bound in <code>BackendCapabilities::valueLimits</code>.</p>
-<h1><a class="anchor" id="autotoc_md55"></a>
+<p>Each backend maps these types to its native SQL types. SQLite uses its integer, real, and text affinities. PostgreSQL uses <code>BOOLEAN</code>, width-appropriate <code>SMALLINT</code>/<code>INTEGER</code>/<code>BIGINT</code>, <code>DOUBLE PRECISION</code>, and <code>TEXT</code>. MySQL and MariaDB use native signed/unsigned integer types, <code>DOUBLE</code>, and <code>LONGTEXT</code> or bounded <code>VARCHAR</code>. See the <a class="el" href="md_docs_2backends.html">backend matrix</a> for backend-specific limits and semantics. Types outside this list are not supported as scalar columns.</p>
+<p>SQLite and PostgreSQL exchange the widest integer values through signed 64-bit storage. Consequently, <code>unsigned long long</code> and 64-bit <code>unsigned long</code> values are supported through <code>INT64_MAX</code>; larger values fail with <code>DatabaseErrorCode::Conversion</code> instead of being silently wrapped. The selected backend reports this bound in <code>BackendCapabilities::valueLimits</code>.</p>
+<h1><a class="anchor" id="autotoc_md56"></a>
+Bounded strings</h1>
+<p>String bounds are model metadata, independent of the selected backend:</p>
+<div class="fragment"><div class="line"><span class="keyword">struct </span>Account {</div>
+<div class="line">    std::string code;</div>
+<div class="line">    std::string name;</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> id_columns = orm::primaryKey&lt;&amp;Account::code&gt;();</div>
+<div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> string_lengths = orm::stringLengths(</div>
+<div class="line">        orm::stringLength&lt;&amp;Account::code, 191&gt;(),</div>
+<div class="line">        orm::stringLength&lt;&amp;Account::name, 100&gt;());</div>
+<div class="line">};</div>
+</div><!-- fragment --><p>Bounds describe a maximum number of characters. Definitions must refer to unique <code>std::string</code> or nullable string members of the same model and use a positive length. MySQL and MariaDB require bounds on string primary and foreign keys so indexes have a predictable width. Related foreign-key columns inherit the referenced key's bound. Index width is validated against the active InnoDB page size before table creation. MySQL-family bounded strings become <code>VARCHAR(n)</code>; ordinary unbounded strings become <code>LONGTEXT</code>. SQLite and PostgreSQL retain their native text types. MySQL-family <code>VARCHAR</code> supports lengths from 1 through 16,383; a table must also fit the server's row limits. MariaDB typed string ordering also requires an explicit bound within that range to avoid native prefix sorting of unbounded text; see <a class="el" href="md_docs_2backends.html">Backends</a>.</p>
+<p>MySQL and MariaDB support the full <code>unsigned long long</code> range through <code>BIGINT UNSIGNED</code>. Consult the selected adapter's value limits when portable application values must also fit SQLite or PostgreSQL.</p>
+<h1><a class="anchor" id="autotoc_md57"></a>
 Optional fields</h1>
 <p>Wrap a supported scalar type in <code>std::optional&lt;T&gt;</code> to make the column nullable.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -151,7 +164,7 @@ Optional fields</h1>
 <div class="line">    std::optional&lt;std::string&gt; email;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>Non-optional fields are generated as <code>NOT NULL</code>. Optional fields are generated without <code>NOT NULL</code>, and <code>std::nullopt</code> is stored and read back as SQL <code>NULL</code>.</p>
-<h1><a class="anchor" id="autotoc_md56"></a>
+<h1><a class="anchor" id="autotoc_md58"></a>
 Table name</h1>
 <p>Override the generated table name with a static <code>table_name</code> field:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -161,7 +174,7 @@ Table name</h1>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> orm::reflection::FixedString table_name{<span class="stringliteral">&quot;users&quot;</span>};</div>
 <div class="line">};</div>
 </div><!-- fragment --><p><code>table_name</code> must be a structural <code>FixedString</code>; runtime <code>std::string</code> and <code>std::string_view</code> metadata are no longer accepted.</p>
-<h1><a class="anchor" id="autotoc_md57"></a>
+<h1><a class="anchor" id="autotoc_md59"></a>
 Column names</h1>
 <p>Override database column names with <code>orm::columnNames</code> and typed member pointers. Fields omitted from the mapping keep their reflected C++ names.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -174,7 +187,7 @@ Column names</h1>
 <div class="line">};</div>
 </div><!-- fragment --><p>Query and update builders use member pointers such as <code>orm::query::col&lt;&amp;User::displayName&gt;()</code>; the renderer maps them to database column names.</p>
 <p>Physical non-identity column names are also used as prepared-statement bind names by the bundled adapters. Keep those mapped names to ASCII letters, digits, and <code>_</code>; unsupported names are rejected during model validation rather than being passed to a database driver. Table names and all identifiers must be non-empty and cannot contain an embedded NUL byte. PostgreSQL additionally enforces its 63-byte identifier limit.</p>
-<h1><a class="anchor" id="autotoc_md58"></a>
+<h1><a class="anchor" id="autotoc_md60"></a>
 Primary key</h1>
 <p>If a model has an <code>id</code> field, it is used as the default primary key.</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
@@ -196,9 +209,9 @@ Primary key</h1>
 <div class="line"> </div>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> id_columns = orm::primaryKey&lt;&gt;();</div>
 <div class="line">};</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md59"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md61"></a>
 Auto-increment primary key</h1>
-<p>Integer primary keys can be generated by either bundled database backend. To enable this, define <code>auto_increment_columns</code> with <code>orm::autoIncrement</code>:</p>
+<p>Integer primary keys can be generated by any bundled database backend. To enable this, define <code>auto_increment_columns</code> with <code>orm::autoIncrement</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>User {</div>
 <div class="line">    <span class="keywordtype">int</span> id;</div>
 <div class="line">    std::string name;</div>
@@ -206,7 +219,7 @@ Auto-increment primary key</h1>
 <div class="line">    <span class="keyword">inline</span> <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> auto_increment_columns =</div>
 <div class="line">        orm::autoIncrement&lt;&amp;User::id&gt;();</div>
 <div class="line">};</div>
-</div><!-- fragment --><p>SQLite creates <code>id INTEGER PRIMARY KEY AUTOINCREMENT</code>; PostgreSQL creates <code>id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY</code>. Both omit the field from generated <code>INSERT</code> statements. Existing models are unchanged unless they define <code>auto_increment_columns</code>.</p>
+</div><!-- fragment --><p>SQLite creates <code>id INTEGER PRIMARY KEY AUTOINCREMENT</code>; PostgreSQL creates <code>id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY</code>; MySQL and MariaDB use <code>AUTO_INCREMENT</code>. All adapters omit the field from generated <code>INSERT</code> statements. Existing models are unchanged unless they define <code>auto_increment_columns</code>.</p>
 <p>Auto-increment support has these limitations:</p>
 <ul>
 <li>The auto-increment column must be the only primary-key column.</li>
@@ -225,7 +238,7 @@ Auto-increment primary key</h1>
 <div class="line">        orm::columnNames(orm::columnName&lt;&amp;User::id, &quot;user_id&quot;&gt;());</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>This applies the mapped <code>user_id</code> name to the backend's corresponding auto-generated integer primary-key declaration.</p>
-<h1><a class="anchor" id="autotoc_md60"></a>
+<h1><a class="anchor" id="autotoc_md62"></a>
 One-to-one relations</h1>
 <p>A field whose type is another model with a primary key is treated as a one-to-one relation. The owning table stores the related model primary key as local foreign key column(s).</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Profile {</div>
@@ -245,7 +258,7 @@ One-to-one relations</h1>
 <div class="line">};</div>
 </div><!-- fragment --><p>Nullable relations generate nullable foreign-key columns, store <code>std::nullopt</code> as SQL <code>NULL</code>, and read SQL <code>NULL</code> back as <code>std::nullopt</code>.</p>
 <p>These fields are represented by separate to-one relation metadata rather than by a scalar <code>ColumnType</code>. The ORM does not add a <code>UNIQUE</code> constraint to their foreign-key columns.</p>
-<h1><a class="anchor" id="autotoc_md61"></a>
+<h1><a class="anchor" id="autotoc_md63"></a>
 Collection relations</h1>
 <p>Use <code>orm::OneToMany&lt;T&gt;</code> and <code>orm::ManyToMany&lt;T&gt;</code> for fields that contain multiple related models. A collection field must have exactly one matching entry in the model's static <code>relations</code> metadata:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Book;</div>
@@ -296,7 +309,7 @@ Collection relations</h1>
 <div class="line">orm::Database database;</div>
 <div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
 </div><!-- fragment --><p>Collection fields are omitted from base-table DDL, insert statements, and ordinary row binding. Inserting a model never traverses or saves a collection. See <a class="el" href="md_docs_2relations.html">Collection relations</a> for wrapper behavior, junction naming, schema lifecycle, explicit mutations, includes, predicates, composite keys, and validation rules.</p>
-<h1><a class="anchor" id="autotoc_md62"></a>
+<h1><a class="anchor" id="autotoc_md64"></a>
 Current limitations</h1>
 <p>Model metadata supports to-one fields and explicitly mapped <code>OneToMany</code> and <code>ManyToMany</code> collection fields. Mapping definitions are compile-time values; the old runtime <code>string</code>/<code>string_view</code>, <code>vector</code>, and <code>map</code> metadata forms are not accepted. It does not support nested collection loading, junction models with payload fields, ordered relations, custom converters, date/time fields, UUID fields, or <code>boost::optional</code>. </p>
 </div></div><!-- contents -->

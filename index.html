@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
   <div class="headertitle"><div class="title">ORM C++ </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="md_docs_2main"></a> ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables using compile-time reflection. It ships with SQLite and PostgreSQL backends built on SOCI.</p>
+<div class="textblock"><p><a class="anchor" id="md_docs_2main"></a> ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables using compile-time reflection. It ships with SQLite, PostgreSQL, MySQL and MariaDB backends built on SOCI.</p>
 <p>The public API consists of two named modules:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
 <div class="line"><span class="keyword">import</span> <a class="code" href="module_orm.html">orm</a>;</div>
@@ -114,9 +114,9 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 <li><a class="el" href="md_docs_2modules.html">C++20 modules and CMake consumers</a></li>
 <li><a class="el" href="md_docs_2schema-migrations.html">Schema migrations</a></li>
 </ol>
-<h1><a class="anchor" id="autotoc_md50"></a>
+<h1><a class="anchor" id="autotoc_md51"></a>
 Build configuration and macro policy</h1>
-<p>Backend options are selected when building the library or package. The <code>orm</code> module exports <code>orm::config::sqliteBackendEnabled</code> and <code>orm::config::postgresqlBackendEnabled</code> as C++ constants. Use <code>if constexpr</code> for backend-dependent behavior; expressions whose validity depends on a backend must remain dependent inside a template.</p>
+<p>Backend options are selected when building the library or package. The <code>orm</code> module exports <code>orm::config::sqliteBackendEnabled</code> and <code>orm::config::postgresqlBackendEnabled</code>, <code>orm::config::mysqlBackendEnabled</code> and <code>orm::config::mariadbBackendEnabled</code> as C++ constants. Use <code>if constexpr</code> for backend-dependent behavior; expressions whose validity depends on a backend must remain dependent inside a template.</p>
 <p>First-party code and exported package metadata define no preprocessor macros. <code>scripts/check-macros.py</code> checks module sources, C++ sources, templates, CMake, and Conan recipes. Backend selection uses generated C++ constants, source selection, and dependency linkage. CMake cache <code>-D</code> options are permitted. Compiler conditionals are confined to reflection adapters and platform tests; external-library macros such as GoogleTest assertions are outside this policy.</p>
 <p>The API may change freely while the project has no established external users. Documentation describes the current API; version-to-version migration guides and compatibility fallbacks are not maintained during this stage. </p>
 </div></div><!-- PageDoc -->

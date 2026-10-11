@@ -94,9 +94,9 @@ $(document).ready(function(){initNavTree('md_docs_2partial-result-queries.html',
   <div class="headertitle"><div class="title">Partial-result queries</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md73"></a> Partial-result queries select a subset of model fields into a flat user-defined DTO. Use them when you do not need to hydrate a full model object.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md75"></a> Partial-result queries select a subset of model fields into a flat user-defined DTO. Use them when you do not need to hydrate a full model object.</p>
 <p>For immutable DTO plans, use <code>query::selectAs&lt;Source, Result&gt;</code> with literal <code>as&lt;"alias"&gt;</code> projections as described in <a class="el" href="md_docs_2static-queries.html">static query plans</a>.</p>
-<h1><a class="anchor" id="autotoc_md74"></a>
+<h1><a class="anchor" id="autotoc_md76"></a>
 Contract</h1>
 <p>Full-model selects keep the existing API and result type:</p>
 <div class="fragment"><div class="line">orm::Query&lt;User&gt; query;</div>
@@ -127,7 +127,7 @@ Contract</h1>
 <div class="line">              as(<span class="stringliteral">&quot;name&quot;</span>, col&lt;&amp;User::displayName&gt;()));</div>
 <div class="line"> </div>
 <div class="line">std::vector&lt;UserSummary&gt; rows = context.select(query);</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md75"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md77"></a>
 Query behavior</h1>
 <p><code>ProjectionQuery</code> supports the same filtering, ordering, paging, distinct, and join controls as <code>Query</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -186,7 +186,7 @@ Query behavior</h1>
 <div class="line">orm::ProjectionQuery&lt;User, UserEmail&gt; query;</div>
 <div class="line">query.project(as(<span class="stringliteral">&quot;id&quot;</span>, col&lt;&amp;User::id&gt;()),</div>
 <div class="line">              as(<span class="stringliteral">&quot;email&quot;</span>, col&lt;&amp;User::email&gt;()));</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md76"></a>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md78"></a>
 Aggregate result queries</h1>
 <p>Use <code>ProjectionQuery&lt;Source, Result&gt;</code> when aggregated values must be returned. They are projected into DTO fields through the same explicit <code>as("dtoField", ...)</code> aliases:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -231,7 +231,7 @@ Aggregate result queries</h1>
 <li><code>long long</code> for integral <code>sum</code>, and the column scalar type for <code>min</code> and <code>max</code>,</li>
 <li><code>std::optional&lt;T&gt;</code> when the aggregate can return SQL <code>NULL</code>, such as <code>avg</code> or <code>sum</code> over an empty result set.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md77"></a>
+<h1><a class="anchor" id="autotoc_md79"></a>
 Result DTO rules</h1>
 <p>Projection DTOs are flat result objects. Supported DTO field types are the scalar types already supported by model binding plus <code>std::optional&lt;T&gt;</code> for SQL <code>NULL</code> values.</p>
 <p>Alias validation is part of the public contract:</p>
@@ -243,7 +243,7 @@ Result DTO rules</h1>
 <li>relation fields must be projected as flat DTO fields.</li>
 </ul>
 <p>DTO aliases remain runtime strings. Alias validation failures throw <code>std::invalid_argument</code> before executing SQL.</p>
-<h1><a class="anchor" id="autotoc_md78"></a>
+<h1><a class="anchor" id="autotoc_md80"></a>
 Limitations</h1>
 <p>Projection DTOs are flat. Relation fields must be flattened through aliases, for example <code>as("city", col&lt;&amp;User::profile, &amp;Profile::city&gt;())</code>.</p>
 <p><code>ProjectionQuery</code> does not expose <code>include</code>; collection wrappers are model state and are never hydrated into a flat DTO. A projection <code>WHERE</code> predicate may still use the dedicated <code>any</code>, <code>exists</code>, and <code>none</code> helpers to filter by a mapped source-model collection, but the collection itself cannot be projected.</p>

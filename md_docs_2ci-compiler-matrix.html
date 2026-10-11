@@ -94,8 +94,8 @@ $(document).ready(function(){initNavTree('md_docs_2ci-compiler-matrix.html','');
   <div class="headertitle"><div class="title">CI Compiler Matrix</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md27"></a> This document describes the compiler versions tested in CI and the coverage policy for the <code>orm-cxx</code> project.</p>
-<h1><a class="anchor" id="autotoc_md28"></a>
+<div class="textblock"><p><a class="anchor" id="autotoc_md28"></a> This document describes the compiler versions tested in CI and the coverage policy for the <code>orm-cxx</code> project.</p>
+<h1><a class="anchor" id="autotoc_md29"></a>
 CI Status</h1>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -105,7 +105,7 @@ CI Status</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Clang (18–20)   </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main" alt="Clang" style="pointer-events: none;" class="inline"/></a>    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">PostgreSQL   </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main" alt="PostgreSQL" style="pointer-events: none;" class="inline"/></a>    </td></tr>
+<td class="markdownTableBodyNone">Backend conformance   </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main" alt="Backend conformance" style="pointer-events: none;" class="inline"/></a>    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">MSVC   </td><td class="markdownTableBodyNone"><a href="https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml"><img src="https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main" alt="MSVC" style="pointer-events: none;" class="inline"/></a>    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -113,10 +113,10 @@ CI Status</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Coverage   </td><td class="markdownTableBodyNone"><a href="https://codecov.io/github/wsekta/orm-cxx"><img src="https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9" alt="codecov" style="pointer-events: none;" class="inline"/></a>   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md29"></a>
+<h1><a class="anchor" id="autotoc_md30"></a>
 Tested Compiler Versions</h1>
 <p>Linux CI uses <b>Ubuntu 24.04 (Noble)</b> runners. GCC jobs run inside the official <code>gcc:15-trixie</code> image; Clang jobs install compiler packages from the Ubuntu repositories. Linux package-manager jobs use Clang 18.</p>
-<h2><a class="anchor" id="autotoc_md30"></a>
+<h2><a class="anchor" id="autotoc_md31"></a>
 GCC</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -126,7 +126,7 @@ GCC</h2>
 </table>
 <p>GCC 15.3.0 and 16.2.0 were validated with the full module build. GCC 14 exceeds its imported source-location limit. GCC 15 and 16 require <code>-fno-module-lazy</code> on both module producers and importers to avoid <code>Bad file data</code> from the lazy reader; both CMake targets propagate this option, including installed interfaces rebuilt by consumers.</p>
 <p>The GCC workflow also installs ORM and SOCI into an isolated prefix and builds the <code>find_package</code> consumer with warnings treated as errors. A separate installed reflection consumer disables SOCI discovery. Both checks rebuild their module interfaces using the targets' public options and then run the resulting programs.</p>
-<h2><a class="anchor" id="autotoc_md31"></a>
+<h2><a class="anchor" id="autotoc_md32"></a>
 Clang</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -141,7 +141,7 @@ Clang</h2>
 <blockquote class="doxtable">
 <p>&zwj;<b>Note:</b> Clang 16 and 17 are not supported. The compile-time reflection layer uses <code>consteval</code> patterns that require Clang 18 or newer. </p>
 </blockquote>
-<h2><a class="anchor" id="autotoc_md32"></a>
+<h2><a class="anchor" id="autotoc_md33"></a>
 MSVC</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
@@ -149,34 +149,16 @@ MSVC</h2>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">MSVC latest   </td><td class="markdownTableBodyNone"><code>windows-2025-vs2026</code>   </td><td class="markdownTableBodyNone"><code>windows-msvc-build.yml</code>   </td><td class="markdownTableBodyNone">Tested   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md33"></a>
-PostgreSQL Compiler Matrix</h1>
-<p>PostgreSQL integration tests are run with multiple compiler/backend version combinations:</p>
-<table class="markdownTable">
-<tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Compiler   </th><th class="markdownTableHeadNone">PostgreSQL   </th><th class="markdownTableHeadNone">Coverage   </th><th class="markdownTableHeadNone">Workflow    </th></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">GCC 15   </td><td class="markdownTableBodyNone">15   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone"><code>postgresql-build.yml</code>    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Clang 18   </td><td class="markdownTableBodyNone">18   </td><td class="markdownTableBodyNone">Yes   </td><td class="markdownTableBodyNone"><code>postgresql-build.yml</code>    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Clang 19   </td><td class="markdownTableBodyNone">18   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone"><code>postgresql-build.yml</code>    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Clang 20   </td><td class="markdownTableBodyNone">18   </td><td class="markdownTableBodyNone">No   </td><td class="markdownTableBodyNone"><code>postgresql-build.yml</code>   </td></tr>
-</table>
 <h1><a class="anchor" id="autotoc_md34"></a>
-Coverage Policy</h1>
-<p>Code coverage is collected on a <b>single Clang version only</b> (Clang 18) to avoid redundant coverage reports and keep Codecov integration simple:</p>
-<ul>
-<li><b>SQLite coverage:</b> <code>linux-clang-build.yml</code> — Clang 18 with <code>linux-clang-coverage</code> preset</li>
-<li><b>PostgreSQL coverage:</b> <code>postgresql-build.yml</code> — Clang 18 with <code>linux-clang-postgresql-coverage</code> preset</li>
-</ul>
-<p>The LLVM exporter removes compiler-synthesized implicit-member maps only when every zero-count region exactly covers a class name on a plain <code>class</code> or <code>struct</code> declaration line in a project module, and LLVM profdata has no instrumentation record for that function. It verifies that all profile records were read. Explicit method bodies and instrumented functions with zero hits remain coverage failures. The exporter reports how many maps and declaration lines it normalized. Python is required only for coverage builds.</p>
-<p>Coverage flags uploaded to Codecov:</p><ul>
-<li><code>linux-clang-coverage</code> — SQLite coverage</li>
-<li><code>linux-clang-postgresql-coverage</code> — PostgreSQL coverage</li>
-</ul>
+Backend and consumer matrix</h1>
+<p><code>postgresql-build.yml</code> runs all four adapters through the same conformance suite. The workflow name is <b>Backend conformance</b>. Clang 18, 19 and 20 and GCC 15 cover PostgreSQL 15/18, MySQL 8.4/9.7 and MariaDB 11.4/11.8/12.3. MSVC builds every adapter; live server tests run on Linux. Each all-adapter build registers consumers for all 16 independent subsets. Every consumer checks exact registry membership and compiles negative controls for disabled provider types. Core compiler jobs require no database clients.</p>
+<p>The Packages workflow repeats the 16 subsets for Conan and vcpkg on Linux and Windows. Linux installed consumers run live CRUD and migrations against every selected service; Windows verifies module, provider and linking contracts.</p>
 <h1><a class="anchor" id="autotoc_md35"></a>
+Coverage policy</h1>
+<p>Clang 18 produces five independent reports: core, SQLite, PostgreSQL, MySQL and MariaDB. The backend conformance workflow merges the full report list and requires 100% line coverage. Every adapter contributes under the same policy.</p>
+<p>The LLVM exporter removes compiler-synthesized implicit-member maps only when every zero-count region exactly covers a class name on a plain <code>class</code> or <code>struct</code> declaration line in a project module, and LLVM profdata has no instrumentation record for that function. It verifies that all profile records were read. Explicit method bodies and instrumented functions with zero hits remain coverage failures. The exporter reports how many maps and declaration lines it normalized. Python is required only for coverage builds.</p>
+<p>The merged report is uploaded with Codecov flag <code>all-backends</code>; the standalone core compiler workflow also uploads its core report.</p>
+<h1><a class="anchor" id="autotoc_md36"></a>
 CMake Presets</h1>
 <p>Each compiler version has dedicated CMake presets. All library and consumer builds use native C++20 modules through Ninja 1.11+ and CMake 3.31+. CI installs CMake 3.31.6 and Ninja 1.13.0 explicitly. The default GCC presets select GCC 15; Clang 18 remains the coverage compiler.</p>
 <table class="markdownTable">
@@ -189,7 +171,7 @@ CMake Presets</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>linux-clang-debug</code>   </td><td class="markdownTableBodyNone">Clang 18   </td><td class="markdownTableBodyNone">Local development (default)    </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone"><code>linux-clang-coverage</code>   </td><td class="markdownTableBodyNone">Clang 18   </td><td class="markdownTableBodyNone">CI coverage    </td></tr>
+<td class="markdownTableBodyNone"><code>linux-clang-coverage</code>   </td><td class="markdownTableBodyNone">Clang 18   </td><td class="markdownTableBodyNone">Core coverage    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone"><code>linux-clang-19-debug</code>   </td><td class="markdownTableBodyNone">Clang 19   </td><td class="markdownTableBodyNone">CI matrix    </td></tr>
 <tr class="markdownTableRowEven">
@@ -211,9 +193,16 @@ CMake Presets</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><code>msvc-debug</code>   </td><td class="markdownTableBodyNone">MSVC   </td><td class="markdownTableBodyNone">Windows (default)    </td></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone"><code>msvc-postgresql-debug</code>   </td><td class="markdownTableBodyNone">MSVC   </td><td class="markdownTableBodyNone">Windows PostgreSQL   </td></tr>
+<td class="markdownTableBodyNone"><code>msvc-postgresql-debug</code>   </td><td class="markdownTableBodyNone">MSVC   </td><td class="markdownTableBodyNone">Windows PostgreSQL    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>msvc-all-backends-debug</code>   </td><td class="markdownTableBodyNone">MSVC   </td><td class="markdownTableBodyNone">All adapters and 16 consumers    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone"><code>linux-clang-all-backends</code>   </td><td class="markdownTableBodyNone">Clang 18   </td><td class="markdownTableBodyNone">Live conformance and 16 consumers    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone"><code>linux-gcc-15-all-backends</code>   </td><td class="markdownTableBodyNone">GCC 15   </td><td class="markdownTableBodyNone">Live conformance and 16 consumers   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md36"></a>
+<p>Single-backend debug presets exist for <code>sqlite</code>, <code>postgresql</code>, <code>mysql</code> and <code>mariadb</code> for each supported compiler. Clang 18 coverage presets follow <code>linux-clang-&lt;backend&gt;-coverage</code>. Base debug and coverage presets select core; all four backend options remain disabled unless a profile selects them.</p>
+<h1><a class="anchor" id="autotoc_md37"></a>
 Adding New Compiler Versions</h1>
 <p>To add a new compiler version to CI:</p>
 <ol type="1">

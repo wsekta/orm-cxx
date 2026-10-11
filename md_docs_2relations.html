@@ -94,7 +94,7 @@ $(document).ready(function(){initNavTree('md_docs_2relations.html',''); initResi
   <div class="headertitle"><div class="title">Collection relations</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="autotoc_md94"></a> <code>orm-cxx</code> supports explicit one-level collection relations with <code>orm::OneToMany&lt;T&gt;</code> and <code>orm::ManyToMany&lt;T&gt;</code>. Collection fields are model metadata: they are not columns of the model's base table, are never written by <code>insert</code>, and are loaded only when a query explicitly requests them. Mapping descriptors use compile-time member pointers and <code>FixedString</code> names, and the complete relation graph is validated by <code>orm::Schema&lt;Models...&gt;</code>.</p>
+<div class="textblock"><p><a class="anchor" id="autotoc_md96"></a> <code>orm-cxx</code> supports explicit one-level collection relations with <code>orm::OneToMany&lt;T&gt;</code> and <code>orm::ManyToMany&lt;T&gt;</code>. Collection fields are model metadata: they are not columns of the model's base table, are never written by <code>insert</code>, and are loaded only when a query explicitly requests them. Mapping descriptors use compile-time member pointers and <code>FixedString</code> names, and the complete relation graph is validated by <code>orm::Schema&lt;Models...&gt;</code>.</p>
 <ol type="1">
 <li>Collection wrappers</li>
 <li>One-to-many</li>
@@ -110,7 +110,7 @@ $(document).ready(function(){initNavTree('md_docs_2relations.html',''); initResi
 <li>Common mistakes</li>
 <li>Migrating an existing schema</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md95"></a>
+<h1><a class="anchor" id="autotoc_md97"></a>
 Collection wrappers</h1>
 <p>A collection field uses one of the ORM wrappers rather than <code>std::vector&lt;T&gt;</code>:</p>
 <div class="fragment"><div class="line">orm::OneToMany&lt;Book&gt; books;</div>
@@ -126,7 +126,7 @@ Collection wrappers</h1>
 </ul>
 <p>A default-constructed wrapper is empty and has <code>isLoaded() == false</code>. After an explicit <code>include</code>, it has <code>isLoaded() == true</code>, including when the database contains no related rows. This distinction lets callers tell "not requested" from "requested and empty".</p>
 <p>Changing <code>values()</code> or an element of the wrapper changes only the C++ object. The ORM does not cascade-save or synchronize a collection. Use <code>link</code> and <code>unlink</code> for relation mutations, and insert or update endpoint models separately.</p>
-<h1><a class="anchor" id="autotoc_md96"></a>
+<h1><a class="anchor" id="autotoc_md98"></a>
 One-to-many</h1>
 <p><code>OneToMany</code> is the inverse of an existing to-one field on the child. Declare the collection descriptor in the parent's static <code>relations</code> metadata and name the child's to-one field with <code>mappedBy</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Book;</div>
@@ -156,7 +156,7 @@ One-to-many</h1>
 <div class="line">    std::optional&lt;Author&gt; author;</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>This choice also determines whether <code>unlink&lt;&amp;Author::books&gt;(author, book)</code> is valid.</p>
-<h1><a class="anchor" id="autotoc_md97"></a>
+<h1><a class="anchor" id="autotoc_md99"></a>
 Many-to-many</h1>
 <p>The owning side declares the junction table with <code>through</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Role;</div>
@@ -189,7 +189,7 @@ Many-to-many</h1>
 <div class="line">orm::Database database;</div>
 <div class="line"><span class="keyword">auto</span> context = database.orm&lt;AppSchema&gt;();</div>
 </div><!-- fragment --><p>The junction table contains only the complete primary keys of both endpoints. Every junction column is <code>NOT NULL</code>; all columns together form its composite primary key. It has one foreign key to each endpoint with <code>ON DELETE CASCADE</code>. Deleting an endpoint therefore deletes only its junction rows, never the model at the other endpoint. No surrogate id, ordering column, or payload columns are added.</p>
-<h1><a class="anchor" id="autotoc_md98"></a>
+<h1><a class="anchor" id="autotoc_md100"></a>
 Junction column names</h1>
 <p><code>ownerColumns</code> and <code>targetColumns</code> are optional. By default each junction column is named <code>&lt;endpoint-table&gt;_&lt;primary-key-column&gt;</code>. Database column names, including <code>columns_names</code> mappings, are used for the primary-key part.</p>
 <p>For a composite primary key there must be exactly one junction column name per primary-key column, in primary-key order:</p>
@@ -210,7 +210,7 @@ Junction column names</h1>
 <div class="line">                           .targetColumns&lt;&quot;tag_tenant_id&quot;, &quot;tag_id&quot;&gt;());</div>
 <div class="line">};</div>
 </div><!-- fragment --><p>Self-referencing many-to-many mappings must specify distinct owner and target column names explicitly, because the default names would collide.</p>
-<h1><a class="anchor" id="autotoc_md99"></a>
+<h1><a class="anchor" id="autotoc_md101"></a>
 Schema lifecycle</h1>
 <p>Create endpoint tables first, then create junction tables from the owning model:</p>
 <div class="fragment"><div class="line">context.createTable&lt;User&gt;();</div>
@@ -222,7 +222,7 @@ Schema lifecycle</h1>
 <div class="line">context.deleteTable&lt;Role&gt;();</div>
 <div class="line">context.deleteTable&lt;User&gt;();</div>
 </div><!-- fragment --><p>Relation-table creation and deletion are idempotent. They remain explicit; <code>createTable&lt;T&gt;()</code> and <code>deleteTable&lt;T&gt;()</code> do not recursively alter relation tables. Connecting to SQLite enables <code>PRAGMA foreign_keys=ON</code> automatically.</p>
-<h1><a class="anchor" id="autotoc_md100"></a>
+<h1><a class="anchor" id="autotoc_md102"></a>
 Link and unlink</h1>
 <p>Use endpoint objects with complete, non-null primary-key values:</p>
 <div class="fragment"><div class="line">User user{1, <span class="stringliteral">&quot;Ada&quot;</span>};</div>
@@ -236,7 +236,7 @@ Link and unlink</h1>
 <div class="line">std::size_t detached = context.unlink&lt;&amp;Author::books&gt;(author, book);</div>
 </div><!-- fragment --><p><code>link</code> assigns the child's mapped foreign key and may move the child from a different parent. <code>unlink</code> stores SQL <code>NULL</code> in that foreign key. It throws <code>std::invalid_argument</code> when the mapped child relation is non-nullable. As with many-to-many, the return value is <code>1</code> only when the stored foreign key changed and <code>0</code> when it was already in the requested state.</p>
 <p>These operations read primary keys only. They do not insert, update, or cascade-save either endpoint. All primary-key components must be present and non-null, including every component of a composite key. For an auto-increment model, select the inserted row to obtain its generated key before calling <code>link</code>.</p>
-<h1><a class="anchor" id="autotoc_md101"></a>
+<h1><a class="anchor" id="autotoc_md103"></a>
 Loading collections</h1>
 <p>Collections are not joined into the main model query. Request one level explicitly with <code>Query&lt;T&gt;::include</code>:</p>
 <div class="fragment"><div class="line">orm::Query&lt;Author&gt; query;</div>
@@ -248,7 +248,7 @@ Loading collections</h1>
 </div><!-- fragment --><p>Duplicate includes are idempotent. The ORM first runs the unchanged parent query, then one or more parameter-bounded batched queries per included field and groups rows by the complete parent primary key. It never issues one relation query per parent.</p>
 <p><code>LIMIT</code>, <code>OFFSET</code>, <code>DISTINCT</code>, and parent ordering apply only to the main query, so each returned parent's collection is complete. Large primary-key sets are split into batches that respect the selected backend's parameter limit. Element order inside a collection is not guaranteed.</p>
 <p>Includes are available only on full-model <code>Query&lt;T&gt;</code>, not on flat <code>ProjectionQuery</code> results. Only one include level is supported: collection fields on included elements remain unloaded. <code>disableJoining()</code> still controls to-one hydration and is propagated to collection elements, but does not cancel an explicit collection include.</p>
-<h1><a class="anchor" id="autotoc_md102"></a>
+<h1><a class="anchor" id="autotoc_md104"></a>
 Filtering by collections</h1>
 <p>Collection predicates use correlated <code>EXISTS</code> subqueries:</p>
 <div class="fragment"><div class="line"><span class="keyword">using namespace </span>orm::query;</div>
@@ -264,7 +264,7 @@ Filtering by collections</h1>
 </div><!-- fragment --><p>The predicate passed to <code>any</code> or <code>none</code> is relative to the collection's target model. It may use scalar target fields and existing one-level to-one paths. <code>any</code> renders correlated <code>EXISTS</code>, <code>none</code> renders <code>NOT EXISTS</code>, and <code>exists</code> checks only whether the collection is non-empty. Values remain SOCI bind parameters.</p>
 <p>Filtering does not load the collection. Add <code>include&lt;&amp;Author::books&gt;()</code> separately when the result objects also need the elements. Nested collection predicates are not supported.</p>
 <p>A collection is not a flat column path. Expressions such as <code>col&lt;&amp;Author::books, &amp;Book::title&gt;()</code> are rejected, as are collection fields in <code>ORDER BY</code>, <code>GROUP BY</code>, projections, aggregate expressions, and <code>Update</code> assignments.</p>
-<h1><a class="anchor" id="autotoc_md103"></a>
+<h1><a class="anchor" id="autotoc_md105"></a>
 End-to-end workflow</h1>
 <p>The complete lifecycle below uses both relation kinds. Endpoint rows are inserted first, links are written explicitly, and collection values are loaded only by <code>include</code>:</p>
 <div class="fragment"><div class="line"><span class="keyword">using </span>AppSchema = orm::Schema&lt;Author, Book, User, Role&gt;;</div>
@@ -324,12 +324,12 @@ End-to-end workflow</h1>
 <li>Calling <code>link</code> with the original object whose auto-increment key is still empty is rejected.</li>
 </ol>
 <p>A complete program containing the model declarations and this lifecycle is available in <a href="../examples/relations.cpp"><code>examples/relations.cpp</code></a>. It is built as the <code>relations-example</code> CMake target.</p>
-<h1><a class="anchor" id="autotoc_md104"></a>
+<h1><a class="anchor" id="autotoc_md106"></a>
 Transactions and consistency</h1>
 <p>Schema operations, <code>link</code>, <code>unlink</code>, and collection queries participate in the database's current explicit transaction. They do not start or commit a private transaction.</p>
 <p>An included select uses multiple SQL statements. It does not create an automatic snapshot around them; wrap the select in an explicit transaction when the parent rows and included collections must be observed consistently.</p>
 <p>Deleting a one-to-many parent is blocked by the child's foreign key unless the application detaches or removes the children first. The ORM does not generate cascade deletion for child rows.</p>
-<h1><a class="anchor" id="autotoc_md105"></a>
+<h1><a class="anchor" id="autotoc_md107"></a>
 Validation and unsupported mappings</h1>
 <p>Instantiating <code>orm::Schema&lt;Models...&gt;</code> rejects invalid collection mappings at compile time, including:</p>
 <ul>
@@ -344,7 +344,7 @@ Validation and unsupported mappings</h1>
 </ul>
 <p>Collection mapping cycles are supported because relation targets are resolved lazily from cached metadata rather than recursively copied.</p>
 <p>Lazy loading, nested includes, nested collection predicates, automatic collection synchronization, cascade-save, ordered collections, junction payload models, and automatic schema synchronization are outside the current contract.</p>
-<h1><a class="anchor" id="autotoc_md106"></a>
+<h1><a class="anchor" id="autotoc_md108"></a>
 Common mistakes</h1>
 <ul>
 <li><code>oneToMany&lt;&amp;Author::books&gt;()</code> and <code>manyToMany&lt;&amp;User::roles&gt;()</code> require collection member pointers. Prefer a target member pointer for <code>mappedBy</code>; its <code>FixedString</code> fallback names a C++ field, not a SQL column.</li>
@@ -356,7 +356,7 @@ Common mistakes</h1>
 <li>Only the owning many-to-many model calls <code>createRelationTables&lt;T&gt;()</code> and <code>deleteRelationTables&lt;T&gt;()</code>. Calling them for the inverse model is a no-op.</li>
 <li>Do not call <code>deleteTable</code> for an endpoint while its owning junction table still exists. Drop the junction table first.</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md107"></a>
+<h1><a class="anchor" id="autotoc_md109"></a>
 Migrating an existing schema</h1>
 <p>Adding relation metadata does not migrate an existing database. Apply schema changes through handwritten <a class="el" href="md_docs_2schema-migrations.html">SQL migrations</a>:</p>
 <ul>
