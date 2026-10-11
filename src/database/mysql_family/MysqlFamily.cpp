@@ -255,7 +255,57 @@ auto capabilities() -> BackendCapabilities
 
 namespace
 {
-class StatementBackend final : public soci::details::statement_backend
+template <typename Backend, typename Type>
+auto describedColumnType(void (Backend::*)(int, Type&, std::string&)) -> Type;
+using DescribedColumnType = decltype(describedColumnType(&soci::details::statement_backend::describe_column));
+
+template <typename Backend>
+auto synchronizeBindingFlags(Backend& native, const Backend& wrapper) -> void
+{
+    // Newer SOCI versions set these flags on the public backend rather than in the native binding factories.
+    if constexpr (requires { wrapper.hasUseElements_; })
+    {
+        native.hasIntoElements_ = wrapper.hasIntoElements_;
+        native.hasVectorIntoElements_ = wrapper.hasVectorIntoElements_;
+        native.hasUseElements_ = wrapper.hasUseElements_;
+        native.hasVectorUseElements_ = wrapper.hasVectorUseElements_;
+    }
+}
+
+template <typename Backend, typename Type>
+class OptionalStatementHooks : public Backend
+{
+protected:
+    [[nodiscard]] virtual auto nativeBackend() const -> const Backend& = 0;
+};
+
+template <typename Backend, typename Type>
+    requires requires(const Backend& backend, Type type) {
+        backend.to_data_type(type);
+        backend.exchange_dbtype_for(type);
+        backend.get_row_to_dump();
+    }
+class OptionalStatementHooks<Backend, Type> : public Backend
+{
+public:
+    auto to_data_type(Type type) const -> soci::data_type override
+    {
+        return nativeBackend().to_data_type(type);
+    }
+    auto exchange_dbtype_for(Type type) const -> Type override
+    {
+        return nativeBackend().exchange_dbtype_for(type);
+    }
+    auto get_row_to_dump() const -> int override
+    {
+        return nativeBackend().get_row_to_dump();
+    }
+
+protected:
+    [[nodiscard]] virtual auto nativeBackend() const -> const Backend& = 0;
+};
+
+class StatementBackend final : public OptionalStatementHooks<soci::details::statement_backend, DescribedColumnType>
 {
 public:
     explicit StatementBackend(soci::details::session_backend& session) : native_{session.make_statement_backend()} {}
@@ -278,6 +328,7 @@ public:
     }
     auto execute(int number) -> exec_fetch_result override
     {
+        synchronizeBindingFlags(*native_, static_cast<const soci::details::statement_backend&>(*this));
         const bool alreadyExecuted = static_cast<soci::mysql_statement_backend*>(native_.get())->justDescribed_;
         const auto result = native_->execute(number);
         // MySQL stores this count on the connection. Even a later mysql_ping() resets it.
@@ -299,7 +350,7 @@ public:
     }
     auto get_parameter_name(int index) const -> std::string override
     {
-        return native_->get_parameter_name(index);
+        return nativeBackend().get_parameter_name(index);
     }
     auto rewrite_for_procedure_call(const std::string& sql) -> std::string override
     {
@@ -307,11 +358,12 @@ public:
     }
     auto prepare_for_describe() -> int override
     {
+        synchronizeBindingFlags(*native_, static_cast<const soci::details::statement_backend&>(*this));
         const auto count = native_->prepare_for_describe();
         affectedRows_ = native_->get_affected_rows();
         return count;
     }
-    auto describe_column(int column, soci::data_type& type, std::string& name) -> void override
+    auto describe_column(int column, DescribedColumnType& type, std::string& name) -> void override
     {
         native_->describe_column(column, type, name);
     }
@@ -333,6 +385,10 @@ public:
     }
 
 private:
+    [[nodiscard]] auto nativeBackend() const -> const soci::details::statement_backend& override
+    {
+        return *native_;
+    }
     std::unique_ptr<soci::details::statement_backend> native_;
     long long affectedRows_ = -1;
 };
