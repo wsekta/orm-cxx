@@ -1,0 +1,62 @@
+// database/mysql/MysqlDialect.hpp
+export namespace orm::db::mysql
+{
+
+class MysqlDialect final : public SqlDialect
+{
+public:
+    [[nodiscard]] auto quoteIdentifier(std::string_view identifier) const -> std::string override;
+    [[nodiscard]] auto bindMarker(std::string_view logicalName) const -> std::string override;
+    [[nodiscard]] auto toSqlType(model::ColumnType type,
+                                 std::optional<std::size_t> maxStringLength = std::nullopt) const
+        -> std::string override;
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
+        -> std::string override;
+    [[nodiscard]] auto renderCreateTableSuffix() const -> std::string override;
+    [[nodiscard]] auto renderDefaultInsert(std::string_view tableName) const -> std::string override;
+    [[nodiscard]] auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string override;
+    [[nodiscard]] auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string override;
+    [[nodiscard]] auto renderPagination(const PaginationSpec& pagination) const -> std::string override;
+    [[nodiscard]] auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string override;
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
+        -> std::string override;
+};
+} // namespace orm::db::mysql
+
+// database/mysql/MysqlBackend.hpp
+export namespace orm::db::mysql
+{
+
+class MysqlBackend final : public BackendProvider
+{
+public:
+    MysqlBackend();
+    ~MysqlBackend() override;
+
+    [[nodiscard]] auto type() const noexcept -> BackendType override;
+    [[nodiscard]] auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override;
+    [[nodiscard]] auto capabilities() const noexcept -> const BackendCapabilities& override;
+    [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
+    [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;
+    [[nodiscard]] auto commandGenerator() const noexcept -> const CommandGenerator& override;
+    [[nodiscard]] auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor override;
+
+private:
+    BackendCapabilities backendCapabilities;
+    MysqlDialect mysqlDialect;
+    std::unique_ptr<BackendRuntime> backendRuntime;
+    std::unique_ptr<CommandGenerator> mysqlCommandGenerator;
+};
+} // namespace orm::db::mysql
+
+// database/mysql/MysqlTypeTranslator.hpp
+namespace orm::db::mysql
+{
+class MysqlTypeTranslator final : public TypeTranslator
+{
+public:
+    [[nodiscard]] auto toSqlType(model::ColumnType type,
+                                 std::optional<std::size_t> maxStringLength = std::nullopt) const
+        -> std::string override;
+};
+} // namespace orm::db::mysql

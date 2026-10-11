@@ -48,7 +48,7 @@ auto DefaultInsertCommand::insert(model::ModelView model) const -> std::string
 
     if (fieldsNames.empty())
     {
-        return std::format("INSERT INTO {} DEFAULT VALUES;", dialect.quoteIdentifier(model->tableName));
+        return dialect.renderDefaultInsert(model->tableName);
     }
 
     return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(model->tableName),

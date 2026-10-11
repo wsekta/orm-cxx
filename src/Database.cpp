@@ -379,6 +379,16 @@ auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
     return static_cast<std::size_t>(affectedRows);
 }
 
+auto db::BackendRuntime::executeInsertIfAbsent(soci::session& session, StatementView statement,
+                                               const InsertIfAbsentSpec&) const -> std::size_t
+{
+    soci::values values;
+    orm::detail::bindStatementParameters(*this, values, statement.parameters);
+    soci::statement prepared = (session.prepare << statement.sql, soci::use(values));
+    prepared.execute(true);
+    return normalizeAffectedRows(prepared.get_affected_rows());
+}
+
 Database::Database() : backendType{db::BackendType::Empty} {}
 
 Database::Database(db::CommandGeneratorFactory factory)
@@ -605,6 +615,7 @@ auto Database::executeMutation(const db::Statement& statement, std::string_view 
 
 auto Database::executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t
 {
+    ensureSessionUsable(operation);
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
     soci::values parameterValues;
@@ -653,7 +664,7 @@ auto Database::executeMutation(db::StatementView statement, std::string_view ope
 
 auto Database::executeSql(std::string_view statement, std::string_view operation) -> void
 {
-    (void)getBackend();
+    ensureDdlSupported(operation);
 
     try
     {
@@ -665,8 +676,140 @@ auto Database::executeSql(std::string_view statement, std::string_view operation
     }
 }
 
+auto Database::executeInsertIfAbsent(const db::Statement& statement, const db::InsertIfAbsentSpec& conflict,
+                                     std::string_view operation) -> std::size_t
+{
+    ensureSessionUsable(operation);
+    ensureStatementWithinBindLimit(statement.parameters.size(), operation);
+    ensureAffectedRowsAvailable(operation);
+    try
+    {
+        return getBackend().runtime().executeInsertIfAbsent(sql, db::StatementView{statement.sql, statement.parameters},
+                                                            conflict);
+    }
+    catch (const db::binding::ConversionError&)
+    {
+        throw DatabaseError{DatabaseErrorCode::Conversion, backendType, std::string{operation},
+                            "A relation value cannot be represented by the selected backend"};
+    }
+    catch (const soci::soci_error& error)
+    {
+        throwTranslatedError(error, DatabaseErrorCode::Statement, operation);
+    }
+}
+
+auto Database::ensureSessionUsable(std::string_view operation) const -> void
+{
+    (void)getBackend();
+    if (transactionFailed)
+    {
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, std::string{operation},
+                            "The failed transaction must be rolled back before another SQL operation"};
+    }
+}
+
+auto Database::ensureDdlSupported(std::string_view operation) const -> void
+{
+    ensureSessionUsable(operation);
+    if (transaction != nullptr && !getBackendCapabilities().schema.transactionalDdl)
+    {
+        throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                            "The backend cannot execute schema operations inside an application transaction"};
+    }
+}
+
+auto Database::ensureStringValueSupported(const model::ColumnView& column,
+                                          const std::optional<query::QueryValue>& value,
+                                          std::string_view operation) const -> void
+{
+    if (!column.maxStringLength || !value)
+        return;
+    if (const auto* text = std::get_if<std::string>(&value->get()))
+    {
+        try
+        {
+            db::binding::validateStringLength(*text, column.maxStringLength);
+        }
+        catch (const db::binding::ConversionError&)
+        {
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, std::string{operation},
+                                "A string cannot be represented by its declared character limit"};
+        }
+    }
+}
+
+auto Database::ensureSchemaSupported(model::ModelView descriptor, bool includeJunctions,
+                                     std::string_view operation) -> void
+{
+    ensureDdlSupported(operation);
+    if (!getBackendCapabilities().schema.boundedStringKeys)
+        return;
+    const auto limits = getBackendRuntimeLimits();
+    auto keySize = [&](model::ModelView endpoint)
+    {
+        std::size_t bytes{};
+        for (const auto index : endpoint->primaryKeyIndices)
+        {
+            const auto& column = endpoint->columns[index];
+            std::size_t part{};
+            switch (column.type.value())
+            {
+            case model::ColumnType::String:
+                if (!column.maxStringLength || *column.maxStringLength > std::numeric_limits<std::size_t>::max() / 4)
+                    throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                        "Textual keys require a supported explicit string length"};
+                part = *column.maxStringLength * 4;
+                break;
+            case model::ColumnType::Bool:
+            case model::ColumnType::UnsignedChar:
+                part = 1;
+                break;
+            case model::ColumnType::Char:
+            case model::ColumnType::Short:
+            case model::ColumnType::UnsignedShort:
+                part = 2;
+                break;
+            case model::ColumnType::Int:
+            case model::ColumnType::UnsignedInt:
+                part = 4;
+                break;
+            default:
+                part = 8;
+                break;
+            }
+            if (part > std::numeric_limits<std::size_t>::max() - bytes)
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                    "The declared key exceeds the backend index budget"};
+            bytes += part;
+        }
+        return bytes;
+    };
+    auto checkBudget = [&](std::size_t bytes)
+    {
+        if (limits.maxIndexBytes && bytes > *limits.maxIndexBytes)
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                "The declared key exceeds the backend index budget"};
+    };
+    const auto ownerBytes = keySize(descriptor);
+    checkBudget(ownerBytes);
+    for (const auto& column : descriptor->columns)
+        if (column.kind == model::FieldKind::ToOne)
+            checkBudget(keySize(descriptor.resolveTarget(column)));
+    if (includeJunctions)
+        for (const auto& relation : descriptor->relations)
+            if (relation.kind == model::RelationKind::ManyToMany && relation.junction.owningSide)
+            {
+                const auto targetBytes = keySize(descriptor.resolveTarget(relation));
+                if (targetBytes > std::numeric_limits<std::size_t>::max() - ownerBytes)
+                    throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                        "The declared junction key exceeds the backend index budget"};
+                checkBudget(ownerBytes + targetBytes);
+            }
+}
+
 auto Database::relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool
 {
+    ensureEndpointKeySupported(model, key, "link relation");
     const auto primaryKeyColumns = detail::requireEndpointKeyColumns(model, key);
 
     const auto& dialect = getBackend().dialect();
@@ -710,8 +853,17 @@ auto Database::relationEndpointExists(model::ModelView model, const db::binding:
     return count > 0;
 }
 
+auto Database::ensureEndpointKeySupported(model::ModelView descriptor, const db::binding::PrimaryKey& key,
+                                          std::string_view operation) const -> void
+{
+    const auto columns = detail::requireEndpointKeyColumns(descriptor, key);
+    for (std::size_t index = 0; index < columns.size(); ++index)
+        ensureStringValueSupported(*columns[index], key[index], operation);
+}
+
 auto Database::tableExists(std::string_view tableName) -> bool
 {
+    ensureSessionUsable("inspect schema");
     try
     {
         return getBackend().runtime().tableExists(sql, tableName);
@@ -783,6 +935,7 @@ auto Database::getCommandGenerator() const -> const db::CommandGenerator&
 
 auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
 {
+    ensureSessionUsable("read backend limits");
     try
     {
         return getBackend().runtime().limits(sql);
@@ -795,6 +948,7 @@ auto Database::getBackendRuntimeLimits() -> db::BackendRuntimeLimits
 
 auto Database::ensureModelSupported(model::ModelView descriptor, std::string_view operation) const -> void
 {
+    ensureSessionUsable(operation);
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
 
@@ -956,6 +1110,17 @@ auto Database::ensureQuerySupported(model::ModelView descriptor, db::detail::Sql
                                         db::detail::sqlPath(source)};
         return std::pair{info.relation, info.column};
     };
+    if (capabilities.query.maxOrderedStringLength)
+        for (const auto& order : spec.orders)
+            if (!order.isRaw)
+            {
+                const auto* column = columnIdentity(order.source).second;
+                if (column->type == model::ColumnType::String)
+                    requireCapability(column->maxStringLength &&
+                                          *column->maxStringLength <= *capabilities.query.maxOrderedStringLength,
+                                      "select",
+                                      "String ordering requires an explicit length within the backend sort limit");
+            }
     if (spec.isDistinct && !spec.projections.empty() && capabilities.query.distinctOrderByRequiresProjectedColumn)
     {
         for (const auto& ordering : spec.orders)

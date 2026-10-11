@@ -40,7 +40,8 @@ import :internal;
 
 namespace orm::db::postgresql
 {
-auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type) const -> std::string
+auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type,
+                                         std::optional<std::size_t> maxStringLength) const -> std::string
 {
     switch (type)
     {
@@ -66,7 +67,7 @@ auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type) const -> std::s
         return "DOUBLE PRECISION";
 
     case model::ColumnType::String:
-        return "TEXT";
+        return maxStringLength ? std::format("VARCHAR({})", *maxStringLength) : "TEXT";
 
     case model::ColumnType::Uuid:
         break;

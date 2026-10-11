@@ -1,3 +1,4 @@
+#include <iostream>
 #include <optional>
 #include <string>
 #include <vector>
@@ -14,6 +15,7 @@ struct ObjectModel
 
     // Defining id_columns is optional.
     inline static constexpr auto id_columns = orm::primaryKey<&ObjectModel::field2>();
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&ObjectModel::field2, 191>());
 
     // Another way to define the default primary key is an `int id` field.
     // int id;
@@ -40,15 +42,20 @@ struct ObjectStats
     std::optional<double> averageNumber;
 };
 
-int main() // NOLINT(bugprone-exception-escape)
+int main(int argc, char** argv) // NOLINT(bugprone-exception-escape)
 {
+    if (argc != 2)
+    {
+        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
+        return 2;
+    }
     using namespace orm::query;
 
     // connect with standard connection string
     using AppSchema = orm::Schema<ObjectModel>;
     orm::Database database;
     auto context = database.orm<AppSchema>();
-    database.connect("sqlite3://test.db");
+    database.connect(argv[1]);
 
     // drop table if exists
     context.deleteTable<ObjectModel>();
@@ -64,14 +71,6 @@ int main() // NOLINT(bugprone-exception-escape)
     orm::Query<ObjectModel> fullQuery;
     fullQuery.limit(10).offset(5);
     auto queriedObjects = context.select(fullQuery);
-
-    // grouping and HAVING keep the full-model result type
-    orm::Query<ObjectModel> groupedQuery;
-    groupedQuery.where(col<&ObjectModel::field1>().isNotNull())
-        .groupBy(col<&ObjectModel::field2>())
-        .having(countAll<ObjectModel>() > 0)
-        .andHaving(avg(col<&ObjectModel::field1>()) >= 1.0);
-    auto groupedObjects = context.select(groupedQuery);
 
     // projection select returns a flat DTO
     orm::ProjectionQuery<ObjectModel, ObjectSummary> summaryQuery;

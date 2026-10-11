@@ -238,3 +238,18 @@ namespace orm::db::aliases
     return std::format("{}_{}_{}", tableName, relationName, columnName);
 }
 } // namespace orm::db::aliases
+
+namespace orm::db::mysql_family
+{
+[[nodiscard]] auto capabilities() -> BackendCapabilities;
+[[nodiscard]] auto makeRuntime(BackendType type, std::string_view prefix) -> std::unique_ptr<BackendRuntime>;
+[[nodiscard]] auto sqlType(model::ColumnType type, std::optional<std::size_t> maxStringLength) -> std::string;
+[[nodiscard]] auto renderInsert(const InsertIfAbsentSpec& insert) -> std::string;
+struct StatementTokens
+{
+    std::vector<std::string> chunks;
+    std::vector<std::string> names;
+};
+[[nodiscard]] auto tokenizeStatement(std::string_view sql) -> StatementTokens;
+[[nodiscard]] auto isEmptyScript(std::string_view sql) -> bool;
+}

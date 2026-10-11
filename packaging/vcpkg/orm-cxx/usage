@@ -15,5 +15,6 @@ For reflection without database dependencies in the consuming target:
 
 The package supplies interface sources and native CMake metadata. CMake builds
 BMIs for the consumer locally. Configure the consumer with -G Ninja.
-SQLite is enabled by default. Add the postgresql feature for PostgreSQL.
-Disable default features for a core-only build or a PostgreSQL-only build.
+All database adapters default to disabled. Select sqlite, postgresql, mysql and
+mariadb features independently. MySQL and MariaDB share one Oracle MySQL client
+and SOCI mysql driver. A dependency without features selects core-only.

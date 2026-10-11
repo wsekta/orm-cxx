@@ -16,6 +16,7 @@ export module orm:migrations;
 
 import :foundation;
 import :database;
+import :sql_contracts;
 
 /** Versioned SQL migrations, independent of the application's current model types. */
 export namespace orm::migrations
@@ -38,6 +39,8 @@ enum class ErrorCode
     HistoryChanged,
     Execution,
     CommitUncertain,
+    IncompleteMigration,
+    InvalidResolution,
 };
 
 class MigrationError final : public std::runtime_error
@@ -108,23 +111,41 @@ struct Diagnostic
     std::string message;
 };
 
+enum class Direction
+{
+    Up,
+    Down,
+};
+
+enum class Resolution
+{
+    Completed,
+    Reverted,
+};
+
+/** Durable marker for a script whose result must be inspected by an operator. */
+struct IncompleteMigration
+{
+    Version version{};
+    std::string name;
+    db::BackendType backend{db::BackendType::Empty};
+    Direction direction{Direction::Up};
+    std::string checksum;
+    auto operator==(const IncompleteMigration&) const -> bool = default;
+};
+
 struct Status
 {
     Version currentVersion{};
     Version baselineVersion{};
     std::vector<AppliedMigration> applied;
     std::vector<MigrationSummary> pending;
+    std::optional<IncompleteMigration> incomplete;
     std::vector<Diagnostic> problems;
     [[nodiscard]] auto isValid() const noexcept -> bool
     {
-        return problems.empty();
+        return problems.empty() && !incomplete;
     }
-};
-
-enum class Direction
-{
-    Up,
-    Down,
 };
 
 struct PlannedMigration
@@ -139,6 +160,7 @@ struct Plan
     Direction direction{Direction::Up};
     Version from{};
     Version to{};
+    db::MigrationAtomicity atomicity{db::MigrationAtomicity::WholeMigration};
     std::vector<PlannedMigration> migrations;
 };
 
@@ -153,6 +175,8 @@ public:
     auto up(std::optional<Version> target = std::nullopt) -> void;
     auto down(Version target) -> void;
     auto baseline(Version target) -> void;
+    /** Operator assertion after manually completing or reverting an incomplete script. */
+    auto resolve(Version version, std::string_view expectedChecksum, Resolution resolution) -> void;
 
 private:
     Database* database_;

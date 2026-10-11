@@ -2,6 +2,9 @@
 
 FROM gcc:15-trixie AS gcc-dev
 
+COPY scripts/install_mysql_client_debian.sh /tmp/install_mysql_client_debian.sh
+RUN sh /tmp/install_mysql_client_debian.sh
+
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
         ca-certificates libsqlite3-dev libpq-dev postgresql-client \
@@ -39,6 +42,7 @@ RUN apt-get update \
         libc++abi-18-dev \
         libsqlite3-dev \
         libpq-dev \
+        libmysqlclient-dev \
         llvm-18 \
         ninja-build \
         pkg-config \

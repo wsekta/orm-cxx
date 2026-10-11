@@ -92,7 +92,7 @@ constexpr auto modelView() -> orm::model::ModelView
 class DefaultCreateTableCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultCreateTableCommand command{dialect};
 };
 

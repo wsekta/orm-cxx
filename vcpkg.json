@@ -1,9 +1,7 @@
 {
   "name": "orm-cxx",
-  "builtin-baseline": "d2452281016c6d77b6ef199d599d9929eafe4807",
-  "default-features": [
-    "sqlite"
-  ],
+  "builtin-baseline": "e456309491fd875487bf02b8a0dca76c1b1b00cc",
+  "default-features": [],
   "features": {
     "postgresql": {
       "description": "Build the optional PostgreSQL backend through libpq",
@@ -12,9 +10,21 @@
       ]
     },
     "sqlite": {
-      "description": "Build the default SQLite backend",
+      "description": "Build the SQLite backend",
       "dependencies": [
         "sqlite3"
+      ]
+    },
+    "mysql": {
+      "description": "Build the mysql backend through the shared MySQL client",
+      "dependencies": [
+        "libmysql"
+      ]
+    },
+    "mariadb": {
+      "description": "Build the mariadb backend through the shared MySQL client",
+      "dependencies": [
+        "libmysql"
       ]
     }
   }

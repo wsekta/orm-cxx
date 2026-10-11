@@ -21,7 +21,7 @@ set(ORM_CXX_SOURCES
 
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     list(APPEND ORM_CXX_SOURCES database/sqlite/SqliteBackend.cpp database/sqlite/SqliteDialect.cpp
-         database/sqlite/SqliteRelationStatements.cpp database/sqlite/SqliteTypeTranslator.cpp
+         database/sqlite/SqliteTypeTranslator.cpp
     )
 endif()
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
@@ -30,31 +30,41 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     )
 endif()
 
+if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)
+    list(APPEND ORM_CXX_SOURCES database/mysql_family/MysqlFamily.cpp)
+endif()
+foreach(backend Mysql Mariadb)
+    string(TOUPPER "${backend}" backend_upper)
+    string(TOLOWER "${backend}" backend_dir)
+    if(ORM_CXX_ENABLE_${backend_upper}_BACKEND)
+        list(APPEND ORM_CXX_SOURCES database/${backend_dir}/${backend}Backend.cpp
+             database/${backend_dir}/${backend}Dialect.cpp database/${backend_dir}/${backend}TypeTranslator.cpp
+        )
+    endif()
+endforeach()
+
 set(ORM_CXX_GENERATED_MODULE_DIR "${PROJECT_BINARY_DIR}/generated/modules")
 file(MAKE_DIRECTORY "${ORM_CXX_GENERATED_MODULE_DIR}")
-set(ORM_CXX_SQLITE_BACKEND_ENABLED false)
-set(ORM_CXX_POSTGRESQL_BACKEND_ENABLED false)
-set(ORM_CXX_SQLITE_RELATION_DECLARATIONS "")
-set_property(
-    DIRECTORY
-    APPEND
-    PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/cmake/SqliteBackendDeclarations.cppm.in"
-             "${PROJECT_SOURCE_DIR}/cmake/PostgresqlBackendDeclarations.cppm.in"
-             "${PROJECT_SOURCE_DIR}/cmake/SqliteRelationDeclarations.cppm.in"
-)
-file(READ "${PROJECT_SOURCE_DIR}/cmake/SqliteBackendDeclarations.cppm.in" ORM_CXX_SQLITE_BACKEND_DECLARATIONS)
-file(READ "${PROJECT_SOURCE_DIR}/cmake/PostgresqlBackendDeclarations.cppm.in" ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS)
-if(ORM_CXX_ENABLE_SQLITE_BACKEND)
-    set(ORM_CXX_SQLITE_BACKEND_ENABLED true)
-    file(READ "${PROJECT_SOURCE_DIR}/cmake/SqliteRelationDeclarations.cppm.in" ORM_CXX_SQLITE_RELATION_DECLARATIONS)
-else()
-    set(ORM_CXX_SQLITE_BACKEND_DECLARATIONS "namespace orm::db::sqlite { class SqliteBackend; }")
-endif()
-if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    set(ORM_CXX_POSTGRESQL_BACKEND_ENABLED true)
-else()
-    set(ORM_CXX_POSTGRESQL_BACKEND_DECLARATIONS "namespace orm::db::postgresql { class PostgresqlBackend; }")
-endif()
+foreach(backend Sqlite Postgresql Mysql Mariadb)
+    string(TOUPPER "${backend}" backend_upper)
+    set(ORM_CXX_${backend_upper}_BACKEND_ENABLED false)
+    set_property(
+        DIRECTORY
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS "${PROJECT_SOURCE_DIR}/cmake/${backend}BackendDeclarations.cppm.in"
+    )
+    if(ORM_CXX_ENABLE_${backend_upper}_BACKEND)
+        set(ORM_CXX_${backend_upper}_BACKEND_ENABLED true)
+        file(READ "${PROJECT_SOURCE_DIR}/cmake/${backend}BackendDeclarations.cppm.in"
+             ORM_CXX_${backend_upper}_BACKEND_DECLARATIONS
+        )
+    else()
+        string(TOLOWER "${backend}" backend_namespace)
+        set(ORM_CXX_${backend_upper}_BACKEND_DECLARATIONS
+            "namespace orm::db::${backend_namespace} { class ${backend}Backend; }"
+        )
+    endif()
+endforeach()
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/BuildConfig.cppm.in" "${ORM_CXX_GENERATED_MODULE_DIR}/orm.config.cppm" @ONLY
 )
@@ -184,14 +194,20 @@ target_link_libraries(
            orm-cxx::reflection
     PRIVATE "$<BUILD_INTERFACE:orm-cxx-project-warnings>"
 )
-foreach(backend SQLITE3 POSTGRESQL)
+foreach(backend CORE SQLITE3 POSTGRESQL MYSQL)
     if(ORM_CXX_SOCI_${backend}_TARGET)
-        target_link_libraries(
-            orm-cxx PUBLIC "$<BUILD_INTERFACE:${ORM_CXX_SOCI_${backend}_TARGET}>"
-                           "$<INSTALL_INTERFACE:${ORM_CXX_SOCI_${backend}_INSTALLED_TARGET}>"
-        )
+        if(NOT backend STREQUAL "CORE")
+            target_link_libraries(
+                orm-cxx PUBLIC "$<BUILD_INTERFACE:${ORM_CXX_SOCI_${backend}_TARGET}>"
+                               "$<INSTALL_INTERFACE:${ORM_CXX_SOCI_${backend}_INSTALLED_TARGET}>"
+            )
+        endif()
+        # SOCI headers are a third-party dependency, including when its targets come from a parent project. Propagate
+        # system includes to test and source consumers; installed imported SOCI targets retain their system semantics.
         target_include_directories(
-            orm-cxx
+            orm-cxx SYSTEM
+            PUBLIC
+                "$<BUILD_INTERFACE:$<TARGET_PROPERTY:${ORM_CXX_SOCI_${backend}_TARGET},INTERFACE_INCLUDE_DIRECTORIES>>"
             PRIVATE "$<BUILD_INTERFACE:$<TARGET_PROPERTY:${ORM_CXX_SOCI_${backend}_TARGET},INCLUDE_DIRECTORIES>>"
         )
     endif()

@@ -36,7 +36,7 @@ constexpr auto modelView() -> orm::model::ModelView
 class DefaultDeleteCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultDeleteCommand command{dialect};
 };
 

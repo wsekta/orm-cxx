@@ -6,6 +6,7 @@
 #include <atomic>
 #include <bit>
 #include <cassert>
+#include <cctype>
 #include <charconv>
 #include <chrono>
 #include <cmath>

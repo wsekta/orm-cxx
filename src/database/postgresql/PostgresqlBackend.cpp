@@ -86,6 +86,23 @@ public:
         return orm::db::postgresql::PostgresqlDialect{}.quoteIdentifier(schema) + ".\"_orm_migrations\"";
     }
 
+    auto migrationHistoryExists(soci::session& session, std::string_view historyTable) const -> bool override
+    {
+        const std::string table{historyTable};
+        int exists{};
+        session << "SELECT CASE WHEN to_regclass(:table) IS NULL THEN 0 ELSE 1 END", soci::use(table, "table"),
+            soci::into(exists);
+        return exists != 0;
+    }
+
+    auto createMigrationHistory(soci::session& session, std::string_view table) const -> void override
+    {
+        session << "CREATE TABLE IF NOT EXISTS " + std::string{table} +
+                       " (version BIGINT PRIMARY KEY NOT NULL, name TEXT NOT NULL, backend INTEGER NOT NULL, "
+                       "checksum TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                       "baseline INTEGER NOT NULL CHECK(baseline IN (0,1)))";
+    }
+
     auto beginMigration(soci::session& session, std::string_view historyTable) const -> void override
     {
         session.begin();
@@ -200,7 +217,7 @@ public:
 
     auto limits(soci::session& /*session*/) const -> orm::db::BackendRuntimeLimits override
     {
-        return orm::db::BackendRuntimeLimits{.maxBindParameters = 65'535};
+        return orm::db::BackendRuntimeLimits{.maxBindParameters = 65'535, .maxIndexBytes = std::nullopt};
     }
 
     auto normalizeAffectedRows(long long affectedRows) const -> std::size_t override
@@ -319,7 +336,7 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
                 .compositePrimaryKeys = true,
                 .foreignKeys = true,
                 .onDeleteCascade = true,
-                .transactionalMigrations = true,
+                .transactionalDdl = true,
             },
         .query =
             {
@@ -357,6 +374,7 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
             {
                 .maxUnsignedLongLong = static_cast<unsigned long long>(std::numeric_limits<long long>::max()),
             },
+        .migrations = {.supported = true, .atomicity = orm::db::MigrationAtomicity::WholeMigration},
         .supportedColumnTypes =
             {
                 ColumnType::Bool,

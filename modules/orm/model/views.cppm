@@ -63,6 +63,8 @@ export
         bool isPrimaryKey{};
         bool isAutoIncrement{};
         bool isNotNull{};
+        /** Maximum number of UTF-8 characters, inherited by physical foreign keys. */
+        std::optional<std::size_t> maxStringLength;
 
         constexpr auto operator==(const ColumnView&) const noexcept -> bool = default;
     };

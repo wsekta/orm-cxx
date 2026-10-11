@@ -45,17 +45,21 @@ backends may also be registered by the factory's default construction path.
 
 The `CommandGeneratorFactory(std::vector<std::unique_ptr<BackendProvider>>)`
 constructor registers exactly the supplied providers. Pass an empty vector to
-start an empty registry, or supply your own SQLite/PostgreSQL provider without
+start an empty registry, or supply your own provider without
 the default built-in registration.
 
-Transactional migration support is opt-in through
-`BackendCapabilities::schema.transactionalMigrations`. A provider implementing
-SQLite or PostgreSQL must provide `migrationTable`, `beginMigration` and
-`executeMigrationScript`: resolve a qualified history table, begin and acquire
-the appropriate lock, and execute a complete script while preserving the
-transaction and session settings. Default hooks reject the operation. The
-runner owns commit/rollback and history updates. Other backend types remain
-unsupported by the migration executor.
+Migration support is opt-in through `BackendCapabilities::migrations.supported`
+and declares `migrations.atomicity` as `Transactional` or `NonTransactional`.
+A migration-capable runtime supplies `migrationTable`, `migrationHistoryExists`,
+`createMigrationHistory`, `beginMigration` and `executeMigrationScript` to
+resolve and inspect the history table, acquire the appropriate lock and execute
+SQL without changing session settings. `validateMigrationSession` checks any
+required session invariants before history values are bound; its default is a
+no-op. Nontransactional engines also supply
+`migrationJournalTable` for durable failure tracking and `endMigration` to
+release session locks. Default hooks reject unsupported operations. The runner
+owns history updates and transactional commit/rollback; it never claims that
+nontransactional DDL can be undone.
 
 An extension translation unit uses `import orm;`. The command override types
 are `orm::db::SelectSpec`, `orm::db::UpdateSpec`, and `orm::db::Predicate`.
@@ -69,7 +73,8 @@ three command signatures, inspect predicate nodes, and register a provider
 without joining the library's module implementation.
 
 Built-in provider and dialect declarations are exported only when their backend
-is enabled in the library build. `orm::config::sqliteBackendEnabled` and
+is enabled in the library build. `orm::config::sqliteBackendEnabled`, `orm::config::mysqlBackendEnabled`,
+`orm::config::mariadbBackendEnabled` and
 `orm::config::postgresqlBackendEnabled` report that build configuration.
 
 ## Required backend responsibilities
@@ -122,6 +127,8 @@ that cannot be emulated reliably, for example:
 
 A limit is backend data, such as maximum bind parameters per statement or the
 largest numeric value a driver can exchange without loss.
+`query.maxOrderedStringLength` requires typed string ordering to use a declared
+column bound no greater than that limit; an empty value imposes no such restriction.
 
 Adapter implementation details include, for example:
 

@@ -37,7 +37,7 @@ auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command,
 class DefaultUpdateCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultUpdateCommand command{dialect};
 };
 

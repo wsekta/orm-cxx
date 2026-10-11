@@ -37,10 +37,10 @@ jobs:
       - name: Build and test
         run: cmake --workflow --preset msvc-debug
 
-  postgresql-build:
-    name: PostgreSQL adapter and consumers
+  backends-build:
+    name: All four adapters and 16 consumer subsets
     runs-on: windows-2025-vs2026
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
       - name: Checkout
@@ -59,8 +59,8 @@ jobs:
       - name: Bootstrap vcpkg
         run: .\externals\vcpkg\bootstrap-vcpkg.bat
 
-      - name: Install SQLite and PostgreSQL dependencies
-        run: .\externals\vcpkg\vcpkg.exe install --x-feature=postgresql
+      - name: Install explicitly selected backend dependencies
+        run: .\externals\vcpkg\vcpkg.exe install --x-feature=sqlite --x-feature=postgresql --x-feature=mysql --x-feature=mariadb
 
-      - name: Build and test the PostgreSQL-enabled configuration
-        run: cmake --workflow --preset msvc-postgresql-debug
+      - name: Build and test all adapters and consumer subsets
+        run: cmake --workflow --preset msvc-all-backends-debug

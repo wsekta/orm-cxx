@@ -22,7 +22,7 @@ const std::string dropTableSql = "DROP TABLE IF EXISTS models_ModelWithFloat;";
 class DefaultDropTableCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultDropTableCommand command{dialect};
 };
 

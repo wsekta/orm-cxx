@@ -58,6 +58,8 @@ export
                       "ORM_MODEL_TABLE_NAME: table_name must be a non-empty orm::reflection::FixedString");
         static_assert(detail::hasValidColumnNamesDefinition<T>(),
                       "ORM_MODEL_COLUMN_MAPPING: columns_names must be a valid typed columnNames(...) definition");
+        static_assert(detail::hasValidStringLengthsDefinition<T>(),
+                      "ORM_MODEL_STRING_LENGTH: string_lengths must uniquely map string members of this model");
         static_assert(
             detail::hasValidPrimaryKeyDefinition<T>(),
             "ORM_MODEL_PRIMARY_KEY_DEFINITION: id_columns must be a valid typed primaryKey<Members...>() definition");

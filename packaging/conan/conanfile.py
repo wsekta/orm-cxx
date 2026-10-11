@@ -17,18 +17,22 @@ class OrmCxxConan(ConanFile):
     license = "MIT"
     homepage = "https://github.com/wsekta/orm-cxx"
     url = "https://github.com/conan-io/conan-center-index"
-    topics = ("orm", "database", "sqlite", "postgresql", "reflection")
+    topics = ("orm", "database", "sqlite", "postgresql", "mysql", "mariadb", "reflection")
     package_type = "static-library"
     settings = "os", "arch", "compiler", "build_type"
     options = {
         "fPIC": [True, False],
         "with_sqlite3": [True, False],
         "with_postgresql": [True, False],
+        "with_mysql": [True, False],
+        "with_mariadb": [True, False],
     }
     default_options = {
         "fPIC": True,
-        "with_sqlite3": True,
+        "with_sqlite3": False,
         "with_postgresql": False,
+        "with_mysql": False,
+        "with_mariadb": False,
     }
 
     def config_options(self):
@@ -46,6 +50,7 @@ class OrmCxxConan(ConanFile):
             options={
                 "with_sqlite3": bool(self.options.with_sqlite3),
                 "with_postgresql": bool(self.options.with_postgresql),
+                "with_mysql": bool(self.options.with_mysql or self.options.with_mariadb),
             },
         )
 
@@ -67,6 +72,9 @@ class OrmCxxConan(ConanFile):
                     f"orm-cxx:{backend}=True requires soci:{backend}=True"
                 )
 
+        if (self.options.with_mysql or self.options.with_mariadb) and not soci_options.get_safe("with_mysql"):
+            raise ConanInvalidConfiguration("MySQL and MariaDB require soci:with_mysql=True")
+
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
 
@@ -81,6 +89,8 @@ class OrmCxxConan(ConanFile):
         tc.variables["ORM_CXX_WARNINGS_AS_ERRORS"] = False
         tc.variables["ORM_CXX_ENABLE_SQLITE_BACKEND"] = self.options.with_sqlite3
         tc.variables["ORM_CXX_ENABLE_POSTGRESQL_BACKEND"] = self.options.with_postgresql
+        tc.variables["ORM_CXX_ENABLE_MYSQL_BACKEND"] = self.options.with_mysql
+        tc.variables["ORM_CXX_ENABLE_MARIADB_BACKEND"] = self.options.with_mariadb
         tc.generate()
 
     def build(self):
@@ -125,3 +135,5 @@ class OrmCxxConan(ConanFile):
             core.requires.append("soci::soci_sqlite3")
         if self.options.with_postgresql:
             core.requires.append("soci::soci_postgresql")
+        if self.options.with_mysql or self.options.with_mariadb:
+            core.requires.append("soci::soci_mysql")

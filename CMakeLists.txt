@@ -46,27 +46,14 @@ include(OrmCxxProjectSettings)
 
 orm_cxx_define_options()
 
-if(ORM_CXX_BUILD_EXAMPLES
-   AND NOT ORM_CXX_ENABLE_SQLITE_BACKEND
-   AND NOT ORM_CXX_ENABLE_POSTGRESQL_BACKEND
-)
-    message(FATAL_ERROR "ORM_CXX_BUILD_EXAMPLES requires at least one enabled database backend.")
-endif()
-
-if(ORM_CXX_BUILD_TESTS AND NOT ORM_CXX_ENABLE_SQLITE_BACKEND)
-    message(
-        FATAL_ERROR
-            "The legacy developer test suite still exercises SQLite. Configure ORM_CXX_BUILD_TESTS=OFF for PostgreSQL-only and core-only consumer builds."
-    )
-endif()
-
-if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS AND NOT ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    message(FATAL_ERROR "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS requires ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON.")
-endif()
-
-if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS AND NOT ORM_CXX_BUILD_TESTS)
-    message(FATAL_ERROR "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS requires ORM_CXX_BUILD_TESTS=ON.")
-endif()
+foreach(backend POSTGRESQL MYSQL MARIADB)
+    if(ORM_CXX_ENABLE_${backend}_INTEGRATION_TESTS AND NOT ORM_CXX_ENABLE_${backend}_BACKEND)
+        message(FATAL_ERROR "ORM_CXX_ENABLE_${backend}_INTEGRATION_TESTS requires its backend to be enabled.")
+    endif()
+    if(ORM_CXX_ENABLE_${backend}_INTEGRATION_TESTS AND NOT ORM_CXX_BUILD_TESTS)
+        message(FATAL_ERROR "ORM_CXX_ENABLE_${backend}_INTEGRATION_TESTS requires ORM_CXX_BUILD_TESTS=ON.")
+    endif()
+endforeach()
 
 if(ORM_CXX_ENABLE_COVERAGE AND NOT ORM_CXX_BUILD_TESTS)
     message(

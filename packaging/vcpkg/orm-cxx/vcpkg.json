@@ -1,14 +1,14 @@
 {
   "name": "orm-cxx",
   "version": "0.5.0",
-  "description": "A C++20 modules object-relational mapping library with compile-time reflection, SQLite, and PostgreSQL backends",
+  "description": "A C++20 modules ORM with compile-time reflection and independent SQLite, PostgreSQL, MySQL, and MariaDB backends",
   "homepage": "https://github.com/wsekta/orm-cxx",
   "license": "MIT",
   "dependencies": [
     {
       "name": "soci",
       "default-features": false,
-      "version>=": "4.0.3"
+      "version>=": "4.1.0"
     },
     {
       "name": "vcpkg-cmake",
@@ -19,9 +19,7 @@
       "host": true
     }
   ],
-  "default-features": [
-    "sqlite"
-  ],
+  "default-features": [],
   "features": {
     "postgresql": {
       "description": "Build the PostgreSQL backend with its client library",
@@ -43,6 +41,30 @@
           "default-features": false,
           "features": [
             "sqlite3"
+          ]
+        }
+      ]
+    },
+    "mysql": {
+      "description": "Build the mysql backend through the shared MySQL client",
+      "dependencies": [
+        {
+          "name": "soci",
+          "default-features": false,
+          "features": [
+            "mysql"
+          ]
+        }
+      ]
+    },
+    "mariadb": {
+      "description": "Build the mariadb backend through the shared MySQL client",
+      "dependencies": [
+        {
+          "name": "soci",
+          "default-features": false,
+          "features": [
+            "mysql"
           ]
         }
       ]

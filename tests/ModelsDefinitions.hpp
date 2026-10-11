@@ -52,6 +52,7 @@ struct ModelWithId
     int id;
     [[maybe_unused]] int field1;
     std::string field2;
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&ModelWithId::field2, 128>());
 };
 
 struct ModelWithAutoIncrementId
@@ -85,6 +86,8 @@ struct ModelWithOverwrittenId
 
     inline static constexpr auto id_columns =
         orm::primaryKey<&ModelWithOverwrittenId::field1, &ModelWithOverwrittenId::field2>();
+    inline static constexpr auto string_lengths =
+        orm::stringLengths(orm::stringLength<&ModelWithOverwrittenId::field2, 128>());
 };
 
 struct ModelWithIdAndNamesMapping

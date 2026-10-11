@@ -32,13 +32,12 @@ class MergedCoverageTests(unittest.TestCase):
             encoding="utf-8",
         )
 
-    def run_gate(self):
+    def run_gate(self, reports=None):
         return subprocess.run(
             [
                 sys.executable,
                 str(SCRIPT),
-                str(self.sqlite),
-                str(self.postgresql),
+                *(str(report) for report in (reports or [self.sqlite, self.postgresql])),
                 "--source-root",
                 str(self.root),
                 "--output",
@@ -93,6 +92,27 @@ class MergedCoverageTests(unittest.TestCase):
         result = self.run_gate()
         self.assertEqual(result.returncode, 1)
         self.assertIn("outside this checkout", result.stderr)
+
+    def test_four_independent_backends_contribute_unique_lines(self):
+        reports = [self.root / f"backend-{index}.lcov" for index in range(4)]
+        for index, report in enumerate(reports):
+            self.report(report, f"/builder/{index}", {line: int(line == index + 1) for line in range(1, 5)})
+        result = self.run_gate(reports)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("4/4 (0 missing)", result.stdout)
+
+    def test_single_core_report_is_valid(self):
+        self.report(self.sqlite, "/core", {1: 1, 2: 3})
+        result = self.run_gate([self.sqlite])
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_a_missing_fourth_report_cannot_be_silently_omitted(self):
+        reports = [self.root / f"backend-{index}.lcov" for index in range(4)]
+        for report in reports[:3]:
+            self.report(report, "/builder", {1: 1})
+        result = self.run_gate(reports)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("is missing", result.stderr)
 
 
 if __name__ == "__main__":

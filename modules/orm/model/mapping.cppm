@@ -225,6 +225,61 @@ export
         return {};
     }
 
+    /** A backend-independent maximum number of characters in a string field. */
+    template <auto Member, std::size_t Length>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    struct StringLength
+    {
+        static_assert(Length > 0, "ORM_MODEL_STRING_LENGTH: a string length must be positive");
+        inline static constexpr auto member = Member;
+        inline static constexpr auto length = Length;
+    };
+
+    template <auto Member, std::size_t Length>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    consteval auto stringLength() -> StringLength<Member, Length>
+    {
+        return {};
+    }
+
+    template <typename... Definitions>
+    struct StringLengths
+    {
+        static_assert((requires {
+                          Definitions::member;
+                          Definitions::length;
+                      } && ...), "ORM_MODEL_STRING_LENGTH: stringLengths accepts stringLength definitions");
+
+        template <typename Model>
+        [[nodiscard]] static consteval auto isValidFor() -> bool
+        {
+            if constexpr (not(std::same_as<detail::member_owner_t<Definitions::member>, Model> && ...))
+                return false;
+            else
+                return (detail::memberExists<Model, Definitions::member>() && ...) &&
+                       (std::same_as<detail::static_optional_value_t<detail::member_value_t<Definitions::member>>,
+                                     std::string> &&
+                        ...) &&
+                       detail::uniqueMemberNames<Definitions::member...>();
+        }
+
+        [[nodiscard]] consteval auto find(std::string_view memberName) const -> std::optional<std::size_t>
+        {
+            std::optional<std::size_t> result;
+            ((detail::reflectedMemberName<Definitions::member>().view() == memberName ?
+                  static_cast<void>(result = Definitions::length) :
+                  static_cast<void>(0)),
+             ...);
+            return result;
+        }
+    };
+
+    template <typename... Definitions>
+    consteval auto stringLengths(Definitions...) -> StringLengths<Definitions...>
+    {
+        return {};
+    }
+
     template <auto... Members>
         requires(std::is_member_object_pointer_v<decltype(Members)> && ...)
     struct PrimaryKey
@@ -469,6 +524,19 @@ export
     consteval auto primaryKey()
     {
         return model::primaryKey<Members...>();
+    }
+
+    template <auto Member, std::size_t Length>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    consteval auto stringLength()
+    {
+        return model::stringLength<Member, Length>();
+    }
+
+    template <typename... Definitions>
+    consteval auto stringLengths(Definitions... definitions)
+    {
+        return model::stringLengths(definitions...);
     }
 
     template <auto... Members>

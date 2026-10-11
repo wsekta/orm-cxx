@@ -183,6 +183,9 @@ export
     [[nodiscard]] auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
                                      const binding::PrimaryKey& ownerKey,
                                      const binding::PrimaryKey& targetKey) -> Statement;
+    [[nodiscard]] auto linkInsertSpec(model::ModelView owner, model::RelationView relation,
+                                      const binding::PrimaryKey& ownerKey,
+                                      const binding::PrimaryKey& targetKey) -> InsertIfAbsentSpec;
     [[nodiscard]] auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
                                        const binding::PrimaryKey& ownerKey,
                                        const binding::PrimaryKey& targetKey) -> Statement;

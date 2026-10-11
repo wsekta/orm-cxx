@@ -1,37 +1,12 @@
 #include <concepts>
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
 import orm;
 import orm_cxx_consumer.models;
-
-template <typename Owner>
-consteval auto sqliteRelationOverloadsMatchConfiguration() -> bool
-{
-    constexpr bool create = requires(Owner owner) {
-        { orm::db::relations::createTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
-    };
-    constexpr bool drop = requires(Owner owner) {
-        { orm::db::relations::dropTableStatements(owner) } -> std::same_as<std::vector<std::string>>;
-    };
-    constexpr bool link = requires(Owner owner, orm::model::RelationView relation, const orm::db::PrimaryKey& key) {
-        { orm::db::relations::linkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
-    };
-    constexpr bool unlink = requires(Owner owner, orm::model::RelationView relation, const orm::db::PrimaryKey& key) {
-        { orm::db::relations::unlinkStatement(owner, relation, key, key) } -> std::same_as<orm::db::Statement>;
-    };
-    constexpr bool select = requires(Owner owner, orm::model::RelationView relation, std::string sql,
-                                     const std::vector<orm::db::PrimaryKey>& keys) {
-        {
-            orm::db::relations::collectionSelectStatement(owner, relation, sql, keys, true)
-        } -> std::same_as<orm::db::Statement>;
-    };
-    constexpr bool enabled = orm::config::sqliteBackendEnabled;
-    return create == enabled and drop == enabled and link == enabled and unlink == enabled and select == enabled;
-}
-
-static_assert(sqliteRelationOverloadsMatchConfiguration<orm::model::ModelView>());
 
 auto consumerModelTypeId() -> orm::model::TypeId;
 auto consumerModelView() -> orm::model::ModelView;
@@ -63,7 +38,8 @@ public:
         return ":" + std::string{logicalName};
     }
 
-    auto toSqlType(orm::model::ColumnType /*type*/) const -> std::string override
+    auto toSqlType(orm::model::ColumnType /*type*/,
+                   std::optional<std::size_t> /*maxStringLength*/) const -> std::string override
     {
         return "INTEGER";
     }
@@ -141,6 +117,8 @@ int main()
     const orm::db::CommandGeneratorFactory factory;
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
+    const auto* mysql = factory.findBackend("mysql://host=localhost db=orm_cxx");
+    const auto* mariadb = factory.findBackend("mariadb://host=localhost db=orm_cxx");
 
     if ((sqlite != nullptr) != orm::config::sqliteBackendEnabled)
     {
@@ -152,6 +130,16 @@ int main()
         return 2;
     }
 
+    if ((mysql != nullptr) != orm::config::mysqlBackendEnabled or
+        (mysql != nullptr and mysql->type() != orm::db::BackendType::Mysql))
+    {
+        return 5;
+    }
+    if ((mariadb != nullptr) != orm::config::mariadbBackendEnabled or
+        (mariadb != nullptr and mariadb->type() != orm::db::BackendType::Mariadb))
+    {
+        return 6;
+    }
     const ConsumerDialect dialect;
 
     if (not orm::db::relations::createTableStatements(

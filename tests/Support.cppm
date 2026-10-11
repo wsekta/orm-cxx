@@ -6,6 +6,7 @@ module orm:test_support;
 
 import orm.reflection;
 import :internal;
+import :config;
 import :foundation;
 import :model;
 import :expressions;

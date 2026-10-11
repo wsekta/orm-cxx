@@ -33,6 +33,9 @@ function(orm_cxx_expect_compile_failure name source expected_diagnostic)
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
+foreach(case Zero NonString Duplicate OtherModel)
+    orm_cxx_expect_compile_failure("string-length-${case}" "StringLength${case}.cpp" "ORM_MODEL_STRING_LENGTH")
+endforeach()
 orm_cxx_expect_compile_success(backend-provider-import-positive BackendProviderImportPositive.cpp)
 orm_cxx_expect_compile_failure(context-temporary-database OrmContextTemporaryDatabase.cpp "orm")
 orm_cxx_expect_compile_failure(context-const-database OrmContextConstDatabase.cpp "orm")
@@ -43,6 +46,13 @@ if(NOT ORM_CXX_ENABLE_SQLITE_BACKEND)
 endif()
 if(NOT ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     orm_cxx_expect_compile_failure(disabled-postgresql-backend DisabledPostgresqlBackend.cpp "PostgresqlBackend")
+endif()
+
+if(NOT ORM_CXX_ENABLE_MYSQL_BACKEND)
+    orm_cxx_expect_compile_failure(disabled-mysql-backend DisabledMysqlBackend.cpp "MysqlBackend")
+endif()
+if(NOT ORM_CXX_ENABLE_MARIADB_BACKEND)
+    orm_cxx_expect_compile_failure(disabled-mariadb-backend DisabledMariadbBackend.cpp "MariadbBackend")
 endif()
 
 orm_cxx_expect_compile_failure(

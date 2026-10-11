@@ -79,7 +79,8 @@ export
         bool compositePrimaryKeys = false;
         bool foreignKeys = false;
         bool onDeleteCascade = false;
-        bool transactionalMigrations = false;
+        bool transactionalDdl = false;
+        bool boundedStringKeys = false;
 
         auto operator==(const SchemaCapabilities&) const -> bool = default;
     };
@@ -97,6 +98,7 @@ export
         bool fullModelGrouping = false;
         bool distinctOrderByRequiresProjectedColumn = false;
         bool strictProjectionGrouping = false;
+        std::optional<std::size_t> maxOrderedStringLength = {};
 
         auto operator==(const QueryCapabilities&) const -> bool = default;
     };
@@ -136,6 +138,20 @@ export
         auto operator==(const BackendValueLimits&) const -> bool = default;
     };
 
+    enum class MigrationAtomicity
+    {
+        WholeMigration,
+        NonTransactional,
+    };
+
+    struct MigrationCapabilities
+    {
+        bool supported = false;
+        MigrationAtomicity atomicity = MigrationAtomicity::WholeMigration;
+
+        auto operator==(const MigrationCapabilities&) const -> bool = default;
+    };
+
     struct BackendCapabilities
     {
         SchemaCapabilities schema;
@@ -143,6 +159,7 @@ export
         MutationCapabilities mutations;
         RelationCapabilities relations;
         BackendValueLimits valueLimits;
+        MigrationCapabilities migrations;
         std::vector<model::ColumnType> supportedColumnTypes;
         bool transactions = false;
 
@@ -156,7 +173,8 @@ export
 
     struct BackendRuntimeLimits
     {
-        std::optional<std::size_t> maxBindParameters;
+        std::optional<std::size_t> maxBindParameters{};
+        std::optional<std::size_t> maxIndexBytes{};
 
         auto operator==(const BackendRuntimeLimits&) const -> bool = default;
     };
@@ -170,6 +188,7 @@ export
     class BackendRuntime;
     class CommandGenerator;
     class SqlDialect;
+    struct InsertIfAbsentSpec;
 
     class BackendProvider
     {
@@ -261,27 +280,50 @@ export
         virtual ~BackendRuntime() = default;
 
         /** Migration hooks are opt-in for application-supplied backends. */
+        /** Checks session parsing and binding invariants before history access. */
+        virtual auto validateMigrationSession(soci::session&) const -> void {}
         virtual auto migrationTable(soci::session&) const -> std::string
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
-                                "Backend does not support transactional migrations"};
+                                "Backend does not support migrations"};
         }
         virtual auto beginMigration(soci::session&, std::string_view) const -> void
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
-                                "Backend does not support transactional migrations"};
+                                "Backend does not support migrations"};
         }
         virtual auto executeMigrationScript(soci::session&, std::string_view) const -> void
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
-                                "Backend does not support transactional migrations"};
+                                "Backend does not support migrations"};
         }
+
+        [[nodiscard]] virtual auto migrationHistoryExists(soci::session&, std::string_view) const -> bool
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
+                                "Backend does not support migration history inspection"};
+        }
+        virtual auto createMigrationHistory(soci::session&, std::string_view) const -> void
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "migrations",
+                                "Backend does not support migration history creation"};
+        }
+        /** Nontransactional engines return a qualified durable journal table. */
+        [[nodiscard]] virtual auto migrationJournalTable(soci::session&, std::string_view) const -> std::string
+        {
+            return {};
+        }
+        /** Releases session-scoped locks; transaction-scoped locks need no hook. */
+        virtual auto endMigration(soci::session&, std::string_view) const -> void {}
 
         virtual auto open(soci::session& session, std::string_view connectionString) const -> void = 0;
         virtual auto onConnect(soci::session& session) const -> void = 0;
         [[nodiscard]] virtual auto tableExists(soci::session& session, std::string_view tableName) const -> bool = 0;
         [[nodiscard]] virtual auto limits(soci::session& session) const -> BackendRuntimeLimits = 0;
         [[nodiscard]] virtual auto normalizeAffectedRows(long long affectedRows) const -> std::size_t = 0;
+        /** Executes an atomic, idempotent insertion without hiding unrelated constraints. */
+        [[nodiscard]] virtual auto executeInsertIfAbsent(soci::session& session, StatementView statement,
+                                                         const InsertIfAbsentSpec& conflict) const -> std::size_t;
         [[nodiscard]] virtual auto
         statementErrorInvalidatesTransaction(const soci::soci_error& /*error*/) const noexcept -> bool
         {
@@ -334,9 +376,24 @@ export
 
         [[nodiscard]] virtual auto quoteIdentifier(std::string_view identifier) const -> std::string = 0;
         [[nodiscard]] virtual auto bindMarker(std::string_view logicalName) const -> std::string = 0;
-        [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
+        [[nodiscard]] virtual auto
+        toSqlType(model::ColumnType type,
+                  std::optional<std::size_t> maxStringLength = std::nullopt) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderStringLengthConstraint(std::string_view,
+                                                                std::optional<std::size_t>) const -> std::string
+        {
+            return {};
+        }
         [[nodiscard]] virtual auto renderCreateTablePrefix(std::string_view tableName,
                                                            bool ifNotExists) const -> std::string = 0;
+        [[nodiscard]] virtual auto renderCreateTableSuffix() const -> std::string
+        {
+            return "\n);";
+        }
+        [[nodiscard]] virtual auto renderDefaultInsert(std::string_view tableName) const -> std::string
+        {
+            return "INSERT INTO " + quoteIdentifier(tableName) + " DEFAULT VALUES;";
+        }
         [[nodiscard]] virtual auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string = 0;
         [[nodiscard]] virtual auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string = 0;
         [[nodiscard]] virtual auto renderPagination(const PaginationSpec& pagination) const -> std::string = 0;
@@ -359,7 +416,9 @@ export
     public:
         virtual ~TypeTranslator() = default;
 
-        [[nodiscard]] virtual auto toSqlType(model::ColumnType type) const -> std::string = 0;
+        [[nodiscard]] virtual auto
+        toSqlType(model::ColumnType type,
+                  std::optional<std::size_t> maxStringLength = std::nullopt) const -> std::string = 0;
     };
 }
 } // namespace orm::db

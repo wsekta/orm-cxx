@@ -258,9 +258,60 @@ struct IsOptionalScalarField<std::optional<T>> : std::true_type
     using value_type = T;
 };
 
+inline auto validateStringLength(std::string_view text, std::optional<std::size_t> limit) -> void
+{
+    if (!limit)
+        return;
+    std::size_t characters{};
+    for (std::size_t offset = 0; offset < text.size();)
+    {
+        const auto first = static_cast<unsigned char>(text[offset++]);
+        std::size_t remaining{};
+        unsigned long codePoint{};
+        unsigned long minimum{};
+        if (first < 0x80)
+            codePoint = first;
+        else if (first >= 0xc2 && first <= 0xdf)
+        {
+            remaining = 1;
+            codePoint = first & 0x1f;
+            minimum = 0x80;
+        }
+        else if (first >= 0xe0 && first <= 0xef)
+        {
+            remaining = 2;
+            codePoint = first & 0x0f;
+            minimum = 0x800;
+        }
+        else if (first >= 0xf0 && first <= 0xf4)
+        {
+            remaining = 3;
+            codePoint = first & 0x07;
+            minimum = 0x10000;
+        }
+        else
+            throw ConversionError{"A bounded string must contain valid UTF-8"};
+        if (remaining > text.size() - offset)
+            throw ConversionError{"A bounded string must contain valid UTF-8"};
+        while (remaining > 0)
+        {
+            --remaining;
+            const auto continuation = static_cast<unsigned char>(text[offset++]);
+            if ((continuation & 0xc0) != 0x80)
+                throw ConversionError{"A bounded string must contain valid UTF-8"};
+            codePoint = (codePoint << 6) | (continuation & 0x3f);
+        }
+        if (codePoint < minimum || codePoint > 0x10ffff || (codePoint >= 0xd800 && codePoint <= 0xdfff))
+            throw ConversionError{"A bounded string must contain valid UTF-8"};
+        if (++characters > *limit)
+            throw ConversionError{"A string exceeds its declared character limit"};
+    }
+}
+
 template <typename ModelField>
 auto setScalarFieldValue(soci::values& values, const std::string& fieldName, const ModelField& field,
-                         model::ColumnType columnType) -> void
+                         model::ColumnType columnType,
+                         std::optional<std::size_t> maxStringLength = std::nullopt) -> void
 {
     if constexpr (IsOptionalScalarField<ModelField>::value)
     {
@@ -270,7 +321,7 @@ auto setScalarFieldValue(soci::values& values, const std::string& fieldName, con
             return;
         }
 
-        setScalarFieldValue(values, fieldName, field.value(), columnType);
+        setScalarFieldValue(values, fieldName, field.value(), columnType, maxStringLength);
     }
     else if constexpr (SociConvertableToDouble<ModelField>)
     {
@@ -296,6 +347,8 @@ auto setScalarFieldValue(soci::values& values, const std::string& fieldName, con
         }
         else
         {
+            if constexpr (std::same_as<ModelField, std::string>)
+                validateStringLength(field, maxStringLength);
             values.set(fieldName, field);
         }
     }
@@ -328,7 +381,8 @@ auto serializeRelated(const Related& related, const model::ColumnView& relationC
                 if (targetColumn->isPrimaryKey)
                 {
                     const auto parameterName = std::format("{}_{}", relationColumn.name, targetColumn->name);
-                    setScalarFieldValue(values, parameterName, *field, targetColumn->type.value());
+                    setScalarFieldValue(values, parameterName, *field, targetColumn->type.value(),
+                                        targetColumn->maxStringLength);
                 }
             }
         }
@@ -382,7 +436,7 @@ struct ObjectFieldToValues
         }
         else
         {
-            setScalarFieldValue(values, std::string{column.name}, *field, column.type.value());
+            setScalarFieldValue(values, std::string{column.name}, *field, column.type.value(), column.maxStringLength);
         }
     }
 

@@ -159,7 +159,7 @@ using namespace projection_select_command_test_models;
 class DefaultSelectCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultSelectCommand command{dialect};
 };
 

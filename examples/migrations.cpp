@@ -12,8 +12,17 @@ int main(int argc, char** argv)
     const SqlMigration email{"ALTER TABLE migration_example_users ADD COLUMN email TEXT;"
                              "UPDATE migration_example_users SET email='ann@example.com';",
                              "ALTER TABLE migration_example_users DROP COLUMN email;"};
-    const Catalog catalog{
-        Migration{1, "initial", {{orm::db::BackendType::Sqlite, initial}, {orm::db::BackendType::Postgres, initial}}},
-        Migration{2, "email", {{orm::db::BackendType::Sqlite, email}, {orm::db::BackendType::Postgres, email}}}};
+    const Catalog catalog{Migration{1,
+                                    "initial",
+                                    {{orm::db::BackendType::Sqlite, initial},
+                                     {orm::db::BackendType::Postgres, initial},
+                                     {orm::db::BackendType::Mysql, initial},
+                                     {orm::db::BackendType::Mariadb, initial}}},
+                          Migration{2,
+                                    "email",
+                                    {{orm::db::BackendType::Sqlite, email},
+                                     {orm::db::BackendType::Postgres, email},
+                                     {orm::db::BackendType::Mysql, email},
+                                     {orm::db::BackendType::Mariadb, email}}}};
     return runCommandLine(argc, argv, catalog);
 }

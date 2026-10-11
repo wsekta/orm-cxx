@@ -37,8 +37,15 @@ struct StaticSqlPolicy
     [[nodiscard]] constexpr auto renderAggregateResult(std::string_view value, bool exact) const -> std::string
     {
         if constexpr (Flavor == CompiledSqlFlavor::PostgreSQL)
+        {
             if (exact)
                 return sqlConcat("CAST(", value, " AS TEXT)");
+        }
+        if constexpr (Flavor == CompiledSqlFlavor::MySQLFamily)
+        {
+            if (exact)
+                return sqlConcat("CAST(", value, " AS CHAR)");
+        }
         return std::string{value};
     }
     [[nodiscard]] constexpr auto pagination(const SqlQueryView& query) const -> std::string
@@ -51,8 +58,15 @@ struct StaticSqlPolicy
                                               decimal(query.literalLimit);
         }
         else if constexpr (Flavor == CompiledSqlFlavor::SQLite)
+        {
             if (query.hasOffset)
                 result += " LIMIT -1";
+        }
+        else if constexpr (Flavor == CompiledSqlFlavor::MySQLFamily)
+        {
+            if (query.hasOffset)
+                result += " LIMIT 18446744073709551615";
+        }
         if (query.hasOffset)
         {
             result += " OFFSET ";

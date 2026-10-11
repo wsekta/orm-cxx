@@ -57,14 +57,15 @@ export
 
     enum class BackendType
     {
-        Sqlite,
-        Postgres [[maybe_unused]],
-        Mysql [[maybe_unused]],
-        Oracle [[maybe_unused]],
-        Firebird [[maybe_unused]],
-        Db2 [[maybe_unused]],
-        Odbc [[maybe_unused]],
-        Empty
+        Sqlite = 0,
+        Postgres = 1,
+        Mysql = 2,
+        Oracle [[maybe_unused]] = 3,
+        Firebird [[maybe_unused]] = 4,
+        Db2 [[maybe_unused]] = 5,
+        Odbc [[maybe_unused]] = 6,
+        Empty = 7,
+        Mariadb = 8,
     };
 }
 } // namespace orm::db
@@ -80,6 +81,7 @@ export
         None,
         SQLite,
         PostgreSQL,
+        MySQLFamily,
     };
 }
 } // namespace orm::db

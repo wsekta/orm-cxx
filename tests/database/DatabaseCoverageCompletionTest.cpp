@@ -233,9 +233,11 @@ public:
         return delegate.bindMarker(logicalName);
     }
 
-    [[nodiscard]] auto toSqlType(orm::model::ColumnType type) const -> std::string override
+    [[nodiscard]] auto
+    toSqlType(orm::model::ColumnType type,
+              std::optional<std::size_t> maxStringLength = std::nullopt) const -> std::string override
     {
-        return delegate.toSqlType(type);
+        return delegate.toSqlType(type, maxStringLength);
     }
 
     [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName,
@@ -342,7 +344,7 @@ public:
         case NormalizeAction::Delegate:
             return delegate.normalizeAffectedRows(affectedRows);
         case NormalizeAction::ThrowDatabaseError:
-            throw orm::DatabaseError{orm::DatabaseErrorCode::Constraint, orm::db::BackendType::Mysql,
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Constraint, orm::db::BackendType::Oracle,
                                      "coverage mutation", "coverage database error"};
         case NormalizeAction::ThrowStandardError:
             throw std::runtime_error{"coverage affected rows failure"};
@@ -370,7 +372,7 @@ public:
     auto translateError(const soci::soci_error& /*error*/, orm::DatabaseErrorCode fallback,
                         std::string_view operation) const -> orm::DatabaseError override
     {
-        return orm::DatabaseError{fallback, orm::db::BackendType::Mysql, std::string{operation},
+        return orm::DatabaseError{fallback, orm::db::BackendType::Oracle, std::string{operation},
                                   "coverage translated driver error"};
     }
 
@@ -404,7 +406,7 @@ public:
 
     auto type() const noexcept -> orm::db::BackendType override
     {
-        return orm::db::BackendType::Mysql;
+        return orm::db::BackendType::Oracle;
     }
 
     auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
@@ -455,7 +457,7 @@ public:
 
     auto connect() -> void
     {
-        connection->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:");
+        connection->connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
     }
 
     ConfigurableBackend* backend{};
@@ -505,7 +507,7 @@ TEST(DatabaseCoverageCompletionTest, typedConnectRejectsAlreadyConnectedDatabase
     DatabaseBundle bundle;
     bundle.connect();
 
-    expectDatabaseError([&bundle]() { bundle.connection->connect(orm::db::BackendType::Mysql, "sqlite3://:memory:"); },
+    expectDatabaseError([&bundle]() { bundle.connection->connect(orm::db::BackendType::Oracle, "sqlite3://:memory:"); },
                         orm::DatabaseErrorCode::AlreadyConnected, "connect");
     bundle.connection->disconnect();
 }

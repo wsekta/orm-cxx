@@ -1,7 +1,7 @@
 # ORM C++
 
 ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables
-using compile-time reflection. It ships with SQLite and PostgreSQL backends
+using compile-time reflection. It ships with SQLite, PostgreSQL, MySQL and MariaDB backends
 built on SOCI.
 
 The public API consists of two named modules:
@@ -35,7 +35,8 @@ sources and native CMake metadata; CMake builds BMIs locally.
 
 Backend options are selected when building the library or package. The `orm`
 module exports `orm::config::sqliteBackendEnabled` and
-`orm::config::postgresqlBackendEnabled` as C++ constants. Use `if constexpr`
+`orm::config::postgresqlBackendEnabled`, `orm::config::mysqlBackendEnabled`
+and `orm::config::mariadbBackendEnabled` as C++ constants. Use `if constexpr`
 for backend-dependent behavior; expressions whose validity depends on a backend
 must remain dependent inside a template.
 

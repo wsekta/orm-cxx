@@ -3,9 +3,6 @@ set(ORM_CXX_TEST_SOURCES
     ../src/database/BackendCapabilitiesTest.cpp
     ../src/database/CommandGeneratorFactoryTest.cpp
     ../src/database/NumericConversionTest.cpp
-    ../src/database/sqlite/SqliteBackendTest.cpp
-    ../src/database/sqlite/SqliteDialectTest.cpp
-    ../src/database/sqlite/SqliteTypeTranslatorTest.cpp
     ../src/model/ColumnTypeTest.cpp
     ../src/utils/StringUtilsTest.cpp
     ../src/database/defaults/DefaultCreateTableCommandTest.cpp
@@ -24,25 +21,11 @@ set(ORM_CXX_TEST_SOURCES
     ../src/query/StaticPlanCoverageTest.cpp
     ../src/query/CompiledSqlCoverageTest.cpp
     CollectionRelationCoverageTest.cpp
-    database/BackendConformanceTest.cpp
-    database/DatabaseCoverageCompletionTest.cpp
     database/DatabaseValidationTest.cpp
     database/DatabaseErrorTest.cpp
     database/StaticDatabaseApiCompileTest.cpp
-    database/OrmContextTest.cpp
-    database/StaticPlanTest.cpp
-    database/StatementParameterBindingTest.cpp
-    database/ProjectionQueryTest.cpp
-    database/TransactionsTest.cpp
-    database/SimpleModelTest.cpp
-    database/WriteOperationsTest.cpp
-    database/IdModelsTest.cpp
-    database/RelatedModelTest.cpp
-    database/CollectionRelationTest.cpp
-    database/CollectionRelationAcceptanceTest.cpp
-    database/QueryLanguageTest.cpp
-    database/BaseOperationsTest.cpp
     model/StaticMetadataTest.cpp
+    model/StringLengthTest.cpp
     reflection/GeneratedBindingArity0To15Test.cpp
     reflection/GeneratedBindingArity16To31Test.cpp
     reflection/GeneratedBindingArity32To47Test.cpp
@@ -57,6 +40,62 @@ set(ORM_CXX_TEST_SOURCES
     reflection/TypeNameStorageConsumer.cpp
     utils/ConstexprForTest.cpp
 )
+
+if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+    list(
+        APPEND
+        ORM_CXX_TEST_SOURCES
+        database/DatabaseCoverageCompletionTest.cpp
+        database/SqliteConnectErrorTest.cpp
+        database/StatementParameterBindingTest.cpp
+        database/SqliteStaticPlanRendererTest.cpp
+        database/SqliteContextBindingTest.cpp
+    )
+endif()
+if(ORM_CXX_ENABLE_SQLITE_BACKEND
+   OR (ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
+   OR (ORM_CXX_ENABLE_MYSQL_BACKEND AND ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS)
+   OR (ORM_CXX_ENABLE_MARIADB_BACKEND AND ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS)
+)
+    list(
+        APPEND
+        ORM_CXX_TEST_SOURCES
+        database/BackendConformanceTest.cpp
+        database/StringLengthTest.cpp
+        database/OrmContextTest.cpp
+        database/StaticPlanTest.cpp
+        database/ProjectionQueryTest.cpp
+        database/TransactionsTest.cpp
+        database/SimpleModelTest.cpp
+        database/WriteOperationsTest.cpp
+        database/IdModelsTest.cpp
+        database/RelatedModelTest.cpp
+        database/CollectionRelationTest.cpp
+        database/CollectionRelationAcceptanceTest.cpp
+        database/QueryLanguageTest.cpp
+        database/BaseOperationsTest.cpp
+    )
+endif()
+
+if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+    list(APPEND ORM_CXX_TEST_SOURCES ../src/database/sqlite/SqliteBackendTest.cpp
+         ../src/database/sqlite/SqliteDialectTest.cpp ../src/database/sqlite/SqliteTypeTranslatorTest.cpp
+         migrations/SqliteMigrationTest.cpp
+    )
+endif()
+if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)
+    list(APPEND ORM_CXX_TEST_SOURCES ../src/database/mysql_family/MysqlFamilyTest.cpp)
+endif()
+foreach(backend Mysql Mariadb)
+    string(TOUPPER "${backend}" backend_upper)
+    string(TOLOWER "${backend}" backend_dir)
+    if(ORM_CXX_ENABLE_${backend_upper}_BACKEND)
+        list(APPEND ORM_CXX_TEST_SOURCES ../src/database/${backend_dir}/${backend}BackendTest.cpp
+             ../src/database/${backend_dir}/${backend}DialectTest.cpp
+             ../src/database/${backend_dir}/${backend}TypeTranslatorTest.cpp
+        )
+    endif()
+endforeach()
 
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     list(APPEND ORM_CXX_TEST_SOURCES ../src/database/postgresql/PostgresqlBackendTest.cpp
@@ -73,10 +112,13 @@ add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})
 target_sources(orm-cxx-UT PRIVATE FILE_SET test_modules TYPE CXX_MODULES FILES Support.cppm)
 set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
-set(orm_cxx_postgresql_integration_enabled false)
-if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-    set(orm_cxx_postgresql_integration_enabled true)
-endif()
+foreach(backend POSTGRESQL MYSQL MARIADB)
+    string(TOLOWER "${backend}" backend_lower)
+    set(orm_cxx_${backend_lower}_integration_enabled false)
+    if(ORM_CXX_ENABLE_${backend}_BACKEND AND ORM_CXX_ENABLE_${backend}_INTEGRATION_TESTS)
+        set(orm_cxx_${backend_lower}_integration_enabled true)
+    endif()
+endforeach()
 configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/OrmCxxTestConfig.hpp.in"
     "${PROJECT_BINARY_DIR}/generated/test-include/orm-cxx-tests/TestConfig.hpp" @ONLY
@@ -90,11 +132,13 @@ set_target_properties(
 )
 add_test(NAME orm-cxx-static-plan-allocations COMMAND orm-cxx-static-plan-allocations)
 set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES LABELS "unit;query;allocation")
-if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    target_include_directories(
-        orm-cxx-UT PRIVATE "$<TARGET_PROPERTY:${ORM_CXX_SOCI_POSTGRESQL_TARGET},INCLUDE_DIRECTORIES>"
-    )
-endif()
+foreach(component SQLITE3 POSTGRESQL MYSQL)
+    if(ORM_CXX_SOCI_${component}_TARGET)
+        target_include_directories(
+            orm-cxx-UT SYSTEM PRIVATE "$<TARGET_PROPERTY:${ORM_CXX_SOCI_${component}_TARGET},INCLUDE_DIRECTORIES>"
+        )
+    endif()
+endforeach()
 
 if(MSVC)
     set_source_files_properties(database/BackendConformanceTest.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
@@ -108,48 +152,39 @@ set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES WORKING_DIRECTOR
 
 add_test(
     NAME orm-cxx-UT
-    COMMAND
-        orm-cxx-UT
-        --gtest_filter=-DatabaseTest/BackendConformanceTest.*:DatabaseTest/StaticPlanTest.*:DatabaseTest/OrmContextTest.*:DatabaseTest/MigrationTest.*:Postgresql/PostgresqlIntegrationTest.*:PostgresqlTestSchemaTest.*
+    COMMAND orm-cxx-UT --gtest_filter=-DatabaseTest/*:Postgresql/*:PostgresqlTestSchemaTest.*
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
-add_test(
-    NAME orm-cxx-sqlite-conformance
-    COMMAND
-        orm-cxx-UT
-        --gtest_filter=DatabaseTest/BackendConformanceTest.*/Sqlite:DatabaseTest/StaticPlanTest.*/Sqlite:DatabaseTest/OrmContextTest.*/Sqlite:DatabaseTest/MigrationTest.*/Sqlite
-    WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
-)
-set_tests_properties(
-    orm-cxx-UT PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_SQLITE3_TARGET}>" LABELS
-                          "unit;backend-sqlite"
-)
+set_tests_properties(orm-cxx-UT PROPERTIES LABELS "unit;core")
 
-if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-    add_test(
-        NAME orm-cxx-postgresql-conformance
-        COMMAND
-            orm-cxx-UT
-            --gtest_filter=DatabaseTest/BackendConformanceTest.*/Postgresql:DatabaseTest/StaticPlanTest.*/Postgresql:DatabaseTest/OrmContextTest.*/Postgresql:DatabaseTest/MigrationTest.*/Postgresql
-        WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
+foreach(backend Sqlite Postgresql Mysql Mariadb)
+    string(TOUPPER "${backend}" backend_upper)
+    string(TOLOWER "${backend}" backend_lower)
+    if(ORM_CXX_ENABLE_${backend_upper}_BACKEND AND (backend STREQUAL "Sqlite"
+                                                    OR ORM_CXX_ENABLE_${backend_upper}_INTEGRATION_TESTS)
     )
+        add_test(
+            NAME orm-cxx-${backend_lower}-conformance
+            COMMAND orm-cxx-UT "--gtest_filter=DatabaseTest/*.*/${backend}"
+            WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
+        )
+        set_tests_properties(
+            orm-cxx-${backend_lower}-conformance PROPERTIES LABELS "conformance;backend-${backend_lower}"
+                                                            FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
+        )
+    endif()
+endforeach()
+if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
     add_test(
         NAME orm-cxx-postgresql-integration
         COMMAND orm-cxx-UT --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     set_tests_properties(
-        orm-cxx-postgresql-conformance orm-cxx-postgresql-integration
-        PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_POSTGRESQL_TARGET}>" LABELS
-                   "integration;backend-postgresql" FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
+        orm-cxx-postgresql-integration PROPERTIES LABELS "integration;backend-postgresql" FAIL_REGULAR_EXPRESSION
+                                                  "\\[  PASSED  \\] 0 tests"
     )
-    set_tests_properties(orm-cxx-postgresql-conformance PROPERTIES LABELS "conformance;backend-postgresql")
 endif()
-set_tests_properties(
-    orm-cxx-sqlite-conformance
-    PROPERTIES ENVIRONMENT "SOCI_BACKENDS_PATH=$<TARGET_FILE_DIR:${ORM_CXX_SOCI_SQLITE3_TARGET}>" LABELS
-               "conformance;backend-sqlite" FAIL_REGULAR_EXPRESSION "\\[  PASSED  \\] 0 tests"
-)
 
 set(orm_cxx_make_program "${CMAKE_MAKE_PROGRAM}")
 if(orm_cxx_make_program AND NOT IS_ABSOLUTE "${orm_cxx_make_program}")
@@ -203,14 +238,19 @@ if(VCPKG_TARGET_TRIPLET)
     list(APPEND orm_cxx_consumer_common_configure_arguments "-DVCPKG_TARGET_TRIPLET=${VCPKG_TARGET_TRIPLET}")
 endif()
 
-function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled)
+function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled mysql_enabled mariadb_enabled)
     set(binary_dir "${PROJECT_BINARY_DIR}/consumer-${profile}-test")
     set(configure_test "orm-cxx-consumer-${profile}-configure")
     set(build_test "orm-cxx-consumer-${profile}-build")
     set(run_test "orm-cxx-consumer-${profile}-run")
     set(configure_arguments
-        ${orm_cxx_consumer_common_configure_arguments} -B "${binary_dir}"
-        "-DORM_CXX_ENABLE_SQLITE_BACKEND=${sqlite_enabled}" "-DORM_CXX_ENABLE_POSTGRESQL_BACKEND=${postgresql_enabled}"
+        ${orm_cxx_consumer_common_configure_arguments}
+        -B
+        "${binary_dir}"
+        "-DORM_CXX_ENABLE_SQLITE_BACKEND=${sqlite_enabled}"
+        "-DORM_CXX_ENABLE_POSTGRESQL_BACKEND=${postgresql_enabled}"
+        "-DORM_CXX_ENABLE_MYSQL_BACKEND=${mysql_enabled}"
+        "-DORM_CXX_ENABLE_MARIADB_BACKEND=${mariadb_enabled}"
     )
 
     add_test(NAME "${configure_test}" COMMAND "${CMAKE_COMMAND}" ${configure_arguments})
@@ -220,7 +260,7 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled)
 
     add_test(
         NAME "${run_test}"
-        COMMAND "${binary_dir}/bin/orm-cxx-consumer${CMAKE_EXECUTABLE_SUFFIX}"
+        COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${binary_dir}" --build-config Debug --output-on-failure
         WORKING_DIRECTORY "${binary_dir}/bin"
     )
     set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "consumer;${profile}")
@@ -237,10 +277,32 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled)
     endif()
 endfunction()
 
-orm_cxx_add_consumer_profile(sqlite-only ON OFF)
-orm_cxx_add_consumer_profile(core-only OFF OFF)
-
-if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    orm_cxx_add_consumer_profile(postgresql-only OFF ON)
-    orm_cxx_add_consumer_profile(all-backends ON ON)
-endif()
+# Exercise every subset of the drivers installed for this build, including core-only.
+foreach(mask RANGE 0 15)
+    set(profile_parts)
+    set(profile_available ON)
+    set(index 0)
+    foreach(backend SQLITE POSTGRESQL MYSQL MARIADB)
+        math(EXPR selected "(${mask} >> ${index}) & 1")
+        string(TOLOWER "${backend}" backend_lower)
+        set(${backend_lower}_enabled OFF)
+        if(selected)
+            set(${backend_lower}_enabled ON)
+            list(APPEND profile_parts "${backend_lower}")
+            if(NOT ORM_CXX_ENABLE_${backend}_BACKEND)
+                set(profile_available OFF)
+            endif()
+        endif()
+        math(EXPR index "${index} + 1")
+    endforeach()
+    if(profile_available)
+        if(profile_parts)
+            list(JOIN profile_parts "+" profile)
+        else()
+            set(profile core)
+        endif()
+        orm_cxx_add_consumer_profile(
+            "${profile}" ${sqlite_enabled} ${postgresql_enabled} ${mysql_enabled} ${mariadb_enabled}
+        )
+    endif()
+endforeach()

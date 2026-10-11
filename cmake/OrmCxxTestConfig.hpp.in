@@ -3,4 +3,6 @@
 namespace orm::test::config
 {
 inline constexpr bool postgresqlIntegrationEnabled = @orm_cxx_postgresql_integration_enabled@;
+inline constexpr bool mysqlIntegrationEnabled = @orm_cxx_mysql_integration_enabled@;
+inline constexpr bool mariadbIntegrationEnabled = @orm_cxx_mariadb_integration_enabled@;
 }

@@ -55,7 +55,7 @@ constexpr auto modelView() -> orm::model::ModelView
 class DefaultInsertCommandTest : public ::testing::Test
 {
 public:
-    orm::tests::SnapshotSqliteDialect dialect;
+    orm::tests::SnapshotSqlDialect dialect;
     orm::db::commands::DefaultInsertCommand command{dialect};
 };
 

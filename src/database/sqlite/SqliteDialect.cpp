@@ -75,11 +75,22 @@ auto SqliteDialect::bindMarker(std::string_view logicalName) const -> std::strin
     return ":" + std::string{logicalName};
 }
 
-auto SqliteDialect::toSqlType(model::ColumnType type) const -> std::string
+auto SqliteDialect::toSqlType(model::ColumnType type, std::optional<std::size_t> maxStringLength) const -> std::string
 {
     static const SqliteTypeTranslator translator;
 
-    return translator.toSqlType(type);
+    return translator.toSqlType(type, maxStringLength);
+}
+
+auto SqliteDialect::renderStringLengthConstraint(std::string_view columnName,
+                                                 std::optional<std::size_t> maxStringLength) const -> std::string
+{
+    if (!maxStringLength)
+    {
+        return {};
+    }
+    return std::format(" CHECK (length(replace({}, char(0), char(1))) <= {})", quoteIdentifier(columnName),
+                       *maxStringLength);
 }
 
 auto SqliteDialect::renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const -> std::string

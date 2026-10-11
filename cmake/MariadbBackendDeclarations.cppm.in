@@ -1,0 +1,62 @@
+// database/mariadb/MariadbDialect.hpp
+export namespace orm::db::mariadb
+{
+
+class MariadbDialect final : public SqlDialect
+{
+public:
+    [[nodiscard]] auto quoteIdentifier(std::string_view identifier) const -> std::string override;
+    [[nodiscard]] auto bindMarker(std::string_view logicalName) const -> std::string override;
+    [[nodiscard]] auto toSqlType(model::ColumnType type,
+                                 std::optional<std::size_t> maxStringLength = std::nullopt) const
+        -> std::string override;
+    [[nodiscard]] auto renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const
+        -> std::string override;
+    [[nodiscard]] auto renderCreateTableSuffix() const -> std::string override;
+    [[nodiscard]] auto renderDefaultInsert(std::string_view tableName) const -> std::string override;
+    [[nodiscard]] auto renderDropTable(std::string_view tableName, bool ifExists) const -> std::string override;
+    [[nodiscard]] auto renderAutoIncrementPrimaryKey(std::string_view columnName) const -> std::string override;
+    [[nodiscard]] auto renderPagination(const PaginationSpec& pagination) const -> std::string override;
+    [[nodiscard]] auto renderInsertIfAbsent(const InsertIfAbsentSpec& insert) const -> std::string override;
+    [[nodiscard]] auto renderAggregateResult(std::string_view expression, bool preserveExactNumeric) const
+        -> std::string override;
+};
+} // namespace orm::db::mariadb
+
+// database/mariadb/MariadbBackend.hpp
+export namespace orm::db::mariadb
+{
+
+class MariadbBackend final : public BackendProvider
+{
+public:
+    MariadbBackend();
+    ~MariadbBackend() override;
+
+    [[nodiscard]] auto type() const noexcept -> BackendType override;
+    [[nodiscard]] auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override;
+    [[nodiscard]] auto capabilities() const noexcept -> const BackendCapabilities& override;
+    [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
+    [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;
+    [[nodiscard]] auto commandGenerator() const noexcept -> const CommandGenerator& override;
+    [[nodiscard]] auto compiledSqlFlavor() const noexcept -> CompiledSqlFlavor override;
+
+private:
+    BackendCapabilities backendCapabilities;
+    MariadbDialect mariadbDialect;
+    std::unique_ptr<BackendRuntime> backendRuntime;
+    std::unique_ptr<CommandGenerator> mariadbCommandGenerator;
+};
+} // namespace orm::db::mariadb
+
+// database/mariadb/MariadbTypeTranslator.hpp
+namespace orm::db::mariadb
+{
+class MariadbTypeTranslator final : public TypeTranslator
+{
+public:
+    [[nodiscard]] auto toSqlType(model::ColumnType type,
+                                 std::optional<std::size_t> maxStringLength = std::nullopt) const
+        -> std::string override;
+};
+} // namespace orm::db::mariadb

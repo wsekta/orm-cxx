@@ -6,4 +6,6 @@ namespace orm::test::config
 {
 inline constexpr std::optional<bool> expectedSqliteBackend = @orm_cxx_expected_sqlite@;
 inline constexpr std::optional<bool> expectedPostgresqlBackend = @orm_cxx_expected_postgresql@;
+inline constexpr std::optional<bool> expectedMysqlBackend = @orm_cxx_expected_mysql@;
+inline constexpr std::optional<bool> expectedMariadbBackend = @orm_cxx_expected_mariadb@;
 }

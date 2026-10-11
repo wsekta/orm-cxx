@@ -69,8 +69,10 @@ auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std
             continue;
         }
 
-        command.append(std::format("\t{} {}{},\n", dialect.quoteIdentifier(column.name),
-                                   dialect.toSqlType(column.type.value()), column.isNotNull ? " NOT NULL" : ""));
+        command.append(std::format("\t{} {}{}{},\n", dialect.quoteIdentifier(column.name),
+                                   dialect.toSqlType(column.type.value(), column.maxStringLength),
+                                   column.isNotNull ? " NOT NULL" : "",
+                                   dialect.renderStringLengthConstraint(column.name, column.maxStringLength)));
     }
 
     if (model->primaryKeyIndices.empty() or hasAutoIncrementPrimaryKey(model))
@@ -99,7 +101,7 @@ auto DefaultCreateTableCommand::createTable(model::ModelView model) const -> std
         command.append(std::format(",\n{}", addForeignIds(foreignKeys)));
     }
 
-    command.append("\n);");
+    command.append(dialect.renderCreateTableSuffix());
 
     return command;
 }
@@ -129,9 +131,11 @@ auto DefaultCreateTableCommand::addColumnsForForeignIds(model::ModelView target,
     {
         if (targetColumn.isPrimaryKey)
         {
-            command.append(std::format("\t{} {}{},\n",
-                                       dialect.quoteIdentifier(std::format("{}_{}", fieldName, targetColumn.name)),
-                                       dialect.toSqlType(targetColumn.type.value()), isNullable));
+            const auto localName = std::format("{}_{}", fieldName, targetColumn.name);
+            command.append(std::format("\t{} {}{}{},\n", dialect.quoteIdentifier(localName),
+                                       dialect.toSqlType(targetColumn.type.value(), targetColumn.maxStringLength),
+                                       isNullable,
+                                       dialect.renderStringLengthConstraint(localName, targetColumn.maxStringLength)));
         }
     }
 

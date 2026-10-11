@@ -375,9 +375,9 @@ case each returned model is a representative row for its group, and values of
 fields outside `GROUP BY` are not deterministic. Group by every selected field
 when deterministic full-model values are required.
 
-PostgreSQL rejects full-model `GROUP BY` and `HAVING` through the backend
+PostgreSQL, MySQL and MariaDB reject full-model `GROUP BY` and `HAVING` through the backend
 capability check before executing SQL. Use an aggregate `ProjectionQuery`
-instead. PostgreSQL also requires every non-aggregate projected column and
+instead. These backends also require every non-aggregate projected column and
 typed `ORDER BY` column in an aggregate projection to appear in `GROUP BY`.
 These rules keep the same typed query API while avoiding backend-dependent
 hydration of an incomplete model.

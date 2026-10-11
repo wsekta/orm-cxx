@@ -117,7 +117,7 @@ TEST_P(CollectionRelationDatabaseTest, oneToManyForeignKey_shouldBlockDeletingPa
     catch (const orm::DatabaseError& error)
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Constraint);
-        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
+        EXPECT_EQ(error.getBackendType(), GetParam().type);
         EXPECT_EQ(error.getOperation(), "remove");
         EXPECT_TRUE(error.getNativeCode().has_value());
     }

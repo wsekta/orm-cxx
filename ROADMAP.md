@@ -1,12 +1,13 @@
 # ORM C++ Roadmap
 
 This roadmap is focused on making `orm-cxx` easier to adopt as an open source
-C++ ORM: keep the SQLite workflow stable, document the public model and query
-contracts, then expand expressiveness and database support deliberately.
+C++ ORM: maintain equal backend contracts, document the public model and query
+interfaces, then expand expressiveness and database support deliberately.
 
 ## Current State
 
-`orm-cxx` provides a usable SQLite-first foundation with an optional PostgreSQL backend:
+`orm-cxx` provides a shared ORM with independently selected SQLite, PostgreSQL,
+MySQL and MariaDB adapters. Every backend defaults to disabled:
 
 - A dedicated local C++20 aggregate-reflection layer with structural
   `FixedString` names, generated field access for aggregates with up to 128
@@ -24,11 +25,12 @@ contracts, then expand expressiveness and database support deliberately.
   nullable local foreign-key columns, SQL `NULL` inserts, joined selects, and
   non-joined selects that hydrate related primary-key values.
 - Table creation and drop commands.
-- Versioned SQL schema migrations for SQLite and PostgreSQL in 0.5, with file
-  and embedded catalogs, per-migration transactions, immutable checksums,
-  concurrency protection, optional undo SQL, explicit baselines and a project
-  CLI; see [Schema migrations](docs/schema-migrations.md).
-- Full row-level CRUD operations through `orm::Database`, including insert,
+- Versioned SQL schema migrations for all four adapters, with file and embedded
+  catalogs, immutable checksums, concurrency protection, optional undo SQL,
+  explicit baselines and a project CLI. Transactional engines use per-migration
+  transactions; MySQL and MariaDB retain durable markers and explicit recovery
+  for incomplete migrations. See [Schema migrations](docs/schema-migrations.md).
+- Full row-level CRUD operations through `orm::OrmContext`, including insert,
   select, predicate-based update, and predicate-based remove operations.
 - Typed member-pointer query fields and one-level to-one paths, with compile-time
   model, operator, value, nullable, and write-target checks; typed collection
@@ -37,8 +39,8 @@ contracts, then expand expressiveness and database support deliberately.
   `DISTINCT`, `LIMIT`, `OFFSET`, `GROUP BY`, aggregate `HAVING`, raw predicates,
   raw ordering, and bind parameters.
 - Immutable select, DTO projection, update, and delete plans with typed
-  argument slots, compile-time expression structure, and cached SQLite and
-  PostgreSQL SQL in 0.3; explicit conversion to the mutable query builders
+  argument slots, compile-time expression structure, and cached SQL for all
+  four adapters; explicit conversion to the mutable query builders
   supports runtime clauses and raw SQL.
 - A projection query builder for partial-result `SELECT` queries that hydrate
   flat DTOs through explicit field aliases.
@@ -65,7 +67,7 @@ contracts, then expand expressiveness and database support deliberately.
 - Collection predicates through correlated `any`, `exists`, and `none`
   expressions without implicitly loading the matching collection.
 - Unit and integration tests across model metadata, command rendering, query
-  behavior, write operations, transactions, and live SQLite/PostgreSQL execution.
+  behavior, write operations, transactions, and live execution on all four adapters.
 - Target-scoped CMake configuration with independent library, example, test,
   coverage, and dependency boundaries plus maintained GCC, Clang, coverage,
   MSVC, and quality presets.
@@ -84,17 +86,15 @@ contracts, then expand expressiveness and database support deliberately.
   translation.
 - Stable backend-neutral database errors for lifecycle, capability, connection,
   statement, constraint, transaction, conversion, and affected-row failures.
-- Reusable backend conformance configuration and tests, with SQLite and
-  PostgreSQL exercising the shared public behavior on their supported CI
-  profiles.
-- An optional SQLite build boundary: core-only consumers can omit SQLite
-  sources, registration, and driver linkage while retaining the shared ORM and
-  SOCI core.
+- Reusable backend conformance configuration and tests, with all four adapters
+  exercising the shared public behavior on their supported CI profiles.
+- Independent backend build boundaries: core-only consumers omit every
+  adapter's sources, registration and client linkage while retaining the shared
+  ORM and SOCI core. Every one of the 16 selections has a consumer contract.
 - A documented backend support matrix, portability policy, source extension
   contract, feature negotiation rules, and minimum CI requirements.
-- An optional PostgreSQL adapter with native dialect/runtime behavior, isolated
-  live conformance tests, PostgreSQL 15 and 18 CI boundaries, and SQLite-only,
-  PostgreSQL-only, combined, and core-only consumer builds.
+- Native dialect/runtime behavior and isolated live conformance for PostgreSQL
+  15/18, MySQL 8.4/9.7 and MariaDB 11.4/11.8/12.3, alongside SQLite.
 
 ## Long Term
 
@@ -103,20 +103,19 @@ Package recipes and the `release` branch pipeline are implemented; see
 central catalogs remains pending maintainer configuration of the submission
 token and acceptance by vcpkg and ConanCenter.
 
-SQLite and PostgreSQL now exercise the backend portability contract. Continue
+All four adapters exercise the backend portability contract. Continue
 expanding that contract only where another production backend needs it.
 
-- Add MySQL, ODBC, Oracle, Firebird, and DB2 according to user demand and
+- Add ODBC, Oracle, Firebird, and DB2 according to user demand and
   maintainer capacity.
 - Extend migrations with stable schema snapshots and DDL export, then reviewed
   snapshot diffs, explicit renames and backend-specific SQL generation.
 - Complete the initial vcpkg and ConanCenter submissions generated by the package
   release pipeline and follow their reviews through central publication.
-- After adding non-SQLite backends with native date/time and UUID types, decide
-  how custom field converters should work before supporting types such as
+- Decide how custom field converters should map native date/time and UUID
+  types across adapters before supporting types such as
   `std::tm`, `boost::uuids::uuid`, `boost::optional`, or other third-party
-  values. SQLite has no native UUID type, so defining this abstraction before
-  those backends exist would not provide a useful portability contract.
+  values. The contract must account for engines that lack a matching native type.
 
 ## Far Future
 
@@ -132,6 +131,6 @@ These items are valuable, but they should not block the core ORM experience.
 ## Roadmap Principles
 
 - Prefer stable, documented behavior over broad but shallow feature coverage.
-- Keep SQLite excellent before adding more backends.
+- Hold every supported backend to the same portability and verification contract.
 - Add public APIs only when their behavior, error cases, and tests are clear.
 - Treat documentation and examples as part of the feature, not follow-up polish.

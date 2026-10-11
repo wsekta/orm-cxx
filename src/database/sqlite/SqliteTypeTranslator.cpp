@@ -46,7 +46,8 @@ const std::regex stringRegex{R"((class )?std.*::basic_string<.*>\W?)"};
 
 namespace orm::db::sqlite
 {
-auto SqliteTypeTranslator::toSqlType(model::ColumnType type) const -> std::string
+auto SqliteTypeTranslator::toSqlType(model::ColumnType type,
+                                     std::optional<std::size_t> /*maxStringLength*/) const -> std::string
 {
     switch (type)
     {

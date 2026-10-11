@@ -232,6 +232,12 @@ export
             {
                 const auto values = std::forward_as_tuple(args...);
                 const auto flavor = database_->getBackend().compiledSqlFlavor();
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::MySQLFamily>.valid)
+                {
+                    if (flavor == db::CompiledSqlFlavor::MySQLFamily)
+                        return executeCompiledPlan<Plan, db::CompiledSqlFlavor::MySQLFamily>(plan, values);
+                }
                 if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
                 {
                     if (flavor == db::CompiledSqlFlavor::SQLite)
@@ -255,6 +261,12 @@ export
             {
                 const auto values = std::forward_as_tuple(args...);
                 const auto flavor = database_->getBackend().compiledSqlFlavor();
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::MySQLFamily>.valid)
+                {
+                    if (flavor == db::CompiledSqlFlavor::MySQLFamily)
+                        return executeCompiledPlan<Plan, db::CompiledSqlFlavor::MySQLFamily>(plan, values);
+                }
                 if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
                 {
                     if (flavor == db::CompiledSqlFlavor::SQLite)
@@ -278,6 +290,12 @@ export
             {
                 const auto values = std::forward_as_tuple(args...);
                 const auto flavor = database_->getBackend().compiledSqlFlavor();
+                if constexpr (
+                    query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::MySQLFamily>.valid)
+                {
+                    if (flavor == db::CompiledSqlFlavor::MySQLFamily)
+                        return executeCompiledPlan<Plan, db::CompiledSqlFlavor::MySQLFamily>(plan, values);
+                }
                 if constexpr (query::detail::compiledStatement<SchemaType, Plan, db::CompiledSqlFlavor::SQLite>.valid)
                 {
                     if (flavor == db::CompiledSqlFlavor::SQLite)
@@ -342,6 +360,11 @@ export
                                         { return node.kind == db::detail::SqlNodeKind::Collection; }),
                     operation);
                 const auto parameters = query::detail::collectParameters(plan, values);
+                if constexpr (Plan::operation == query::detail::PlanOperation::Update)
+                    for (const auto& assignment : requirements.assignments)
+                        database_->ensureStringValueSupported(
+                            *db::detail::resolveSqlColumn(assignment.source, descriptor, true).column,
+                            parameters[assignment.parameter].value, operation);
                 return database_->executeMutation(db::StatementView{compiled.view(), parameters}, operation);
             }
         }
@@ -498,6 +521,11 @@ export
             {
                 database_->ensurePredicateSupported(*update.getData().predicate, "update");
             }
+            for (const auto& assignment : update.getData().assignments)
+                database_->ensureStringValueSupported(
+                    *db::detail::resolveSqlColumn(db::detail::parseSqlSource(assignment.column.getPath()), model, true)
+                         .column,
+                    assignment.value.value, "update");
             const auto statement = database_->getCommandGenerator().update(model, update.getData());
 
             return database_->executeMutation(statement, "update");
@@ -533,6 +561,7 @@ export
         {
             constexpr auto model = model::modelView<SchemaType, T>();
             database_->ensureModelSupported(model, "create table");
+            database_->ensureSchemaSupported(model, false, "create table");
             database_->requireCapability(database_->getBackendCapabilities().schema.createTableIfNotExists,
                                          "create table", "idempotent table creation is not supported");
             const auto command = database_->getCommandGenerator().createTable(model);
@@ -573,6 +602,7 @@ export
             }
 
             database_->ensureModelSupported(owner, "create relation tables");
+            database_->ensureSchemaSupported(owner, true, "create relation tables");
             database_->ensureRelationTableEndpointsExist(owner);
 
             for (const auto& command : db::relations::createTableStatements(database_->getBackend().dialect(), owner))
@@ -647,10 +677,13 @@ export
                 throw std::invalid_argument{"Cannot link relation endpoints that do not exist"};
             }
 
-            return database_->executeMutation(db::relations::linkStatement(database_->getBackend().dialect(),
-                                                                           ownerDescriptor, *relation, ownerKey,
-                                                                           targetKey),
-                                              "link relation");
+            const auto statement = db::relations::linkStatement(database_->getBackend().dialect(), ownerDescriptor,
+                                                                *relation, ownerKey, targetKey);
+            if (relation->kind == model::RelationKind::ManyToMany)
+                return database_->executeInsertIfAbsent(
+                    statement, db::relations::linkInsertSpec(ownerDescriptor, *relation, ownerKey, targetKey),
+                    "link relation");
+            return database_->executeMutation(statement, "link relation");
         }
 
         /**
@@ -676,11 +709,14 @@ export
                                              database_->getBackendCapabilities().mutations.remove,
                                          "unlink relation", "relation mutations are not supported");
 
-            return database_->executeMutation(
-                db::relations::unlinkStatement(database_->getBackend().dialect(), ownerDescriptor, *relation,
-                                               db::binding::getPrimaryKey<SchemaType>(owner),
-                                               db::binding::getPrimaryKey<SchemaType>(target)),
-                "unlink relation");
+            const auto ownerKey = db::binding::getPrimaryKey<SchemaType>(owner);
+            const auto targetKey = db::binding::getPrimaryKey<SchemaType>(target);
+            database_->ensureEndpointKeySupported(ownerDescriptor, ownerKey, "unlink relation");
+            database_->ensureEndpointKeySupported(*targetDescriptor, targetKey, "unlink relation");
+            return database_->executeMutation(db::relations::unlinkStatement(database_->getBackend().dialect(),
+                                                                             ownerDescriptor, *relation, ownerKey,
+                                                                             targetKey),
+                                              "unlink relation");
         }
 
         template <typename Owner, typename Target, bool JoinedValues>

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Merge two LLVM LCOV reports and require every project line to be hit."""
+"""Merge backend LLVM LCOV reports and require every project line to be hit."""
 
 import argparse
 from collections import defaultdict
@@ -76,8 +76,7 @@ def write_report(path: Path, report: dict[str, dict[int, int]]) -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("sqlite_report", type=Path)
-    parser.add_argument("postgresql_report", type=Path)
+    parser.add_argument("reports", type=Path, nargs="+", help="LCOV reports from independent backend profiles")
     parser.add_argument("--source-root", type=Path, default=Path(__file__).resolve().parent.parent)
     parser.add_argument("--output", type=Path, required=True)
     arguments = parser.parse_args()
@@ -85,7 +84,7 @@ def main() -> int:
     try:
         source_root = arguments.source_root.resolve()
         merged = merge_reports(
-            [read_report(arguments.sqlite_report, source_root), read_report(arguments.postgresql_report, source_root)]
+            [read_report(report, source_root) for report in arguments.reports]
         )
         write_report(arguments.output, merged)
     except (OSError, UnicodeError, ValueError) as error:

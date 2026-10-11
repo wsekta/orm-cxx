@@ -192,19 +192,21 @@ template <typename... Parts>
     if (identifier.empty())
         throw std::invalid_argument{"SQL identifier cannot be empty"};
     if (identifier.find('\0') != std::string_view::npos)
-        throw std::invalid_argument{flavor == CompiledSqlFlavor::PostgreSQL ?
-                                        "PostgreSQL identifiers must not contain an embedded NUL byte" :
-                                        "SQLite identifiers must not contain an embedded NUL byte"};
+        throw std::invalid_argument{"SQL identifiers must not contain an embedded NUL byte"};
     if (flavor == CompiledSqlFlavor::PostgreSQL && identifier.size() > 63)
         throw std::invalid_argument{"PostgreSQL identifiers must not exceed 63 bytes"};
-    std::string result{"\""};
+    if (flavor == CompiledSqlFlavor::MySQLFamily &&
+        std::ranges::count_if(identifier, [](unsigned char c) { return (c & 0xc0) != 0x80; }) > 64)
+        throw std::invalid_argument{"MySQL-family identifiers must not exceed 64 characters"};
+    const auto quote = flavor == CompiledSqlFlavor::MySQLFamily ? '`' : '"';
+    std::string result(1, quote);
     for (const auto character : identifier)
     {
-        if (character == '"')
-            result += '"';
+        if (character == quote)
+            result += quote;
         result += character;
     }
-    result += '"';
+    result += quote;
     return result;
 }
 } // namespace detail

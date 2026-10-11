@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "orm-cxx-tests/TestConfig.hpp"
+#include "tests/database/MysqlTestDatabase.hpp"
 #include "tests/database/postgresql/PostgresqlTestSchema.hpp"
 #include "tests/ModelsDefinitions.hpp"
 #include "tests/utils/GenerateModels.hpp"
@@ -38,20 +39,23 @@ extern const auto postgresqlBackendTestConfig = BackendTestConfig{
     .supported = true,
 };
 
-// Keep the legacy integration fixtures SQLite-only. Backends added to the
-// reusable public conformance profile must not implicitly run suites that use
-// SQLite-specific assumptions or private driver instrumentation.
-[[maybe_unused]] extern const auto backendTestConfigs = ::testing::Values(sqliteBackendTestConfig);
-[[maybe_unused]] extern const auto conformanceBackendTestConfigs = ::testing::ValuesIn(
+[[maybe_unused]] extern const auto backendTestConfigs = ::testing::ValuesIn(
     []
     {
-        std::vector<BackendTestConfig> configs{sqliteBackendTestConfig};
+        std::vector<BackendTestConfig> configs;
+        if constexpr (orm::config::sqliteBackendEnabled)
+            configs.push_back(sqliteBackendTestConfig);
         if constexpr (orm::test::config::postgresqlIntegrationEnabled)
         {
             configs.push_back(postgresqlBackendTestConfig);
         }
+        if constexpr (orm::test::config::mysqlIntegrationEnabled)
+            configs.push_back({orm::db::BackendType::Mysql, "Mysql", {}, true});
+        if constexpr (orm::test::config::mariadbIntegrationEnabled)
+            configs.push_back({orm::db::BackendType::Mariadb, "Mariadb", {}, true});
         return configs;
     }());
+[[maybe_unused]] extern const auto conformanceBackendTestConfigs = backendTestConfigs;
 
 auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) -> std::string
 {
@@ -89,6 +93,21 @@ public:
             }
         }
 
+        if (GetParam().type == orm::db::BackendType::Mysql or GetParam().type == orm::db::BackendType::Mariadb)
+        {
+            const auto dsn = mysql_test::configuredDsn(GetParam().type);
+            ASSERT_FALSE(dsn.empty())
+                << "The enabled backend requires ORM_CXX_MYSQL_TEST_DSN or ORM_CXX_MARIADB_TEST_DSN";
+            try
+            {
+                mysqlDatabase = std::make_unique<mysql_test::MysqlTestDatabase>(GetParam().type, dsn);
+                activeConnectionString = mysqlDatabase->connectionString();
+            }
+            catch (const std::exception& error)
+            {
+                FAIL() << "Failed to isolate test database: " << error.what();
+            }
+        }
         connection.connect(GetParam().type, activeConnectionString);
     }
 
@@ -127,6 +146,18 @@ public:
             }
         }
 
+        if (mysqlDatabase != nullptr)
+        {
+            try
+            {
+                mysqlDatabase->drop();
+            }
+            catch (const std::exception& error)
+            {
+                ADD_FAILURE() << "Test database cleanup failed: " << error.what();
+            }
+            mysqlDatabase.reset();
+        }
         if constexpr (orm::test::config::postgresqlIntegrationEnabled)
         {
             if (postgresqlSchema != nullptr)
@@ -172,4 +203,5 @@ private:
     std::vector<std::function<void()>> tearDownFunctions;
     std::string activeConnectionString;
     std::unique_ptr<postgresql_test::PostgresqlTestSchema> postgresqlSchema;
+    std::unique_ptr<mysql_test::MysqlTestDatabase> mysqlDatabase;
 };

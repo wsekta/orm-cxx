@@ -22,6 +22,10 @@ vcpkg_check_features(
     ORM_CXX_ENABLE_SQLITE_BACKEND
     postgresql
     ORM_CXX_ENABLE_POSTGRESQL_BACKEND
+    mysql
+    ORM_CXX_ENABLE_MYSQL_BACKEND
+    mariadb
+    ORM_CXX_ENABLE_MARIADB_BACKEND
 )
 
 vcpkg_cmake_configure(

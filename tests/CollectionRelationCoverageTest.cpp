@@ -29,7 +29,8 @@ public:
         return "$" + std::string{logicalName};
     }
 
-    [[nodiscard]] auto toSqlType(orm::model::ColumnType /*type*/) const -> std::string override
+    [[nodiscard]] auto toSqlType(orm::model::ColumnType /*type*/,
+                                 std::optional<std::size_t> = std::nullopt) const -> std::string override
     {
         return "PORTABLE_TYPE";
     }
@@ -478,7 +479,7 @@ TEST(CollectionRelationCoverageTest, oneToManyStatementsRejectUnknownMappedBy)
 
 TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
 {
-    orm::db::sqlite::SqliteDialect dialect;
+    orm::tests::TestSqlDialect dialect;
     MutableRelationSchema metadata{orm::modelView<collection_models::Schema, collection_models::Book>(),
                                    orm::modelView<collection_models::Schema, collection_models::Author>()};
     const auto relation = std::ranges::find_if(metadata.ownerColumns, [](const auto& column)
@@ -543,19 +544,20 @@ TEST(CollectionRelationCoverageTest, collectionRendererRejectsInvalidEndpointAnd
     }
 }
 
-TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceCompleteStatements)
+TEST(CollectionRelationCoverageTest, explicitDialectProducesCompleteStatements)
 {
+    const orm::tests::TestSqlDialect dialect;
     const auto user = orm::modelView<collection_models::Schema, collection_models::User>();
     const auto relation = user->relations.front();
-    const auto create = orm::db::relations::createTableStatements(user);
+    const auto create = orm::db::relations::createTableStatements(dialect, user);
     ASSERT_EQ(create.size(), 1);
     EXPECT_NE(create.front().find("CREATE TABLE IF NOT EXISTS \"collection_user_roles\""), std::string::npos);
 
-    const auto drop = orm::db::relations::dropTableStatements(user);
+    const auto drop = orm::db::relations::dropTableStatements(dialect, user);
     ASSERT_EQ(drop.size(), 1);
     EXPECT_EQ(drop.front(), "DROP TABLE IF EXISTS \"collection_user_roles\";");
 
-    const auto link = orm::db::relations::linkStatement(user, relation, key(1), key(2));
+    const auto link = orm::db::relations::linkStatement(dialect, user, relation, key(1), key(2));
     EXPECT_NE(link.sql.find("INSERT INTO \"collection_user_roles\""), std::string::npos);
     ASSERT_EQ(link.parameters.size(), 2);
     EXPECT_EQ(link.parameters[0].name, "orm_rel_owner_0");
@@ -563,12 +565,13 @@ TEST(CollectionRelationCoverageTest, defaultSqliteRelationOverloadsProduceComple
     EXPECT_EQ(link.parameters[1].name, "orm_rel_target_0");
     EXPECT_EQ(link.parameters[1].value, orm::query::QueryValue{2});
 
-    const auto unlink = orm::db::relations::unlinkStatement(user, relation, key(1), key(2));
+    const auto unlink = orm::db::relations::unlinkStatement(dialect, user, relation, key(1), key(2));
     EXPECT_EQ(unlink.sql, "DELETE FROM \"collection_user_roles\" WHERE \"user_id\" = :orm_rel_owner_0 "
                           "AND \"role_id\" = :orm_rel_target_0;");
     ASSERT_EQ(unlink.parameters.size(), 2);
 
-    const auto select = orm::db::relations::collectionSelectStatement(user, relation, "SELECT 1;\n", {key(1)}, true);
+    const auto select =
+        orm::db::relations::collectionSelectStatement(dialect, user, relation, "SELECT 1;\n", {key(1)}, true);
     EXPECT_NE(select.sql.find("FROM \"collection_user_roles\" AS \"orm_relation_junction\""), std::string::npos);
     EXPECT_NE(select.sql.find("JOIN (SELECT 1)"), std::string::npos);
     ASSERT_EQ(select.parameters.size(), 1);

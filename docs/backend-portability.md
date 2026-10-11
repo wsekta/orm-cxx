@@ -1,6 +1,7 @@
 # Backend portability
 
-`orm-cxx` remains SQLite-first and also provides an optional PostgreSQL backend.
+`orm-cxx` treats SQLite, PostgreSQL, MySQL and MariaDB as equal adapters.
+All backend selections are explicit and default to disabled.
 Its portability layer requires live behavior verification instead of treating
 an enum value or a generated SQL string as proof of backend support.
 
@@ -116,12 +117,11 @@ of every compiler and every database:
 
 | Job | Environment | Required checks |
 | --- | --- | --- |
-| GCC core | Official `gcc:15-trixie` container, GCC 15, SQLite | Unit, SQLite conformance, consumer test |
-| Clang coverage | Ubuntu, Clang 18, SQLite | The core checks and coverage export |
-| MSVC core | Windows, MSVC, SQLite | Unit, SQLite conformance, consumer test |
-| Quality and docs | Ubuntu, Clang 18, SQLite and PostgreSQL client libraries | Formatting, static analysis for both adapters, documentation validation |
-| PostgreSQL 15 | Official `gcc:15-trixie` container, GCC 15, real PostgreSQL service | Unit, dialect, common conformance, live integration |
-| PostgreSQL 18 | Ubuntu, Clang 18, real PostgreSQL service | Unit, dialect, common conformance, live integration, coverage |
+| Core | GCC 15, Clang 18–20 and MSVC without database clients | Unit, compile contracts and core consumer |
+| All adapters | GCC 15 and Clang 18–20 with real services; MSVC compile/link | Equal conformance profiles and all 16 consumer subsets |
+| Quality and docs | Clang 18 with every selected client | Formatting, static analysis for every adapter, documentation validation |
+| Coverage | Clang 18, core plus four independent adapters | Merge every report; require 100% lines |
+| Packages | Conan/vcpkg, Linux/Windows, all 16 subsets | Positive and disabled-provider compile contracts; live CRUD and migrations on Linux |
 
 A backend receives additional operating-system or compiler jobs only when those
 combinations are publicly supported. A claimed server-version range must be
@@ -130,11 +130,10 @@ version actually verified.
 
 ## Definition of Done
 
-The Mid Term portability milestone is complete when:
+Backend support is complete when:
 
-- SQLite passes reusable conformance tests on the supported GCC, Clang, and MSVC
-  workflows;
-- common conformance sources contain no SQLite catalog queries, pragmas, exact
+- every advertised adapter passes the same reusable public conformance tests;
+- common conformance sources contain no vendor catalog queries, pragmas, exact
   SQL snapshots, or private access to a SOCI session;
 - capabilities and limits are obtained from one backend contract rather than
   scattered backend enum branches;

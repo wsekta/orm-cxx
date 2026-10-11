@@ -58,6 +58,8 @@ CommandGeneratorFactory::CommandGeneratorFactory()
 {
     registerBuiltinBackend<config::sqliteBackendEnabled, sqlite::SqliteBackend>(*this);
     registerBuiltinBackend<config::postgresqlBackendEnabled, postgresql::PostgresqlBackend>(*this);
+    registerBuiltinBackend<config::mysqlBackendEnabled, mysql::MysqlBackend>(*this);
+    registerBuiltinBackend<config::mariadbBackendEnabled, mariadb::MariadbBackend>(*this);
 }
 
 CommandGeneratorFactory::CommandGeneratorFactory(std::vector<std::unique_ptr<BackendProvider>> providers)

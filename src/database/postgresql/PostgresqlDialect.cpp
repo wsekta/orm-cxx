@@ -76,11 +76,12 @@ auto PostgresqlDialect::bindMarker(std::string_view logicalName) const -> std::s
     return ":" + std::string{logicalName};
 }
 
-auto PostgresqlDialect::toSqlType(model::ColumnType type) const -> std::string
+auto PostgresqlDialect::toSqlType(model::ColumnType type,
+                                  std::optional<std::size_t> maxStringLength) const -> std::string
 {
     static const PostgresqlTypeTranslator translator;
 
-    return translator.toSqlType(type);
+    return translator.toSqlType(type, maxStringLength);
 }
 
 auto PostgresqlDialect::renderCreateTablePrefix(std::string_view tableName, bool ifNotExists) const -> std::string

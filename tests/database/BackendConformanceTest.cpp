@@ -48,6 +48,7 @@ struct MappedModel
 {
     int id;
     std::string name;
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&MappedModel::name, 128>());
 
     inline static constexpr orm::reflection::FixedString table_name{"conformance_mapped_table"};
     inline static constexpr auto columns_names = orm::columnNames(orm::columnName<&MappedModel::id, "mapped_id">(),

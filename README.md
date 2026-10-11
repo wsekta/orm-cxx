@@ -22,7 +22,7 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 
 🆕 Compile-time model reflection implemented with standard C++20<br>
 ✅ 100% test coverage with unit tests and integration tests<br>
-🗂️ SQLite and optional PostgreSQL support, backed by a shared [portability contract](docs/backend-portability.md)<br>
+🗂️ SQLite, PostgreSQL, MySQL and MariaDB support, backed by a shared [portability contract](docs/backend-portability.md)<br>
 ⚙️ Support for multiple compilers<br>
 ✅ Native C++20 modules with no project-defined macros<br>
 🚀 As low as possible runtime overhead<br>
@@ -34,11 +34,21 @@ The goal of the ORM C++ is to provide a decent Object-Relational Mapping library
 ### Package installation
 
 The [package guide](docs/packaging.md) covers vcpkg and Conan installation with
-automatic SOCI/SQLite/libpq dependencies, backend selection, and the GitHub Actions
+automatic SOCI and selected client dependencies, backend selection, and the GitHub Actions
 release pipeline driven by `VERSION.txt`. Central catalog availability follows
 acceptance of the generated submissions to vcpkg and ConanCenter.
 
 ### Example
+
+Enable the chosen adapter explicitly and pass its connection string to this
+example. The model and query code are shared by all four backends:
+
+| Adapter | Build option | Example argument |
+| --- | --- | --- |
+| SQLite | `ORM_CXX_ENABLE_SQLITE_BACKEND=ON` | `sqlite3://test.db` |
+| PostgreSQL | `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON` | `postgresql://host=localhost dbname=application user=application` |
+| MySQL | `ORM_CXX_ENABLE_MYSQL_BACKEND=ON` | `mysql://host=localhost db=application user=application` |
+| MariaDB | `ORM_CXX_ENABLE_MARIADB_BACKEND=ON` | `mariadb://host=localhost db=application user=application` |
 
 ```cpp
 #include <string>
@@ -53,6 +63,8 @@ struct ObjectModel
 
     inline static constexpr auto id_columns =
         orm::primaryKey<&ObjectModel::field1, &ObjectModel::field2>();
+    inline static constexpr auto string_lengths =
+        orm::stringLengths(orm::stringLength<&ObjectModel::field2, 191>());
     inline static constexpr orm::reflection::FixedString table_name{"object_model"};
     inline static constexpr auto columns_names =
         orm::columnNames(orm::columnName<&ObjectModel::field1, "some_field1_name">(),
@@ -69,13 +81,14 @@ struct User
         orm::autoIncrement<&User::id>();
 };
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc != 2) return 2;
     // connect with standard connection string
     using AppSchema = orm::Schema<ObjectModel, User>;
     orm::Database database;
     auto context = database.orm<AppSchema>();
-    database.connect("sqlite3://test.db");
+    database.connect(argv[1]);
 
     // drop table if exists
     context.deleteTable<ObjectModel>();
@@ -113,7 +126,7 @@ int main()
 
 ## [Schema migrations](docs/schema-migrations.md)
 
-Versioned SQL migrations support SQLite and PostgreSQL with transactional
+Versioned SQL migrations support all four backends with backend-specific
 execution, checksum validation, optional downgrades, explicit baselines and a
 project CLI. Use `orm::migrations` through `import orm;`; see
 [`examples/migrations.cpp`](examples/migrations.cpp).
@@ -125,7 +138,7 @@ project CLI. Use `orm::migrations` through `import orm;`; see
 ### Query language
 
 The library supports [immutable static query plans](docs/static-queries.md) with
-typed argument slots and SQL reuse for SQLite and PostgreSQL:
+typed argument slots and SQL reuse for all four backends:
 
 ```cpp
 struct PlanUser { int id; int age; };
@@ -199,21 +212,24 @@ This format is intentionally not an RFC PostgreSQL URI. See the [backend
 matrix](docs/backends.md#postgresql) for supported behavior, limits, build
 dependencies, and test setup.
 
-When the adapter and examples are enabled, `postgresql-example` provides a
-non-destructive connection smoke test:
+When an adapter and examples are enabled, `backend-connection-example` provides
+a connection smoke test for the selected DSN:
 
 ```bash
 cmake -S . -B build/postgresql -G Ninja \
-  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON \
-  -DORM_CXX_BUILD_EXAMPLES=ON
-cmake --build build/postgresql --target postgresql-example
-ORM_CXX_POSTGRESQL_EXAMPLE_DSN='postgresql://host=localhost dbname=application user=application' \
-  ./build/postgresql/examples/postgresql-example
+  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON -DORM_CXX_BUILD_EXAMPLES=ON
+cmake --build build/postgresql --target backend-connection-example
+./build/postgresql/examples/backend-connection-example \
+  'postgresql://host=localhost dbname=application user=application'
 ```
+
+MySQL and MariaDB use their own `mysql://` and `mariadb://` selectors and
+independent build options. They share an Oracle MySQL client dependency. See
+[Backends](docs/backends.md#mysql-and-mariadb) for session behavior and bounds.
 
 ### Auto-increment primary keys
 
-SQLite and PostgreSQL `int` primary keys can opt in to database-generated values:
+All four backends' `int` primary keys can opt in to database-generated values:
 
 ```cpp
 struct User
@@ -231,7 +247,7 @@ unless they define `auto_increment_columns`. See [Model documentation](docs/mode
 
 ### Model support
 
-SQLite and PostgreSQL models support common scalar C++ fields, nullable scalar
+All four backend models support common scalar C++ fields, nullable scalar
 fields through `std::optional<T>`, compile-time table and column mappings,
 default or explicit primary keys, to-one relations, and explicitly mapped
 `OneToMany` and `ManyToMany` collections. Each ORM context is bound to a closed
@@ -299,28 +315,31 @@ cd orm-cxx
 docker compose run --build --rm dev bash ./scripts/check-fast.sh
 ```
 
-That command builds the library and examples, runs the test suite with Clang
+That command builds the core library, runs the test suite with Clang
 18, and runs the quality workflow. To reproduce the non-server Linux checks,
-including SQLite coverage, run:
+including core coverage, run:
 
 ```bash
 docker compose run --build --rm dev bash ./scripts/check-linux-ci.sh
 docker compose run --build --rm gcc cmake --workflow --preset linux-gcc-debug
 ```
 
-Live PostgreSQL verification needs the Compose database service and an explicit
-test DSN:
+Live verification of all four adapters needs the Compose database services and
+explicit test DSNs:
 
 ```bash
-docker compose --profile postgresql up --detach --wait postgres
+docker compose --profile all-backends up --detach --wait postgres mysql mariadb
 docker compose run --build --rm \
   -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
-  dev bash -lc \
-  'cmake --workflow --preset linux-clang-postgresql-coverage'
+  -e ORM_CXX_MYSQL_TEST_DSN='mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx' \
+  -e ORM_CXX_MARIADB_TEST_DSN='mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx' \
+  dev cmake --workflow --preset linux-clang-all-backends
 docker compose run --build --rm \
   -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
-  gcc cmake --workflow --preset linux-gcc-postgresql
-docker compose --profile postgresql down
+  -e ORM_CXX_MYSQL_TEST_DSN='mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx' \
+  -e ORM_CXX_MARIADB_TEST_DSN='mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx' \
+  gcc cmake --workflow --preset linux-gcc-15-all-backends
+docker compose --profile all-backends down
 ```
 
 The repository also includes a devcontainer backed by the same Dockerfile and
@@ -378,13 +397,15 @@ headers remain ordinary `#include`s; `import std` and header units are not used.
  ```
 
 2. Select backend options before adding and linking the library. This example
-   enables both bundled backends:
+   enables all four bundled backends:
 
  ```cmake
 set(ORM_CXX_BUILD_TESTS OFF CACHE BOOL "Build orm-cxx tests")
 set(ORM_CXX_BUILD_EXAMPLES OFF CACHE BOOL "Build orm-cxx examples")
 set(ORM_CXX_ENABLE_SQLITE_BACKEND ON CACHE BOOL "Build SQLite backend")
 set(ORM_CXX_ENABLE_POSTGRESQL_BACKEND ON CACHE BOOL "Build PostgreSQL backend")
+set(ORM_CXX_ENABLE_MYSQL_BACKEND ON CACHE BOOL "Build MySQL backend")
+set(ORM_CXX_ENABLE_MARIADB_BACKEND ON CACHE BOOL "Build MariaDB backend")
 
 add_subdirectory(externals/orm-cxx)
 
@@ -393,18 +414,17 @@ add_executable(main Main.cpp)
 target_link_libraries(main PRIVATE orm-cxx::orm-cxx)
  ```
 
-SQLite-only is the default. For PostgreSQL-only, set SQLite to `OFF` and
-PostgreSQL to `ON`; for the backend-neutral core, set both to `OFF`. PostgreSQL
-requires `libpq`, while SQLite requires its development library. When using this
-repository's vcpkg manifest, the `sqlite` feature is enabled by default:
-`vcpkg install --x-feature=postgresql` provisions both dependencies, while
-`vcpkg install --x-no-default-features --x-feature=postgresql` provisions only
-PostgreSQL.
+All four backend options default to `OFF`. Enable only the adapters required by
+your application. SQLite needs its development library, PostgreSQL needs
+`libpq`, and MySQL or MariaDB needs the shared Oracle MySQL C client. Core-only
+builds need SOCI core without database clients. The vcpkg manifest has no default
+backend features; select `sqlite`, `postgresql`, `mysql` and `mariadb` explicitly.
+See [Backends](docs/backends.md) for server versions, live tests and capabilities.
 
 ## ⚒️ Compiler support
 
 - [MSVC➚](https://en.wikipedia.org/wiki/Microsoft_Visual_Studio) version 19.50 or newer.
-- [GCC➚](https://gcc.gnu.org/) version 14 or newer.
+- [GCC➚](https://gcc.gnu.org/) version 15 or newer.
 - [Clang➚](https://clang.llvm.org/) version 18 or newer.
 
 ## 📦 Dependencies
@@ -413,6 +433,7 @@ PostgreSQL.
 - [SOCI](https://github.com/SOCI/soci)
 - SQLite development libraries (when `ORM_CXX_ENABLE_SQLITE_BACKEND=ON`)
 - PostgreSQL `libpq` development libraries (when `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON`)
+- Oracle MySQL C client (when `ORM_CXX_ENABLE_MYSQL_BACKEND=ON` or `ORM_CXX_ENABLE_MARIADB_BACKEND=ON`)
 
 ## ✨ Contributing
 

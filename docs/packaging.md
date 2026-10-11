@@ -15,12 +15,14 @@ the central installation examples below will not resolve `orm-cxx`.
 
 No private registry or Conan remote is required. SOCI and enabled database client
 libraries are dependencies of the package and are installed by the manager.
+The minimum SOCI version is 4.1.0, including MySQL TLS mode support. The pinned
+vcpkg baseline supplies SOCI 4.1.4 and Oracle `libmysql` 8.0.46; the Conan recipe
+uses SOCI 4.1.2 and its Oracle `libmysqlclient` dependency.
 Consumers require GCC 15+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and the selected package manager. Standard-library headers
 are included normally; header units and `import std` are not required.
 On a minimal Linux host, vcpkg also needs its ordinary host tool
-`pkg-config`; the Packages workflow installs it. No manual SOCI/SQLite/libpq
-development-package installation is needed.
-SQLite works in process; PostgreSQL applications still need a database server
+`pkg-config`; the Packages workflow installs it. No manual SOCI or selected-client development-package installation is needed.
+SQLite works in process; PostgreSQL, MySQL and MariaDB need a database server
 to connect to (the package supplies the client library, not a running server).
 
 ## Consume from vcpkg after acceptance
@@ -33,12 +35,12 @@ Add an `orm-cxx` dependency to the application's `vcpkg.json`:
 }
 ```
 
-This enables SQLite. For both backends, use
-`{"name": "orm-cxx", "features": ["postgresql"]}`. For PostgreSQL alone, use
-`{"name": "orm-cxx", "default-features": false, "features": ["postgresql"]}`.
-For the core without database drivers, disable default features and omit
-`features`. Pin a vcpkg `builtin-baseline` containing the accepted port for
-reproducible builds; a baseline predating the initial submission cannot resolve it.
+This selects core-only. Backend features are independent and default to disabled:
+`sqlite`, `postgresql`, `mysql` and `mariadb`. For example,
+`{"name": "orm-cxx", "features": ["mysql", "mariadb"]}` enables those two
+providers with one shared SOCI MySQL driver and Oracle client. Select all four
+features to enable every adapter. Pin a `builtin-baseline` containing the
+accepted port for reproducible builds.
 
 ```cmake
 cmake_minimum_required(VERSION 3.31)
@@ -68,7 +70,8 @@ On Linux the default `x64-linux` triplet is suitable.
 The imported target propagates C++20, module source file sets, import metadata,
 and transitive linkage. Applications write `import orm;`; the module exposes the
 enabled backends as `orm::config::sqliteBackendEnabled` and
-`orm::config::postgresqlBackendEnabled`. No compiler macro definitions are exported.
+`orm::config::postgresqlBackendEnabled`, `orm::config::mysqlBackendEnabled`
+and `orm::config::mariadbBackendEnabled`. No compiler macro definitions are exported.
 `find_package(orm-cxx-reflection CONFIG REQUIRED)` exposes the compiled
 `orm-cxx::reflection` target for `import orm.reflection;` without SOCI dependencies.
 
@@ -96,10 +99,11 @@ Use the same `find_package(orm-cxx)` and target as above. Conan preserves the
 library's native CMake configs; CMakeDeps supplies the dependency configs and
 skips generating an orm-cxx replacement. The native config also exposes
 `orm-cxx::reflection`.
-Conan options are `orm-cxx/*:with_sqlite3=True` (default) and
-`orm-cxx/*:with_postgresql=False` (default). Pass `-o` to `conan install` to select
-the backends. ConanCenter supplies available binaries and `--build=missing`
-builds configurations that do not have a matching binary.
+Conan options are `with_sqlite3`, `with_postgresql`, `with_mysql` and
+`with_mariadb`; all default to `False`. Pass `-o orm-cxx/*:with_mysql=True`, for
+example, to `conan install`. MySQL and MariaDB share one SOCI `with_mysql`
+dependency and Oracle `libmysqlclient`. ConanCenter supplies available binaries;
+`--build=missing` builds configurations without a matching binary.
 
 ## Maintainer setup and publishing
 
@@ -206,10 +210,10 @@ Install the packaging tools into a Python virtual environment:
 python -m pip install -r tools/requirements-packaging.txt
 python -m unittest discover -s tests/packaging -v
 python scripts/prepare_packages.py
-python scripts/check_packages.py --manager conan --backends sqlite
+python scripts/check_packages.py --manager conan --backends core
 git submodule update --init externals/vcpkg
 ./externals/vcpkg/bootstrap-vcpkg.sh -disableMetrics
-python scripts/check_packages.py --manager vcpkg --backends sqlite
+python scripts/check_packages.py --manager vcpkg --backends core
 ```
 
 On Windows, run in a Visual Studio developer shell and bootstrap with
@@ -217,8 +221,9 @@ On Windows, run in a Visual Studio developer shell and bootstrap with
 `x64-windows-static` on Windows and `x64-linux` on Linux. `x64-windows` is also
 supported and produces a static `orm-cxx` library with the triplet's dynamic CRT;
 use `x64-windows-static` when validating a fully static CRT configuration.
-`--backends` accepts `sqlite`,
-`postgresql`, `both`, and `core`. Use a separate `--work` directory for each
+`--backends` accepts `core`, `all`, and any canonical plus-separated subset
+of `sqlite`, `postgresql`, `mysql` and `mariadb`, such as `mysql+mariadb`.
+The default is `core`; CI checks all 16 independent subsets. Use a separate `--work` directory for each
 concurrent invocation. The Conan check defaults `CONAN_HOME` to
 `build/conan-home` and detects a profile there. To use an existing profile, pass
 `--conan-profile=PROFILE`. `--conan-setting` and `--conan-conf` are repeatable
@@ -234,15 +239,18 @@ and metadata, normalizing CRLF to LF so its bytes and checksums are stable acros
 Windows and Linux checkouts. A temporary loopback HTTP server supplies that same archive to the
 actual recipes, including their checksum verification. Consumers build without
 the source tree or bundled dependency submodules. Every configuration builds
-typed `Query`, `Update`, and `ProjectionQuery` expressions, including core-only
-and PostgreSQL-only packages. Consumer targets enable strict warnings and
+typed `Query`, `Update`, and `ProjectionQuery` expressions. Consumer targets enable strict warnings and
 warnings-as-errors privately; those flags are not exported to applications.
-SQLite checks execute CRUD and DTO projections;
-PostgreSQL checks verify linking and backend registration without requiring a
-server. Existing backend integration workflows provide live database coverage.
-Linux and Windows tests cover all four backend selections. Windows vcpkg
-additionally verifies SQLite and both backends with the dynamic CRT triplet. Recipes under `packaging/` are templates: the prepared
-submission under `build/distribution` contains the release version, URL, and hashes.
+Consumers verify the four generated configuration flags, exact registry
+membership and compile failures for disabled provider types. Linux package CI
+starts real PostgreSQL, MySQL and MariaDB services and requires CRUD, projection
+and migration smoke tests for every selected provider. SQLite uses an in-memory
+database. Local live server checks use `ORM_CXX_<BACKEND>_TEST_DSN`; set
+`ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS=1` to reject missing DSNs.
+Both managers check all 16 subsets on Linux and Windows. Windows vcpkg also
+checks SQLite and all four backends with the dynamic CRT triplet.
+Templates under `packaging/` become the prepared versioned recipes under
+`build/distribution`.
 
 ## Native CMake installation
 
@@ -250,7 +258,7 @@ Package recipes set `ORM_CXX_USE_SYSTEM_SOCI=ON`, disable developer tests and
 examples, then use `cmake --install`. An existing SOCI CMake package is required
 in this mode. Installed configs provide `orm-cxx::orm-cxx` and
 `orm-cxx::reflection`; full-library components are `core`, `reflection`,
-`sqlite3`, and `postgresql`. Requesting a disabled backend as a required CMake
+`sqlite3`, `postgresql`, `mysql` and `mariadb`. Requesting a disabled backend as a required CMake
 component fails at configuration time. Compatibility is limited to the same
 minor release series while the library is at version `0.x`.
 

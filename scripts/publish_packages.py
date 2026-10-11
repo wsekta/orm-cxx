@@ -73,7 +73,7 @@ def release_notes(metadata):
         f"# orm-cxx {metadata['version']}\n\n"
         "A C++20 object-relational mapper with compile-time aggregate reflection.\n\n"
         "## Features\n\n"
-        "- SQLite and optional PostgreSQL backends with a shared portability contract.\n"
+        "- SQLite, PostgreSQL, MySQL and MariaDB adapters with a shared portability contract.\n"
         "- Closed schemas, typed model mappings, and reflection for up to 128 fields.\n"
         "- CRUD, transactions, generated integer keys, nullable fields, projections, "
         "and aggregate queries.\n"
@@ -220,14 +220,13 @@ def existing_submission(upstream, owner, branch):
 def submission_body(manager, metadata, conan_issue=None):
     details = (
         f"Upstream release: https://github.com/{metadata['repository']}/releases/tag/{metadata['tag']}\n\n"
-        "A static C++20 library with SQLite enabled by default and optional PostgreSQL. "
+        "A static C++20 library with four independently selected database adapters, all disabled by default. "
         "The package manager supplies SOCI and the enabled database client dependencies. "
         "The source distribution contains no vendored dependency submodules.\n\n"
-        "The upstream Packages workflow passed six configurations for this manager: "
-        "SQLite, PostgreSQL, both backends, and core on Linux; SQLite and both backends "
-        "on Windows. Installed consumers exercise SQLite CRUD, PostgreSQL linking and "
-        "backend registration, and the standalone reflection target. Live PostgreSQL "
-        "behavior is tested by the separate upstream integration workflow.\n\n"
+        "The upstream Packages workflow checks all 16 backend subsets for this manager "
+        "on Linux and Windows. Installed consumers verify selected providers, disabled-provider "
+        "compile failures and the standalone reflection target. Linux consumers run CRUD, "
+        "projections and migrations against every selected database.\n\n"
         f"Validated source commit: `{metadata['commit']}`.\n\n"
         f"SHA256: `{metadata['sha256']}`.\n\n"
     )

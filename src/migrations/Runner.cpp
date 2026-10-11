@@ -1,7 +1,9 @@
 module;
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
+#include <ctime>
 #include <exception>
 #include <optional>
 #include <string>
@@ -22,6 +24,9 @@ namespace
 {
 using Access = detail::DatabaseAccess;
 
+[[noreturn]] auto databaseFailure(const soci::soci_error& error, const db::BackendRuntime& runtime,
+                                  db::BackendType backend, Version version) -> void;
+
 auto ready(Database& database) -> db::BackendType
 {
     const auto backend = database.getBackendType();
@@ -33,12 +38,20 @@ auto ready(Database& database) -> db::BackendType
     {
         throw MigrationError{ErrorCode::ActiveTransaction, "Migrations require an idle database session", 0, backend};
     }
-    if (!database.getBackendCapabilities().schema.transactionalMigrations)
+    if (!database.getBackendCapabilities().migrations.supported)
     {
-        throw MigrationError{ErrorCode::UnsupportedBackend, "Backend does not support transactional migrations", 0,
-                             backend};
+        throw MigrationError{ErrorCode::UnsupportedBackend, "Backend does not support migrations", 0, backend};
     }
     (void)detail::backendName(backend);
+    const auto& runtime = Access::runtime(database);
+    try
+    {
+        runtime.validateMigrationSession(Access::session(database));
+    }
+    catch (const soci::soci_error& error)
+    {
+        databaseFailure(error, runtime, backend, 0);
+    }
     return backend;
 }
 auto scriptsFor(const Migration& migration, db::BackendType backend) -> const SqlMigration&
@@ -67,7 +80,8 @@ auto validateCatalog(const Catalog& catalog, db::BackendType backend) -> void
 class Transaction
 {
 public:
-    Transaction(Database& database, std::string_view table, bool writing) : database_{database}
+    Transaction(Database& database, std::string_view table, bool writing)
+        : database_{database}, previouslyActive_{Access::active(database)}
     {
         if (writing)
         {
@@ -95,7 +109,7 @@ public:
                 database_.disconnect();
             }
         }
-        Access::setActive(database_, false);
+        Access::setActive(database_, previouslyActive_);
     }
     auto commit(Version version) -> void
     {
@@ -119,23 +133,58 @@ public:
 private:
     Database& database_;
     bool finished_ = false;
+    bool previouslyActive_ = false;
 };
 
-auto readHistory(soci::session& session, const std::string& table) -> std::vector<AppliedMigration>
+/** A nontransactional backend's session lock survives the script's implicit commits. */
+class MigrationLock
 {
-    // Qualified table discovery uses the same resolved namespace as history reads/writes.
-    int exists = 0;
-    if (session.get_backend_name() == "sqlite3")
+public:
+    MigrationLock(Database& database, std::string_view table) : database_{database}, table_{table}
     {
-        session << "SELECT COUNT(*) FROM main.sqlite_master WHERE type='table' AND name='_orm_migrations'",
-            soci::into(exists);
+        Access::runtime(database_).beginMigration(Access::session(database_), table_);
+        Access::setActive(database_, true);
     }
-    else
+    MigrationLock(const MigrationLock&) = delete;
+    auto operator=(const MigrationLock&) -> MigrationLock& = delete;
+    ~MigrationLock()
     {
-        session << "SELECT CASE WHEN to_regclass(:table) IS NULL THEN 0 ELSE 1 END", soci::use(table, "table"),
-            soci::into(exists);
+        try
+        {
+            if (!finished_ && database_.isConnected())
+            {
+                Access::runtime(database_).endMigration(Access::session(database_), table_);
+            }
+        }
+        catch (...)
+        {
+            try
+            {
+                database_.disconnect();
+            }
+            catch (...)
+            {
+            }
+        }
+        Access::setActive(database_, false);
     }
-    if (!exists)
+    auto finish() -> void
+    {
+        Access::runtime(database_).endMigration(Access::session(database_), table_);
+        finished_ = true;
+        Access::setActive(database_, false);
+    }
+
+private:
+    Database& database_;
+    std::string table_;
+    bool finished_ = false;
+};
+
+auto readHistory(soci::session& session, const db::BackendRuntime& runtime,
+                 const std::string& table) -> std::vector<AppliedMigration>
+{
+    if (!runtime.migrationHistoryExists(session, table))
     {
         return {};
     }
@@ -150,16 +199,32 @@ auto readHistory(soci::session& session, const std::string& table) -> std::vecto
             const auto flag = row.get<int>(5);
             const auto backend = row.get<int>(2);
             if ((flag != 0 && flag != 1) || (backend != static_cast<int>(db::BackendType::Sqlite) &&
-                                             backend != static_cast<int>(db::BackendType::Postgres)))
+                                             backend != static_cast<int>(db::BackendType::Postgres) &&
+                                             backend != static_cast<int>(db::BackendType::Mysql) &&
+                                             backend != static_cast<int>(db::BackendType::Mariadb)))
             {
                 throw MigrationError{ErrorCode::InvalidHistory, "Invalid migration history record"};
             }
-            // SQLite reports its BIGINT values as long long; PostgreSQL BIGINT does too.
+            std::string appliedAt;
+            if (row.get_properties(4).get_data_type() == soci::dt_date)
+            {
+                const auto timestamp = row.get<std::tm>(4);
+                std::array<char, 32> text{};
+                if (std::strftime(text.data(), text.size(), "%Y-%m-%d %H:%M:%S", &timestamp) == 0)
+                {
+                    throw MigrationError{ErrorCode::InvalidHistory, "Invalid migration history timestamp"};
+                }
+                appliedAt = text.data();
+            }
+            else
+            {
+                appliedAt = row.get<std::string>(4);
+            }
             history.push_back(AppliedMigration{.version = row.get<long long>(0),
                                                .name = row.get<std::string>(1),
                                                .backend = static_cast<db::BackendType>(backend),
                                                .checksum = row.get<std::string>(3),
-                                               .appliedAt = row.get<std::string>(4),
+                                               .appliedAt = std::move(appliedAt),
                                                .baseline = flag != 0});
         }
     }
@@ -170,12 +235,50 @@ auto readHistory(soci::session& session, const std::string& table) -> std::vecto
     return history;
 }
 
-auto evaluate(const Catalog& catalog, db::BackendType backend, std::vector<AppliedMigration> history) -> Status
+auto readIncomplete(soci::session& session, const db::BackendRuntime& runtime,
+                    const std::string& table) -> std::optional<IncompleteMigration>
+{
+    const auto journal = runtime.migrationJournalTable(session, table);
+    if (journal.empty() || !runtime.migrationHistoryExists(session, journal))
+    {
+        return std::nullopt;
+    }
+    std::optional<IncompleteMigration> result;
+    soci::rowset<soci::row> rows =
+        (session.prepare << "SELECT slot,version,name,backend,direction,checksum FROM " + journal);
+    try
+    {
+        for (const auto& row : rows)
+        {
+            const auto backend = static_cast<db::BackendType>(row.get<int>(3));
+            const auto direction = row.get<int>(4);
+            if (result || row.get<int>(0) != 1 || (direction != 0 && direction != 1) ||
+                (backend != db::BackendType::Mysql && backend != db::BackendType::Mariadb))
+            {
+                throw MigrationError{ErrorCode::InvalidHistory, "Invalid incomplete migration marker"};
+            }
+            result = IncompleteMigration{.version = row.get<long long>(1),
+                                         .name = row.get<std::string>(2),
+                                         .backend = backend,
+                                         .direction = direction == 0 ? Direction::Up : Direction::Down,
+                                         .checksum = row.get<std::string>(5)};
+        }
+    }
+    catch (const std::bad_cast&)
+    {
+        throw MigrationError{ErrorCode::InvalidHistory, "Incomplete marker has incompatible column types"};
+    }
+    return result;
+}
+
+auto evaluate(const Catalog& catalog, db::BackendType backend, std::vector<AppliedMigration> history,
+              std::optional<IncompleteMigration> incomplete = std::nullopt) -> Status
 {
     Status result{.currentVersion = history.empty() ? 0 : history.back().version,
                   .baselineVersion = 0,
                   .applied = std::move(history),
                   .pending = {},
+                  .incomplete = std::move(incomplete),
                   .problems = {}};
     const auto migrations = catalog.migrations();
     bool ordinarySeen = false;
@@ -203,14 +306,39 @@ auto evaluate(const Catalog& catalog, db::BackendType backend, std::vector<Appli
     {
         result.pending.push_back({migrations[i].version, migrations[i].name});
     }
+    if (result.incomplete)
+    {
+        const auto& marker = *result.incomplete;
+        const auto found = std::ranges::find(migrations, marker.version, &Migration::version);
+        const auto expectedIndex = marker.direction == Direction::Up ?
+                                       result.applied.size() :
+                                       (result.applied.empty() ? migrations.size() : result.applied.size() - 1);
+        if (found == migrations.end() || marker.backend != backend || marker.name != found->name ||
+            expectedIndex >= migrations.size() || migrations[expectedIndex].version != marker.version ||
+            (marker.direction == Direction::Down && marker.version <= result.baselineVersion))
+        {
+            result.problems.push_back(
+                {ErrorCode::InvalidHistory, marker.version, "Incomplete marker does not match catalog position"});
+        }
+        else if (marker.checksum != detail::checksum(scriptsFor(*found, backend)))
+        {
+            result.problems.push_back(
+                {ErrorCode::ChecksumMismatch, marker.version, "Incomplete migration SQL has changed"});
+        }
+    }
     return result;
 }
 auto requireValid(const Status& status, db::BackendType backend) -> void
 {
-    if (!status.isValid())
+    if (!status.problems.empty())
     {
         const auto& issue = status.problems.front();
         throw MigrationError{issue.code, issue.message, issue.version, backend};
+    }
+    if (status.incomplete)
+    {
+        throw MigrationError{ErrorCode::IncompleteMigration, "Incomplete migration requires operator resolution",
+                             status.incomplete->version, backend};
     }
 }
 
@@ -256,12 +384,18 @@ auto makePlan(const Catalog& catalog, db::BackendType backend, const Status& sta
     return result;
 }
 
-auto createHistory(soci::session& session, const std::string& table) -> void
+auto recordIncomplete(soci::session& session, const std::string& journal, const Migration& migration,
+                      db::BackendType backend, Direction direction) -> void
 {
-    session << "CREATE TABLE IF NOT EXISTS " + table +
-                   " (version BIGINT PRIMARY KEY NOT NULL, name TEXT NOT NULL, backend INTEGER NOT NULL, checksum TEXT "
-                   "NOT NULL, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, baseline INTEGER NOT NULL "
-                   "CHECK(baseline IN (0,1)))";
+    const auto version = static_cast<long long>(migration.version);
+    const auto backendNumber = static_cast<int>(backend);
+    const auto directionNumber = direction == Direction::Up ? 0 : 1;
+    const auto checksum = detail::checksum(scriptsFor(migration, backend));
+    session << "INSERT INTO " + journal +
+                   " (slot,version,name,backend,direction,checksum) VALUES "
+                   "(1,:version,:name,:backend,:direction,:checksum)",
+        soci::use(version, "version"), soci::use(migration.name, "name"), soci::use(backendNumber, "backend"),
+        soci::use(directionNumber, "direction"), soci::use(checksum, "checksum");
 }
 auto recordHistory(soci::session& session, const std::string& table, const Migration& migration,
                    db::BackendType backend, bool baseline) -> void
@@ -296,7 +430,8 @@ auto Runner::status() const -> Status
         auto& session = Access::session(*database_);
         const auto table = runtime.migrationTable(session);
         Transaction transaction{*database_, table, false};
-        auto result = evaluate(catalog_, backend, readHistory(session, table));
+        auto result =
+            evaluate(catalog_, backend, readHistory(session, runtime, table), readIncomplete(session, runtime, table));
         transaction.commit(0);
         return result;
     }
@@ -315,7 +450,9 @@ auto Runner::validate() const -> void
 }
 auto Runner::preview(Direction direction, std::optional<Version> target) const -> Plan
 {
-    return makePlan(catalog_, database_->getBackendType(), status(), direction, target);
+    auto result = makePlan(catalog_, database_->getBackendType(), status(), direction, target);
+    result.atomicity = database_->getBackendCapabilities().migrations.atomicity;
+    return result;
 }
 auto Runner::up(std::optional<Version> target) -> void
 {
@@ -335,18 +472,68 @@ auto Runner::execute(Direction direction, std::optional<Version> target) -> void
     auto& session = Access::session(*database_);
     const auto& runtime = Access::runtime(*database_);
     const auto table = runtime.migrationTable(session);
+    const auto nonTransactional =
+        database_->getBackendCapabilities().migrations.atomicity == db::MigrationAtomicity::NonTransactional;
     for (const auto& step : plan.migrations)
     {
         try
         {
-            Transaction transaction{*database_, table, true};
-            if (readHistory(session, table) != expected)
+            std::optional<MigrationLock> lock;
+            if (nonTransactional)
+            {
+                lock.emplace(*database_, table);
+                requireValid(evaluate(catalog_, backend, readHistory(session, runtime, table),
+                                      readIncomplete(session, runtime, table)),
+                             backend);
+                runtime.createMigrationHistory(session, table);
+                const auto journal = runtime.migrationJournalTable(session, table);
+                if (journal.empty())
+                {
+                    throw MigrationError{ErrorCode::UnsupportedBackend,
+                                         "Nontransactional migrations require a durable journal", step.version,
+                                         backend};
+                }
+                Transaction marker{*database_, table, false};
+                if (readHistory(session, runtime, table) != expected)
+                {
+                    throw MigrationError{ErrorCode::HistoryChanged, "Migration history changed; inspect and retry",
+                                         step.version, backend};
+                }
+                const auto migration = std::ranges::find(catalog_.migrations(), step.version, &Migration::version);
+                recordIncomplete(session, journal, *migration, backend, direction);
+                const IncompleteMigration wanted{step.version, step.name, backend, direction,
+                                                 detail::checksum(scriptsFor(*migration, backend))};
+                if (readIncomplete(session, runtime, table) != wanted)
+                {
+                    throw MigrationError{ErrorCode::InvalidHistory, "Incomplete marker was not recorded", step.version,
+                                         backend};
+                }
+                marker.commit(step.version);
+                runtime.executeMigrationScript(session, step.sql);
+            }
+            Transaction transaction{*database_, table, !nonTransactional};
+            if (readHistory(session, runtime, table) != expected)
             {
                 throw MigrationError{ErrorCode::HistoryChanged, "Migration history changed; inspect and retry",
                                      step.version, backend};
             }
-            createHistory(session, table);
-            runtime.executeMigrationScript(session, step.sql);
+            if (nonTransactional)
+            {
+                const auto marker = readIncomplete(session, runtime, table);
+                const auto migration = std::ranges::find(catalog_.migrations(), step.version, &Migration::version);
+                const IncompleteMigration wanted{step.version, step.name, backend, direction,
+                                                 detail::checksum(scriptsFor(*migration, backend))};
+                if (marker != wanted)
+                {
+                    throw MigrationError{ErrorCode::InvalidHistory, "Migration script modified its incomplete marker",
+                                         step.version, backend};
+                }
+            }
+            if (!nonTransactional)
+            {
+                runtime.createMigrationHistory(session, table);
+                runtime.executeMigrationScript(session, step.sql);
+            }
             if (direction == Direction::Up)
             {
                 const auto migration = std::ranges::find(catalog_.migrations(), step.version, &Migration::version);
@@ -357,7 +544,7 @@ auto Runner::execute(Direction direction, std::optional<Version> target) -> void
                 const auto version = static_cast<long long>(step.version);
                 session << "DELETE FROM " + table + " WHERE version=:version", soci::use(version, "version");
             }
-            auto actual = readHistory(session, table);
+            auto actual = readHistory(session, runtime, table);
             const auto wantedSize = direction == Direction::Up ? expected.size() + 1 : expected.size() - 1;
             const auto preservedSize = direction == Direction::Up ? expected.size() : wantedSize;
             if (actual.size() != wantedSize ||
@@ -371,7 +558,20 @@ auto Runner::execute(Direction direction, std::optional<Version> target) -> void
             // Scripts may not erase or corrupt the migration ledger.
             const auto next = evaluate(catalog_, backend, expected);
             requireValid(next, backend);
+            if (nonTransactional)
+            {
+                session << "DELETE FROM " + runtime.migrationJournalTable(session, table) + " WHERE slot=1";
+                if (readIncomplete(session, runtime, table))
+                {
+                    throw MigrationError{ErrorCode::InvalidHistory, "Incomplete marker was not removed", step.version,
+                                         backend};
+                }
+            }
             transaction.commit(step.version);
+            if (lock)
+            {
+                lock->finish();
+            }
         }
         catch (const soci::soci_error& error)
         {
@@ -400,13 +600,27 @@ auto Runner::baseline(Version target) -> void
     {
         auto& session = Access::session(*database_);
         const auto table = runtime.migrationTable(session);
-        Transaction transaction{*database_, table, true};
-        if (!readHistory(session, table).empty())
+        const auto nonTransactional =
+            database_->getBackendCapabilities().migrations.atomicity == db::MigrationAtomicity::NonTransactional;
+        std::optional<MigrationLock> lock;
+        if (nonTransactional)
+        {
+            lock.emplace(*database_, table);
+            requireValid(evaluate(catalog_, backend, readHistory(session, runtime, table),
+                                  readIncomplete(session, runtime, table)),
+                         backend);
+            runtime.createMigrationHistory(session, table);
+        }
+        Transaction transaction{*database_, table, !nonTransactional};
+        if (!readHistory(session, runtime, table).empty())
         {
             throw MigrationError{ErrorCode::HistoryChanged, "Migration history changed; inspect and retry", target,
                                  backend};
         }
-        createHistory(session, table);
+        if (!nonTransactional)
+        {
+            runtime.createMigrationHistory(session, table);
+        }
         for (const auto& migration : catalog_.migrations())
         {
             if (migration.version > target)
@@ -415,7 +629,7 @@ auto Runner::baseline(Version target) -> void
             }
             recordHistory(session, table, migration, backend, true);
         }
-        const auto recorded = evaluate(catalog_, backend, readHistory(session, table));
+        const auto recorded = evaluate(catalog_, backend, readHistory(session, runtime, table));
         requireValid(recorded, backend);
         if (recorded.applied.size() != plan.migrations.size() || recorded.currentVersion != target ||
             recorded.baselineVersion != target)
@@ -424,6 +638,10 @@ auto Runner::baseline(Version target) -> void
                                  backend};
         }
         transaction.commit(target);
+        if (lock)
+        {
+            lock->finish();
+        }
     }
     catch (const soci::soci_error& error)
     {
@@ -432,6 +650,73 @@ auto Runner::baseline(Version target) -> void
     catch (const MigrationError& error)
     {
         throw MigrationError{error.getCode(), error.what(), target, backend, error.getNativeCode()};
+    }
+}
+
+auto Runner::resolve(Version version, std::string_view expectedChecksum, Resolution resolution) -> void
+{
+    const auto initial = status();
+    const auto backend = database_->getBackendType();
+    if (!initial.problems.empty())
+    {
+        const auto& problem = initial.problems.front();
+        throw MigrationError{problem.code, problem.message, problem.version, backend};
+    }
+    if (database_->getBackendCapabilities().migrations.atomicity != db::MigrationAtomicity::NonTransactional ||
+        !initial.incomplete || initial.incomplete->version != version ||
+        initial.incomplete->checksum != expectedChecksum ||
+        (resolution != Resolution::Completed && resolution != Resolution::Reverted))
+    {
+        throw MigrationError{ErrorCode::InvalidResolution,
+                             "Resolution must match the incomplete migration and checksum", version, backend};
+    }
+    const auto& runtime = Access::runtime(*database_);
+    try
+    {
+        auto& session = Access::session(*database_);
+        const auto table = runtime.migrationTable(session);
+        MigrationLock lock{*database_, table};
+        Transaction transaction{*database_, table, false};
+        if (readHistory(session, runtime, table) != initial.applied ||
+            readIncomplete(session, runtime, table) != initial.incomplete)
+        {
+            throw MigrationError{ErrorCode::HistoryChanged, "Migration state changed; inspect and retry", version,
+                                 backend};
+        }
+        if (resolution == Resolution::Completed)
+        {
+            if (initial.incomplete->direction == Direction::Up)
+            {
+                const auto migration = std::ranges::find(catalog_.migrations(), version, &Migration::version);
+                recordHistory(session, table, *migration, backend, false);
+            }
+            else
+            {
+                const auto value = static_cast<long long>(version);
+                session << "DELETE FROM " + table + " WHERE version=:version", soci::use(value, "version");
+            }
+        }
+        const auto actual = evaluate(catalog_, backend, readHistory(session, runtime, table));
+        requireValid(actual, backend);
+        const auto expectedSize =
+            initial.applied.size() +
+            (resolution == Resolution::Completed && initial.incomplete->direction == Direction::Up ? 1 : 0) -
+            (resolution == Resolution::Completed && initial.incomplete->direction == Direction::Down ? 1 : 0);
+        if (actual.applied.size() != expectedSize)
+        {
+            throw MigrationError{ErrorCode::InvalidHistory, "Resolution history was not recorded", version, backend};
+        }
+        session << "DELETE FROM " + runtime.migrationJournalTable(session, table) + " WHERE slot=1";
+        if (readIncomplete(session, runtime, table))
+        {
+            throw MigrationError{ErrorCode::InvalidHistory, "Incomplete marker was not removed", version, backend};
+        }
+        transaction.commit(version);
+        lock.finish();
+    }
+    catch (const soci::soci_error& error)
+    {
+        databaseFailure(error, runtime, backend, version);
     }
 }
 } // namespace orm::migrations

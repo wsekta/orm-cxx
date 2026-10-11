@@ -9,7 +9,7 @@ policy for the `orm-cxx` project.
 |----------|--------|
 | GCC 15 | [![GCC](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-gxx-build.yml) |
 | Clang (18–20) | [![Clang](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/linux-clang-build.yml) |
-| PostgreSQL | [![PostgreSQL](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml) |
+| Backend conformance | [![Backend conformance](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/postgresql-build.yml) |
 | MSVC | [![MSVC](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/windows-msvc-build.yml) |
 | Quality | [![Quality](https://github.com/wsekta/orm-cxx/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/wsekta/orm-cxx/actions/workflows/quality.yml) |
 | Coverage | [![codecov](https://codecov.io/github/wsekta/orm-cxx/graph/badge.svg?token=MREUNGY5C9)](https://codecov.io/github/wsekta/orm-cxx) |
@@ -54,25 +54,25 @@ interfaces using the targets' public options and then run the resulting programs
 |---------|--------|----------|--------|
 | MSVC latest | `windows-2025-vs2026` | `windows-msvc-build.yml` | Tested |
 
-## PostgreSQL Compiler Matrix
+## Backend and consumer matrix
 
-PostgreSQL integration tests are run with multiple compiler/backend version
-combinations:
+`postgresql-build.yml` runs all four adapters through the same conformance
+suite. The workflow name is **Backend conformance**. Clang 18, 19 and 20 and
+GCC 15 cover PostgreSQL 15/18, MySQL 8.4/9.7 and MariaDB 11.4/11.8/12.3.
+MSVC builds every adapter; live server tests run on Linux.
+Each all-adapter build registers consumers for all 16 independent subsets.
+Every consumer checks exact registry membership and compiles negative controls
+for disabled provider types. Core compiler jobs require no database clients.
 
-| Compiler | PostgreSQL | Coverage | Workflow |
-|----------|-----------|----------|----------|
-| GCC 15 | 15 | No | `postgresql-build.yml` |
-| Clang 18 | 18 | Yes | `postgresql-build.yml` |
-| Clang 19 | 18 | No | `postgresql-build.yml` |
-| Clang 20 | 18 | No | `postgresql-build.yml` |
+The Packages workflow repeats the 16 subsets for Conan and vcpkg on Linux and
+Windows. Linux installed consumers run live CRUD and migrations against every
+selected service; Windows verifies module, provider and linking contracts.
 
-## Coverage Policy
+## Coverage policy
 
-Code coverage is collected on a **single Clang version only** (Clang 18) to
-avoid redundant coverage reports and keep Codecov integration simple:
-
-- **SQLite coverage:** `linux-clang-build.yml` — Clang 18 with `linux-clang-coverage` preset
-- **PostgreSQL coverage:** `postgresql-build.yml` — Clang 18 with `linux-clang-postgresql-coverage` preset
+Clang 18 produces five independent reports: core, SQLite, PostgreSQL, MySQL and
+MariaDB. The backend conformance workflow merges the full report list and
+requires 100% line coverage. Every adapter contributes under the same policy.
 
 The LLVM exporter removes compiler-synthesized implicit-member maps only when
 every zero-count region exactly covers a class name on a plain `class` or
@@ -82,9 +82,8 @@ were read. Explicit method bodies and instrumented functions with zero hits
 remain coverage failures. The exporter reports how many maps and declaration
 lines it normalized. Python is required only for coverage builds.
 
-Coverage flags uploaded to Codecov:
-- `linux-clang-coverage` — SQLite coverage
-- `linux-clang-postgresql-coverage` — PostgreSQL coverage
+The merged report is uploaded with Codecov flag `all-backends`; the standalone
+core compiler workflow also uploads its core report.
 
 ## CMake Presets
 
@@ -98,7 +97,7 @@ GCC presets select GCC 15; Clang 18 remains the coverage compiler.
 | `linux-gcc-debug` | GCC 15 | Local development (default) |
 | `linux-gcc-15-debug` | GCC 15 | CI matrix |
 | `linux-clang-debug` | Clang 18 | Local development (default) |
-| `linux-clang-coverage` | Clang 18 | CI coverage |
+| `linux-clang-coverage` | Clang 18 | Core coverage |
 | `linux-clang-19-debug` | Clang 19 | CI matrix |
 | `linux-clang-19-coverage` | Clang 19 | Local coverage (optional) |
 | `linux-clang-19-postgresql` | Clang 19 | PostgreSQL CI matrix |
@@ -110,6 +109,14 @@ GCC presets select GCC 15; Clang 18 remains the coverage compiler.
 | `linux-clang-20-postgresql` | Clang 20 | PostgreSQL CI matrix |
 | `msvc-debug` | MSVC | Windows (default) |
 | `msvc-postgresql-debug` | MSVC | Windows PostgreSQL |
+| `msvc-all-backends-debug` | MSVC | All adapters and 16 consumers |
+| `linux-clang-all-backends` | Clang 18 | Live conformance and 16 consumers |
+| `linux-gcc-15-all-backends` | GCC 15 | Live conformance and 16 consumers |
+
+Single-backend debug presets exist for `sqlite`, `postgresql`, `mysql` and
+`mariadb` for each supported compiler. Clang 18 coverage presets follow
+`linux-clang-<backend>-coverage`. Base debug and coverage presets select core;
+all four backend options remain disabled unless a profile selects them.
 
 ## Adding New Compiler Versions
 

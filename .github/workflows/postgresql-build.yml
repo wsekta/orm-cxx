@@ -1,95 +1,72 @@
-name: PostgreSQL
+name: Backend conformance
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
 jobs:
-  pg15-gcc-15:
+  clang:
     runs-on: ubuntu-24.04
-    container: public.ecr.aws/docker/library/gcc:15-trixie
-    timeout-minutes: 40
-    name: PG 15 / GCC 15
+    timeout-minutes: 120
+    name: All backends / Clang ${{ matrix.clang }} / PG ${{ matrix.pg }} / MySQL ${{ matrix.mysql }} / MariaDB ${{ matrix.mariadb }}
+    strategy:
+      fail-fast: false
+      matrix:
+        clang: [18, 19, 20]
+        include:
+          - clang: 18
+            pg: '15'
+            mysql: '8.4'
+            mariadb: '11.4'
+          - clang: 19
+            pg: '18'
+            mysql: '9.7'
+            mariadb: '12.3'
+          - clang: 20
+            pg: '18'
+            mysql: '8.4'
+            mariadb: '11.8'
     services:
       postgres:
-        image: public.ecr.aws/docker/library/postgres:15
+        image: postgres:${{ matrix.pg || '18' }}
         env:
           POSTGRES_DB: orm_cxx
-          POSTGRES_PASSWORD: orm_cxx
           POSTGRES_USER: orm_cxx
-        ports:
-          - 5432:5432
+          POSTGRES_PASSWORD: orm_cxx
+        ports: ['5432:5432']
         options: >-
           --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      PGPASSWORD: orm_cxx
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - name: Install dependencies
-        run: |
-          apt-get update
-          apt-get install --no-install-recommends --yes \
-            python3 python3-venv libpq-dev libsqlite3-dev postgresql-client sqlite3
-          ln -sf /usr/local/bin/gcc /usr/local/bin/gcc-15
-          ln -sf /usr/local/bin/g++ /usr/local/bin/g++-15
-      - name: Install pinned module build tools
-        run: |
-          python3 -m venv "$GITHUB_WORKSPACE/.ci-tools"
-          "$GITHUB_WORKSPACE/.ci-tools/bin/pip" install cmake==3.31.6 ninja==1.13.0
-          printf '%s\n' "$GITHUB_WORKSPACE/.ci-tools/bin" >> "$GITHUB_PATH"
-      - name: Configure
-        run: cmake --preset linux-gcc-15-postgresql
-      - name: Build
-        run: cmake --build build/linux-gcc-15-postgresql --parallel 2
-      - name: Test
-        run: ctest --preset linux-gcc-15-postgresql
-      - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/linux-gcc-15-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
-      - name: Verify isolated schemas were removed
-        run: |
-          remaining="$(psql --host postgres --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
-            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
-          if [ -n "$remaining" ]; then
-            echo "PostgreSQL test schemas were not removed: $remaining"
-            exit 1
-          fi
-
-  pg18-clang-18:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 60
-    name: PG 18 / Clang 18
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:18
+          --health-interval 2s --health-timeout 5s --health-retries 40
+      mysql:
+        image: mysql:${{ matrix.mysql || '8.4' }}
         env:
-          POSTGRES_DB: orm_cxx
-          POSTGRES_PASSWORD: orm_cxx
-          POSTGRES_USER: orm_cxx
-        ports:
-          - 5432:5432
+          MYSQL_DATABASE: orm_cxx
+          MYSQL_ROOT_PASSWORD: orm_cxx
+          MYSQL_ROOT_HOST: '%'
+        ports: ['3306:3306']
         options: >-
-          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
+          --health-cmd "mysqladmin ping --host=localhost --user=root --password=orm_cxx"
+          --health-interval 2s --health-timeout 5s --health-retries 60
+      mariadb:
+        image: mariadb:${{ matrix.mariadb || '11.8' }}
+        env:
+          MARIADB_DATABASE: orm_cxx
+          MARIADB_ROOT_PASSWORD: orm_cxx
+          MARIADB_ROOT_HOST: '%'
+        ports: ['3307:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 2s --health-timeout 5s --health-retries 60
     env:
       ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      PGPASSWORD: orm_cxx
+      ORM_CXX_MYSQL_TEST_DSN: mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           submodules: recursive
       - uses: actions/setup-python@v6
@@ -97,167 +74,161 @@ jobs:
           python-version: '3.12'
       - name: Install module build tools
         run: python -m pip install cmake==3.31.6 ninja==1.13.0
-      - name: Install dependencies
+      - name: Install selected client libraries and compiler
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes \
-            clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 \
-            libpq-dev libsqlite3-dev lcov ninja-build postgresql-client sqlite3
-      - name: Configure
-        run: cmake --preset linux-clang-postgresql-coverage
-      - name: Build and generate coverage
-        run: cmake --build --preset linux-clang-postgresql-coverage --target orm-cxx-coverage
-      - name: Generate SQLite coverage from the same commit
+          sudo apt-get install --no-install-recommends --yes clang-${{ matrix.clang }} clang-tools-${{ matrix.clang }} libclang-rt-${{ matrix.clang }}-dev llvm-${{ matrix.clang }} libpq-dev libsqlite3-dev libmysqlclient-dev
+      - name: Configure all four adapters
         run: |
-          cmake --preset linux-clang-coverage
-          cmake --build --preset linux-clang-coverage --target orm-cxx-coverage --parallel 2
-      - name: Test
-        run: ctest --preset linux-clang-postgresql-coverage
-      - name: Test SQLite profile
-        run: ctest --preset linux-clang-coverage
-      - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/linux-clang-postgresql-coverage --output-on-failure --no-tests=error --label-regex backend-postgresql
-      - name: Verify isolated schemas were removed
+          preset=linux-clang-all-backends
+          if [ '${{ matrix.clang }}' != '18' ]; then preset=linux-clang-${{ matrix.clang }}-all-backends; fi
+          cmake --preset "$preset"
+          echo "BACKEND_PRESET=$preset" >> "$GITHUB_ENV"
+      - name: Build and run conformance, compile contracts and 16 consumer subsets
         run: |
-          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
-            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
-          if [ -n "$remaining" ]; then
-            echo "PostgreSQL test schemas were not removed: $remaining"
-            exit 1
-          fi
+          cmake --build --preset "$BACKEND_PRESET" --parallel 2
+          ctest --preset "$BACKEND_PRESET"
+
+  gcc:
+    runs-on: ubuntu-24.04
+    container: gcc:15-trixie
+    timeout-minutes: 120
+    name: All backends / GCC 15
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_USER: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s --health-timeout 5s --health-retries 40
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: orm_cxx
+          MYSQL_ROOT_PASSWORD: orm_cxx
+          MYSQL_ROOT_HOST: '%'
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping --host=localhost --user=root --password=orm_cxx"
+          --health-interval 2s --health-timeout 5s --health-retries 60
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: orm_cxx
+          MARIADB_ROOT_PASSWORD: orm_cxx
+          MARIADB_ROOT_HOST: '%'
+        ports: ['3307:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 2s --health-timeout 5s --health-retries 60
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      ORM_CXX_MYSQL_TEST_DSN: mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - name: Install selected dependencies and pinned build tools
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends --yes python3 python3-venv libpq-dev libsqlite3-dev
+          sh scripts/install_mysql_client_debian.sh
+          ln -sf /usr/local/bin/gcc /usr/local/bin/gcc-15
+          ln -sf /usr/local/bin/g++ /usr/local/bin/g++-15
+          python3 -m venv .ci-tools
+          .ci-tools/bin/pip install cmake==3.31.6 ninja==1.13.0
+          printf '%s\n' "$GITHUB_WORKSPACE/.ci-tools/bin" >> "$GITHUB_PATH"
+      - name: Build and run conformance, compile contracts and 16 consumer subsets
+        run: cmake --workflow --preset linux-gcc-15-all-backends
+
+  coverage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    name: Core and four equal coverage profiles / Clang 18
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: orm_cxx
+          POSTGRES_USER: orm_cxx
+          POSTGRES_PASSWORD: orm_cxx
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
+          --health-interval 2s --health-timeout 5s --health-retries 40
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: orm_cxx
+          MYSQL_ROOT_PASSWORD: orm_cxx
+          MYSQL_ROOT_HOST: '%'
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd "mysqladmin ping --host=localhost --user=root --password=orm_cxx"
+          --health-interval 2s --health-timeout 5s --health-retries 60
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_DATABASE: orm_cxx
+          MARIADB_ROOT_PASSWORD: orm_cxx
+          MARIADB_ROOT_HOST: '%'
+        ports: ['3307:3306']
+        options: >-
+          --health-cmd "healthcheck.sh --connect --innodb_initialized"
+          --health-interval 2s --health-timeout 5s --health-retries 60
+    env:
+      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+      ORM_CXX_MYSQL_TEST_DSN: mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Install module build tools
+        run: python -m pip install cmake==3.31.6 ninja==1.13.0
+      - name: Install compiler, coverage tools and selected clients
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends --yes clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 lcov libpq-dev libsqlite3-dev libmysqlclient-dev
       - name: Test coverage exporter and merger
-        run: python3 -m unittest discover -s tests/coverage -v
+        run: python -m unittest discover -s tests/coverage -v
+      - name: Generate independent coverage reports
+        run: |
+          for preset in linux-clang-coverage linux-clang-sqlite-coverage linux-clang-postgresql-coverage linux-clang-mysql-coverage linux-clang-mariadb-coverage; do
+            cmake --preset "$preset"
+            cmake --build --preset "$preset" --target orm-cxx-coverage --parallel 2
+            ctest --preset "$preset"
+          done
       - name: Require 100% merged line coverage
         run: |
-          python3 scripts/check_merged_coverage.py \
+          python scripts/check_merged_coverage.py \
             build/linux-clang-coverage/coverage.lcov \
+            build/linux-clang-sqlite-coverage/coverage.lcov \
             build/linux-clang-postgresql-coverage/coverage.lcov \
+            build/linux-clang-mysql-coverage/coverage.lcov \
+            build/linux-clang-mariadb-coverage/coverage.lcov \
             --source-root . --output build/coverage-merged.lcov
-      - name: Archive coverage for this commit
+      - uses: actions/upload-artifact@v4
         if: always()
-        uses: actions/upload-artifact@v4
         with:
           name: coverage-${{ github.sha }}
           path: |
-            build/linux-clang-coverage/coverage.lcov
-            build/linux-clang-postgresql-coverage/coverage.lcov
+            build/linux-clang*-coverage/coverage.lcov
             build/coverage-merged.lcov
           if-no-files-found: warn
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN || secrets.CODECOVTOKEN }}
           files: ${{ github.workspace }}/build/coverage-merged.lcov
-          flags: linux-clang-postgresql-coverage
-          name: PG 18 / Clang 18
+          flags: all-backends
+          name: Core and four backends
           disable_search: true
           fail_ci_if_error: true
-          verbose: true
-
-  pg18-clang-19:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
-    name: PG 18 / Clang 19
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:18
-        env:
-          POSTGRES_DB: orm_cxx
-          POSTGRES_PASSWORD: orm_cxx
-          POSTGRES_USER: orm_cxx
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      PGPASSWORD: orm_cxx
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Install module build tools
-        run: python -m pip install cmake==3.31.6 ninja==1.13.0
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes \
-            clang-19 clang-tools-19 libclang-rt-19-dev llvm-19 \
-            libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
-      - name: Configure
-        run: cmake --preset linux-clang-19-postgresql
-      - name: Build
-        run: cmake --build build/linux-clang-19-postgresql --parallel 2
-      - name: Test
-        run: ctest --preset linux-clang-19-postgresql
-      - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/linux-clang-19-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
-      - name: Verify isolated schemas were removed
-        run: |
-          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
-            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
-          if [ -n "$remaining" ]; then
-            echo "PostgreSQL test schemas were not removed: $remaining"
-            exit 1
-          fi
-
-  pg18-clang-20:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 40
-    name: PG 18 / Clang 20
-    services:
-      postgres:
-        image: public.ecr.aws/docker/library/postgres:18
-        env:
-          POSTGRES_DB: orm_cxx
-          POSTGRES_PASSWORD: orm_cxx
-          POSTGRES_USER: orm_cxx
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
-          --health-interval 2s
-          --health-timeout 5s
-          --health-retries 20
-    env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      PGPASSWORD: orm_cxx
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          submodules: recursive
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
-      - name: Install module build tools
-        run: python -m pip install cmake==3.31.6 ninja==1.13.0
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes \
-            clang-20 clang-tools-20 libclang-rt-20-dev llvm-20 \
-            libpq-dev libsqlite3-dev ninja-build postgresql-client sqlite3
-      - name: Configure
-        run: cmake --preset linux-clang-20-postgresql
-      - name: Build
-        run: cmake --build build/linux-clang-20-postgresql --parallel 2
-      - name: Test
-        run: ctest --preset linux-clang-20-postgresql
-      - name: Repeat PostgreSQL tests
-        run: ctest --test-dir build/linux-clang-20-postgresql --output-on-failure --no-tests=error --label-regex backend-postgresql
-      - name: Verify isolated schemas were removed
-        run: |
-          remaining="$(psql --host localhost --username orm_cxx --dbname orm_cxx --tuples-only --no-align \
-            --command "SELECT schema_name FROM information_schema.schemata WHERE left(schema_name, length('orm_cxx_test_')) = 'orm_cxx_test_';")"
-          if [ -n "$remaining" ]; then
-            echo "PostgreSQL test schemas were not removed: $remaining"
-            exit 1
-          fi

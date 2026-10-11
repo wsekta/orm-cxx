@@ -25,6 +25,8 @@ class OrmCxxTestConan(ConanFile):
         tc = CMakeToolchain(self, generator="Ninja")
         tc.variables["ORM_CXX_EXPECT_SQLITE"] = bool(options.with_sqlite3)
         tc.variables["ORM_CXX_EXPECT_POSTGRESQL"] = bool(options.with_postgresql)
+        tc.variables["ORM_CXX_EXPECT_MYSQL"] = bool(options.with_mysql)
+        tc.variables["ORM_CXX_EXPECT_MARIADB"] = bool(options.with_mariadb)
         tc.generate()
 
     def build(self):
@@ -34,6 +36,7 @@ class OrmCxxTestConan(ConanFile):
 
     def test(self):
         if can_run(self):
+            CMake(self).test()
             for executable in ("test_package", "test_reflection"):
                 self.run(
                     os.path.join(self.cpp.build.bindirs[0], executable),

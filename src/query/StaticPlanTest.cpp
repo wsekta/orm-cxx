@@ -245,7 +245,7 @@ TEST(StaticPlanTest, constexprCacheMatchesRuntimeSqlForRelationsCollectionsAndHa
     static_assert(postgres.view().find("HAVING") != std::string_view::npos);
     static_assert(sqlite.program.bindings.size() == 3);
     auto dynamic = plan.toDynamic(18, std::string{"reader"}, 2);
-    const orm::db::sqlite::SqliteBackend backend;
+    const orm::tests::TestBackend backend;
     const auto rendered = backend.commandGenerator().select(orm::modelView<Schema, User>(),
                                                             orm::detail::QueryTestAccess::getSelectSpec(dynamic));
     EXPECT_EQ(sqlite.view(), rendered.sql);
@@ -265,7 +265,7 @@ TEST(StaticPlanTest, cacheBindingsPreserveRepeatedSlotsAndNullableAssignments)
     static_assert(compiled.valid);
     static_assert(compiled.program.bindings.size() == 3);
     auto dynamic = patch.toDynamic(1, std::optional<std::string>{});
-    const orm::db::sqlite::SqliteBackend backend;
+    const orm::tests::TestBackend backend;
     const auto rendered = backend.commandGenerator().update(orm::modelView<Schema, User>(),
                                                             orm::detail::QueryTestAccess::getUpdateSpec(dynamic));
     EXPECT_EQ(compiled.view(), rendered.sql);

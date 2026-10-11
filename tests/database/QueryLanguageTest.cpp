@@ -144,6 +144,13 @@ TEST_P(QueryLanguageTest, whereWithCompositeRelatedFieldPath_shouldJoinByAllIds)
 
 TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldFilterAndPageGroups)
 {
+    if (not connection.getBackendCapabilities().query.fullModelGrouping)
+    {
+        orm::Query<models::ModelWithId> query;
+        query.groupBy(col<&models::ModelWithId::field2>());
+        EXPECT_THROW(database.select(query), orm::DatabaseError);
+        return;
+    }
     createTable<models::ModelWithId>();
     database.insert(std::vector<models::ModelWithId>{
         {1, 10, "alpha"}, {2, 20, "alpha"}, {3, 30, "beta"}, {4, 40, "beta"}, {5, 50, "gamma"}, {6, 60, "gamma"}});
@@ -169,6 +176,13 @@ TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldFilterAndPageGroups)
 
 TEST_P(QueryLanguageTest, fullModelGroupByHaving_shouldSupportRelatedPaths)
 {
+    if (not connection.getBackendCapabilities().query.fullModelGrouping)
+    {
+        orm::Query<models::ModelRelatedToOtherModel> query;
+        query.groupBy(col<&models::ModelRelatedToOtherModel::field3, &models::ModelWithId::field2>());
+        EXPECT_THROW(database.select(query), orm::DatabaseError);
+        return;
+    }
     createTable<models::ModelWithId>();
     createTable<models::ModelRelatedToOtherModel>();
     const auto relatedModels = std::vector<models::ModelWithId>{{1, 100, "group-a"}, {2, 200, "group-b"}};

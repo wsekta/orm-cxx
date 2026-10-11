@@ -12,6 +12,7 @@ import sys
 import threading
 
 from prepare_packages import ROOT, write_json
+from backend_profiles import BACKENDS, PROFILES, selected_backends
 
 
 def run(*command, cwd=None):
@@ -50,13 +51,16 @@ def check_conan(args, metadata, work):
         profile_options += ["-s", setting]
     for config in args.conan_conf:
         profile_options += ["-c", config]
-    sqlite = args.backends in ("sqlite", "both")
-    postgres = args.backends in ("postgresql", "both")
+    selected = selected_backends(args.backends)
+    sqlite = "sqlite" in selected
+    postgres = "postgresql" in selected
     run(*conan, "create", work / "conan/recipes/orm-cxx/all",
         "--version", metadata["version"], "--build=missing",
         "-s", "compiler.cppstd=20", "-s", "build_type=Release",
         "-o", f"orm-cxx/*:with_sqlite3={sqlite}",
         "-o", f"orm-cxx/*:with_postgresql={postgres}",
+        "-o", f"orm-cxx/*:with_mysql={'mysql' in selected}",
+        "-o", f"orm-cxx/*:with_mariadb={'mariadb' in selected}",
         "-c", "tools.cmake.cmaketoolchain:generator=Ninja",
         "-c", "tools.build:jobs=2", *profile_options)
 
@@ -69,11 +73,7 @@ def check_vcpkg(args, metadata, work):
     vcpkg_root = args.vcpkg_root.resolve()
     vcpkg = vcpkg_root / ("vcpkg.exe" if os.name == "nt" else "vcpkg")
     triplet = args.triplet or ("x64-windows-static" if os.name == "nt" else "x64-linux")
-    features = []
-    if args.backends in ("sqlite", "both"):
-        features.append("sqlite")
-    if args.backends in ("postgresql", "both"):
-        features.append("postgresql")
+    features = list(selected_backends(args.backends))
     compiler_options = []
     if os.name == "nt" and triplet.endswith("-static"):
         compiler_options.append("-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded$<$<CONFIG:Debug>:Debug>")
@@ -93,7 +93,8 @@ def check_vcpkg(args, metadata, work):
         f"-DVCPKG_TARGET_TRIPLET={triplet}",
         "-DVCPKG_INSTALL_OPTIONS=--enforce-port-checks",
         f"-DORM_CXX_EXPECT_SQLITE={'ON' if 'sqlite' in features else 'OFF'}",
-        f"-DORM_CXX_EXPECT_POSTGRESQL={'ON' if 'postgresql' in features else 'OFF'}",
+        *(f"-DORM_CXX_EXPECT_{backend.upper()}={'ON' if backend in features else 'OFF'}"
+          for backend in BACKENDS if backend != "sqlite"),
         *compiler_options)
     run("cmake", "--build", build, "--parallel", "2")
     run("ctest", "--test-dir", build, "--output-on-failure")
@@ -108,7 +109,7 @@ def check_vcpkg(args, metadata, work):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manager", choices=("conan", "vcpkg"), required=True)
-    parser.add_argument("--backends", choices=("sqlite", "postgresql", "both", "core"), default="sqlite")
+    parser.add_argument("--backends", choices=(*PROFILES, "all"), default="core")
     parser.add_argument("--distribution", type=Path, default=ROOT / "build/distribution")
     parser.add_argument("--vcpkg-root", type=Path, default=ROOT / "externals/vcpkg")
     parser.add_argument("--triplet")

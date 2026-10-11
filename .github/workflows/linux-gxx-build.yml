@@ -26,7 +26,7 @@ jobs:
         run: |
           apt-get update
           apt-get install --no-install-recommends --yes \
-            python3 python3-venv sqlite3 libsqlite3-dev
+            python3 python3-venv
           ln -sf /usr/local/bin/gcc /usr/local/bin/gcc-15
           ln -sf /usr/local/bin/g++ /usr/local/bin/g++-15
       - name: Install pinned module build tools
@@ -46,7 +46,8 @@ jobs:
           cmake -S tests/package_consumer -B "$consumer" -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=g++-15 \
             "-DCMAKE_PREFIX_PATH=$prefix" \
-            -DORM_CXX_EXPECT_SQLITE=ON -DORM_CXX_EXPECT_POSTGRESQL=OFF
+            -DORM_CXX_EXPECT_SQLITE=OFF -DORM_CXX_EXPECT_POSTGRESQL=OFF \
+            -DORM_CXX_EXPECT_MYSQL=OFF -DORM_CXX_EXPECT_MARIADB=OFF
           cmake --build "$consumer"
           ctest --test-dir "$consumer" --output-on-failure
       - name: Verify installed reflection without SOCI

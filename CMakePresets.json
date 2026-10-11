@@ -16,7 +16,11 @@
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true,
                 "ORM_CXX_BUILD_TESTS": true,
                 "ORM_CXX_BUILD_EXAMPLES": true,
-                "ORM_CXX_WARNINGS_AS_ERRORS": true
+                "ORM_CXX_WARNINGS_AS_ERRORS": true,
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false
             }
         },
         {
@@ -68,11 +72,16 @@
         },
         {
             "name": "linux-clang-postgresql-coverage",
-            "displayName": "Linux Clang PostgreSQL Coverage",
+            "displayName": "Clang coverage / postgresql",
             "inherits": "linux-clang-coverage",
             "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
-                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
             }
         },
         {
@@ -93,11 +102,16 @@
         },
         {
             "name": "msvc-postgresql-debug",
-            "displayName": "MSVC Debug with PostgreSQL",
+            "displayName": "msvc / postgresql",
             "inherits": "msvc-debug",
             "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false,
                 "VCPKG_MANIFEST_FEATURES": "postgresql"
             }
         },
@@ -107,7 +121,10 @@
             "inherits": "linux-clang-debug",
             "cacheVariables": {
                 "CMAKE_EXPORT_COMPILE_COMMANDS": true,
-                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true
             }
         },
         {
@@ -162,11 +179,16 @@
         },
         {
             "name": "linux-gcc-15-postgresql",
-            "displayName": "Linux GCC 15 with PostgreSQL",
+            "displayName": "linux-gcc-15 / postgresql",
             "inherits": "linux-gcc-15-debug",
             "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
-                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
             }
         },
         {
@@ -180,11 +202,16 @@
         },
         {
             "name": "linux-clang-19-postgresql",
-            "displayName": "Linux Clang 19 with PostgreSQL",
+            "displayName": "linux-clang-19 / postgresql",
             "inherits": "linux-clang-19-debug",
             "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
-                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
             }
         },
         {
@@ -203,11 +230,356 @@
         },
         {
             "name": "linux-clang-20-postgresql",
-            "displayName": "Linux Clang 20 with PostgreSQL",
+            "displayName": "linux-clang-20 / postgresql",
             "inherits": "linux-clang-20-debug",
             "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
                 "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
-                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-gcc-15-sqlite",
+            "displayName": "linux-gcc-15 / sqlite",
+            "inherits": "linux-gcc-15-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-gcc-15-mysql",
+            "displayName": "linux-gcc-15 / mysql",
+            "inherits": "linux-gcc-15-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-gcc-15-mariadb",
+            "displayName": "linux-gcc-15 / mariadb",
+            "inherits": "linux-gcc-15-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-gcc-15-all-backends",
+            "displayName": "linux-gcc-15 / all-backends",
+            "inherits": "linux-gcc-15-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-sqlite",
+            "displayName": "linux-clang / sqlite",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-postgresql",
+            "displayName": "linux-clang / postgresql",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-mysql",
+            "displayName": "linux-clang / mysql",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-mariadb",
+            "displayName": "linux-clang / mariadb",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-all-backends",
+            "displayName": "linux-clang / all-backends",
+            "inherits": "linux-clang-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-19-sqlite",
+            "displayName": "linux-clang-19 / sqlite",
+            "inherits": "linux-clang-19-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-19-mysql",
+            "displayName": "linux-clang-19 / mysql",
+            "inherits": "linux-clang-19-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-19-mariadb",
+            "displayName": "linux-clang-19 / mariadb",
+            "inherits": "linux-clang-19-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-19-all-backends",
+            "displayName": "linux-clang-19 / all-backends",
+            "inherits": "linux-clang-19-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-20-sqlite",
+            "displayName": "linux-clang-20 / sqlite",
+            "inherits": "linux-clang-20-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-20-mysql",
+            "displayName": "linux-clang-20 / mysql",
+            "inherits": "linux-clang-20-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-20-mariadb",
+            "displayName": "linux-clang-20 / mariadb",
+            "inherits": "linux-clang-20-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "linux-clang-20-all-backends",
+            "displayName": "linux-clang-20 / all-backends",
+            "inherits": "linux-clang-20-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
+            }
+        },
+        {
+            "name": "msvc-sqlite-debug",
+            "displayName": "msvc / sqlite",
+            "inherits": "msvc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false,
+                "VCPKG_MANIFEST_FEATURES": "sqlite"
+            }
+        },
+        {
+            "name": "msvc-mysql-debug",
+            "displayName": "msvc / mysql",
+            "inherits": "msvc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false,
+                "VCPKG_MANIFEST_FEATURES": "mysql"
+            }
+        },
+        {
+            "name": "msvc-mariadb-debug",
+            "displayName": "msvc / mariadb",
+            "inherits": "msvc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false,
+                "VCPKG_MANIFEST_FEATURES": "mariadb"
+            }
+        },
+        {
+            "name": "msvc-all-backends-debug",
+            "displayName": "msvc / all-backends",
+            "inherits": "msvc-debug",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false,
+                "VCPKG_MANIFEST_FEATURES": "sqlite;postgresql;mysql;mariadb"
+            }
+        },
+        {
+            "name": "linux-clang-sqlite-coverage",
+            "displayName": "Clang coverage / sqlite",
+            "inherits": "linux-clang-coverage",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-mysql-coverage",
+            "displayName": "Clang coverage / mysql",
+            "inherits": "linux-clang-coverage",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": true,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": true,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": false
+            }
+        },
+        {
+            "name": "linux-clang-mariadb-coverage",
+            "displayName": "Clang coverage / mariadb",
+            "inherits": "linux-clang-coverage",
+            "cacheVariables": {
+                "ORM_CXX_ENABLE_SQLITE_BACKEND": false,
+                "ORM_CXX_ENABLE_POSTGRESQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MYSQL_BACKEND": false,
+                "ORM_CXX_ENABLE_MARIADB_BACKEND": true,
+                "ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS": false,
+                "ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS": true
             }
         }
     ],
@@ -308,6 +680,135 @@
             "name": "linux-clang-20-postgresql",
             "configurePreset": "linux-clang-20-postgresql",
             "configuration": "Debug"
+        },
+        {
+            "name": "linux-gcc-15-sqlite",
+            "configurePreset": "linux-gcc-15-sqlite",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-gcc-15-mysql",
+            "configurePreset": "linux-gcc-15-mysql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-gcc-15-mariadb",
+            "configurePreset": "linux-gcc-15-mariadb",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-gcc-15-all-backends",
+            "configurePreset": "linux-gcc-15-all-backends",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-sqlite",
+            "configurePreset": "linux-clang-sqlite",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-postgresql",
+            "configurePreset": "linux-clang-postgresql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-mysql",
+            "configurePreset": "linux-clang-mysql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-mariadb",
+            "configurePreset": "linux-clang-mariadb",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-all-backends",
+            "configurePreset": "linux-clang-all-backends",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-19-sqlite",
+            "configurePreset": "linux-clang-19-sqlite",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-19-mysql",
+            "configurePreset": "linux-clang-19-mysql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-19-mariadb",
+            "configurePreset": "linux-clang-19-mariadb",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-19-all-backends",
+            "configurePreset": "linux-clang-19-all-backends",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-20-sqlite",
+            "configurePreset": "linux-clang-20-sqlite",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-20-mysql",
+            "configurePreset": "linux-clang-20-mysql",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-20-mariadb",
+            "configurePreset": "linux-clang-20-mariadb",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-20-all-backends",
+            "configurePreset": "linux-clang-20-all-backends",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-sqlite-debug",
+            "configurePreset": "msvc-sqlite-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-mysql-debug",
+            "configurePreset": "msvc-mysql-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-mariadb-debug",
+            "configurePreset": "msvc-mariadb-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "msvc-all-backends-debug",
+            "configurePreset": "msvc-all-backends-debug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "linux-clang-sqlite-coverage",
+            "configurePreset": "linux-clang-sqlite-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "orm-cxx-coverage"
+            ]
+        },
+        {
+            "name": "linux-clang-mysql-coverage",
+            "configurePreset": "linux-clang-mysql-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "orm-cxx-coverage"
+            ]
+        },
+        {
+            "name": "linux-clang-mariadb-coverage",
+            "configurePreset": "linux-clang-mariadb-coverage",
+            "configuration": "Debug",
+            "targets": [
+                "orm-cxx-coverage"
+            ]
         }
     ],
     "testPresets": [
@@ -492,6 +993,279 @@
             "name": "linux-clang-20-postgresql",
             "configurePreset": "linux-clang-20-postgresql",
             "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-gcc-15-sqlite",
+            "configurePreset": "linux-gcc-15-sqlite",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-gcc-15-mysql",
+            "configurePreset": "linux-gcc-15-mysql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-gcc-15-mariadb",
+            "configurePreset": "linux-gcc-15-mariadb",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-gcc-15-all-backends",
+            "configurePreset": "linux-gcc-15-all-backends",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-sqlite",
+            "configurePreset": "linux-clang-sqlite",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-postgresql",
+            "configurePreset": "linux-clang-postgresql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-mysql",
+            "configurePreset": "linux-clang-mysql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-mariadb",
+            "configurePreset": "linux-clang-mariadb",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-all-backends",
+            "configurePreset": "linux-clang-all-backends",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-19-sqlite",
+            "configurePreset": "linux-clang-19-sqlite",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-19-mysql",
+            "configurePreset": "linux-clang-19-mysql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-19-mariadb",
+            "configurePreset": "linux-clang-19-mariadb",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-19-all-backends",
+            "configurePreset": "linux-clang-19-all-backends",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-20-sqlite",
+            "configurePreset": "linux-clang-20-sqlite",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-20-mysql",
+            "configurePreset": "linux-clang-20-mysql",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-20-mariadb",
+            "configurePreset": "linux-clang-20-mariadb",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-20-all-backends",
+            "configurePreset": "linux-clang-20-all-backends",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-sqlite-debug",
+            "configurePreset": "msvc-sqlite-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-mysql-debug",
+            "configurePreset": "msvc-mysql-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-mariadb-debug",
+            "configurePreset": "msvc-mariadb-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "msvc-all-backends-debug",
+            "configurePreset": "msvc-all-backends-debug",
+            "configuration": "Debug",
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-sqlite-coverage",
+            "configurePreset": "linux-clang-sqlite-coverage",
+            "configuration": "Debug",
+            "environment": {
+                "LLVM_PROFILE_FILE": "${sourceDir}/build/linux-clang-sqlite-coverage/ctest-%p.profraw"
+            },
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-mysql-coverage",
+            "configurePreset": "linux-clang-mysql-coverage",
+            "configuration": "Debug",
+            "environment": {
+                "LLVM_PROFILE_FILE": "${sourceDir}/build/linux-clang-mysql-coverage/ctest-%p.profraw"
+            },
+            "output": {
+                "outputOnFailure": true
+            },
+            "execution": {
+                "noTestsAction": "error"
+            }
+        },
+        {
+            "name": "linux-clang-mariadb-coverage",
+            "configurePreset": "linux-clang-mariadb-coverage",
+            "configuration": "Debug",
+            "environment": {
+                "LLVM_PROFILE_FILE": "${sourceDir}/build/linux-clang-mariadb-coverage/ctest-%p.profraw"
+            },
             "output": {
                 "outputOnFailure": true
             },
@@ -770,6 +1544,414 @@
                 {
                     "type": "test",
                     "name": "linux-clang-20-postgresql"
+                }
+            ]
+        },
+        {
+            "name": "linux-gcc-15-sqlite",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-15-sqlite"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-15-sqlite"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-15-sqlite"
+                }
+            ]
+        },
+        {
+            "name": "linux-gcc-15-mysql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-15-mysql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-15-mysql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-15-mysql"
+                }
+            ]
+        },
+        {
+            "name": "linux-gcc-15-mariadb",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-15-mariadb"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-15-mariadb"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-15-mariadb"
+                }
+            ]
+        },
+        {
+            "name": "linux-gcc-15-all-backends",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-gcc-15-all-backends"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-gcc-15-all-backends"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-gcc-15-all-backends"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-sqlite",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-sqlite"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-sqlite"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-sqlite"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-postgresql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-postgresql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-postgresql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-postgresql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-mysql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-mysql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-mysql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-mysql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-mariadb",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-mariadb"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-mariadb"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-mariadb"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-all-backends",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-all-backends"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-all-backends"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-all-backends"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-19-sqlite",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-19-sqlite"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-19-sqlite"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-19-sqlite"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-19-mysql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-19-mysql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-19-mysql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-19-mysql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-19-mariadb",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-19-mariadb"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-19-mariadb"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-19-mariadb"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-19-all-backends",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-19-all-backends"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-19-all-backends"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-19-all-backends"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-20-sqlite",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-20-sqlite"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-20-sqlite"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-20-sqlite"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-20-mysql",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-20-mysql"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-20-mysql"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-20-mysql"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-20-mariadb",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-20-mariadb"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-20-mariadb"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-20-mariadb"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-20-all-backends",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-20-all-backends"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-20-all-backends"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-20-all-backends"
+                }
+            ]
+        },
+        {
+            "name": "msvc-sqlite-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-sqlite-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-sqlite-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-sqlite-debug"
+                }
+            ]
+        },
+        {
+            "name": "msvc-mysql-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-mysql-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-mysql-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-mysql-debug"
+                }
+            ]
+        },
+        {
+            "name": "msvc-mariadb-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-mariadb-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-mariadb-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-mariadb-debug"
+                }
+            ]
+        },
+        {
+            "name": "msvc-all-backends-debug",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "msvc-all-backends-debug"
+                },
+                {
+                    "type": "build",
+                    "name": "msvc-all-backends-debug"
+                },
+                {
+                    "type": "test",
+                    "name": "msvc-all-backends-debug"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-sqlite-coverage",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-sqlite-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-sqlite-coverage"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-sqlite-coverage"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-mysql-coverage",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-mysql-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-mysql-coverage"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-mysql-coverage"
+                }
+            ]
+        },
+        {
+            "name": "linux-clang-mariadb-coverage",
+            "steps": [
+                {
+                    "type": "configure",
+                    "name": "linux-clang-mariadb-coverage"
+                },
+                {
+                    "type": "build",
+                    "name": "linux-clang-mariadb-coverage"
+                },
+                {
+                    "type": "test",
+                    "name": "linux-clang-mariadb-coverage"
                 }
             ]
         }

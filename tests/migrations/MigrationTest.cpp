@@ -22,7 +22,10 @@ auto migration(Version version, std::string up, std::optional<std::string> down 
     SqlMigration scripts{.up = std::move(up), .down = std::move(down)};
     return Migration{.version = version,
                      .name = "step_" + std::to_string(version),
-                     .scripts = {{orm::db::BackendType::Sqlite, scripts}, {orm::db::BackendType::Postgres, scripts}}};
+                     .scripts = {{orm::db::BackendType::Sqlite, scripts},
+                                 {orm::db::BackendType::Postgres, scripts},
+                                 {orm::db::BackendType::Mysql, scripts},
+                                 {orm::db::BackendType::Mariadb, scripts}}};
 }
 auto initialCatalog() -> Catalog
 {
@@ -76,6 +79,11 @@ public:
 class MigrationTest : public DatabaseTest<models::Schema>
 {
 public:
+    auto nontransactional() const -> bool
+    {
+        return connection.getBackendCapabilities().migrations.atomicity ==
+               orm::db::MigrationAtomicity::NonTransactional;
+    }
     auto session() -> soci::session&
     {
         return orm::migrations::detail::DatabaseAccess::session(connection);
@@ -103,6 +111,7 @@ TEST_P(MigrationTest, ReadOnlyCommandsDoNotCreateHistory)
     auto plan = runner.preview(Direction::Up);
     EXPECT_EQ(plan.from, 0);
     EXPECT_EQ(plan.to, 30);
+    EXPECT_EQ(plan.atomicity, connection.getBackendCapabilities().migrations.atomicity);
     ASSERT_EQ(plan.migrations.size(), 2);
     const auto table = historyTable();
     EXPECT_THROW(session() << "SELECT version FROM " + table, soci::soci_error);
@@ -134,6 +143,10 @@ TEST_P(MigrationTest, AppliesWholeScriptsAndRetainsData)
 
 TEST_P(MigrationTest, FailureRollsBackCurrentMigrationAndCanRetry)
 {
+    if (nontransactional())
+    {
+        GTEST_SKIP() << "Covered by nontransactional recovery tests";
+    }
     Runner broken{
         connection,
         Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);", "DROP TABLE migration_users;"),
@@ -165,6 +178,10 @@ TEST_P(MigrationTest, FailureRollsBackCurrentMigrationAndCanRetry)
 
 TEST_P(MigrationTest, FailureOfFirstMigrationLeavesNoHistory)
 {
+    if (nontransactional())
+    {
+        GTEST_SKIP() << "Covered by nontransactional recovery tests";
+    }
     Runner broken{connection,
                   Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER); INSERT INTO missing VALUES(1);")}};
     EXPECT_THROW(broken.up(), MigrationError);
@@ -262,10 +279,17 @@ TEST_P(MigrationTest, QuotesCommentsAndProceduralBodies)
         sql += "CREATE TRIGGER migration_trigger AFTER INSERT ON migration_users BEGIN UPDATE migration_users SET "
                "name='trigger;done' WHERE id=NEW.id; END; INSERT INTO migration_users VALUES(2,'new');";
     }
-    else
+    else if (GetParam().type == orm::db::BackendType::Postgres)
     {
         sql += "CREATE FUNCTION migration_function() RETURNS integer LANGUAGE plpgsql AS $body$ BEGIN RETURN 42; END; "
                "$body$; DO $$ BEGIN INSERT INTO migration_users VALUES(2,'function;done'); END; $$;";
+    }
+    else
+    {
+        sql += "CREATE PROCEDURE migration_procedure() BEGIN INSERT INTO migration_users VALUES(2,'procedure;done'); "
+               "SELECT 'drain;result'; END; CALL migration_procedure(); "
+               "CREATE TRIGGER migration_trigger BEFORE INSERT ON migration_users FOR EACH ROW "
+               "BEGIN SET NEW.name='trigger;done'; END;";
     }
     Runner runner{connection, Catalog{migration(1, sql)}};
     runner.up();
@@ -293,10 +317,12 @@ TEST_P(MigrationTest, LocksRejectACompetingSession)
     Runner second{competitor, initialCatalog()};
     expectMigrationError([&] { second.up(); }, ErrorCode::LockUnavailable);
     session().rollback();
+    runtime.endMigration(session(), table);
     EXPECT_NO_THROW(second.up());
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, MigrationTest, conformanceBackendTestConfigs, backendTestName);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MigrationTest);
 
 TEST_P(MigrationTest, EmptyCatalogAndExplicitNoOpDown)
 {
@@ -313,6 +339,10 @@ TEST_P(MigrationTest, EmptyCatalogAndExplicitNoOpDown)
 
 TEST_P(MigrationTest, DownFailurePreservesCurrentMigrationAndEarlierHistory)
 {
+    if (nontransactional())
+    {
+        GTEST_SKIP() << "Covered by nontransactional recovery tests";
+    }
     Runner runner{
         connection,
         Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER);", "DROP TABLE migration_users;"),
@@ -379,46 +409,12 @@ TEST_P(MigrationTest, PostgreSqlScriptsCannotChangeSessionsOrCorruptHistory)
     expectMigrationError([&] { (void)initial.status(); }, ErrorCode::InvalidHistory);
 }
 
-TEST(MigrationRunnerTest, FailedCommitDisconnectsAndRequiresReinspection)
-{
-    TempDirectory directory;
-    const auto url = "sqlite3://" + (directory.path / "commit.db").string();
-    orm::Database database;
-    database.connect(url);
-    Runner runner{database, Catalog{migration(
-                                1, "PRAGMA defer_foreign_keys=ON; CREATE TABLE parent(id INTEGER PRIMARY KEY); CREATE "
-                                   "TABLE child(id INTEGER REFERENCES parent(id)); INSERT INTO child VALUES(1);")}};
-    try
-    {
-        runner.up();
-        FAIL();
-    }
-    catch (const MigrationError& error)
-    {
-        EXPECT_EQ(error.getCode(), ErrorCode::CommitUncertain);
-        EXPECT_EQ(error.getVersion(), 1);
-        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
-    }
-    EXPECT_FALSE(database.isConnected());
-    database.connect(url);
-    EXPECT_EQ(runner.status().currentVersion, 0);
-}
-
-TEST(MigrationRunnerTest, BaselineChecksThatHistoryWasActuallyRecorded)
-{
-    orm::Database database;
-    database.connect("sqlite3://:memory:");
-    Runner runner{database, initialCatalog()};
-    runner.up(10);
-    runner.down(0);
-    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
-    session << "CREATE TRIGGER ignore_baseline BEFORE INSERT ON _orm_migrations BEGIN SELECT RAISE(IGNORE); END;";
-    expectMigrationError([&] { runner.baseline(10); }, ErrorCode::InvalidHistory);
-    EXPECT_EQ(runner.status().currentVersion, 0);
-}
-
 TEST_P(MigrationTest, NativeRuntimeRequiresAnActiveTransaction)
 {
+    if (nontransactional())
+    {
+        GTEST_SKIP() << "Nontransactional scripts require a session lock";
+    }
     const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
     expectMigrationError([&] { runtime.executeMigrationScript(session(), "SELECT 1;"); }, ErrorCode::Execution);
     if (GetParam().type == orm::db::BackendType::Sqlite)
@@ -429,198 +425,331 @@ TEST_P(MigrationTest, NativeRuntimeRequiresAnActiveTransaction)
     }
 }
 
-TEST(MigrationRunnerTest, SQLiteRebuildPreservesDataForeignKeysIndexesAndTriggers)
+TEST_P(MigrationTest, NontransactionalUpRequiresRepairAndExplicitResolution)
 {
-    orm::Database database;
-    database.connect("sqlite3://:memory:");
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    const auto catalog = Catalog{
+        migration(1,
+                  "CREATE TABLE migration_users(id INTEGER PRIMARY KEY); INSERT INTO migration_users VALUES(1); "
+                  "INSERT INTO missing VALUES(1);",
+                  "DROP TABLE migration_users;")};
+    Runner runner{connection, catalog};
+    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+    auto interrupted = runner.status();
+    ASSERT_TRUE(interrupted.incomplete);
+    EXPECT_FALSE(interrupted.isValid());
+    EXPECT_EQ(interrupted.currentVersion, 0);
+    EXPECT_EQ(interrupted.incomplete->direction, Direction::Up);
+    EXPECT_EQ(users(), 1); // The successful DDL and DML survived the failing statement.
+    const auto checksum = interrupted.incomplete->checksum;
+    expectMigrationError([&] { runner.up(); }, ErrorCode::IncompleteMigration);
+    expectMigrationError([&] { runner.down(0); }, ErrorCode::IncompleteMigration);
+    expectMigrationError([&] { runner.baseline(1); }, ErrorCode::IncompleteMigration);
+    expectMigrationError([&] { runner.validate(); }, ErrorCode::IncompleteMigration);
+    expectMigrationError([&] { (void)runner.preview(Direction::Up); }, ErrorCode::IncompleteMigration);
+    expectMigrationError([&] { runner.resolve(2, checksum, Resolution::Reverted); }, ErrorCode::InvalidResolution);
+    expectMigrationError([&] { runner.resolve(1, "incorrect", Resolution::Completed); }, ErrorCode::InvalidResolution);
+    expectMigrationError([&] { runner.resolve(1, checksum, static_cast<Resolution>(99)); },
+                         ErrorCode::InvalidResolution);
+    Runner edited{connection, Catalog{migration(1, "SELECT 1;")}};
+    expectMigrationError([&] { edited.resolve(1, checksum, Resolution::Completed); }, ErrorCode::ChecksumMismatch);
+
+    connection.disconnect();
+    connection.connect(GetParam().type, testConnectionString());
+    EXPECT_EQ(runner.status().incomplete, interrupted.incomplete);
+    session() << "DROP TABLE migration_users";
+    runner.resolve(1, checksum, Resolution::Reverted);
+    EXPECT_TRUE(runner.status().isValid());
+    EXPECT_EQ(runner.status().currentVersion, 0);
+    expectMigrationError([&] { runner.resolve(1, checksum, Resolution::Reverted); }, ErrorCode::InvalidResolution);
+
+    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+    session() << "CREATE TABLE missing(id INTEGER)";
+    session() << "INSERT INTO missing VALUES(1)";
+    runner.resolve(1, checksum, Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    EXPECT_FALSE(runner.status().incomplete);
+    runner.down(0);
+    EXPECT_EQ(runner.status().currentVersion, 0);
+}
+
+TEST_P(MigrationTest, NontransactionalDownCanBeCompletedOrReverted)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
     Runner runner{
-        database,
-        Catalog{
-            migration(1,
-                      "CREATE TABLE parent(id INTEGER PRIMARY KEY); INSERT INTO parent VALUES(1);"
-                      "CREATE TABLE child(id INTEGER PRIMARY KEY,parent_id INTEGER REFERENCES parent(id),value TEXT);"
-                      "INSERT INTO child VALUES(7,1,'42');"),
-            migration(
-                2,
-                "PRAGMA defer_foreign_keys=ON;"
-                "CREATE TABLE child_new(id INTEGER PRIMARY KEY,parent_id INTEGER REFERENCES parent(id),value INTEGER);"
-                "INSERT INTO child_new SELECT id,parent_id,CAST(value AS INTEGER) FROM child;"
-                "DROP TABLE child; ALTER TABLE child_new RENAME TO child;"
-                "CREATE INDEX child_parent ON child(parent_id);"
-                "CREATE TRIGGER child_positive BEFORE INSERT ON child WHEN NEW.value<0 "
-                "BEGIN SELECT RAISE(ABORT,'negative'); END;")}};
+        connection,
+        Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);", "DROP TABLE migration_users;"),
+                migration(2, "ALTER TABLE migration_users ADD COLUMN email TEXT;",
+                          "ALTER TABLE migration_users DROP COLUMN email; SELECT * FROM missing;")}};
     runner.up();
-    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
-    int value{};
-    session << "SELECT value FROM child WHERE id=7 AND parent_id=1", soci::into(value);
-    EXPECT_EQ(value, 42);
-    int indexes{};
-    session << "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='child_parent'", soci::into(indexes);
-    EXPECT_EQ(indexes, 1);
-    EXPECT_THROW((session << "INSERT INTO child VALUES(8,999,1)"), soci::soci_error);
-    EXPECT_THROW((session << "INSERT INTO child VALUES(8,1,-1)"), soci::soci_error);
+    expectMigrationError([&] { runner.down(1); }, ErrorCode::Execution);
+    const auto incomplete = runner.status().incomplete;
+    ASSERT_TRUE(incomplete);
+    EXPECT_EQ(incomplete->direction, Direction::Down);
+    EXPECT_EQ(runner.status().currentVersion, 2);
+    EXPECT_THROW(session() << "SELECT email FROM migration_users", soci::soci_error);
+    session() << "ALTER TABLE migration_users ADD COLUMN email TEXT";
+    runner.resolve(2, incomplete->checksum, Resolution::Reverted);
+    EXPECT_EQ(runner.status().currentVersion, 2);
+    expectMigrationError([&] { runner.down(1); }, ErrorCode::Execution);
+    runner.resolve(2, incomplete->checksum, Resolution::Completed);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    runner.up();
     EXPECT_EQ(runner.status().currentVersion, 2);
 }
 
-namespace
+TEST_P(MigrationTest, DurableMarkerSurvivesLossBeforeHistoryFinalization)
 {
-class InstrumentedRuntime final : public orm::db::BackendRuntime
-{
-public:
-    explicit InstrumentedRuntime(const BackendRuntime& runtime) : delegate{runtime} {}
-    auto open(soci::session& session, std::string_view url) const -> void override
+    if (!nontransactional())
     {
-        delegate.open(session, url);
+        GTEST_SKIP();
     }
-    auto onConnect(soci::session& session) const -> void override
-    {
-        delegate.onConnect(session);
-    }
-    auto tableExists(soci::session& session, std::string_view table) const -> bool override
-    {
-        return delegate.tableExists(session, table);
-    }
-    auto limits(soci::session& session) const -> orm::db::BackendRuntimeLimits override
-    {
-        return delegate.limits(session);
-    }
-    auto normalizeAffectedRows(long long rows) const -> std::size_t override
-    {
-        return delegate.normalizeAffectedRows(rows);
-    }
-    auto bind(soci::values& values, std::string_view name, const orm::db::BoundValue& value) const -> void override
-    {
-        delegate.bind(values, name, value);
-    }
-    auto translateError(const soci::soci_error& error, orm::DatabaseErrorCode fallback,
-                        std::string_view operation) const -> orm::DatabaseError override
-    {
-        return delegate.translateError(error, fallback, operation);
-    }
-    auto migrationTable(soci::session& session) const -> std::string override
-    {
-        if (failTable)
-        {
-            throw soci::soci_error{"injected inspection failure"};
-        }
-        return delegate.migrationTable(session);
-    }
-    auto beginMigration(soci::session& session, std::string_view table) const -> void override
-    {
-        if (beforeBegin)
-        {
-            beforeBegin(session);
-        }
-        delegate.beginMigration(session, table);
-    }
-    auto executeMigrationScript(soci::session& session, std::string_view sql) const -> void override
-    {
-        delegate.executeMigrationScript(session, sql);
-        if (afterScript)
-        {
-            afterScript(session);
-        }
-    }
-    auto checkLegacyHooks(soci::session& session) const -> void
-    {
-        EXPECT_THROW((void)BackendRuntime::migrationTable(session), orm::DatabaseError);
-        EXPECT_THROW(BackendRuntime::beginMigration(session, "history"), orm::DatabaseError);
-        EXPECT_THROW(BackendRuntime::executeMigrationScript(session, "SELECT 1"), orm::DatabaseError);
-    }
-    bool failTable = false;
-    std::function<void(soci::session&)> beforeBegin, afterScript;
-
-private:
-    const BackendRuntime& delegate;
-};
-class InstrumentedBackend final : public orm::db::BackendProvider
-{
-private:
-    orm::db::sqlite::SqliteBackend delegate;
-
-public:
-    InstrumentedBackend() : runtimeValue{delegate.runtime()}, capabilitiesValue{delegate.capabilities()} {}
-    auto type() const noexcept -> orm::db::BackendType override
-    {
-        return backendType;
-    }
-    auto acceptsConnectionString(std::string_view url) const noexcept -> bool override
-    {
-        return delegate.acceptsConnectionString(url);
-    }
-    auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
-    {
-        return capabilitiesValue;
-    }
-    auto dialect() const noexcept -> const orm::db::SqlDialect& override
-    {
-        return delegate.dialect();
-    }
-    auto runtime() const noexcept -> const orm::db::BackendRuntime& override
-    {
-        return runtimeValue;
-    }
-    auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
-    {
-        return delegate.commandGenerator();
-    }
-    InstrumentedRuntime runtimeValue;
-    orm::db::BackendCapabilities capabilitiesValue;
-    orm::db::BackendType backendType = orm::db::BackendType::Sqlite;
-};
-} // namespace
-
-TEST(MigrationRunnerTest, OptInLegacyHooksAndDriverFailures)
-{
-    auto provider = std::make_unique<InstrumentedBackend>();
-    auto* backend = provider.get();
-    orm::db::CommandGeneratorFactory factory{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
-    factory.registerBackend(std::move(provider));
-    orm::Database database{std::move(factory)};
-    database.connect("sqlite3://:memory:");
-    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
-    Runner runner{database, initialCatalog()};
-    backend->runtimeValue.checkLegacyHooks(session);
-    backend->capabilitiesValue.schema.transactionalMigrations = false;
-    expectMigrationError([&] { runner.up(); }, ErrorCode::UnsupportedBackend);
-    backend->capabilitiesValue.schema.transactionalMigrations = true;
-    backend->runtimeValue.failTable = true;
-    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::Execution);
-    backend->runtimeValue.failTable = false;
-    backend->runtimeValue.beforeBegin = [](soci::session&) { throw soci::soci_error{"injected begin failure"}; };
-    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
-    expectMigrationError([&] { runner.baseline(10); }, ErrorCode::Execution);
-    backend->runtimeValue.beforeBegin = {};
-    backend->runtimeValue.afterScript = [&](soci::session& active)
-    {
-        expectMigrationError([&] { (void)runner.status(); }, ErrorCode::ActiveTransaction);
-        EXPECT_THROW(database.beginTransaction(), orm::DatabaseError);
-        active.close();
-        throw soci::soci_error{"injected lost connection"};
-    };
-    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
-    EXPECT_FALSE(database.isConnected());
+    const auto catalog = Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")};
+    const auto& entry = catalog.migrations().front();
+    const auto checksum = orm::migrations::detail::checksum(entry.scripts.at(GetParam().type));
+    auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    const auto table = runtime.migrationTable(session());
+    runtime.beginMigration(session(), table);
+    runtime.createMigrationHistory(session(), table);
+    const auto journal = runtime.migrationJournalTable(session(), table);
+    const auto backend = static_cast<int>(GetParam().type);
+    session() << "INSERT INTO " + journal +
+                     "(slot,version,name,backend,direction,checksum) VALUES(1,1,'step_1',:backend,0,:checksum)",
+        soci::use(backend, "backend"), soci::use(checksum, "checksum");
+    runtime.executeMigrationScript(session(), entry.scripts.at(GetParam().type).up);
+    connection.disconnect(); // Lock released; journal and application DDL remain durable.
+    connection.connect(GetParam().type, testConnectionString());
+    Runner restarted{connection, catalog};
+    ASSERT_TRUE(restarted.status().incomplete);
+    EXPECT_EQ(restarted.status().currentVersion, 0);
+    expectMigrationError([&] { restarted.up(); }, ErrorCode::IncompleteMigration);
+    restarted.resolve(1, checksum, Resolution::Completed);
+    EXPECT_EQ(restarted.status().currentVersion, 1);
+    EXPECT_EQ(users(), 0);
 }
 
-TEST(MigrationRunnerTest, HistoryChangedBetweenReadAndWrite)
+TEST_P(MigrationTest, ResolveIsUnavailableWithoutAnIncompleteMigration)
 {
-    auto provider = std::make_unique<InstrumentedBackend>();
-    auto* backend = provider.get();
-    std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
-    providers.push_back(std::move(provider));
-    orm::db::CommandGeneratorFactory factory{std::move(providers)};
-    orm::Database database{std::move(factory)};
-    database.connect("sqlite3://:memory:");
-    Runner runner{database, initialCatalog()};
-    runner.up(10);
-    backend->runtimeValue.beforeBegin = [](soci::session& session)
-    { session << "UPDATE _orm_migrations SET name='concurrent_edit'"; };
-    expectMigrationError([&] { runner.up(); }, ErrorCode::HistoryChanged);
-    backend->runtimeValue.beforeBegin = {};
-    orm::migrations::detail::DatabaseAccess::session(database) << "DELETE FROM _orm_migrations";
-    backend->runtimeValue.beforeBegin = [](soci::session& session)
-    { session << "INSERT INTO _orm_migrations VALUES(10,'concurrent',1,'checksum','now',0)"; };
-    expectMigrationError([&] { runner.baseline(10); }, ErrorCode::HistoryChanged);
+    Runner runner{connection, initialCatalog()};
+    expectMigrationError([&] { runner.resolve(10, std::string(64, 'a'), Resolution::Completed); },
+                         ErrorCode::InvalidResolution);
+}
+
+TEST_P(MigrationTest, CommandLineReportsAndResolvesAnIncompleteMigration)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    const auto catalog =
+        Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY); SELECT * FROM missing;",
+                          "DROP TABLE migration_users; SELECT * FROM missing;")};
+    Runner runner{connection, catalog};
+    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+    const auto checksum = runner.status().incomplete->checksum;
+    const auto call = [&](std::initializer_list<std::string_view> args)
+    {
+        std::ostringstream output, errors;
+        const auto result = orm::migrations::detail::runCommandLineWithConnection(
+            std::span{args.begin(), args.size()}, catalog, testConnectionString(), output, errors);
+        return std::tuple{result, output.str(), errors.str()};
+    };
+    const auto status = call({"status"});
+    EXPECT_EQ(std::get<0>(status), 1);
+    EXPECT_NE(std::get<1>(status).find("Incomplete: 1 step_1 up checksum " + checksum), std::string::npos);
+    EXPECT_NE(std::get<2>(status).find("Inspect and repair"), std::string::npos);
+    EXPECT_EQ(std::get<0>(call({"preview", "up"})), 1);
+    session() << "CREATE TABLE missing(id INTEGER)";
+    EXPECT_EQ(std::get<0>(call({"resolve", "--version", "1", "--checksum", checksum, "--resolution", "completed"})), 0);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    session() << "DROP TABLE missing";
+    expectMigrationError([&] { runner.down(0); }, ErrorCode::Execution);
+    session() << "CREATE TABLE migration_users(id INTEGER PRIMARY KEY)";
+    EXPECT_EQ(std::get<0>(call({"resolve", "--version", "1", "--checksum", checksum, "--resolution", "reverted"})), 0);
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(MigrationTest, InvalidDurableMarkersBlockAllChanges)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    const auto catalog = Catalog{migration(1, "SELECT 1;")};
+    Runner runner{connection, catalog};
+    const auto checksum = orm::migrations::detail::checksum(catalog.migrations().front().scripts.at(GetParam().type));
+    auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    const auto table = runtime.migrationTable(session());
+    const auto journal = runtime.migrationJournalTable(session(), table);
+    session() << "CREATE TABLE " + journal +
+                     " (slot INT,version BIGINT,name TEXT,backend INT,direction INT,checksum TEXT)";
+    const auto backend = static_cast<int>(GetParam().type);
+    session() << "INSERT INTO " + journal + " VALUES(1,1,'step_1',:backend,0,:checksum)", soci::use(backend, "backend"),
+        soci::use(checksum, "checksum");
+    session() << "UPDATE " + journal + " SET slot=0";
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+    session() << "UPDATE " + journal + " SET slot=1,direction=2";
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+    session() << "UPDATE " + journal + " SET direction=0,backend=-1";
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+    session() << "UPDATE " + journal + " SET backend=:backend,name='different'", soci::use(backend, "backend");
+    expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidHistory);
+    session() << "UPDATE " + journal + " SET name='step_1',checksum='changed'";
+    expectMigrationError([&] { runner.up(); }, ErrorCode::ChecksumMismatch);
+    session() << "UPDATE " + journal + " SET checksum=:checksum", soci::use(checksum, "checksum");
+    session() << "INSERT INTO " + journal + " SELECT 2,version,name,backend,direction,checksum FROM " + journal;
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+    session() << "DROP TABLE " + journal;
+    session() << "CREATE TABLE " + journal +
+                     " (slot TEXT,version BIGINT,name TEXT,backend INT,direction INT,checksum TEXT)";
+    session() << "INSERT INTO " + journal + " VALUES('wrong',1,'step_1',:backend,0,:checksum)",
+        soci::use(backend, "backend"), soci::use(checksum, "checksum");
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidHistory);
+}
+
+TEST_P(MigrationTest, MysqlFamilyRejectsUnsafeSessionModesBeforeApplicationSql)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    std::string originalMode;
+    session() << "SELECT @@SESSION.sql_mode", soci::into(originalMode);
+    Runner runner{connection, Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")}};
+    for (const auto mode : {"ANSI_QUOTES", "NO_BACKSLASH_ESCAPES", ""})
+    {
+        const auto altered =
+            originalMode.empty() || std::string_view{mode}.empty() ? std::string{mode} : originalMode + "," + mode;
+        session() << "SET SESSION sql_mode='" + altered + "'";
+        expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidSql);
+        expectMigrationError([&] { (void)runner.status(); }, ErrorCode::InvalidSql);
+        session() << "SET SESSION sql_mode='" + originalMode + "'";
+        EXPECT_FALSE(runner.status().incomplete);
+        EXPECT_FALSE(
+            orm::migrations::detail::DatabaseAccess::runtime(connection).tableExists(session(), "migration_users"));
+    }
+    if (GetParam().type == orm::db::BackendType::Mariadb)
+    {
+        session() << "SET SESSION max_sort_length=32";
+        expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidSql);
+        session() << "SET SESSION max_sort_length=65536";
+        EXPECT_FALSE(runner.status().incomplete);
+    }
+    runner.up();
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(MigrationTest, MysqlFamilyDetectsSettingsChangesThroughStoredRoutine)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    int originalSortLength{};
+    session() << "SELECT @@SESSION.max_sort_length", soci::into(originalSortLength);
+    session() << "CREATE PROCEDURE migration_change_settings() SET SESSION max_sort_length=" +
+                     std::to_string(originalSortLength == 32 ? 64 : 32);
+    Runner runner{connection, Catalog{migration(1, "CALL migration_change_settings(); "
+                                                   "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")}};
+    expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidSql);
+    EXPECT_FALSE(connection.isConnected());
+    connection.connect(GetParam().type, testConnectionString());
+    const auto state = runner.status();
+    ASSERT_TRUE(state.incomplete);
+    EXPECT_EQ(state.currentVersion, 0);
+    EXPECT_TRUE(orm::migrations::detail::DatabaseAccess::runtime(connection).tableExists(session(), "migration_users"));
+    runner.resolve(1, state.incomplete->checksum, Resolution::Completed);
+    EXPECT_TRUE(runner.status().isValid());
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(MigrationTest, MysqlFamilyHistoryFinalizationFailurePreservesDurableMarker)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    const auto history = historyTable();
+    const auto journal = runtime.migrationJournalTable(session(), history);
+    Runner runner{connection, Catalog{migration(1, "SELECT 1;"),
+                                      migration(2, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);"),
+                                      migration(3, "INSERT INTO migration_users VALUES(1);")}};
+    runner.baseline(1);
+    for (const auto version : {Version{2}, Version{3}})
+    {
+        session() << "CREATE TRIGGER migration_fail_finalization BEFORE " +
+                         std::string{version == 2 ? "INSERT ON " : "DELETE ON "} + (version == 2 ? history : journal) +
+                         " FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='fault'";
+        expectMigrationError([&] { runner.up(version); }, ErrorCode::Execution);
+        const auto state = runner.status();
+        ASSERT_TRUE(state.incomplete);
+        EXPECT_EQ(state.currentVersion, version - 1);
+        EXPECT_EQ(state.incomplete->version, version);
+        EXPECT_TRUE(runtime.tableExists(session(), "migration_users"));
+        if (version == 3)
+        {
+            EXPECT_EQ(users(), 1);
+        }
+        expectMigrationError([&] { runner.resolve(version, state.incomplete->checksum, Resolution::Completed); },
+                             ErrorCode::Execution);
+        EXPECT_EQ(runner.status().currentVersion, version - 1);
+        EXPECT_EQ(runner.status().incomplete, state.incomplete);
+        session() << "DROP TRIGGER migration_fail_finalization";
+        runner.resolve(version, state.incomplete->checksum, Resolution::Completed);
+        EXPECT_FALSE(runner.status().incomplete);
+        EXPECT_EQ(runner.status().currentVersion, version);
+    }
+}
+
+TEST_P(MigrationTest, MysqlFamilyRejectsNontransactionalAndViewLedgers)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    Runner runner{connection, Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")}};
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    const auto history = runtime.migrationTable(session());
+    const auto journal = runtime.migrationJournalTable(session(), history);
+    for (const auto& table : {history, journal})
+    {
+        session() << "CREATE TABLE " + table + " (dummy INT) ENGINE=MyISAM";
+        expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidHistory);
+        EXPECT_FALSE(runtime.tableExists(session(), "migration_users"));
+        session() << "DROP TABLE " + table;
+        session() << "CREATE VIEW " + table + " AS SELECT 1 AS dummy";
+        expectMigrationError([&] { runner.baseline(1); }, ErrorCode::InvalidHistory);
+        EXPECT_FALSE(runtime.tableExists(session(), "migration_users"));
+        session() << "DROP VIEW " + table;
+    }
+    runner.up();
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(MigrationTest, IncompleteDowngradeCannotRemoveABaseline)
+{
+    if (!nontransactional())
+    {
+        GTEST_SKIP();
+    }
+    const auto catalog = Catalog{migration(1, "SELECT 1;", "")};
+    Runner runner{connection, catalog};
+    runner.baseline(1);
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    const auto journal = runtime.migrationJournalTable(session(), historyTable());
+    const auto backend = static_cast<int>(GetParam().type);
+    const auto checksum = orm::migrations::detail::checksum(catalog.migrations().front().scripts.at(GetParam().type));
+    session() << "INSERT INTO " + journal + " VALUES(1,1,'step_1',:backend,1,:checksum)", soci::use(backend, "backend"),
+        soci::use(checksum, "checksum");
+    expectMigrationError([&] { runner.resolve(1, checksum, Resolution::Completed); }, ErrorCode::InvalidHistory);
+    EXPECT_EQ(runner.status().baselineVersion, 1);
 }
 
 TEST(MigrationCatalogTest, Sha256StandardVectors)
@@ -684,6 +813,72 @@ TEST(MigrationCatalogTest, PostgresqlLexerRejectsUnsafeCommandsButAcceptsQuotedB
     EXPECT_NO_THROW(orm::migrations::detail::validateScript("SELECT $1;", orm::db::BackendType::Postgres, 1));
 }
 
+TEST(MigrationCatalogTest, MysqlAndMariaDbVariantsAreIndependent)
+{
+    TempDirectory directory;
+    directory.write("1_create/mysql/up.sql", "SELECT 1;\r\n");
+    directory.write("1_create/mariadb/up.sql", "SELECT 2;\n");
+    const auto catalog = Catalog::fromDirectory(directory.path);
+    ASSERT_EQ(catalog.migrations().size(), 1);
+    const auto& variants = catalog.migrations().front().scripts;
+    EXPECT_EQ(variants.at(orm::db::BackendType::Mysql).up, "SELECT 1;\n");
+    EXPECT_EQ(variants.at(orm::db::BackendType::Mariadb).up, "SELECT 2;\n");
+    EXPECT_NE(orm::migrations::detail::checksum(variants.at(orm::db::BackendType::Mysql)),
+              orm::migrations::detail::checksum(variants.at(orm::db::BackendType::Mariadb)));
+}
+
+TEST(MigrationCatalogTest, MysqlFamilyLexerChecksExecutableCommentsAndRoutines)
+{
+    for (const auto backend : {orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb})
+    {
+        for (const auto sql : {"COMMIT;",
+                               "START TRANSACTION;",
+                               "BEGIN; SELECT 1; END;",
+                               "USE other;",
+                               "DROP DATABASE current_database;",
+                               "DROP SCHEMA IF EXISTS current_database;",
+                               "SET sql_mode='';",
+                               "/*!80000 SET autocommit=0 */;",
+                               "/*M!100100 COMMIT */;",
+                               "/*! SELECT /* ordinary comment */ GET_LOCK('x',0) */;",
+                               "/*M! SELECT /* ordinary comment */ RELEASE_ALL_LOCKS() */;",
+                               "#\nCOMMIT;",
+                               "# comment\rCOMMIT;",
+                               "-- comment\rROLLBACK;",
+                               "DELIMITER $$",
+                               "SELECT @@autocommit;",
+                               "DROP TABLE `_orm_migrations`;",
+                               "DELETE FROM _orm_migrations_incomplete;",
+                               "CREATE PROCEDURE p() BEGIN SET sql_mode=''; END;",
+                               "CREATE PROCEDURE p() BEGIN COMMIT; END;",
+                               "CREATE PROCEDURE p() BEGIN DROP DATABASE current_database; END;",
+                               "CREATE PROCEDURE p() BEGIN PREPARE x FROM 'COMMIT'; END;",
+                               "SELECT RELEASE_LOCK('x');",
+                               "CREATE PROCEDURE p() BEGIN SELECT 1; END; BEGIN; SELECT 1;",
+                               "/* unclosed",
+                               "SELECT 'unclosed"})
+        {
+            EXPECT_THROW(orm::migrations::detail::validateScript(sql, backend, 1), MigrationError) << sql;
+        }
+        EXPECT_NO_THROW(orm::migrations::detail::validateScript(
+            "# COMMIT\n-- ROLLBACK\n/* SET sql_mode='' */ CREATE TABLE `a:b`(id INT); "
+            "/*!80000 INSERT INTO `a:b` VALUES(1) */; /*M!100100 SELECT 'native;sql' */; "
+            "CREATE PROCEDURE p() BEGIN BEGIN UPDATE `a:b` SET id=2; END; SELECT 'it\\'s;ok'; END; CALL p(); "
+            "CREATE TRIGGER t BEFORE INSERT ON `a:b` FOR EACH ROW BEGIN SET NEW.id=3; END;",
+            backend, 1));
+        EXPECT_NO_THROW(orm::migrations::detail::validateScript(
+            "SELECT '/*! COMMIT */'; SELECT \"/*M! COMMIT */\"; SELECT `a``b`;", backend, 1));
+        EXPECT_NO_THROW(
+            orm::migrations::detail::validateScript("/*! SELECT /* ordinary comment */ 'literal */ text' */; "
+                                                    "/*M! SELECT /*! COMMIT */ 1 */;",
+                                                    backend, 1));
+        EXPECT_NO_THROW(orm::migrations::detail::validateScript(
+            "CREATE PROCEDURE p() BEGIN SELECT CASE WHEN 1 THEN 'ok' ELSE 'bad' END; "
+            "CASE 1 WHEN 1 THEN BEGIN SELECT 2; END; END CASE; END;",
+            backend, 1));
+    }
+}
+
 TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
 {
     const auto check = [](const std::filesystem::path& relative, bool directory)
@@ -702,7 +897,7 @@ TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
     check("10_name/sqlite/mistake.sql", false);
     check("10_name/sqlite/up.sql", true);
     check("x_bad/sqlite/up.sql", false);
-    check("10_name/mysql/up.sql", false);
+    check("10_name/unknown/up.sql", false);
     check("10_name/sqlite/down.sql", false);
     TempDirectory files;
     files.write("1_same/sqlite/up.sql", "SELECT 1;");
@@ -749,7 +944,11 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
                              {"up", "--to", "bad"},
                              {"up", "--to", "-1"},
                              {"up", "--to", "1x"},
-                             {"up", "--other", "1"}})
+                             {"up", "--other", "1"},
+                             {"resolve"},
+                             {"resolve", "--version", "0", "--checksum", "bad", "--resolution", "completed"},
+                             {"resolve", "--version", "1", "--checksum", "bad", "--resolution", "reverted"},
+                             {"resolve", "--version", "1", "--checksum", "bad", "--resolution", "invalid"}})
     {
         std::ostringstream out, err;
         EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(), std::nullopt, out, err),
@@ -760,57 +959,27 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     const auto secretFailure = call({"status"}, "invalid://super-secret");
     EXPECT_EQ(std::get<0>(secretFailure), 1);
     EXPECT_EQ(std::get<2>(secretFailure).find("super-secret"), std::string::npos);
-    for (const auto& args : {std::vector<std::string_view>{"status"},
-                             {"validate"},
-                             {"preview", "up"},
-                             {"preview", "down"},
-                             {"up"},
-                             {"down", "--to", "0"},
-                             {"baseline", "--to", "10"}})
+    if constexpr (orm::config::sqliteBackendEnabled)
     {
-        std::ostringstream out, err;
-        EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(),
-                                                                        "sqlite3://:memory:", out, err),
-                  0)
-            << err.str();
+        for (const auto& args : {std::vector<std::string_view>{"status"},
+                                 {"validate"},
+                                 {"preview", "up"},
+                                 {"preview", "down"},
+                                 {"up"},
+                                 {"down", "--to", "0"},
+                                 {"baseline", "--to", "10"}})
+        {
+            std::ostringstream out, err;
+            EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(),
+                                                                            "sqlite3://:memory:", out, err),
+                      0)
+                << err.str();
+        }
+        EXPECT_EQ(std::get<0>(call({"up", "--to", "999"}, "sqlite3://:memory:")), 1);
     }
-    EXPECT_EQ(std::get<0>(call({"up", "--to", "999"}, "sqlite3://:memory:")), 1);
     std::ostringstream out, err;
     const std::string_view help[]{"--help"};
     EXPECT_EQ(runCommandLine(help, initialCatalog(), out, err), 0);
     const char* argv[]{"migrate", "--help"};
     EXPECT_EQ(runCommandLine(2, argv, initialCatalog()), 0);
-}
-
-TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
-{
-    TempDirectory directory;
-    const auto url = "sqlite3://" + (directory.path / "cli.db").generic_string();
-    const auto call = [&](std::initializer_list<std::string_view> args, const Catalog& catalog)
-    {
-        std::ostringstream output, errors;
-        const auto result = orm::migrations::detail::runCommandLineWithConnection(std::span{args.begin(), args.size()},
-                                                                                  catalog, url, output, errors);
-        return std::tuple{result, output.str(), errors.str()};
-    };
-    const auto catalog = initialCatalog();
-    EXPECT_EQ(std::get<0>(call({"up", "--to", "10"}, catalog)), 0);
-    EXPECT_NE(std::get<1>(call({"status"}, catalog)).find("applied"), std::string::npos);
-    EXPECT_EQ(std::get<0>(call({"down", "--to", "0"}, catalog)), 0);
-    EXPECT_EQ(std::get<0>(call({"baseline", "--to", "10"}, catalog)), 0);
-    EXPECT_NE(std::get<1>(call({"status"}, catalog)).find("step_10 baseline"), std::string::npos);
-    orm::Database database;
-    database.connect(url);
-    orm::migrations::detail::DatabaseAccess::session(database) << "UPDATE _orm_migrations SET checksum='changed'";
-    database.disconnect();
-    const auto diagnostic = call({"status"}, catalog);
-    EXPECT_EQ(std::get<0>(diagnostic), 1);
-    EXPECT_NE(std::get<2>(diagnostic).find("SQL has changed"), std::string::npos);
-    std::ostringstream output, errors;
-    const std::string_view up[]{"up"};
-    EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
-                                                                    "sqlite3://:memory:", output, errors),
-              1);
-    EXPECT_NE(errors.str().find("(1)"), std::string::npos);
-    EXPECT_EQ(errors.str().find("NOT VALID SQL"), std::string::npos);
 }

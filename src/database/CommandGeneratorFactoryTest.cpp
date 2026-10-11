@@ -54,17 +54,28 @@ public:
 private:
     orm::db::BackendType backendType;
     bool accepts;
-    orm::db::sqlite::SqliteBackend delegate;
+    orm::tests::TestBackend delegate;
 };
 } // namespace
 
-TEST(CommandGeneratorFactoryTest, registersSQLiteBackendAndPreservesGeneratorLookup)
+TEST(CommandGeneratorFactoryTest, registersExactlyEnabledBackendsAndPreservesGeneratorLookup)
 {
     const orm::db::CommandGeneratorFactory factory;
-    const auto& backend = factory.getBackend(orm::db::BackendType::Sqlite);
-
-    EXPECT_EQ(backend.type(), orm::db::BackendType::Sqlite);
-    EXPECT_EQ(&factory.getCommandGenerator(orm::db::BackendType::Sqlite), &backend.commandGenerator());
+    const std::array cases{std::pair{orm::db::BackendType::Sqlite, orm::config::sqliteBackendEnabled},
+                           std::pair{orm::db::BackendType::Postgres, orm::config::postgresqlBackendEnabled},
+                           std::pair{orm::db::BackendType::Mysql, orm::config::mysqlBackendEnabled},
+                           std::pair{orm::db::BackendType::Mariadb, orm::config::mariadbBackendEnabled}};
+    for (const auto& [type, enabled] : cases)
+    {
+        if (enabled)
+        {
+            const auto& backend = factory.getBackend(type);
+            EXPECT_EQ(backend.type(), type);
+            EXPECT_EQ(&factory.getCommandGenerator(type), &backend.commandGenerator());
+        }
+        else
+            EXPECT_THROW((void)factory.getBackend(type), std::out_of_range);
+    }
 }
 
 TEST(CommandGeneratorFactoryTest, findsBackendByConnectionString)
@@ -73,8 +84,13 @@ TEST(CommandGeneratorFactoryTest, findsBackendByConnectionString)
 
     const auto* sqlite = factory.findBackend("sqlite3://:memory:");
 
-    ASSERT_NE(sqlite, nullptr);
-    EXPECT_EQ(sqlite->type(), orm::db::BackendType::Sqlite);
+    if constexpr (orm::config::sqliteBackendEnabled)
+    {
+        ASSERT_NE(sqlite, nullptr);
+        EXPECT_EQ(sqlite->type(), orm::db::BackendType::Sqlite);
+    }
+    else
+        EXPECT_EQ(sqlite, nullptr);
     const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=test");
     if constexpr (orm::config::postgresqlBackendEnabled)
     {
@@ -85,13 +101,30 @@ TEST(CommandGeneratorFactoryTest, findsBackendByConnectionString)
     {
         EXPECT_EQ(postgresql, nullptr);
     }
+    for (const auto& [scheme, type, enabled] :
+         std::array{std::tuple{"mysql://host=localhost db=test", orm::db::BackendType::Mysql,
+                               orm::config::mysqlBackendEnabled},
+                    std::tuple{"mariadb://host=localhost db=test", orm::db::BackendType::Mariadb,
+                               orm::config::mariadbBackendEnabled}})
+    {
+        const auto* backend = factory.findBackend(scheme);
+        if (enabled)
+        {
+            ASSERT_NE(backend, nullptr);
+            EXPECT_EQ(backend->type(), type);
+        }
+        else
+            EXPECT_EQ(backend, nullptr);
+    }
 }
 
 TEST(CommandGeneratorFactoryTest, rejectsDuplicateAndNullBackendRegistration)
 {
     orm::db::CommandGeneratorFactory factory;
 
-    EXPECT_THROW(factory.registerBackend(std::make_unique<orm::db::sqlite::SqliteBackend>()), std::invalid_argument);
+    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Oracle, false));
+    EXPECT_THROW(factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Oracle, false)),
+                 std::invalid_argument);
     EXPECT_THROW(factory.registerBackend(nullptr), std::invalid_argument);
     EXPECT_THROW(factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Empty, false)),
                  std::invalid_argument);
@@ -100,14 +133,15 @@ TEST(CommandGeneratorFactoryTest, rejectsDuplicateAndNullBackendRegistration)
 TEST(CommandGeneratorFactoryTest, rejectsAmbiguousAutomaticBackendSelectionDeterministically)
 {
     orm::db::CommandGeneratorFactory factory;
-    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Mysql, true));
+    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Oracle, true));
+    factory.registerBackend(std::make_unique<DelegatingBackend>(orm::db::BackendType::Firebird, true));
 
     EXPECT_EQ(factory.findBackend("sqlite3://:memory:"), nullptr);
 }
 
 TEST(CommandGeneratorFactoryTest, preservesOutOfRangeForUnknownBackendLookup)
 {
-    const orm::db::CommandGeneratorFactory factory;
+    const orm::db::CommandGeneratorFactory factory{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
 
     EXPECT_THROW((void)factory.getBackend(orm::db::BackendType::Mysql), std::out_of_range);
     EXPECT_THROW((void)factory.getCommandGenerator(orm::db::BackendType::Mysql), std::out_of_range);

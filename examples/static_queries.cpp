@@ -30,13 +30,18 @@ inline constexpr auto renameUser =
     update<User>().set(col<&User::name>(), param<std::string, 0>()).where(col<&User::id>() == param<int, 1>());
 inline constexpr auto eraseUser = remove<User>().where(col<&User::id>() == param<int, 0>());
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc != 2)
+    {
+        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
+        return 2;
+    }
     try
     {
         orm::Database database;
         auto context = database.orm<AppSchema>();
-        database.connect("sqlite3://:memory:");
+        database.connect(argv[1]);
         context.createTable<User>();
         context.insert(std::vector<User>{{1, 18, "Ada", std::nullopt}, {2, 21, "Grace", "grace@example.test"}});
 

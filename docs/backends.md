@@ -1,16 +1,17 @@
 # Backends
 
-`orm-cxx` supports SQLite by default and an optional PostgreSQL adapter. Other
-backend enum values remain placeholders and are not evidence of working
-database support.
+`orm-cxx` treats SQLite, PostgreSQL, MySQL and MariaDB as equal, independently
+selected adapters. All four build options default to `OFF`. The default library
+and developer test profile use the backend-independent core and SOCI core.
 
 ## Support status
 
 | Backend | Status | Verification |
 | --- | --- | --- |
 | SQLite | Supported | Integration tests on GCC, Clang, and MSVC; Clang coverage |
-| PostgreSQL | Supported, opt-in | Live common conformance on PostgreSQL 15 and 18; GCC and Clang; Clang coverage; MSVC compile/link |
-| MySQL | Future | Not currently available |
+| PostgreSQL | Supported | Live common conformance on PostgreSQL 15 and 18; GCC and Clang; Clang coverage; MSVC compile/link |
+| MySQL | Supported | Common conformance for 8.4 and 9.7; GCC and Clang; Clang coverage; MSVC compile/link |
+| MariaDB | Supported | Common conformance for 11.4, 11.8 and 12.3; GCC and Clang; Clang coverage; MSVC compile/link |
 | ODBC | Future | Not currently available |
 | Oracle | Future | Not currently available |
 | Firebird | Future | Not currently available |
@@ -24,36 +25,38 @@ qualify as support.
 
 ## Compatibility at a glance
 
-SQLite and PostgreSQL are first-class supported backends for the shared ORM
+SQLite, PostgreSQL, MySQL and MariaDB are equal supported backends for the shared ORM
 contract. Supported does not mean that their native SQL semantics or every
 optional capability are identical. Applications can use the same model, CRUD,
 projection, transaction, and relation APIs; capability reporting exposes the
 intentional differences before SQL execution.
 
-| Contract area | SQLite | PostgreSQL |
-| --- | --- | --- |
-| Build mode | Default backend | Opt-in backend |
-| Scalar and nullable model fields | All currently documented portable fields | All currently documented portable fields |
-| Manual, composite, and generated integer keys | Supported | Supported |
-| CRUD and exact affected-row counts | Supported | Supported |
-| Projection and aggregate projection queries | Supported | Supported |
-| Full-model `GROUP BY` / `HAVING` | Supported with SQLite representative-row semantics | Rejected; use a grouped projection |
-| To-one, one-to-many, and many-to-many relations | Supported | Supported |
-| Foreign keys and junction-row cascade | Enabled per ORM session | Native PostgreSQL enforcement |
-| Explicit transactions | Supported | Supported; a statement error requires rollback |
-| [Versioned SQL migrations](schema-migrations.md) | Transactional DDL and history; `BEGIN IMMEDIATE` | Transactional DDL and history; advisory lock per history schema |
-| ORM bind-parameter ceiling | 900 | 65,535 |
-| ORM identifier restriction | No additional byte limit; bind-backed physical columns use portable ASCII names | 63 bytes; bind-backed physical columns use portable ASCII names |
-| Default `LIKE` behavior | ASCII case-insensitive | Case-sensitive |
-| Native NULL ordering | `ASC`: first; `DESC`: last | `ASC`: last; `DESC`: first |
-| Namespace selection | SQLite database connection | Active PostgreSQL `search_path` |
+| Contract area | SQLite | PostgreSQL | MySQL | MariaDB |
+| --- | --- | --- | --- | --- |
+| Build mode | Explicit opt-in | Explicit opt-in | Explicit opt-in | Explicit opt-in |
+| Scalar and nullable fields | Portable contract | Portable contract | Portable contract | Portable contract |
+| Manual, composite and generated integer keys | Supported | Supported | Supported | Supported |
+| CRUD and exact affected rows | Supported | Supported | Supported | Supported |
+| Projections and aggregate projections | Supported | Supported | Supported | Supported |
+| Full-model grouping | Representative-row semantics | Rejected | Rejected | Rejected |
+| Grouped projections | Supported | Strict grouping | Strict grouping | Strict grouping |
+| To-one and collection relations | Supported | Supported | Supported | Supported |
+| Foreign keys and junction cascade | Enabled per ORM session | Native enforcement | InnoDB enforcement | InnoDB enforcement |
+| Explicit transactions | Supported | Statement errors require rollback | Fatal transaction errors require rollback | Fatal transaction errors require rollback |
+| [Versioned migrations](schema-migrations.md) | Transactional; `BEGIN IMMEDIATE` | Transactional; advisory lock | Nontransactional; session lock and journal | Nontransactional; session lock and journal |
+| String primary/foreign keys | Native text | Native text | Explicit bounded strings | Explicit bounded strings |
+| ORM parameter ceiling | 900 | 65,535 | Runtime/driver limits | Runtime/driver limits |
+| Identifier ceiling | No additional byte limit | 63 bytes | 64 characters | 64 characters |
+| ORM `LIKE` behavior | ASCII case-insensitive | Case-sensitive | Binary collation | Binary collation |
+| Native NULL order | ASC first; DESC last | ASC last; DESC first | ASC first; DESC last | ASC first; DESC last |
+| Namespace selection | Database connection | Active `search_path` | Selected database | Selected database |
 
 Raw SQL remains backend-specific. Code that needs portable behavior should use
 the typed API and inspect `getBackendCapabilities()` for optional operations.
-For both bundled adapters, a physical non-identity column name used as a SOCI
+For every bundled adapter, a physical non-identity column name used as a SOCI
 bind name may contain only ASCII letters, digits, and `_`.
 Connection strings and identifiers containing an embedded NUL byte are rejected
-before they reach either database driver's C API.
+before they reach a database driver's C API.
 
 ## SQLite
 
@@ -82,9 +85,9 @@ Failures that cross the backend boundary use `orm::DatabaseError`. Its code,
 backend type, logical operation, and optional native code are stable structured
 fields; diagnostic messages never include connection strings or bound values.
 
-SQLite is the reference backend for the current public model, query, mutation,
-transaction, and relation behavior. Its session enables foreign-key enforcement
-for ORM-managed connections.
+SQLite sessions enable foreign-key enforcement for ORM-managed connections.
+The same public model, query, mutation, transaction and relation contract applies
+to every adapter.
 
 SQLite supports the current scalar and nullable model fields, manual and
 composite primary keys, SQLite integer auto-increment keys, full-model and
@@ -127,15 +130,12 @@ preserve whitespace inside keyword values, so connection values must not contain
 spaces. Prefer a PostgreSQL passfile/`PGPASSFILE` instead of embedding a complex
 password in the DSN.
 
-With examples enabled, the `postgresql-example` target reads
-`ORM_CXX_POSTGRESQL_EXAMPLE_DSN`, connects, reports selected capabilities, and
-disconnects without creating database objects. It is also built by the
-PostgreSQL CI profiles.
+With examples enabled, `backend-connection-example` accepts a connection
+string as its only argument, reports capabilities and disconnects without
+creating database objects. The same example supports every selected adapter.
 
-The supported server range is PostgreSQL 15 through 18. CI verifies the lower
-boundary with GCC 15 and the upper boundary with Clang 18 and coverage. MSVC
-builds and links the adapter and every consumer configuration; live server
-behavior is verified on Linux.
+The server test matrix covers PostgreSQL 15 and 18. MSVC compiles and links the
+adapter and consumer configurations; live server behavior runs on Linux.
 
 PostgreSQL supports the current scalar and nullable fields, manual and composite
 keys, generated integer identity keys, exact affected-row counts, transactions,
@@ -197,47 +197,113 @@ docker compose run --rm \
   dev cmake --workflow --preset linux-gcc-postgresql
 ```
 
+## MySQL and MariaDB
+
+MySQL and MariaDB have separate providers, registry entries, capabilities,
+error identities and migration SQL variants. They share one SOCI `mysql`
+transport and one Oracle MySQL C client. Enabling MariaDB alone does not
+register MySQL. Enabling MySQL alone does not register MariaDB. A connection to
+the wrong server family is rejected during session initialization.
+
+```text
+mysql://host=localhost port=3306 db=application user=application password=secret
+mariadb://host=localhost port=3307 db=application user=application password=secret
+```
+
+These are SOCI keyword/value payloads. Explicit selection uses
+`BackendType::Mysql` or `BackendType::Mariadb`. ORM sessions use InnoDB,
+`utf8mb4`, a binary no-pad collation, strict SQL mode including
+`ONLY_FULL_GROUP_BY`, foreign-key checks and explicit autocommit. Automatic
+reconnection is rejected because it would discard transaction state and locks.
+
+| Contract area | MySQL | MariaDB |
+| --- | --- | --- |
+| Scalar and nullable fields, CRUD, projections, generated/composite keys | Supported | Supported |
+| To-one, one-to-many and many-to-many relations | Supported | Supported |
+| Grouped projections | Strict grouping | Strict grouping |
+| Full-model grouping | Rejected | Rejected |
+| Foreign keys | InnoDB enforcement | InnoDB enforcement |
+| Migration DDL | Nontransactional | Nontransactional |
+| String primary/foreign key | Explicit bounded string | Explicit bounded string |
+| Identifier limit | 64 characters | 64 characters |
+| Unsigned 64-bit integer storage | `BIGINT UNSIGNED` | `BIGINT UNSIGNED` |
+| Typed string ordering | Supported | Requires explicit string length up to 16,383 characters |
+
+Ordinary unbounded strings use `LONGTEXT`. Bounded strings use `VARCHAR`;
+string primary and foreign keys require explicit `stringLengths` metadata.
+The ORM validates index width against the active InnoDB page size before DDL.
+See [Model](model.md) for the metadata declaration. The configured binary
+collation gives case-sensitive `LIKE` and preserves trailing spaces.
+
+MariaDB sorts `LONGTEXT` using a prefix controlled by `max_sort_length`.
+The adapter configures a 65,536-byte sort prefix and rejects typed string
+ordering unless `stringLengths` declares at most 16,383 characters. This
+prevents silently incorrect ordering of long strings. Storage and filtering
+of unbounded strings remain supported. Raw SQL ordering keeps native server
+semantics and is the caller's responsibility. The restriction is exposed as
+`query.maxOrderedStringLength` in backend capabilities.
+
+Both adapters implement [versioned SQL migrations](schema-migrations.md),
+including session locks, checksums and explicit recovery of failed migrations.
+MySQL-family DDL cannot be rolled back; read the migration recovery contract
+before applying schema changes.
+
+The selected Oracle client supports MySQL's default `caching_sha2_password` and
+MariaDB's default `mysql_native_password`. TLS uses SOCI MySQL options such as `ssl_mode=REQUIRED`,
+`ssl_mode=VERIFY_IDENTITY` and `sslca=/path/to/ca.pem`; configure the server
+certificate and CA for verified TLS. Optional MariaDB authentication plugins
+require matching client plugins and are outside the default package contract.
+The package uses `libmysql` in vcpkg and `libmysqlclient` through Conan;
+MariaDB Connector/C is not a second dependency. On Debian,
+`default-libmysqlclient-dev` selects MariaDB Connector/C. Use
+`scripts/install_mysql_client_debian.sh` for the Oracle 8.4 LTS client.
+
 ## Build configuration
 
-SQLite is controlled by `ORM_CXX_ENABLE_SQLITE_BACKEND` and enabled by default.
-PostgreSQL is controlled by `ORM_CXX_ENABLE_POSTGRESQL_BACKEND` and disabled by
-default. Live tests additionally require
-`ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS=ON`. The target name and alias remain
-`orm-cxx` and `orm-cxx::orm-cxx`.
-
-For a backend-neutral consumer build that links only the shared SOCI core, use:
+The independent options are `ORM_CXX_ENABLE_SQLITE_BACKEND`,
+`ORM_CXX_ENABLE_POSTGRESQL_BACKEND`, `ORM_CXX_ENABLE_MYSQL_BACKEND` and
+`ORM_CXX_ENABLE_MARIADB_BACKEND`. All default to `OFF`; all 16 subsets,
+including the core-only developer build, are supported.
 
 ```sh
-cmake -S . -B build/core-only \
-  -DORM_CXX_ENABLE_SQLITE_BACKEND=OFF \
-  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=OFF \
-  -DORM_CXX_BUILD_TESTS=OFF \
-  -DORM_CXX_BUILD_EXAMPLES=OFF
+cmake -S . -B build/mysql -G Ninja -DORM_CXX_ENABLE_MYSQL_BACKEND=ON
 ```
 
-With a backend disabled, its implementation sources, SOCI driver link dependency,
-and factory registration are omitted; `soci_core` remains required. The legacy
-developer test suite still requires SQLite. Examples are selected according to
-the enabled backends. Parent-project consumers default tests and examples to
-`OFF` and may choose SQLite-only, PostgreSQL-only, both backends, or core-only.
+A disabled adapter omits implementation sources, its client and SOCI driver
+link, complete generated provider declarations and registry factory. SOCI core
+remains required. The target is always `orm-cxx::orm-cxx`.
+The generated module exposes four booleans in `orm::config`:
+`sqliteBackendEnabled`, `postgresqlBackendEnabled`, `mysqlBackendEnabled` and
+`mariadbBackendEnabled`. Parent-project tests and examples default to `OFF`.
 
-Linux PostgreSQL builds require the `libpq` development package. The repository
-vcpkg manifest enables its `sqlite` feature by default and keeps `postgresql`
-optional:
+Each server has an independent `ORM_CXX_ENABLE_<BACKEND>_INTEGRATION_TESTS`
+option and `ORM_CXX_<BACKEND>_TEST_DSN`. Live tests use isolated PostgreSQL
+schemas or MySQL/MariaDB databases. The test role must be permitted to create
+and drop these namespaces. Missing DSNs in an enabled live profile are errors.
+
+```sh
+docker compose --profile all-backends up --detach --wait postgres mysql mariadb
+docker compose run --rm \
+  -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
+  -e ORM_CXX_MYSQL_TEST_DSN='mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx' \
+  -e ORM_CXX_MARIADB_TEST_DSN='mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx' \
+  dev cmake --workflow --preset linux-clang-all-backends
+```
+
+Single-adapter presets have suffixes `sqlite`, `postgresql`, `mysql` and
+`mariadb`; `all-backends` enables all four. Base `*-debug` presets select core.
+Clang 18 exports independent core and four adapter coverage reports, merged
+into the common 100% line coverage gate.
+
+Windows selects dependencies explicitly:
 
 ```powershell
-.\externals\vcpkg\vcpkg.exe install --x-feature=postgresql
-cmake --workflow --preset msvc-postgresql-debug
+.\externals\vcpkg\vcpkg.exe install --x-feature=sqlite --x-feature=postgresql --x-feature=mysql --x-feature=mariadb
+cmake --workflow --preset msvc-all-backends-debug
 ```
 
-For a PostgreSQL-only dependency set, omit the default SQLite feature:
-
-```powershell
-.\externals\vcpkg\vcpkg.exe install --x-no-default-features --x-feature=postgresql
-```
-
-The vcpkg features provision native dependencies; the corresponding
-`ORM_CXX_ENABLE_*_BACKEND` CMake options still select which adapters are built.
+The vcpkg features provision dependencies; CMake options select library behavior.
+Neither enables a backend implicitly. See [Packaging](packaging.md).
 
 ## Capability reporting
 
@@ -254,7 +320,7 @@ be hard-coded as SQLite assumptions in shared code.
 ## Raw SQL portability
 
 Raw query and ordering fragments use the selected database's SQL dialect. A raw
-fragment written for SQLite may not work with a future PostgreSQL or MySQL
+fragment written for SQLite may not work with a different PostgreSQL or MySQL
 backend. Explicit raw-fragment values remain prepared bind parameters.
 
 Use the typed query API for portable application logic and isolate intentional

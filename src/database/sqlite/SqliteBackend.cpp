@@ -69,6 +69,22 @@ public:
         return "main.\"_orm_migrations\"";
     }
 
+    auto migrationHistoryExists(soci::session& session, std::string_view) const -> bool override
+    {
+        int exists{};
+        session << "SELECT COUNT(*) FROM main.sqlite_master WHERE type='table' AND name='_orm_migrations'",
+            soci::into(exists);
+        return exists != 0;
+    }
+
+    auto createMigrationHistory(soci::session& session, std::string_view table) const -> void override
+    {
+        session << "CREATE TABLE IF NOT EXISTS " + std::string{table} +
+                       " (version BIGINT PRIMARY KEY NOT NULL, name TEXT NOT NULL, backend INTEGER NOT NULL, "
+                       "checksum TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+                       "baseline INTEGER NOT NULL CHECK(baseline IN (0,1)))";
+    }
+
     auto beginMigration(soci::session& session, std::string_view) const -> void override
     {
         try
@@ -190,7 +206,7 @@ public:
 
     auto limits(soci::session& /*session*/) const -> orm::db::BackendRuntimeLimits override
     {
-        return orm::db::BackendRuntimeLimits{.maxBindParameters = 900};
+        return orm::db::BackendRuntimeLimits{.maxBindParameters = 900, .maxIndexBytes = std::nullopt};
     }
 
     auto normalizeAffectedRows(long long affectedRows) const -> std::size_t override
@@ -295,7 +311,7 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
                 .compositePrimaryKeys = true,
                 .foreignKeys = true,
                 .onDeleteCascade = true,
-                .transactionalMigrations = true,
+                .transactionalDdl = true,
             },
         .query =
             {
@@ -331,6 +347,7 @@ auto sqliteCapabilities() -> orm::db::BackendCapabilities
             {
                 .maxUnsignedLongLong = static_cast<unsigned long long>(std::numeric_limits<long long>::max()),
             },
+        .migrations = {.supported = true, .atomicity = orm::db::MigrationAtomicity::WholeMigration},
         .supportedColumnTypes =
             {
                 ColumnType::Bool,

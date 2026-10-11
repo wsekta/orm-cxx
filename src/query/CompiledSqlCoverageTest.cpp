@@ -39,8 +39,10 @@ using EmbeddedNulIdentifierPlan = decltype(select<EmbeddedNulIdentifierModel>())
 
 static_assert(ast::compiledStatement<IdentifierSchema, LongIdentifierPlan, Flavor::SQLite>.valid);
 static_assert(!ast::compiledStatement<IdentifierSchema, LongIdentifierPlan, Flavor::PostgreSQL>.valid);
+static_assert(!ast::compiledStatement<IdentifierSchema, LongIdentifierPlan, Flavor::MySQLFamily>.valid);
 static_assert(!ast::compiledStatement<IdentifierSchema, EmbeddedNulIdentifierPlan, Flavor::SQLite>.valid);
 static_assert(!ast::compiledStatement<IdentifierSchema, EmbeddedNulIdentifierPlan, Flavor::PostgreSQL>.valid);
+static_assert(!ast::compiledStatement<IdentifierSchema, EmbeddedNulIdentifierPlan, Flavor::MySQLFamily>.valid);
 
 struct CompositeBook;
 struct CompositeAuthor
@@ -67,10 +69,12 @@ auto expectRuntimeProgramMatchesCache(const Plan&) -> void
     const auto data = ast::compiled::program<Plan>();
     constexpr auto& sqlite = ast::compiledStatement<SchemaType, Plan, Flavor::SQLite>;
     constexpr auto& postgres = ast::compiledStatement<SchemaType, Plan, Flavor::PostgreSQL>;
-    static_assert(sqlite.valid && postgres.valid);
+    constexpr auto& mysql = ast::compiledStatement<SchemaType, Plan, Flavor::MySQLFamily>;
+    static_assert(sqlite.valid && postgres.valid && mysql.valid);
     const auto model = orm::modelView<SchemaType, typename Plan::Model>();
     EXPECT_EQ(sql::emitSql(data.view(), model, sql::StaticSqlPolicy<Flavor::SQLite>{}), sqlite.view());
     EXPECT_EQ(sql::emitSql(data.view(), model, sql::StaticSqlPolicy<Flavor::PostgreSQL>{}), postgres.view());
+    EXPECT_EQ(sql::emitSql(data.view(), model, sql::StaticSqlPolicy<Flavor::MySQLFamily>{}), mysql.view());
     ASSERT_EQ(data.bindings.size(), sqlite.program.bindings.size());
     for (std::size_t i = 0; i < data.bindings.size(); ++i)
     {
@@ -178,7 +182,7 @@ TEST(CompiledSqlCoverageTest, builtinPolicyValidatesNamesAndRuntimePolicyRejects
     EXPECT_THROW((void)sqlite.quoteIdentifier(std::string_view{"embedded\0nul", 12}), std::invalid_argument);
     sql::SqlProgram program;
     program.boundPagination = true;
-    const orm::db::sqlite::SqliteDialect dialect;
+    const orm::tests::TestSqlDialect dialect;
     EXPECT_THROW((void)sql::RuntimeSqlPolicy{dialect}.pagination(program.view()), std::logic_error);
 }
 
@@ -212,7 +216,7 @@ TEST(CompiledSqlCoverageTest, sharedPathParserPreservesDiagnosticsAndRendererAli
     auto malformed = sql::parseSqlSource("id");
     malformed.pathSize = 3;
     EXPECT_THROW((void)sql::resolveSqlColumn(malformed, model), std::invalid_argument);
-    const orm::db::sqlite::SqliteDialect dialect;
+    const orm::tests::TestSqlDialect dialect;
     orm::db::commands::RenderContext context{.model = model, .dialect = dialect};
     context.relationAliases.emplace("profile", "selected_profile");
     EXPECT_EQ(orm::db::commands::renderColumn(ast::Column{"profile.city"}, context), "\"selected_profile\".\"city\"");

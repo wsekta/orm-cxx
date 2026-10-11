@@ -63,7 +63,15 @@ auto backendName(db::BackendType backend) -> std::string_view
     {
         return "postgresql";
     }
-    throw MigrationError{ErrorCode::UnsupportedBackend, "Migrations require SQLite or PostgreSQL", 0, backend};
+    if (backend == db::BackendType::Mysql)
+    {
+        return "mysql";
+    }
+    if (backend == db::BackendType::Mariadb)
+    {
+        return "mariadb";
+    }
+    throw MigrationError{ErrorCode::UnsupportedBackend, "Unsupported migration backend", 0, backend};
 }
 
 auto normalizeSql(std::string_view sql) -> std::string
@@ -266,10 +274,10 @@ auto Catalog::fromDirectory(const std::filesystem::path& directory) -> Catalog
             for (const auto& dialect : std::filesystem::directory_iterator(entry.path()))
             {
                 const auto name = dialect.path().filename().string();
-                if (!dialect.is_directory() || dialect.is_symlink() || (name != "sqlite" && name != "postgresql"))
+                if (!dialect.is_directory() || dialect.is_symlink() ||
+                    (name != "sqlite" && name != "postgresql" && name != "mysql" && name != "mariadb"))
                 {
-                    throw MigrationError{ErrorCode::InvalidCatalog, "Expected a sqlite or postgresql directory",
-                                         version};
+                    throw MigrationError{ErrorCode::InvalidCatalog, "Expected a supported backend directory", version};
                 }
                 for (const auto& file : std::filesystem::directory_iterator(dialect.path()))
                 {
@@ -290,8 +298,11 @@ auto Catalog::fromDirectory(const std::filesystem::path& directory) -> Catalog
                 {
                     scripts.down = readSql(down);
                 }
-                migration.scripts.emplace(name == "sqlite" ? db::BackendType::Sqlite : db::BackendType::Postgres,
-                                          std::move(scripts));
+                const auto type = name == "sqlite"     ? db::BackendType::Sqlite :
+                                  name == "postgresql" ? db::BackendType::Postgres :
+                                  name == "mysql"      ? db::BackendType::Mysql :
+                                                         db::BackendType::Mariadb;
+                migration.scripts.emplace(type, std::move(scripts));
             }
             migrations.push_back(std::move(migration));
         }

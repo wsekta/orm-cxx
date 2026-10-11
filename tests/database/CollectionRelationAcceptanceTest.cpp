@@ -131,10 +131,11 @@ protected:
     }
 };
 
-TEST(SqliteCollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAndConstraints)
+TEST(CollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAndConstraints)
 {
+    const orm::tests::TestSqlDialect dialect;
     const auto statements = orm::db::relations::createTableStatements(
-        orm::modelView<collection_models::Schema, collection_models::CompositeOwner>());
+        dialect, orm::modelView<collection_models::Schema, collection_models::CompositeOwner>());
 
     ASSERT_EQ(statements.size(), 1);
     EXPECT_EQ(statements.front(),

@@ -180,14 +180,18 @@ auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) ->
 
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
         {
-            definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.ownerColumns[i]),
-                                              dialect.toSqlType(ownerPrimaryKey[i]->type.value())));
+            definitions.push_back(std::format(
+                "\t{} {} NOT NULL{}", dialect.quoteIdentifier(junction.ownerColumns[i]),
+                dialect.toSqlType(ownerPrimaryKey[i]->type.value(), ownerPrimaryKey[i]->maxStringLength),
+                dialect.renderStringLengthConstraint(junction.ownerColumns[i], ownerPrimaryKey[i]->maxStringLength)));
         }
 
         for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
         {
-            definitions.push_back(std::format("\t{} {} NOT NULL", dialect.quoteIdentifier(junction.targetColumns[i]),
-                                              dialect.toSqlType(targetPrimaryKey[i]->type.value())));
+            definitions.push_back(std::format(
+                "\t{} {} NOT NULL{}", dialect.quoteIdentifier(junction.targetColumns[i]),
+                dialect.toSqlType(targetPrimaryKey[i]->type.value(), targetPrimaryKey[i]->maxStringLength),
+                dialect.renderStringLengthConstraint(junction.targetColumns[i], targetPrimaryKey[i]->maxStringLength)));
         }
 
         std::vector<std::string_view> allJunctionColumns{junction.ownerColumns.begin(), junction.ownerColumns.end()};
@@ -218,8 +222,8 @@ auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) ->
                                           join(quoteIdentifiers(dialect, junction.targetColumns), ", "),
                                           dialect.quoteIdentifier(target->tableName), join(targetColumnNames, ", ")));
 
-        statements.push_back(std::format("{}\n{}\n);", dialect.renderCreateTablePrefix(junction.tableName, true),
-                                         join(definitions, ",\n")));
+        statements.push_back(std::format("{}\n{}{}", dialect.renderCreateTablePrefix(junction.tableName, true),
+                                         join(definitions, ",\n"), dialect.renderCreateTableSuffix()));
     }
 
     return statements;
@@ -239,6 +243,41 @@ auto dropTableStatements(const SqlDialect& dialect, model::ModelView owner) -> s
     }
 
     return statements;
+}
+
+auto linkInsertSpec(model::ModelView owner, model::RelationView relation, const binding::PrimaryKey& ownerKey,
+                    const binding::PrimaryKey& targetKey) -> InsertIfAbsentSpec
+{
+    const auto target = owner.resolveTarget(relation);
+    if (!target || relation.kind != model::RelationKind::ManyToMany)
+    {
+        throw std::invalid_argument{"Insert-if-absent requires a resolved many-to-many relation"};
+    }
+    const auto junction = owner.resolveJunction(relation);
+    if (!junction.isConfigured())
+    {
+        throw std::invalid_argument{"Many-to-many relation has no junction mapping"};
+    }
+    requireKeySize(ownerKey, binding::getPrimaryKeyColumns(owner), "owner");
+    requireKeySize(targetKey, binding::getPrimaryKeyColumns(target), "target");
+    if (junction.ownerColumns.size() != ownerKey.size() || junction.targetColumns.size() != targetKey.size())
+    {
+        throw std::invalid_argument{"Junction column count does not match endpoint primary keys"};
+    }
+    InsertIfAbsentSpec result{
+        .tableName = std::string{junction.tableName}, .columns = {}, .valueExpressions = {}, .conflictColumns = {}};
+    for (std::size_t i = 0; i < ownerKey.size(); ++i)
+    {
+        result.columns.emplace_back(junction.ownerColumns[i]);
+        result.valueExpressions.push_back(std::format(":orm_rel_owner_{}", i));
+    }
+    for (std::size_t i = 0; i < targetKey.size(); ++i)
+    {
+        result.columns.emplace_back(junction.targetColumns[i]);
+        result.valueExpressions.push_back(std::format(":orm_rel_target_{}", i));
+    }
+    result.conflictColumns = result.columns;
+    return result;
 }
 
 auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
@@ -278,18 +317,9 @@ auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::Rel
                 addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]));
         }
 
-        std::vector<std::string> allColumns;
-        allColumns.reserve(junction.ownerColumns.size() + junction.targetColumns.size());
-        std::ranges::transform(junction.ownerColumns, std::back_inserter(allColumns),
-                               [](std::string_view column) { return std::string{column}; });
-        std::ranges::transform(junction.targetColumns, std::back_inserter(allColumns),
-                               [](std::string_view column) { return std::string{column}; });
-        statement.sql = dialect.renderInsertIfAbsent(InsertIfAbsentSpec{
-            .tableName = std::string{junction.tableName},
-            .columns = allColumns,
-            .valueExpressions = placeholders,
-            .conflictColumns = allColumns,
-        });
+        auto spec = linkInsertSpec(owner, relation, ownerKey, targetKey);
+        spec.valueExpressions = std::move(placeholders);
+        statement.sql = dialect.renderInsertIfAbsent(spec);
 
         return statement;
     }

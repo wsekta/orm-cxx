@@ -120,7 +120,7 @@ TEST_P(TransactionsTest, disconnectWithActiveTransaction_shouldClearTransactionS
     ASSERT_NO_THROW(connection.disconnect());
     EXPECT_FALSE(connection.isConnected());
 
-    ASSERT_NO_THROW(connection.connect(GetParam().type, GetParam().connectionString));
+    ASSERT_NO_THROW(connection.connect(GetParam().type, testConnectionString()));
     ASSERT_NO_THROW(connection.beginTransaction());
     EXPECT_NO_THROW(connection.rollbackTransaction());
 }

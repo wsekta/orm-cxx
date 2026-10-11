@@ -1,22 +1,111 @@
 include_guard(GLOBAL)
 
+function(orm_cxx_require_oracle_mysql_client soci_target)
+    # Resolve headers from the selected driver graph before trying platform defaults.
+    set(pending_targets "${soci_target}")
+    get_property(
+        imported_targets
+        DIRECTORY
+        PROPERTY IMPORTED_TARGETS
+    )
+    foreach(imported_target IN LISTS imported_targets)
+        if(imported_target MATCHES "[Mm][Yy][Ss][Qq][Ll]")
+            list(APPEND pending_targets "${imported_target}")
+        endif()
+    endforeach()
+    set(visited_targets)
+    set(client_include_hints ${MYSQL_INCLUDE_DIR} ${MYSQL_INCLUDE_DIRS})
+    while(pending_targets)
+        list(POP_FRONT pending_targets current_target)
+        if(NOT TARGET "${current_target}" OR current_target IN_LIST visited_targets)
+            continue()
+        endif()
+        list(APPEND visited_targets "${current_target}")
+        foreach(property INCLUDE_DIRECTORIES INTERFACE_INCLUDE_DIRECTORIES)
+            get_target_property(target_includes "${current_target}" "${property}")
+            # Conan CMakeDeps wraps its include paths in configuration expressions. Both configurations use the
+            # package's public headers; unwrap these simple expressions before the configure-time probe.
+            string(REGEX REPLACE "\\$<\\$<CONFIG:[^>]+>:([^<>]*)>" "\\1" target_includes "${target_includes}")
+            string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^<>]*)>" "\\1" target_includes "${target_includes}")
+            foreach(directory IN LISTS target_includes)
+                if(NOT directory MATCHES "\\$<" AND IS_DIRECTORY "${directory}")
+                    list(APPEND client_include_hints "${directory}")
+                endif()
+            endforeach()
+        endforeach()
+        get_target_property(target_libraries "${current_target}" INTERFACE_LINK_LIBRARIES)
+        foreach(library IN LISTS target_libraries)
+            if(TARGET "${library}")
+                list(APPEND pending_targets "${library}")
+            endif()
+        endforeach()
+    endwhile()
+    find_path(
+        orm_cxx_mysql_client_include mysql.h
+        HINTS ${client_include_hints}
+        PATH_SUFFIXES mysql include/mysql include NO_CACHE
+    )
+    if(NOT orm_cxx_mysql_client_include)
+        message(
+            FATAL_ERROR
+                "MySQL and MariaDB require the Oracle MySQL C client development headers (libmysql/libmysqlclient)."
+        )
+    endif()
+    include(CheckCXXSourceCompiles)
+    set(CMAKE_REQUIRED_INCLUDES "${orm_cxx_mysql_client_include}" ${client_include_hints})
+    unset(orm_cxx_oracle_mysql_client CACHE)
+    check_cxx_source_compiles(
+        "#include <mysql.h>
+#include <soci/version.h>
+#if defined(MARIADB_BASE_VERSION) || defined(MARIADB_VERSION_ID)
+#error ORM_CXX_REQUIRES_ORACLE_MYSQL_CLIENT
+#endif
+static_assert(SOCI_VERSION >= 400100, \"MySQL-family TLS requires SOCI 4.1.0 or newer\");
+int main() { auto mode = MYSQL_OPT_SSL_MODE; (void)mode; }"
+        orm_cxx_oracle_mysql_client
+    )
+    if(NOT orm_cxx_oracle_mysql_client)
+        message(
+            FATAL_ERROR
+                "MySQL and MariaDB require Oracle libmysql/libmysqlclient with SSL mode support; MariaDB Connector/C is not supported by this dependency contract."
+        )
+    endif()
+endfunction()
+
 function(orm_cxx_add_runtime_dependencies source_dir)
     set(ORM_CXX_SOCI_NEEDS_OPENSSL
         OFF
         PARENT_SCOPE
     )
+    set(soci_components core)
+    if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+        list(APPEND soci_components sqlite3)
+    endif()
+    if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
+        list(APPEND soci_components postgresql)
+    endif()
+    set(mysql_family_enabled OFF)
+    if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)
+        set(mysql_family_enabled ON)
+        list(APPEND soci_components mysql)
+    endif()
+    # Clear inherited targets so disabled drivers never leak into the link interface.
+    foreach(component CORE SQLITE3 POSTGRESQL MYSQL)
+        set(ORM_CXX_SOCI_${component}_TARGET
+            ""
+            PARENT_SCOPE
+        )
+        set(ORM_CXX_SOCI_${component}_INSTALLED_TARGET
+            ""
+            PARENT_SCOPE
+        )
+    endforeach()
     if(ORM_CXX_USE_SYSTEM_SOCI)
-        find_package(SOCI 4.0.3 CONFIG REQUIRED)
+        find_package(SOCI 4.1.0 CONFIG REQUIRED)
         set(soci_export_core Core)
         set(soci_export_sqlite3 SQLite3)
         set(soci_export_postgresql PostgreSQL)
-        set(soci_components core)
-        if(ORM_CXX_ENABLE_SQLITE_BACKEND)
-            list(APPEND soci_components sqlite3)
-        endif()
-        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-            list(APPEND soci_components postgresql)
-        endif()
+        set(soci_export_mysql MySQL)
 
         foreach(component IN LISTS soci_components)
             # Recent SOCI exports component names; older packages and Conan distinguish static and shared targets. Keep
@@ -31,9 +120,13 @@ function(orm_cxx_add_runtime_dependencies source_dir)
                 message(FATAL_ERROR "The installed SOCI package does not provide its ${component} target.")
             endif()
 
+            if(component STREQUAL "mysql")
+                orm_cxx_require_oracle_mysql_client("${soci_target}")
+            endif()
+
             # Older SOCI PostgreSQL exports name OpenSSL::SSL in their static link interface without finding it. Inspect
             # both modern and legacy configuration-specific properties, and resolve only declared dependencies.
-            if(component STREQUAL "postgresql")
+            if(NOT component STREQUAL "core")
                 get_target_property(soci_link_libraries "${soci_target}" INTERFACE_LINK_LIBRARIES)
                 get_target_property(soci_configurations "${soci_target}" IMPORTED_CONFIGURATIONS)
                 foreach(config IN LISTS soci_configurations)
@@ -65,20 +158,19 @@ function(orm_cxx_add_runtime_dependencies source_dir)
     endif()
 
     if(TARGET soci_core)
-        if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)
-            message(
-                FATAL_ERROR
-                    "ORM_CXX_ENABLE_SQLITE_BACKEND=ON requires the parent project to provide the soci_sqlite3 target alongside soci_core."
-            )
-        endif()
-        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND NOT TARGET soci_postgresql)
-            message(
-                FATAL_ERROR
-                    "ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON requires the parent project to provide the soci_postgresql target alongside soci_core."
-            )
-        endif()
-    elseif(TARGET soci_sqlite3 OR TARGET soci_postgresql)
-        message(FATAL_ERROR "orm-cxx requires the soci_core target when SOCI targets are supplied by a parent project.")
+        foreach(component IN LISTS soci_components)
+            if(NOT TARGET soci_${component})
+                message(
+                    FATAL_ERROR "The selected backend requires parent-provided soci_${component} alongside soci_core."
+                )
+            endif()
+        endforeach()
+    elseif(
+        TARGET soci_sqlite3
+        OR TARGET soci_postgresql
+        OR TARGET soci_mysql
+    )
+        message(FATAL_ERROR "orm-cxx requires soci_core when SOCI targets are supplied by a parent project.")
     else()
         # Keep all SOCI configuration local to this function/directory tree. In particular, do not overwrite a parent
         # project's cache or BUILD_SHARED_LIBS setting.
@@ -90,7 +182,8 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         set(SOCI_EMPTY OFF)
         set(WITH_DB2 OFF)
         set(WITH_FIREBIRD OFF)
-        set(WITH_MYSQL OFF)
+        set(WITH_MYSQL "${mysql_family_enabled}")
+        set(SOCI_MYSQL "${mysql_family_enabled}")
         set(WITH_ODBC OFF)
         set(WITH_ORACLE OFF)
         set(WITH_POSTGRESQL "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}")
@@ -104,27 +197,22 @@ function(orm_cxx_add_runtime_dependencies source_dir)
 
         add_subdirectory("${source_dir}/externals/soci" "${CMAKE_CURRENT_BINARY_DIR}/externals/soci" EXCLUDE_FROM_ALL)
 
-        if(NOT TARGET soci_core)
-            message(FATAL_ERROR "The bundled SOCI configuration could not create the soci_core target.")
-        endif()
+        foreach(component IN LISTS soci_components)
+            if(NOT TARGET soci_${component})
+                message(
+                    FATAL_ERROR
+                        "Bundled SOCI could not create soci_${component}. Install the selected backend client development package."
+                )
+            endif()
+        endforeach()
 
-        if(ORM_CXX_ENABLE_SQLITE_BACKEND AND NOT TARGET soci_sqlite3)
-            message(
-                FATAL_ERROR
-                    "The bundled SOCI configuration could not create its SQLite backend. Install the SQLite development package or configure through the repository's vcpkg toolchain."
-            )
-        endif()
-
-        if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND NOT TARGET soci_postgresql)
-            message(
-                FATAL_ERROR
-                    "The bundled SOCI configuration could not create its PostgreSQL backend. Install the libpq development package or configure through the repository's vcpkg toolchain with the postgresql manifest feature."
-            )
-        endif()
     endif()
 
-    foreach(component core sqlite3 postgresql)
+    foreach(component IN LISTS soci_components)
         if(TARGET soci_${component})
+            if(component STREQUAL "mysql")
+                orm_cxx_require_oracle_mysql_client(soci_mysql)
+            endif()
             string(TOUPPER "${component}" component_upper)
             set(ORM_CXX_SOCI_${component_upper}_TARGET
                 "soci_${component}"

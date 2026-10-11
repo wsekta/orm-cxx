@@ -2,7 +2,7 @@
 
 Immutable plans are available alongside the mutable `orm::Query<T>`,
 `orm::ProjectionQuery<Source, Result>`, and `orm::Update<T>` builders. A plan
-preserves the expression structure in its C++ type. SQLite and PostgreSQL use
+preserves the expression structure in its C++ type. All four backends use
 that structure to prepare SQL once for the schema, plan type, and SQL dialect.
 Execution binds the current values and hydrates the usual model or DTO result.
 

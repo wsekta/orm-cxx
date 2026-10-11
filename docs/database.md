@@ -73,6 +73,21 @@ strings are never copied into `DatabaseError` diagnostics. Keyword values with
 whitespace are not supported by the vendored SOCI parser; use a PostgreSQL
 passfile/`PGPASSFILE` for credentials that cannot be represented safely.
 
+Each enabled provider has its own selector and explicit type:
+
+| Provider | Explicit `BackendType` | Connection example |
+| --- | --- | --- |
+| SQLite | `Sqlite` | `sqlite3://test.db` |
+| PostgreSQL | `Postgres` | `postgresql://host=localhost dbname=application user=application` |
+| MySQL | `Mysql` | `mysql://host=localhost db=application user=application` |
+| MariaDB | `Mariadb` | `mariadb://host=localhost db=application user=application` |
+
+MySQL and MariaDB use separate selectors and capability profiles while sharing
+the Oracle MySQL client transport. Their payloads use SOCI keyword/value options
+such as `ssl_mode=VERIFY_IDENTITY` and `sslca=/path/to/ca.pem`. All providers
+default to disabled at build time; enable the required adapter explicitly.
+See [Backends](backends.md) for authentication, TLS and session requirements.
+
 Use `isConnected()` and `getBackendType()` to inspect lifecycle state. Calling
 `disconnect()` rolls back an active transaction before closing the session; the
 same `Database` object can then connect again; existing ORM contexts use its new
@@ -80,7 +95,7 @@ session and backend. A `Database` is intentionally
 neither copyable nor movable because an active transaction is tied to its SOCI
 session.
 
-Both supported backends enforce generated foreign keys. SQLite connections
+All four supported backends enforce generated foreign keys. SQLite connections
 automatically enable `PRAGMA foreign_keys=ON`; PostgreSQL requires no equivalent
 session setup. Foreign-key violations therefore fail immediately, and deleting
 a many-to-many endpoint removes its junction rows through the generated
@@ -247,7 +262,7 @@ stored foreign key changed and `0` when it was already in the requested state.
 object, and all components of a simple or composite key must be present and
 non-null. A model with a database-generated key must be selected after insert
 before it is used as an endpoint. Missing endpoint rows are rejected by
-foreign-key enforcement on both supported backends.
+foreign-key enforcement on all four supported backends.
 
 See [Collection relations](relations.md) for mapping declarations, generated
 junction schemas, delete behavior, and self-referencing mappings.

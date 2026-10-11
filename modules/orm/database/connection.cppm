@@ -2,6 +2,7 @@ module;
 
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -10,6 +11,7 @@ export module orm:database_connection;
 import :foundation;
 import :model;
 import :sql;
+import :query_value;
 import :database_payload;
 
 namespace orm::migrations::detail
@@ -103,9 +105,18 @@ private:
 
     auto executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t;
     auto executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t;
+    auto executeInsertIfAbsent(const db::Statement& statement, const db::InsertIfAbsentSpec& conflict,
+                               std::string_view operation) -> std::size_t;
     auto executeSql(std::string_view statement, std::string_view operation) -> void;
+    auto ensureSessionUsable(std::string_view operation) const -> void;
+    auto ensureDdlSupported(std::string_view operation) const -> void;
+    auto ensureSchemaSupported(model::ModelView model, bool includeJunctions, std::string_view operation) -> void;
+    auto ensureStringValueSupported(const model::ColumnView& column, const std::optional<query::QueryValue>& value,
+                                    std::string_view operation) const -> void;
     auto relationEndpointExists(model::ModelView model, const db::binding::PrimaryKey& key) -> bool;
     auto tableExists(std::string_view tableName) -> bool;
+    auto ensureEndpointKeySupported(model::ModelView model, const db::binding::PrimaryKey& key,
+                                    std::string_view operation) const -> void;
     auto ensureRelationTableEndpointsExist(model::ModelView owner) -> void;
     [[nodiscard]] auto getBackend() const -> const db::BackendProvider&;
     [[nodiscard]] auto getCommandGenerator() const -> const db::CommandGenerator&;

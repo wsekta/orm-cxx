@@ -247,16 +247,19 @@ struct CheckingPolicy : db::detail::StaticSqlPolicy<Flavor>
     [[nodiscard]] constexpr auto quoteIdentifier(std::string_view name) const -> std::string
     {
         if (name.empty() || name.find('\0') != std::string_view::npos ||
-            (Flavor == db::CompiledSqlFlavor::PostgreSQL && name.size() > 63))
+            (Flavor == db::CompiledSqlFlavor::PostgreSQL && name.size() > 63) ||
+            (Flavor == db::CompiledSqlFlavor::MySQLFamily &&
+             std::ranges::count_if(name, [](unsigned char c) { return (c & 0xc0) != 0x80; }) > 64))
             *valid = false;
-        std::string result{"\""};
+        const auto quote = Flavor == db::CompiledSqlFlavor::MySQLFamily ? '`' : '"';
+        std::string result(1, quote);
         for (const auto character : name)
         {
-            if (character == '"')
-                result += '"';
+            if (character == quote)
+                result += quote;
             result += character;
         }
-        result += '"';
+        result += quote;
         return result;
     }
 };

@@ -81,6 +81,7 @@ struct CompositeTag
 
     inline static constexpr orm::reflection::FixedString table_name{"collection_composite_tags"};
     inline static constexpr auto id_columns = orm::primaryKey<&CompositeTag::scope, &CompositeTag::id>();
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&CompositeTag::scope, 128>());
 };
 
 struct CompositeOwner
@@ -92,6 +93,7 @@ struct CompositeOwner
 
     inline static constexpr orm::reflection::FixedString table_name{"collection_composite_owners"};
     inline static constexpr auto id_columns = orm::primaryKey<&CompositeOwner::tenant, &CompositeOwner::id>();
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&CompositeOwner::tenant, 128>());
     inline static constexpr auto relations = orm::relations(orm::manyToMany<&CompositeOwner::tags>()
                                                                 .through<"collection_owner_tags">()
                                                                 .ownerColumns<"owner_tenant", "owner_id">()

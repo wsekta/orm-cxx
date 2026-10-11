@@ -59,7 +59,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-2025-vs2026]
         manager: [conan, vcpkg]
-        backends: [sqlite, both, core, postgresql]
+        backends: [core, sqlite, postgresql, mysql, mariadb, sqlite+postgresql, sqlite+mysql, sqlite+mariadb, postgresql+mysql, postgresql+mariadb, mysql+mariadb, sqlite+postgresql+mysql, sqlite+postgresql+mariadb, sqlite+mysql+mariadb, postgresql+mysql+mariadb, sqlite+postgresql+mysql+mariadb]
         triplet: [default]
         include:
           - os: windows-2025-vs2026
@@ -68,10 +68,10 @@ jobs:
             triplet: x64-windows
           - os: windows-2025-vs2026
             manager: vcpkg
-            backends: both
+            backends: sqlite+postgresql+mysql+mariadb
             triplet: x64-windows
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    timeout-minutes: 120
     env:
       CONAN_HOME: ${{ github.workspace }}/build/conan-home
       VCPKG_DISABLE_METRICS: '1'
@@ -117,13 +117,37 @@ jobs:
         run: |
           git submodule update --init externals/vcpkg
           call .\externals\vcpkg\bootstrap-vcpkg.bat -disableMetrics
+      - name: Start database services for installed consumers
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          services=()
+          selection='${{ matrix.backends }}'
+          for backend in postgresql mysql mariadb; do
+            case "+$selection+" in
+              *"+$backend+"*)
+                service="$backend"
+                if [ "$backend" = postgresql ]; then service=postgres; fi
+                services+=("$service")
+                ;;
+            esac
+          done
+          if ((${#services[@]})); then
+            docker compose --profile all-backends up --detach --wait "${services[@]}"
+          fi
+          cat >> "$GITHUB_ENV" <<'EOF'
+          ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS=1
+          ORM_CXX_POSTGRESQL_TEST_DSN=postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
+          ORM_CXX_MYSQL_TEST_DSN=mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
+          ORM_CXX_MARIADB_TEST_DSN=mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
+          EOF
       - name: Build package and run installed consumer
         run: python scripts/check_packages.py --manager ${{ matrix.manager }} --backends ${{ matrix.backends }} ${{ matrix.triplet != 'default' && format('--triplet {0}', matrix.triplet) || '' }}
       - name: Preserve failure logs
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: logs-${{ matrix.manager }}-${{ matrix.os }}-${{ matrix.backends }}
+          name: logs-${{ matrix.manager }}-${{ matrix.os }}-${{ matrix.backends }}-${{ matrix.triplet }}
           path: |
             build/**/CMakeConfigureLog.yaml
             build/**/LastTest.log

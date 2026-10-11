@@ -37,6 +37,10 @@ struct DatabaseAccess
     {
         database.migrationActive = active;
     }
+    static auto active(const Database& database) -> bool
+    {
+        return database.migrationActive;
+    }
 };
 
 [[nodiscard]] auto normalizeSql(std::string_view sql) -> std::string;

@@ -77,6 +77,43 @@ struct IsPrimaryKey : std::false_type
 {
 };
 
+template <typename>
+struct IsStringLengths : std::false_type
+{
+};
+
+template <typename... Definitions>
+struct IsStringLengths<StringLengths<Definitions...>> : std::true_type
+{
+};
+
+template <typename Model>
+consteval auto hasValidStringLengthsDefinition() -> bool
+{
+    if constexpr (requires { Model::string_lengths; })
+    {
+        using definition_t = std::remove_cvref_t<decltype(Model::string_lengths)>;
+        if constexpr (IsStringLengths<definition_t>::value)
+            return definition_t::template isValidFor<Model>();
+        else
+            return false;
+    }
+    else
+        return true;
+}
+
+template <typename Model>
+consteval auto mappedStringLength(std::string_view name) -> std::optional<std::size_t>
+{
+    if constexpr (requires { Model::string_lengths; })
+    {
+        using definition_t = std::remove_cvref_t<decltype(Model::string_lengths)>;
+        if constexpr (IsStringLengths<definition_t>::value)
+            return Model::string_lengths.find(name);
+    }
+    return std::nullopt;
+}
+
 template <auto... Members>
 struct IsPrimaryKey<PrimaryKey<Members...>> : std::true_type
 {
@@ -369,6 +406,7 @@ consteval auto makeColumn() -> ColumnView
             .isPrimaryKey = isPrimaryKey<Model>(fieldName),
             .isAutoIncrement = isAutoIncrement<Model>(fieldName),
             .isNotNull = not isNullable<field_t>,
+            .maxStringLength = mappedStringLength<Model>(fieldName),
         };
     }
 }

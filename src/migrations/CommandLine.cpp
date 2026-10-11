@@ -20,7 +20,8 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
                                           std::ostream& errors) -> int
 {
     constexpr std::string_view usage = "Usage: status | validate | preview up|down [--to N] | up [--to N] | down --to "
-                                       "N | baseline --to N\nConnection: ORM_CXX_DATABASE_URL\n";
+                                       "N | baseline --to N | resolve --version N --checksum SHA256 "
+                                       "--resolution completed|reverted\nConnection: ORM_CXX_DATABASE_URL\n";
     if (args.empty() || (args.size() == 1 && (args[0] == "--help" || args[0] == "help")))
     {
         output << usage;
@@ -33,7 +34,7 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
     };
     const auto command = args[0];
     if (command != "status" && command != "validate" && command != "preview" && command != "up" && command != "down" &&
-        command != "baseline")
+        command != "baseline" && command != "resolve")
     {
         return badArguments();
     }
@@ -49,7 +50,28 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
         consumed = 2;
     }
     std::optional<Version> target;
-    if (args.size() != consumed)
+    std::string_view expectedChecksum;
+    Resolution resolution{Resolution::Completed};
+    if (command == "resolve")
+    {
+        if (args.size() != 7 || args[1] != "--version" || args[3] != "--checksum" || args[5] != "--resolution" ||
+            (args[6] != "completed" && args[6] != "reverted"))
+        {
+            return badArguments();
+        }
+        Version value{};
+        const auto parsed = std::from_chars(args[2].data(), args[2].data() + args[2].size(), value);
+        expectedChecksum = args[4];
+        if (parsed.ec != std::errc{} || parsed.ptr != args[2].data() + args[2].size() || value <= 0 ||
+            expectedChecksum.size() != 64 ||
+            expectedChecksum.find_first_not_of("0123456789abcdef") != std::string_view::npos)
+        {
+            return badArguments();
+        }
+        target = value;
+        resolution = args[6] == "completed" ? Resolution::Completed : Resolution::Reverted;
+    }
+    else if (args.size() != consumed)
     {
         if (command == "status" || command == "validate" || args.size() != consumed + 2 || args[consumed] != "--to")
         {
@@ -91,6 +113,14 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
             {
                 output << migration.version << ' ' << migration.name << " pending\n";
             }
+            if (status.incomplete)
+            {
+                const auto& marker = *status.incomplete;
+                output << "Incomplete: " << marker.version << ' ' << marker.name << ' '
+                       << (marker.direction == Direction::Up ? "up" : "down") << " checksum " << marker.checksum
+                       << '\n';
+                errors << "Inspect and repair the database before resolving the incomplete migration\n";
+            }
             for (const auto& issue : status.problems)
             {
                 errors << "Migration " << issue.version << ": " << issue.message << '\n';
@@ -100,7 +130,10 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
         if (command == "preview")
         {
             const auto plan = runner.preview(direction, target);
-            output << "From " << plan.from << " to " << plan.to << '\n';
+            output << "From " << plan.from << " to " << plan.to << "; atomicity: "
+                   << (plan.atomicity == db::MigrationAtomicity::WholeMigration ? "whole migration" :
+                                                                                  "nontransactional")
+                   << '\n';
             for (const auto& migration : plan.migrations)
             {
                 output << "-- " << migration.version << ' ' << migration.name << '\n' << migration.sql << '\n';
@@ -118,6 +151,10 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
         else if (command == "down")
         {
             runner.down(*target);
+        }
+        else if (command == "resolve")
+        {
+            runner.resolve(*target, expectedChecksum, resolution);
         }
         else
         {

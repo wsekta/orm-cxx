@@ -22,7 +22,7 @@ changes in the same pull request as user-facing changes.
 
 ## Fastest supported setup
 
-The default development image contains Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL client libraries,
+The default development image contains Clang/LLVM 18, Ninja, CMake, SQLite, PostgreSQL and Oracle MySQL client libraries,
 clang-format, clang-tidy, and cmake-format. Docker Compose and the devcontainer
 both build that image from the repository's single `Dockerfile`. The separate
 `gcc` Compose service uses the official GCC 15 image and the same pinned
@@ -34,7 +34,7 @@ Run the normal Clang build, tests, and quality checks from a clean checkout:
 docker compose run --build --rm dev bash ./scripts/check-fast.sh
 ```
 
-Reproduce the non-server Linux build, test, SQLite coverage, and quality
+Reproduce the non-server Linux build, test, core coverage, and quality
 workflows:
 
 ```bash
@@ -75,27 +75,20 @@ coverage settings. The PostgreSQL profiles require
 in [Backends](docs/backends.md#postgresql). Do not copy preset flags into local
 scripts.
 
-SQLite debug presets build the two SQLite examples; PostgreSQL-enabled profiles
-also build the non-destructive `postgresql-example` connection smoke test. The
-verification scripts compile examples but intentionally do not run them,
-because the SQLite examples create files in their current directory. If you run
-one manually, use a temporary working directory so the source checkout stays
-clean:
+All backend options default to `OFF`. Base debug presets build the core and
+core tests without client libraries. Use `sqlite`, `postgresql`, `mysql`,
+`mariadb` or `all-backends` presets to select adapters. Server profiles require
+their matching `ORM_CXX_<BACKEND>_TEST_DSN` and live services.
 
-```bash
-repo_root="$PWD"
-example_dir="$(mktemp -d)"
-(cd "$example_dir" && "$repo_root/build/linux-clang-debug/examples/example")
-rm -rf "$example_dir"
-```
-
-Run `relations-example` the same way if needed.
-`postgresql-example` instead requires `ORM_CXX_POSTGRESQL_EXAMPLE_DSN` and does
-not create database objects.
+Every selected-adapter build compiles the shared examples. `example`,
+`relations-example` and `static-queries-example` accept a DSN argument and
+create or remove example tables; use a disposable database. The
+`backend-connection-example` accepts the same argument and only reports
+capabilities. `migrations-example` uses the documented migration CLI.
 
 ## Database backend work
 
-SQLite is the default backend and PostgreSQL is optional. Before changing
+SQLite, PostgreSQL, MySQL and MariaDB have equal support contracts. Before changing
 backend selection, SQL generation, binding, execution, or driver dependencies,
 read the project documentation for [backend
 portability](docs/backend-portability.md) and the [backend extension
@@ -116,7 +109,7 @@ itself is not a backend support claim.
 ## Native Linux setup
 
 Install CMake 3.31 or newer, Ninja 1.11 or newer, SQLite development headers, `libpq`
-development headers, the PostgreSQL client, GCC 15, Clang/LLVM 18, and the
+development headers, Oracle MySQL client headers, GCC 15, Clang/LLVM 18, and the
 Python tools pinned in `tools/requirements-dev.txt`.
 Then invoke the same workflow presets shown above. The container is the
 reference environment when host package names or versions differ.
@@ -133,12 +126,12 @@ Visual Studio Developer PowerShell and run:
 ./scripts/check-msvc.ps1
 ```
 
-The first two commands bootstrap the repository's pinned vcpkg checkout and
-install SQLite. Add `--x-feature=postgresql` to the install command and use the
-`msvc-postgresql-debug` workflow preset to compile the PostgreSQL adapter and
-all consumer configurations. They are required once per clean checkout. The script itself
-only invokes the `msvc-debug` workflow preset; the preset contains the
-toolchain and build settings.
+The first two commands bootstrap pinned vcpkg and install core dependencies.
+Select backend dependencies explicitly with `--x-feature=sqlite`,
+`--x-feature=postgresql`, `--x-feature=mysql` and `--x-feature=mariadb`, then use
+the corresponding preset, such as `msvc-all-backends-debug`. That profile checks
+all 16 consumer subsets, including compile failures for disabled adapters.
+The script invokes the core-only `msvc-debug` workflow.
 
 ## Before submitting a pull request
 
