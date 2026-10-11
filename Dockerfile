@@ -7,7 +7,7 @@ RUN sh /tmp/install_mysql_client_debian.sh
 
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends \
-        ca-certificates libsqlite3-dev libpq-dev libtirpc-dev postgresql-client \
+        ca-certificates libsqlite3-dev libpq-dev libtirpc-dev libncurses-dev postgresql-client \
         python3 python3-venv pkg-config bison flex perl sqlite3 \
     && python3 -m venv /opt/orm-cxx-tools \
     && /opt/orm-cxx-tools/bin/pip install --no-cache-dir cmake==3.31.6 ninja==1.13.0 \
@@ -46,6 +46,7 @@ RUN apt-get update \
         libpq-dev \
         libmysqlclient-dev \
         libtirpc-dev \
+        libncurses-dev \
         llvm-18 \
         ninja-build \
         pkg-config \

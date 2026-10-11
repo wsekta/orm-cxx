@@ -108,7 +108,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --yes pkg-config bison flex perl
           case '+${{ matrix.backends }}+' in
-            *'+mysql+'*|*'+mariadb+'*) sudo apt-get install --yes libtirpc-dev ;;
+            *'+mysql+'*|*'+mariadb+'*) sudo apt-get install --yes libtirpc-dev libncurses-dev ;;
           esac
       - name: Initialize pinned vcpkg on Linux
         if: matrix.manager == 'vcpkg' && runner.os == 'Linux'

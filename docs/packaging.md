@@ -24,7 +24,8 @@ On a minimal Linux host, vcpkg also needs ordinary host tools `pkg-config`,
 `bison`, `flex` and `perl`; the Packages workflow installs them. No manual SOCI
 or selected-client development-package installation is needed.
 Building the vcpkg Oracle client on Debian/Ubuntu also needs the system RPC
-development headers from `libtirpc-dev` when MySQL or MariaDB is selected.
+and terminal development headers from `libtirpc-dev` and `libncurses-dev`
+when MySQL or MariaDB is selected.
 SQLite works in process; PostgreSQL, MySQL and MariaDB need a database server
 to connect to (the package supplies the client library, not a running server).
 
