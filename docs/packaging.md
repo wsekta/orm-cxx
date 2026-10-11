@@ -20,8 +20,9 @@ vcpkg baseline supplies SOCI 4.1.4 and Oracle `libmysql` 8.0.46; the Conan recip
 uses SOCI 4.1.2 and its Oracle `libmysqlclient` dependency.
 Consumers require GCC 15+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and the selected package manager. Standard-library headers
 are included normally; header units and `import std` are not required.
-On a minimal Linux host, vcpkg also needs its ordinary host tool
-`pkg-config`; the Packages workflow installs it. No manual SOCI or selected-client development-package installation is needed.
+On a minimal Linux host, vcpkg also needs ordinary host tools `pkg-config`,
+`bison`, `flex` and `perl`; the Packages workflow installs them. No manual SOCI
+or selected-client development-package installation is needed.
 SQLite works in process; PostgreSQL, MySQL and MariaDB need a database server
 to connect to (the package supplies the client library, not a running server).
 
