@@ -151,7 +151,11 @@ public:
     {
         try
         {
-            if (!finished_ && database_.isConnected())
+            if (!database_.isConnected())
+            {
+                database_.disconnect();
+            }
+            else if (!finished_)
             {
                 Access::runtime(database_).endMigration(Access::session(database_), table_);
             }
