@@ -89,6 +89,18 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         set(mysql_family_enabled ON)
         list(APPEND soci_components mysql)
     endif()
+    set(soci_export_core Core)
+    set(soci_export_sqlite3 SQLite3)
+    set(soci_export_postgresql PostgreSQL)
+    set(soci_export_mysql MySQL)
+    set(soci_export_components)
+    foreach(component IN LISTS soci_components)
+        list(APPEND soci_export_components "${soci_export_${component}}")
+    endforeach()
+    set(ORM_CXX_SOCI_COMPONENTS
+        "${soci_export_components}"
+        PARENT_SCOPE
+    )
     # Clear inherited targets so disabled drivers never leak into the link interface.
     foreach(component CORE SQLITE3 POSTGRESQL MYSQL)
         set(ORM_CXX_SOCI_${component}_TARGET
@@ -101,11 +113,7 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         )
     endforeach()
     if(ORM_CXX_USE_SYSTEM_SOCI)
-        find_package(SOCI 4.1.0 CONFIG REQUIRED)
-        set(soci_export_core Core)
-        set(soci_export_sqlite3 SQLite3)
-        set(soci_export_postgresql PostgreSQL)
-        set(soci_export_mysql MySQL)
+        find_package(SOCI 4.1.0 CONFIG REQUIRED COMPONENTS ${soci_export_components})
 
         foreach(component IN LISTS soci_components)
             # Recent SOCI exports component names; older packages and Conan distinguish static and shared targets. Keep
