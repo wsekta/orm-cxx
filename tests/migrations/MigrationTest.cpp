@@ -854,6 +854,9 @@ TEST(MigrationCatalogTest, MysqlFamilyLexerChecksExecutableCommentsAndRoutines)
                                "CREATE PROCEDURE p() BEGIN DROP DATABASE current_database; END;",
                                "CREATE PROCEDURE p() BEGIN PREPARE x FROM 'COMMIT'; END;",
                                "SELECT RELEASE_LOCK('x');",
+                               "SELECT `GET_LOCK`('x',0);",
+                               "SELECT `RELEASE_LOCK`('x');",
+                               "SELECT `release_all_locks`();",
                                "CREATE PROCEDURE p() BEGIN SELECT 1; END; BEGIN; SELECT 1;",
                                "/* unclosed",
                                "SELECT 'unclosed"})

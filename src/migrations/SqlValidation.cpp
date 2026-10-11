@@ -365,7 +365,8 @@ auto validateScript(std::string_view script, db::BackendType backend, Version ve
             }
             const auto quoted = upper(script.substr(quotedStart + 1, i - quotedStart - 2));
             if (((c == '"' && backend == db::BackendType::Postgres) || (mysql && c == '`')) &&
-                (quoted == "_ORM_MIGRATIONS" || quoted == "_ORM_MIGRATIONS_INCOMPLETE"))
+                (quoted == "_ORM_MIGRATIONS" || quoted == "_ORM_MIGRATIONS_INCOMPLETE" ||
+                 (mysql && (quoted == "GET_LOCK" || quoted == "RELEASE_LOCK" || quoted == "RELEASE_ALL_LOCKS"))))
             {
                 invalid();
             }
