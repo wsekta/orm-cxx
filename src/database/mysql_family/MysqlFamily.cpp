@@ -655,8 +655,8 @@ public:
     {
         binding::bindBoundValue(values, name, value);
     }
-    auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback, std::string_view operation) const
-        -> DatabaseError override
+    auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
+                        std::string_view operation) const -> DatabaseError override
     {
         auto code = fallback;
         std::optional<std::string> native;
@@ -695,8 +695,8 @@ public:
         return DatabaseError{code, type_, std::string{operation},
                              "Database operation failed: " + std::string{operation}, native};
     }
-    auto executeInsertIfAbsent(soci::session& session, StatementView statement, const InsertIfAbsentSpec& spec) const
-        -> std::size_t override
+    auto executeInsertIfAbsent(soci::session& session, StatementView statement,
+                               const InsertIfAbsentSpec& spec) const -> std::size_t override
     {
         soci::values values;
         for (const auto& parameter : statement.parameters)
