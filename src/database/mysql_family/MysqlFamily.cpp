@@ -818,20 +818,21 @@ public:
                                              "Invalid migration history namespace", 0, type_};
         }
         const std::string name{table == resolved ? "_orm_migrations" : "_orm_migrations_incomplete"};
-        soci::rowset<soci::row> objects =
+        soci::row object;
+        soci::statement prepared =
             (session.prepare << "SELECT TABLE_TYPE,COALESCE(ENGINE,'') FROM information_schema.tables "
                                 "WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=:name",
-             soci::use(name, "name"));
-        for (const auto& object : objects)
+             soci::use(name, "name"), soci::into(object));
+        if (not prepared.execute(true))
         {
-            if (object.get<std::string>(0) != "BASE TABLE" || object.get<std::string>(1) != "InnoDB")
-            {
-                throw migrations::MigrationError{migrations::ErrorCode::InvalidHistory,
-                                                 "Migration history and journal require InnoDB tables", 0, type_};
-            }
-            return true;
+            return false;
         }
-        return false;
+        if (object.get<std::string>(0) != "BASE TABLE" || object.get<std::string>(1) != "InnoDB")
+        {
+            throw migrations::MigrationError{migrations::ErrorCode::InvalidHistory,
+                                             "Migration history and journal require InnoDB tables", 0, type_};
+        }
+        return true;
     }
     auto createMigrationHistory(soci::session& session, std::string_view table) const -> void override
     {

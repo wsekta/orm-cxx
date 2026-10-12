@@ -73,6 +73,9 @@ int main() { auto mode = MYSQL_OPT_SSL_MODE; (void)mode; }"
 endfunction()
 
 function(orm_cxx_add_runtime_dependencies source_dir)
+    if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+        find_package(SQLite3 REQUIRED)
+    endif()
     set(ORM_CXX_SOCI_NEEDS_OPENSSL
         OFF
         PARENT_SCOPE

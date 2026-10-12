@@ -197,6 +197,10 @@ target_link_libraries(
            orm-cxx::reflection
     PRIVATE "$<BUILD_INTERFACE:orm-cxx-project-warnings>"
 )
+if(ORM_CXX_ENABLE_SQLITE_BACKEND)
+    # Migration execution calls the native client directly, regardless of the SOCI driver's linkage.
+    target_link_libraries(orm-cxx PRIVATE SQLite::SQLite3)
+endif()
 foreach(backend CORE SQLITE3 POSTGRESQL MYSQL)
     if(ORM_CXX_SOCI_${backend}_TARGET)
         if(NOT backend STREQUAL "CORE")
