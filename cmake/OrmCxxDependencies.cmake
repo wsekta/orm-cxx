@@ -75,6 +75,10 @@ endfunction()
 function(orm_cxx_add_runtime_dependencies source_dir)
     if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         find_package(SQLite3 REQUIRED)
+        # SOCI and CMake's FindSQLite3 use different target namespaces for the same selected client.
+        if(TARGET SQLite::SQLite3 AND NOT TARGET SQLite3::SQLite3)
+            add_library(SQLite3::SQLite3 ALIAS SQLite::SQLite3)
+        endif()
     endif()
     set(ORM_CXX_SOCI_NEEDS_OPENSSL
         OFF

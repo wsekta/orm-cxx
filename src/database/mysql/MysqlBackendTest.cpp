@@ -46,8 +46,8 @@ TEST(MysqlBackendTest, preservesFullUnsignedRangeAndNullBinding)
     soci::values values;
     backend.runtime().bind(values, "maximum",
                            {.logicalType = orm::model::ColumnType::UnsignedLongLong,
-                            .value = orm::query::QueryValue::Value{std::numeric_limits<unsigned long long>::max()}});
-    EXPECT_EQ(values.get<unsigned long long>("maximum"), std::numeric_limits<unsigned long long>::max());
+                            .value = orm::query::QueryValue::Value{(std::numeric_limits<unsigned long long>::max)()}});
+    EXPECT_EQ(values.get<unsigned long long>("maximum"), (std::numeric_limits<unsigned long long>::max)());
     backend.runtime().bind(values, "null_value",
                            {.logicalType = orm::model::ColumnType::UnsignedLongLong, .value = std::nullopt});
     EXPECT_EQ(values.get_indicator("null_value"), soci::i_null);
