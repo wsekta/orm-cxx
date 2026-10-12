@@ -36,6 +36,7 @@ if(MSVC AND "@MSVC@")
         TARGET orm-cxx::reflection
         APPEND
         PROPERTY IMPORTED_CXX_MODULES_COMPILE_OPTIONS
+                 /utf-8
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreaded>:/MT>"
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDebug>:/MTd>"
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDLL>:/MD>"

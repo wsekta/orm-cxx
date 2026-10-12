@@ -852,8 +852,9 @@ TEST(MigrationCatalogTest, MysqlAndMariaDbVariantsAreIndependent)
     directory.write("1_create/mysql/up.sql", "SELECT 1;\r\n");
     directory.write("1_create/mariadb/up.sql", "SELECT 2;\n");
     const auto catalog = Catalog::fromDirectory(directory.path);
-    ASSERT_EQ(catalog.migrations().size(), 1);
-    const auto& variants = catalog.migrations().front().scripts;
+    const auto migrations = catalog.migrations();
+    ASSERT_EQ(migrations.size(), 1);
+    const auto& variants = migrations.front().scripts;
     EXPECT_EQ(variants.at(orm::db::BackendType::Mysql).up, "SELECT 1;\n");
     EXPECT_EQ(variants.at(orm::db::BackendType::Mariadb).up, "SELECT 2;\n");
     EXPECT_NE(orm::migrations::detail::checksum(variants.at(orm::db::BackendType::Mysql)),

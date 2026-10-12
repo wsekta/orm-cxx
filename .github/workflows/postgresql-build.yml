@@ -205,7 +205,9 @@ jobs:
           for preset in linux-clang-coverage linux-clang-sqlite-coverage linux-clang-postgresql-coverage linux-clang-mysql-coverage linux-clang-mariadb-coverage; do
             cmake --preset "$preset"
             cmake --build --preset "$preset" --target orm-cxx-coverage --parallel 2
-            ctest --preset "$preset"
+            # Compiler contracts and all 16 installed consumer subsets run in the all-backends jobs above.
+            # These profiles repeat runtime tests with independent instrumentation, without rebuilding those consumers.
+            ctest --preset "$preset" --exclude-regex 'orm-cxx-(consumer-|compile-fail)'
           done
       - name: Require 100% merged line coverage
         run: |

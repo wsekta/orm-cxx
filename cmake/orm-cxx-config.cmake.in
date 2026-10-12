@@ -28,6 +28,10 @@ endif()
 unset(orm_cxx_ninja_version)
 
 include(CMakeFindDependencyMacro)
+if(@ORM_CXX_ENABLE_SQLITE_BACKEND@)
+    # Resolve the selected native client before SOCI exports its dynamic backend link interface.
+    find_dependency(SQLite3)
+endif()
 set(orm_cxx_soci_components "@ORM_CXX_SOCI_COMPONENTS@")
 find_dependency(SOCI 4.1.0 CONFIG COMPONENTS ${orm_cxx_soci_components})
 unset(orm_cxx_soci_components)
@@ -54,6 +58,7 @@ if(MSVC AND "@MSVC@")
         TARGET orm-cxx::orm-cxx
         APPEND
         PROPERTY IMPORTED_CXX_MODULES_COMPILE_OPTIONS
+                 /utf-8
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreaded>:/MT>"
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDebug>:/MTd>"
                  "$<$<STREQUAL:${orm_cxx_module_runtime},MultiThreadedDLL>:/MD>"

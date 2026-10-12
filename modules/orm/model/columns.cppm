@@ -392,6 +392,7 @@ consteval auto makeColumn() -> ColumnView
             .isPrimaryKey = isPrimaryKey<Model>(fieldName),
             .isAutoIncrement = isAutoIncrement<Model>(fieldName),
             .isNotNull = not isNullable<field_t>,
+            .maxStringLength = std::nullopt,
         };
     }
     else

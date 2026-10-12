@@ -80,6 +80,8 @@ target_compile_features(orm-cxx-reflection PUBLIC cxx_std_20)
 # GCC's lazy module reader corrupts this partition graph. Apply the option to producers, importers, and rebuilt
 # installed interfaces through the public compile options.
 target_compile_options(orm-cxx-reflection PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
+# Installed interfaces are rebuilt by the consumer. Keep the source encoding identical for every MSVC BMI and importer.
+target_compile_options(orm-cxx-reflection PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 target_sources(
     orm-cxx-reflection
     PUBLIC FILE_SET
@@ -133,6 +135,7 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
 endif()
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
 target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
+target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 target_sources(
     orm-cxx
     PUBLIC FILE_SET

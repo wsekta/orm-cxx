@@ -901,9 +901,9 @@ public:
         {
             return;
         }
-        if constexpr (std::numeric_limits<std::size_t>::max() > std::numeric_limits<unsigned long>::max())
+        if constexpr ((std::numeric_limits<std::size_t>::max)() > (std::numeric_limits<unsigned long>::max)())
         {
-            if (script.size() > std::numeric_limits<unsigned long>::max())
+            if (script.size() > (std::numeric_limits<unsigned long>::max)())
             {
                 throw migrations::MigrationError{migrations::ErrorCode::InvalidSql,
                                                  "Migration SQL exceeds the client query-length limit", 0, type_};
