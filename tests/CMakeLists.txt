@@ -1,5 +1,11 @@
 set(ORM_CXX_TEST_SOURCES
     migrations/MigrationTest.cpp
+    migrations/SnapshotTest.cpp
+    migrations/GeneratorTest.cpp
+    migrations/ProjectTest.cpp
+    migrations/NativeGenerationTest.cpp
+    migrations/TargetValuesTest.cpp
+    migrations/IndexDriftTest.cpp
     ../src/database/BackendCapabilitiesTest.cpp
     ../src/database/CommandGeneratorFactoryTest.cpp
     ../src/database/NumericConversionTest.cpp
@@ -78,9 +84,15 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND
 endif()
 
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
-    list(APPEND ORM_CXX_TEST_SOURCES ../src/database/sqlite/SqliteBackendTest.cpp
-         ../src/database/sqlite/SqliteDialectTest.cpp ../src/database/sqlite/SqliteTypeTranslatorTest.cpp
-         migrations/SqliteMigrationTest.cpp
+    list(
+        APPEND
+        ORM_CXX_TEST_SOURCES
+        ../src/database/sqlite/SqliteBackendTest.cpp
+        ../src/database/sqlite/SqliteDialectTest.cpp
+        ../src/database/sqlite/SqliteTypeTranslatorTest.cpp
+        migrations/SqliteMigrationTest.cpp
+        migrations/RebuildTest.cpp
+        migrations/RebuildFailureTest.cpp
     )
 endif()
 if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)

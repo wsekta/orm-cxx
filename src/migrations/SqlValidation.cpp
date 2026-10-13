@@ -226,7 +226,10 @@ auto validateScript(std::string_view script, db::BackendType backend, Version ve
                 {
                     invalid();
                 }
-                if (word == "SET" && !(index + 1 < words.size() && words[index + 1] == "NEW"))
+                const bool tableCharacterSet = index > 0 && words[index - 1] == "CHARACTER" &&
+                                               (first == "CREATE" || first == "ALTER") &&
+                                               std::ranges::find(words, "TABLE") != words.end();
+                if (word == "SET" && !tableCharacterSet && !(index + 1 < words.size() && words[index + 1] == "NEW"))
                 {
                     // SET belonging to UPDATE/INSERT changes rows; standalone SET
                     // changes the connection, including inside a stored routine.

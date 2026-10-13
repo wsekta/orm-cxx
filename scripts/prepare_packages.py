@@ -35,6 +35,7 @@ def create_archive(root, archive, version):
         "CMakeLists.txt", "VERSION.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "README.md",
         "scripts/export_llvm_coverage.py"
     )]
+    entries.extend(p for p in (root / "externals" / "nlohmann_json").rglob("*") if p.is_file())
     for directory in ("cmake", "include", "modules", "src"):
         entries.extend(p for p in (root / directory).rglob("*") if p.is_file())
     archive.parent.mkdir(parents=True, exist_ok=True)

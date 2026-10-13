@@ -172,9 +172,21 @@ auto sha256(std::string_view bytes) -> std::string
 
 auto checksum(const SqlMigration& scripts) -> std::string
 {
-    // Length-prefixed fields distinguish boundaries and absent versus empty down scripts.
-    std::string data = "orm-cxx-sql-migration-v1:" + std::to_string(scripts.up.size()) + ":" + scripts.up;
-    data += scripts.down ? ":1:" + std::to_string(scripts.down->size()) + ":" + *scripts.down : ":0:";
+    // Every execution input is bound; backend snapshot hashes do not depend on other variants.
+    std::string data = "orm-cxx-model-migration-v1";
+    const auto append = [&](std::string_view value)
+    {
+        data += ':' + std::to_string(value.size()) + ':';
+        data.append(value);
+    };
+    append(normalizeSql(scripts.up));
+    append(scripts.down ? "present" : "absent");
+    if (scripts.down)
+        append(normalizeSql(*scripts.down));
+    append(contextJson(scripts.upContext));
+    append(contextJson(scripts.downContext));
+    append(scripts.beforeHash);
+    append(scripts.afterHash);
     return sha256(data);
 }
 } // namespace detail
@@ -189,25 +201,60 @@ auto safeName(std::string_view name) -> bool
                                                            (c >= '0' && c <= '9') || c == '_' || c == '-';
                                                 });
 }
-auto readSql(const std::filesystem::path& path) -> std::string
+
+auto validateContext(const MigrationExecutionContext& context, const PhysicalSchema* before,
+                     const PhysicalSchema* after, Version version, db::BackendType backend) -> void
 {
-    if (!std::filesystem::is_regular_file(path) || std::filesystem::is_symlink(path))
+    const auto fail = [&]
+    { throw MigrationError{ErrorCode::InvalidCatalog, "Invalid migration execution context", version, backend}; };
+    if (context.mode != MigrationExecutionMode::Normal && context.mode != MigrationExecutionMode::SqliteRebuild)
+        fail();
+    if (context.source.has_value() != context.target.has_value())
+        fail();
+    if (context.source && (!before || !after || *context.source != *before || *context.target != *after))
+        fail();
+    if (context.mode == MigrationExecutionMode::SqliteRebuild &&
+        (backend != db::BackendType::Sqlite || !context.source || context.tables.empty()))
+        fail();
+    if ((!context.tables.empty() || !context.rebuildTables.empty()) && !context.source)
+        fail();
+    std::vector<std::string> touched;
+    for (const auto& name : context.tables)
     {
-        throw MigrationError{ErrorCode::InvalidCatalog, "Migration SQL must be a regular file"};
+        if (std::ranges::find(touched, name) != touched.end() ||
+            std::ranges::none_of(context.source->tables, [&](const auto& table) { return table.name == name; }))
+            fail();
+        touched.push_back(name);
     }
-    try
+    std::vector<std::string> sources, targets, stages;
+    for (const auto& rebuilt : context.rebuildTables)
     {
-        std::ifstream stream(path, std::ios::binary | std::ios::ate);
-        stream.exceptions(std::ios::badbit | std::ios::failbit);
-        const auto size = static_cast<std::streamsize>(stream.tellg());
-        std::string sql(static_cast<std::size_t>(size), '\0');
-        stream.seekg(0);
-        stream.read(sql.data(), size);
-        return sql;
-    }
-    catch (const std::ios_base::failure&)
-    {
-        throw MigrationError{ErrorCode::InvalidCatalog, "Cannot read migration SQL"};
+        const auto source = std::ranges::find(context.source->tables, rebuilt.source, &PhysicalTable::name);
+        const auto target = std::ranges::find(context.target->tables, rebuilt.target, &PhysicalTable::name);
+        if (context.mode != MigrationExecutionMode::SqliteRebuild || source == context.source->tables.end() ||
+            target == context.target->tables.end() || !rebuilt.staging.starts_with("__orm_rebuild_") ||
+            rebuilt.staging.size() != 30 ||
+            rebuilt.staging.find_first_not_of("0123456789abcdef", 14) != std::string::npos ||
+            std::ranges::find(context.tables, rebuilt.source) == context.tables.end() ||
+            std::ranges::find(sources, rebuilt.source) != sources.end() ||
+            std::ranges::find(targets, rebuilt.target) != targets.end() ||
+            std::ranges::find(stages, rebuilt.staging) != stages.end() ||
+            std::ranges::any_of(context.source->tables,
+                                [&](const auto& table) { return table.name == rebuilt.staging; }) ||
+            std::ranges::any_of(context.target->tables,
+                                [&](const auto& table) { return table.name == rebuilt.staging; }))
+            fail();
+        const auto identityMatches = [](const PhysicalTable& table, const std::optional<std::string>& identity)
+        {
+            const auto column =
+                std::ranges::find_if(table.columns, [](const auto& candidate) { return candidate.autoIncrement; });
+            return column == table.columns.end() ? !identity : identity && *identity == column->name;
+        };
+        if (!identityMatches(*source, rebuilt.sourceIdentity) || !identityMatches(*target, rebuilt.targetIdentity))
+            fail();
+        sources.push_back(rebuilt.source);
+        targets.push_back(rebuilt.target);
+        stages.push_back(rebuilt.staging);
     }
 }
 } // namespace
@@ -217,6 +264,7 @@ Catalog::Catalog(std::vector<Migration> migrations) : migrations_{std::move(migr
 {
     std::ranges::sort(migrations_, {}, &Migration::version);
     Version previous = 0;
+    const SchemaSnapshot* previousAfter = nullptr;
     for (auto& migration : migrations_)
     {
         if (migration.version <= previous || !safeName(migration.name) || migration.scripts.empty())
@@ -226,6 +274,26 @@ Catalog::Catalog(std::vector<Migration> migrations) : migrations_{std::move(migr
                                  migration.version};
         }
         previous = migration.version;
+        const auto hasSnapshots = !migration.before.backends.empty() || !migration.after.backends.empty();
+        if (hasSnapshots)
+        {
+            detail::canonicalize(migration.before);
+            detail::canonicalize(migration.after);
+            detail::validateSnapshot(migration.before);
+            detail::validateSnapshot(migration.after);
+            if (migration.before.backends.size() != migration.scripts.size() ||
+                migration.after.backends.size() != migration.scripts.size())
+            {
+                throw MigrationError{ErrorCode::InvalidCatalog, "Migration snapshot and script backend sets differ",
+                                     migration.version};
+            }
+            if (previousAfter && *previousAfter != migration.before)
+            {
+                throw MigrationError{ErrorCode::InvalidCatalog,
+                                     "Adjacent migration snapshots do not form a continuous schema chain",
+                                     migration.version};
+            }
+        }
         for (auto& [backend, scripts] : migration.scripts)
         {
             (void)detail::backendName(backend);
@@ -239,7 +307,31 @@ Catalog::Catalog(std::vector<Migration> migrations) : migrations_{std::move(migr
             {
                 scripts.down = detail::normalizeSql(*scripts.down);
             }
+            if (hasSnapshots)
+            {
+                if (!migration.before.backends.contains(backend) || !migration.after.backends.contains(backend))
+                {
+                    throw MigrationError{ErrorCode::InvalidCatalog, "Missing backend snapshot", migration.version,
+                                         backend};
+                }
+                const auto before = detail::snapshotHash(migration.before, backend);
+                const auto after = detail::snapshotHash(migration.after, backend);
+                if ((!scripts.beforeHash.empty() && scripts.beforeHash != before) ||
+                    (!scripts.afterHash.empty() && scripts.afterHash != after))
+                {
+                    throw MigrationError{ErrorCode::InvalidCatalog, "Migration snapshot hash mismatch",
+                                         migration.version, backend};
+                }
+                scripts.beforeHash = before;
+                scripts.afterHash = after;
+            }
+            validateContext(scripts.upContext, hasSnapshots ? &migration.before.backends.at(backend) : nullptr,
+                            hasSnapshots ? &migration.after.backends.at(backend) : nullptr, migration.version, backend);
+            validateContext(scripts.downContext, hasSnapshots ? &migration.after.backends.at(backend) : nullptr,
+                            hasSnapshots ? &migration.before.backends.at(backend) : nullptr, migration.version,
+                            backend);
         }
+        previousAfter = hasSnapshots ? &migration.after : nullptr;
     }
 }
 auto Catalog::migrations() const noexcept -> std::span<const Migration>
@@ -249,68 +341,6 @@ auto Catalog::migrations() const noexcept -> std::span<const Migration>
 
 auto Catalog::fromDirectory(const std::filesystem::path& directory) -> Catalog
 {
-    try
-    {
-        if (std::filesystem::is_symlink(directory))
-        {
-            throw MigrationError{ErrorCode::InvalidCatalog, "Migration directory cannot be a symlink"};
-        }
-        std::vector<Migration> migrations;
-        for (const auto& entry : std::filesystem::directory_iterator(directory))
-        {
-            const auto filename = entry.path().filename().string();
-            const auto separator = filename.find('_');
-            Version version = 0;
-            if (separator == std::string::npos || !entry.is_directory() || entry.is_symlink())
-            {
-                throw MigrationError{ErrorCode::InvalidCatalog, "Expected a <version>_<name> migration directory"};
-            }
-            const auto parsed = std::from_chars(filename.data(), filename.data() + separator, version);
-            if (parsed.ec != std::errc{} || parsed.ptr != filename.data() + separator)
-            {
-                throw MigrationError{ErrorCode::InvalidCatalog, "Invalid migration directory version"};
-            }
-            Migration migration{.version = version, .name = filename.substr(separator + 1), .scripts = {}};
-            for (const auto& dialect : std::filesystem::directory_iterator(entry.path()))
-            {
-                const auto name = dialect.path().filename().string();
-                if (!dialect.is_directory() || dialect.is_symlink() ||
-                    (name != "sqlite" && name != "postgresql" && name != "mysql" && name != "mariadb"))
-                {
-                    throw MigrationError{ErrorCode::InvalidCatalog, "Expected a supported backend directory", version};
-                }
-                for (const auto& file : std::filesystem::directory_iterator(dialect.path()))
-                {
-                    if (!file.is_regular_file() || file.is_symlink())
-                    {
-                        throw MigrationError{ErrorCode::InvalidCatalog, "Migration SQL must be a regular file",
-                                             version};
-                    }
-                    if (file.path().filename() != "up.sql" && file.path().filename() != "down.sql")
-                    {
-                        throw MigrationError{ErrorCode::InvalidCatalog, "Unexpected file in migration directory",
-                                             version};
-                    }
-                }
-                SqlMigration scripts{.up = readSql(dialect.path() / "up.sql"), .down = std::nullopt};
-                const auto down = dialect.path() / "down.sql";
-                if (std::filesystem::exists(down))
-                {
-                    scripts.down = readSql(down);
-                }
-                const auto type = name == "sqlite"     ? db::BackendType::Sqlite :
-                                  name == "postgresql" ? db::BackendType::Postgres :
-                                  name == "mysql"      ? db::BackendType::Mysql :
-                                                         db::BackendType::Mariadb;
-                migration.scripts.emplace(type, std::move(scripts));
-            }
-            migrations.push_back(std::move(migration));
-        }
-        return Catalog{std::move(migrations)};
-    }
-    catch (const std::filesystem::filesystem_error&)
-    {
-        throw MigrationError{ErrorCode::InvalidCatalog, "Cannot access migration directory"};
-    }
+    return MigrationProject{directory}.catalog();
 }
 } // namespace orm::migrations

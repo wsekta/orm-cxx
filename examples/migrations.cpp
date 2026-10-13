@@ -1,28 +1,18 @@
-#include <iostream>
+#include <optional>
 #include <string>
 
 import orm;
 
+struct MigrationUser
+{
+    int id;
+    std::string name;
+    std::optional<std::string> email;
+    inline static constexpr orm::reflection::FixedString table_name{"migration_example_users"};
+};
+
 int main(int argc, char** argv)
 {
-    using namespace orm::migrations;
-    const SqlMigration initial{"CREATE TABLE migration_example_users (id INTEGER PRIMARY KEY, name TEXT NOT NULL);"
-                               "INSERT INTO migration_example_users VALUES (1, 'Ann');",
-                               "DROP TABLE migration_example_users;"};
-    const SqlMigration email{"ALTER TABLE migration_example_users ADD COLUMN email TEXT;"
-                             "UPDATE migration_example_users SET email='ann@example.com';",
-                             "ALTER TABLE migration_example_users DROP COLUMN email;"};
-    const Catalog catalog{Migration{1,
-                                    "initial",
-                                    {{orm::db::BackendType::Sqlite, initial},
-                                     {orm::db::BackendType::Postgres, initial},
-                                     {orm::db::BackendType::Mysql, initial},
-                                     {orm::db::BackendType::Mariadb, initial}}},
-                          Migration{2,
-                                    "email",
-                                    {{orm::db::BackendType::Sqlite, email},
-                                     {orm::db::BackendType::Postgres, email},
-                                     {orm::db::BackendType::Mysql, email},
-                                     {orm::db::BackendType::Mariadb, email}}}};
-    return runCommandLine(argc, argv, catalog);
+    using ApplicationSchema = orm::Schema<MigrationUser>;
+    return orm::migrations::runCommandLine(argc, argv, ApplicationSchema::view);
 }

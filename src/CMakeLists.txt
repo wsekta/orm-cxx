@@ -4,6 +4,11 @@ set(ORM_CXX_SOURCES
     migrations/SqlValidation.cpp
     migrations/Runner.cpp
     migrations/CommandLine.cpp
+    migrations/SchemaSnapshot.cpp
+    migrations/SchemaDiff.cpp
+    migrations/SchemaGeneration.cpp
+    migrations/SchemaJson.cpp
+    migrations/MigrationProject.cpp
     model/ColumnType.cpp
     database/CommandGeneratorFactory.cpp
     utils/StringUtils.cpp
@@ -134,6 +139,7 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
     set_target_properties(orm-cxx orm-cxx-reflection PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
+target_include_directories(orm-cxx SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/externals/nlohmann_json")
 target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
 target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 target_sources(
@@ -156,6 +162,7 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/database/soci.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/migrations.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/migrations/schema.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/migrations/internal.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/dynamic_query/projection.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/dynamic_query/select.cppm"
@@ -266,4 +273,9 @@ foreach(package orm-cxx orm-cxx-reflection)
 endforeach()
 install(FILES "${PROJECT_SOURCE_DIR}/LICENSE" "${PROJECT_SOURCE_DIR}/THIRD_PARTY_NOTICES.md"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/orm-cxx"
+)
+install(
+    FILES "${PROJECT_SOURCE_DIR}/externals/nlohmann_json/LICENSE.MIT"
+    DESTINATION "${CMAKE_INSTALL_DATADIR}/orm-cxx/licenses"
+    RENAME nlohmann-json-MIT.txt
 )

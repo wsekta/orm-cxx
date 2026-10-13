@@ -2,11 +2,16 @@ module;
 
 #include <charconv>
 #include <cstdlib>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
 #include <optional>
 #include <span>
+#include <string>
 #include <string_view>
 #include <system_error>
+#include <utility>
 #include <vector>
 
 module orm;
@@ -15,9 +20,9 @@ import :migrations_internal;
 
 namespace orm::migrations
 {
-auto detail::runCommandLineWithConnection(std::span<const std::string_view> args, const Catalog& catalog,
-                                          std::optional<std::string_view> connection, std::ostream& output,
-                                          std::ostream& errors) -> int
+auto detail::runCatalogCommandWithConnection(std::span<const std::string_view> args, const Catalog& catalog,
+                                             std::optional<std::string_view> connection, std::ostream& output,
+                                             std::ostream& errors) -> int
 {
     constexpr std::string_view usage = "Usage: status | validate | preview up|down [--to N] | up [--to N] | down --to "
                                        "N | baseline --to N | resolve --version N --checksum SHA256 "
@@ -179,21 +184,181 @@ auto detail::runCommandLineWithConnection(std::span<const std::string_view> args
         return 1;
     }
 }
-auto runCommandLine(std::span<const std::string_view> args, const Catalog& catalog, std::ostream& output,
-                    std::ostream& errors) -> int
+auto runCommandLine(std::span<const std::string_view> args, model::SchemaView models,
+                    const std::filesystem::path& directory, std::ostream& output, std::ostream& errors) -> int
 {
-    const auto* connection = std::getenv("ORM_CXX_DATABASE_URL");
-    return detail::runCommandLineWithConnection(
-        args, catalog, connection == nullptr ? std::nullopt : std::optional<std::string_view>{connection}, output,
-        errors);
+    constexpr std::string_view usage =
+        "Usage: init [--backends sqlite,postgresql,mysql,mariadb] | compare [--check] [--decisions FILE] | "
+        "make NAME [--decisions FILE | --manual] | finalize VERSION --accept-schema | status | validate | "
+        "preview up|down [--to N] | up [--to N] | down --to N | baseline --to N | "
+        "resolve --version N --checksum SHA256 --resolution completed|reverted\n"
+        "Generation is offline. Execution uses ORM_CXX_DATABASE_URL.\n";
+    if (args.empty() || (args.size() == 1 && (args[0] == "--help" || args[0] == "help")))
+    {
+        output << usage;
+        return 0;
+    }
+    const auto badArguments = [&]
+    {
+        errors << usage;
+        return 2;
+    };
+    const auto command = args.front();
+    if (command != "init" && command != "compare" && command != "make" && command != "finalize" &&
+        command != "status" && command != "validate" && command != "preview" && command != "up" && command != "down" &&
+        command != "baseline" && command != "resolve")
+        return badArguments();
+    try
+    {
+        if (command == "init")
+        {
+            std::vector<db::BackendType> backends;
+            if (args.size() == 1)
+                backends.assign(generationBackends.begin(), generationBackends.end());
+            else if (args.size() == 3 && args[1] == "--backends")
+            {
+                auto names = args[2];
+                while (!names.empty())
+                {
+                    const auto comma = names.find(',');
+                    const auto name = names.substr(0, comma);
+                    std::optional<db::BackendType> selected;
+                    for (const auto backend : generationBackends)
+                    {
+                        if (detail::backendName(backend) == name)
+                            selected = backend;
+                    }
+                    if (!selected)
+                        return badArguments();
+                    backends.push_back(*selected);
+                    if (comma == std::string_view::npos)
+                        break;
+                    names.remove_prefix(comma + 1);
+                    if (names.empty())
+                        return badArguments();
+                }
+                if (backends.empty())
+                    return badArguments();
+            }
+            else
+                return badArguments();
+            (void)MigrationProject::init(directory, backends);
+            output << "Migration project initialized\n";
+            return 0;
+        }
+        if (command == "compare" || command == "make")
+        {
+            bool check{};
+            bool manual{};
+            std::optional<std::filesystem::path> decisionsFile;
+            std::string name;
+            std::size_t index = 1;
+            if (command == "make")
+            {
+                if (args.size() < 2 || args[1].starts_with("--"))
+                    return badArguments();
+                name = args[1];
+                index = 2;
+            }
+            while (index < args.size())
+            {
+                if (args[index] == "--check" && command == "compare" && !check)
+                {
+                    check = true;
+                    ++index;
+                }
+                else if (args[index] == "--manual" && command == "make" && !manual)
+                {
+                    manual = true;
+                    ++index;
+                }
+                else if (args[index] == "--decisions" && !decisionsFile && index + 1 < args.size())
+                {
+                    decisionsFile = std::filesystem::path{args[index + 1]};
+                    index += 2;
+                }
+                else
+                    return badArguments();
+            }
+            if (manual && decisionsFile)
+                return badArguments();
+            GenerationDecisions decisions;
+            if (decisionsFile)
+            {
+                std::ifstream input{*decisionsFile, std::ios::binary};
+                if (!input)
+                    throw MigrationError{ErrorCode::InvalidCatalog, "Cannot read generation decisions file"};
+                const std::string text{std::istreambuf_iterator<char>{input}, std::istreambuf_iterator<char>{}};
+                decisions = detail::decisionsFromJson(text);
+            }
+            MigrationProject project{directory};
+            if (command == "make")
+            {
+                const auto version = manual ? project.makeManual(std::move(name), models) :
+                                              project.make(std::move(name), models, decisions);
+                output << "Draft migration " << version << " created; review SQL and finalize with --accept-schema\n";
+                return 0;
+            }
+            const auto diff = project.compare(models, decisions);
+            for (const auto& change : diff.changes)
+            {
+                output << detail::backendName(change.backend) << ' ' << change.id << ": " << change.description
+                       << (change.unresolved ? " [decision required]" : "") << '\n';
+            }
+            bool invalid{};
+            for (const auto& diagnostic : diff.diagnostics)
+            {
+                errors << diagnostic.code << ": " << diagnostic.message << '\n';
+                invalid = invalid || diagnostic.error;
+            }
+            if (diff.changes.empty())
+                output << "Models match the latest ready snapshot\n";
+            return invalid || (check && !diff.changes.empty()) ? 1 : 0;
+        }
+        if (command == "finalize")
+        {
+            if (args.size() != 3 || args[2] != "--accept-schema")
+                return badArguments();
+            Version version{};
+            const auto parsed = std::from_chars(args[1].data(), args[1].data() + args[1].size(), version);
+            if (parsed.ec != std::errc{} || parsed.ptr != args[1].data() + args[1].size() || version <= 0)
+            {
+                return badArguments();
+            }
+            MigrationProject{directory}.finalize(version, models, true);
+            output << "Migration " << version << " finalized and immutable\n";
+            return 0;
+        }
+        const auto* connection = std::getenv("ORM_CXX_DATABASE_URL");
+        return detail::runCatalogCommandWithConnection(
+            args, Catalog::fromDirectory(directory),
+            connection == nullptr ? std::nullopt : std::optional<std::string_view>{connection}, output, errors);
+    }
+    catch (const GenerationError& error)
+    {
+        errors << error.what() << '\n';
+        for (const auto& diagnostic : error.diagnostics())
+            errors << diagnostic.code << ": " << diagnostic.message << '\n';
+        return 1;
+    }
+    catch (const MigrationError& error)
+    {
+        errors << "Migration " << error.getVersion() << ": " << error.what() << '\n';
+        return 1;
+    }
+    catch (const std::exception&)
+    {
+        errors << "Cannot operate on the migration project\n";
+        return 1;
+    }
 }
-auto runCommandLine(int argc, const char* const* argv, const Catalog& catalog) -> int
+
+auto runCommandLine(int argc, const char* const* argv, model::SchemaView models,
+                    const std::filesystem::path& directory) -> int
 {
     std::vector<std::string_view> args;
-    for (int i = 1; i < argc; ++i)
-    {
-        args.emplace_back(argv[i]);
-    }
-    return runCommandLine(args, catalog, std::cout, std::cerr);
+    for (int index = 1; index < argc; ++index)
+        args.emplace_back(argv[index]);
+    return runCommandLine(args, models, directory, std::cout, std::cerr);
 }
 } // namespace orm::migrations

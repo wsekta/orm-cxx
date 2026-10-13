@@ -1,5 +1,12 @@
 # Third-party notices
 
+## nlohmann/json
+
+The private migration JSON codec uses the unmodified single header from
+nlohmann/json 3.12.0: <https://github.com/nlohmann/json/tree/v3.12.0>.
+The MIT license is included in `externals/nlohmann_json/LICENSE.MIT`.
+Copyright (c) 2013-2025 Niels Lohmann.
+
 ## reflect-cpp
 
 The aggregate arity detection, generated structured-binding dispatch, and

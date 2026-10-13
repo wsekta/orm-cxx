@@ -388,7 +388,7 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectUnavailableTargetMe
     const auto owner = metadata.owner();
     const auto relation = metadata.ownerRelations.front();
 
-    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::logic_error);
+    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), orm::migrations::GenerationError);
     EXPECT_THROW((void)orm::db::relations::linkStatement(dialect, owner, relation, key(1), key(2)), std::logic_error);
     EXPECT_THROW((void)orm::db::relations::unlinkStatement(dialect, owner, relation, key(1), key(2)), std::logic_error);
     EXPECT_THROW(
@@ -410,7 +410,7 @@ TEST(CollectionRelationCoverageTest, relationGeneratorsRejectJunctionColumnsThat
     const auto owner = metadata.owner();
     const auto relation = metadata.ownerRelations.front();
 
-    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), std::invalid_argument);
+    EXPECT_THROW((void)orm::db::relations::createTableStatements(dialect, owner), orm::migrations::GenerationError);
     EXPECT_THROW(
         (void)orm::db::relations::collectionSelectStatement(dialect, owner, relation, "SELECT 1;", {key(1)}, false),
         std::invalid_argument);
@@ -488,7 +488,8 @@ TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
     relation->targetModelIndex = orm::model::noTargetModel;
     const auto model = metadata.owner();
 
-    EXPECT_THROW((void)orm::db::commands::DefaultCreateTableCommand{dialect}.createTable(model), std::logic_error);
+    EXPECT_THROW((void)orm::db::commands::DefaultCreateTableCommand{dialect}.createTable(model),
+                 orm::migrations::GenerationError);
     EXPECT_THROW((void)orm::db::commands::DefaultInsertCommand{dialect}.insert(model), std::logic_error);
     EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, {}), std::logic_error);
 

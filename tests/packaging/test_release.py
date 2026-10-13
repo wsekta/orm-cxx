@@ -44,7 +44,11 @@ class PackageReleaseTests(unittest.TestCase):
             self.assertIn("orm-cxx-0.1.0/" + interface.relative_to(prepare.ROOT).as_posix(), names)
         self.assertIn("orm-cxx-0.1.0/scripts/export_llvm_coverage.py", names)
         self.assertIn("orm-cxx-0.1.0/VERSION.txt", names)
-        self.assertFalse(any("/externals/" in name or "/.git/" in name for name in names))
+        self.assertEqual({name for name in names if "/externals/" in name}, {
+            "orm-cxx-0.1.0/externals/nlohmann_json/nlohmann/json.hpp",
+            "orm-cxx-0.1.0/externals/nlohmann_json/LICENSE.MIT",
+        })
+        self.assertFalse(any("/.git/" in name for name in names))
         self.assertFalse(any("/include/orm-cxx/" in name for name in names))
         self.assertFalse(any(Path(name).suffix in (".pcm", ".ifc", ".gcm") for name in names))
 

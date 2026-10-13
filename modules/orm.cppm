@@ -14,4 +14,5 @@ export import :sql;
 export import :backend_relations;
 export import :database;
 export import :migrations;
+export import :migrations_schema;
 export import :config;

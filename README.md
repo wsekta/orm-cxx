@@ -126,6 +126,9 @@ int main(int argc, char** argv)
 
 ## [Schema migrations](docs/schema-migrations.md)
 
+Model snapshots and schema comparison generate reviewable SQL for all four backends,
+including when only the core package is installed. Migration projects keep drafts,
+immutable finalized versions, explicit renames and decisions for data transformations.
 Versioned SQL migrations support all four backends with backend-specific
 execution, checksum validation, optional downgrades, explicit baselines and a
 project CLI. Use `orm::migrations` through `import orm;`; see

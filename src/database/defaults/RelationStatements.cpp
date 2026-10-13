@@ -121,20 +121,6 @@ auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement
     return "(" + join(keyPredicates, " OR ") + ")";
 }
 
-auto quoteIdentifiers(const orm::db::SqlDialect& dialect,
-                      std::span<const std::string_view> identifiers) -> std::vector<std::string>
-{
-    std::vector<std::string> quoted;
-    quoted.reserve(identifiers.size());
-
-    for (const auto& identifier : identifiers)
-    {
-        quoted.push_back(dialect.quoteIdentifier(identifier));
-    }
-
-    return quoted;
-}
-
 auto stripTerminator(std::string sql) -> std::string
 {
     while (not sql.empty() and (sql.back() == ';' or sql.back() == ' ' or sql.back() == '\n' or sql.back() == '\r'))
@@ -150,82 +136,11 @@ namespace orm::db::relations
 {
 auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>
 {
-    const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
     std::vector<std::string> statements;
-
-    for (const auto& relation : owner->relations)
+    for (const auto& table : migrations::detail::physicalJunctions(owner, dialect))
     {
-        if (relation.kind != model::RelationKind::ManyToMany or not relation.junction.isConfigured() or
-            not relation.junction.owningSide)
-        {
-            continue;
-        }
-
-        const auto& junction = relation.junction;
-        const auto target = owner.resolveTarget(relation);
-        if (target == nullptr)
-        {
-            throw std::logic_error{"Collection relation target is not available in the schema"};
-        }
-        const auto targetPrimaryKey = binding::getPrimaryKeyColumns(target);
-
-        if (junction.ownerColumns.size() != ownerPrimaryKey.size() or
-            junction.targetColumns.size() != targetPrimaryKey.size())
-        {
-            throw std::invalid_argument{"Junction column count does not match endpoint primary keys: " +
-                                        std::string{junction.tableName}};
-        }
-
-        std::vector<std::string> definitions;
-
-        for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
-        {
-            definitions.push_back(std::format(
-                "\t{} {} NOT NULL{}", dialect.quoteIdentifier(junction.ownerColumns[i]),
-                dialect.toSqlType(ownerPrimaryKey[i]->type.value(), ownerPrimaryKey[i]->maxStringLength),
-                dialect.renderStringLengthConstraint(junction.ownerColumns[i], ownerPrimaryKey[i]->maxStringLength)));
-        }
-
-        for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
-        {
-            definitions.push_back(std::format(
-                "\t{} {} NOT NULL{}", dialect.quoteIdentifier(junction.targetColumns[i]),
-                dialect.toSqlType(targetPrimaryKey[i]->type.value(), targetPrimaryKey[i]->maxStringLength),
-                dialect.renderStringLengthConstraint(junction.targetColumns[i], targetPrimaryKey[i]->maxStringLength)));
-        }
-
-        std::vector<std::string_view> allJunctionColumns{junction.ownerColumns.begin(), junction.ownerColumns.end()};
-        allJunctionColumns.insert(allJunctionColumns.end(), junction.targetColumns.begin(),
-                                  junction.targetColumns.end());
-        definitions.push_back(
-            std::format("\tPRIMARY KEY ({})", join(quoteIdentifiers(dialect, allJunctionColumns), ", ")));
-
-        std::vector<std::string> ownerColumnNames;
-        std::vector<std::string> targetColumnNames;
-        ownerColumnNames.reserve(ownerPrimaryKey.size());
-        targetColumnNames.reserve(targetPrimaryKey.size());
-
-        for (const auto* column : ownerPrimaryKey)
-        {
-            ownerColumnNames.push_back(dialect.quoteIdentifier(column->name));
-        }
-
-        for (const auto* column : targetPrimaryKey)
-        {
-            targetColumnNames.push_back(dialect.quoteIdentifier(column->name));
-        }
-
-        definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
-                                          join(quoteIdentifiers(dialect, junction.ownerColumns), ", "),
-                                          dialect.quoteIdentifier(owner->tableName), join(ownerColumnNames, ", ")));
-        definitions.push_back(std::format("\tFOREIGN KEY ({}) REFERENCES {} ({}) ON DELETE CASCADE",
-                                          join(quoteIdentifiers(dialect, junction.targetColumns), ", "),
-                                          dialect.quoteIdentifier(target->tableName), join(targetColumnNames, ", ")));
-
-        statements.push_back(std::format("{}\n{}{}", dialect.renderCreateTablePrefix(junction.tableName, true),
-                                         join(definitions, ",\n"), dialect.renderCreateTableSuffix()));
+        statements.push_back(migrations::detail::renderCreateTable(dialect, table, true, true));
     }
-
     return statements;
 }
 

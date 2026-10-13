@@ -22,16 +22,17 @@ const std::string createTableSql = "CREATE TABLE IF NOT EXISTS models_ModelWithF
                                    "\tfield3 REAL NOT NULL\n"
                                    ");";
 
-const std::string createTableSqlWithReferringToSimpleModel = "CREATE TABLE IF NOT EXISTS "
-                                                             "models_ModelRelatedToOtherModel (\n"
-                                                             "\tid INTEGER NOT NULL,\n"
-                                                             "\tfield1 INTEGER NOT NULL,\n"
-                                                             "\tfield2 TEXT NOT NULL,\n"
-                                                             "\tfield3_id INTEGER NOT NULL,\n"
-                                                             "\tPRIMARY KEY (id),\n"
-                                                             "\tFOREIGN KEY (field3_id) REFERENCES "
-                                                             "models_ModelWithId (id)\n"
-                                                             ");";
+const std::string createTableSqlWithReferringToSimpleModel =
+    "CREATE TABLE IF NOT EXISTS "
+    "models_ModelRelatedToOtherModel (\n"
+    "\tid INTEGER NOT NULL,\n"
+    "\tfield1 INTEGER NOT NULL,\n"
+    "\tfield2 TEXT NOT NULL,\n"
+    "\tfield3_id INTEGER NOT NULL,\n"
+    "\tCONSTRAINT orm_pk_2a718d11353ead0adc02623b PRIMARY KEY (id),\n"
+    "\tCONSTRAINT orm_fk_5719caf0fbf21b53bab5fd72 FOREIGN KEY (field3_id) REFERENCES "
+    "models_ModelWithId (id)\n"
+    ");";
 
 const std::string createTableSqlWithOptionalFields = "CREATE TABLE IF NOT EXISTS models_ModelWithOptional (\n"
                                                      "\tfield1 INTEGER,\n"
@@ -39,16 +40,17 @@ const std::string createTableSqlWithOptionalFields = "CREATE TABLE IF NOT EXISTS
                                                      "\tfield3 REAL\n"
                                                      ");";
 
-const std::string createTableSqlWithOptionalRelation = "CREATE TABLE IF NOT EXISTS "
-                                                       "models_ModelOptionallyRelatedToOtherModel (\n"
-                                                       "\tid INTEGER NOT NULL,\n"
-                                                       "\tfield1 INTEGER NOT NULL,\n"
-                                                       "\tfield2 TEXT NOT NULL,\n"
-                                                       "\tfield3_id INTEGER,\n"
-                                                       "\tPRIMARY KEY (id),\n"
-                                                       "\tFOREIGN KEY (field3_id) REFERENCES "
-                                                       "models_ModelWithId (id)\n"
-                                                       ");";
+const std::string createTableSqlWithOptionalRelation =
+    "CREATE TABLE IF NOT EXISTS "
+    "models_ModelOptionallyRelatedToOtherModel (\n"
+    "\tid INTEGER NOT NULL,\n"
+    "\tfield1 INTEGER NOT NULL,\n"
+    "\tfield2 TEXT NOT NULL,\n"
+    "\tfield3_id INTEGER,\n"
+    "\tCONSTRAINT orm_pk_1efc562fc8bed474e7b9bd2e PRIMARY KEY (id),\n"
+    "\tCONSTRAINT orm_fk_0da96cb298678894a9a51037 FOREIGN KEY (field3_id) REFERENCES "
+    "models_ModelWithId (id)\n"
+    ");";
 
 const std::string createTableSqlWithReferringToCompositeIdModel =
     "CREATE TABLE IF NOT EXISTS models_ModelRelatedToCompositeIdModel (\n"
@@ -56,19 +58,21 @@ const std::string createTableSqlWithReferringToCompositeIdModel =
     "\tfield1 TEXT NOT NULL,\n"
     "\tfield3_field1 INTEGER NOT NULL,\n"
     "\tfield3_field2 TEXT NOT NULL,\n"
-    "\tPRIMARY KEY (id),\n"
-    "\tFOREIGN KEY (field3_field1, field3_field2) REFERENCES models_ModelWithOverwrittenId (field1, field2)\n"
+    "\tCONSTRAINT orm_pk_5814e81dda91a89490648d4c PRIMARY KEY (id),\n"
+    "\tCONSTRAINT orm_fk_c99e19b8e66ab88c6c6949c6 FOREIGN KEY (field3_field1, field3_field2) REFERENCES "
+    "models_ModelWithOverwrittenId (field1, field2)\n"
     ");";
 
-const std::string createTableSqlWithAutoIncrementId = "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementId (\n"
-                                                      "\tid INTEGER PRIMARY KEY AUTOINCREMENT,\n"
-                                                      "\tfield1 INTEGER NOT NULL,\n"
-                                                      "\tfield2 TEXT NOT NULL\n"
-                                                      ");";
+const std::string createTableSqlWithAutoIncrementId =
+    "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementId (\n"
+    "\tid INTEGER CONSTRAINT orm_pk_48b6c9c52f2b4a7ed11e9152 PRIMARY KEY AUTOINCREMENT,\n"
+    "\tfield1 INTEGER NOT NULL,\n"
+    "\tfield2 TEXT NOT NULL\n"
+    ");";
 
 const std::string createTableSqlWithMappedAutoIncrementId =
     "CREATE TABLE IF NOT EXISTS models_ModelWithAutoIncrementIdAndNamesMapping (\n"
-    "\tsome_id_name INTEGER PRIMARY KEY AUTOINCREMENT,\n"
+    "\tsome_id_name INTEGER CONSTRAINT orm_pk_781fde41eecc86fbcdb722f1 PRIMARY KEY AUTOINCREMENT,\n"
     "\tsome_field1_name INTEGER NOT NULL,\n"
     "\tsome_field2_name TEXT NOT NULL\n"
     ");";
@@ -78,8 +82,9 @@ const std::string createTableSqlWithReferringToAutoIncrementModel =
     "\tid INTEGER NOT NULL,\n"
     "\tfield1 INTEGER NOT NULL,\n"
     "\tfield3_id INTEGER NOT NULL,\n"
-    "\tPRIMARY KEY (id),\n"
-    "\tFOREIGN KEY (field3_id) REFERENCES models_ModelWithAutoIncrementId (id)\n"
+    "\tCONSTRAINT orm_pk_ec4e5621b0b14b952c3a451a PRIMARY KEY (id),\n"
+    "\tCONSTRAINT orm_fk_1b02eeec51f9574689f44267 FOREIGN KEY (field3_id) REFERENCES models_ModelWithAutoIncrementId "
+    "(id)\n"
     ");";
 
 template <typename T>

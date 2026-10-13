@@ -138,20 +138,22 @@ TEST(CollectionRelationDialectTest, junctionDdlContainsOnlyEndpointKeysAndConstr
         dialect, orm::modelView<collection_models::Schema, collection_models::CompositeOwner>());
 
     ASSERT_EQ(statements.size(), 1);
-    EXPECT_EQ(statements.front(),
-              "CREATE TABLE IF NOT EXISTS \"collection_owner_tags\" (\n"
-              "\t\"owner_tenant\" TEXT NOT NULL,\n"
-              "\t\"owner_id\" INTEGER NOT NULL,\n"
-              "\t\"tag_scope\" TEXT NOT NULL,\n"
-              "\t\"tag_id\" INTEGER NOT NULL,\n"
-              "\tPRIMARY KEY (\"owner_tenant\", \"owner_id\", \"tag_scope\", \"tag_id\"),\n"
-              "\tFOREIGN KEY (\"owner_tenant\", \"owner_id\") REFERENCES \"collection_composite_owners\" "
-              "(\"tenant\", \"id\") ON "
-              "DELETE CASCADE,\n"
-              "\tFOREIGN KEY (\"tag_scope\", \"tag_id\") REFERENCES \"collection_composite_tags\" "
-              "(\"scope\", \"id\") ON DELETE "
-              "CASCADE\n"
-              ");");
+    EXPECT_EQ(statements.front(), "CREATE TABLE IF NOT EXISTS \"collection_owner_tags\" (\n"
+                                  "\t\"owner_tenant\" TEXT NOT NULL,\n"
+                                  "\t\"owner_id\" INTEGER NOT NULL,\n"
+                                  "\t\"tag_scope\" TEXT NOT NULL,\n"
+                                  "\t\"tag_id\" INTEGER NOT NULL,\n"
+                                  "\tCONSTRAINT \"orm_pk_1426e013c736e5802a7b3f56\" PRIMARY KEY (\"owner_tenant\", "
+                                  "\"owner_id\", \"tag_scope\", \"tag_id\"),\n"
+                                  "\tCONSTRAINT \"orm_fk_31d27db4ac347fd121117e66\" FOREIGN KEY (\"owner_tenant\", "
+                                  "\"owner_id\") REFERENCES \"collection_composite_owners\" "
+                                  "(\"tenant\", \"id\") ON "
+                                  "DELETE CASCADE,\n"
+                                  "\tCONSTRAINT \"orm_fk_0b5c436501ce52900927d815\" FOREIGN KEY (\"tag_scope\", "
+                                  "\"tag_id\") REFERENCES \"collection_composite_tags\" "
+                                  "(\"scope\", \"id\") ON DELETE "
+                                  "CASCADE\n"
+                                  ");");
 }
 
 TEST_P(CollectionRelationAcceptanceContextTest, manyToManyUsesReloadedAutoIncrementEndpointKeys)

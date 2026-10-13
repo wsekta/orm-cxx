@@ -19,13 +19,17 @@ namespace
 {
 auto migration(Version version, std::string up, std::optional<std::string> down = std::nullopt) -> Migration
 {
-    SqlMigration scripts{.up = std::move(up), .down = std::move(down)};
+    SqlMigration scripts;
+    scripts.up = std::move(up);
+    scripts.down = std::move(down);
     return Migration{.version = version,
                      .name = "step_" + std::to_string(version),
                      .scripts = {{orm::db::BackendType::Sqlite, scripts},
                                  {orm::db::BackendType::Postgres, scripts},
                                  {orm::db::BackendType::Mysql, scripts},
-                                 {orm::db::BackendType::Mariadb, scripts}}};
+                                 {orm::db::BackendType::Mariadb, scripts}},
+                     .before = {},
+                     .after = {}};
 }
 auto initialCatalog() -> Catalog
 {
@@ -561,8 +565,8 @@ TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
     const auto call = [&](std::initializer_list<std::string_view> args, const Catalog& catalog)
     {
         std::ostringstream output, errors;
-        const auto result = orm::migrations::detail::runCommandLineWithConnection(std::span{args.begin(), args.size()},
-                                                                                  catalog, url, output, errors);
+        const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
+            std::span{args.begin(), args.size()}, catalog, url, output, errors);
         return std::tuple{result, output.str(), errors.str()};
     };
     const auto catalog = initialCatalog();
@@ -580,8 +584,8 @@ TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
     EXPECT_NE(std::get<2>(diagnostic).find("SQL has changed"), std::string::npos);
     std::ostringstream output, errors;
     const std::string_view up[]{"up"};
-    EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
-                                                                    "sqlite3://:memory:", output, errors),
+    EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
+                                                                       "sqlite3://:memory:", output, errors),
               1);
     EXPECT_NE(errors.str().find("(1)"), std::string::npos);
     EXPECT_EQ(errors.str().find("NOT VALID SQL"), std::string::npos);

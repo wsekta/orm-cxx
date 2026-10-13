@@ -20,13 +20,17 @@ namespace
 {
 auto migration(Version version, std::string up, std::optional<std::string> down = std::nullopt) -> Migration
 {
-    SqlMigration scripts{.up = std::move(up), .down = std::move(down)};
+    SqlMigration scripts;
+    scripts.up = std::move(up);
+    scripts.down = std::move(down);
     return Migration{.version = version,
                      .name = "step_" + std::to_string(version),
                      .scripts = {{orm::db::BackendType::Sqlite, scripts},
                                  {orm::db::BackendType::Postgres, scripts},
                                  {orm::db::BackendType::Mysql, scripts},
-                                 {orm::db::BackendType::Mariadb, scripts}}};
+                                 {orm::db::BackendType::Mariadb, scripts}},
+                     .before = {},
+                     .after = {}};
 }
 auto initialCatalog() -> Catalog
 {
@@ -286,7 +290,8 @@ TEST_P(MigrationTest, UnsupportedAndMissingBackendScripts)
 {
     const auto other =
         GetParam().type == orm::db::BackendType::Sqlite ? orm::db::BackendType::Postgres : orm::db::BackendType::Sqlite;
-    Runner runner{connection, Catalog{Migration{1, "only_other", {{other, {"SELECT 1;", std::nullopt}}}}}};
+    Runner runner{connection,
+                  Catalog{Migration{1, "only_other", {{other, {"SELECT 1;", std::nullopt, {}, {}, {}, {}}}}, {}, {}}}};
     expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidCatalog);
 }
 
@@ -589,7 +594,7 @@ TEST_P(MigrationTest, CommandLineReportsAndResolvesAnIncompleteMigration)
     const auto call = [&](std::initializer_list<std::string_view> args)
     {
         std::ostringstream output, errors;
-        const auto result = orm::migrations::detail::runCommandLineWithConnection(
+        const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
             std::span{args.begin(), args.size()}, catalog, testConnectionString(), output, errors);
         return std::tuple{result, output.str(), errors.str()};
     };
@@ -797,17 +802,28 @@ TEST(MigrationCatalogTest, Sha256StandardVectors)
 TEST(MigrationCatalogTest, FilesAndEmbeddedSqlHaveSameNormalizedContents)
 {
     TempDirectory directory;
-    directory.write("30_second/postgresql/up.sql", "SELECT 2;\r\n");
-    directory.write("10_first/sqlite/up.sql", "\xef\xbb\xbfSELECT 1;\r\n");
-    directory.write("10_first/sqlite/down.sql", "SELECT 0;\r\n");
+    constexpr std::array backends{orm::db::BackendType::Sqlite};
+    const orm::model::SchemaView models{};
+    auto project = MigrationProject::init(directory.path, backends);
+    project.makeManual("first", models);
+    directory.write("1_first/sqlite/up.sql", "\xef\xbb\xbfSELECT 1;\r\n");
+    directory.write("1_first/sqlite/down.sql", "SELECT 0;\r\n");
+    project.finalize(1, models, true);
+    project.makeManual("second", models);
+    directory.write("2_second/sqlite/up.sql", "SELECT 2;\r\n");
+    project.finalize(2, models, true);
     auto catalog = Catalog::fromDirectory(directory.path);
     ASSERT_EQ(catalog.migrations().size(), 2);
-    EXPECT_EQ(catalog.migrations()[0].version, 10);
+    EXPECT_EQ(catalog.migrations()[0].version, 1);
     const auto& loaded = catalog.migrations()[0].scripts.at(orm::db::BackendType::Sqlite);
-    SqlMigration embedded{orm::migrations::detail::normalizeSql("SELECT 1;\n"), "SELECT 0;\n"};
+    auto embedded = loaded;
+    embedded.up = "SELECT 1;\n";
+    embedded.down = "SELECT 0;\n";
     EXPECT_EQ(orm::migrations::detail::checksum(loaded), orm::migrations::detail::checksum(embedded));
-    EXPECT_NE(orm::migrations::detail::checksum({"SELECT 1;", std::nullopt}),
-              orm::migrations::detail::checksum({"SELECT 1;", ""}));
+    embedded.down.reset();
+    const auto absent = orm::migrations::detail::checksum(embedded);
+    embedded.down = "";
+    EXPECT_NE(absent, orm::migrations::detail::checksum(embedded));
 }
 
 TEST(MigrationCatalogTest, InvalidCatalogsAndPaths)
@@ -819,11 +835,15 @@ TEST(MigrationCatalogTest, InvalidCatalogsAndPaths)
     EXPECT_THROW((Catalog{migration(1, "SELECT 1;"), migration(1, "SELECT 2;")}), MigrationError);
     EXPECT_THROW(Catalog{migration(1, "")}, MigrationError);
     EXPECT_THROW(Catalog{migration(1, std::string{"a\0b", 3})}, MigrationError);
-    EXPECT_THROW((Catalog{Migration{1, "bad name", {{orm::db::BackendType::Sqlite, {"SELECT 1;", std::nullopt}}}}}),
-                 MigrationError);
-    EXPECT_THROW((Catalog{Migration{1, "empty", {}}}), MigrationError);
-    EXPECT_THROW((Catalog{Migration{1, "unsupported", {{orm::db::BackendType::Empty, {"SELECT 1;", std::nullopt}}}}}),
-                 MigrationError);
+    EXPECT_THROW(
+        (Catalog{Migration{
+            1, "bad name", {{orm::db::BackendType::Sqlite, {"SELECT 1;", std::nullopt, {}, {}, {}, {}}}}, {}, {}}}),
+        MigrationError);
+    EXPECT_THROW((Catalog{Migration{1, "empty", {}, {}, {}}}), MigrationError);
+    EXPECT_THROW(
+        (Catalog{Migration{
+            1, "unsupported", {{orm::db::BackendType::Empty, {"SELECT 1;", std::nullopt, {}, {}, {}, {}}}}, {}, {}}}),
+        MigrationError);
     TempDirectory directory;
     EXPECT_THROW((void)Catalog::fromDirectory(directory.path / "missing"), MigrationError);
     directory.write("bad/up.sql", "SELECT 1;");
@@ -849,8 +869,13 @@ TEST(MigrationCatalogTest, PostgresqlLexerRejectsUnsafeCommandsButAcceptsQuotedB
 TEST(MigrationCatalogTest, MysqlAndMariaDbVariantsAreIndependent)
 {
     TempDirectory directory;
+    constexpr std::array backends{orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb};
+    const orm::model::SchemaView models{};
+    auto project = MigrationProject::init(directory.path, backends);
+    project.makeManual("create", models);
     directory.write("1_create/mysql/up.sql", "SELECT 1;\r\n");
     directory.write("1_create/mariadb/up.sql", "SELECT 2;\n");
+    project.finalize(1, models, true);
     const auto catalog = Catalog::fromDirectory(directory.path);
     const auto migrations = catalog.migrations();
     ASSERT_EQ(migrations.size(), 1);
@@ -938,7 +963,8 @@ TEST(MigrationCatalogTest, ExecutableCommentDelimitersRespectEscapesQuotesAndInn
 TEST(MigrationCatalogTest, ReportsStreamReadFailureAsInvalidCatalog)
 {
     TempDirectory temporary;
-    temporary.write("1_name/sqlite/up.sql", "SELECT 1;");
+    constexpr std::array backends{orm::db::BackendType::Sqlite};
+    (void)MigrationProject::init(temporary.path, backends);
     // File permissions do not induce a read failure when tests run as root.
     // A scoped file-stream conversion error gives a deterministic I/O failure.
     ScopedReadFailureLocale locale;
@@ -950,8 +976,14 @@ TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
     const auto check = [](const std::filesystem::path& relative, bool directory)
     {
         TempDirectory temporary;
+        constexpr std::array backends{orm::db::BackendType::Sqlite};
+        auto project = MigrationProject::init(temporary.path, backends);
+        project.makeManual("name", orm::model::SchemaView{});
+        temporary.write("1_name/sqlite/up.sql", "SELECT 1;");
+        project.finalize(1, orm::model::SchemaView{}, true);
         if (directory)
         {
+            std::filesystem::remove(temporary.path / relative);
             std::filesystem::create_directories(temporary.path / relative);
         }
         else
@@ -960,16 +992,21 @@ TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
         }
         expectMigrationError([&] { (void)Catalog::fromDirectory(temporary.path); }, ErrorCode::InvalidCatalog);
     };
-    check("10_name/sqlite/mistake.sql", false);
-    check("10_name/sqlite/up.sql", true);
+    check("1_name/sqlite/mistake.sql", false);
+    check("1_name/sqlite/up.sql", true);
     check("x_bad/sqlite/up.sql", false);
-    check("10_name/unknown/up.sql", false);
-    check("10_name/sqlite/down.sql", false);
+    check("1_name/unknown/up.sql", false);
+    check("1_name/sqlite/down.sql", false);
     TempDirectory files;
+    constexpr std::array backends{orm::db::BackendType::Sqlite};
+    auto fileProject = MigrationProject::init(files.path, backends);
+    fileProject.makeManual("same", orm::model::SchemaView{});
     files.write("1_same/sqlite/up.sql", "SELECT 1;");
-    files.write("01_duplicate/sqlite/up.sql", "SELECT 1;");
+    fileProject.finalize(1, orm::model::SchemaView{}, true);
+    std::filesystem::copy(files.path / "1_same", files.path / "01_same", std::filesystem::copy_options::recursive);
     expectMigrationError([&] { (void)Catalog::fromDirectory(files.path); }, ErrorCode::InvalidCatalog);
     TempDirectory links;
+    (void)MigrationProject::init(links.path, backends);
     std::error_code error;
     std::filesystem::create_directory_symlink(files.path, links.path / "1_link", error);
     if (!error)
@@ -978,7 +1015,10 @@ TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
         EXPECT_THROW((void)Catalog::fromDirectory(links.path / "1_link"), MigrationError);
     }
     TempDirectory unreadable;
+    auto unreadableProject = MigrationProject::init(unreadable.path, backends);
+    unreadableProject.makeManual("name", orm::model::SchemaView{});
     unreadable.write("1_name/sqlite/up.sql", "SELECT 1;");
+    unreadableProject.finalize(1, orm::model::SchemaView{}, true);
     const auto sql = unreadable.path / "1_name/sqlite/up.sql";
     std::filesystem::permissions(sql, std::filesystem::perms::none, error);
     if (!std::ifstream{sql})
@@ -993,7 +1033,7 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     const auto call = [](std::initializer_list<std::string_view> args, std::optional<std::string_view> connection)
     {
         std::ostringstream output, errors;
-        const auto result = orm::migrations::detail::runCommandLineWithConnection(
+        const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
             std::span{args.begin(), args.size()}, initialCatalog(), connection, output, errors);
         return std::tuple{result, output.str(), errors.str()};
     };
@@ -1017,8 +1057,9 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
                              {"resolve", "--version", "1", "--checksum", "bad", "--resolution", "invalid"}})
     {
         std::ostringstream out, err;
-        EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(), std::nullopt, out, err),
-                  2);
+        EXPECT_EQ(
+            orm::migrations::detail::runCatalogCommandWithConnection(args, initialCatalog(), std::nullopt, out, err),
+            2);
     }
     EXPECT_EQ(std::get<0>(call({"status"}, std::nullopt)), 1);
     EXPECT_EQ(std::get<0>(call({"status"}, "")), 1);
@@ -1036,8 +1077,8 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
                                  {"baseline", "--to", "10"}})
         {
             std::ostringstream out, err;
-            EXPECT_EQ(orm::migrations::detail::runCommandLineWithConnection(args, initialCatalog(),
-                                                                            "sqlite3://:memory:", out, err),
+            EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(args, initialCatalog(),
+                                                                               "sqlite3://:memory:", out, err),
                       0)
                 << err.str();
         }
@@ -1045,7 +1086,7 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
     }
     std::ostringstream out, err;
     const std::string_view help[]{"--help"};
-    EXPECT_EQ(runCommandLine(help, initialCatalog(), out, err), 0);
+    EXPECT_EQ(runCommandLine(help, orm::model::SchemaView{}, "migrations", out, err), 0);
     const char* argv[]{"migrate", "--help"};
-    EXPECT_EQ(runCommandLine(2, argv, initialCatalog()), 0);
+    EXPECT_EQ(runCommandLine(2, argv, orm::model::SchemaView{}), 0);
 }

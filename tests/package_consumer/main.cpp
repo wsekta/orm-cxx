@@ -55,7 +55,13 @@ void databaseSmoke(const BackendProbe& probe, const std::string& connection)
                                                                  "package_probe",
                                                                  {{probe.type,
                                                                    {"CREATE TABLE package_migration_probe(id INTEGER);",
-                                                                    "DROP TABLE package_migration_probe;"}}}}}};
+                                                                    "DROP TABLE package_migration_probe;",
+                                                                    {},
+                                                                    {},
+                                                                    {},
+                                                                    {}}}},
+                                                                 {},
+                                                                 {}}}};
     migrations.up();
     if (migrations.status().currentVersion != 1)
     {
@@ -100,6 +106,13 @@ int main()
         (void)plan.toDynamic(1);
         orm::Database database;
         (void)database.orm<PackageSchema>();
+        const auto snapshot = orm::migrations::capture(PackageSchema::view);
+        const auto generated = orm::migrations::generate(
+            1, "package_initial", orm::migrations::compare(orm::migrations::emptySnapshot(), snapshot));
+        if (generated.migration.scripts.size() != orm::migrations::generationBackends.size())
+        {
+            throw std::runtime_error("Installed offline generator is missing a backend variant");
+        }
         const orm::db::CommandGeneratorFactory factory;
         const std::array probes{BackendProbe{orm::db::BackendType::Sqlite, orm::config::sqliteBackendEnabled,
                                              "sqlite3://:memory:", "ORM_CXX_SQLITE_TEST_DSN"},

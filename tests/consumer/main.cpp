@@ -1,5 +1,7 @@
 #include <concepts>
 #include <cstddef>
+#include <exception>
+#include <iostream>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -72,6 +74,7 @@ public:
 } // namespace
 
 int main()
+try
 {
     static_assert(orm::reflection::fieldCount<consumer_models::ConsumerModel> == 1);
     static_assert(orm::reflection::fieldName<consumer_models::ConsumerModel, 0>() == "id");
@@ -87,6 +90,13 @@ int main()
     const orm::migrations::Catalog migrations{};
     orm::migrations::Runner runner{database, migrations};
     (void)runner;
+    const auto generatedSnapshot = orm::migrations::capture(consumer_models::Schema::view);
+    const auto generation = orm::migrations::generate(
+        1, "consumer_initial", orm::migrations::compare(orm::migrations::emptySnapshot(), generatedSnapshot));
+    if (generation.migration.scripts.size() != 4)
+    {
+        return 5;
+    }
     auto context = database.orm<consumer_models::Schema>();
     (void)context;
     orm::Query<consumer_models::ConsumerModel> query;
@@ -150,4 +160,9 @@ int main()
     }
 
     return 0;
+}
+catch (const std::exception& error)
+{
+    std::cerr << "Consumer validation failed: " << error.what() << '\n';
+    return 7;
 }
