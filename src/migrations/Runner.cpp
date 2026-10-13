@@ -5,6 +5,7 @@ module;
 #include <cstdint>
 #include <ctime>
 #include <exception>
+#include <format>
 #include <iomanip>
 #include <limits>
 #include <map>
@@ -164,7 +165,6 @@ auto sqliteDefinitions(std::string_view sql) -> std::vector<std::string>
             {
                 definitions.push_back(std::move(current));
                 current.clear();
-                started = false;
                 // Keep table options (WITHOUT ROWID, STRICT) in the comparison.
                 std::string options;
                 for (++i; i < sql.size(); ++i)
@@ -333,7 +333,8 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                 if (expected == source->columns.end() ||
                     (row.get_indicator(1) != soci::i_null && !expected->autoIncrement && !implicitNullDefault))
                 {
-                    schemaFailure("Unmanaged column or default blocks this migration: " + name + "." + columnName);
+                    schemaFailure(
+                        std::format("Unmanaged column or default blocks this migration: {}.{}", name, columnName));
                 }
                 const auto identity = row.get<std::string>(5);
                 const auto actualIdentity =
@@ -351,7 +352,7 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                      (row.get_indicator(4) == soci::i_null ||
                       static_cast<std::size_t>(row.get<long long>(4)) != *expected->maxStringLength)))
                 {
-                    schemaFailure("Source column differs from its snapshot: " + name + "." + columnName);
+                    schemaFailure(std::format("Source column differs from its snapshot: {}.{}", name, columnName));
                 }
                 seen.insert(columnName);
             }
@@ -382,7 +383,8 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                 const auto constraint = row.get<std::string>(0);
                 const auto type = row.get<std::string>(1);
                 if (row.get<std::string>(2) != "standard")
-                    schemaFailure("Source constraint options differ from its snapshot: " + name + "." + constraint);
+                    schemaFailure(
+                        std::format("Source constraint options differ from its snapshot: {}.{}", name, constraint));
                 const auto modeledIndex = std::ranges::find(source->indexes, constraint, &PhysicalIndex::name);
                 // PostgreSQL represents NOT NULL checks as system constraints.
                 if ((type == "PRIMARY KEY" &&
@@ -395,7 +397,7 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                 {
                     continue;
                 }
-                schemaFailure("Unmanaged constraint blocks this migration: " + name + "." + constraint);
+                schemaFailure(std::format("Unmanaged constraint blocks this migration: {}.{}", name, constraint));
             }
             if (!source->primaryKey.empty())
             {
@@ -521,14 +523,14 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                     {
                         if (part.get_indicator(0) == soci::i_null || (part.get<std::string>(1) == "yes") != unique ||
                             part.get<std::string>(2) != "full" || part.get<std::string>(3) != "standard")
-                            schemaFailure("Source index differs from its snapshot: " + name + "." + index);
+                            schemaFailure(std::format("Source index differs from its snapshot: {}.{}", name, index));
                         actual.push_back(part.get<std::string>(0));
                     }
                     if (actual != expectedColumns)
-                        schemaFailure("Source index columns differ from its snapshot: " + name + "." + index);
+                        schemaFailure(std::format("Source index columns differ from its snapshot: {}.{}", name, index));
                     continue;
                 }
-                schemaFailure("Unmanaged index blocks this migration: " + name + "." + index);
+                schemaFailure(std::format("Unmanaged index blocks this migration: {}.{}", name, index));
             }
             for (const auto& index : source->indexes)
                 if (!seenIndexes.contains(index.name))
@@ -576,8 +578,8 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                     std::ranges::find(context.tables, ownerName) == context.tables.end() ||
                     !std::ranges::any_of(owner->foreignKeys, [&](const auto& expected)
                                          { return expected.name == constraintName && expected.targetTable == name; }))
-                    schemaFailure("Unmanaged incoming foreign key blocks this migration: " + ownerName + "." +
-                                  constraintName);
+                    schemaFailure(std::format("Unmanaged incoming foreign key blocks this migration: {}.{}", ownerName,
+                                              constraintName));
             }
         }
     }
@@ -631,15 +633,16 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
                 if (backend == db::BackendType::Sqlite)
                 {
                     long long invalid{};
-                    session << "SELECT COUNT(*) FROM " + detail::quoteIdentifier(backend, table.name) + " WHERE " +
-                                   name + " IS NOT NULL AND typeof(" + name + ") NOT IN ('integer','real')",
+                    session << std::format(
+                        "SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND typeof({}) NOT IN ('integer','real')",
+                        detail::quoteIdentifier(backend, table.name), name, name),
                         soci::into(invalid);
                     if (invalid != 0)
                         schemaFailure("Migrated floating values have incompatible storage");
                 }
                 soci::rowset<double> values =
-                    (session.prepare << "SELECT " + name + " FROM " + detail::quoteIdentifier(backend, table.name) +
-                                            " WHERE " + name + " IS NOT NULL");
+                    (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
+                                                    detail::quoteIdentifier(backend, table.name), name));
                 try
                 {
                     for (const auto value : values)
@@ -652,8 +655,8 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
                 }
                 catch (const db::binding::ConversionError&)
                 {
-                    schemaFailure("Migrated floating values are outside the target model domain: " + table.name + "." +
-                                  column.name);
+                    schemaFailure(std::format("Migrated floating values are outside the target model domain: {}.{}",
+                                              table.name, column.name));
                 }
                 continue;
             }
@@ -707,15 +710,16 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
             case Uuid:
                 continue;
             }
-            std::string predicate = name + " < " + minimum + " OR " + name + " > " + maximum;
+            auto predicate = std::format("{} < {} OR {} > {}", name, minimum, name, maximum);
             if (backend == db::BackendType::Sqlite)
                 predicate += " OR typeof(" + name + ") <> 'integer'";
             long long invalid{};
-            session << "SELECT COUNT(*) FROM " + detail::quoteIdentifier(backend, table.name) + " WHERE " + name +
-                           " IS NOT NULL AND (" + predicate + ")",
+            session << std::format("SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND ({})",
+                                   detail::quoteIdentifier(backend, table.name), name, predicate),
                 soci::into(invalid);
             if (invalid != 0)
-                schemaFailure("Migrated values are outside the target model domain: " + table.name + "." + column.name);
+                schemaFailure(
+                    std::format("Migrated values are outside the target model domain: {}.{}", table.name, column.name));
         }
     }
 }

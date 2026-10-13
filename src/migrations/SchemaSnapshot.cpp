@@ -118,6 +118,7 @@ auto supportsKey(std::span<const std::string> indexColumns, std::span<const std:
 auto foreignKeyIndexes(PhysicalTable& table) -> void
 {
     std::vector<const PhysicalForeignKey*> keys;
+    keys.reserve(table.foreignKeys.size());
     for (const auto& key : table.foreignKeys)
         keys.push_back(&key);
     // A wider declared index can support a shorter foreign key. Stable ordering

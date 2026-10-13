@@ -474,8 +474,12 @@ auto sqliteSql(Version version, std::string_view direction, const SchemaDiff& di
                               backfill   ? transformationSql(*backfill, source, column, backend) :
                                            "NULL";
             if (old && old->nullable && !column.nullable && backfill && !conversion)
-                expression =
-                    "COALESCE(" + expression + ", " + transformationSql(*backfill, source, column, backend) + ")";
+            {
+                expression.insert(0, "COALESCE(");
+                expression.append(", ");
+                expression.append(transformationSql(*backfill, source, column, backend));
+                expression.push_back(')');
+            }
             values += expression;
         }
         append(sql, "INSERT INTO " + quote(backend, stage) + " (" + identifiers(backend, names) + ") SELECT " + values +
@@ -571,8 +575,13 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
         {
             const auto stage = temporaryName(version, direction, name, column.name, "__orm_column_");
             if (findNamed(oldTable.columns, stage) || findNamed(table.columns, stage))
-                generationFailure("staging-collision", "Generated staging column is already occupied",
-                                  name + "/" + stage, backend);
+            {
+                auto path = name;
+                path.push_back('/');
+                path.append(stage);
+                generationFailure("staging-collision", "Generated staging column is already occupied", std::move(path),
+                                  backend);
+            }
             auto staged = column;
             staged.name = stage;
             staged.nullable = !column.autoIncrement;
@@ -591,7 +600,14 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
             {
                 auto expression = transformationSql(*fill, oldTable, column, backend);
                 if (old && backfill && !conversion)
-                    expression = "COALESCE(" + quote(backend, old->name) + ", " + expression + ")";
+                {
+                    auto coalesced = std::string{"COALESCE("};
+                    coalesced.append(quote(backend, old->name));
+                    coalesced.append(", ");
+                    coalesced.append(expression);
+                    coalesced.push_back(')');
+                    expression = std::move(coalesced);
+                }
                 append(sql, "UPDATE " + quote(backend, name) + " SET " + quote(backend, stage) + " = " + expression);
             }
             stages[column.name] = stage;

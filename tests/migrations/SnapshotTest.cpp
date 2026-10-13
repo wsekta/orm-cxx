@@ -520,8 +520,12 @@ TEST(SnapshotTest, ValidatesTableAndColumnShapes)
     invalidMutation([](auto&, auto& table) { table.columns.push_back(table.columns.front()); });
     invalidMutation([](auto&, auto& table) { table.columns.front().name = std::string{"x\0y", 3}; });
     invalidMutation([](auto&, auto& table) { table.columns.front().name = "__orm_column_0123456789abcdef"; });
-    invalidMutation([](auto&, auto& table)
-                    { table.columns.front().logicalType = static_cast<orm::model::ColumnType>(-1); });
+    invalidMutation(
+        [](auto&, auto& table)
+        {
+            // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+            table.columns.front().logicalType = static_cast<orm::model::ColumnType>(-1);
+        });
     for (const auto& type : {"", "INT;DELETE", "VARCHAR(", "INT)", "INT\n"})
         invalidMutation([&](auto&, auto& table) { table.columns.front().sqlType = type; });
     invalidMutation([](auto&, auto& table) { table.columns.front().maxStringLength = 5; });
