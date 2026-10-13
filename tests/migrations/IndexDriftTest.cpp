@@ -171,6 +171,13 @@ TEST_P(MigrationIndexDriftTest, ChangedUniquenessDoesNotAdvanceHistoryOrModifyRo
     expectRejected(catalog);
 }
 
+TEST_P(MigrationIndexDriftTest, ChangedIndexColumnsDoNotAdvanceHistoryOrModifyRows)
+{
+    const auto catalog = prepare();
+    replaceIndex("id");
+    expectRejected(catalog);
+}
+
 TEST_P(MigrationIndexDriftTest, EmptyUnmanagedIncomingForeignKeyBlocksTheMigration)
 {
     const auto catalog = prepare();

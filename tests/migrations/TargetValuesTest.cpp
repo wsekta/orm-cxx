@@ -158,6 +158,25 @@ TEST_P(MigrationTargetValuesTest, TypedFloatBackfillIsHydratableAfterDecimalQuan
     EXPECT_FALSE(runner.status().incomplete);
 }
 
+TEST_P(MigrationTargetValuesTest, SQLiteRejectsTextStorageInAFloatingTargetColumn)
+{
+    if (GetParam().type != Backend::Sqlite)
+        GTEST_SKIP() << "SQLite dynamic storage regression";
+    const auto before = snapshot(value_models::IdSchema::view);
+    const auto after = snapshot(value_models::FloatSchema::view);
+    const auto first = initial(before);
+    session() << "INSERT INTO migration_target_values VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back(
+        {.table = "migration_target_values", .column = "value", .expressions = {{Backend::Sqlite, "'not a number'"}}});
+    const auto second = generate(2, "invalid_float_storage", compare(before, after, decisions), decisions).migration;
+    rejectMigration(first, second);
+    int columns{};
+    session() << "SELECT COUNT(*) FROM pragma_table_info('migration_target_values') WHERE name='value'",
+        soci::into(columns);
+    EXPECT_EQ(columns, 0);
+}
+
 TEST_P(MigrationTargetValuesTest, LossyDoubleToFloatExpressionCannotProduceAValidHistoryEntry)
 {
     const auto before = snapshot(value_models::DoubleSchema::view);

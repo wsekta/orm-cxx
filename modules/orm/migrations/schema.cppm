@@ -139,7 +139,6 @@ enum class SchemaChangeKind
     DropForeignKey,
     AddIndex,
     DropIndex,
-    AlterTableOptions,
 };
 struct SchemaChange
 {

@@ -2,10 +2,14 @@ set(ORM_CXX_TEST_SOURCES
     migrations/MigrationTest.cpp
     migrations/SnapshotTest.cpp
     migrations/GeneratorTest.cpp
+    migrations/GeneratorCoverageTest.cpp
+    migrations/DiffCoverageTest.cpp
     migrations/ProjectTest.cpp
+    migrations/ProjectCoverageTest.cpp
     migrations/NativeGenerationTest.cpp
     migrations/TargetValuesTest.cpp
     migrations/IndexDriftTest.cpp
+    migrations/RunnerCoverageTest.cpp
     ../src/database/BackendCapabilitiesTest.cpp
     ../src/database/CommandGeneratorFactoryTest.cpp
     ../src/database/NumericConversionTest.cpp

@@ -136,6 +136,28 @@ TEST(MigrationRebuildTest, PreservesReferencingRowsBackfillAndDeletedIdentityHig
     EXPECT_EQ(runner.status().currentVersion, 2);
 }
 
+TEST(MigrationRebuildTest, RestoresDeletedTargetSequenceMetadataFromTheSourceHighwater)
+{
+    const auto before = sourceSnapshot();
+    orm::Database database;
+    setup(database, before);
+    auto& session = Access::session(database);
+    session << "INSERT INTO rebuild_parent(id) VALUES(500)";
+    session << "DELETE FROM rebuild_parent WHERE id=500";
+    auto change = rebuildMigration(before);
+    change.scripts.at(Backend::Sqlite).up += "\nDELETE FROM sqlite_sequence WHERE name='rebuild_parent';\n";
+    const auto first = generate(1, "initial", compare(emptySnapshot(std::array{Backend::Sqlite}), before)).migration;
+    Runner runner{database, Catalog{first, change}};
+    ASSERT_NO_THROW(runner.up());
+    long long highwater{};
+    session << "SELECT seq FROM sqlite_sequence WHERE name='rebuild_parent'", soci::into(highwater);
+    EXPECT_EQ(highwater, 500);
+    session << "INSERT INTO rebuild_parent(label) VALUES('next')";
+    session << "SELECT MAX(id) FROM rebuild_parent", soci::into(highwater);
+    EXPECT_EQ(highwater, 501);
+    EXPECT_EQ(runner.status().currentVersion, 2);
+}
+
 TEST(MigrationRebuildTest, PreservesEmptyIdentityTableAndMaximumHighwaterWithoutOverflow)
 {
     for (const auto highwater : {0LL, 800LL, (std::numeric_limits<long long>::max)()})

@@ -38,6 +38,7 @@ struct FaultControl
     int restorations{};
     int restorationFailures{};
     bool failRestore{};
+    bool startTransactionAfterInspection{};
 };
 
 class FaultOperations final : public detail::SessionOperations
@@ -53,6 +54,8 @@ public:
         {
             ++control_.readCommits;
             detail::SessionOperations::commit(session, version);
+            if (std::exchange(control_.startTransactionAfterInspection, false))
+                session.begin();
             return;
         }
         ++control_.writeCommits;
@@ -290,4 +293,83 @@ TEST(MigrationRebuildFailureTest, SuccessfulCommitRestoresForeignKeysAndReleases
     EXPECT_EQ((Runner{database, catalog}.status().currentVersion), 2);
     database.disconnect();
     assertReconnectedState(database, file, catalog, true);
+}
+
+TEST(MigrationRebuildFailureTest, HeapSessionDependencyIsBorrowedAndReleasedAfterTheRunner)
+{
+    DatabaseFile file;
+    orm::Database database;
+    const auto catalog = rebuildCatalog();
+    setup(database, file, catalog);
+    auto operations = std::make_unique<detail::SessionOperations>();
+    {
+        auto runner = detail::RunnerAccess::withSessionOperations(database, catalog, *operations);
+        ASSERT_NO_THROW(runner.up());
+        EXPECT_EQ(runner.status().currentVersion, 2);
+    }
+    operations.reset();
+    EXPECT_TRUE(database.isConnected());
+    EXPECT_FALSE(Access::active(database));
+    EXPECT_EQ((Runner{database, catalog}.status().currentVersion), 2);
+}
+
+TEST(MigrationRebuildFailureTest, CleanupRestorationFailureDisconnectsWithoutMaskingTheSourceDrift)
+{
+    DatabaseFile file;
+    FaultControl control;
+    FaultOperations operations{control};
+    orm::Database database;
+    const auto catalog = rebuildCatalog();
+    setup(database, file, catalog);
+    Access::session(database) << "CREATE INDEX unmanaged_failure_index ON failure_identity(id)";
+    control.failRestore = true;
+    try
+    {
+        detail::RunnerAccess::withSessionOperations(database, catalog, operations).up();
+        FAIL() << "Expected source drift, even when session restoration also fails";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema) << error.what();
+        EXPECT_NE(std::string{error.what()}.find("Unmanaged index"), std::string::npos);
+        EXPECT_EQ(error.getVersion(), 2);
+    }
+    EXPECT_FALSE(database.isConnected());
+    EXPECT_FALSE(Access::active(database));
+    EXPECT_EQ(control.restorationFailures, 1);
+    EXPECT_EQ(control.rollbacks, 1);
+    EXPECT_EQ(control.realWriteCommits, 0);
+    assertReconnectedState(database, file, catalog, false);
+}
+
+TEST(MigrationRebuildFailureTest, CannotDisableForeignKeysWhenTheSessionBecomesBusyAfterInspection)
+{
+    DatabaseFile file;
+    FaultControl control;
+    FaultOperations operations{control};
+    orm::Database database;
+    const auto catalog = rebuildCatalog();
+    setup(database, file, catalog);
+    control.startTransactionAfterInspection = true;
+    try
+    {
+        detail::RunnerAccess::withSessionOperations(database, catalog, operations).up();
+        FAIL() << "An active SQL transaction must prevent foreign-key disabling";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema) << error.what();
+        EXPECT_NE(std::string{error.what()}.find("Cannot disable SQLite foreign keys"), std::string::npos);
+        EXPECT_EQ(error.getVersion(), 2);
+    }
+    EXPECT_TRUE(database.isConnected());
+    EXPECT_FALSE(Access::active(database));
+    EXPECT_EQ(control.realWriteCommits, 0);
+    int foreignKeys{};
+    Access::session(database) << "PRAGMA foreign_keys", soci::into(foreignKeys);
+    EXPECT_EQ(foreignKeys, 1);
+    Access::session(database).rollback();
+    EXPECT_EQ((Runner{database, catalog}.status().currentVersion), 1);
+    ASSERT_NO_THROW((Runner{database, catalog}.up()));
+    EXPECT_EQ((Runner{database, catalog}.status().currentVersion), 2);
 }

@@ -158,10 +158,24 @@ auto approved(const std::vector<std::string>& approvals, std::string_view id) ->
 auto changeId(Backend backend, std::string_view kind, std::string_view table,
               std::string_view object = {}) -> std::string
 {
+    const auto component = [](std::string_view value)
+    {
+        std::string encoded;
+        for (const auto character : value)
+        {
+            if (character == '%')
+                encoded.append("%25");
+            else if (character == '/')
+                encoded.append("%2F");
+            else
+                encoded.push_back(character);
+        }
+        return encoded;
+    };
     auto result =
-        std::string{orm::migrations::detail::backendName(backend)} + "/" + std::string{kind} + "/" + std::string{table};
+        std::string{orm::migrations::detail::backendName(backend)} + "/" + std::string{kind} + "/" + component(table);
     if (!object.empty())
-        result += "/" + std::string{object};
+        result += "/" + component(object);
     return result;
 }
 
@@ -326,9 +340,6 @@ auto compareTables(SchemaDiff& diff, const PhysicalSchema& before, const Physica
             addChange(diff, backend, SchemaChangeKind::AddIndex, "add-index", target.name, index.name, {}, false, false,
                       decisions);
     }
-    if (source.options != target.options)
-        addChange(diff, backend, SchemaChangeKind::AlterTableOptions, "alter-table-options", target.name, {}, {}, true,
-                  false, decisions);
 }
 } // namespace
 

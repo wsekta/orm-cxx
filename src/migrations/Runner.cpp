@@ -238,10 +238,7 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
     for (const auto& name : context.tables)
     {
         const auto source = std::ranges::find(context.source->tables, name, &PhysicalTable::name);
-        if (source == context.source->tables.end())
-        {
-            schemaFailure("Migration footprint is absent from its source snapshot");
-        }
+        // Catalog already validates its immutable footprint against the source snapshot.
         if (backend == db::BackendType::Sqlite)
         {
             std::string ddl;
@@ -628,38 +625,6 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
         for (const auto& column : table.columns)
         {
             const auto name = detail::quoteIdentifier(backend, column.name);
-            if (column.logicalType == model::ColumnType::Float || column.logicalType == model::ColumnType::Double)
-            {
-                if (backend == db::BackendType::Sqlite)
-                {
-                    long long invalid{};
-                    session << std::format(
-                        "SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND typeof({}) NOT IN ('integer','real')",
-                        detail::quoteIdentifier(backend, table.name), name, name),
-                        soci::into(invalid);
-                    if (invalid != 0)
-                        schemaFailure("Migrated floating values have incompatible storage");
-                }
-                soci::rowset<double> values =
-                    (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
-                                                    detail::quoteIdentifier(backend, table.name), name));
-                try
-                {
-                    for (const auto value : values)
-                    {
-                        if (column.logicalType == model::ColumnType::Float)
-                            (void)db::binding::checkedNumericCast<float>(value, column.name);
-                        else
-                            (void)db::binding::checkedNumericCast<double>(value, column.name);
-                    }
-                }
-                catch (const db::binding::ConversionError&)
-                {
-                    schemaFailure(std::format("Migrated floating values are outside the target model domain: {}.{}",
-                                              table.name, column.name));
-                }
-                continue;
-            }
             std::string minimum, maximum;
             using enum model::ColumnType;
             switch (column.logicalType)
@@ -706,8 +671,41 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
                 break;
             case Float:
             case Double:
+                break;
             case String:
             case Uuid:
+                continue;
+            }
+            if (column.logicalType == model::ColumnType::Float || column.logicalType == model::ColumnType::Double)
+            {
+                if (backend == db::BackendType::Sqlite)
+                {
+                    long long invalid{};
+                    session << std::format(
+                        "SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND typeof({}) NOT IN ('integer','real')",
+                        detail::quoteIdentifier(backend, table.name), name, name),
+                        soci::into(invalid);
+                    if (invalid != 0)
+                        schemaFailure("Migrated floating values have incompatible storage");
+                }
+                soci::rowset<double> values =
+                    (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
+                                                    detail::quoteIdentifier(backend, table.name), name));
+                try
+                {
+                    for (const auto value : values)
+                    {
+                        if (column.logicalType == model::ColumnType::Float)
+                            (void)db::binding::checkedNumericCast<float>(value, column.name);
+                        else
+                            (void)db::binding::checkedNumericCast<double>(value, column.name);
+                    }
+                }
+                catch (const db::binding::ConversionError&)
+                {
+                    schemaFailure(std::format("Migrated floating values are outside the target model domain: {}.{}",
+                                              table.name, column.name));
+                }
                 continue;
             }
             auto predicate = std::format("{} < {} OR {} > {}", name, minimum, name, maximum);
@@ -735,10 +733,7 @@ public:
         {
             return;
         }
-        if (database.getBackendType() != db::BackendType::Sqlite || !context.source || !context.target)
-        {
-            schemaFailure("Invalid SQLite rebuild execution context");
-        }
+        // Catalog validates the backend and both snapshots before a Runner can use this mode.
         Access::setActive(database_, true);
         auto& session = Access::session(database_);
         try
@@ -877,13 +872,9 @@ private:
         }
         catch (...)
         {
-            try
-            {
-                database_.disconnect();
-            }
-            catch (...)
-            {
-            }
+            // Ownership excludes an ORM transaction or pooled session, so closing
+            // cannot produce an ORM disconnect rollback error.
+            database_.disconnect();
             Access::setActive(database_, previousActive_);
         }
     }

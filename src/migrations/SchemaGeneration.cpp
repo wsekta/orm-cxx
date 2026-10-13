@@ -393,7 +393,8 @@ auto temporaryName(Version version, std::string_view direction, std::string_view
 {
     return std::string{prefix} +
            orm::migrations::detail::sha256(std::to_string(version) + ":" + std::string{direction} + ":" +
-                                           std::string{source} + ":" + std::string{target})
+                                           std::to_string(source.size()) + ":" + std::string{source} + ":" +
+                                           std::to_string(target.size()) + ":" + std::string{target})
                .substr(0, 16);
 }
 
@@ -574,14 +575,6 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
         if (!old || conversion || stagedBackfill)
         {
             const auto stage = temporaryName(version, direction, name, column.name, "__orm_column_");
-            if (findNamed(oldTable.columns, stage) || findNamed(table.columns, stage))
-            {
-                auto path = name;
-                path.push_back('/');
-                path.append(stage);
-                generationFailure("staging-collision", "Generated staging column is already occupied", std::move(path),
-                                  backend);
-            }
             auto staged = column;
             staged.name = stage;
             staged.nullable = !column.autoIncrement;
@@ -770,13 +763,6 @@ auto nativeSql(Version version, std::string_view direction, const SchemaDiff& di
                                     quote(backend, name));
                 }
             }
-        if (oldTable.options != table->options)
-        {
-            if (!mysql || table->options.empty())
-                generationFailure("manual-options", "This table-option change requires a manual migration", name,
-                                  backend);
-            append(sql, "ALTER TABLE " + quote(backend, name) + " " + table->options);
-        }
     }
     for (const auto& table : after.tables)
         if (!matchingSource(before, table.name, decisions))
