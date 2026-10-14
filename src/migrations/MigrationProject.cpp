@@ -27,9 +27,15 @@ namespace
 using Json = nlohmann::json;
 using Path = std::filesystem::path;
 
-auto failure(std::string message) -> void
+[[noreturn]] auto failure(std::string message) -> void
 {
     throw MigrationError{ErrorCode::InvalidCatalog, std::move(message)};
+}
+
+auto createExclusiveDirectory(const Path& path, ErrorCode code, std::string_view message) -> void
+{
+    if (!std::filesystem::create_directory(path))
+        throw MigrationError{code, std::string{message}};
 }
 
 auto safeProjectName(std::string_view name) -> bool
@@ -69,7 +75,6 @@ auto readFile(const Path& path) -> std::string
     {
         failure("Cannot read migration project file");
     }
-    return {};
 }
 
 auto writeFile(const Path& path, std::string_view value) -> void
@@ -104,7 +109,6 @@ auto readJson(const Path& path) -> Json
     {
         failure("Invalid migration project JSON");
     }
-    return {};
 }
 
 auto fields(const Json& item, std::initializer_list<std::string_view> names) -> void
@@ -126,7 +130,6 @@ auto backendFromName(std::string_view name) -> db::BackendType
             return backend;
     }
     failure("Unsupported project backend");
-    return db::BackendType::Empty;
 }
 
 auto backendNames(std::span<const db::BackendType> backends) -> std::vector<std::string>
@@ -147,10 +150,7 @@ class ProjectLock final
 public:
     explicit ProjectLock(const Path& root) : path_{root / ".orm-cxx-lock"}
     {
-        if (!std::filesystem::create_directory(path_))
-        {
-            throw MigrationError{ErrorCode::LockUnavailable, "Another migration project writer holds the lock"};
-        }
+        createExclusiveDirectory(path_, ErrorCode::LockUnavailable, "Another migration project writer holds the lock");
     }
     ProjectLock(const ProjectLock&) = delete;
     auto operator=(const ProjectLock&) -> ProjectLock& = delete;
@@ -169,8 +169,7 @@ class StagingDirectory final
 public:
     explicit StagingDirectory(const Path& root) : path{root / ".orm-cxx-staging"}
     {
-        if (!std::filesystem::create_directory(path))
-            failure("A previous migration staging directory exists");
+        createExclusiveDirectory(path, ErrorCode::InvalidCatalog, "A previous migration staging directory exists");
     }
     StagingDirectory(const StagingDirectory&) = delete;
     auto operator=(const StagingDirectory&) -> StagingDirectory& = delete;
@@ -432,7 +431,6 @@ auto projectOperation(Function&& function)
     {
         failure("Cannot write migration project files");
     }
-    throw MigrationError{ErrorCode::InvalidCatalog, "Migration project operation failed"};
 }
 } // namespace
 

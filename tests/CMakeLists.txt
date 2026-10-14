@@ -51,6 +51,10 @@ set(ORM_CXX_TEST_SOURCES
     utils/ConstexprForTest.cpp
 )
 
+if(UNIX)
+    list(APPEND ORM_CXX_TEST_SOURCES migrations/ProjectIoFailureTest.cpp)
+endif()
+
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     list(
         APPEND

@@ -256,7 +256,8 @@ TEST(MigrationProjectCoverageTest, CatalogRejectsTableListsWithoutSchemasAndWron
 TEST(MigrationProjectCoverageTest, ProjectConfigurationRequiresSupportedBackendVersionAndUniqueFields)
 {
     for (const auto text :
-         {"{", R"({"formatVersion":1,"formatVersion":1,"backends":["sqlite"]})",
+         {"{", "[]", "{}", R"({"formatVersion":1,"backends":["sqlite"],"futureVersion":1})",
+          R"({"formatVersion":1,"formatVersion":1,"backends":["sqlite"]})",
           R"({"formatVersion":2,"backends":["sqlite"]})", R"({"formatVersion":1,"backends":["oracle"]})",
           R"({"formatVersion":1,"backends":42})", R"({"futureVersion":1,"backends":["sqlite"]})"})
     {
@@ -367,14 +368,14 @@ TEST(MigrationProjectCoverageTest, ManualDraftRequiresPortableNameAndFinalizatio
 TEST(MigrationProjectCoverageTest, OfflineCliValidatesBackendListsAndOptionGrammar)
 {
     GuardDirectory directory;
-    for (const auto args : {std::vector<std::string_view>{"init", "--backends", "sqlite,mysql,"},
-                            {"init", "--backends", "oracle"},
-                            {"init", "--backends", ""},
-                            {"init", "wrong"},
-                            {"make"},
-                            {"make", "--manual"},
-                            {"compare", "--unknown"},
-                            {"compare", "--check", "--check"}})
+    for (const auto& args : {std::vector<std::string_view>{"init", "--backends", "sqlite,mysql,"},
+                             {"init", "--backends", "oracle"},
+                             {"init", "--backends", ""},
+                             {"init", "wrong"},
+                             {"make"},
+                             {"make", "--manual"},
+                             {"compare", "--unknown"},
+                             {"compare", "--check", "--check"}})
     {
         std::ostringstream output, errors;
         EXPECT_EQ(runCommandLine(args, GuardSchema::view, directory.projectPath(), output, errors), 2);
