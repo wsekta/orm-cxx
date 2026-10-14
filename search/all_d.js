@@ -13,8 +13,9 @@ var searchData=
   ['minimum_20ci_20matrix_10',['Minimum CI matrix',['../md_docs_2backend-portability.html#autotoc_md17',1,'']]],
   ['mistakes_11',['Common mistakes',['../md_docs_2relations.html#autotoc_md108',1,'']]],
   ['model_12',['model',['../md_docs_2model.html#autotoc_md53',1,'Create a model'],['../md_docs_2model.html',1,'Model'],['../md_docs_2backend-portability.html#autotoc_md16',1,'Verification model']]],
-  ['model_20grouping_20and_20having_13',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md92',1,'']]],
-  ['modules_14',['C++20 modules',['../md_docs_2modules.html',1,'']]],
-  ['msvc_15',['MSVC',['../md_docs_2ci-compiler-matrix.html#autotoc_md33',1,'']]],
-  ['mysql_20and_20mariadb_16',['MySQL and MariaDB',['../md_docs_2backends.html#autotoc_md24',1,'']]]
+  ['model_20changes_20and_20decisions_13',['Model changes and decisions',['../md_docs_2schema-migrations.html#autotoc_md113',1,'']]],
+  ['model_20grouping_20and_20having_14',['Full-model grouping and HAVING',['../md_docs_2query.html#autotoc_md92',1,'']]],
+  ['modules_15',['C++20 modules',['../md_docs_2modules.html',1,'']]],
+  ['msvc_16',['MSVC',['../md_docs_2ci-compiler-matrix.html#autotoc_md33',1,'']]],
+  ['mysql_20and_20mariadb_17',['MySQL and MariaDB',['../md_docs_2backends.html#autotoc_md24',1,'']]]
 ];

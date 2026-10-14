@@ -148,12 +148,12 @@ var NAVTREE =
       [ "Migrating an existing schema", "md_docs_2relations.html#autotoc_md109", null ]
     ] ],
     [ "Schema migrations", "md_docs_2schema-migrations.html", [
-      [ "Embedded SQL and the API", "md_docs_2schema-migrations.html#autotoc_md111", null ],
-      [ "SQL files", "md_docs_2schema-migrations.html#autotoc_md112", null ],
-      [ "Project CLI", "md_docs_2schema-migrations.html#autotoc_md113", null ],
-      [ "History and baseline", "md_docs_2schema-migrations.html#autotoc_md114", null ],
-      [ "Transactions, concurrency and errors", "md_docs_2schema-migrations.html#autotoc_md115", null ],
-      [ "SQL contract and limits", "md_docs_2schema-migrations.html#autotoc_md116", null ]
+      [ "Application CLI", "md_docs_2schema-migrations.html#autotoc_md111", null ],
+      [ "Project files", "md_docs_2schema-migrations.html#autotoc_md112", null ],
+      [ "Model changes and decisions", "md_docs_2schema-migrations.html#autotoc_md113", null ],
+      [ "C++ API and execution", "md_docs_2schema-migrations.html#autotoc_md114", null ],
+      [ "History, transactions and recovery", "md_docs_2schema-migrations.html#autotoc_md115", null ],
+      [ "SQL contract", "md_docs_2schema-migrations.html#autotoc_md116", null ]
     ] ],
     [ "Static query plans", "md_docs_2static-queries.html", [
       [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md118", null ],
