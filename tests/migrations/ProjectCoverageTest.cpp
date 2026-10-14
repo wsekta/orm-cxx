@@ -12,13 +12,8 @@ module orm;
 import :internal;
 import :migrations_internal;
 
-namespace
+namespace migration_project_coverage_models
 {
-using namespace orm::migrations;
-using Json = nlohmann::json;
-using Backend = orm::db::BackendType;
-constexpr std::array sqliteOnly{Backend::Sqlite};
-
 struct GuardUser
 {
     int id;
@@ -49,6 +44,15 @@ struct CodecOwner
 using GuardSchema = orm::Schema<GuardUser>;
 using RequiredGuardSchema = orm::Schema<GuardRequiredUser>;
 using CodecSchema = orm::Schema<CodecParent, CodecOwner>;
+} // namespace migration_project_coverage_models
+
+namespace
+{
+using namespace orm::migrations;
+using namespace migration_project_coverage_models;
+using Json = nlohmann::json;
+using Backend = orm::db::BackendType;
+constexpr std::array sqliteOnly{Backend::Sqlite};
 
 class GuardDirectory final
 {

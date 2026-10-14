@@ -139,7 +139,7 @@ if(NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
     set_target_properties(orm-cxx orm-cxx-reflection PROPERTIES POSITION_INDEPENDENT_CODE ON)
 endif()
 target_compile_features(orm-cxx PUBLIC cxx_std_20)
-target_include_directories(orm-cxx SYSTEM PRIVATE "${PROJECT_SOURCE_DIR}/externals/nlohmann_json")
+target_include_directories(orm-cxx SYSTEM PRIVATE "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/externals/nlohmann_json>")
 target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:GNU>:-fno-module-lazy>")
 target_compile_options(orm-cxx PUBLIC "$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 target_sources(
