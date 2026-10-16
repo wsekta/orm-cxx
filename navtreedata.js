@@ -149,15 +149,16 @@ var NAVTREE =
     ] ],
     [ "Schema migrations", "md_docs_2schema-migrations.html", [
       [ "Application CLI", "md_docs_2schema-migrations.html#autotoc_md111", null ],
-      [ "Project files", "md_docs_2schema-migrations.html#autotoc_md112", null ],
-      [ "Model changes and decisions", "md_docs_2schema-migrations.html#autotoc_md113", null ],
-      [ "C++ API and execution", "md_docs_2schema-migrations.html#autotoc_md114", null ],
-      [ "History, transactions and recovery", "md_docs_2schema-migrations.html#autotoc_md115", null ],
-      [ "SQL contract", "md_docs_2schema-migrations.html#autotoc_md116", null ]
+      [ "Durable state and connection loss", "md_docs_2schema-migrations.html#autotoc_md112", null ],
+      [ "Project files", "md_docs_2schema-migrations.html#autotoc_md113", null ],
+      [ "Model changes and decisions", "md_docs_2schema-migrations.html#autotoc_md114", null ],
+      [ "C++ API and execution", "md_docs_2schema-migrations.html#autotoc_md115", null ],
+      [ "History, transactions and recovery", "md_docs_2schema-migrations.html#autotoc_md116", null ],
+      [ "SQL contract", "md_docs_2schema-migrations.html#autotoc_md117", null ]
     ] ],
     [ "Static query plans", "md_docs_2static-queries.html", [
-      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md118", null ],
-      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md119", null ]
+      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md119", null ],
+      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md120", null ]
     ] ],
     [ "Modules", "modules.html", [
       [ "Modules List", "modules.html", "modules_dup" ]

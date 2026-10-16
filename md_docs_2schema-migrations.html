@@ -128,6 +128,12 @@ Application CLI</h1>
 </div><!-- fragment --><p><code>compare --check</code> returns 1 when the models differ, making it suitable for a CI check that model changes have a migration. <code>make</code> creates a draft. A draft cannot be executed or used as the source of another migration. Finalization requires that the current models match its target snapshot and explicitly accepts that the reviewed SQL produces the declared schema. It validates the script contract; it does not infer the result of arbitrary SQL.</p>
 <p>Once finalized, a migration is immutable. The backend set selected by <code>init</code> is fixed for the project. Create another migration for subsequent model changes.</p>
 <h1><a class="anchor" id="autotoc_md112"></a>
+Durable state and connection loss</h1>
+<p>The migration state protocol owns the lock, history and durable marker rules shared by migration execution, baseline acceptance and operator resolution. The runner keeps physical-schema checks and SQLite rebuild session restoration separate from those state transitions.</p>
+<p>SQLite and PostgreSQL commit a migration's SQL and history together. MySQL and MariaDB commit a durable marker before executing nontransactional DDL, retain the session lock across commits, and clear the marker together with the final history update. A lost connection can therefore leave schema changes with an incomplete marker. Inspect the database and use explicit resolution; the runner does not retry the SQL automatically.</p>
+<p>After an uncertain commit, reconnect and inspect <code>status()</code> before deciding what to do. A committed baseline remains a complete baseline. A committed resolution remains recorded even when its response was lost. A failed history transaction retains the previous history and any durable incomplete marker. <code>CommitUncertain</code> remains distinct from <code>SessionRestoration</code>, which reports a committed migration whose SQLite session settings could not be restored.</p>
+<p>The failure tests run actual scripts and commits on the configured databases, lose the connection before or after those operations, and inspect the same database through a new connection. These tests cover execution in both directions, baseline and both resolution choices. They do not simulate server power loss. SQLite uses a file for these reconnection tests.</p>
+<h1><a class="anchor" id="autotoc_md113"></a>
 Project files</h1>
 <div class="fragment"><div class="line">migrations/</div>
 <div class="line">  project.json</div>
@@ -151,7 +157,7 @@ Project files</h1>
 </div><!-- fragment --><p><code>project.json</code> declares the format and backend set. <code>schema.json</code> owns physical names, frozen native SQL types, nullability, string lengths, identity properties, ordered primary and foreign keys, managed indexes and table options. It stores no C++ type names, addresses or reflection handles. Model declaration order does not produce spurious migrations; primary-key column order remains significant. <code>migration.json</code> binds the parent version and snapshot, direction-specific execution contexts and selected-backend before/after hashes.</p>
 <p>A writer lock prevents concurrent project mutations. <code>make</code> writes a staging directory and publishes the complete draft by renaming it. <code>finalize</code> atomically publishes <code>ready.json</code> last. The ready manifest verifies SQL, snapshots, metadata and execution checksums on every load. Unknown entries, unsupported formats, missing files and symlinks are rejected. An interrupted staging directory requires inspection before another writer can proceed.</p>
 <p><code>Catalog::fromDirectory("migrations")</code> loads this project format and rejects unfinalized drafts. It reads all files before opening a database connection. Backend variants are independent: MariaDB never falls back to MySQL SQL. UTF-8 BOMs and CRLF are normalized in SQL; embedded NUL bytes are rejected. Other SQL whitespace is significant. JSON is a private implementation dependency and is absent from the public API.</p>
-<h1><a class="anchor" id="autotoc_md113"></a>
+<h1><a class="anchor" id="autotoc_md114"></a>
 Model changes and decisions</h1>
 <p>The generator handles tables, columns, explicit renames, types, string lengths, nullability, identity, ordered primary keys, foreign keys and owning junction tables. New tables, nullable columns and proven lossless widening can be generated directly. Potentially destructive changes require approval for each reported change ID. Renames must be declared explicitly; names are never matched heuristically.</p>
 <p>Use <code>compare</code> to obtain exact change IDs, then supply a decisions JSON file:</p>
@@ -175,7 +181,7 @@ Model changes and decisions</h1>
 <div class="line"># Edit the backend up.sql files; optionally add down.sql.</div>
 <div class="line">app-migrate finalize 3 --accept-schema</div>
 </div><!-- fragment --><p>Manual migrations use the same snapshots, review step and integrity checks. Finalization is an operator assertion about the declared schema, so custom objects must also be maintained explicitly.</p>
-<h1><a class="anchor" id="autotoc_md114"></a>
+<h1><a class="anchor" id="autotoc_md115"></a>
 C++ API and execution</h1>
 <div class="fragment"><div class="line"><span class="keyword">const</span> std::array backends{orm::db::BackendType::Sqlite};</div>
 <div class="line"><span class="keyword">auto</span> project = orm::migrations::MigrationProject::init(<span class="stringliteral">&quot;migrations&quot;</span>, backends);</div>
@@ -203,7 +209,7 @@ C++ API and execution</h1>
 <div class="line">app-migrate resolve --version 2 --checksum &lt;64-lowercase-hex-digits&gt; --resolution completed</div>
 <div class="line">app-migrate resolve --version 2 --checksum &lt;64-lowercase-hex-digits&gt; --resolution reverted</div>
 </div><!-- fragment --><p>Help needs no project or connection. Exit codes are 0 for success, 1 for model, project, database or history failures, and 2 for invalid arguments. The stream-based CLI overload accepts arguments excluding the executable name.</p>
-<h1><a class="anchor" id="autotoc_md115"></a>
+<h1><a class="anchor" id="autotoc_md116"></a>
 History, transactions and recovery</h1>
 <p>The executor owns <code>_orm_migrations</code> in SQLite's <code>main</code> database, PostgreSQL's current schema, or the selected MySQL/MariaDB database. It stores version, name, backend, checksum, application time and baseline status. Applied migrations must be a matching catalog prefix. Checksums bind normalized up/down SQL, explicit absence of down, both execution contexts and the selected backend's frozen before/after snapshots. Changes to an applied version block further execution.</p>
 <p><code>baseline(version)</code> records a verified existing schema's catalog prefix without executing its SQL. This requires empty history and a positive version. It is an explicit operator assertion; downgrades cannot cross the baseline boundary.</p>
@@ -213,7 +219,7 @@ History, transactions and recovery</h1>
 <p>MySQL and MariaDB implicitly commit DDL and expose <code>NonTransactional</code> atomicity. A session <code>GET_LOCK</code> covers execution. Before running SQL, the runner durably records an incomplete marker in <code>_orm_migrations_incomplete</code>. Successful history updates and marker deletion share an InnoDB transaction. A failure leaves the marker and may leave successful DDL statements; the runner never replays them automatically.</p>
 <p>An incomplete marker blocks mutation, validation and preview. Inspect the schema and data, complete the script or restore its preceding state, then use the original catalog and exact checksum with <code>resolve(..., Completed)</code> or <code>resolve(..., Reverted)</code>. Both outcomes are explicit operator assertions and remove the marker under the lock.</p>
 <p><code>MigrationError</code> exposes a code, version, backend and optional native error code. An uncertain commit disconnects the database and reports <code>CommitUncertain</code>. Reconnect and inspect history before retrying. A confirmed commit followed by a failed session-setting restoration is reported separately as <code>SessionRestoration</code>; the committed migration must not be treated as rolled back.</p>
-<h1><a class="anchor" id="autotoc_md116"></a>
+<h1><a class="anchor" id="autotoc_md117"></a>
 SQL contract</h1>
 <p>Scripts contain backend-native SQL with multiple statements and quoted bodies. SQLite uses prepare/tail parsing; PostgreSQL sends the whole script through libpq; MySQL/MariaDB execute native multi-statements and drain all results. SQL is never split on semicolons.</p>
 <p>The executor owns transaction boundaries. Scripts cannot control transactions, savepoints, migration ledgers or locks, or change session settings. SQLite scripts cannot disable foreign keys; that action belongs to the explicit rebuild context. PostgreSQL permits transaction-local <code>SET CONSTRAINTS</code>, but rejects general session changes, two-phase transactions and client streaming commands. SQL requiring a separate transaction, such as <code>CREATE INDEX CONCURRENTLY</code>, needs a separate deployment procedure. MySQL/MariaDB executable comments are checked as SQL; dynamic prepared SQL and client <code>DELIMITER</code> commands are excluded. Trigger <code>SET NEW.column</code> and <code>UPDATE ... SET</code> remain supported.</p>

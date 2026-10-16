@@ -11,6 +11,6 @@ var searchData=
   ['to_20one_20relations_8',['One-to-one relations',['../md_docs_2model.html#autotoc_md62',1,'']]],
   ['transactions_9',['Transactions',['../md_docs_2database.html#autotoc_md49',1,'']]],
   ['transactions_20and_20consistency_10',['Transactions and consistency',['../md_docs_2relations.html#autotoc_md106',1,'']]],
-  ['transactions_20and_20recovery_11',['History, transactions and recovery',['../md_docs_2schema-migrations.html#autotoc_md115',1,'']]],
+  ['transactions_20and_20recovery_11',['History, transactions and recovery',['../md_docs_2schema-migrations.html#autotoc_md116',1,'']]],
   ['types_12',['Supported field types',['../md_docs_2model.html#autotoc_md55',1,'']]]
 ];

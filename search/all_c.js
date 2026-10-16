@@ -7,5 +7,6 @@ var searchData=
   ['link_20and_20unlink_4',['Link and unlink',['../md_docs_2relations.html#autotoc_md102',1,'']]],
   ['link_20and_20unlink_20relations_5',['Link and unlink relations',['../md_docs_2database.html#autotoc_md45',1,'']]],
   ['loading_20collections_6',['loading collections',['../md_docs_2query.html#autotoc_md83',1,'Loading collections'],['../md_docs_2relations.html#autotoc_md103',1,'Loading collections']]],
-  ['local_20package_20verification_7',['Local package verification',['../md_docs_2packaging.html#autotoc_md73',1,'']]]
+  ['local_20package_20verification_7',['Local package verification',['../md_docs_2packaging.html#autotoc_md73',1,'']]],
+  ['loss_8',['Durable state and connection loss',['../md_docs_2schema-migrations.html#autotoc_md112',1,'']]]
 ];

@@ -5,5 +5,5 @@ var searchData=
   ['workflow_2',['End-to-end workflow',['../md_docs_2relations.html#autotoc_md105',1,'']]],
   ['wrappers_3',['Collection wrappers',['../md_docs_2relations.html#autotoc_md97',1,'']]],
   ['write_20predicates_4',['Write predicates',['../md_docs_2query.html#autotoc_md94',1,'']]],
-  ['writes_5',['Projections and writes',['../md_docs_2static-queries.html#autotoc_md118',1,'']]]
+  ['writes_5',['Projections and writes',['../md_docs_2static-queries.html#autotoc_md119',1,'']]]
 ];
