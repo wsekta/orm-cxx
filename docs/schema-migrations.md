@@ -58,6 +58,33 @@ it does not infer the result of arbitrary SQL.
 Once finalized, a migration is immutable. The backend set selected by `init` is
 fixed for the project. Create another migration for subsequent model changes.
 
+## Durable state and connection loss
+
+The migration state protocol owns the lock, history and durable marker rules
+shared by migration execution, baseline acceptance and operator resolution.
+The runner keeps physical-schema checks and SQLite rebuild session restoration
+separate from those state transitions.
+
+SQLite and PostgreSQL commit a migration's SQL and history together. MySQL and
+MariaDB commit a durable marker before executing nontransactional DDL, retain
+the session lock across commits, and clear the marker together with the final
+history update. A lost connection can therefore leave schema changes with an
+incomplete marker. Inspect the database and use explicit resolution; the runner
+does not retry the SQL automatically.
+
+After an uncertain commit, reconnect and inspect `status()` before deciding
+what to do. A committed baseline remains a complete baseline. A committed
+resolution remains recorded even when its response was lost. A failed history
+transaction retains the previous history and any durable incomplete marker.
+`CommitUncertain` remains distinct from `SessionRestoration`, which reports a
+committed migration whose SQLite session settings could not be restored.
+
+The failure tests run actual scripts and commits on the configured databases,
+lose the connection before or after those operations, and inspect the same
+database through a new connection. These tests cover execution in both
+directions, baseline and both resolution choices. They do not simulate server
+power loss. SQLite uses a file for these reconnection tests.
+
 ## Project files
 
 ```text

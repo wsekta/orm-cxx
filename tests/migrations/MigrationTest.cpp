@@ -57,6 +57,25 @@ auto expectMigrationError(F&& operation, ErrorCode code) -> void
         EXPECT_EQ(error.getCode(), code) << error.what();
     }
 }
+
+auto awaitMigrationConnectionCleanup(orm::Database& database) -> void
+{
+    if (database.getBackendCapabilities().migrations.atomicity != orm::db::MigrationAtomicity::NonTransactional)
+        return;
+    auto& session = orm::migrations::detail::DatabaseAccess::session(database);
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(database);
+    const auto table = runtime.migrationTable(session);
+    const auto lock = "orm:" + orm::migrations::detail::sha256(table).substr(0, 60);
+    int acquired{};
+    soci::indicator indicator{};
+    // mysql_close sends COM_QUIT without waiting for server-side cleanup.
+    // Bound that wait, then release the probe so Runner acquires its own lock.
+    session << "SELECT GET_LOCK(:name,5)", soci::use(lock, "name"), soci::into(acquired, indicator);
+    if (indicator == soci::i_null || acquired != 1)
+        throw std::runtime_error{"The lost migration connection did not release its history lock"};
+    runtime.endMigration(session, table);
+}
+
 class TempDirectory
 {
 public:
@@ -150,6 +169,13 @@ TEST_P(MigrationTest, ReadOnlyCommandsDoNotCreateHistory)
     ASSERT_EQ(plan.migrations.size(), 2);
     const auto table = historyTable();
     EXPECT_THROW(session() << "SELECT version FROM " + table, soci::soci_error);
+}
+
+TEST_P(MigrationTest, MalformedHistoryCannotBeReportedAsAnEmptyDatabase)
+{
+    session() << "CREATE TABLE " + historyTable() + " (unexpected INTEGER)";
+    Runner runner{connection, initialCatalog()};
+    expectMigrationError([&] { (void)runner.status(); }, ErrorCode::Execution);
 }
 
 TEST_P(MigrationTest, AppliesWholeScriptsAndRetainsData)
@@ -549,22 +575,26 @@ TEST_P(MigrationTest, DurableMarkerSurvivesLossBeforeHistoryFinalization)
         GTEST_SKIP();
     }
     const auto catalog = Catalog{migration(1, "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")};
-    const auto& entry = catalog.migrations().front();
-    const auto checksum = orm::migrations::detail::checksum(entry.scripts.at(GetParam().type));
-    auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
-    const auto table = runtime.migrationTable(session());
-    runtime.beginMigration(session(), table);
-    runtime.createMigrationHistory(session(), table);
-    const auto journal = runtime.migrationJournalTable(session(), table);
-    const auto backend = static_cast<int>(GetParam().type);
-    session() << "INSERT INTO " + journal +
-                     "(slot,version,name,backend,direction,checksum) VALUES(1,1,'step_1',:backend,0,:checksum)",
-        soci::use(backend, "backend"), soci::use(checksum, "checksum");
-    runtime.executeMigrationScript(session(), entry.scripts.at(GetParam().type).up);
-    connection.disconnect(); // Lock released; journal and application DDL remain durable.
+    class LostScriptResponse final : public orm::migrations::detail::SessionOperations
+    {
+    public:
+        auto executeScript(soci::session& session, const orm::db::BackendRuntime& runtime, std::string_view sql,
+                           Version version) const -> void override
+        {
+            SessionOperations::executeScript(session, runtime, sql, version);
+            session.close();
+            throw soci::soci_error{"Injected connection loss after migration SQL"};
+        }
+    } operations;
+    auto runner = orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog, operations);
+    expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
+    connection.disconnect();
     connection.connect(GetParam().type, testConnectionString());
+    awaitMigrationConnectionCleanup(connection);
     Runner restarted{connection, catalog};
-    ASSERT_TRUE(restarted.status().incomplete);
+    const auto interrupted = restarted.status();
+    ASSERT_TRUE(interrupted.incomplete);
+    const auto checksum = interrupted.incomplete->checksum;
     EXPECT_EQ(restarted.status().currentVersion, 0);
     expectMigrationError([&] { restarted.up(); }, ErrorCode::IncompleteMigration);
     restarted.resolve(1, checksum, Resolution::Completed);
@@ -578,6 +608,261 @@ TEST_P(MigrationTest, ResolveIsUnavailableWithoutAnIncompleteMigration)
     expectMigrationError([&] { runner.resolve(10, std::string(64, 'a'), Resolution::Completed); },
                          ErrorCode::InvalidResolution);
 }
+
+namespace
+{
+enum class ConnectionLossPoint
+{
+    BeforeScript,
+    AfterScript,
+    BeforeHistoryCommit,
+    AfterHistoryCommit,
+};
+
+/** Runs real driver operations and loses their connection at the requested point. */
+class ConnectionLoss final : public orm::migrations::detail::SessionOperations
+{
+public:
+    ConnectionLoss(ConnectionLossPoint point, Version version, int historyCommit)
+        : point_{point}, version_{version}, historyCommit_{historyCommit}
+    {
+    }
+
+    auto executeScript(soci::session& session, const orm::db::BackendRuntime& runtime, std::string_view sql,
+                       Version version) const -> void override
+    {
+        if (version == version_ && point_ == ConnectionLossPoint::BeforeScript)
+            lose(session);
+        SessionOperations::executeScript(session, runtime, sql, version);
+        if (version == version_ && point_ == ConnectionLossPoint::AfterScript)
+            lose(session);
+    }
+
+    auto commit(soci::session& session, Version version) const -> void override
+    {
+        const bool selected = version == version_ && ++commits_ == historyCommit_;
+        if (selected && point_ == ConnectionLossPoint::BeforeHistoryCommit)
+            lose(session);
+        SessionOperations::commit(session, version);
+        if (selected && point_ == ConnectionLossPoint::AfterHistoryCommit)
+            lose(session);
+    }
+
+private:
+    ConnectionLossPoint point_;
+    Version version_;
+    int historyCommit_;
+    mutable int commits_{};
+
+    [[noreturn]] static auto lose(soci::session& session) -> void
+    {
+        session.close();
+        throw soci::soci_error{"Injected loss of migration connection"};
+    }
+};
+} // namespace
+
+class MigrationStateFailureTest : public MigrationTest
+{
+public:
+    auto SetUp() -> void override
+    {
+        MigrationTest::SetUp();
+        if (HasFatalFailure())
+            return;
+        reconnectUrl_ = testConnectionString();
+        if (GetParam().type == orm::db::BackendType::Sqlite)
+        {
+            // Reconnection must inspect the same durable SQLite database.
+            reconnectUrl_ = "sqlite3://" + (directory_.path / "migration-state.db").string();
+            reconnect();
+        }
+    }
+
+    auto reconnect() -> void
+    {
+        connection.disconnect();
+        connection.connect(GetParam().type, reconnectUrl_);
+        awaitMigrationConnectionCleanup(connection);
+    }
+
+    static auto catalog() -> Catalog
+    {
+        return Catalog{migration(1, "CREATE TABLE migration_anchor(id INTEGER PRIMARY KEY);"),
+                       migration(2,
+                                 "CREATE TABLE migration_users(id INTEGER PRIMARY KEY); "
+                                 "INSERT INTO migration_users VALUES(7);",
+                                 "DROP TABLE migration_users;")};
+    }
+
+    auto verifyExecutionLoss(ConnectionLossPoint point, Direction direction) -> void
+    {
+        Runner runner{connection, catalog()};
+        runner.up(direction == Direction::Up ? 1 : 2);
+        const bool durable = nontransactional();
+        const auto originalVersion = direction == Direction::Up ? 1 : 2;
+        const auto completedVersion = direction == Direction::Up ? 2 : 1;
+        ConnectionLoss loss{point, 2, durable ? 2 : 1};
+        auto failing = orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog(), loss);
+        const bool commitLoss =
+            point == ConnectionLossPoint::BeforeHistoryCommit || point == ConnectionLossPoint::AfterHistoryCommit;
+        expectMigrationError(
+            [&]
+            {
+                if (direction == Direction::Up)
+                    failing.up();
+                else
+                    failing.down(1);
+            },
+            commitLoss ? ErrorCode::CommitUncertain : ErrorCode::Execution);
+        reconnect();
+        Runner restarted{connection, catalog()};
+        const auto state = restarted.status();
+        const bool committed = point == ConnectionLossPoint::AfterHistoryCommit;
+        const bool sqlSurvived = committed || (durable && point != ConnectionLossPoint::BeforeScript);
+        EXPECT_EQ(state.currentVersion, committed ? completedVersion : originalVersion);
+        ASSERT_EQ(state.incomplete.has_value(), durable && !committed);
+        if ((direction == Direction::Up) == sqlSurvived)
+            EXPECT_EQ(users(), 1);
+        else
+            EXPECT_THROW(users(), soci::soci_error);
+        if (state.incomplete)
+        {
+            EXPECT_EQ(state.incomplete->version, 2);
+            EXPECT_EQ(state.incomplete->direction, direction);
+            EXPECT_EQ(state.incomplete->backend, GetParam().type);
+            expectMigrationError([&] { restarted.up(); }, ErrorCode::IncompleteMigration);
+            expectMigrationError([&] { restarted.down(0); }, ErrorCode::IncompleteMigration);
+            expectMigrationError([&] { restarted.baseline(2); }, ErrorCode::IncompleteMigration);
+            restarted.resolve(2, state.incomplete->checksum,
+                              sqlSurvived ? Resolution::Completed : Resolution::Reverted);
+        }
+        // A fresh writer proves the session lock and migration ownership were released.
+        restarted.up(2);
+        EXPECT_EQ(users(), 1);
+        restarted.down(1);
+        EXPECT_EQ(restarted.status().currentVersion, 1);
+        EXPECT_FALSE(restarted.status().incomplete);
+    }
+
+    auto verifyBaselineLoss(ConnectionLossPoint point) -> void
+    {
+        ConnectionLoss loss{point, 2, 1};
+        auto runner = orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog(), loss);
+        expectMigrationError([&] { runner.baseline(2); }, ErrorCode::CommitUncertain);
+        reconnect();
+        Runner restarted{connection, catalog()};
+        const auto state = restarted.status();
+        const bool committed = point == ConnectionLossPoint::AfterHistoryCommit;
+        EXPECT_EQ(state.currentVersion, committed ? 2 : 0);
+        EXPECT_EQ(state.baselineVersion, committed ? 2 : 0);
+        EXPECT_FALSE(state.incomplete);
+        EXPECT_THROW(users(), soci::soci_error);
+        if (!committed)
+            restarted.baseline(2);
+        expectMigrationError([&] { restarted.down(0); }, ErrorCode::BaselineBoundary);
+    }
+
+    auto verifyResolutionLoss(ConnectionLossPoint point, Resolution resolution) -> void
+    {
+        if (!nontransactional())
+            GTEST_SKIP();
+        Runner{connection, catalog()}.up(1);
+        ConnectionLoss scriptLoss{resolution == Resolution::Completed ? ConnectionLossPoint::AfterScript :
+                                                                        ConnectionLossPoint::BeforeScript,
+                                  2, 2};
+        auto interrupted =
+            orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog(), scriptLoss);
+        expectMigrationError([&] { interrupted.up(); }, ErrorCode::Execution);
+        reconnect();
+        Runner restarted{connection, catalog()};
+        const auto marker = restarted.status().incomplete;
+        ASSERT_TRUE(marker);
+        ConnectionLoss commitLoss{point, 2, 1};
+        auto resolving =
+            orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog(), commitLoss);
+        expectMigrationError([&] { resolving.resolve(2, marker->checksum, resolution); }, ErrorCode::CommitUncertain);
+        reconnect();
+        const auto state = restarted.status();
+        const bool committed = point == ConnectionLossPoint::AfterHistoryCommit;
+        EXPECT_EQ(state.currentVersion, committed && resolution == Resolution::Completed ? 2 : 1);
+        EXPECT_EQ(state.incomplete.has_value(), !committed);
+        if (!committed)
+        {
+            EXPECT_EQ(state.incomplete, marker);
+            expectMigrationError([&] { restarted.up(); }, ErrorCode::IncompleteMigration);
+            restarted.resolve(2, marker->checksum, resolution);
+        }
+        restarted.up(2);
+        EXPECT_EQ(users(), 1);
+        restarted.down(1);
+        EXPECT_FALSE(restarted.status().incomplete);
+    }
+
+private:
+    TempDirectory directory_;
+    std::string reconnectUrl_;
+};
+
+TEST_P(MigrationStateFailureTest, LossAfterDurableMarkerRequiresResolutionBeforeRetry)
+{
+    verifyExecutionLoss(ConnectionLossPoint::BeforeScript, Direction::Up);
+}
+TEST_P(MigrationStateFailureTest, LossAfterSqlPreservesOnlyNontransactionalEffects)
+{
+    verifyExecutionLoss(ConnectionLossPoint::AfterScript, Direction::Up);
+}
+TEST_P(MigrationStateFailureTest, LossBeforeHistoryCommitPreservesPreviousHistory)
+{
+    verifyExecutionLoss(ConnectionLossPoint::BeforeHistoryCommit, Direction::Up);
+}
+TEST_P(MigrationStateFailureTest, LostCommitResponseCanBeInspectedWithoutRepeatingSql)
+{
+    verifyExecutionLoss(ConnectionLossPoint::AfterHistoryCommit, Direction::Up);
+}
+TEST_P(MigrationStateFailureTest, DownLossAfterMarkerCanBeReverted)
+{
+    verifyExecutionLoss(ConnectionLossPoint::BeforeScript, Direction::Down);
+}
+TEST_P(MigrationStateFailureTest, DownLossAfterSqlCanBeCompleted)
+{
+    verifyExecutionLoss(ConnectionLossPoint::AfterScript, Direction::Down);
+}
+TEST_P(MigrationStateFailureTest, DownLossBeforeHistoryCommitRetainsAppliedVersion)
+{
+    verifyExecutionLoss(ConnectionLossPoint::BeforeHistoryCommit, Direction::Down);
+}
+TEST_P(MigrationStateFailureTest, DownLostCommitResponseDoesNotRequireResolution)
+{
+    verifyExecutionLoss(ConnectionLossPoint::AfterHistoryCommit, Direction::Down);
+}
+TEST_P(MigrationStateFailureTest, BaselineLossBeforeCommitLeavesNoPartialPrefix)
+{
+    verifyBaselineLoss(ConnectionLossPoint::BeforeHistoryCommit);
+}
+TEST_P(MigrationStateFailureTest, BaselineLostCommitResponsePreservesTheWholePrefix)
+{
+    verifyBaselineLoss(ConnectionLossPoint::AfterHistoryCommit);
+}
+TEST_P(MigrationStateFailureTest, CompletedResolutionLossBeforeCommitRetainsMarker)
+{
+    verifyResolutionLoss(ConnectionLossPoint::BeforeHistoryCommit, Resolution::Completed);
+}
+TEST_P(MigrationStateFailureTest, CompletedResolutionLostCommitResponseClearsMarker)
+{
+    verifyResolutionLoss(ConnectionLossPoint::AfterHistoryCommit, Resolution::Completed);
+}
+TEST_P(MigrationStateFailureTest, RevertedResolutionLossBeforeCommitRetainsMarker)
+{
+    verifyResolutionLoss(ConnectionLossPoint::BeforeHistoryCommit, Resolution::Reverted);
+}
+TEST_P(MigrationStateFailureTest, RevertedResolutionLostCommitResponseClearsMarker)
+{
+    verifyResolutionLoss(ConnectionLossPoint::AfterHistoryCommit, Resolution::Reverted);
+}
+
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, MigrationStateFailureTest, conformanceBackendTestConfigs, backendTestName);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(MigrationStateFailureTest);
 
 TEST_P(MigrationTest, CommandLineReportsAndResolvesAnIncompleteMigration)
 {

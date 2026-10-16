@@ -3,6 +3,7 @@ set(ORM_CXX_SOURCES
     migrations/Catalog.cpp
     migrations/SqlValidation.cpp
     migrations/Runner.cpp
+    migrations/MigrationState.cpp
     migrations/CommandLine.cpp
     migrations/SchemaSnapshot.cpp
     migrations/SchemaDiff.cpp

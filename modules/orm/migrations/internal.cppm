@@ -1,5 +1,6 @@
 module;
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -29,7 +30,39 @@ public:
     virtual ~SessionOperations() = default;
     virtual auto commit(soci::session& session, Version version) const -> void;
     virtual auto rollback(soci::session& session) const -> void;
+    virtual auto executeScript(soci::session& session, const db::BackendRuntime& runtime, std::string_view sql,
+                               Version version) const -> void;
     virtual auto restoreSqliteForeignKeys(soci::session& session, int previousValue) const -> void;
+};
+
+/** Owns the durable state protocol. Schema checks stay with the Runner. */
+class MigrationState
+{
+public:
+    MigrationState(Database& database, const Catalog& catalog, const SessionOperations& operations);
+    [[nodiscard]] auto status() const -> Status;
+    auto validate() const -> void;
+    [[nodiscard]] auto plan(const Status& initial, Direction direction, std::optional<Version> target) const -> Plan;
+    [[nodiscard]] auto apply(const Migration& migration, Direction direction,
+                             const std::vector<AppliedMigration>& expected, const std::function<void()>& preflight,
+                             const std::function<void()>& validateResult) -> std::vector<AppliedMigration>;
+    auto baseline(Version target) -> void;
+    auto resolve(Version version, std::string_view expectedChecksum, Resolution resolution) -> void;
+
+private:
+    Database& database_;
+    const Catalog& catalog_;
+    const SessionOperations& operations_;
+    db::BackendType backend_;
+    const db::BackendRuntime& runtime_;
+    soci::session& session_;
+    std::string table_;
+
+    [[nodiscard]] auto inspect() const -> Status;
+    auto requireHistory(const std::vector<AppliedMigration>& expected, Version version) const -> void;
+    auto requireMarker(const IncompleteMigration& expected, std::string_view message) const -> void;
+    auto changeHistory(const Migration& migration, Direction direction) -> void;
+    auto clearMarker(Version version) -> void;
 };
 
 struct RunnerAccess

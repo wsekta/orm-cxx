@@ -8,16 +8,33 @@ module;
 
 #include "tests/UnitTestPrelude.hpp"
 
+// SOCI distributions expose either full C declarations or opaque SQLite types.
+// clang-format off
+#include "soci/sqlite3/soci-sqlite3.h"
+#include <sqlite3.h>
+// clang-format on
+
 module orm;
 
 import :internal;
 import :migrations_internal;
 
+namespace sqlite_api
+{
+}
+
 namespace
 {
+using namespace sqlite_api;
 using namespace orm::migrations;
 using Backend = orm::db::BackendType;
 using Access = detail::DatabaseAccess;
+
+template <typename Handle, typename Result, typename Native, typename... Args>
+auto nativeSqliteConnection(Handle* handle, Result (*)(Native*, Args...)) -> Native*
+{
+    return reinterpret_cast<Native*>(handle);
+}
 
 enum class Fault
 {
@@ -234,6 +251,58 @@ auto exerciseCommitFault(Fault fault, bool committed) -> void
 TEST(MigrationRebuildFailureTest, FailureBeforeCommitDisconnectsAndCloseRollsBackOnlyTheCurrentMigration)
 {
     exerciseCommitFault(Fault::BeforeCommit, false);
+}
+
+TEST(MigrationRebuildFailureTest, NativeSessionPreparationFailurePreservesHistoryAndOwnership)
+{
+    DatabaseFile file;
+    orm::Database database;
+    const auto catalog = rebuildCatalog();
+    setup(database, file, catalog);
+    auto& session = Access::session(database);
+    auto* handle = nativeSqliteConnection(static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_,
+                                          sqlite3_set_authorizer);
+    int denied{};
+    {
+        const auto installed = sqlite3_set_authorizer(
+            handle,
+            [](void* context, int action, const char* name, const char*, const char*, const char*)
+            {
+                if (action == SQLITE_PRAGMA && name != nullptr && std::string_view{name} == "foreign_keys")
+                {
+                    ++*static_cast<int*>(context);
+                    return SQLITE_DENY;
+                }
+                return SQLITE_OK;
+            },
+            &denied);
+        ASSERT_EQ(installed, SQLITE_OK);
+        struct RestoreAuthorization
+        {
+            decltype(handle) connection;
+            ~RestoreAuthorization()
+            {
+                sqlite3_set_authorizer(connection, nullptr, nullptr);
+            }
+        } restore{handle};
+        try
+        {
+            Runner{database, catalog}.up();
+            FAIL() << "Expected the real SQLite authorization failure";
+        }
+        catch (const MigrationError& error)
+        {
+            EXPECT_EQ(error.getCode(), ErrorCode::Execution);
+            EXPECT_EQ(error.getVersion(), 2);
+            EXPECT_EQ(error.getBackendType(), Backend::Sqlite);
+        }
+    }
+    EXPECT_EQ(denied, 1);
+    EXPECT_TRUE(database.isConnected());
+    EXPECT_FALSE(Access::active(database));
+    EXPECT_EQ(Runner(database, catalog).status().currentVersion, 1);
+    Runner{database, catalog}.up();
+    EXPECT_EQ(Runner(database, catalog).status().currentVersion, 2);
 }
 
 TEST(MigrationRebuildFailureTest, FailureAfterRealCommitDisconnectsAndKeepsTheCommittedHistory)
