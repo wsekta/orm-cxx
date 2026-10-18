@@ -102,9 +102,9 @@ public:
     {
         return orm::db::BackendType::Oracle;
     }
-    auto acceptsConnectionString(std::string_view) const noexcept -> bool override
+    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
     {
-        return false;
+        return delegate.acceptsConnectionString(connectionString);
     }
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
     {
@@ -211,11 +211,18 @@ try
     const auto model = orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>();
     const ConsumerCommands commands{dialect};
     const orm::db::CommandGenerator& generator = commands;
-    const auto selected = generator.select(model, query.getData());
+    const auto predicate = orm::db::ast::Column{"id"} == 7;
+    orm::db::SelectSpec selectSpec;
+    selectSpec.predicate = predicate;
+    orm::db::UpdateSpec updateSpec;
+    updateSpec.assignments.push_back(
+        {.column = orm::db::ast::Column{"id"}, .value = {.value = orm::query::QueryValue{8}}});
+    updateSpec.predicate = predicate;
+    const auto selected = generator.select(model, selectSpec);
     if (not selected.sql.starts_with("/* consumer override */ SELECT ") or selected.parameters.size() != 1 or
         commands.selects != 1 or generator.createTable(model).empty() or generator.dropTable(model).empty() or
-        generator.insert(model).empty() or generator.update(model, update.getData()).parameters.size() != 2 or
-        generator.remove(model, *query.getData().predicate).parameters.size() != 1)
+        generator.insert(model).empty() or generator.update(model, updateSpec).parameters.size() != 2 or
+        generator.remove(model, predicate).parameters.size() != 1)
     {
         return 8;
     }
@@ -237,7 +244,7 @@ try
         {
             return 9;
         }
-        custom.dropTable<consumer_models::ConsumerModel>();
+        custom.deleteTable<consumer_models::ConsumerModel>();
     }
 
     if (not orm::db::relations::createTableStatements(
