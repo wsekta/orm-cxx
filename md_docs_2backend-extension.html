@@ -103,7 +103,7 @@ Concrete extension points</h1>
 <li><code>BackendProvider</code> owns backend identity, connection-string recognition, capabilities, and access to the remaining strategies;</li>
 <li><code>BackendRuntime</code> owns session initialization, catalog access, runtime limits, canonical value binding, affected-row normalization, and driver-error translation;</li>
 <li><code>SqlDialect</code> owns identifier quoting, bind markers, pagination, generated-key syntax, and relation-specific SQL forms;</li>
-<li><code>CommandGenerator</code> owns model and query command construction for the selected backend;</li>
+<li><code>CommandGenerator</code> is the polymorphic interface for the backend's six model and query command operations; <code>DefaultCommandGenerator</code> implements them using a <code>SqlDialect</code>;</li>
 <li><code>CommandGeneratorFactory</code> is the registry and deterministic selection point.</li>
 </ul>
 <p><code>Database</code> consumes these interfaces and does not branch on individual backend types. A provider is registered once by <code>BackendType</code>; automatic selection must recognize exactly one provider. Overlapping connection-string recognizers are treated as ambiguous instead of depending on registry iteration order.</p>
@@ -115,7 +115,23 @@ Concrete extension points</h1>
 <p>The <code>CommandGeneratorFactory(std::vector&lt;std::unique_ptr&lt;BackendProvider&gt;&gt;)</code> constructor registers exactly the supplied providers. Pass an empty vector to start an empty registry, or supply your own provider without the default built-in registration.</p>
 <p>Migration support is opt-in through <code>BackendCapabilities::migrations.supported</code> and declares <code>migrations.atomicity</code> as <code>Transactional</code> or <code>NonTransactional</code>. A migration-capable runtime supplies <code>migrationTable</code>, <code>migrationHistoryExists</code>, <code>createMigrationHistory</code>, <code>beginMigration</code> and <code>executeMigrationScript</code> to resolve and inspect the history table, acquire the appropriate lock and execute SQL without changing session settings. <code>validateMigrationSession</code> checks any required session invariants before history values are bound; its default is a no-op. Nontransactional engines also supply <code>migrationJournalTable</code> for durable failure tracking and <code>endMigration</code> to release session locks. Default hooks reject unsupported operations. The runner owns history updates and transactional commit/rollback; it never claims that nontransactional DDL can be undone.</p>
 <p>An extension translation unit uses <code>import orm;</code>. The command override types are <code>orm::db::SelectSpec</code>, <code>orm::db::UpdateSpec</code>, and <code>orm::db::Predicate</code>. <code>orm::db::ast</code> provides the runtime column, predicate-node, aggregate, ordering, projection, and assignment types needed to inspect those inputs. Endpoint keys use <code>orm::db::PrimaryKey</code>. These names define the backend input contract; application queries continue to use the typed <code>orm::query</code> builders.</p>
-<p>The external import compile control verifies that a consumer can override all three command signatures, inspect predicate nodes, and register a provider without joining the library's module implementation.</p>
+<p>Implement all six operations by deriving from <code>CommandGenerator</code>, or derive from <code>DefaultCommandGenerator</code> and override only the operations that differ. Both types are available through <code>import orm;</code>, including builds with no built-in backend enabled. The default generator borrows a <code>const SqlDialect&amp;</code>; the dialect must outlive the generator. A provider storing both should declare its dialect before its generator so destruction occurs in the reverse order.</p>
+<p>For example, a provider can store this generator and return it from <code>commandGenerator()</code>:</p>
+<div class="fragment"><div class="line"><span class="keyword">class </span>CustomCommands final : <span class="keyword">public</span> orm::db::DefaultCommandGenerator</div>
+<div class="line">{</div>
+<div class="line"><span class="keyword">public</span>:</div>
+<div class="line">    <span class="keyword">using </span>DefaultCommandGenerator::DefaultCommandGenerator;</div>
+<div class="line"> </div>
+<div class="line">    <span class="keyword">auto</span> select(orm::model::ModelView model, <span class="keyword">const</span> orm::db::SelectSpec&amp; spec) <span class="keyword">const</span></div>
+<div class="line">        -&gt; orm::db::SelectStatement <span class="keyword">override</span></div>
+<div class="line">    {</div>
+<div class="line">        <span class="keyword">auto</span> statement = DefaultCommandGenerator::select(model, spec);</div>
+<div class="line">        statement.sql.insert(0, <span class="stringliteral">&quot;/* custom select */ &quot;</span>);</div>
+<div class="line">        <span class="keywordflow">return</span> statement;</div>
+<div class="line">    }</div>
+<div class="line">};</div>
+</div><!-- fragment --><p><code>BackendProvider::compiledSqlFlavor()</code> defaults to <code>CompiledSqlFlavor::None</code>. With that default, static plans also use the runtime generator. Advertising a known flavor opts eligible static plans into precompiled SQL that bypasses <code>CommandGenerator</code>; dynamic queries and unsupported static shapes still use the generator. A provider changing generated SQL must leave the flavor as <code>None</code> unless that precompiled SQL implements the intended behavior too.</p>
+<p>The external import compile control verifies complete and partial generator overrides, predicate-node inspection, and registration of a provider owning the custom generator without joining the library's module implementation. External consumer execution also exercises inherited operations and partial overrides.</p>
 <p>Built-in provider and dialect declarations are exported only when their backend is enabled in the library build. <code>orm::config::sqliteBackendEnabled</code>, <code>orm::config::mysqlBackendEnabled</code>, <code>orm::config::mariadbBackendEnabled</code> and <code>orm::config::postgresqlBackendEnabled</code> report that build configuration.</p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Required backend responsibilities</h1>
