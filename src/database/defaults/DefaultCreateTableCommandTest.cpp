@@ -98,7 +98,7 @@ class DefaultCreateTableCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultCreateTableCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultCreateTableCommandTest, createTable)
@@ -149,7 +149,7 @@ TEST_F(DefaultCreateTableCommandTest, createTableWithReferringToAutoIncrementMod
 TEST(DefaultCreateTableCommandDialectTest, delegatesDdlTypesAutoincrementAndIdentifiersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultCreateTableCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     EXPECT_EQ(command.createTable(modelView<models::ModelWithAutoIncrementId>()),
               "CREATE_PORTABLE_IF_ABSENT [models_ModelWithAutoIncrementId] (\n"
               "\tPORTABLE_AUTO [id],\n"

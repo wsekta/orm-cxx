@@ -23,7 +23,7 @@ class DefaultDropTableCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultDropTableCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultDropTableCommandTest, dropTable)
@@ -34,7 +34,7 @@ TEST_F(DefaultDropTableCommandTest, dropTable)
 TEST(DefaultDropTableCommandDialectTest, delegatesDropSyntaxAndIdentifierToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultDropTableCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     EXPECT_EQ(command.dropTable(orm::modelView<models::Schema, models::ModelWithFloat>()),
               "DROP_PORTABLE_IF_PRESENT [models_ModelWithFloat];");
 }

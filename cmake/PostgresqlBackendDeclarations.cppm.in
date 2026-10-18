@@ -43,7 +43,7 @@ private:
     BackendCapabilities backendCapabilities;
     PostgresqlDialect postgresqlDialect;
     std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> postgresqlCommandGenerator;
+    DefaultCommandGenerator postgresqlCommandGenerator;
 };
 } // namespace orm::db::postgresql
 

@@ -227,7 +227,7 @@ class TestBackend final : public db::BackendProvider
 {
 public:
     explicit TestBackend(db::BackendType type = db::BackendType::Oracle, bool accepts = false)
-        : type_{type}, accepts_{accepts}, generator_{db::defaults::makeDefaultCommandGenerator(dialect_)}
+        : type_{type}, accepts_{accepts}, generator_{dialect_}
     {
     }
     auto type() const noexcept -> db::BackendType override
@@ -252,7 +252,7 @@ public:
     }
     auto commandGenerator() const noexcept -> const db::CommandGenerator& override
     {
-        return *generator_;
+        return generator_;
     }
 
 private:
@@ -261,6 +261,6 @@ private:
     db::BackendCapabilities capabilities_;
     TestSqlDialect dialect_;
     TestRuntime runtime_;
-    std::unique_ptr<db::CommandGenerator> generator_;
+    db::DefaultCommandGenerator generator_;
 };
 } // namespace orm::tests

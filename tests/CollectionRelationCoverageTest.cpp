@@ -488,15 +488,14 @@ TEST(CollectionRelationCoverageTest, sqlCommandsRejectUnavailableToOneTarget)
     relation->targetModelIndex = orm::model::noTargetModel;
     const auto model = metadata.owner();
 
-    EXPECT_THROW((void)orm::db::commands::DefaultCreateTableCommand{dialect}.createTable(model),
-                 orm::migrations::GenerationError);
-    EXPECT_THROW((void)orm::db::commands::DefaultInsertCommand{dialect}.insert(model), std::logic_error);
-    EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, {}), std::logic_error);
+    EXPECT_THROW((void)orm::db::DefaultCommandGenerator{dialect}.createTable(model), orm::migrations::GenerationError);
+    EXPECT_THROW((void)orm::db::DefaultCommandGenerator{dialect}.insert(model), std::logic_error);
+    EXPECT_THROW((void)orm::db::DefaultCommandGenerator{dialect}.select(model, {}), std::logic_error);
 
     orm::query::detail::SelectSpec projected;
     projected.projections.push_back(
         orm::query::detail::erase(orm::query::as("id", orm::query::col<&collection_models::Book::id>())));
-    EXPECT_THROW((void)orm::db::commands::DefaultSelectCommand{dialect}.select(model, projected), std::logic_error);
+    EXPECT_THROW((void)orm::db::DefaultCommandGenerator{dialect}.select(model, projected), std::logic_error);
 
     orm::db::commands::RenderContext context{.model = model, .dialect = dialect};
     EXPECT_THROW((void)orm::db::commands::renderColumn(

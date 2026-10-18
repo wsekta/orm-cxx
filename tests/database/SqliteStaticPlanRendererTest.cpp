@@ -28,12 +28,7 @@ struct RendererCalls
     int removes{};
 };
 
-class ObservedCommands final : public orm::db::commands::CreateTableCommand,
-                               public orm::db::commands::DropTableCommand,
-                               public orm::db::commands::InsertCommand,
-                               public orm::db::commands::SelectCommand,
-                               public orm::db::commands::UpdateCommand,
-                               public orm::db::commands::DeleteCommand
+class ObservedCommands final : public orm::db::CommandGenerator
 {
 public:
     ObservedCommands(const orm::db::CommandGenerator& delegate, RendererCalls& calls) : delegate{delegate}, calls{calls}
@@ -79,15 +74,7 @@ private:
 class ObservedBackend : public orm::db::BackendProvider
 {
 public:
-    ObservedBackend()
-        : generator{std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls),
-                    std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls),
-                    std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls),
-                    std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls),
-                    std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls),
-                    std::make_unique<ObservedCommands>(sqlite.commandGenerator(), calls)}
-    {
-    }
+    ObservedBackend() : generator{sqlite.commandGenerator(), calls} {}
     auto type() const noexcept -> orm::db::BackendType override
     {
         return orm::db::BackendType::Oracle;
@@ -117,7 +104,7 @@ public:
 
 private:
     orm::db::sqlite::SqliteBackend sqlite;
-    orm::db::CommandGenerator generator;
+    ObservedCommands generator;
 };
 
 class CachedObservedBackend final : public ObservedBackend

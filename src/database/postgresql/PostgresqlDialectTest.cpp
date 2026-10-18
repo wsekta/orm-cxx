@@ -93,7 +93,7 @@ TEST(PostgresqlDialectTest, rejectsIncompleteInsertIfAbsentSpecifications)
 
 TEST(PostgresqlDialectTest, rejectsRawParameterNamesThatCannotBeRenderedAsPostgresqlBindMarkers)
 {
-    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     orm::Query<models::ModelWithOneField> query;
     query.where(orm::query::raw<models::ModelWithOneField>("field1 = :bad-name", orm::query::param("bad-name", 1)));
 

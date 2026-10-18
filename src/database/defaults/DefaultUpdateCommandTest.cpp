@@ -27,8 +27,7 @@ auto getValue(const orm::db::StatementParameter& parameter) -> T
 }
 
 template <typename T>
-auto renderUpdate(orm::db::commands::DefaultUpdateCommand& command,
-                  orm::tests::RuntimeUpdate<T>& update) -> orm::db::Statement
+auto renderUpdate(orm::db::DefaultCommandGenerator& command, orm::tests::RuntimeUpdate<T>& update) -> orm::db::Statement
 {
     return command.update(orm::modelView<models::Schema, T>(), orm::detail::QueryTestAccess::getUpdateSpec(update));
 }
@@ -38,7 +37,7 @@ class DefaultUpdateCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultUpdateCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultUpdateCommandTest, updateWithComparisonPredicate)
@@ -78,7 +77,7 @@ TEST_F(DefaultUpdateCommandTest, updateWithNullAssignment)
 TEST(DefaultUpdateCommandDialectTest, delegatesIdentifiersAndPresentAndNullBindMarkersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultUpdateCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     orm::tests::RuntimeUpdate<models::ModelWithOptional> update;
     update.set(col("field1"), std::nullopt).set(col("field2"), "updated").where(col("field3") >= 1.0);
 

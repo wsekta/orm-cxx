@@ -45,7 +45,7 @@ private:
     BackendCapabilities backendCapabilities;
     MariadbDialect mariadbDialect;
     std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> mariadbCommandGenerator;
+    DefaultCommandGenerator mariadbCommandGenerator;
 };
 } // namespace orm::db::mariadb
 

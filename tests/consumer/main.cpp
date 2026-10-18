@@ -2,9 +2,11 @@
 #include <cstddef>
 #include <exception>
 #include <iostream>
+#include <memory>
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 import orm;
@@ -70,6 +72,61 @@ public:
     {
         return {};
     }
+};
+
+class ConsumerCommands final : public orm::db::DefaultCommandGenerator
+{
+public:
+    using DefaultCommandGenerator::DefaultCommandGenerator;
+
+    auto select(orm::model::ModelView model, const orm::db::SelectSpec& spec) const -> orm::db::SelectStatement override
+    {
+        ++selects;
+        auto statement = DefaultCommandGenerator::select(model, spec);
+        statement.sql.insert(0, "/* consumer override */ ");
+        return statement;
+    }
+
+    mutable int selects{};
+};
+
+class ConsumerBackend final : public orm::db::BackendProvider
+{
+public:
+    explicit ConsumerBackend(const orm::db::BackendProvider& delegate)
+        : commands{delegate.dialect()}, delegate{delegate}
+    {
+    }
+
+    auto type() const noexcept -> orm::db::BackendType override
+    {
+        return orm::db::BackendType::Oracle;
+    }
+    auto acceptsConnectionString(std::string_view) const noexcept -> bool override
+    {
+        return false;
+    }
+    auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
+    {
+        return delegate.capabilities();
+    }
+    auto dialect() const noexcept -> const orm::db::SqlDialect& override
+    {
+        return delegate.dialect();
+    }
+    auto runtime() const noexcept -> const orm::db::BackendRuntime& override
+    {
+        return delegate.runtime();
+    }
+    auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
+    {
+        return commands;
+    }
+
+    ConsumerCommands commands;
+
+private:
+    const orm::db::BackendProvider& delegate;
 };
 } // namespace
 
@@ -151,6 +208,37 @@ try
         return 6;
     }
     const ConsumerDialect dialect;
+    const auto model = orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>();
+    const ConsumerCommands commands{dialect};
+    const orm::db::CommandGenerator& generator = commands;
+    const auto selected = generator.select(model, query.getData());
+    if (not selected.sql.starts_with("/* consumer override */ SELECT ") or selected.parameters.size() != 1 or
+        commands.selects != 1 or generator.createTable(model).empty() or generator.dropTable(model).empty() or
+        generator.insert(model).empty() or generator.update(model, update.getData()).parameters.size() != 2 or
+        generator.remove(model, *query.getData().predicate).parameters.size() != 1)
+    {
+        return 8;
+    }
+
+    if (sqlite != nullptr)
+    {
+        auto provider = std::make_unique<ConsumerBackend>(*sqlite);
+        const auto* observed = provider.get();
+        orm::db::CommandGeneratorFactory registry{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
+        registry.registerBackend(std::move(provider));
+        orm::Database customDatabase{std::move(registry)};
+        customDatabase.connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
+        auto custom = customDatabase.orm<consumer_models::Schema>();
+        custom.createTable<consumer_models::ConsumerModel>();
+        custom.insert(consumer_models::ConsumerModel{7});
+        if (observed->compiledSqlFlavor() != orm::db::CompiledSqlFlavor::None or
+            custom.select(selectPlan, 7).size() != 1 or observed->commands.selects != 1 or
+            custom.update(updatePlan, 8, 7) != 1 or custom.remove(removePlan, 8) != 1)
+        {
+            return 9;
+        }
+        custom.dropTable<consumer_models::ConsumerModel>();
+    }
 
     if (not orm::db::relations::createTableStatements(
                 dialect, orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>())

@@ -13,16 +13,9 @@ set(ORM_CXX_SOURCES
     model/ColumnType.cpp
     database/CommandGeneratorFactory.cpp
     utils/StringUtils.cpp
-    database/defaults/DefaultCreateTableCommand.cpp
-    database/defaults/DefaultCommandGeneratorFactory.cpp
-    database/defaults/DefaultDropTableCommand.cpp
-    database/defaults/DefaultInsertCommand.cpp
-    database/defaults/DefaultSelectCommand.cpp
-    database/defaults/DefaultUpdateCommand.cpp
-    database/defaults/DefaultDeleteCommand.cpp
     database/defaults/SqlRenderer.cpp
     database/defaults/RelationStatements.cpp
-    database/CommandGenerator.cpp
+    database/DefaultCommandGenerator.cpp
 )
 
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)

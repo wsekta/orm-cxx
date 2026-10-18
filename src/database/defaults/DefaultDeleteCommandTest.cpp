@@ -37,7 +37,7 @@ class DefaultDeleteCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultDeleteCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultDeleteCommandTest, removeWithComparisonPredicate)
@@ -53,7 +53,7 @@ TEST_F(DefaultDeleteCommandTest, removeWithComparisonPredicate)
 TEST(DefaultDeleteCommandDialectTest, delegatesIdentifiersAndAutomaticBindMarkersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultDeleteCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     const auto statement = command.remove(modelView<models::ModelWithFloat>(), col("field1") == 5);
 
     EXPECT_EQ(statement.sql, "DELETE FROM [models_ModelWithFloat] WHERE [models_ModelWithFloat].[field1] = $orm_p0;");

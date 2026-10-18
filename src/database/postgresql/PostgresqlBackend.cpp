@@ -400,7 +400,7 @@ namespace orm::db::postgresql
 PostgresqlBackend::PostgresqlBackend()
     : backendCapabilities{postgresqlCapabilities()},
       backendRuntime{std::make_unique<PostgresqlRuntime>()},
-      postgresqlCommandGenerator{defaults::makeDefaultCommandGenerator(postgresqlDialect)}
+      postgresqlCommandGenerator{postgresqlDialect}
 {
 }
 
@@ -433,7 +433,7 @@ auto PostgresqlBackend::runtime() const noexcept -> const BackendRuntime&
 
 auto PostgresqlBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
-    return *postgresqlCommandGenerator;
+    return postgresqlCommandGenerator;
 }
 
 auto PostgresqlBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor

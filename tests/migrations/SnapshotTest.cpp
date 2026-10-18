@@ -228,7 +228,7 @@ TEST(SnapshotTest, SharesExpansionAndPreservesExplicitPrimaryKeyOrder)
         EXPECT_NE(sql.find("PRIMARY KEY (" + quote("second") + ", " + quote("first") + ")"), std::string::npos);
     }
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultCreateTableCommand create{dialect};
+    orm::db::DefaultCommandGenerator create{dialect};
     EXPECT_NE(create.createTable(orm::modelView<snapshot_models::Relations, snapshot_models::Target>())
                   .find("PRIMARY KEY (second, first)"),
               std::string::npos);

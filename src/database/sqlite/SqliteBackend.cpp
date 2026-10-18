@@ -374,7 +374,7 @@ namespace orm::db::sqlite
 SqliteBackend::SqliteBackend()
     : backendCapabilities{sqliteCapabilities()},
       backendRuntime{std::make_unique<SqliteRuntime>()},
-      sqliteCommandGenerator{defaults::makeDefaultCommandGenerator(sqliteDialect)}
+      sqliteCommandGenerator{sqliteDialect}
 {
 }
 
@@ -407,7 +407,7 @@ auto SqliteBackend::runtime() const noexcept -> const BackendRuntime&
 
 auto SqliteBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
-    return *sqliteCommandGenerator;
+    return sqliteCommandGenerator;
 }
 
 auto SqliteBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor

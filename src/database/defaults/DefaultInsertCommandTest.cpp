@@ -56,7 +56,7 @@ class DefaultInsertCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultInsertCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultInsertCommandTest, insert)
@@ -67,7 +67,7 @@ TEST_F(DefaultInsertCommandTest, insert)
 TEST(DefaultInsertCommandDialectTest, delegatesIdentifiersAndBindMarkersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultInsertCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     EXPECT_EQ(command.insert(modelView<models::ModelWithFloat>()),
               "INSERT INTO [models_ModelWithFloat] ([field1], [field2], [field3]) "
               "VALUES ($field1, $field2, $field3);");

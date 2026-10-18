@@ -80,20 +80,19 @@ auto expectedModelWithFloatWhereSql(const std::string& predicateSql) -> std::str
 }
 
 template <typename T>
-auto select(orm::db::commands::DefaultSelectCommand& command,
-            orm::tests::RuntimeQuery<T>& query) -> orm::db::SelectStatement
+auto select(orm::db::DefaultCommandGenerator& command, orm::tests::RuntimeQuery<T>& query) -> orm::db::SelectStatement
 {
     return command.select(orm::modelView<models::Schema, T>(), orm::detail::QueryTestAccess::getSelectSpec(query));
 }
 
 template <typename Source, typename Result>
-auto select(orm::db::commands::DefaultSelectCommand& command,
+auto select(orm::db::DefaultCommandGenerator& command,
             orm::tests::RuntimeProjectionQuery<Source, Result>& query) -> orm::db::SelectStatement
 {
     return command.select(orm::modelView<models::Schema, Source>(), orm::detail::QueryTestAccess::getSelectSpec(query));
 }
 
-auto renderModelWithFloatWhereSql(orm::db::commands::DefaultSelectCommand& command,
+auto renderModelWithFloatWhereSql(orm::db::DefaultCommandGenerator& command,
                                   const orm::query::detail::Predicate& predicate) -> std::string
 {
     orm::tests::RuntimeQuery<models::ModelWithFloat> query;
@@ -160,7 +159,7 @@ class DefaultSelectCommandTest : public ::testing::Test
 {
 public:
     orm::tests::SnapshotSqlDialect dialect;
-    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
 };
 
 TEST_F(DefaultSelectCommandTest, select)
@@ -173,7 +172,7 @@ TEST_F(DefaultSelectCommandTest, select)
 TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBindMarkersToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     orm::tests::RuntimeQuery<models::ModelWithFloat> query;
     query.where(col("field1") == 5);
 
@@ -190,7 +189,7 @@ TEST(DefaultSelectCommandDialectTest, delegatesIdentifiersAliasesAndAutomaticBin
 TEST(DefaultSelectCommandDialectTest, delegatesOnlyProjectedNumericAggregateResultsToDialect)
 {
     orm::tests::TrackingSqlDialect dialect;
-    orm::db::commands::DefaultSelectCommand command{dialect};
+    orm::db::DefaultCommandGenerator command{dialect};
     orm::tests::RuntimeProjectionQuery<models::ModelWithId, ExactNumericAggregateProjection> query;
     query.project(as("total", sum(col("field1"))), as("average", avg(col("field1")))).having(avg(col("field1")) > 0.0);
 

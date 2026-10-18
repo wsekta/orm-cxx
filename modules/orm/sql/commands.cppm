@@ -12,136 +12,39 @@ import :foundation;
 import :model;
 import :sql_contracts;
 
-namespace orm::db::commands
+export namespace orm::db
 {
-export
+using SelectStatement = Statement;
+
+class CommandGenerator
 {
+public:
+    virtual ~CommandGenerator() = default;
 
-    class CreateTableCommand
-    {
-    public:
-        virtual ~CreateTableCommand() = default;
+    [[nodiscard]] virtual auto createTable(model::ModelView model) const -> std::string = 0;
+    [[nodiscard]] virtual auto dropTable(model::ModelView model) const -> std::string = 0;
+    [[nodiscard]] virtual auto insert(model::ModelView model) const -> std::string = 0;
+    [[nodiscard]] virtual auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement = 0;
+    [[nodiscard]] virtual auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement = 0;
+    [[nodiscard]] virtual auto remove(model::ModelView model, const Predicate& predicate) const -> Statement = 0;
+};
 
-        [[nodiscard]] virtual auto createTable(model::ModelView model) const -> std::string = 0;
-    };
-}
-} // namespace orm::db
-
-namespace orm::db::commands
+class DefaultCommandGenerator : public CommandGenerator
 {
-export
-{
+public:
+    /** The dialect must outlive this generator. */
+    explicit DefaultCommandGenerator(const SqlDialect& dialect);
 
-    class DeleteCommand
-    {
-    public:
-        virtual ~DeleteCommand() = default;
+    [[nodiscard]] auto createTable(model::ModelView model) const -> std::string override;
+    [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string override;
+    [[nodiscard]] auto insert(model::ModelView model) const -> std::string override;
+    [[nodiscard]] auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement override;
+    [[nodiscard]] auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement override;
+    [[nodiscard]] auto remove(model::ModelView model, const Predicate& predicate) const -> Statement override;
 
-        [[nodiscard]] virtual auto remove(model::ModelView model, const Predicate& predicate) const -> Statement = 0;
-    };
-}
-} // namespace orm::db::commands
-
-namespace orm::db::commands
-{
-export
-{
-
-    class DropTableCommand
-    {
-    public:
-        virtual ~DropTableCommand() = default;
-
-        [[nodiscard]] virtual auto dropTable(model::ModelView model) const -> std::string = 0;
-    };
-}
-}
-
-namespace orm::db::commands
-{
-export
-{
-
-    class InsertCommand
-    {
-    public:
-        virtual ~InsertCommand() = default;
-
-        [[nodiscard]] virtual auto insert(model::ModelView model) const -> std::string = 0;
-    };
-}
-}
-
-namespace orm::db
-{
-export
-{
-
-    using SelectStatement = Statement;
-}
-} // namespace orm::db
-
-namespace orm::db::commands
-{
-export
-{
-
-    class SelectCommand
-    {
-    public:
-        virtual ~SelectCommand() = default;
-
-        [[nodiscard]] virtual auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement = 0;
-    };
-}
-} // namespace orm::db::commands
-
-namespace orm::db::commands
-{
-export
-{
-
-    class UpdateCommand
-    {
-    public:
-        virtual ~UpdateCommand() = default;
-
-        [[nodiscard]] virtual auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement = 0;
-    };
-}
-} // namespace orm::db::commands
-
-namespace orm::db
-{
-export
-{
-
-    class CommandGenerator
-    {
-    public:
-        CommandGenerator(std::unique_ptr<commands::CreateTableCommand> createTableCommand,
-                         std::unique_ptr<commands::DropTableCommand> dropTableCommand,
-                         std::unique_ptr<commands::InsertCommand> insertCommand,
-                         std::unique_ptr<commands::SelectCommand> selectCommand,
-                         std::unique_ptr<commands::UpdateCommand> updateCommand,
-                         std::unique_ptr<commands::DeleteCommand> deleteCommand);
-
-        [[nodiscard]] auto createTable(model::ModelView model) const -> std::string;
-        [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string;
-        [[nodiscard]] auto insert(model::ModelView model) const -> std::string;
-        [[nodiscard]] auto select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement;
-        [[nodiscard]] auto update(model::ModelView model, const UpdateSpec& spec) const -> Statement;
-        [[nodiscard]] auto remove(model::ModelView model, const Predicate& predicate) const -> Statement;
-
-    private:
-        std::unique_ptr<commands::CreateTableCommand> createTableCommand;
-        std::unique_ptr<commands::DropTableCommand> dropTableCommand;
-        std::unique_ptr<commands::InsertCommand> insertCommand;
-        std::unique_ptr<commands::SelectCommand> selectCommand;
-        std::unique_ptr<commands::UpdateCommand> updateCommand;
-        std::unique_ptr<commands::DeleteCommand> deleteCommand;
-    };
-}
+private:
+    const SqlDialect& dialect;
+};
 } // namespace orm::db
 
 namespace orm::db

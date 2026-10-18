@@ -37,6 +37,18 @@ struct BackendProbe
     const char* environment;
 };
 
+class PackageCommands final : public orm::db::DefaultCommandGenerator
+{
+public:
+    using DefaultCommandGenerator::DefaultCommandGenerator;
+    auto select(orm::model::ModelView model, const orm::db::SelectSpec& spec) const -> orm::db::SelectStatement override
+    {
+        auto statement = DefaultCommandGenerator::select(model, spec);
+        statement.sql.insert(0, "/* package override */ ");
+        return statement;
+    }
+};
+
 void databaseSmoke(const BackendProbe& probe, const std::string& connection)
 {
     using namespace orm::query;
@@ -134,6 +146,15 @@ int main()
             if (not probe.enabled)
             {
                 continue;
+            }
+            const PackageCommands commands{provider->dialect()};
+            const orm::db::CommandGenerator& generator = commands;
+            const auto model = orm::modelView<PackageSchema, PackageModel>();
+            if (not generator.select(model, {}).sql.starts_with("/* package override */ SELECT ") or
+                generator.createTable(model).empty() or generator.dropTable(model).empty() or
+                generator.insert(model).empty())
+            {
+                throw std::runtime_error("Installed command generator extension failed");
             }
             const auto* configured = std::getenv(probe.environment);
             if (configured != nullptr and *configured != '\0')

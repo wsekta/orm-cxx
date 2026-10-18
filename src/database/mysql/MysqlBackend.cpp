@@ -15,7 +15,7 @@ namespace orm::db::mysql
 MysqlBackend::MysqlBackend()
     : backendCapabilities{mysql_family::capabilities()},
       backendRuntime{mysql_family::makeRuntime(BackendType::Mysql, "mysql://")},
-      mysqlCommandGenerator{defaults::makeDefaultCommandGenerator(mysqlDialect)}
+      mysqlCommandGenerator{mysqlDialect}
 {
 }
 MysqlBackend::~MysqlBackend() = default;
@@ -41,7 +41,7 @@ auto MysqlBackend::runtime() const noexcept -> const BackendRuntime&
 }
 auto MysqlBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
-    return *mysqlCommandGenerator;
+    return mysqlCommandGenerator;
 }
 auto MysqlBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
 {

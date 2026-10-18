@@ -138,93 +138,6 @@ namespace
 using namespace database_coverage_completion_models;
 using namespace orm::query;
 
-class StaticCreateTableCommand final : public orm::db::commands::CreateTableCommand
-{
-public:
-    explicit StaticCreateTableCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
-
-    auto createTable(orm::model::ModelView /*model*/) const -> std::string override
-    {
-        return sql;
-    }
-
-private:
-    std::string sql;
-};
-
-class StaticDropTableCommand final : public orm::db::commands::DropTableCommand
-{
-public:
-    explicit StaticDropTableCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
-
-    auto dropTable(orm::model::ModelView /*model*/) const -> std::string override
-    {
-        return sql;
-    }
-
-private:
-    std::string sql;
-};
-
-class StaticInsertCommand final : public orm::db::commands::InsertCommand
-{
-public:
-    explicit StaticInsertCommand(std::string sqlInit) : sql{std::move(sqlInit)} {}
-
-    auto insert(orm::model::ModelView /*model*/) const -> std::string override
-    {
-        return sql;
-    }
-
-private:
-    std::string sql;
-};
-
-class StaticSelectCommand final : public orm::db::commands::SelectCommand
-{
-public:
-    explicit StaticSelectCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
-
-    auto select(orm::model::ModelView /*model*/,
-                const orm::query::detail::SelectSpec& /*spec*/) const -> orm::db::SelectStatement override
-    {
-        return statement;
-    }
-
-private:
-    orm::db::Statement statement;
-};
-
-class StaticUpdateCommand final : public orm::db::commands::UpdateCommand
-{
-public:
-    explicit StaticUpdateCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
-
-    auto update(orm::model::ModelView /*model*/,
-                const orm::query::detail::UpdateSpec& /*spec*/) const -> orm::db::Statement override
-    {
-        return statement;
-    }
-
-private:
-    orm::db::Statement statement;
-};
-
-class StaticDeleteCommand final : public orm::db::commands::DeleteCommand
-{
-public:
-    explicit StaticDeleteCommand(orm::db::Statement statementInit) : statement{std::move(statementInit)} {}
-
-    auto remove(orm::model::ModelView /*model*/,
-                const orm::query::detail::Predicate& /*predicate*/) const -> orm::db::Statement override
-    {
-        return statement;
-    }
-
-private:
-    orm::db::Statement statement;
-};
-
 struct CommandScripts
 {
     std::string create = "SELECT 1;";
@@ -235,15 +148,42 @@ struct CommandScripts
     orm::db::Statement remove{.sql = "SELECT 1;"};
 };
 
+class ScriptedGenerator final : public orm::db::CommandGenerator
+{
+public:
+    explicit ScriptedGenerator(CommandScripts scripts) : scripts{std::move(scripts)} {}
+    auto createTable(orm::model::ModelView) const -> std::string override
+    {
+        return scripts.create;
+    }
+    auto dropTable(orm::model::ModelView) const -> std::string override
+    {
+        return scripts.drop;
+    }
+    auto insert(orm::model::ModelView) const -> std::string override
+    {
+        return scripts.insert;
+    }
+    auto select(orm::model::ModelView, const orm::db::SelectSpec&) const -> orm::db::SelectStatement override
+    {
+        return scripts.select;
+    }
+    auto update(orm::model::ModelView, const orm::db::UpdateSpec&) const -> orm::db::Statement override
+    {
+        return scripts.update;
+    }
+    auto remove(orm::model::ModelView, const orm::db::Predicate&) const -> orm::db::Statement override
+    {
+        return scripts.remove;
+    }
+
+private:
+    CommandScripts scripts;
+};
+
 auto makeScriptedGenerator(CommandScripts scripts) -> std::unique_ptr<orm::db::CommandGenerator>
 {
-    return std::make_unique<orm::db::CommandGenerator>(
-        std::make_unique<StaticCreateTableCommand>(std::move(scripts.create)),
-        std::make_unique<StaticDropTableCommand>(std::move(scripts.drop)),
-        std::make_unique<StaticInsertCommand>(std::move(scripts.insert)),
-        std::make_unique<StaticSelectCommand>(std::move(scripts.select)),
-        std::make_unique<StaticUpdateCommand>(std::move(scripts.update)),
-        std::make_unique<StaticDeleteCommand>(std::move(scripts.remove)));
+    return std::make_unique<ScriptedGenerator>(std::move(scripts));
 }
 
 enum class OnConnectAction

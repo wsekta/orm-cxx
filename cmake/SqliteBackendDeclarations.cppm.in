@@ -44,7 +44,7 @@ private:
     BackendCapabilities backendCapabilities;
     SqliteDialect sqliteDialect;
     std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> sqliteCommandGenerator;
+    DefaultCommandGenerator sqliteCommandGenerator;
 };
 } // namespace orm::db::sqlite
 

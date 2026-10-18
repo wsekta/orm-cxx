@@ -45,7 +45,7 @@ private:
     BackendCapabilities backendCapabilities;
     MysqlDialect mysqlDialect;
     std::unique_ptr<BackendRuntime> backendRuntime;
-    std::unique_ptr<CommandGenerator> mysqlCommandGenerator;
+    DefaultCommandGenerator mysqlCommandGenerator;
 };
 } // namespace orm::db::mysql
 

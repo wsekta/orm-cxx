@@ -2,15 +2,28 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 #include <variant>
 
 import orm;
 
 namespace
 {
-class ImportedSelectCommand final : public orm::db::commands::SelectCommand
+class ImportedGenerator final : public orm::db::CommandGenerator
 {
 public:
+    auto createTable(orm::model::ModelView) const -> std::string override
+    {
+        return "CREATE TABLE imported(id INT)";
+    }
+    auto dropTable(orm::model::ModelView) const -> std::string override
+    {
+        return "DROP TABLE imported";
+    }
+    auto insert(orm::model::ModelView) const -> std::string override
+    {
+        return "INSERT INTO imported VALUES(1)";
+    }
     auto select(orm::model::ModelView, const orm::db::SelectSpec& spec) const -> orm::db::SelectStatement override
     {
         for (const auto& order : spec.orderBy)
@@ -29,21 +42,11 @@ public:
         }
         return {.sql = "SELECT 1", .parameters = {}};
     }
-};
-
-class ImportedUpdateCommand final : public orm::db::commands::UpdateCommand
-{
-public:
     auto update(orm::model::ModelView, const orm::db::UpdateSpec& spec) const -> orm::db::Statement override
     {
         return {.sql = spec.assignments.empty() ? "UPDATE" : spec.assignments.front().column.getPath(),
                 .parameters = {}};
     }
-};
-
-class ImportedDeleteCommand final : public orm::db::commands::DeleteCommand
-{
-public:
     auto remove(orm::model::ModelView, const orm::db::Predicate& predicate) const -> orm::db::Statement override
     {
         const auto& expression = predicate.getNode().expression;
@@ -52,10 +55,23 @@ public:
     }
 };
 
+class ImportedPartialGenerator final : public orm::db::DefaultCommandGenerator
+{
+public:
+    using DefaultCommandGenerator::DefaultCommandGenerator;
+    auto select(orm::model::ModelView model, const orm::db::SelectSpec& spec) const -> orm::db::SelectStatement override
+    {
+        return DefaultCommandGenerator::select(model, spec);
+    }
+};
+
 class ImportedProvider final : public orm::db::BackendProvider
 {
 public:
-    explicit ImportedProvider(const orm::db::BackendProvider& delegate) : delegate{delegate} {}
+    ImportedProvider(const orm::db::BackendProvider& delegate, std::unique_ptr<orm::db::CommandGenerator> generator)
+        : delegate{delegate}, generator{std::move(generator)}
+    {
+    }
     auto type() const noexcept -> orm::db::BackendType override
     {
         return delegate.type();
@@ -78,23 +94,32 @@ public:
     }
     auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
     {
-        return delegate.commandGenerator();
+        return *generator;
     }
 
 private:
     const orm::db::BackendProvider& delegate;
+    std::unique_ptr<orm::db::CommandGenerator> generator;
 };
 
-static_assert(not std::is_abstract_v<ImportedSelectCommand>);
-static_assert(not std::is_abstract_v<ImportedUpdateCommand>);
-static_assert(not std::is_abstract_v<ImportedDeleteCommand>);
+static_assert(std::is_abstract_v<orm::db::CommandGenerator>);
+static_assert(std::has_virtual_destructor_v<orm::db::CommandGenerator>);
+static_assert(not std::is_abstract_v<ImportedGenerator>);
+static_assert(not std::is_abstract_v<ImportedPartialGenerator>);
 static_assert(not std::is_abstract_v<ImportedProvider>);
 
 [[maybe_unused]] auto importedBackendContract(orm::db::CommandGeneratorFactory& registry,
                                               const orm::db::BackendProvider& delegate) -> void
 {
-    registry.registerBackend(std::make_unique<ImportedProvider>(delegate));
+    registry.registerBackend(std::make_unique<ImportedProvider>(delegate, std::make_unique<ImportedGenerator>()));
     orm::db::PrimaryKey key{orm::query::QueryValue{1}};
     (void)key;
+}
+
+[[maybe_unused]] auto importedPartialBackendContract(orm::db::CommandGeneratorFactory& registry,
+                                                     const orm::db::BackendProvider& delegate) -> void
+{
+    registry.registerBackend(
+        std::make_unique<ImportedProvider>(delegate, std::make_unique<ImportedPartialGenerator>(delegate.dialect())));
 }
 } // namespace

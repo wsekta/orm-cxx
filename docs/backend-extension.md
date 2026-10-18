@@ -22,8 +22,9 @@ The backend boundary is split into focused contracts:
   translation;
 - `SqlDialect` owns identifier quoting, bind markers, pagination, generated-key
   syntax, and relation-specific SQL forms;
-- `CommandGenerator` owns model and query command construction for the selected
-  backend;
+- `CommandGenerator` is the polymorphic interface for the backend's six model
+  and query command operations; `DefaultCommandGenerator` implements them using
+  a `SqlDialect`;
 - `CommandGeneratorFactory` is the registry and deterministic selection point.
 
 `Database` consumes these interfaces and does not branch on individual backend
@@ -68,9 +69,43 @@ projection, and assignment types needed to inspect those inputs. Endpoint keys
 use `orm::db::PrimaryKey`. These names define the backend input contract;
 application queries continue to use the typed `orm::query` builders.
 
-The external import compile control verifies that a consumer can override all
-three command signatures, inspect predicate nodes, and register a provider
-without joining the library's module implementation.
+Implement all six operations by deriving from `CommandGenerator`, or derive
+from `DefaultCommandGenerator` and override only the operations that differ.
+Both types are available through `import orm;`, including builds with no
+built-in backend enabled. The default generator borrows a `const SqlDialect&`;
+the dialect must outlive the generator. A provider storing both should declare
+its dialect before its generator so destruction occurs in the reverse order.
+
+For example, a provider can store this generator and return it from
+`commandGenerator()`:
+
+```cpp
+class CustomCommands final : public orm::db::DefaultCommandGenerator
+{
+public:
+    using DefaultCommandGenerator::DefaultCommandGenerator;
+
+    auto select(orm::model::ModelView model, const orm::db::SelectSpec& spec) const
+        -> orm::db::SelectStatement override
+    {
+        auto statement = DefaultCommandGenerator::select(model, spec);
+        statement.sql.insert(0, "/* custom select */ ");
+        return statement;
+    }
+};
+```
+
+`BackendProvider::compiledSqlFlavor()` defaults to `CompiledSqlFlavor::None`.
+With that default, static plans also use the runtime generator. Advertising a
+known flavor opts eligible static plans into precompiled SQL that bypasses
+`CommandGenerator`; dynamic queries and unsupported static shapes still use
+the generator. A provider changing generated SQL must leave the flavor as
+`None` unless that precompiled SQL implements the intended behavior too.
+
+The external import compile control verifies complete and partial generator
+overrides, predicate-node inspection, and registration of a provider owning the
+custom generator without joining the library's module implementation. External
+consumer execution also exercises inherited operations and partial overrides.
 
 Built-in provider and dialect declarations are exported only when their backend
 is enabled in the library build. `orm::config::sqliteBackendEnabled`, `orm::config::mysqlBackendEnabled`,

@@ -38,24 +38,13 @@ module orm;
 
 import :internal;
 
-namespace orm::db::commands
+namespace orm::db
 {
-DefaultInsertCommand::DefaultInsertCommand(const SqlDialect& dialectInit) : dialect{dialectInit} {}
-
-auto DefaultInsertCommand::insert(model::ModelView model) const -> std::string
+namespace
 {
-    auto fieldsNames = getFieldsNames(model);
-
-    if (fieldsNames.empty())
-    {
-        return dialect.renderDefaultInsert(model->tableName);
-    }
-
-    return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(model->tableName),
-                       getInsertFields(fieldsNames), getInsertValues(fieldsNames));
-}
-
-auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& fieldNames) const -> std::string
+auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
+                             model::ModelView target) -> std::vector<std::string>;
+auto getInsertFields(const SqlDialect& dialect, const std::vector<std::string>& fieldNames) -> std::string
 {
     std::string insertFields;
 
@@ -69,7 +58,7 @@ auto DefaultInsertCommand::getInsertFields(const std::vector<std::string>& field
     return insertFields;
 }
 
-auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& fieldNames) const -> std::string
+auto getInsertValues(const SqlDialect& dialect, const std::vector<std::string>& fieldNames) -> std::string
 {
     std::string insertValues;
 
@@ -83,7 +72,7 @@ auto DefaultInsertCommand::getInsertValues(const std::vector<std::string>& field
     return insertValues;
 }
 
-auto DefaultInsertCommand::getFieldsNames(model::ModelView model) -> std::vector<std::string>
+auto getFieldsNames(model::ModelView model) -> std::vector<std::string>
 {
     std::vector<std::string> fieldsNames;
 
@@ -115,8 +104,8 @@ auto DefaultInsertCommand::getFieldsNames(model::ModelView model) -> std::vector
     return fieldsNames;
 }
 
-auto DefaultInsertCommand::getForeignModelIdsNames(std::string_view foreignModelFieldName,
-                                                   model::ModelView target) -> std::vector<std::string>
+auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
+                             model::ModelView target) -> std::vector<std::string>
 {
     std::vector<std::string> foreignModelIdsNames;
 
@@ -130,4 +119,43 @@ auto DefaultInsertCommand::getForeignModelIdsNames(std::string_view foreignModel
 
     return foreignModelIdsNames;
 }
-} // namespace orm::db::commands
+} // namespace
+
+DefaultCommandGenerator::DefaultCommandGenerator(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+
+auto DefaultCommandGenerator::insert(model::ModelView model) const -> std::string
+{
+    auto fieldsNames = getFieldsNames(model);
+
+    if (fieldsNames.empty())
+    {
+        return dialect.renderDefaultInsert(model->tableName);
+    }
+
+    return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(model->tableName),
+                       getInsertFields(dialect, fieldsNames), getInsertValues(dialect, fieldsNames));
+}
+
+auto DefaultCommandGenerator::createTable(model::ModelView model) const -> std::string
+{
+    const auto table = migrations::detail::physicalTable(model, dialect);
+    return migrations::detail::renderCreateTable(dialect, table, true, true);
+}
+
+auto DefaultCommandGenerator::dropTable(model::ModelView model) const -> std::string
+{
+    return dialect.renderDropTable(model->tableName, true);
+}
+auto DefaultCommandGenerator::select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement
+{
+    return commands::renderSelectStatement(model, spec, dialect);
+}
+auto DefaultCommandGenerator::update(model::ModelView model, const UpdateSpec& spec) const -> Statement
+{
+    return commands::renderUpdateStatement(model, spec, dialect);
+}
+auto DefaultCommandGenerator::remove(model::ModelView model, const Predicate& predicate) const -> Statement
+{
+    return commands::renderRemoveStatement(model, predicate, dialect);
+}
+} // namespace orm::db

@@ -15,7 +15,7 @@ namespace orm::db::mariadb
 MariadbBackend::MariadbBackend()
     : backendCapabilities{mysql_family::capabilities()},
       backendRuntime{mysql_family::makeRuntime(BackendType::Mariadb, "mariadb://")},
-      mariadbCommandGenerator{defaults::makeDefaultCommandGenerator(mariadbDialect)}
+      mariadbCommandGenerator{mariadbDialect}
 {
     backendCapabilities.query.maxOrderedStringLength = 16'383;
 }
@@ -42,7 +42,7 @@ auto MariadbBackend::runtime() const noexcept -> const BackendRuntime&
 }
 auto MariadbBackend::commandGenerator() const noexcept -> const CommandGenerator&
 {
-    return *mariadbCommandGenerator;
+    return mariadbCommandGenerator;
 }
 auto MariadbBackend::compiledSqlFlavor() const noexcept -> CompiledSqlFlavor
 {

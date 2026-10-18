@@ -47,31 +47,6 @@ namespace orm::detail
                                            model::TypeId expectedType) -> model::ModelView;
 } // namespace orm::detail
 
-// database/defaults/DefaultCommandGeneratorFactory.hpp
-namespace orm::db
-{
-} // namespace orm::db
-
-namespace orm::db::defaults
-{
-[[nodiscard]] auto makeDefaultCommandGenerator(const SqlDialect& dialect) -> std::unique_ptr<CommandGenerator>;
-} // namespace orm::db::defaults
-
-// database/defaults/DefaultCreateTableCommand.hpp
-namespace orm::db::commands
-{
-class DefaultCreateTableCommand : public CreateTableCommand
-{
-public:
-    explicit DefaultCreateTableCommand(const SqlDialect& dialect);
-
-    [[nodiscard]] auto createTable(model::ModelView model) const -> std::string override;
-
-private:
-    const SqlDialect& dialect;
-};
-} // namespace orm::db::commands
-
 // database/defaults/SqlRenderer.hpp
 namespace orm::db::commands
 {
@@ -116,89 +91,6 @@ struct WriteColumn
                                          const SqlDialect& dialect) -> Statement;
 [[nodiscard]] auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate,
                                          const SqlDialect& dialect) -> Statement;
-} // namespace orm::db::commands
-
-// database/defaults/DefaultDeleteCommand.hpp
-namespace orm::db::commands
-{
-class DefaultDeleteCommand : public DeleteCommand
-{
-public:
-    explicit DefaultDeleteCommand(const SqlDialect& dialect);
-
-    [[nodiscard]] auto remove(model::ModelView model,
-                              const query::detail::Predicate& predicate) const -> Statement override;
-
-private:
-    const SqlDialect& dialect;
-};
-} // namespace orm::db::commands
-
-// database/defaults/DefaultDropTableCommand.hpp
-namespace orm::db::commands
-{
-class DefaultDropTableCommand : public DropTableCommand
-{
-public:
-    explicit DefaultDropTableCommand(const SqlDialect& dialect);
-
-    [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string override;
-
-private:
-    const SqlDialect& dialect;
-};
-} // namespace orm::db::commands
-
-// database/defaults/DefaultInsertCommand.hpp
-namespace orm::db::commands
-{
-class DefaultInsertCommand : public InsertCommand
-{
-public:
-    explicit DefaultInsertCommand(const SqlDialect& dialect);
-
-    [[nodiscard]] auto insert(model::ModelView model) const -> std::string override;
-
-private:
-    const SqlDialect& dialect;
-
-    auto getInsertFields(const std::vector<std::string>& fieldNames) const -> std::string;
-    auto getInsertValues(const std::vector<std::string>& fieldNames) const -> std::string;
-    static auto getFieldsNames(model::ModelView model) -> std::vector<std::string>;
-    static auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
-                                        model::ModelView target) -> std::vector<std::string>;
-};
-} // namespace orm::db::commands
-
-// database/defaults/DefaultSelectCommand.hpp
-namespace orm::db::commands
-{
-class DefaultSelectCommand : public SelectCommand
-{
-public:
-    explicit DefaultSelectCommand(const SqlDialect& dialectInit);
-    [[nodiscard]] auto select(model::ModelView model,
-                              const query::detail::SelectSpec& spec) const -> SelectStatement override;
-
-private:
-    const SqlDialect& dialect;
-};
-}
-
-// database/defaults/DefaultUpdateCommand.hpp
-namespace orm::db::commands
-{
-class DefaultUpdateCommand : public UpdateCommand
-{
-public:
-    explicit DefaultUpdateCommand(const SqlDialect& dialect);
-
-    [[nodiscard]] auto update(model::ModelView model,
-                              const query::detail::UpdateSpec& spec) const -> Statement override;
-
-private:
-    const SqlDialect& dialect;
-};
 } // namespace orm::db::commands
 
 // database/defaults/SqlAliases.hpp
