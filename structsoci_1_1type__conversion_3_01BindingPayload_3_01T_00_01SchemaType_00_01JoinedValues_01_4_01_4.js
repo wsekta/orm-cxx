@@ -1,0 +1,4 @@
+var structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4 =
+[
+    [ "base_type", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html#ae12f75057fbf9100fe1766a15d44dbd4", null ]
+];

@@ -25,150 +25,211 @@
 var NAVTREE =
 [
   [ "ORM C++", "index.html", [
-    [ "Build configuration and macro policy", "index.html#autotoc_md51", null ],
-    [ "Backend extension contract", "md_docs_2backend-extension.html", [
-      [ "Concrete extension points", "md_docs_2backend-extension.html#autotoc_md1", null ],
-      [ "Required backend responsibilities", "md_docs_2backend-extension.html#autotoc_md2", null ],
-      [ "Capabilities versus dialect", "md_docs_2backend-extension.html#autotoc_md3", null ],
-      [ "SOCI boundary", "md_docs_2backend-extension.html#autotoc_md4", null ],
-      [ "Raw SQL", "md_docs_2backend-extension.html#autotoc_md5", null ],
-      [ "Error contract", "md_docs_2backend-extension.html#autotoc_md6", null ],
-      [ "Conformance tests", "md_docs_2backend-extension.html#autotoc_md7", null ],
-      [ "Build and CI integration", "md_docs_2backend-extension.html#autotoc_md8", null ],
-      [ "Backend Definition of Done", "md_docs_2backend-extension.html#autotoc_md9", null ]
+    [ "Start here", "index.html#docs-main-start-here", null ],
+    [ "Integration reference", "index.html#docs-main-integration-reference", null ],
+    [ "For contributors and maintainers", "index.html#docs-main-for-contributors-and-maintainers", null ],
+    [ "API reference", "index.html#docs-main-api-reference", null ],
+    [ "Backend extension contract", "docs-backend-extension-backend-extension-contract.html", [
+      [ "Concrete extension points", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-concrete-extension-points", null ],
+      [ "Required backend responsibilities", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-required-backend-responsibilities", null ],
+      [ "Capabilities versus dialect", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-capabilities-versus-dialect", null ],
+      [ "SOCI boundary", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-soci-boundary", null ],
+      [ "Raw SQL", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-raw-sql", null ],
+      [ "Error contract", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-error-contract", null ],
+      [ "Conformance tests", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-conformance-tests", null ],
+      [ "Build and CI integration", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-build-and-ci-integration", null ],
+      [ "Backend Definition of Done", "docs-backend-extension-backend-extension-contract.html#docs-backend-extension-backend-definition-of-done", null ]
     ] ],
-    [ "Backend portability", "md_docs_2backend-portability.html", [
-      [ "Portability layers", "md_docs_2backend-portability.html#autotoc_md11", null ],
-      [ "Portable behavior", "md_docs_2backend-portability.html#autotoc_md12", null ],
-      [ "Capabilities and dialect differences", "md_docs_2backend-portability.html#autotoc_md13", null ],
-      [ "Binding and SOCI", "md_docs_2backend-portability.html#autotoc_md14", null ],
-      [ "Raw SQL", "md_docs_2backend-portability.html#autotoc_md15", null ],
-      [ "Verification model", "md_docs_2backend-portability.html#autotoc_md16", null ],
-      [ "Minimum CI matrix", "md_docs_2backend-portability.html#autotoc_md17", null ],
-      [ "Definition of Done", "md_docs_2backend-portability.html#autotoc_md18", null ]
+    [ "Backend portability", "docs-backend-portability-backend-portability.html", [
+      [ "Portability layers", "docs-backend-portability-backend-portability.html#docs-backend-portability-portability-layers", null ],
+      [ "Portable behavior", "docs-backend-portability-backend-portability.html#docs-backend-portability-portable-behavior", null ],
+      [ "Capabilities and dialect differences", "docs-backend-portability-backend-portability.html#docs-backend-portability-capabilities-and-dialect-differences", null ],
+      [ "Binding and SOCI", "docs-backend-portability-backend-portability.html#docs-backend-portability-binding-and-soci", null ],
+      [ "Raw SQL", "docs-backend-portability-backend-portability.html#docs-backend-portability-raw-sql", null ],
+      [ "Verification model", "docs-backend-portability-backend-portability.html#docs-backend-portability-verification-model", null ],
+      [ "Minimum CI matrix", "docs-backend-portability-backend-portability.html#docs-backend-portability-minimum-ci-matrix", null ],
+      [ "Definition of Done", "docs-backend-portability-backend-portability.html#docs-backend-portability-definition-of-done", null ]
     ] ],
-    [ "Backends", "md_docs_2backends.html", [
-      [ "Support status", "md_docs_2backends.html#autotoc_md20", null ],
-      [ "Compatibility at a glance", "md_docs_2backends.html#autotoc_md21", null ],
-      [ "SQLite", "md_docs_2backends.html#autotoc_md22", null ],
-      [ "PostgreSQL", "md_docs_2backends.html#autotoc_md23", null ],
-      [ "MySQL and MariaDB", "md_docs_2backends.html#autotoc_md24", null ],
-      [ "Build configuration", "md_docs_2backends.html#autotoc_md25", null ],
-      [ "Capability reporting", "md_docs_2backends.html#autotoc_md26", null ],
-      [ "Raw SQL portability", "md_docs_2backends.html#autotoc_md27", null ]
+    [ "Backends", "docs-backends-backends.html", [
+      [ "Support status", "docs-backends-backends.html#docs-backends-support-status", null ],
+      [ "Compatibility at a glance", "docs-backends-backends.html#docs-backends-compatibility-at-a-glance", null ],
+      [ "SQLite", "docs-backends-backends.html#docs-backends-sqlite", null ],
+      [ "PostgreSQL", "docs-backends-backends.html#docs-backends-postgresql", null ],
+      [ "MySQL and MariaDB", "docs-backends-backends.html#docs-backends-mysql-and-mariadb", null ],
+      [ "Build configuration", "docs-backends-backends.html#docs-backends-build-configuration", null ],
+      [ "Capability reporting", "docs-backends-backends.html#docs-backends-capability-reporting", null ],
+      [ "Raw SQL portability", "docs-backends-backends.html#docs-backends-raw-sql-portability", null ]
     ] ],
-    [ "CI Compiler Matrix", "md_docs_2ci-compiler-matrix.html", [
-      [ "CI Status", "md_docs_2ci-compiler-matrix.html#autotoc_md29", null ],
-      [ "Tested Compiler Versions", "md_docs_2ci-compiler-matrix.html#autotoc_md30", [
-        [ "GCC", "md_docs_2ci-compiler-matrix.html#autotoc_md31", null ],
-        [ "Clang", "md_docs_2ci-compiler-matrix.html#autotoc_md32", null ],
-        [ "MSVC", "md_docs_2ci-compiler-matrix.html#autotoc_md33", null ]
+    [ "CI Compiler Matrix", "docs-ci-compiler-matrix-ci-compiler-matrix.html", [
+      [ "CI Status", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-ci-status", null ],
+      [ "Tested Compiler Versions", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-tested-compiler-versions", [
+        [ "GCC", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-gcc", null ],
+        [ "Clang", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-clang", null ],
+        [ "MSVC", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-msvc", null ]
       ] ],
-      [ "Backend and consumer matrix", "md_docs_2ci-compiler-matrix.html#autotoc_md34", null ],
-      [ "Coverage policy", "md_docs_2ci-compiler-matrix.html#autotoc_md35", null ],
-      [ "CMake Presets", "md_docs_2ci-compiler-matrix.html#autotoc_md36", null ],
-      [ "Adding New Compiler Versions", "md_docs_2ci-compiler-matrix.html#autotoc_md37", null ]
+      [ "Backend and consumer matrix", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-backend-and-consumer-matrix", null ],
+      [ "Coverage policy", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-coverage-policy", null ],
+      [ "CMake Presets", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-cmake-presets", null ],
+      [ "Adding New Compiler Versions", "docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-adding-new-compiler-versions", null ]
     ] ],
-    [ "Database", "md_docs_2database.html", [
-      [ "Connect", "md_docs_2database.html#autotoc_md39", null ],
-      [ "Capabilities and errors", "md_docs_2database.html#autotoc_md40", null ],
-      [ "Create table", "md_docs_2database.html#autotoc_md41", null ],
-      [ "Delete table", "md_docs_2database.html#autotoc_md42", null ],
-      [ "Create and delete relation tables", "md_docs_2database.html#autotoc_md43", null ],
-      [ "Insert objects", "md_docs_2database.html#autotoc_md44", null ],
-      [ "Link and unlink relations", "md_docs_2database.html#autotoc_md45", null ],
-      [ "Query objects", "md_docs_2database.html#autotoc_md46", null ],
-      [ "Update objects", "md_docs_2database.html#autotoc_md47", null ],
-      [ "Remove objects", "md_docs_2database.html#autotoc_md48", null ],
-      [ "Transactions", "md_docs_2database.html#autotoc_md49", null ]
+    [ "Database", "docs-database-database.html", [
+      [ "Connect", "docs-database-database.html#docs-database-connect", null ],
+      [ "Capabilities and errors", "docs-database-database.html#docs-database-capabilities-and-errors", null ],
+      [ "Create table", "docs-database-database.html#docs-database-create-table", null ],
+      [ "Delete table", "docs-database-database.html#docs-database-delete-table", null ],
+      [ "Create and delete relation tables", "docs-database-database.html#docs-database-create-and-delete-relation-tables", null ],
+      [ "Insert objects", "docs-database-database.html#docs-database-insert-objects", null ],
+      [ "Link and unlink relations", "docs-database-database.html#docs-database-link-and-unlink-relations", null ],
+      [ "Query objects", "docs-database-database.html#docs-database-query-objects", null ],
+      [ "Update objects", "docs-database-database.html#docs-database-update-objects", null ],
+      [ "Remove objects", "docs-database-database.html#docs-database-remove-objects", null ],
+      [ "Transactions", "docs-database-database.html#docs-database-transactions", null ]
     ] ],
-    [ "Model", "md_docs_2model.html", [
-      [ "Create a model", "md_docs_2model.html#autotoc_md53", null ],
-      [ "Static schema", "md_docs_2model.html#autotoc_md54", null ],
-      [ "Supported field types", "md_docs_2model.html#autotoc_md55", null ],
-      [ "Bounded strings", "md_docs_2model.html#autotoc_md56", null ],
-      [ "Optional fields", "md_docs_2model.html#autotoc_md57", null ],
-      [ "Table name", "md_docs_2model.html#autotoc_md58", null ],
-      [ "Column names", "md_docs_2model.html#autotoc_md59", null ],
-      [ "Primary key", "md_docs_2model.html#autotoc_md60", null ],
-      [ "Auto-increment primary key", "md_docs_2model.html#autotoc_md61", null ],
-      [ "One-to-one relations", "md_docs_2model.html#autotoc_md62", null ],
-      [ "Collection relations", "md_docs_2model.html#autotoc_md63", null ],
-      [ "Current limitations", "md_docs_2model.html#autotoc_md64", null ]
+    [ "Model", "docs-model-model.html", [
+      [ "Create a model", "docs-model-model.html#docs-model-create-a-model", null ],
+      [ "Static schema", "docs-model-model.html#docs-model-static-schema", null ],
+      [ "Supported field types", "docs-model-model.html#docs-model-supported-field-types", null ],
+      [ "Bounded strings", "docs-model-model.html#docs-model-bounded-strings", null ],
+      [ "Optional fields", "docs-model-model.html#docs-model-optional-fields", null ],
+      [ "Table name", "docs-model-model.html#docs-model-table-name", null ],
+      [ "Column names", "docs-model-model.html#docs-model-column-names", null ],
+      [ "Primary key", "docs-model-model.html#docs-model-primary-key", null ],
+      [ "Auto-increment primary key", "docs-model-model.html#docs-model-auto-increment-primary-key", null ],
+      [ "One-to-one relations", "docs-model-model.html#docs-model-one-to-one-relations", null ],
+      [ "Collection relations", "docs-model-model.html#docs-model-collection-relations", null ],
+      [ "Current limitations", "docs-model-model.html#docs-model-current-limitations", null ]
     ] ],
-    [ "C++20 modules", "md_docs_2modules.html", [
-      [ "Source organization", "md_docs_2modules.html#autotoc_md66", null ],
-      [ "CMake consumers and installation", "md_docs_2modules.html#autotoc_md67", null ]
+    [ "C++20 modules", "docs-modules-c20-modules.html", [
+      [ "Source organization", "docs-modules-c20-modules.html#docs-modules-source-organization", null ],
+      [ "CMake consumers and installation", "docs-modules-c20-modules.html#docs-modules-cmake-consumers-and-installation", null ]
     ] ],
-    [ "Package managers and releases", "md_docs_2packaging.html", [
-      [ "Consume from vcpkg after acceptance", "md_docs_2packaging.html#autotoc_md69", null ],
-      [ "Consume from ConanCenter after acceptance", "md_docs_2packaging.html#autotoc_md70", null ],
-      [ "Maintainer setup and publishing", "md_docs_2packaging.html#autotoc_md71", [
-        [ "Retry without changing the release", "md_docs_2packaging.html#autotoc_md72", null ]
+    [ "Package managers and releases", "docs-packaging-package-managers-and-releases.html", [
+      [ "Consume from vcpkg after acceptance", "docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-vcpkg-after-acceptance", null ],
+      [ "Consume from ConanCenter after acceptance", "docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-conancenter-after-acceptance", null ],
+      [ "Maintainer setup and publishing", "docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing", [
+        [ "Retry without changing the release", "docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release", null ]
       ] ],
-      [ "Local package verification", "md_docs_2packaging.html#autotoc_md73", null ],
-      [ "Native CMake installation", "md_docs_2packaging.html#autotoc_md74", null ]
+      [ "Local package verification", "docs-packaging-package-managers-and-releases.html#docs-packaging-local-package-verification", null ],
+      [ "Native CMake installation", "docs-packaging-package-managers-and-releases.html#docs-packaging-native-cmake-installation", null ]
     ] ],
-    [ "Partial-result queries", "md_docs_2partial-result-queries.html", [
-      [ "Contract", "md_docs_2partial-result-queries.html#autotoc_md76", null ],
-      [ "Query behavior", "md_docs_2partial-result-queries.html#autotoc_md77", null ],
-      [ "Aggregate result queries", "md_docs_2partial-result-queries.html#autotoc_md78", null ],
-      [ "Result DTO rules", "md_docs_2partial-result-queries.html#autotoc_md79", null ],
-      [ "Limitations", "md_docs_2partial-result-queries.html#autotoc_md80", null ]
+    [ "Partial-result queries", "docs-partial-result-queries-partial-result-queries.html", [
+      [ "Contract", "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-contract", null ],
+      [ "Query behavior", "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-query-behavior", null ],
+      [ "Aggregate result queries", "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries", null ],
+      [ "Result DTO rules", "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-result-dto-rules", null ],
+      [ "Limitations", "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-limitations", null ]
     ] ],
-    [ "Query", "md_docs_2query.html", [
-      [ "Build select", "md_docs_2query.html#autotoc_md82", null ],
-      [ "Loading collections", "md_docs_2query.html#autotoc_md83", null ],
-      [ "Where predicates", "md_docs_2query.html#autotoc_md84", null ],
-      [ "Collection predicates", "md_docs_2query.html#autotoc_md85", null ],
-      [ "Column names and relations", "md_docs_2query.html#autotoc_md86", null ],
-      [ "Ordering", "md_docs_2query.html#autotoc_md87", null ],
-      [ "Distinct", "md_docs_2query.html#autotoc_md88", null ],
-      [ "Limit and offset", "md_docs_2query.html#autotoc_md89", null ],
-      [ "Raw SQL fragments", "md_docs_2query.html#autotoc_md90", null ],
-      [ "Partial-result queries", "md_docs_2query.html#autotoc_md91", null ],
-      [ "Full-model grouping and HAVING", "md_docs_2query.html#autotoc_md92", null ],
-      [ "Aggregate projection queries", "md_docs_2query.html#autotoc_md93", null ],
-      [ "Write predicates", "md_docs_2query.html#autotoc_md94", null ],
-      [ "Limitations", "md_docs_2query.html#autotoc_md95", null ]
+    [ "Query", "docs-query-query.html", [
+      [ "Build select", "docs-query-query.html#docs-query-build-select", null ],
+      [ "Loading collections", "docs-query-query.html#docs-query-loading-collections", null ],
+      [ "Where predicates", "docs-query-query.html#docs-query-where-predicates", null ],
+      [ "Collection predicates", "docs-query-query.html#docs-query-collection-predicates", null ],
+      [ "Column names and relations", "docs-query-query.html#docs-query-column-names-and-relations", null ],
+      [ "Ordering", "docs-query-query.html#docs-query-ordering", null ],
+      [ "Distinct", "docs-query-query.html#docs-query-distinct", null ],
+      [ "Limit and offset", "docs-query-query.html#docs-query-limit-and-offset", null ],
+      [ "Raw SQL fragments", "docs-query-query.html#docs-query-raw-sql-fragments", null ],
+      [ "Partial-result queries", "docs-query-query.html#docs-query-partial-result-queries", null ],
+      [ "Full-model grouping and HAVING", "docs-query-query.html#docs-query-full-model-grouping-and-having", null ],
+      [ "Aggregate projection queries", "docs-query-query.html#docs-query-aggregate-projection-queries", null ],
+      [ "Write predicates", "docs-query-query.html#docs-query-write-predicates", null ],
+      [ "Limitations", "docs-query-query.html#docs-query-limitations", null ]
     ] ],
-    [ "Collection relations", "md_docs_2relations.html", [
-      [ "Collection wrappers", "md_docs_2relations.html#autotoc_md97", null ],
-      [ "One-to-many", "md_docs_2relations.html#autotoc_md98", null ],
-      [ "Many-to-many", "md_docs_2relations.html#autotoc_md99", null ],
-      [ "Junction column names", "md_docs_2relations.html#autotoc_md100", null ],
-      [ "Schema lifecycle", "md_docs_2relations.html#autotoc_md101", null ],
-      [ "Link and unlink", "md_docs_2relations.html#autotoc_md102", null ],
-      [ "Loading collections", "md_docs_2relations.html#autotoc_md103", null ],
-      [ "Filtering by collections", "md_docs_2relations.html#autotoc_md104", null ],
-      [ "End-to-end workflow", "md_docs_2relations.html#autotoc_md105", null ],
-      [ "Transactions and consistency", "md_docs_2relations.html#autotoc_md106", null ],
-      [ "Validation and unsupported mappings", "md_docs_2relations.html#autotoc_md107", null ],
-      [ "Common mistakes", "md_docs_2relations.html#autotoc_md108", null ],
-      [ "Migrating an existing schema", "md_docs_2relations.html#autotoc_md109", null ]
+    [ "Quickstart: SQLite CRUD", "docs-quickstart-quickstart-sqlite-crud.html", [
+      [ "Requirements", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-requirements", null ],
+      [ "Get the sources", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-get-the-sources", null ],
+      [ "Build and run", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-build-and-run", null ],
+      [ "The application", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-the-application", null ],
+      [ "If the build fails", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-if-the-build-fails", null ],
+      [ "Next steps", "docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-next-steps", null ]
     ] ],
-    [ "Schema migrations", "md_docs_2schema-migrations.html", [
-      [ "Application CLI", "md_docs_2schema-migrations.html#autotoc_md111", null ],
-      [ "Durable state and connection loss", "md_docs_2schema-migrations.html#autotoc_md112", null ],
-      [ "Project files", "md_docs_2schema-migrations.html#autotoc_md113", null ],
-      [ "Model changes and decisions", "md_docs_2schema-migrations.html#autotoc_md114", null ],
-      [ "C++ API and execution", "md_docs_2schema-migrations.html#autotoc_md115", null ],
-      [ "History, transactions and recovery", "md_docs_2schema-migrations.html#autotoc_md116", null ],
-      [ "SQL contract", "md_docs_2schema-migrations.html#autotoc_md117", null ]
+    [ "Collection relations", "docs-relations-collection-relations.html", [
+      [ "Collection wrappers", "docs-relations-collection-relations.html#docs-relations-collection-wrappers", null ],
+      [ "One-to-many", "docs-relations-collection-relations.html#docs-relations-one-to-many", null ],
+      [ "Many-to-many", "docs-relations-collection-relations.html#docs-relations-many-to-many", null ],
+      [ "Junction column names", "docs-relations-collection-relations.html#docs-relations-junction-column-names", null ],
+      [ "Schema lifecycle", "docs-relations-collection-relations.html#docs-relations-schema-lifecycle", null ],
+      [ "Link and unlink", "docs-relations-collection-relations.html#docs-relations-link-and-unlink", null ],
+      [ "Loading collections", "docs-relations-collection-relations.html#docs-relations-loading-collections", null ],
+      [ "Filtering by collections", "docs-relations-collection-relations.html#docs-relations-filtering-by-collections", null ],
+      [ "End-to-end workflow", "docs-relations-collection-relations.html#docs-relations-end-to-end-workflow", null ],
+      [ "Transactions and consistency", "docs-relations-collection-relations.html#docs-relations-transactions-and-consistency", null ],
+      [ "Validation and unsupported mappings", "docs-relations-collection-relations.html#docs-relations-validation-and-unsupported-mappings", null ],
+      [ "Common mistakes", "docs-relations-collection-relations.html#docs-relations-common-mistakes", null ],
+      [ "Migrating an existing schema", "docs-relations-collection-relations.html#docs-relations-migrating-an-existing-schema", null ]
     ] ],
-    [ "Static query plans", "md_docs_2static-queries.html", [
-      [ "Projections and writes", "md_docs_2static-queries.html#autotoc_md119", null ],
-      [ "Runtime shapes and explicit conversion", "md_docs_2static-queries.html#autotoc_md120", null ]
+    [ "Schema migrations", "docs-schema-migrations-schema-migrations.html", [
+      [ "Application CLI", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-application-cli", null ],
+      [ "Durable state and connection loss", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-durable-state-and-connection-loss", null ],
+      [ "Project files", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-project-files", null ],
+      [ "Model changes and decisions", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-model-changes-and-decisions", null ],
+      [ "C++ API and execution", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-c-api-and-execution", null ],
+      [ "History, transactions and recovery", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery", null ],
+      [ "SQL contract", "docs-schema-migrations-schema-migrations.html#docs-schema-migrations-sql-contract", null ]
     ] ],
-    [ "Modules", "modules.html", [
-      [ "Modules List", "modules.html", "modules_dup" ]
+    [ "Static query plans", "docs-static-queries-static-query-plans.html", [
+      [ "Projections and writes", "docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes", null ],
+      [ "Runtime shapes and explicit conversion", "docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion", null ]
+    ] ],
+    [ "How to contribute", "CONTRIBUTING-how-to-contribute.html", [
+      [ "Getting started", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-getting-started", null ],
+      [ "Fastest supported setup", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-fastest-supported-setup", null ],
+      [ "Presets and CI-equivalent commands", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-presets-and-ci-equivalent-commands", null ],
+      [ "Database backend work", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-database-backend-work", null ],
+      [ "Native Linux setup", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-native-linux-setup", null ],
+      [ "Native Windows and MSVC", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-native-windows-and-msvc", null ],
+      [ "Documentation", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-documentation", null ],
+      [ "Build configuration and macro policy", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-build-configuration-and-macro-policy", null ],
+      [ "Before submitting a pull request", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request", null ]
+    ] ],
+    [ "ORM C++ Roadmap", "ROADMAP-orm-c-roadmap.html", [
+      [ "Current State", "ROADMAP-orm-c-roadmap.html#ROADMAP-current-state", null ],
+      [ "Long Term", "ROADMAP-orm-c-roadmap.html#ROADMAP-long-term", null ],
+      [ "Far Future", "ROADMAP-orm-c-roadmap.html#ROADMAP-far-future", null ],
+      [ "Roadmap Principles", "ROADMAP-orm-c-roadmap.html#ROADMAP-roadmap-principles", null ]
+    ] ],
+    [ "Namespaces", "namespaces.html", [
+      [ "Namespace List", "namespaces.html", "namespaces_dup" ],
+      [ "Namespace Members", "namespacemembers.html", [
+        [ "All", "namespacemembers.html", null ],
+        [ "Functions", "namespacemembers_func.html", null ],
+        [ "Variables", "namespacemembers_vars.html", null ],
+        [ "Typedefs", "namespacemembers_type.html", null ],
+        [ "Enumerations", "namespacemembers_enum.html", null ]
+      ] ]
+    ] ],
+    [ "Concepts", "concepts.html", "concepts" ],
+    [ "Classes", "annotated.html", [
+      [ "Class List", "annotated.html", "annotated_dup" ],
+      [ "Class Index", "classes.html", null ],
+      [ "Class Hierarchy", "hierarchy.html", "hierarchy" ],
+      [ "Class Members", "functions.html", [
+        [ "All", "functions.html", "functions_dup" ],
+        [ "Functions", "functions_func.html", "functions_func" ],
+        [ "Variables", "functions_vars.html", "functions_vars" ],
+        [ "Typedefs", "functions_type.html", null ],
+        [ "Related Symbols", "functions_rela.html", null ]
+      ] ]
+    ] ],
+    [ "Files", "files.html", [
+      [ "File List", "files.html", "files_dup" ]
     ] ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"index.html"
+"BackendRelations_8cppm.html",
+"classorm_1_1db_1_1BackendRuntime.html#a8d69a7b8bc6706092c894374a4b4376c",
+"classorm_1_1db_1_1sqlite_1_1SqliteDialect.html#a9d402eaceb52836cc339bd34df0af3de",
+"classorm_1_1query_1_1TypedColumn.html#ac1f8fbaaad74625e7f83e5aca0537a38",
+"docs-relations-collection-relations.html#docs-relations-collection-wrappers",
+"namespaceorm.html#a2b67d3b5b004c67b5fc30d098b5f8aec",
+"namespaceorm_1_1reflection.html#a35b930760291c5236dd42ed6476bf4da",
+"structorm_1_1db_1_1QueryCapabilities.html",
+"structorm_1_1migrations_1_1Migration.html#aac3fb922c02f07f2919dc8274ade3074",
+"structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html",
+"utilities_8cppm.html#a6919a5fdd3821e0ca3a611c0353c1753"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

@@ -1,7 +1,25 @@
 var searchData=
 [
-  ['unlink_0',['Link and unlink',['../md_docs_2relations.html#autotoc_md102',1,'']]],
-  ['unlink_20relations_1',['Link and unlink relations',['../md_docs_2database.html#autotoc_md45',1,'']]],
-  ['unsupported_20mappings_2',['Validation and unsupported mappings',['../md_docs_2relations.html#autotoc_md107',1,'']]],
-  ['update_20objects_3',['Update objects',['../md_docs_2database.html#autotoc_md47',1,'']]]
+  ['unavailable_0',['Unavailable',['../namespaceorm_1_1db.html#ab2091a06eb7816eb1603baba87ca1ea5a453e6aa38d87b28ccae545967c53004f',1,'orm::db']]],
+  ['unique_1',['unique',['../structorm_1_1migrations_1_1PhysicalIndex.html#a6fee6439227938b4a00aec8159232c69',1,'orm::migrations::PhysicalIndex']]],
+  ['unlink_2',['unlink',['../docs-relations-collection-relations.html#docs-relations-link-and-unlink',1,'Link and unlink'],['../classorm_1_1OrmContext.html#afbe4b1097b37819e4fd143b68a02a636',1,'orm::OrmContext::unlink()']]],
+  ['unlink_20relations_3',['Link and unlink relations',['../docs-database-database.html#docs-database-link-and-unlink-relations',1,'']]],
+  ['unresolved_4',['unresolved',['../structorm_1_1migrations_1_1SchemaChange.html#af6539e5b519eb4580846943ef289f725',1,'orm::migrations::SchemaChange']]],
+  ['unsignedchar_5',['UnsignedChar',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659aa93f121640d609f8772397a0f40f40d6',1,'orm::model']]],
+  ['unsignedint_6',['UnsignedInt',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659ac93cff91b6b9a57fa32bbe1863150070',1,'orm::model']]],
+  ['unsignedlonglong_7',['UnsignedLongLong',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659aaebccc9c65b387501c42fb1e85718393',1,'orm::model']]],
+  ['unsignedshort_8',['UnsignedShort',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659aeb51124277f3ec904a9af74d5de34e7b',1,'orm::model']]],
+  ['unsupported_20mappings_9',['Validation and unsupported mappings',['../docs-relations-collection-relations.html#docs-relations-validation-and-unsupported-mappings',1,'']]],
+  ['unsupportedbackend_10',['unsupportedbackend',['../namespaceorm_1_1migrations.html#a87136024db9b820b5a9437f985f55914a7e04808831a3678fd73fff0bf6900416',1,'orm::migrations::UnsupportedBackend'],['../namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a7e04808831a3678fd73fff0bf6900416',1,'orm::UnsupportedBackend']]],
+  ['unsupportedfeature_11',['UnsupportedFeature',['../namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a6dcca67f0df2a0038edf5a82b1399527',1,'orm']]],
+  ['up_12',['up',['../namespaceorm_1_1migrations.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a258f49887ef8d14ac268c92b02503aaa',1,'orm::migrations::Up'],['../classorm_1_1migrations_1_1Runner.html#a69ffa39208bddc779ee4c6108fa62510',1,'orm::migrations::Runner::up()'],['../structorm_1_1migrations_1_1SqlMigration.html#aeeee0ed76eea560ed20abb9415c4def7',1,'orm::migrations::SqlMigration::up']]],
+  ['upcontext_13',['upContext',['../structorm_1_1migrations_1_1SqlMigration.html#ad9d11060b9cd481191f534e30a839420',1,'orm::migrations::SqlMigration']]],
+  ['update_14',['update',['../classorm_1_1Update.html',1,'orm::Update&lt; T &gt;'],['../classorm_1_1OrmContext.html#ac14756e0e1122efc99149cb0f37ff9d5',1,'orm::OrmContext::update()'],['../namespaceorm_1_1query.html#a448f0836907fb5dbb75637be3f8a51c0',1,'orm::query::update()'],['../structorm_1_1db_1_1MutationCapabilities.html#adca639e32992fb19fb3dfd28c9e715dc',1,'orm::db::MutationCapabilities::update'],['../classorm_1_1OrmContext.html#ae608e0906cc9a5ae4700f1a07c888754',1,'orm::OrmContext::update()'],['../classorm_1_1Update.html#ae65e991f38e241c0d03a8d7a37ac0ad0',1,'orm::Update::Update()'],['../classorm_1_1db_1_1DefaultCommandGenerator.html#ae2ebedae9f0d06786c146504a4e7f148',1,'orm::db::DefaultCommandGenerator::update()'],['../classorm_1_1db_1_1CommandGenerator.html#a5a914a880b51fb0987aa376d433947c1',1,'orm::db::CommandGenerator::update()']]],
+  ['update_20objects_15',['Update objects',['../docs-database-database.html#docs-database-update-objects',1,'']]],
+  ['update_2ecppm_16',['update.cppm',['../update_8cppm.html',1,'']]],
+  ['updateassignment_17',['UpdateAssignment',['../namespaceorm_1_1db_1_1ast.html#af76178b0d1852fef3d53e86780a6ceac',1,'orm::db::ast']]],
+  ['updatespec_18',['UpdateSpec',['../namespaceorm_1_1db.html#a194af50309dc1e1f296ce0baca2fc560',1,'orm::db']]],
+  ['updatevalue_19',['UpdateValue',['../namespaceorm_1_1db_1_1ast.html#a3ff1222388cece39626c69697f9a75eb',1,'orm::db::ast']]],
+  ['utilities_2ecppm_20',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
+  ['uuid_21',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
 ];

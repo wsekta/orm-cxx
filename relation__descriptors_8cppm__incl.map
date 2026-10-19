@@ -1,0 +1,15 @@
+<map id="modules/orm/foundation/relation_descriptors.cppm" name="modules/orm/foundation/relation_descriptors.cppm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="181,5,376,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,61,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="221,48,76,94,74,89,219,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="85,93,165,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="243,48,161,89,159,85,241,43"/>
+<area shape="rect" id="Node000004" title=" " alt="" coords="190,93,261,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="268,47,243,83,239,80,264,44"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="285,93,382,119"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="294,44,320,80,315,84,290,47"/>
+<area shape="rect" id="Node000006" title=" " alt="" coords="406,93,461,119"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="317,43,400,85,397,89,315,48"/>
+<area shape="rect" id="Node000007" title=" " alt="" coords="485,93,577,119"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="340,43,481,87,480,92,338,48"/>
+</map>

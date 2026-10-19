@@ -94,31 +94,42 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
   <div class="headertitle"><div class="title">ORM C++ </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p><a class="anchor" id="md_docs_2main"></a> ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables using compile-time reflection. It ships with SQLite, PostgreSQL, MySQL and MariaDB backends built on SOCI.</p>
+<div class="textblock"><p><a class="anchor" id="docs-main-orm-c"></a> ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables using compile-time reflection. It ships with SQLite, PostgreSQL, MySQL and MariaDB backends built on SOCI.</p>
 <p>The public API consists of two named modules:</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><span class="keyword">import</span> <a class="code" href="module_orm.html">orm</a>;</div>
-<div class="ttc" id="amodule_orm_html"><div class="ttname"><a href="module_orm.html">orm</a></div></div>
+<div class="line"><span class="keyword">import</span> orm;</div>
 </div><!-- fragment --><p><code>import orm.reflection;</code> provides the independent reflection layer. Link <code>orm-cxx::orm-cxx</code> or <code>orm-cxx::reflection</code> respectively. Both are compiled CMake targets. Standard-library headers remain ordinary includes.</p>
 <p><b>Build requirements:</b> CMake 3.31+, Ninja 1.11+, GCC 15+, Clang 18+, or MSVC 19.50+. Installed packages include module interface sources and native CMake metadata; CMake builds BMIs locally.</p>
+<h1><a class="anchor" id="docs-main-start-here"></a>
+Start here</h1>
 <ol type="1">
-<li><a class="el" href="md_docs_2model.html">Model</a></li>
-<li><a class="el" href="md_docs_2relations.html">Collection relations</a></li>
-<li><a class="el" href="md_docs_2query.html">Query</a></li>
-<li><a class="el" href="md_docs_2static-queries.html">Static query plans</a></li>
-<li><a class="el" href="md_docs_2database.html">Database</a></li>
-<li><a class="el" href="md_docs_2backends.html">Backends</a></li>
-<li><a class="el" href="md_docs_2backend-portability.html">Backend portability</a></li>
-<li><a class="el" href="md_docs_2backend-extension.html">Backend extension contract</a></li>
-<li><a class="el" href="md_docs_2packaging.html">Package managers and releases</a></li>
-<li><a class="el" href="md_docs_2modules.html">C++20 modules and CMake consumers</a></li>
-<li><a class="el" href="md_docs_2schema-migrations.html">Schema migrations</a></li>
+<li><a class="el" href="docs-quickstart-quickstart-sqlite-crud.html">Quickstart: SQLite CRUD</a> — a complete application, build commands and expected output.</li>
+<li><a class="el" href="docs-model-model.html">Model</a> — aggregate fields, closed schemas, names and keys.</li>
+<li><a class="el" href="docs-database-database.html">Database</a> — connections, CRUD, errors and transactions.</li>
+<li><a class="el" href="docs-query-query.html">Query</a> — mutable queries and typed predicates.</li>
+<li><a class="el" href="docs-partial-result-queries-partial-result-queries.html">Partial-result queries</a> — flat DTOs and aggregates.</li>
+<li><a class="el" href="docs-static-queries-static-query-plans.html">Static query plans</a> — reusable immutable query shapes.</li>
+<li><a class="el" href="docs-relations-collection-relations.html">Collection relations</a> — mapping, loading and changing links.</li>
+<li><a class="el" href="docs-schema-migrations-schema-migrations.html">Schema migrations</a> — reviewed model changes and SQL.</li>
 </ol>
-<h1><a class="anchor" id="autotoc_md51"></a>
-Build configuration and macro policy</h1>
-<p>Backend options are selected when building the library or package. The <code>orm</code> module exports <code>orm::config::sqliteBackendEnabled</code> and <code>orm::config::postgresqlBackendEnabled</code>, <code>orm::config::mysqlBackendEnabled</code> and <code>orm::config::mariadbBackendEnabled</code> as C++ constants. Use <code>if constexpr</code> for backend-dependent behavior; expressions whose validity depends on a backend must remain dependent inside a template.</p>
-<p>First-party code and exported package metadata define no preprocessor macros. <code>scripts/check-macros.py</code> checks module sources, C++ sources, templates, CMake, and Conan recipes. Backend selection uses generated C++ constants, source selection, and dependency linkage. CMake cache <code>-D</code> options are permitted. Compiler conditionals are confined to reflection adapters and platform tests; external-library macros such as GoogleTest assertions are outside this policy.</p>
-<p>The API may change freely while the project has no established external users. Documentation describes the current API; version-to-version migration guides and compatibility fallbacks are not maintained during this stage. </p>
+<h1><a class="anchor" id="docs-main-integration-reference"></a>
+Integration reference</h1>
+<ul>
+<li><a class="el" href="docs-backends-backends.html">Backends</a>: adapter selection, connection strings and differences.</li>
+<li><a class="el" href="docs-packaging-package-managers-and-releases.html">Package installation</a>: vcpkg, Conan and native installation.</li>
+<li><a class="el" href="docs-modules-c20-modules.html">C++20 modules and CMake consumers</a>: toolchain and ABI requirements.</li>
+</ul>
+<h1><a class="anchor" id="docs-main-for-contributors-and-maintainers"></a>
+For contributors and maintainers</h1>
+<ul>
+<li><a class="el" href="CONTRIBUTING-how-to-contribute.html">Contributing</a>: setup and local verification.</li>
+<li><a class="el" href="docs-backend-portability-backend-portability.html">Backend portability</a> and <a class="el" href="docs-backend-extension-backend-extension-contract.html">extension contract</a>.</li>
+<li><a class="el" href="docs-ci-compiler-matrix-ci-compiler-matrix.html">CI compiler matrix</a>.</li>
+<li><a class="el" href="docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing">Release maintenance</a>.</li>
+</ul>
+<h1><a class="anchor" id="docs-main-api-reference"></a>
+API reference</h1>
+<p>The generated reference covers all four optional adapters; an installed library exports only the adapters selected at build time. Its documentation profile enables every adapter, so values shown for <code>orm::config</code> describe that profile, not the default core-only build. </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->

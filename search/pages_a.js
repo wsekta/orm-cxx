@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['relations_0',['Collection relations',['../md_docs_2relations.html',1,'']]],
-  ['releases_1',['Package managers and releases',['../md_docs_2packaging.html',1,'']]],
-  ['result_20queries_2',['Partial-result queries',['../md_docs_2partial-result-queries.html',1,'']]]
+  ['queries_0',['Partial-result queries',['../docs-partial-result-queries-partial-result-queries.html',1,'']]],
+  ['query_1',['Query',['../docs-query-query.html',1,'']]],
+  ['query_20plans_2',['Static query plans',['../docs-static-queries-static-query-plans.html',1,'']]],
+  ['quickstart_3a_20sqlite_20crud_3',['Quickstart: SQLite CRUD',['../docs-quickstart-quickstart-sqlite-crud.html',1,'']]]
 ];

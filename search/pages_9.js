@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['queries_0',['Partial-result queries',['../md_docs_2partial-result-queries.html',1,'']]],
-  ['query_1',['Query',['../md_docs_2query.html',1,'']]],
-  ['query_20plans_2',['Static query plans',['../md_docs_2static-queries.html',1,'']]]
+  ['package_20managers_20and_20releases_0',['Package managers and releases',['../docs-packaging-package-managers-and-releases.html',1,'']]],
+  ['partial_20result_20queries_1',['Partial-result queries',['../docs-partial-result-queries-partial-result-queries.html',1,'']]],
+  ['plans_2',['Static query plans',['../docs-static-queries-static-query-plans.html',1,'']]],
+  ['portability_3',['Backend portability',['../docs-backend-portability-backend-portability.html',1,'']]]
 ];

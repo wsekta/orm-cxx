@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['and_20releases_0',['Package managers and releases',['../md_docs_2packaging.html',1,'']]]
+  ['and_20releases_0',['Package managers and releases',['../docs-packaging-package-managers-and-releases.html',1,'']]]
 ];

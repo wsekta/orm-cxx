@@ -1,0 +1,10 @@
+<map id="orm::migrations::GeneratedMigration" name="orm::migrations::GeneratedMigration">
+<area shape="rect" id="Node000001" title=" " alt="" coords="115,196,318,236"/>
+<area shape="rect" id="Node000002" href="$structorm_1_1migrations_1_1Migration.html" title=" " alt="" coords="5,108,201,133"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="129,140,195,194,192,198,126,144"/>
+<area shape="rect" id="Node000003" href="$structorm_1_1migrations_1_1SchemaSnapshot.html" title=" " alt="" coords="92,5,339,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="194,42,118,110,114,106,190,38"/>
+<area shape="rect" id="Node000004" href="$structorm_1_1migrations_1_1SchemaDiff.html" title=" " alt="" coords="225,108,435,133"/>
+<area shape="poly" id="edge4_Node000004_Node000003" title=" " alt="" coords="241,38,319,106,315,110,237,42"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="307,144,241,198,238,194,304,140"/>
+</map>
