@@ -29,13 +29,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes \
             clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 \
-            lcov ninja-build
+            lcov ninja-build libsqlite3-dev
       - name: Configure
         run: cmake --preset linux-clang-coverage
       - name: Run tests and generate coverage
         run: cmake --build --preset linux-clang-coverage --target orm-cxx-coverage
       - name: Run full portability profile
         run: ctest --preset linux-clang-coverage
+      - name: Build and run documented SQLite quickstart
+        run: |
+          cmake -S examples/quickstart -B build/quickstart-clang -G Ninja -DCMAKE_BUILD_TYPE=Debug -DCMAKE_CXX_COMPILER=clang++-18
+          cmake --build build/quickstart-clang --parallel 2
+          ctest --test-dir build/quickstart-clang --output-on-failure
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:

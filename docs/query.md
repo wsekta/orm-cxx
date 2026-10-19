@@ -21,7 +21,9 @@ offer `.dynamic()` when a named facade is needed.
 
 ## Build select
 
-To query objects from a table use `orm::Query<Model>` and pass it to `orm::Database::select`.
+To query objects from a table use `orm::Query<Model>` and pass it to
+`OrmContext<Schema>::select`. Obtain `context` from `database.orm<Schema>()`,
+with every queried model included in that schema.
 The result is always `std::vector<Model>`.
 
 ```cpp
@@ -426,7 +428,7 @@ results that may be SQL `NULL`.
 
 ## Write predicates
 
-The same predicate DSL is used by `orm::Update<Model>` and `orm::Database::remove<Model>`:
+The same predicate DSL is used by `orm::Update<Model>` and `OrmContext<Schema>::remove<Model>`:
 
 ```cpp
 using namespace orm::query;

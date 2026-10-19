@@ -373,11 +373,18 @@ database.rollbackTransaction();
 ```
 
 PostgreSQL marks a transaction failed after a statement error. `commitTransaction()`
-then returns `DatabaseErrorCode::Transaction` without sending a misleading
-commit; call `rollbackTransaction()` before starting another transaction.
+then throws `orm::DatabaseError` with `getCode() == DatabaseErrorCode::Transaction`
+without sending a misleading commit; catch the exception and call
+`rollbackTransaction()` before starting another transaction. The function returns
+`void` on success.
 
 Relation-table operations, `link`, `unlink`, and included selects participate
 in the current explicit transaction and never start a private transaction.
 Because an included select uses the parent query plus one or more batched
-queries per included collection, wrap it in a transaction when those
-statements must observe a single consistent application-level snapshot.
+queries per included collection, a consistent snapshot requires both an explicit
+transaction and a backend isolation level that preserves that snapshot across
+statements. `beginTransaction()` does not select or strengthen the isolation
+level. In PostgreSQL's default `READ COMMITTED`, consecutive queries can still
+observe commits from other connections. Configure the required isolation through
+the database's connection defaults before connecting; this API has no isolation
+setter. See [transactions and consistency](relations.md#transactions-and-consistency).

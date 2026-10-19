@@ -19,34 +19,33 @@ targets. Standard-library headers remain ordinary includes.
 GCC 15+, Clang 18+, or MSVC 19.50+. Installed packages include module interface
 sources and native CMake metadata; CMake builds BMIs locally.
 
-1. [Model](model.md)
-2. [Collection relations](relations.md)
-3. [Query](query.md)
-4. [Static query plans](static-queries.md)
-5. [Database](database.md)
-6. [Backends](backends.md)
-7. [Backend portability](backend-portability.md)
-8. [Backend extension contract](backend-extension.md)
-9. [Package managers and releases](packaging.md)
-10. [C++20 modules and CMake consumers](modules.md)
-11. [Schema migrations](schema-migrations.md)
+## Start here
 
-## Build configuration and macro policy
+1. [Quickstart: SQLite CRUD](quickstart.md) — a complete application, build commands and expected output.
+2. [Model](model.md) — aggregate fields, closed schemas, names and keys.
+3. [Database](database.md) — connections, CRUD, errors and transactions.
+4. [Query](query.md) — mutable queries and typed predicates.
+5. [Partial-result queries](partial-result-queries.md) — flat DTOs and aggregates.
+6. [Static query plans](static-queries.md) — reusable immutable query shapes.
+7. [Collection relations](relations.md) — mapping, loading and changing links.
+8. [Schema migrations](schema-migrations.md) — reviewed model changes and SQL.
 
-Backend options are selected when building the library or package. The `orm`
-module exports `orm::config::sqliteBackendEnabled` and
-`orm::config::postgresqlBackendEnabled`, `orm::config::mysqlBackendEnabled`
-and `orm::config::mariadbBackendEnabled` as C++ constants. Use `if constexpr`
-for backend-dependent behavior; expressions whose validity depends on a backend
-must remain dependent inside a template.
+## Integration reference
 
-First-party code and exported package metadata define no preprocessor macros.
-`scripts/check-macros.py` checks module sources, C++ sources, templates, CMake,
-and Conan recipes. Backend selection uses generated C++ constants, source
-selection, and dependency linkage. CMake cache `-D` options are permitted.
-Compiler conditionals are confined to reflection adapters and platform tests;
-external-library macros such as GoogleTest assertions are outside this policy.
+- [Backends](backends.md): adapter selection, connection strings and differences.
+- [Package installation](packaging.md): vcpkg, Conan and native installation.
+- [C++20 modules and CMake consumers](modules.md): toolchain and ABI requirements.
 
-The API may change freely while the project has no established external users.
-Documentation describes the current API; version-to-version migration guides
-and compatibility fallbacks are not maintained during this stage.
+## For contributors and maintainers
+
+- [Contributing](../CONTRIBUTING.md): setup and local verification.
+- [Backend portability](backend-portability.md) and [extension contract](backend-extension.md).
+- [CI compiler matrix](ci-compiler-matrix.md).
+- [Release maintenance](packaging.md#maintainer-setup-and-publishing).
+
+## API reference
+
+The generated reference covers all four optional adapters; an installed library
+exports only the adapters selected at build time. Its documentation profile
+enables every adapter, so values shown for `orm::config` describe that profile,
+not the default core-only build.

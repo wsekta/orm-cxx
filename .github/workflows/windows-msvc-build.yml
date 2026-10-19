@@ -36,6 +36,14 @@ jobs:
 
       - name: Build and test
         run: cmake --workflow --preset msvc-debug
+      - name: Build and run documented SQLite quickstart
+        shell: pwsh
+        run: |
+          cmake -S examples/quickstart -B build/quickstart-msvc -G Ninja -DCMAKE_BUILD_TYPE=Debug "-DCMAKE_TOOLCHAIN_FILE=$PWD/externals/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_MANIFEST_DIR=$PWD" "-DVCPKG_INSTALLED_DIR=$PWD/vcpkg_installed" -DVCPKG_MANIFEST_FEATURES=sqlite
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          cmake --build build/quickstart-msvc --parallel 2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          ctest --test-dir build/quickstart-msvc --output-on-failure
 
   backends-build:
     name: All four adapters and 16 consumer subsets

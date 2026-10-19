@@ -96,7 +96,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes doxygen graphviz
 
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test documentation regression controls
+        run: python -m unittest discover -s tests/docs -v
       - name: Validate documentation generation
-        run: |
-          { cat Doxyfile; echo 'HTML_EXTRA_STYLESHEET ='; } | doxygen -
-          test -f html/index.html
+        run: python scripts/check_docs.py
+      - name: Save checked documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation
+          path: |
+            build/docs/html
+            build/docs/warnings.log

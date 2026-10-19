@@ -133,6 +133,41 @@ the corresponding preset, such as `msvc-all-backends-debug`. That profile checks
 all 16 consumer subsets, including compile failures for disabled adapters.
 The script invokes the core-only `msvc-debug` workflow.
 
+## Documentation
+
+For documentation changes, install Python 3.12+, Doxygen 1.9.8+ and Graphviz, then
+run `python scripts/check_docs.py`. It checks local Markdown links and anchors,
+quickstart source/output consistency and the generated public API reference.
+Generated output is under `build/docs/`; no database clients or C++ build are
+needed for that command. The same check runs before documentation publication.
+The quickstart's real build and CRUD execution run on GCC, Clang and MSVC in CI.
+
+For Doxygen compatibility, documentation generation unwraps module export blocks
+and preserves requires-clauses as comments in a generated source view. The
+original module sources remain the authority for compile-time constraints;
+the model and query guides explain their user-visible rules. This generated view
+is never compiled or installed as a header interface.
+
+## Build configuration and macro policy
+
+Backend options are selected when building the library or package. The `orm`
+module exports `orm::config::sqliteBackendEnabled` and
+`orm::config::postgresqlBackendEnabled`, `orm::config::mysqlBackendEnabled`
+and `orm::config::mariadbBackendEnabled` as C++ constants. Use `if constexpr`
+for backend-dependent behavior; expressions whose validity depends on a backend
+must remain dependent inside a template.
+
+First-party code and exported package metadata define no preprocessor macros.
+`scripts/check-macros.py` checks module sources, C++ sources, templates, CMake,
+and Conan recipes. Backend selection uses generated C++ constants, source
+selection, and dependency linkage. CMake cache `-D` options are permitted.
+Compiler conditionals are confined to reflection adapters and platform tests;
+external-library macros such as GoogleTest assertions are outside this policy.
+
+The API may change freely while the project has no established external users.
+Documentation describes the current API; version-to-version migration guides
+and compatibility fallbacks are not maintained during this stage.
+
 ## Before submitting a pull request
 
 - Run the fast check while iterating and the relevant full workflows before

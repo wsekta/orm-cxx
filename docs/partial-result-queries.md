@@ -23,9 +23,10 @@ class orm::ProjectionQuery;
 ```
 
 `Source` is the mapped ORM model. `Result` is a user-defined DTO with the exact
-fields returned by the projection. `ProjectionQuery<Source, Result>` is the only
-public entry point for partial-result queries; `orm::Query<Model>` remains
-reserved for full-model results.
+fields returned by the projection. `ProjectionQuery<Source, Result>` is the
+mutable builder for partial-result queries; `query::selectAs<Source, Result>`
+creates an immutable plan. Both return DTOs through `context.select`.
+`orm::Query<Model>` remains reserved for full-model results.
 
 Projection and aggregate helpers live in `orm::query`. `as("dtoField", expression)`
 accepts a typed column or aggregate and retains its source model.

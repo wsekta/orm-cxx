@@ -1,0 +1,4 @@
+Selected: 1 Ada
+Updated: 1 Grace
+Deleted: 1
+Remaining: 0

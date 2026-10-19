@@ -24,10 +24,10 @@ jobs:
         run: git clone https://github.com/jothepro/doxygen-awesome-css.git && cd doxygen-awesome-css && sudo make install
 
       - name: Generate docs
-        run: doxygen Doxyfile
+        run: python3 scripts/check_docs.py
 
       - name: Deploy docs
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./html
+          publish_dir: ./build/docs/html

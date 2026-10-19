@@ -1,5 +1,9 @@
 # Package managers and releases
 
+For a first working application without central catalog availability, start with
+the [SQLite quickstart](quickstart.md). This guide separates consumer installation
+from [maintainer publishing](#maintainer-setup-and-publishing).
+
 `VERSION.txt` is the release version shared by CMake, vcpkg, and Conan. The current
 version is `0.6.0`; use a stable `major.minor.patch` value and increase it before
 publishing changed sources. The library currently ships as a static library.
