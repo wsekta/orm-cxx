@@ -1,0 +1,20 @@
+{
+  "doxygen": {
+    "version": "1.18.0",
+    "linux": {
+      "archive": "doxygen-1.18.0.linux.bin.tar.gz",
+      "sha256": "14fa81bdc34171edb5f1f02b1d60e74802f0439b77fa44e592565d517d72df90",
+      "binary": "doxygen-1.18.0/bin/doxygen"
+    },
+    "windows": {
+      "archive": "doxygen-1.18.0.windows.x64.bin.zip",
+      "sha256": "e84f54cfd49ef06b0b16536056dbec0c496323de28abcce53a4269463de35eaf",
+      "binary": "doxygen.exe"
+    }
+  },
+  "theme": {
+    "version": "2.5.0",
+    "commit": "46483f1e5a70ffb9ecd3b82d0a1cd1b24edf13da",
+    "sha256": "65abe1d85bc2adf9d1a1b6ef90ae5e63f72425024196f89ec27b7bdc52d94267"
+  }
+}

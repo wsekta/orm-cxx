@@ -91,14 +91,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Install Doxygen
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes doxygen graphviz
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.12'
+      - name: Set up documentation tools
+        uses: ./.github/actions/setup-docs
       - name: Test documentation regression controls
         run: python -m unittest discover -s tests/docs -v
       - name: Validate documentation generation

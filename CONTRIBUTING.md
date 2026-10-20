@@ -135,18 +135,34 @@ The script invokes the core-only `msvc-debug` workflow.
 
 ## Documentation
 
-For documentation changes, install Python 3.12+, Doxygen 1.9.8+ and Graphviz, then
-run `python scripts/check_docs.py`. It checks local Markdown links and anchors,
-quickstart source/output consistency and the generated public API reference.
+For documentation changes, install Python 3.12+ and Graphviz, then run:
+
+```sh
+python scripts/setup_docs.py
+python -m unittest discover -s tests/docs -v
+python scripts/check_docs.py
+```
+
+The installer supports Linux and Windows x64. It downloads Doxygen 1.18.0 and
+doxygen-awesome-css 2.5.0 into `build/docs-tools/`, verifies SHA-256 checksums,
+and leaves system installations unchanged. Versions and checksums are pinned in
+`tools/docs-toolchain.json`; `Quality` and `Docs` use the same installer.
+
+The check validates local Markdown links and anchors, quickstart source/output
+consistency, guide headings, tables and code blocks, and the generated public
+API reference including both named modules.
 Generated output is under `build/docs/`; no database clients or C++ build are
 needed for that command. The same check runs before documentation publication.
 The quickstart's real build and CRUD execution run on GCC, Clang and MSVC in CI.
 
-For Doxygen compatibility, documentation generation unwraps module export blocks
-and preserves requires-clauses as comments in a generated source view. The
+Documentation generation preserves native module and export declarations.
+Doxygen 1.18.0 still misparses some dependent requires-clauses, so the generated
+source view preserves these clauses as comments. The
 original module sources remain the authority for compile-time constraints;
 the model and query guides explain their user-visible rules. This generated view
 is never compiled or installed as a header interface.
+Generated module-member and alphabetical-index links are resolved to existing
+anchors before the full HTML link check; unresolved links fail the build.
 
 ## Build configuration and macro policy
 

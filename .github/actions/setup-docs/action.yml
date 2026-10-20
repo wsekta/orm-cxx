@@ -1,0 +1,16 @@
+name: Set up documentation tools
+description: Install the pinned Doxygen and theme used for checks and publication
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.12'
+    - name: Install Graphviz
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install --no-install-recommends --yes graphviz
+    - name: Install pinned documentation tools
+      shell: bash
+      run: python scripts/setup_docs.py

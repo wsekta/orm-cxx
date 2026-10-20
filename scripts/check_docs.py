@@ -1,6 +1,6 @@
 """Validate Markdown, runnable snippets and the generated public API reference.
 
-Requires Python 3.12+, Doxygen 1.9.8+ and Graphviz. No C++ build or database
+Requires Python 3.12+, the pinned Doxygen 1.18.0 and Graphviz. No C++ build or database
 dependencies are needed. All generated files stay in build/docs.
 """
 
@@ -16,6 +16,8 @@ import subprocess
 import sys
 from urllib.parse import unquote, urlsplit
 import xml.etree.ElementTree as ET
+
+from setup_docs import DOXYGEN_VERSION, THEME, doxygen_binary
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,34 +95,13 @@ def check_snippets(root):
     return len(sources)
 
 
-def public_source(source):
-    """Present module declarations as C++ to Doxygen 1.9.8's pre-module parser.
+def documentation_source(source):
+    """Keep native modules; mask dependent constraints Doxygen still misparses.
 
-    This documentation-only view preserves declarations and their comments.
-    It is never installed, compiled, or used as a public-header fallback.
+    Doxygen 1.18.0 treats E::nullable in compound requires-clauses as a class
+    member definition. Comments retain the original expression and line numbers
+    in the source browser; the real module remains the constraint authority.
     """
-    # Unwrap export blocks without changing namespace or class scope. Braces in
-    # comments and literals must not influence the matching closing brace.
-    tokens = re.compile(r'//[^\n]*|/\*.*?\*/|R"[^\n(]{0,16}\(.*?\)[^\n"]{0,16}"|'
-                        r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\\n])\'', re.S)
-    masked = tokens.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), source)
-    characters = list(source)
-    for block in re.finditer(r"\bexport\s*\{", masked):
-        opening = block.end() - 1
-        depth = 1
-        closing = opening + 1
-        while closing < len(masked) and depth:
-            depth += (masked[closing] == "{") - (masked[closing] == "}")
-            closing += 1
-        if depth:
-            raise ValueError("Unbalanced C++ export block in documentation input")
-        for index in range(block.start(), opening + 1):
-            if characters[index] != "\n":
-                characters[index] = " "
-        characters[closing - 1] = " "
-    source = "".join(characters)
-    # Older Doxygen confuses dependent requires-clauses with data members.
-    # Keep them as source comments rather than inventing unconstrained API docs.
     lines = source.splitlines(keepends=True)
     constraint_indent = None
     for index, line in enumerate(lines):
@@ -131,9 +112,7 @@ def public_source(source):
             constraint_indent = None
         if constraint_indent is not None:
             lines[index] = "// " + line
-    source = "".join(lines)
-    source = re.sub(r"^(?:export\s+)?(?:module|import)\b[^;]*;", "", source, flags=re.M)
-    return re.sub(r"^(\s*)export\s+", r"\1", source, flags=re.M)
+    return "".join(lines)
 
 
 def prepare_inputs(root, work):
@@ -147,7 +126,7 @@ def prepare_inputs(root, work):
         relative = path.relative_to(root)
         target = stage / relative
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(public_source(path.read_text(encoding="utf-8")), encoding="utf-8")
+        target.write_text(documentation_source(path.read_text(encoding="utf-8")), encoding="utf-8")
     replacements = {}
     for name in ("Sqlite", "Postgresql", "Mysql", "Mariadb"):
         replacements[f"ORM_CXX_{name.upper()}_BACKEND_ENABLED"] = "true"
@@ -156,14 +135,14 @@ def prepare_inputs(root, work):
     for name in ("BuildConfig", "BackendRelations"):
         source = (root / f"cmake/{name}.cppm.in").read_text(encoding="utf-8")
         source = re.sub(r"@([A-Z_]+)@", lambda m: replacements[m[1]], source)
-        (stage / f"modules/{name}.cppm").write_text(public_source(source), encoding="utf-8")
+        (stage / f"modules/{name}.cppm").write_text(documentation_source(source), encoding="utf-8")
     for path in markdown_files(root):
         source = path.read_text(encoding="utf-8")
 
         def source_link(match):
             url = urlsplit(match[1])
-            # Doxygen 1.9.8 turns wrapped @ref labels into an unterminated
-            # quoted argument, exposing subsequent sections as literal markup.
+            # Keep @ref's quoted label on one line so wrapped prose cannot
+            # corrupt the generated link or subsequent Markdown sections.
             label = re.sub(r"\s+", " ", match[0][1:match[0].rfind("](")])
             link = f"[{label}]({match[1]})"
             if url.scheme or url.netloc:
@@ -198,8 +177,8 @@ def prepare_inputs(root, work):
             if marker:
                 fence = None if fence == marker[1] else marker[1]
             if not fence:
-                # Doxygen treats ::reflection as an explicit link even inside
-                # inline code, stripping :: when it cannot resolve the name.
+                # Even 1.18 resolves ::orm against known C++ namespaces inside
+                # inline code. Protect literal CMake targets in this source view.
                 line = line.replace("orm-cxx::", "orm-cxx::%")
             if not fence and re.match(r"^#{1,6}\s+", line):
                 slug = next(iter(anchors(line)))
@@ -293,13 +272,17 @@ def check_rendered_markdown(stage, directory):
     """Check every guide's structure and examples, not just linked anchors."""
     pages = {path.name: HTMLPage(path.read_text(encoding="utf-8"))
              for path in directory.glob("*.html")}
+    page_refs = {item.findtext("name"): item.get("refid") for item in
+                 ET.parse(directory.parent / "xml/index.xml").getroot().findall("compound")
+                 if item.get("kind") == "page"}
     for path in [*sorted((stage / "docs").glob("*.md")),
                  stage / "CONTRIBUTING.md", stage / "ROADMAP.md"]:
         source = path.read_text(encoding="utf-8")
         heading_ids = re.findall(r"^#{1,6} .*?\{#([^}]+)\}", prose(source), re.M)
         if not heading_ids:
             raise ValueError(f"{path.name}: missing page title")
-        name = "index.html" if path == stage / "docs/main.md" else heading_ids[0] + ".html"
+        name = "index.html" if path == stage / "docs/main.md" else \
+            page_refs.get(heading_ids[0], heading_ids[0]) + ".html"
         page = pages.get(name)
         if page is None:
             raise ValueError(f"{path.name}: missing rendered guide")
@@ -315,19 +298,6 @@ def check_rendered_markdown(stage, directory):
             raise ValueError(f"{path.name}: rendered code blocks differ from Markdown examples")
 
 
-def fix_hidden_class_navigation(directory):
-    # Doxygen 1.9.8 emits a Classes summary link even when EXTRACT_PRIVATE=NO
-    # or EXCLUDE_SYMBOLS hides that entire section. Remove only that empty
-    # summary item, never authored links or real public nested-class sections.
-    for path in directory.glob("*.html"):
-        source = path.read_text(encoding="utf-8")
-        if 'href="#nested-classes"' in source and "nested-classes" not in HTMLPage(source).anchors:
-            updated = re.sub(r'(<div class="summary">\s*)<a href="#nested-classes">Classes</a>\s*(?:&#124;)?',
-                             r'\1', source)
-            if updated != source:
-                path.write_text(updated, encoding="utf-8")
-
-
 def check_api(xml):
     index = ET.parse(xml / "index.xml").getroot()
     compounds = {item.findtext("name"): item for item in index.findall("compound")}
@@ -341,6 +311,77 @@ def check_api(xml):
         page = xml.parent / "html" / (compound.attrib["refid"] + ".html")
         if not page.is_file():
             raise ValueError(f"Doxygen reference is missing HTML page for {name}")
+    modules = {item.findtext("name"): item for item in index.findall("compound")
+               if item.get("kind") == "module"}
+    for name in ("orm", "orm.reflection"):
+        if name not in modules:
+            raise ValueError(f"Doxygen reference is missing named module {name}")
+        if not (xml.parent / "html" / (modules[name].get("refid") + ".html")).is_file():
+            raise ValueError(f"Doxygen reference is missing module HTML page for {name}")
+
+
+def fix_generator_links(directory, xml):
+    """Resolve Doxygen 1.18's generated module/index links to real anchors.
+
+    The crawl file points exported members at the module overview, although
+    their detailed anchors live on namespace/class pages. XML gives the actual
+    owner. The alphabetical index also uses '~' instead of its encoded ID.
+    Unknown or authored broken links remain errors in check_html.
+    """
+    pages = {path.name: HTMLPage(path.read_text(encoding="utf-8"))
+             for path in directory.glob("*.html")}
+    exports = {}
+    for module in ET.parse(xml / "index.xml").getroot().findall("compound"):
+        if module.get("kind") != "module":
+            continue
+        for member in module.findall("member"):
+            owner, _, anchor = member.get("refid").rpartition("_1")
+            exports[(module.get("refid") + ".html", anchor)] = owner + ".html#" + anchor
+    indexes = [directory / "doxygen_crawl.html", *sorted(directory.glob("functions*.html")),
+               *sorted(directory.glob("module__*.html"))]
+    for path in indexes:
+        if not path.is_file():
+            continue
+        source = path.read_text(encoding="utf-8")
+        original = source
+        if path.name.startswith("functions"):
+            # The related-symbol index has letter shortcuts but no headings.
+            # Attach each missing shortcut to its first matching visible entry.
+            missing = set(re.findall(r'href="#(index_[a-z])"', source)) - pages[path.name].anchors
+
+            def index_entry(match):
+                text = unescape(re.sub(r"<[^>]*>", "", match[1])).lstrip()
+                anchor = "index_" + text[:1].lower()
+                if anchor in missing:
+                    missing.remove(anchor)
+                    return f'<li><a id="{anchor}"></a>{match[1]}</li>'
+                return match[0]
+
+            source = re.sub(r"<li>(.*?)</li>", index_entry, source, flags=re.S)
+
+        def resolve(match):
+            url = urlsplit(unescape(match[1]))
+            target = url.path or path.name
+            if url.scheme or url.netloc or target not in pages or url.fragment in pages[target].anchors:
+                return match[0]
+            if target.startswith("module__") and url.fragment == "classes" and \
+                    "header-nested-classes" in pages[target].anchors:
+                return f'href="{url.path}#header-nested-classes"'
+            canonical = exports.get((target, url.fragment))
+            if canonical:
+                owner, anchor = canonical.split("#")
+                if owner in pages and anchor in pages[owner].anchors:
+                    return f'href="{canonical}"'
+            if target.startswith("functions") and url.fragment.startswith("index_"):
+                encoded = "index_" + "".join(char if char.isalnum() else f"_{ord(char):02X}"
+                                            for char in url.fragment[6:])
+                if encoded in pages[target].anchors:
+                    return f'href="{url.path}#{encoded}"'
+            return match[0]
+
+        updated = re.sub(r'href="([^"]+)"', resolve, source)
+        if updated != original:
+            path.write_text(updated, encoding="utf-8")
 
 
 def generate(root, work):
@@ -353,9 +394,11 @@ def generate(root, work):
             shutil.rmtree(directory)
     stage = prepare_inputs(root, work)
     config = (root / "Doxyfile").read_text(encoding="utf-8")
-    styles = [root / "doxygen-awesome-css" / name for name in
+    styles = [THEME / name for name in
               ("doxygen-awesome.css", "doxygen-awesome-sidebar-only.css")]
-    style_config = " ".join(f'"{p.as_posix()}"' for p in styles if p.is_file())
+    if not all(path.is_file() for path in styles):
+        raise ValueError("Install the pinned theme with python scripts/setup_docs.py")
+    style_config = " ".join(f'"{p.as_posix()}"' for p in styles)
     overrides = {
         "OUTPUT_DIRECTORY": f'"{work.as_posix()}"',
         "INPUT": '"docs" "modules" "CONTRIBUTING.md" "ROADMAP.md"',
@@ -365,7 +408,7 @@ def generate(root, work):
         "QUIET": "YES",
     }
     config += "\n" + "\n".join(f"{key} = {value}" for key, value in overrides.items()) + "\n"
-    result = subprocess.run(["doxygen", "-"], input=config, text=True, cwd=stage,
+    result = subprocess.run([str(doxygen_binary()), "-"], input=config, text=True, cwd=stage,
                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     warnings = work / "warnings.log"
     diagnostics = warnings.read_text(encoding="utf-8") if warnings.exists() else ""
@@ -374,7 +417,7 @@ def generate(root, work):
     if not (work / "html/index.html").is_file():
         raise ValueError("Doxygen did not generate html/index.html")
     check_api(work / "xml")
-    fix_hidden_class_navigation(work / "html")
+    fix_generator_links(work / "html", work / "xml")
     check_html(work / "html")
     check_rendered_markdown(stage, work / "html")
 
@@ -386,8 +429,12 @@ def main():
     try:
         links = check_links(ROOT)
         snippets = check_snippets(ROOT)
-        if not shutil.which("doxygen"):
-            raise ValueError("Install Doxygen 1.9.8+ and Graphviz before running this command")
+        binary = doxygen_binary()
+        if not binary.is_file():
+            raise ValueError("Install Doxygen with python scripts/setup_docs.py")
+        version = subprocess.check_output([str(binary), "--version"], text=True).strip()
+        if version.split()[0] != DOXYGEN_VERSION:
+            raise ValueError(f"Expected Doxygen {DOXYGEN_VERSION}, got {version}")
         work = args.output.resolve()
         work.mkdir(parents=True, exist_ok=True)
         generate(ROOT, work)

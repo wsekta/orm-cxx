@@ -1,7 +1,6 @@
 """Regression controls for failures that used to pass documentation CI."""
 
 from pathlib import Path
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -10,6 +9,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import check_docs as docs
+import setup_docs
 
 
 class DocumentationChecks(unittest.TestCase):
@@ -84,17 +84,53 @@ class DocumentationChecks(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "missing HTML page"):
                 docs.check_api(self.root / "xml")
 
-    def test_export_blocks_preserve_namespace_scope_and_ignore_literal_braces(self):
+    def test_native_module_declarations_and_export_blocks_are_preserved(self):
         source = 'export module orm;\nnamespace orm {\nexport {\nclass Database {\n' \
                  'const char* value = "}"; /* } */\n};\n}\n}\n'
-        result = docs.public_source(source)
-        self.assertNotIn("export", result)
-        self.assertIn('namespace orm {\n        \nclass Database', result)
-        self.assertTrue(result.endswith("};\n \n}\n"))
+        self.assertEqual(docs.documentation_source(source), source)
+
+    def test_corrupt_cached_tool_archive_is_rejected_before_extraction(self):
+        self.write("tools/downloads/tool.tar.gz", "corrupt download")
+        with patch.object(setup_docs, "TOOLS", self.root / "tools"), \
+                patch.object(setup_docs, "urlopen") as network:
+            with self.assertRaisesRegex(ValueError, "SHA-256 mismatch"):
+                setup_docs.download("https://example.invalid/tool.tar.gz", "tool.tar.gz", "0" * 64)
+            network.assert_not_called()
+
+    def test_missing_named_module_is_rejected(self):
+        self.write("xml/index.xml", '<doxygenindex><compound refid="module__orm" kind="module">'
+                   '<name>orm</name></compound></doxygenindex>')
+        self.write("html/module__orm.html", "Module orm")
+        with patch.dict(docs.REQUIRED, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, "missing named module orm.reflection"):
+                docs.check_api(self.root / "xml")
+
+    def test_generated_module_and_alphabetical_links_use_existing_anchors(self):
+        self.write("xml/index.xml", '<doxygenindex><compound refid="module__orm" kind="module">'
+                   '<member refid="namespace_orm_1a123"><name>value</name></member>'
+                   '</compound></doxygenindex>')
+        self.write("html/module__orm.html", '<a href="#classes">Classes</a>'
+                   '<h2 id="header-nested-classes">Classes</h2>')
+        self.write("html/namespace_orm.html", '<a id="a123"></a>')
+        self.write("html/functions_~.html", '<a id="index__7E"></a>')
+        self.write("html/functions_rela.html", '<a href="#index_d">D</a>'
+                   '<a href="#index_o">O</a><ul><li>Database</li><li>Other</li></ul>')
+        self.write("html/doxygen_crawl.html", '<a href="module__orm.html#a123">value</a>'
+                   '<a href="functions_~.html#index_~">~</a>'
+                   '<a href="module__orm.html#unknown">broken</a>')
+        docs.fix_generator_links(self.root / "html", self.root / "xml")
+        source = (self.root / "html/doxygen_crawl.html").read_text(encoding="utf-8")
+        self.assertIn('href="namespace_orm.html#a123"', source)
+        self.assertIn('href="functions_~.html#index__7E"', source)
+        self.assertIn('href="module__orm.html#unknown"', source)
+        module = (self.root / "html/module__orm.html").read_text(encoding="utf-8")
+        self.assertIn('href="#header-nested-classes"', module)
+        related = docs.HTMLPage((self.root / "html/functions_rela.html").read_text(encoding="utf-8"))
+        self.assertTrue({"index_d", "index_o"} <= related.anchors)
 
     def test_constraint_continuations_do_not_consume_declarations(self):
         source = 'template <typename T>\n    requires T::value &&\n             T::other\nauto get(T value);\n'
-        result = docs.public_source(source)
+        result = docs.documentation_source(source)
         self.assertIn('//     requires T::value', result)
         self.assertIn('\nauto get(T value);', result)
 
@@ -135,12 +171,15 @@ class DocumentationChecks(unittest.TestCase):
         docs.check_html(self.root / "html")
 
     def test_rendered_guides_preserve_headings_tables_and_code(self):
+        self.write("xml/index.xml", '<doxygenindex><compound kind="page" refid="_contributing">'
+                   '<name>CONTRIBUTING</name></compound></doxygenindex>')
         self.write("input/docs/main.md", '# Home {#home}\n\n## Example {#example}\n\n'
                    '| Feature | Detail |\n| --- | --- |\n| Keys | DDL |\n\n'
                    '```cpp\nimport orm;\nimport orm.reflection;\n```\n')
         for name in ("CONTRIBUTING", "ROADMAP"):
             self.write(f"input/{name}.md", f"# {name} {{#{name}}}\n")
-            self.write(f"html/{name}.html", f'<a id="{name}"></a>')
+            filename = "_contributing" if name == "CONTRIBUTING" else name
+            self.write(f"html/{filename}.html", f'<a id="{name}"></a>')
         source = '<a id="home"></a><h1><a id="example"></a>Example</h1>' \
                  '<table class="markdownTable"><tr><td>Keys</td><td>DDL</td></tr></table>' \
                  '<div class="fragment"><div class="line">import orm;</div>' \
@@ -156,22 +195,26 @@ class DocumentationChecks(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, error):
                     docs.check_rendered_markdown(self.root / "input", self.root / "html")
 
-    @unittest.skipUnless(shutil.which("doxygen"), "requires Doxygen")
+    @unittest.skipUnless(docs.doxygen_binary().is_file(), "run python scripts/setup_docs.py")
     def test_wrapped_link_label_does_not_corrupt_following_markdown(self):
         # Exercise the same staged Markdown and real Doxygen parser as publishing.
-        self.write("modules/test.cppm", "export module test;\n")
+        self.write("modules/test.cppm", 'export module test;\nnamespace orm {\nexport {\n'
+                   'class Value { public: int get() const; };\n}\n}\n')
         for name in ("SqliteBackendDeclarations", "PostgresqlBackendDeclarations",
                      "MysqlBackendDeclarations", "MariadbBackendDeclarations",
                      "BuildConfig", "BackendRelations"):
             self.write(f"cmake/{name}.cppm.in", "")
         self.write("docs/guide.md", "# Guide\n")
         self.write("docs/main.md", '# Home\n\nSee [Backend extension\ncontract](guide.md).\n\n'
+                   '`orm-cxx::orm-cxx` and `orm-cxx::reflection`.\n\n'
                    '## Layers\n\n1. **Public behavior** covers CRUD.\n\n'
                    '| Feature | Detail |\n| --- | --- |\n| Keys | DDL |\n\n'
                    '```cpp\nimport orm;\nimport orm.reflection;\n// [leave](guide.md)\n```\n')
         stage = docs.prepare_inputs(self.root, self.root / "work")
-        result = subprocess.run(["doxygen", "-"], cwd=stage, text=True,
-                                input='INPUT = docs\nRECURSIVE = YES\n'
+        result = subprocess.run([str(docs.doxygen_binary()), "-"], cwd=stage, text=True,
+                                input='INPUT = docs modules\nRECURSIVE = YES\n'
+                                'FILE_PATTERNS = *.md *.cppm\nEXTENSION_MAPPING = cppm=C++\n'
+                                'GENERATE_XML = YES\nEXTRACT_ALL = YES\n'
                                 'USE_MDFILE_AS_MAINPAGE = docs/main.md\n'
                                 'GENERATE_LATEX = NO\nQUIET = YES\n',
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -181,27 +224,17 @@ class DocumentationChecks(unittest.TestCase):
         self.assertNotIn("@section", "".join(page.text))
         self.assertIn('id="docs-main-layers"', source)
         self.assertIn('<table class="markdownTable">', source)
-        self.assertIn('<li><b>Public behavior</b>', source)
+        self.assertIn('Public behavior', "".join(page.text))
+        self.assertIn('<li>', source)
         self.assertIn('Backend extension contract</a>', source.replace("\n", ""))
         self.assertIn('// [leave](guide.md)', "".join(page.text))
-
-    def test_only_empty_private_class_summary_navigation_is_removed(self):
-        for name in ("classValue.html", "module_8cppm.html"):
-            self.write(f"html/{name}", '<div class="summary">\n'
-                       '<a href="#nested-classes">Classes</a> &#124;\n</div>'
-                       '<p><a href="#missing">Authored link</a></p>')
-        docs.fix_hidden_class_navigation(self.root / "html")
-        for name in ("classValue.html", "module_8cppm.html"):
-            source = (self.root / f"html/{name}").read_text()
-            self.assertNotIn('href="#nested-classes"', source)
-            self.assertIn('href="#missing"', source)
-
-    def test_real_public_nested_class_navigation_is_preserved(self):
-        source = '<div class="summary"><a href="#nested-classes">Classes</a></div>' \
-                 '<h2 id="nested-classes">Classes</h2>'
-        self.write("html/classValue.html", source)
-        docs.fix_hidden_class_navigation(self.root / "html")
-        self.assertEqual((self.root / "html/classValue.html").read_text(), source)
+        self.assertIn('orm-cxx::orm-cxx', "".join(page.text))
+        self.assertIn('orm-cxx::reflection', "".join(page.text))
+        compounds = {item.findtext("name"): item for item in
+                     docs.ET.parse(stage / "xml/index.xml").getroot().findall("compound")}
+        self.assertEqual(compounds["test"].get("kind"), "module")
+        self.assertEqual(compounds["orm::Value"].get("kind"), "class")
+        self.assertIn("get", [item.findtext("name") for item in compounds["orm::Value"].findall("member")])
 
 
 if __name__ == "__main__":
