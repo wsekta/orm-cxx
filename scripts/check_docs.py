@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 LINK = re.compile(r"\[[^\]]*\]\(([^\s)]+)\)")
 INCLUDE = re.compile(r"<!-- include: ([^\n]+) -->\s*```[^\n]*\n(.*?)\n```", re.S)
+FENCED = re.compile(r"^([ \t]*)(`{3,}|~{3,})[^\n]*\n(.*?)^\1\2[ \t]*$", re.M | re.S)
 REQUIRED = {
     "orm::Database": {"connect", "orm", "beginTransaction"},
     "orm::OrmContext": {"select", "insert", "update", "remove"},
@@ -39,8 +40,7 @@ def markdown_files(root):
 
 def prose(source):
     """Remove fenced examples so their comments aren't mistaken for headings."""
-    return re.sub(r"^([ \t]*)(`{3,}|~{3,})[^\n]*\n.*?^\1\2[^\n]*$", "", source,
-                  flags=re.M | re.S)
+    return FENCED.sub("", source)
 
 
 def anchors(source):
@@ -162,29 +162,41 @@ def prepare_inputs(root, work):
 
         def source_link(match):
             url = urlsplit(match[1])
+            # Doxygen 1.9.8 turns wrapped @ref labels into an unterminated
+            # quoted argument, exposing subsequent sections as literal markup.
+            label = re.sub(r"\s+", " ", match[0][1:match[0].rfind("](")])
+            link = f"[{label}]({match[1]})"
             if url.scheme or url.netloc:
-                return match[0]
+                return link
             target = (path.parent / unquote(url.path)).resolve() if url.path else path
             if target.suffix == ".md":
                 prefix = target.relative_to(root.resolve()).with_suffix("").as_posix().replace("/", "-")
                 heading = re.search(r"^#\s+(.+)$", target.read_text(encoding="utf-8"), re.M)
                 fragment = url.fragment or next(iter(anchors(heading[0])))
-                return match[0].replace(match[1], f"@ref {prefix}-{fragment}")
+                return f"[{label}](@ref {prefix}-{fragment})"
             relative = target.relative_to(root.resolve()).as_posix()
-            return match[0].replace(match[1], f"https://github.com/wsekta/orm-cxx/blob/main/{relative}")
+            return f"[{label}](https://github.com/wsekta/orm-cxx/blob/main/{relative})"
 
         target = stage / path.relative_to(root)
         target.parent.mkdir(parents=True, exist_ok=True)
         # Doxygen's automatic heading IDs differ from GitHub's Markdown slugs.
         # Give headings unique explicit IDs in this generated view only.
-        source = LINK.sub(source_link, source)
+        # Rewrite prose links only; examples must retain their literal content.
+        pieces = []
+        end = 0
+        for block in FENCED.finditer(source):
+            pieces.extend((LINK.sub(source_link, source[end:block.start()]), block[0]))
+            end = block.end()
+        pieces.append(LINK.sub(source_link, source[end:]))
+        source = "".join(pieces)
         prefix = path.relative_to(root).with_suffix("").as_posix().replace("/", "-")
         counts = Counter()
-        fence = False
+        fence = None
         lines = []
         for line in source.splitlines():
-            if re.match(r"\s*```", line):
-                fence = not fence
+            marker = re.match(r"\s*(`{3,}|~{3,})", line)
+            if marker:
+                fence = None if fence == marker[1] else marker[1]
             if not fence:
                 # Doxygen treats ::reflection as an explicit link even inside
                 # inline code, stripping :: when it cannot resolve the name.
@@ -206,16 +218,47 @@ class HTMLPage(HTMLParser):
         self.anchors = set()
         self.links = []
         self.text = []
+        self.prose = []
+        self.heading_anchors = set()
+        self.tables = 0
+        self.codeblocks = []
+        self.stack = []
         self.feed(source)
 
     def handle_starttag(self, tag, attributes):
         attrs = dict(attributes)
+        classes = attrs.get("class", "").split()
+        block = [] if (tag == "pre" or "fragment" in classes) and not any(
+            item[2] is not None for item in self.stack) else None
+        if block is not None:
+            self.codeblocks.append(block)
+        if tag == "table" and "markdownTable" in classes:
+            self.tables += 1
+        if re.fullmatch(r"h[1-6]", tag) or any(
+                re.fullmatch(r"h[1-6]", item[0]) for item in self.stack):
+            self.heading_anchors.update(attrs[key] for key in ("id", "name") if attrs.get(key))
         self.anchors.update(attrs[key] for key in ("id", "name") if attrs.get(key))
         if attrs.get("href"):
             self.links.append(attrs["href"])
+        if tag not in {"area", "base", "br", "col", "embed", "hr", "img", "input",
+                       "link", "meta", "param", "source", "track", "wbr"}:
+            self.stack.append((tag, classes, block))
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, -1, -1):
+            if self.stack[index][0] == tag:
+                del self.stack[index:]
+                break
 
     def handle_data(self, data):
         self.text.append(data)
+        for _, _, block in self.stack:
+            # Doxygen appends hidden symbol tooltips inside fragment containers.
+            if block is not None and not any("ttc" in classes for _, classes, _ in self.stack):
+                block.append(data)
+        if not any(tag in {"code", "pre", "script", "style"} or "fragment" in classes
+                   for tag, classes, _ in self.stack):
+            self.prose.append(data)
 
 
 def check_html(directory):
@@ -224,6 +267,10 @@ def check_html(directory):
     pages = {name: HTMLPage(path.read_text(encoding="utf-8"))
              for name, path in files.items() if name.endswith(".html")}
     for name, page in pages.items():
+        if re.search(r"(?:@|\\)(?:section|subsection|ref)\s|"
+                     r"</?(?:strong|table|tr|th|td|tt|ul|ol|li|h[1-6])(?:\s[^>]*)?>",
+                     "".join(page.prose)):
+            raise ValueError(f"{name}: unrendered markup in visible text")
         for link in page.links:
             url = urlsplit(link)
             if url.scheme or url.netloc:
@@ -240,6 +287,32 @@ def check_html(directory):
     for name in ("orm-cxx::orm-cxx", "orm-cxx::reflection"):
         if name not in "".join(index.text):
             raise ValueError(f"Doxygen changed the spelling of {name} in the main page")
+
+
+def check_rendered_markdown(stage, directory):
+    """Check every guide's structure and examples, not just linked anchors."""
+    pages = {path.name: HTMLPage(path.read_text(encoding="utf-8"))
+             for path in directory.glob("*.html")}
+    for path in [*sorted((stage / "docs").glob("*.md")),
+                 stage / "CONTRIBUTING.md", stage / "ROADMAP.md"]:
+        source = path.read_text(encoding="utf-8")
+        heading_ids = re.findall(r"^#{1,6} .*?\{#([^}]+)\}", prose(source), re.M)
+        if not heading_ids:
+            raise ValueError(f"{path.name}: missing page title")
+        name = "index.html" if path == stage / "docs/main.md" else heading_ids[0] + ".html"
+        page = pages.get(name)
+        if page is None:
+            raise ValueError(f"{path.name}: missing rendered guide")
+        missing = set(heading_ids[1:]) - page.heading_anchors
+        if missing:
+            raise ValueError(f"{path.name}: missing rendered headings {sorted(missing)}")
+        tables = len(re.findall(r"^\s*\|?\s*:?-{3,}:?\s*\|.*$", prose(source), re.M))
+        if page.tables != tables:
+            raise ValueError(f"{path.name}: expected {tables} rendered tables, got {page.tables}")
+        expected = [re.sub(r"\s+", "", block[3]) for block in FENCED.finditer(source)]
+        actual = [re.sub(r"\s+", "", "".join(block)) for block in page.codeblocks]
+        if expected != actual:
+            raise ValueError(f"{path.name}: rendered code blocks differ from Markdown examples")
 
 
 def fix_hidden_class_navigation(directory):
@@ -303,6 +376,7 @@ def generate(root, work):
     check_api(work / "xml")
     fix_hidden_class_navigation(work / "html")
     check_html(work / "html")
+    check_rendered_markdown(stage, work / "html")
 
 
 def main():

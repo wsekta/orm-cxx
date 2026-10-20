@@ -1,6 +1,8 @@
 """Regression controls for failures that used to pass documentation CI."""
 
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -116,6 +118,72 @@ class DocumentationChecks(unittest.TestCase):
                    '<a href="guide.html#start">Start</a>')
         self.write("html/guide.html", '<h1 id="start">Start</h1><a href="index.html">Home</a>')
         docs.check_html(self.root / "html")
+
+    def test_escaped_formatting_outside_code_is_rejected(self):
+        for leak in ('@section broken Title', '&lt;strong&gt;Public behavior&lt;/strong&gt;',
+                     '&lt;table class="markdownTable"&gt;'):
+            with self.subTest(leak=leak):
+                self.write("html/index.html", '<p>orm-cxx::reflection orm-cxx::orm-cxx</p>'
+                           f'<div class="textblock"><p>{leak}</p></div>')
+                with self.assertRaisesRegex(ValueError, "unrendered markup"):
+                    docs.check_html(self.root / "html")
+
+    def test_literal_markup_in_code_is_preserved(self):
+        self.write("html/index.html", '<p>orm-cxx::reflection orm-cxx::orm-cxx</p>'
+                   '<code>&lt;strong&gt; @section example</code>'
+                   '<div class="fragment"><div class="line">&lt;table&gt;</div></div>')
+        docs.check_html(self.root / "html")
+
+    def test_rendered_guides_preserve_headings_tables_and_code(self):
+        self.write("input/docs/main.md", '# Home {#home}\n\n## Example {#example}\n\n'
+                   '| Feature | Detail |\n| --- | --- |\n| Keys | DDL |\n\n'
+                   '```cpp\nimport orm;\nimport orm.reflection;\n```\n')
+        for name in ("CONTRIBUTING", "ROADMAP"):
+            self.write(f"input/{name}.md", f"# {name} {{#{name}}}\n")
+            self.write(f"html/{name}.html", f'<a id="{name}"></a>')
+        source = '<a id="home"></a><h1><a id="example"></a>Example</h1>' \
+                 '<table class="markdownTable"><tr><td>Keys</td><td>DDL</td></tr></table>' \
+                 '<div class="fragment"><div class="line">import orm;</div>' \
+                 '<div class="line">import orm.reflection;</div>' \
+                 '<div class="ttc">Hidden symbol tooltip</div></div>'
+        self.write("html/index.html", source)
+        docs.check_rendered_markdown(self.root / "input", self.root / "html")
+        for broken, error in ((source.replace('h1>', 'p>'), "missing rendered headings"),
+                              (source.replace('markdownTable', 'broken'), "rendered tables"),
+                              (source.replace('import orm.reflection;', ''), "rendered code blocks")):
+            with self.subTest(error=error):
+                self.write("html/index.html", broken)
+                with self.assertRaisesRegex(ValueError, error):
+                    docs.check_rendered_markdown(self.root / "input", self.root / "html")
+
+    @unittest.skipUnless(shutil.which("doxygen"), "requires Doxygen")
+    def test_wrapped_link_label_does_not_corrupt_following_markdown(self):
+        # Exercise the same staged Markdown and real Doxygen parser as publishing.
+        self.write("modules/test.cppm", "export module test;\n")
+        for name in ("SqliteBackendDeclarations", "PostgresqlBackendDeclarations",
+                     "MysqlBackendDeclarations", "MariadbBackendDeclarations",
+                     "BuildConfig", "BackendRelations"):
+            self.write(f"cmake/{name}.cppm.in", "")
+        self.write("docs/guide.md", "# Guide\n")
+        self.write("docs/main.md", '# Home\n\nSee [Backend extension\ncontract](guide.md).\n\n'
+                   '## Layers\n\n1. **Public behavior** covers CRUD.\n\n'
+                   '| Feature | Detail |\n| --- | --- |\n| Keys | DDL |\n\n'
+                   '```cpp\nimport orm;\nimport orm.reflection;\n// [leave](guide.md)\n```\n')
+        stage = docs.prepare_inputs(self.root, self.root / "work")
+        result = subprocess.run(["doxygen", "-"], cwd=stage, text=True,
+                                input='INPUT = docs\nRECURSIVE = YES\n'
+                                'USE_MDFILE_AS_MAINPAGE = docs/main.md\n'
+                                'GENERATE_LATEX = NO\nQUIET = YES\n',
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        source = (stage / "html/index.html").read_text(encoding="utf-8")
+        page = docs.HTMLPage(source)
+        self.assertNotIn("@section", "".join(page.text))
+        self.assertIn('id="docs-main-layers"', source)
+        self.assertIn('<table class="markdownTable">', source)
+        self.assertIn('<li><b>Public behavior</b>', source)
+        self.assertIn('Backend extension contract</a>', source.replace("\n", ""))
+        self.assertIn('// [leave](guide.md)', "".join(page.text))
 
     def test_only_empty_private_class_summary_navigation_is_removed(self):
         for name in ("classValue.html", "module_8cppm.html"):

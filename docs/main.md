@@ -4,16 +4,21 @@ ORM C++ is a C++20 ORM that maps plain aggregate structs to database tables
 using compile-time reflection. It ships with SQLite, PostgreSQL, MySQL and MariaDB backends
 built on SOCI.
 
-The public API consists of two named modules:
+Import the ORM with its named module:
 
 ```cpp
-#include <string>
 import orm;
 ```
 
-`import orm.reflection;` provides the independent reflection layer. Link
-`orm-cxx::orm-cxx` or `orm-cxx::reflection` respectively. Both are compiled CMake
-targets. Standard-library headers remain ordinary includes.
+Link the CMake target `orm-cxx::orm-cxx`.
+For standalone compile-time reflection, use the separate module instead:
+
+```cpp
+import orm.reflection;
+```
+
+Link the CMake target `orm-cxx::reflection`. Both targets are compiled libraries.
+Include any standard-library headers used by your application in the usual way.
 
 **Build requirements:** CMake 3.31+, Ninja 1.11+,
 GCC 15+, Clang 18+, or MSVC 19.50+. Installed packages include module interface
