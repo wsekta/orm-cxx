@@ -1,0 +1,20 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "codex-ci-webhook",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-20",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "durable_objects": {
+    "bindings": [{ "name": "REPOSITORIES", "class_name": "RepositoryEvents" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RepositoryEvents"] }],
+  "vars": {
+    "REPOSITORY_CONFIG": "{\"wsekta/orm-cxx\":{\"branch\":\"main\",\"workflows\":[\"GCC\",\"MSVC\",\"Quality\",\"Backend conformance\",\"Clang\",\"Packages\",\"Docs\"]}}"
+  },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true },
+    "traces": { "enabled": true, "head_sampling_rate": 0.01 }
+  }
+}

@@ -10,6 +10,32 @@ permissions:
   contents: read
 
 jobs:
+  ci-webhook:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/ci-webhook
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tools/ci-webhook/package-lock.json
+      - name: Install dependencies
+        run: npm ci
+      - name: Check types and webhook delivery
+        run: |
+          npm run types
+          npm run check
+          npm test
+          npm run test:bridge
+          npm run test:transport
+          npm run bundle
+
   macros:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
