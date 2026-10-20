@@ -95,73 +95,52 @@ $(document).ready(function(){initNavTree('docs-backend-portability-backend-porta
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p><code>orm-cxx</code> treats SQLite, PostgreSQL, MySQL and MariaDB as equal adapters. All backend selections are explicit and default to disabled. Its portability layer requires live behavior verification instead of treating an enum value or a generated SQL string as proof of backend support.</p>
-<p>This document defines the portability boundary. See <a class="el" href="docs-backends-backends.html">Backends</a> for the support status visible to users and <a class="el" href="docs-backend-extension-backend-extension-contract.html">Backend extension</a>contract" for the contributor-facing implementation
-requirements.
-
-@section docs-backend-portability-portability-layers Portability layers
-
-Database support is split into three layers:
-
-1. &lt;strong&gt;Public ORM behavior&lt;/strong&gt; covers connection lifecycle, schema operations,
-   binding and hydration, CRUD, affected-row reporting, transactions, queries,
-   and relations. Reusable backend conformance tests define this layer.
-2. &lt;strong&gt;Backend adapter&lt;/strong&gt; splits into a dialect for database-specific SQL and a
-   runtime for session behavior. Identifier quoting, pagination syntax,
-   generated-key DDL, and idempotent relation mutations belong to the dialect;
-   session initialization, catalog access, limits, and driver errors belong to
-   the runtime.
-3. &lt;strong&gt;SOCI transport&lt;/strong&gt; opens the driver session and exchanges prepared statement
-   values. SOCI is transport infrastructure; using a SOCI backend does not by
-   itself make the ORM behavior portable or supported.
-
-Backend selection, capabilities, and limits must be resolved before an ORM
-operation generates SQL. Core code must not accumulate scattered checks such as
-&lt;tt&gt;if (backend == ...)&lt;/tt&gt;.
-
-@section docs-backend-portability-portable-behavior Portable behavior
-
-A backend advertised as supported must pass the common conformance profile for
-the public behavior it advertises. The core profile includes:
-
-- connecting, disconnecting, and reconnecting with deterministic errors;
-- table creation and removal for supported model shapes;
-- prepared binding and hydration of supported scalar and nullable values;
-- insert, full-model and projection select, filtered update, and filtered
-  remove;
-- exact affected-row counts where the public API returns a count;
-- commit and rollback behavior;
-- deterministic ordering and pagination;
-- primary keys, composite keys, mapped names, and supported relations;
-- consistent error categories independent of vendor message text.
-
-Tests that compare rows positionally must request an explicit order. Generated
-keys are tested for uniqueness and usability, not for a vendor-specific starting
-value. Backend-specific SQL snapshots are dialect tests rather than conformance
-tests.
-
-@section docs-backend-portability-capabilities-and-dialect-differences Capabilities and dialect differences
-
-A capability describes user-visible behavior that a backend may genuinely be
-unable to provide. A dialect difference describes how an advertised behavior is
-implemented.
-
-&lt;table class="markdownTable"&gt;
-  &lt;tr class="markdownTableHead"&gt;    &lt;th class="markdownTableHeadNone"&gt; Capability or limit   </p>
-<p>Dialect detail    </p>
-<p>Database-generated integer keys   </p>
-<p>Generated-column syntax    </p>
-<p>Full-model grouping semantics   </p>
-<p><code>GROUP BY</code> rendering or an equivalent query    </p>
-<p>Collection-relation support   </p>
-<p>Junction DDL and idempotent link syntax    </p>
-<p>Enforced foreign keys   </p>
-<p>Session setup such as SQLite pragmas    </p>
-<p>Native date, time, or UUID types   </p>
-<p>Concrete SQL type name    </p>
-<p>Maximum bind-parameter count   </p>
-<p>How placeholders are written    </p>
-<p>Maximum lossless numeric exchange value   </p>
-<p>Driver representation used for binding   </p>
+<p>This document defines the portability boundary. See <a class="el" href="docs-backends-backends.html">Backends</a> for the support status visible to users and <a class="el" href="docs-backend-extension-backend-extension-contract.html">Backend extension contract</a> for the contributor-facing implementation requirements.</p>
+<h1><a class="anchor" id="docs-backend-portability-portability-layers"></a>
+Portability layers</h1>
+<p>Database support is split into three layers:</p>
+<ol type="1">
+<li><b>Public ORM behavior</b> covers connection lifecycle, schema operations, binding and hydration, CRUD, affected-row reporting, transactions, queries, and relations. Reusable backend conformance tests define this layer.</li>
+<li><b>Backend adapter</b> splits into a dialect for database-specific SQL and a runtime for session behavior. Identifier quoting, pagination syntax, generated-key DDL, and idempotent relation mutations belong to the dialect; session initialization, catalog access, limits, and driver errors belong to the runtime.</li>
+<li><b>SOCI transport</b> opens the driver session and exchanges prepared statement values. SOCI is transport infrastructure; using a SOCI backend does not by itself make the ORM behavior portable or supported.</li>
+</ol>
+<p>Backend selection, capabilities, and limits must be resolved before an ORM operation generates SQL. Core code must not accumulate scattered checks such as <code>if (backend == ...)</code>.</p>
+<h1><a class="anchor" id="docs-backend-portability-portable-behavior"></a>
+Portable behavior</h1>
+<p>A backend advertised as supported must pass the common conformance profile for the public behavior it advertises. The core profile includes:</p>
+<ul>
+<li>connecting, disconnecting, and reconnecting with deterministic errors;</li>
+<li>table creation and removal for supported model shapes;</li>
+<li>prepared binding and hydration of supported scalar and nullable values;</li>
+<li>insert, full-model and projection select, filtered update, and filtered remove;</li>
+<li>exact affected-row counts where the public API returns a count;</li>
+<li>commit and rollback behavior;</li>
+<li>deterministic ordering and pagination;</li>
+<li>primary keys, composite keys, mapped names, and supported relations;</li>
+<li>consistent error categories independent of vendor message text.</li>
+</ul>
+<p>Tests that compare rows positionally must request an explicit order. Generated keys are tested for uniqueness and usability, not for a vendor-specific starting value. Backend-specific SQL snapshots are dialect tests rather than conformance tests.</p>
+<h1><a class="anchor" id="docs-backend-portability-capabilities-and-dialect-differences"></a>
+Capabilities and dialect differences</h1>
+<p>A capability describes user-visible behavior that a backend may genuinely be unable to provide. A dialect difference describes how an advertised behavior is implemented.</p>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Capability or limit   </th><th class="markdownTableHeadNone">Dialect detail    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Database-generated integer keys   </td><td class="markdownTableBodyNone">Generated-column syntax    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Full-model grouping semantics   </td><td class="markdownTableBodyNone"><code>GROUP BY</code> rendering or an equivalent query    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Collection-relation support   </td><td class="markdownTableBodyNone">Junction DDL and idempotent link syntax    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Enforced foreign keys   </td><td class="markdownTableBodyNone">Session setup such as SQLite pragmas    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Native date, time, or UUID types   </td><td class="markdownTableBodyNone">Concrete SQL type name    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Maximum bind-parameter count   </td><td class="markdownTableBodyNone">How placeholders are written    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Maximum lossless numeric exchange value   </td><td class="markdownTableBodyNone">Driver representation used for binding   </td></tr>
+</table>
 <p>Capabilities and numeric limits are reported centrally by the selected backend. If an optional feature is unavailable, the ORM must reject it predictably before issuing SQL. Syntax differences such as quoting, <code>IF EXISTS</code>, upsert forms, or offset-without-limit are responsibilities of the dialect and should not require application feature checks.</p>
 <h1><a class="anchor" id="docs-backend-portability-binding-and-soci"></a>
 Binding and SOCI</h1>
