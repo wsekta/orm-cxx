@@ -1,7 +1,9 @@
 var searchData=
 [
-  ['package_20managers_20and_20releases_0',['Package managers and releases',['../docs-packaging-package-managers-and-releases.html',1,'']]],
-  ['partial_20result_20queries_1',['Partial-result queries',['../docs-partial-result-queries-partial-result-queries.html',1,'']]],
-  ['plans_2',['Static query plans',['../docs-static-queries-static-query-plans.html',1,'']]],
-  ['portability_3',['Backend portability',['../docs-backend-portability-backend-portability.html',1,'']]]
+  ['if_20the_20build_20fails_0',['If the build fails',['../docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-if-the-build-fails',1,'']]],
+  ['increment_20primary_20key_1',['Auto-increment primary key',['../docs-model-model.html#docs-model-auto-increment-primary-key',1,'']]],
+  ['insert_20objects_2',['Insert objects',['../docs-database-database.html#docs-database-insert-objects',1,'']]],
+  ['installation_3',['installation',['../docs-modules-c20-modules.html#docs-modules-cmake-consumers-and-installation',1,'CMake consumers and installation'],['../docs-packaging-package-managers-and-releases.html#docs-packaging-native-cmake-installation',1,'Native CMake installation']]],
+  ['integration_4',['Build and CI integration',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-build-and-ci-integration',1,'']]],
+  ['integration_20reference_5',['Integration reference',['../index.html#docs-main-integration-reference',1,'']]]
 ];

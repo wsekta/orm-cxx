@@ -1,0 +1,11 @@
+<map id="modules/orm/foundation.cppm" name="modules/orm/foundation.cppm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,5,228,31"/>
+<area shape="rect" id="Node000002" href="$orm_8cppm.html" title=" " alt="" coords="26,79,207,104"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="119,31,119,65,114,65,114,31"/>
+<area shape="poly" id="edge3_Node000002_Node000002" title=" " alt="" coords="170,76,213,77,228,82,234,91,229,100,218,104,184,107,184,102,217,99,226,96,229,91,225,86,212,82,170,81"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="17,152,96,177"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="109,106,77,143,73,140,105,103"/>
+<area shape="rect" id="Node000004" href="$orm_8reflection_8cppm.html" title=" " alt="" coords="120,152,233,177"/>
+<area shape="poly" id="edge4_Node000002_Node000004" title=" " alt="" coords="129,103,160,140,156,143,125,106"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="215,149,245,151,256,156,260,165,257,172,250,177,229,181,228,176,248,172,253,169,255,165,252,159,244,156,214,155"/>
+</map>

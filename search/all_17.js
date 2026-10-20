@@ -10,5 +10,5 @@ var searchData=
   ['wrappers_7',['Collection wrappers',['../docs-relations-collection-relations.html#docs-relations-collection-wrappers',1,'']]],
   ['write_20predicates_8',['Write predicates',['../docs-query-query.html#docs-query-write-predicates',1,'']]],
   ['writes_9',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
-  ['writesafe_10',['writesafe',['../classorm_1_1query_1_1TypedPredicate.html#a427917e6c61d43849c50bee8391bc9f4',1,'orm::query::TypedPredicate::writeSafe'],['../classorm_1_1query_1_1TypedColumn.html#a1f21db9a8836dbdf678e234c19a11d44',1,'orm::query::TypedColumn::writeSafe']]]
+  ['writesafe_10',['writeSafe',['../classorm_1_1query_1_1TypedAggregatePredicate.html#aa8a98f9ae8806b4652ffcf81995fb04d',1,'orm::query::TypedAggregatePredicate::writeSafe'],['../classorm_1_1query_1_1TypedAggregate.html#a79f6d174707af85242bfdcd844922ed2',1,'orm::query::TypedAggregate::writeSafe'],['../classorm_1_1query_1_1TypedPredicate.html#a427917e6c61d43849c50bee8391bc9f4',1,'orm::query::TypedPredicate::writeSafe'],['../classorm_1_1query_1_1TypedColumn.html#a1f21db9a8836dbdf678e234c19a11d44',1,'orm::query::TypedColumn::writeSafe']]]
 ];

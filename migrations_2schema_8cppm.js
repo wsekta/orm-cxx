@@ -16,24 +16,24 @@ var migrations_2schema_8cppm =
     [ "orm::migrations::GenerationDiagnostic", "structorm_1_1migrations_1_1GenerationDiagnostic.html", "structorm_1_1migrations_1_1GenerationDiagnostic" ],
     [ "orm::migrations::SchemaDiff", "structorm_1_1migrations_1_1SchemaDiff.html", "structorm_1_1migrations_1_1SchemaDiff" ],
     [ "orm::migrations::GenerationError", "classorm_1_1migrations_1_1GenerationError.html", "classorm_1_1migrations_1_1GenerationError" ],
-    [ "GenerationLiteral", "migrations_2schema_8cppm.html#a89de2c58e4cca2a2e5ccf4c8fd4412f5", null ],
-    [ "MigrationExecutionMode", "migrations_2schema_8cppm.html#ae1b6062b3cc928c1d4d91ffb37622e87", [
-      [ "Normal", "migrations_2schema_8cppm.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0", null ],
-      [ "SqliteRebuild", "migrations_2schema_8cppm.html#ae1b6062b3cc928c1d4d91ffb37622e87a4671c13cf009a082b84b4d3ac5153355", null ]
+    [ "orm::migrations::GenerationLiteral", "namespaceorm_1_1migrations.html#a4db4a96f4171365b5885196f80a2ec9b", null ],
+    [ "orm::migrations::MigrationExecutionMode", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87", [
+      [ "orm::migrations::MigrationExecutionMode::Normal", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0", null ],
+      [ "orm::migrations::MigrationExecutionMode::SqliteRebuild", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a4671c13cf009a082b84b4d3ac5153355", null ]
     ] ],
-    [ "SchemaChangeKind", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2a", [
-      [ "CreateTable", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa1fa24322658be6593b45830a90090633", null ],
-      [ "DropTable", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aac15482dc66db828064ede1bf185a0ddb", null ],
-      [ "RenameTable", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aacfd36fe6eb39ad71579c9e4cb6fc9000", null ],
-      [ "AddColumn", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa9d09da8088dfd4ae6d6d2ba8dd936524", null ],
-      [ "DropColumn", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aaf84131bd785e806ab64e871409f2811a", null ],
-      [ "RenameColumn", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa7e916660dbc4f5e8c79bd4d732202512", null ],
-      [ "AlterColumn", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aab5f9f7c7d4e2b1513e016e0fc84eb36b", null ],
-      [ "AlterPrimaryKey", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa03d8206f9f633c01b469f6750c67843d", null ],
-      [ "AddForeignKey", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa44bb5ac38bbe3d3a7f693111623df183", null ],
-      [ "DropForeignKey", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aaa98a0ac1720147bb3ea1aadf9e2be33d", null ],
-      [ "AddIndex", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa3c125ce2c97a2c96ca41754cfca9942d", null ],
-      [ "DropIndex", "migrations_2schema_8cppm.html#af481b86e67d27f1d123603cfcddd2f2aa2a1ba782e13d9c832c73db3e90f153d3", null ]
+    [ "orm::migrations::SchemaChangeKind", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2a", [
+      [ "orm::migrations::SchemaChangeKind::CreateTable", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa1fa24322658be6593b45830a90090633", null ],
+      [ "orm::migrations::SchemaChangeKind::DropTable", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aac15482dc66db828064ede1bf185a0ddb", null ],
+      [ "orm::migrations::SchemaChangeKind::RenameTable", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aacfd36fe6eb39ad71579c9e4cb6fc9000", null ],
+      [ "orm::migrations::SchemaChangeKind::AddColumn", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa9d09da8088dfd4ae6d6d2ba8dd936524", null ],
+      [ "orm::migrations::SchemaChangeKind::DropColumn", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aaf84131bd785e806ab64e871409f2811a", null ],
+      [ "orm::migrations::SchemaChangeKind::RenameColumn", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa7e916660dbc4f5e8c79bd4d732202512", null ],
+      [ "orm::migrations::SchemaChangeKind::AlterColumn", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aab5f9f7c7d4e2b1513e016e0fc84eb36b", null ],
+      [ "orm::migrations::SchemaChangeKind::AlterPrimaryKey", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa03d8206f9f633c01b469f6750c67843d", null ],
+      [ "orm::migrations::SchemaChangeKind::AddForeignKey", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa44bb5ac38bbe3d3a7f693111623df183", null ],
+      [ "orm::migrations::SchemaChangeKind::DropForeignKey", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aaa98a0ac1720147bb3ea1aadf9e2be33d", null ],
+      [ "orm::migrations::SchemaChangeKind::AddIndex", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa3c125ce2c97a2c96ca41754cfca9942d", null ],
+      [ "orm::migrations::SchemaChangeKind::DropIndex", "namespaceorm_1_1migrations.html#af481b86e67d27f1d123603cfcddd2f2aa2a1ba782e13d9c832c73db3e90f153d3", null ]
     ] ],
-    [ "generationBackends", "migrations_2schema_8cppm.html#a515daca392648b572a887dc846583ccd", null ]
+    [ "orm::migrations::generationBackends", "namespaceorm_1_1migrations.html#a515daca392648b572a887dc846583ccd", null ]
 ];

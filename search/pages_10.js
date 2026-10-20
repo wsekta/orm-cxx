@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['package_20managers_20and_20releases_0',['Package managers and releases',['../docs-packaging-package-managers-and-releases.html',1,'']]],
+  ['package_20verification_1',['Local package verification',['../docs-packaging-package-managers-and-releases.html#docs-packaging-local-package-verification',1,'']]],
+  ['partial_20result_20queries_2',['Partial result queries',['../docs-partial-result-queries-partial-result-queries.html',1,'Partial-result queries'],['../docs-query-query.html#docs-query-partial-result-queries',1,'Partial-result queries']]],
+  ['plans_3',['Static query plans',['../docs-static-queries-static-query-plans.html',1,'']]],
+  ['points_4',['Concrete extension points',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-concrete-extension-points',1,'']]],
+  ['policy_5',['policy',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-build-configuration-and-macro-policy',1,'Build configuration and macro policy'],['../docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-coverage-policy',1,'Coverage policy']]],
+  ['portability_6',['portability',['../docs-backend-portability-backend-portability.html',1,'Backend portability'],['../docs-backends-backends.html#docs-backends-raw-sql-portability',1,'Raw SQL portability']]],
+  ['portability_20layers_7',['Portability layers',['../docs-backend-portability-backend-portability.html#docs-backend-portability-portability-layers',1,'']]],
+  ['portable_20behavior_8',['Portable behavior',['../docs-backend-portability-backend-portability.html#docs-backend-portability-portable-behavior',1,'']]],
+  ['postgresql_9',['PostgreSQL',['../docs-backends-backends.html#docs-backends-postgresql',1,'']]],
+  ['predicates_10',['predicates',['../docs-query-query.html#docs-query-collection-predicates',1,'Collection predicates'],['../docs-query-query.html#docs-query-where-predicates',1,'Where predicates'],['../docs-query-query.html#docs-query-write-predicates',1,'Write predicates']]],
+  ['presets_11',['CMake Presets',['../docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-cmake-presets',1,'']]],
+  ['presets_20and_20ci_20equivalent_20commands_12',['Presets and CI-equivalent commands',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-presets-and-ci-equivalent-commands',1,'']]],
+  ['primary_20key_13',['Primary key',['../docs-model-model.html#docs-model-primary-key',1,'']]],
+  ['primary_20key_14',['Auto-increment primary key',['../docs-model-model.html#docs-model-auto-increment-primary-key',1,'']]],
+  ['principles_15',['Roadmap Principles',['../ROADMAP-orm-c-roadmap.html#ROADMAP-roadmap-principles',1,'']]],
+  ['project_20files_16',['Project files',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-project-files',1,'']]],
+  ['projection_20queries_17',['Aggregate projection queries',['../docs-query-query.html#docs-query-aggregate-projection-queries',1,'']]],
+  ['projections_20and_20writes_18',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
+  ['publishing_19',['Maintainer setup and publishing',['../docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing',1,'']]],
+  ['pull_20request_20',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]]
+];

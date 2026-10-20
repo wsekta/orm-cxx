@@ -8,37 +8,41 @@ var annotated_dup =
           [ "CollectionPayload", "structorm_1_1db_1_1binding_1_1CollectionPayload.html", "structorm_1_1db_1_1binding_1_1CollectionPayload" ],
           [ "ConversionError", "classorm_1_1db_1_1binding_1_1ConversionError.html", "classorm_1_1db_1_1binding_1_1ConversionError" ],
           [ "IsOptional", "structorm_1_1db_1_1binding_1_1IsOptional.html", null ],
-          [ "IsOptional< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
+          [ "IsOptional&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
           [ "IsOptionalBoundField", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField.html", null ],
-          [ "IsOptionalBoundField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4" ],
+          [ "IsOptionalBoundField&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4" ],
           [ "IsOptionalScalarField", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField.html", null ],
-          [ "IsOptionalScalarField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4" ],
+          [ "IsOptionalScalarField&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4" ],
           [ "ObjectFieldFromProjectionValues", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues.html", null ],
-          [ "ObjectFieldFromProjectionValues< ResultField >", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html", null ],
-          [ "ObjectFieldFromProjectionValues< std::optional< ResultField > >", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html", null ],
+          [ "ObjectFieldFromProjectionValues&lt; ResultField &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html", null ],
+          [ "ObjectFieldFromProjectionValues&lt; std::optional&lt; ResultField &gt; &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html", null ],
           [ "ObjectFieldFromProjectionValuesWithCast", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html", null ],
           [ "ObjectFieldFromValues", "structorm_1_1db_1_1binding_1_1ObjectFieldFromValues.html", null ],
           [ "ObjectFieldToValues", "structorm_1_1db_1_1binding_1_1ObjectFieldToValues.html", null ],
           [ "OptionalValue", "structorm_1_1db_1_1binding_1_1OptionalValue.html", "structorm_1_1db_1_1binding_1_1OptionalValue" ],
-          [ "OptionalValue< std::optional< T > >", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4" ],
+          [ "OptionalValue&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4" ],
           [ "PrimaryKeyLess", "structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html", "structorm_1_1db_1_1binding_1_1PrimaryKeyLess" ],
           [ "ProjectionPayload", "structorm_1_1db_1_1binding_1_1ProjectionPayload.html", "structorm_1_1db_1_1binding_1_1ProjectionPayload" ]
         ] ],
         [ "mariadb", "namespaceorm_1_1db_1_1mariadb.html", [
+          [ "MariadbDialect", "classorm_1_1db_1_1mariadb_1_1MariadbDialect.html", "classorm_1_1db_1_1mariadb_1_1MariadbDialect" ],
           [ "MariadbBackend", "classorm_1_1db_1_1mariadb_1_1MariadbBackend.html", "classorm_1_1db_1_1mariadb_1_1MariadbBackend" ],
-          [ "MariadbDialect", "classorm_1_1db_1_1mariadb_1_1MariadbDialect.html", "classorm_1_1db_1_1mariadb_1_1MariadbDialect" ]
+          [ "MariadbTypeTranslator", "classorm_1_1db_1_1mariadb_1_1MariadbTypeTranslator.html", "classorm_1_1db_1_1mariadb_1_1MariadbTypeTranslator" ]
         ] ],
         [ "mysql", "namespaceorm_1_1db_1_1mysql.html", [
+          [ "MysqlDialect", "classorm_1_1db_1_1mysql_1_1MysqlDialect.html", "classorm_1_1db_1_1mysql_1_1MysqlDialect" ],
           [ "MysqlBackend", "classorm_1_1db_1_1mysql_1_1MysqlBackend.html", "classorm_1_1db_1_1mysql_1_1MysqlBackend" ],
-          [ "MysqlDialect", "classorm_1_1db_1_1mysql_1_1MysqlDialect.html", "classorm_1_1db_1_1mysql_1_1MysqlDialect" ]
+          [ "MysqlTypeTranslator", "classorm_1_1db_1_1mysql_1_1MysqlTypeTranslator.html", "classorm_1_1db_1_1mysql_1_1MysqlTypeTranslator" ]
         ] ],
         [ "postgresql", "namespaceorm_1_1db_1_1postgresql.html", [
+          [ "PostgresqlDialect", "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html", "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect" ],
           [ "PostgresqlBackend", "classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html", "classorm_1_1db_1_1postgresql_1_1PostgresqlBackend" ],
-          [ "PostgresqlDialect", "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html", "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect" ]
+          [ "PostgresqlTypeTranslator", "classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator.html", "classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator" ]
         ] ],
         [ "sqlite", "namespaceorm_1_1db_1_1sqlite.html", [
+          [ "SqliteDialect", "classorm_1_1db_1_1sqlite_1_1SqliteDialect.html", "classorm_1_1db_1_1sqlite_1_1SqliteDialect" ],
           [ "SqliteBackend", "classorm_1_1db_1_1sqlite_1_1SqliteBackend.html", "classorm_1_1db_1_1sqlite_1_1SqliteBackend" ],
-          [ "SqliteDialect", "classorm_1_1db_1_1sqlite_1_1SqliteDialect.html", "classorm_1_1db_1_1sqlite_1_1SqliteDialect" ]
+          [ "SqliteTypeTranslator", "classorm_1_1db_1_1sqlite_1_1SqliteTypeTranslator.html", "classorm_1_1db_1_1sqlite_1_1SqliteTypeTranslator" ]
         ] ],
         [ "BackendCapabilities", "structorm_1_1db_1_1BackendCapabilities.html", "structorm_1_1db_1_1BackendCapabilities" ],
         [ "BackendProvider", "classorm_1_1db_1_1BackendProvider.html", "classorm_1_1db_1_1BackendProvider" ],
@@ -47,6 +51,7 @@ var annotated_dup =
         [ "BackendValueLimits", "structorm_1_1db_1_1BackendValueLimits.html", "structorm_1_1db_1_1BackendValueLimits" ],
         [ "BoundValue", "structorm_1_1db_1_1BoundValue.html", "structorm_1_1db_1_1BoundValue" ],
         [ "CommandGenerator", "classorm_1_1db_1_1CommandGenerator.html", "classorm_1_1db_1_1CommandGenerator" ],
+        [ "CommandGeneratorFactory", "classorm_1_1db_1_1CommandGeneratorFactory.html", "classorm_1_1db_1_1CommandGeneratorFactory" ],
         [ "DefaultCommandGenerator", "classorm_1_1db_1_1DefaultCommandGenerator.html", "classorm_1_1db_1_1DefaultCommandGenerator" ],
         [ "InsertIfAbsentSpec", "structorm_1_1db_1_1InsertIfAbsentSpec.html", "structorm_1_1db_1_1InsertIfAbsentSpec" ],
         [ "MigrationCapabilities", "structorm_1_1db_1_1MigrationCapabilities.html", "structorm_1_1db_1_1MigrationCapabilities" ],
@@ -100,21 +105,21 @@ var annotated_dup =
         [ "ColumnView", "structorm_1_1model_1_1ColumnView.html", "structorm_1_1model_1_1ColumnView" ],
         [ "JunctionView", "structorm_1_1model_1_1JunctionView.html", "structorm_1_1model_1_1JunctionView" ],
         [ "LogicalTypeTraits", "structorm_1_1model_1_1LogicalTypeTraits.html", null ],
-        [ "LogicalTypeTraits< bool >", "structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html", null ],
-        [ "LogicalTypeTraits< char >", "structorm_1_1model_1_1LogicalTypeTraits_3_01char_01_4.html", null ],
-        [ "LogicalTypeTraits< double >", "structorm_1_1model_1_1LogicalTypeTraits_3_01double_01_4.html", null ],
-        [ "LogicalTypeTraits< float >", "structorm_1_1model_1_1LogicalTypeTraits_3_01float_01_4.html", null ],
-        [ "LogicalTypeTraits< int >", "structorm_1_1model_1_1LogicalTypeTraits_3_01int_01_4.html", null ],
-        [ "LogicalTypeTraits< long >", "structorm_1_1model_1_1LogicalTypeTraits_3_01long_01_4.html", null ],
-        [ "LogicalTypeTraits< long long >", "structorm_1_1model_1_1LogicalTypeTraits_3_01long_01long_01_4.html", null ],
-        [ "LogicalTypeTraits< short >", "structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html", null ],
-        [ "LogicalTypeTraits< signed char >", "structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html", null ],
-        [ "LogicalTypeTraits< std::string >", "structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html", null ],
-        [ "LogicalTypeTraits< unsigned char >", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html", null ],
-        [ "LogicalTypeTraits< unsigned int >", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html", null ],
-        [ "LogicalTypeTraits< unsigned long >", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01_4.html", null ],
-        [ "LogicalTypeTraits< unsigned long long >", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01long_01_4.html", null ],
-        [ "LogicalTypeTraits< unsigned short >", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01short_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; bool &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01char_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; double &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01double_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; float &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01float_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; int &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01int_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; long &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01long_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; long long &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01long_01long_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; signed char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; std::string &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; unsigned char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; unsigned int &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; unsigned long &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; unsigned long long &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01long_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; unsigned short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01short_01_4.html", null ],
         [ "ModelDataView", "structorm_1_1model_1_1ModelDataView.html", "structorm_1_1model_1_1ModelDataView" ],
         [ "ModelView", "structorm_1_1model_1_1ModelView.html", "structorm_1_1model_1_1ModelView" ],
         [ "PrimaryKey", "structorm_1_1model_1_1PrimaryKey.html", "structorm_1_1model_1_1PrimaryKey" ],
@@ -132,6 +137,8 @@ var annotated_dup =
         [ "QueryParameter", "structorm_1_1query_1_1QueryParameter.html", "structorm_1_1query_1_1QueryParameter" ],
         [ "QueryValue", "classorm_1_1query_1_1QueryValue.html", "classorm_1_1query_1_1QueryValue" ],
         [ "StaticPlan", "classorm_1_1query_1_1StaticPlan.html", "classorm_1_1query_1_1StaticPlan" ],
+        [ "TypedAggregate", "classorm_1_1query_1_1TypedAggregate.html", "classorm_1_1query_1_1TypedAggregate" ],
+        [ "TypedAggregatePredicate", "classorm_1_1query_1_1TypedAggregatePredicate.html", "classorm_1_1query_1_1TypedAggregatePredicate" ],
         [ "TypedColumn", "classorm_1_1query_1_1TypedColumn.html", "classorm_1_1query_1_1TypedColumn" ],
         [ "TypedOrderBy", "classorm_1_1query_1_1TypedOrderBy.html", "classorm_1_1query_1_1TypedOrderBy" ],
         [ "TypedPredicate", "classorm_1_1query_1_1TypedPredicate.html", "classorm_1_1query_1_1TypedPredicate" ],
@@ -153,8 +160,8 @@ var annotated_dup =
       [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ]
     ] ],
     [ "soci", "namespacesoci.html", [
-      [ "type_conversion< BindingPayload< T, SchemaType, JoinedValues > >", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4" ],
-      [ "type_conversion< orm::db::binding::CollectionPayload< Owner, Target, SchemaType, JoinedValues > >", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051" ],
-      [ "type_conversion< ProjectionPayload< T > >", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4" ]
+      [ "type_conversion&lt; BindingPayload&lt; T, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4" ],
+      [ "type_conversion&lt; orm::db::binding::CollectionPayload&lt; Owner, Target, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051" ],
+      [ "type_conversion&lt; ProjectionPayload&lt; T &gt; &gt;", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4" ]
     ] ]
 ];

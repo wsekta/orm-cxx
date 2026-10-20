@@ -1,17 +1,25 @@
 <map id="modules/orm/query/aggregate.cppm" name="modules/orm/query/aggregate.cppm">
-<area shape="rect" id="Node000001" title=" " alt="" coords="208,5,467,31"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="256,5,515,31"/>
 <area shape="rect" id="Node000002" title=" " alt="" coords="5,79,85,104"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="291,33,99,80,98,74,290,28"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="330,33,100,81,99,76,328,28"/>
 <area shape="rect" id="Node000003" title=" " alt="" coords="109,79,187,104"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="308,33,193,76,191,71,306,28"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="348,33,200,77,199,72,346,28"/>
 <area shape="rect" id="Node000004" title=" " alt="" coords="211,79,285,104"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="325,33,275,72,272,68,321,29"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="364,33,284,75,281,70,362,28"/>
 <area shape="rect" id="Node000005" title=" " alt="" coords="310,79,365,104"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="340,31,340,65,335,65,335,31"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="380,33,355,69,350,66,375,30"/>
 <area shape="rect" id="Node000006" title=" " alt="" coords="389,79,481,104"/>
-<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="355,29,409,68,406,72,351,33"/>
+<area shape="poly" id="edge5_Node000001_Node000006" title=" " alt="" coords="396,29,421,66,417,69,391,33"/>
 <area shape="rect" id="Node000007" title=" " alt="" coords="505,79,565,104"/>
-<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="370,28,492,72,491,77,368,33"/>
+<area shape="poly" id="edge6_Node000001_Node000007" title=" " alt="" coords="410,28,499,70,497,75,408,33"/>
 <area shape="rect" id="Node000008" title=" " alt="" coords="589,79,657,104"/>
-<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="384,28,576,76,575,81,383,33"/>
+<area shape="poly" id="edge7_Node000001_Node000008" title=" " alt="" coords="424,28,576,73,575,78,423,33"/>
+<area shape="rect" id="Node000009" href="$orm_8cppm.html" title=" " alt="" coords="681,79,831,104"/>
+<area shape="poly" id="edge8_Node000001_Node000009" title=" " alt="" coords="445,28,683,73,682,79,444,33"/>
+<area shape="poly" id="edge10_Node000009_Node000009" title=" " alt="" coords="803,76,840,77,853,82,858,91,854,99,845,104,817,107,816,102,843,99,850,95,853,91,849,86,839,82,802,81"/>
+<area shape="rect" id="Node000010" title=" " alt="" coords="657,152,735,177"/>
+<area shape="poly" id="edge9_Node000009_Node000010" title=" " alt="" coords="748,106,717,143,712,140,744,103"/>
+<area shape="rect" id="Node000011" href="$orm_8reflection_8cppm.html" title=" " alt="" coords="759,152,873,177"/>
+<area shape="poly" id="edge11_Node000009_Node000011" title=" " alt="" coords="768,103,800,140,795,143,764,106"/>
+<area shape="poly" id="edge12_Node000011_Node000011" title=" " alt="" coords="854,149,884,151,895,156,899,165,896,172,889,177,868,181,867,176,887,172,892,169,894,165,891,159,883,156,854,155"/>
 </map>

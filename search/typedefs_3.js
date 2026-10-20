@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['field_5ftype_5ft_0',['field_type_t',['../namespaceorm_1_1reflection.html#a8321c9c2d1cd3dafd7c0b3f1dfcb74b2',1,'orm::reflection']]]
+  ['dynamicaggregatemarker_0',['DynamicAggregateMarker',['../classorm_1_1query_1_1TypedAggregatePredicate.html#a3f2a1f3688412d1d15b45e4f889d46c1',1,'orm::query::TypedAggregatePredicate']]]
 ];

@@ -188,6 +188,9 @@ var NAVTREE =
       [ "Far Future", "ROADMAP-orm-c-roadmap.html#ROADMAP-far-future", null ],
       [ "Roadmap Principles", "ROADMAP-orm-c-roadmap.html#ROADMAP-roadmap-principles", null ]
     ] ],
+    [ "Modules", "modules.html", [
+      [ "Modules List", "modules.html", "modules_dup" ]
+    ] ],
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
@@ -220,17 +223,21 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "BackendRelations_8cppm.html",
-"classorm_1_1db_1_1BackendRuntime.html#a8d69a7b8bc6706092c894374a4b4376c",
-"classorm_1_1db_1_1sqlite_1_1SqliteDialect.html#a9d402eaceb52836cc339bd34df0af3de",
-"classorm_1_1query_1_1TypedColumn.html#ac1f8fbaaad74625e7f83e5aca0537a38",
-"docs-relations-collection-relations.html#docs-relations-collection-wrappers",
-"namespaceorm.html#a2b67d3b5b004c67b5fc30d098b5f8aec",
-"namespaceorm_1_1reflection.html#a35b930760291c5236dd42ed6476bf4da",
-"structorm_1_1db_1_1QueryCapabilities.html",
-"structorm_1_1migrations_1_1Migration.html#aac3fb922c02f07f2919dc8274ade3074",
-"structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html",
-"utilities_8cppm.html#a6919a5fdd3821e0ca3a611c0353c1753"
+"classorm_1_1Query.html#a9fc47e9bd227bd0c3d94986f2011be56",
+"classorm_1_1db_1_1SqlDialect.html#aff7fba6a0011a838503d3138b9c89fab",
+"classorm_1_1db_1_1sqlite_1_1SqliteDialect.html",
+"classorm_1_1query_1_1StaticPlan.html",
+"classorm_1_1query_1_1TypedColumn.html#af54e0af0091e0f9f279e0995ee8288c4",
+"files.html",
+"module__orm.html#a93b52dab983b980a07a6cf4699771d15",
+"namespaceorm_1_1migrations.html#a42e88a75c8e7b44922214fbb696c2e2ea23ca55fd18e9e52129ff3a3ecf16331d",
+"structorm_1_1db_1_1BackendCapabilities.html#a3ae3dcfe402ee94a2c5f5be272562eb0",
+"structorm_1_1db_1_1StatementView.html#a0c8194b115c6ca520be51126c5f210f6",
+"structorm_1_1migrations_1_1MigrationExecutionContext.html#a74bdc0fffb4276dd5cd775b0d9fd47c0",
+"structorm_1_1migrations_1_1Status.html",
+"structorm_1_1model_1_1RelationView.html#a4766ab0165dc367d210e56243d1c2705"
 ];
 
-var SYNCONMSG = 'click to disable panel synchronisation';
-var SYNCOFFMSG = 'click to enable panel synchronisation';
+const SYNCONMSG = 'click to disable panel synchronization';
+const SYNCOFFMSG = 'click to enable panel synchronization';
+const LISTOFALLMEMBERS = 'List of all members';

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['includes_0',['Includes',['../classorm_1_1query_1_1StaticPlan.html#aa1725c7b377c0fbb4f80bd8d01aa23cd',1,'orm::query::StaticPlan']]]
+  ['having_0',['Having',['../classorm_1_1query_1_1StaticPlan.html#a5772a7e43e76a680902007f4d16b9327',1,'orm::query::StaticPlan']]]
 ];

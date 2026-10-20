@@ -5,6 +5,8 @@ var namespaceorm_1_1query =
     [ "QueryParameter", "structorm_1_1query_1_1QueryParameter.html", "structorm_1_1query_1_1QueryParameter" ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html", "classorm_1_1query_1_1QueryValue" ],
     [ "StaticPlan", "classorm_1_1query_1_1StaticPlan.html", "classorm_1_1query_1_1StaticPlan" ],
+    [ "TypedAggregate", "classorm_1_1query_1_1TypedAggregate.html", "classorm_1_1query_1_1TypedAggregate" ],
+    [ "TypedAggregatePredicate", "classorm_1_1query_1_1TypedAggregatePredicate.html", "classorm_1_1query_1_1TypedAggregatePredicate" ],
     [ "TypedColumn", "classorm_1_1query_1_1TypedColumn.html", "classorm_1_1query_1_1TypedColumn" ],
     [ "TypedOrderBy", "classorm_1_1query_1_1TypedOrderBy.html", "classorm_1_1query_1_1TypedOrderBy" ],
     [ "TypedPredicate", "classorm_1_1query_1_1TypedPredicate.html", "classorm_1_1query_1_1TypedPredicate" ],

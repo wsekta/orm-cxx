@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['notexpression_0',['NotExpression',['../namespaceorm_1_1db_1_1ast.html#ade07f546742dfaa5afcd7253bf640f06',1,'orm::db::ast']]],
-  ['nullexpression_1',['NullExpression',['../namespaceorm_1_1db_1_1ast.html#ab293bc54912552456b175e9e5cdda745',1,'orm::db::ast']]],
-  ['nulloperator_2',['NullOperator',['../namespaceorm_1_1db_1_1ast.html#a9d2c799d3ec6f07d1c8fd447e76eca58',1,'orm::db::ast']]]
+  ['model_0',['Model',['../classorm_1_1query_1_1TypedAggregatePredicate.html#a56b685252c341676d26f278703fbf218',1,'orm::query::TypedAggregatePredicate::Model'],['../classorm_1_1query_1_1TypedAggregate.html#aac65a603f414e4153c614e85c1403828',1,'orm::query::TypedAggregate::Model'],['../classorm_1_1query_1_1TypedPredicate.html#a1bcdffd4b047f08114b8f32f72831f05',1,'orm::query::TypedPredicate::Model'],['../classorm_1_1query_1_1TypedColumn.html#aa82311bc6b9803c9fdfd766e84b2f3c8',1,'orm::query::TypedColumn::Model'],['../classorm_1_1query_1_1TypedOrderBy.html#ab5e361f01ecb2f855d0b7c7eab3271bf',1,'orm::query::TypedOrderBy::Model'],['../classorm_1_1query_1_1TypedProjection.html#a49f71a26fabd5f86e8e2d8edc9fdfd0e',1,'orm::query::TypedProjection::Model'],['../classorm_1_1query_1_1StaticPlan.html#a839d1f235b737d84aa7dee69519c11b7',1,'orm::query::StaticPlan::Model']]]
 ];

@@ -25,6 +25,8 @@
 var menudata={children:[
 {text:"Main Page",url:"index.html"},
 {text:"Related Pages",url:"pages.html"},
+{text:"Modules",url:"modules.html",children:[
+{text:"Modules List",url:"modules.html"}]},
 {text:"Namespaces",url:"namespaces.html",children:[
 {text:"Namespace List",url:"namespaces.html"},
 {text:"Namespace Members",url:"namespacemembers.html",children:[
@@ -165,6 +167,7 @@ var menudata={children:[
 {text:"Typedefs",url:"functions_type.html",children:[
 {text:"a",url:"functions_type.html#index_a"},
 {text:"b",url:"functions_type.html#index_b"},
+{text:"d",url:"functions_type.html#index_d"},
 {text:"g",url:"functions_type.html#index_g"},
 {text:"h",url:"functions_type.html#index_h"},
 {text:"i",url:"functions_type.html#index_i"},

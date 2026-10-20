@@ -28,8 +28,8 @@ var namespaceorm =
     [ "ProjectionQuery", "classorm_1_1ProjectionQuery.html", "classorm_1_1ProjectionQuery" ],
     [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ],
     [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ],
-    [ "relation_target_t", "namespaceorm.html#a8241187e3c6bc5dadfc807680e1c9d06", null ],
-    [ "Schema", "namespaceorm.html#ac991c751231164e609b0d103326c2834", null ],
+    [ "relation_target_t", "namespaceorm.html#a2753e67871ca8adab07de8977b9e1b80", null ],
+    [ "Schema", "namespaceorm.html#af6417eb2aa4837d7e7ca503962ee69bc", null ],
     [ "DatabaseErrorCode", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62", [
       [ "NotConnected", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a4075072d219e061ca0f3124f8fbef463", null ],
       [ "AlreadyConnected", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a026d4490386eaf538cd104d5b3cb5b34", null ],

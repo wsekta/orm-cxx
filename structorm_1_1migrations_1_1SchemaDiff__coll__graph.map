@@ -1,5 +1,5 @@
 <map id="orm::migrations::SchemaDiff" name="orm::migrations::SchemaDiff">
-<area shape="rect" id="Node000001" title=" " alt="" coords="24,108,233,133"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="24,121,233,147"/>
 <area shape="rect" id="Node000002" href="$structorm_1_1migrations_1_1SchemaSnapshot.html" title=" " alt="" coords="5,5,252,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,45,131,108,126,108,126,45"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="131,45,131,121,126,121,126,45"/>
 </map>

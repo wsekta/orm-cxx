@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['raw_20sql_0',['Raw SQL',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-raw-sql',1,'Raw SQL'],['../docs-backend-portability-backend-portability.html#docs-backend-portability-raw-sql',1,'Raw SQL']]],
+  ['raw_20sql_20fragments_1',['Raw SQL fragments',['../docs-query-query.html#docs-query-raw-sql-fragments',1,'']]],
+  ['raw_20sql_20portability_2',['Raw SQL portability',['../docs-backends-backends.html#docs-backends-raw-sql-portability',1,'']]],
+  ['recovery_3',['History, transactions and recovery',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery',1,'']]],
+  ['reference_4',['reference',['../index.html#docs-main-api-reference',1,'API reference'],['../index.html#docs-main-integration-reference',1,'Integration reference']]],
+  ['relation_20tables_5',['Create and delete relation tables',['../docs-database-database.html#docs-database-create-and-delete-relation-tables',1,'']]],
+  ['relations_6',['relations',['../docs-relations-collection-relations.html',1,'Collection relations'],['../docs-model-model.html#docs-model-collection-relations',1,'Collection relations'],['../docs-query-query.html#docs-query-column-names-and-relations',1,'Column names and relations'],['../docs-database-database.html#docs-database-link-and-unlink-relations',1,'Link and unlink relations'],['../docs-model-model.html#docs-model-one-to-one-relations',1,'One-to-one relations']]],
+  ['release_7',['Retry without changing the release',['../docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release',1,'']]],
+  ['releases_8',['Package managers and releases',['../docs-packaging-package-managers-and-releases.html',1,'']]],
+  ['remove_20objects_9',['Remove objects',['../docs-database-database.html#docs-database-remove-objects',1,'']]],
+  ['reporting_10',['Capability reporting',['../docs-backends-backends.html#docs-backends-capability-reporting',1,'']]],
+  ['request_11',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]],
+  ['required_20backend_20responsibilities_12',['Required backend responsibilities',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-required-backend-responsibilities',1,'']]],
+  ['requirements_13',['Requirements',['../docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-requirements',1,'']]],
+  ['responsibilities_14',['Required backend responsibilities',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-required-backend-responsibilities',1,'']]],
+  ['result_20dto_20rules_15',['Result DTO rules',['../docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-result-dto-rules',1,'']]],
+  ['result_20queries_16',['result queries',['../docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries',1,'Aggregate result queries'],['../docs-partial-result-queries-partial-result-queries.html',1,'Partial-result queries'],['../docs-query-query.html#docs-query-partial-result-queries',1,'Partial-result queries']]],
+  ['retry_20without_20changing_20the_20release_17',['Retry without changing the release',['../docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release',1,'']]],
+  ['roadmap_18',['ORM C++ Roadmap',['../ROADMAP-orm-c-roadmap.html',1,'']]],
+  ['roadmap_20principles_19',['Roadmap Principles',['../ROADMAP-orm-c-roadmap.html#ROADMAP-roadmap-principles',1,'']]],
+  ['rules_20',['Result DTO rules',['../docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-result-dto-rules',1,'']]],
+  ['run_21',['Build and run',['../docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-build-and-run',1,'']]],
+  ['runtime_20shapes_20and_20explicit_20conversion_22',['Runtime shapes and explicit conversion',['../docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion',1,'']]]
+];

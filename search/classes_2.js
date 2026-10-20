@@ -8,5 +8,6 @@ var searchData=
   ['columntransformation_5',['ColumnTransformation',['../structorm_1_1migrations_1_1ColumnTransformation.html',1,'orm::migrations']]],
   ['columnview_6',['ColumnView',['../structorm_1_1model_1_1ColumnView.html',1,'orm::model']]],
   ['commandgenerator_7',['CommandGenerator',['../classorm_1_1db_1_1CommandGenerator.html',1,'orm::db']]],
-  ['conversionerror_8',['ConversionError',['../classorm_1_1db_1_1binding_1_1ConversionError.html',1,'orm::db::binding']]]
+  ['commandgeneratorfactory_8',['CommandGeneratorFactory',['../classorm_1_1db_1_1CommandGeneratorFactory.html',1,'orm::db']]],
+  ['conversionerror_9',['ConversionError',['../classorm_1_1db_1_1binding_1_1ConversionError.html',1,'orm::db::binding']]]
 ];
