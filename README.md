@@ -48,9 +48,9 @@ struct User { int id; std::string name; };
 
 int main()
 {
-    orm::Database database;
-    auto context = database.orm<orm::Schema<User>>();
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+auto context = database.orm<orm::Schema<User>>();
+
     context.createTable<User>();
     context.insert(User{1, "Ada"});
 
@@ -61,7 +61,7 @@ int main()
 ```
 
 With SQLite enabled, this prints `1 Ada`. The model and query API is shared by
-all four adapters; see [Backends](docs/backends.md) for build options and DSNs.
+all four adapters; see [Backends](docs/backends.md) for build options and typed configurations.
 For existing applications, the [package guide](docs/packaging.md) covers vcpkg
 and Conan. Central catalog installation requires acceptance of the package
 submissions.
@@ -76,16 +76,16 @@ submissions.
 
 ## Backend selection
 
-| Adapter | Build option | Connection example |
+| Adapter | Build option | Configuration |
 | --- | --- | --- |
-| SQLite | `ORM_CXX_ENABLE_SQLITE_BACKEND=ON` | `sqlite3://:memory:` |
-| PostgreSQL | `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON` | `postgresql://host=localhost dbname=application user=application` |
-| MySQL | `ORM_CXX_ENABLE_MYSQL_BACKEND=ON` | `mysql://host=localhost db=application user=application` |
-| MariaDB | `ORM_CXX_ENABLE_MARIADB_BACKEND=ON` | `mariadb://host=localhost db=application user=application` |
+| SQLite | `ORM_CXX_ENABLE_SQLITE_BACKEND=ON` | `SqliteConfig` |
+| PostgreSQL | `ORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON` | `PostgresConfig` |
+| MySQL | `ORM_CXX_ENABLE_MYSQL_BACKEND=ON` | `MysqlConfig` |
+| MariaDB | `ORM_CXX_ENABLE_MARIADB_BACKEND=ON` | `MariadbConfig` |
 
-All options default to `OFF`. The PostgreSQL selector takes a SOCI keyword/value
-payload, rather than an RFC PostgreSQL URI. See [Backends](docs/backends.md) for
-client dependencies, supported behavior and live-test setup.
+All options default to `OFF`. Construct `Database{config}` with owned typed
+fields; omitted fields preserve native client defaults. See [Backends](docs/backends.md)
+for client dependencies, authentication, TLS and live-test setup.
 
 ## Features and integration
 

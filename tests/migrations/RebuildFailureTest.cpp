@@ -125,9 +125,9 @@ public:
         std::error_code error;
         std::filesystem::remove(path, error);
     }
-    auto url() const -> std::string
+    auto config() const -> orm::SqliteConfig
     {
-        return "sqlite3://" + path.string();
+        return orm::SqliteConfig{path};
     }
 };
 
@@ -173,9 +173,8 @@ auto rebuildCatalog() -> Catalog
     return Catalog{initial, second};
 }
 
-auto setup(orm::Database& database, const DatabaseFile& file, const Catalog& catalog) -> void
+auto setup(orm::Database& database, const DatabaseFile& /*file*/, const Catalog& catalog) -> void
 {
-    database.connect(file.url());
     Runner{database, catalog}.up(1);
     auto& session = Access::session(database);
     session << "INSERT INTO failure_identity(id) VALUES(1)";
@@ -186,7 +185,7 @@ auto setup(orm::Database& database, const DatabaseFile& file, const Catalog& cat
 auto assertReconnectedState(orm::Database& database, const DatabaseFile& file, const Catalog& catalog,
                             bool committed) -> void
 {
-    database.connect(file.url());
+    database.connect(file.config());
     const auto status = Runner{database, catalog}.status();
     EXPECT_TRUE(status.isValid());
     EXPECT_EQ(status.currentVersion, committed ? 2 : 1);
@@ -219,7 +218,7 @@ auto exerciseCommitFault(Fault fault, bool committed) -> void
     DatabaseFile file;
     FaultControl control;
     FaultOperations operations{control};
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     control.armed = fault;
@@ -256,7 +255,7 @@ TEST(MigrationRebuildFailureTest, FailureBeforeCommitDisconnectsAndCloseRollsBac
 TEST(MigrationRebuildFailureTest, NativeSessionPreparationFailurePreservesHistoryAndOwnership)
 {
     DatabaseFile file;
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     auto& session = Access::session(database);
@@ -315,7 +314,7 @@ TEST(MigrationRebuildFailureTest, RestorationFailureIsDistinctFromCommitUncertai
     DatabaseFile file;
     FaultControl control;
     FaultOperations operations{control};
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     control.armed = Fault::Restore;
@@ -345,7 +344,7 @@ TEST(MigrationRebuildFailureTest, SuccessfulCommitRestoresForeignKeysAndReleases
     DatabaseFile file;
     FaultControl control;
     FaultOperations operations{control};
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     auto runner = detail::RunnerAccess::withSessionOperations(database, catalog, operations);
@@ -367,7 +366,7 @@ TEST(MigrationRebuildFailureTest, SuccessfulCommitRestoresForeignKeysAndReleases
 TEST(MigrationRebuildFailureTest, HeapSessionDependencyIsBorrowedAndReleasedAfterTheRunner)
 {
     DatabaseFile file;
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     auto operations = std::make_unique<detail::SessionOperations>();
@@ -387,7 +386,7 @@ TEST(MigrationRebuildFailureTest, CleanupRestorationFailureDisconnectsWithoutMas
     DatabaseFile file;
     FaultControl control;
     FaultOperations operations{control};
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     Access::session(database) << "CREATE INDEX unmanaged_failure_index ON failure_identity(id)";
@@ -416,7 +415,7 @@ TEST(MigrationRebuildFailureTest, CannotDisableForeignKeysWhenTheSessionBecomesB
     DatabaseFile file;
     FaultControl control;
     FaultOperations operations{control};
-    orm::Database database;
+    orm::Database database{file.config()};
     const auto catalog = rebuildCatalog();
     setup(database, file, catalog);
     control.startTransactionAfterInspection = true;

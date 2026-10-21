@@ -347,7 +347,8 @@ TEST(StatementParameterBindingTest, numericHydrationUsesTheDriverDescribedHolder
 {
     const orm::db::sqlite::SqliteBackend backend;
     auto session = soci::session{};
-    backend.runtime().open(session, "sqlite3://:memory:");
+    const auto config = orm::SqliteConfig{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     session << "CREATE TABLE holder_probe (value BIGINT NOT NULL);";
     session << "INSERT INTO holder_probe (value) VALUES (42);";
 
@@ -364,7 +365,8 @@ TEST(StatementParameterBindingTest, numericHydrationRejectsNonNumericDriverDescr
 {
     const orm::db::sqlite::SqliteBackend backend;
     auto session = soci::session{};
-    backend.runtime().open(session, "sqlite3://:memory:");
+    const auto config = orm::SqliteConfig{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     session << "CREATE TABLE non_numeric_probe (date_value DATE, blob_value BLOB);";
     session << "INSERT INTO non_numeric_probe (date_value, blob_value) VALUES ('2026-07-24', X'01');";
 

@@ -5,10 +5,12 @@ module;
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 
 export module orm:database_connection;
 
 import :foundation;
+import :connection_config;
 import :model;
 import :sql;
 import :query_value;
@@ -27,12 +29,12 @@ public:
     /**
      * @brief Constructs a new Database object.
      */
-    Database();
-
-    /**
-     * @brief Constructs a database with an application-supplied backend registry.
-     */
-    explicit Database(db::CommandGeneratorFactory factory);
+    template <db::ConnectionConfiguration Config>
+    explicit Database(const Config& config, db::CommandGeneratorFactory registry = {})
+        : Database{std::move(registry), db::ConnectionConfigView{config}}
+    {
+    }
+    ~Database() noexcept;
     Database(const Database&) = delete;
     Database(Database&&) = delete;
     auto operator=(const Database&) -> Database& = delete;
@@ -41,14 +43,13 @@ public:
     /**
      * @brief Connects to a database.
      *
-     * @param connectionString The connection string for the database.
+     * @param config The typed connection parameters, borrowed during opening.
      */
-    auto connect(const std::string& connectionString) -> void;
-
-    /**
-     * @brief Connects using an explicitly selected registered backend.
-     */
-    auto connect(db::BackendType requestedBackend, const std::string& connectionString) -> void;
+    template <db::ConnectionConfiguration Config>
+    auto connect(const Config& config) -> void
+    {
+        connect(db::ConnectionConfigView{config});
+    }
 
     /**
      * @brief Disconnects from the database.
@@ -99,6 +100,8 @@ public:
     auto rollbackTransaction() -> void;
 
 private:
+    explicit Database(db::CommandGeneratorFactory registry, db::ConnectionConfigView config);
+    auto connect(db::ConnectionConfigView config) -> void;
     friend struct migrations::detail::DatabaseAccess;
     template <typename>
     friend class OrmContext;

@@ -8,6 +8,7 @@ module;
 module orm;
 
 import :internal;
+import :connection_config;
 import :test_support;
 import :foundation;
 import :model;
@@ -50,9 +51,6 @@ TEST(PostgresqlBackendTest, exposesPostgresqlIdentityAndCapabilities)
     const auto& capabilities = backend.capabilities();
 
     EXPECT_EQ(backend.type(), orm::db::BackendType::Postgres);
-    EXPECT_TRUE(backend.acceptsConnectionString("postgresql://host=localhost dbname=orm_cxx"));
-    EXPECT_FALSE(backend.acceptsConnectionString("postgres://localhost/orm_cxx"));
-    EXPECT_FALSE(backend.acceptsConnectionString("sqlite3://:memory:"));
     EXPECT_TRUE(capabilities.schema.createTableIfNotExists);
     EXPECT_TRUE(capabilities.schema.dropTableIfExists);
     EXPECT_TRUE(capabilities.schema.autoIncrementPrimaryKey);
@@ -90,22 +88,23 @@ TEST(PostgresqlBackendTest, exposesPostgresqlIdentityAndCapabilities)
               static_cast<unsigned long long>(std::numeric_limits<long long>::max()));
 }
 
-TEST(PostgresqlBackendTest, runtimeRejectsAConnectionStringOwnedByAnotherBackendBeforeOpening)
+TEST(PostgresqlBackendTest, runtimeRejectsAConfigurationOwnedByAnotherBackendBeforeOpening)
 {
     const orm::db::postgresql::PostgresqlBackend backend;
     soci::session session;
 
-    EXPECT_THROW(backend.runtime().open(session, "sqlite3://:memory:"), std::invalid_argument);
+    const auto config = orm::SqliteConfig{orm::SqliteMemory{}};
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{config}), orm::DatabaseError);
     EXPECT_FALSE(session.is_connected());
 }
 
-TEST(PostgresqlBackendTest, runtimeRejectsConnectionStringsContainingEmbeddedNulBeforeOpening)
+TEST(PostgresqlBackendTest, runtimeRejectsConfigurationsContainingEmbeddedNulBeforeOpening)
 {
     const orm::db::postgresql::PostgresqlBackend backend;
     soci::session session;
-    const auto connectionString = std::string{"postgresql://host=localhost"} + '\0' + " dbname=orm_cxx";
+    const auto config = orm::PostgresConfig{.host = std::string{"localhost"} + '\0' + "ignored"};
 
-    EXPECT_THROW(backend.runtime().open(session, connectionString), std::invalid_argument);
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{config}), orm::DatabaseError);
     EXPECT_FALSE(session.is_connected());
 }
 

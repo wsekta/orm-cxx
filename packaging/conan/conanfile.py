@@ -44,7 +44,7 @@ class OrmCxxConan(ConanFile):
 
     def requirements(self):
         self.requires(
-            "soci/4.1.2",
+            "soci/4.1.4",
             transitive_headers=True,
             transitive_libs=True,
             options={

@@ -1,13 +1,24 @@
 #include <array>
+#include <charconv>
+#include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
+#include <limits>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <vector>
 
 #include "BackendExpectations.hpp"
+
 import orm;
+
+#include "ConnectionConfig.hpp"
 
 struct PackageModel
 {
@@ -33,7 +44,6 @@ struct BackendProbe
 {
     orm::db::BackendType type;
     bool enabled;
-    const char* dsn;
     const char* environment;
 };
 
@@ -49,7 +59,8 @@ public:
     }
 };
 
-void databaseSmoke(const BackendProbe& probe, const std::string& connection)
+template <orm::db::ConnectionConfiguration Config>
+void databaseSmoke(const BackendProbe& probe, const Config& config)
 {
     using namespace orm::query;
     constexpr auto selectPlan = select<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
@@ -59,8 +70,7 @@ void databaseSmoke(const BackendProbe& probe, const std::string& connection)
     constexpr auto projectionPlan = selectAs<PackageModel, PackageSummary>(as<"name">(col<&PackageModel::name>()))
                                         .where(col<&PackageModel::id>() == param<int, 0>());
     constexpr auto removePlan = remove<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
-    orm::Database database;
-    database.connect(connection);
+    orm::Database database{config};
     auto context = database.orm<PackageSchema>();
     orm::migrations::Runner migrations{database,
                                        orm::migrations::Catalog{{1,
@@ -116,8 +126,7 @@ int main()
         // Compile the public typed API even for a package with no drivers.
         constexpr auto plan = select<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
         (void)plan.toDynamic(1);
-        orm::Database database;
-        (void)database.orm<PackageSchema>();
+        static_assert(requires(orm::Database& database) { database.orm<PackageSchema>(); });
         const auto snapshot = orm::migrations::capture(PackageSchema::view);
         const auto generated = orm::migrations::generate(
             1, "package_initial", orm::migrations::compare(orm::migrations::emptySnapshot(), snapshot));
@@ -126,19 +135,25 @@ int main()
             throw std::runtime_error("Installed offline generator is missing a backend variant");
         }
         const orm::db::CommandGeneratorFactory factory;
-        const std::array probes{BackendProbe{orm::db::BackendType::Sqlite, orm::config::sqliteBackendEnabled,
-                                             "sqlite3://:memory:", "ORM_CXX_SQLITE_TEST_DSN"},
-                                BackendProbe{orm::db::BackendType::Postgres, orm::config::postgresqlBackendEnabled,
-                                             "postgresql://host=localhost dbname=orm_cxx",
-                                             "ORM_CXX_POSTGRESQL_TEST_DSN"},
-                                BackendProbe{orm::db::BackendType::Mysql, orm::config::mysqlBackendEnabled,
-                                             "mysql://host=localhost db=orm_cxx", "ORM_CXX_MYSQL_TEST_DSN"},
-                                BackendProbe{orm::db::BackendType::Mariadb, orm::config::mariadbBackendEnabled,
-                                             "mariadb://host=localhost db=orm_cxx", "ORM_CXX_MARIADB_TEST_DSN"}};
+        const std::array probes{
+            BackendProbe{orm::db::BackendType::Sqlite, orm::config::sqliteBackendEnabled,
+                         "ORM_CXX_SQLITE_TEST_DATABASE"},
+            BackendProbe{orm::db::BackendType::Postgres, orm::config::postgresqlBackendEnabled,
+                         "ORM_CXX_POSTGRESQL_TEST_DATABASE"},
+            BackendProbe{orm::db::BackendType::Mysql, orm::config::mysqlBackendEnabled, "ORM_CXX_MYSQL_TEST_DATABASE"},
+            BackendProbe{orm::db::BackendType::Mariadb, orm::config::mariadbBackendEnabled,
+                         "ORM_CXX_MARIADB_TEST_DATABASE"}};
         const auto* required = std::getenv("ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS");
         for (const auto& probe : probes)
         {
-            const auto* provider = factory.findBackend(probe.dsn);
+            const orm::db::BackendProvider* provider = nullptr;
+            try
+            {
+                provider = &factory.getBackend(probe.type);
+            }
+            catch (const std::out_of_range&)
+            {
+            }
             if ((provider != nullptr) != probe.enabled or (provider != nullptr and provider->type() != probe.type))
             {
                 throw std::runtime_error("Backend registration differs from package features");
@@ -157,17 +172,24 @@ int main()
                 throw std::runtime_error("Installed command generator extension failed");
             }
             const auto* configured = std::getenv(probe.environment);
-            if (configured != nullptr and *configured != '\0')
+            if (probe.type == orm::db::BackendType::Sqlite)
+                databaseSmoke(probe, orm::SqliteConfig{.database = orm::SqliteMemory{}});
+            else if (configured != nullptr or (required != nullptr and std::string{required} == "1"))
             {
-                databaseSmoke(probe, configured);
-            }
-            else if (probe.type == orm::db::BackendType::Sqlite)
-            {
-                databaseSmoke(probe, probe.dsn);
-            }
-            else if (required != nullptr and std::string{required} == "1")
-            {
-                throw std::runtime_error(std::string{"Missing required package DSN: "} + probe.environment);
+                switch (probe.type)
+                {
+                case orm::db::BackendType::Postgres:
+                    databaseSmoke(probe, orm::test::postgresConfigFromEnvironment());
+                    break;
+                case orm::db::BackendType::Mysql:
+                    databaseSmoke(probe, orm::test::mysqlConfigFromEnvironment());
+                    break;
+                case orm::db::BackendType::Mariadb:
+                    databaseSmoke(probe, orm::test::mariadbConfigFromEnvironment());
+                    break;
+                default:
+                    break;
+                }
             }
         }
         return 0;

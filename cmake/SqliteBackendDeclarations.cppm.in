@@ -33,7 +33,6 @@ public:
     ~SqliteBackend() override;
 
     [[nodiscard]] auto type() const noexcept -> BackendType override;
-    [[nodiscard]] auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override;
     [[nodiscard]] auto capabilities() const noexcept -> const BackendCapabilities& override;
     [[nodiscard]] auto dialect() const noexcept -> const SqlDialect& override;
     [[nodiscard]] auto runtime() const noexcept -> const BackendRuntime& override;

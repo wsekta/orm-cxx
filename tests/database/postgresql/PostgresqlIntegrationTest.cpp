@@ -117,15 +117,15 @@ TEST(PostgresqlTestSchemaTest, acceptsOnlyGeneratedPrefixAndSafeIdentifierCharac
 
 TEST(PostgresqlTestSchemaTest, explicitCleanupRemovesOnlyTheGeneratedSchema)
 {
-    const auto dsn = postgresql_test::configuredDsn();
-    ASSERT_FALSE(dsn.empty())
-        << "ORM_CXX_POSTGRESQL_TEST_DSN is required when PostgreSQL integration tests are enabled";
+    const auto config = orm::test::postgresConfigFromEnvironment();
 
-    postgresql_test::PostgresqlTestSchema schema{dsn};
-    postgresql_test::PostgresqlTestSchema survivor{dsn};
+    postgresql_test::PostgresqlTestSchema schema{config};
+    postgresql_test::PostgresqlTestSchema survivor{config};
     const auto schemaName = schema.schemaName();
     const auto survivorName = survivor.schemaName();
-    auto verificationSession = soci::session{"postgresql", postgresql_test::connectionPayload(dsn)};
+    soci::session verificationSession;
+    const orm::db::postgresql::PostgresqlBackend backend;
+    backend.runtime().open(verificationSession, orm::db::ConnectionConfigView{config});
     int count{};
     verificationSession << "SELECT COUNT(*) FROM pg_namespace WHERE nspname = :schema_name", soci::use(schemaName),
         soci::into(count);
@@ -149,7 +149,10 @@ TEST_P(PostgresqlIntegrationTest, isolatedSearchPathDrivesRuntimeTableInspection
     ASSERT_NE(schema, nullptr);
 
     const orm::db::postgresql::PostgresqlBackend backend;
-    auto inspectionSession = soci::session{"postgresql", postgresql_test::connectionPayload(testConnectionString())};
+    soci::session inspectionSession;
+    const auto config = postgresqlTestSchema()->connectionConfig();
+    backend.runtime().open(inspectionSession, orm::db::ConnectionConfigView{config});
+    postgresqlTestSchema()->prepare(inspectionSession);
     backend.runtime().onConnect(inspectionSession);
 
     std::string currentSchema;
@@ -163,7 +166,7 @@ TEST_P(PostgresqlIntegrationTest, isolatedSearchPathDrivesRuntimeTableInspection
     EXPECT_TRUE(backend.runtime().tableExists(inspectionSession, tableName));
 
     connection.disconnect();
-    connection.connect(orm::db::BackendType::Postgres, testConnectionString());
+    connection.connect(schema->connectionConfig());
     EXPECT_TRUE(connection.isConnected());
     EXPECT_EQ(connection.getBackendType(), orm::db::BackendType::Postgres);
     EXPECT_TRUE(backend.runtime().tableExists(inspectionSession, tableName));
@@ -405,7 +408,10 @@ TEST_P(PostgresqlIntegrationTest, nativeSqlStateDistinguishesUniqueAndForeignKey
 TEST_P(PostgresqlIntegrationTest, runtimeBindCeilingSupportsAPracticalLargePredicate)
 {
     const orm::db::postgresql::PostgresqlBackend backend;
-    auto inspectionSession = soci::session{"postgresql", postgresql_test::connectionPayload(testConnectionString())};
+    soci::session inspectionSession;
+    const auto config = postgresqlTestSchema()->connectionConfig();
+    backend.runtime().open(inspectionSession, orm::db::ConnectionConfigView{config});
+    postgresqlTestSchema()->prepare(inspectionSession);
     backend.runtime().onConnect(inspectionSession);
     const auto limits = backend.runtime().limits(inspectionSession);
     ASSERT_TRUE(limits.maxBindParameters.has_value());

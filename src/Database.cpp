@@ -389,14 +389,25 @@ auto db::BackendRuntime::executeInsertIfAbsent(soci::session& session, Statement
     return normalizeAffectedRows(prepared.get_affected_rows());
 }
 
-Database::Database() : backendType{db::BackendType::Empty} {}
-
-Database::Database(db::CommandGeneratorFactory factory)
-    : backendType{db::BackendType::Empty}, commandGeneratorFactory{std::move(factory)}
+Database::Database(db::CommandGeneratorFactory registry, db::ConnectionConfigView config)
+    : backendType{db::BackendType::Empty}, commandGeneratorFactory{std::move(registry)}
 {
+    connect(config);
 }
 
-auto Database::connect(const std::string& connectionString) -> void
+Database::~Database() noexcept
+{
+    try
+    {
+        disconnect();
+    }
+    catch (...)
+    {
+        // Destruction must release owned resources without propagating rollback errors.
+    }
+}
+
+auto Database::connect(db::ConnectionConfigView config) -> void
 {
     if (backend != nullptr)
     {
@@ -404,27 +415,8 @@ auto Database::connect(const std::string& connectionString) -> void
                             "A database session is already connected"};
     }
 
-    const auto* selectedBackend = commandGeneratorFactory.findBackend(connectionString);
-
-    if (selectedBackend == nullptr)
-    {
-        throw DatabaseError{DatabaseErrorCode::UnsupportedBackend, db::BackendType::Empty, "connect",
-                            "No unique registered backend accepts the connection string"};
-    }
-
-    connect(selectedBackend->type(), connectionString);
-}
-
-auto Database::connect(db::BackendType requestedBackend, const std::string& connectionString) -> void
-{
-    if (backend != nullptr)
-    {
-        throw DatabaseError{DatabaseErrorCode::AlreadyConnected, backendType, "connect",
-                            "A database session is already connected"};
-    }
-
+    const auto requestedBackend = config.backendType();
     const db::BackendProvider* selectedBackend{};
-
     try
     {
         selectedBackend = &commandGeneratorFactory.getBackend(requestedBackend);
@@ -435,37 +427,34 @@ auto Database::connect(db::BackendType requestedBackend, const std::string& conn
                             "The requested backend is not registered"};
     }
 
-    if (not selectedBackend->acceptsConnectionString(connectionString))
-    {
-        throw DatabaseError{DatabaseErrorCode::Connection, requestedBackend, "connect",
-                            "The connection string is not valid for the requested backend"};
-    }
-
     auto closeFailedSession = [this]() noexcept
     {
-        if (not sql.is_connected())
+        // close() releases the owned backend even when its health check fails.
+        try
         {
-            return;
+            sql.close();
         }
-
-        sql.close();
+        catch (...)
+        {
+            // SOCI clears its owned pointer before deleting the backend.
+            // Preserve the original initialization error if cleanup also fails.
+        }
     };
 
     try
     {
-        selectedBackend->runtime().open(sql, connectionString);
+        selectedBackend->runtime().open(sql, config);
         selectedBackend->runtime().onConnect(sql);
+    }
+    catch (const DatabaseError&)
+    {
+        closeFailedSession();
+        throw;
     }
     catch (const soci::soci_error& error)
     {
         closeFailedSession();
         throw selectedBackend->runtime().translateError(error, DatabaseErrorCode::Connection, "connect");
-    }
-    catch (const std::exception&)
-    {
-        closeFailedSession();
-        throw DatabaseError{DatabaseErrorCode::Connection, requestedBackend, "connect",
-                            "Backend session initialization failed"};
     }
     catch (...)
     {
@@ -477,7 +466,6 @@ auto Database::connect(db::BackendType requestedBackend, const std::string& conn
     backend = selectedBackend;
     backendType = requestedBackend;
 }
-
 auto Database::disconnect() -> void
 {
     if (backend == nullptr)
@@ -505,11 +493,26 @@ auto Database::disconnect() -> void
         transactionFailed = false;
     }
 
-    sql.close();
+    try
+    {
+        sql.close();
+    }
+    catch (const soci::soci_error& error)
+    {
+        if (not failure.has_value())
+            failure = connectedBackend->runtime().translateError(error, DatabaseErrorCode::Connection, "disconnect");
+    }
+    catch (...)
+    {
+        if (not failure.has_value())
+            failure = DatabaseError{DatabaseErrorCode::Connection, backendType, "disconnect",
+                                    "Backend session cleanup failed"};
+    }
 
     backend = nullptr;
     backendType = db::BackendType::Empty;
     transactionFailed = false;
+    migrationActive = false;
 
     if (failure.has_value())
     {

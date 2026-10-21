@@ -16,6 +16,15 @@ import :database;
 
 using namespace orm::test::fixtures;
 
+struct CoverageConnectionConfig
+{
+};
+template <>
+struct orm::db::ConnectionTraits<CoverageConnectionConfig>
+{
+    static constexpr auto backendType = orm::db::BackendType::Oracle;
+};
+
 namespace database_coverage_completion_models
 {
 struct AutoOnly
@@ -266,18 +275,97 @@ private:
     const orm::db::SqlDialect& delegate;
 };
 
+struct SessionOwnershipProbe
+{
+    int alive = 0;
+    bool healthy = false;
+    bool failInitialization = true;
+    int cleanupFailure = 0;
+};
+
+class ProbedSession final : public soci::details::session_backend
+{
+public:
+    explicit ProbedSession(SessionOwnershipProbe& probe) : state{probe}
+    {
+        ++state.alive;
+    }
+    ~ProbedSession() noexcept(false) override
+    {
+        --state.alive;
+        if (state.cleanupFailure == 1)
+            throw soci::soci_error{"private driver cleanup detail"};
+        if (state.cleanupFailure == 2)
+            throw std::runtime_error{"private unknown cleanup detail"};
+    }
+    auto is_connected() -> bool override
+    {
+        return state.healthy;
+    }
+    auto begin() -> void override {}
+    auto commit() -> void override {}
+    auto rollback() -> void override {}
+    auto get_dummy_from_table() const -> std::string override
+    {
+        return {};
+    }
+    auto get_backend_name() const -> std::string override
+    {
+        return "ownership-probe";
+    }
+    auto make_statement_backend() -> soci::details::statement_backend* override
+    {
+        return nullptr;
+    }
+    auto make_rowid_backend() -> soci::details::rowid_backend* override
+    {
+        return nullptr;
+    }
+    auto make_blob_backend() -> soci::details::blob_backend* override
+    {
+        return nullptr;
+    }
+
+private:
+    SessionOwnershipProbe& state;
+};
+
+class ProbedFactory final : public soci::backend_factory
+{
+public:
+    SessionOwnershipProbe* state = nullptr;
+    auto make_session(const soci::connection_parameters&) const -> soci::details::session_backend* override
+    {
+        return new ProbedSession{*state};
+    }
+};
+
 class ConfigurableRuntime final : public orm::db::BackendRuntime
 {
 public:
     explicit ConfigurableRuntime(const orm::db::BackendRuntime& delegateInit) : delegate{delegateInit} {}
 
-    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    auto open(soci::session& session, orm::db::ConnectionConfigView config) const -> void override
     {
-        delegate.open(session, connectionString);
+        (void)config.get<CoverageConnectionConfig>();
+        if (ownershipProbe != nullptr)
+        {
+            probeFactory.state = ownershipProbe;
+            session.open(probeFactory, "");
+            return;
+        }
+        const auto sqliteConfig = orm::SqliteConfig{.database = orm::SqliteMemory{}};
+        delegate.open(session, orm::db::ConnectionConfigView{sqliteConfig});
     }
 
     auto onConnect(soci::session& session) const -> void override
     {
+        if (ownershipProbe != nullptr)
+        {
+            if (ownershipProbe->failInitialization)
+                throw std::runtime_error{"private initialization detail"};
+            return;
+        }
         delegate.onConnect(session);
 
         switch (onConnectAction)
@@ -382,9 +470,11 @@ public:
     bool invalidateTransactionAfterStatementError = false;
     std::function<void()> beforeTableExistsFailure;
     orm::db::BackendRuntimeLimits limitsValue;
+    SessionOwnershipProbe* ownershipProbe = nullptr;
 
 private:
     const orm::db::BackendRuntime& delegate;
+    mutable ProbedFactory probeFactory;
 };
 
 class ConfigurableBackend final : public orm::db::BackendProvider
@@ -404,11 +494,6 @@ public:
     auto type() const noexcept -> orm::db::BackendType override
     {
         return orm::db::BackendType::Oracle;
-    }
-
-    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
-    {
-        return connectionString.starts_with("sqlite3://");
     }
 
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
@@ -448,13 +533,14 @@ public:
         auto provider = std::make_unique<ConfigurableBackend>(std::move(generator));
         backend = provider.get();
         factory.registerBackend(std::move(provider));
-        connection = std::make_unique<orm::Database>(std::move(factory));
+        connection = std::make_unique<orm::Database>(CoverageConnectionConfig{}, std::move(factory));
         database = std::make_unique<orm::OrmContext<Schema>>(connection->orm<Schema>());
+        connection->disconnect();
     }
 
     auto connect() -> void
     {
-        connection->connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
+        connection->connect(CoverageConnectionConfig{});
     }
 
     ConfigurableBackend* backend{};
@@ -487,6 +573,108 @@ auto removeSupportedType(orm::db::BackendCapabilities& capabilities, orm::model:
 }
 } // namespace
 
+TEST(DatabaseCoverageCompletionTest, failedConstructorReleasesOwnedSessionEvenWhenHealthCheckFails)
+{
+    SessionOwnershipProbe state;
+    auto registry = orm::db::CommandGeneratorFactory{};
+    auto provider = std::make_unique<ConfigurableBackend>();
+    provider->runtimeStrategy.ownershipProbe = &state;
+    registry.registerBackend(std::move(provider));
+    expectDatabaseError([&]() { orm::Database owner{CoverageConnectionConfig{}, std::move(registry)}; },
+                        orm::DatabaseErrorCode::Connection, "connect");
+    EXPECT_EQ(state.alive, 0);
+}
+
+TEST(DatabaseCoverageCompletionTest, failedReconnectReleasesUnhealthySessionAndAllowsAnotherAttempt)
+{
+    SessionOwnershipProbe state;
+    DatabaseBundle bundle;
+    bundle.backend->runtimeStrategy.ownershipProbe = &state;
+    expectDatabaseError([&]() { bundle.connect(); }, orm::DatabaseErrorCode::Connection, "connect");
+    EXPECT_EQ(state.alive, 0);
+    EXPECT_FALSE(bundle.connection->isConnected());
+    EXPECT_EQ(bundle.connection->getBackendType(), orm::db::BackendType::Empty);
+    state.failInitialization = false;
+    state.healthy = true;
+    bundle.connect();
+    EXPECT_EQ(state.alive, 1);
+    EXPECT_TRUE(bundle.connection->isConnected());
+    state.healthy = false;
+    bundle.connection->disconnect();
+    EXPECT_EQ(state.alive, 0);
+    EXPECT_NO_THROW(bundle.connection->disconnect());
+}
+
+TEST(DatabaseCoverageCompletionTest, destructorReleasesUnhealthySession)
+{
+    SessionOwnershipProbe state;
+    state.failInitialization = false;
+    {
+        DatabaseBundle bundle;
+        bundle.backend->runtimeStrategy.ownershipProbe = &state;
+        bundle.connect();
+        EXPECT_FALSE(bundle.connection->isConnected());
+        EXPECT_EQ(state.alive, 1);
+    }
+    EXPECT_EQ(state.alive, 0);
+}
+
+TEST(DatabaseCoverageCompletionTest, failedInitializationKeepsItsErrorWhenCleanupAlsoThrows)
+{
+    SessionOwnershipProbe state;
+    state.cleanupFailure = 1;
+    DatabaseBundle bundle;
+    bundle.backend->runtimeStrategy.ownershipProbe = &state;
+    expectDatabaseError([&]() { bundle.connect(); }, orm::DatabaseErrorCode::Connection, "connect");
+    EXPECT_EQ(state.alive, 0);
+    EXPECT_FALSE(bundle.connection->isConnected());
+    state.cleanupFailure = 0;
+    state.failInitialization = false;
+    EXPECT_NO_THROW(bundle.connect());
+    EXPECT_NO_THROW(bundle.connection->disconnect());
+}
+
+TEST(DatabaseCoverageCompletionTest, cleanupErrorsAreSanitizedAfterDisconnectClearsTheOwnedSession)
+{
+    for (const auto failure : {1, 2})
+    {
+        SessionOwnershipProbe state;
+        state.cleanupFailure = failure;
+        state.failInitialization = false;
+        DatabaseBundle bundle;
+        bundle.backend->runtimeStrategy.ownershipProbe = &state;
+        bundle.connect();
+        expectDatabaseError([&]() { bundle.connection->disconnect(); }, orm::DatabaseErrorCode::Connection,
+                            "disconnect");
+        EXPECT_EQ(state.alive, 0);
+        EXPECT_EQ(bundle.connection->getBackendType(), orm::db::BackendType::Empty);
+        EXPECT_NO_THROW(bundle.connection->disconnect());
+    }
+}
+
+TEST(DatabaseCoverageCompletionTest, destructorDoesNotPropagateCleanupFailure)
+{
+    SessionOwnershipProbe state;
+    state.cleanupFailure = 1;
+    state.failInitialization = false;
+    {
+        DatabaseBundle bundle;
+        bundle.backend->runtimeStrategy.ownershipProbe = &state;
+        bundle.connect();
+    }
+    EXPECT_EQ(state.alive, 0);
+}
+TEST(DatabaseCoverageCompletionTest, constructorRequiresRegisteredConfigurationBackend)
+{
+    expectDatabaseError(
+        []()
+        {
+            orm::Database owner{
+                CoverageConnectionConfig{},
+                orm::db::CommandGeneratorFactory{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}}};
+        },
+        orm::DatabaseErrorCode::UnsupportedBackend, "connect");
+}
 TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsIncompatibleLogicalStorage)
 {
     const orm::db::sqlite::SqliteBackend sqlite;
@@ -504,7 +692,7 @@ TEST(DatabaseCoverageCompletionTest, typedConnectRejectsAlreadyConnectedDatabase
     DatabaseBundle bundle;
     bundle.connect();
 
-    expectDatabaseError([&bundle]() { bundle.connection->connect(orm::db::BackendType::Oracle, "sqlite3://:memory:"); },
+    expectDatabaseError([&bundle]() { bundle.connection->connect(CoverageConnectionConfig{}); },
                         orm::DatabaseErrorCode::AlreadyConnected, "connect");
     bundle.connection->disconnect();
 }
@@ -534,7 +722,8 @@ TEST(DatabaseCoverageCompletionTest, unknownConnectFailureClosesTheOpenedSession
 
 TEST(DatabaseCoverageCompletionTest, disconnectWithoutBackendIsIdempotent)
 {
-    orm::Database databaseConnection;
+    orm::Database databaseConnection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    databaseConnection.disconnect();
 
     EXPECT_NO_THROW(databaseConnection.disconnect());
     EXPECT_EQ(databaseConnection.getBackendType(), orm::db::BackendType::Empty);

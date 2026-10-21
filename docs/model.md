@@ -40,7 +40,7 @@ an independent database connection:
 import orm;
 
 using AppSchema = orm::Schema<User>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
 auto context = database.orm<AppSchema>();
 ```
 
@@ -355,7 +355,7 @@ Declare the complete relation graph in one schema:
 
 ```cpp
 using AppSchema = orm::Schema<Author, Book, User, Role>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
 auto context = database.orm<AppSchema>();
 ```
 

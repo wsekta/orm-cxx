@@ -18,10 +18,10 @@ package is already available there. Until the initial requests are accepted,
 the central installation examples below will not resolve `orm-cxx`.
 
 No private registry or Conan remote is required. SOCI and enabled database client
-libraries are dependencies of the package and are installed by the manager.
-The minimum SOCI version is 4.1.0, including MySQL TLS mode support. The pinned
+libraries and fmt are dependencies of the package and are installed by the manager.
+The minimum SOCI version is 4.1.4, including MySQL TLS mode support. The pinned
 vcpkg baseline supplies SOCI 4.1.4 and Oracle `libmysql` 8.0.46; the Conan recipe
-uses SOCI 4.1.2 and its Oracle `libmysqlclient` dependency.
+uses SOCI 4.1.4 and its Oracle `libmysqlclient` dependency.
 Consumers require GCC 15+, Clang 18+, or MSVC 19.50+, CMake 3.31+, Ninja 1.11+, and the selected package manager. Standard-library headers
 are included normally; header units and `import std` are not required.
 On a minimal Linux host, vcpkg also needs ordinary host tools `pkg-config`,
@@ -249,12 +249,16 @@ actual recipes, including their checksum verification. Consumers build without
 the source tree or bundled dependency submodules. Every configuration builds
 typed `Query`, `Update`, and `ProjectionQuery` expressions. Consumer targets enable strict warnings and
 warnings-as-errors privately; those flags are not exported to applications.
+MSVC consumers inherit only the suppression of SOCI DLL/STL diagnostics C4251
+and C4275, which MSVC otherwise re-emits at module import sites despite external
+header warning suppression.
 Consumers verify the four generated configuration flags, exact registry
 membership and compile failures for disabled provider types. Linux package CI
 starts real PostgreSQL, MySQL and MariaDB services and requires CRUD, projection
 and migration smoke tests for every selected provider. SQLite uses an in-memory
-database. Local live server checks use `ORM_CXX_<BACKEND>_TEST_DSN`; set
-`ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS=1` to reject missing DSNs.
+database. Local live server checks use typed `ORM_CXX_<BACKEND>_TEST_*` fields; set
+`ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS=1` to require a successful live smoke
+for every selected adapter.
 Both managers check all 16 subsets on Linux and Windows. Windows vcpkg also
 checks SQLite and all four backends with the dynamic CRT triplet.
 Templates under `packaging/` become the prepared versioned recipes under

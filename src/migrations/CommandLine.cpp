@@ -12,6 +12,7 @@ module;
 #include <string_view>
 #include <system_error>
 #include <utility>
+#include <variant>
 #include <vector>
 
 module orm;
@@ -21,12 +22,13 @@ import :migrations_internal;
 namespace orm::migrations
 {
 auto detail::runCatalogCommandWithConnection(std::span<const std::string_view> args, const Catalog& catalog,
-                                             std::optional<std::string_view> connection, std::ostream& output,
+                                             const ConnectionEnvironment& connection, std::ostream& output,
                                              std::ostream& errors) -> int
 {
-    constexpr std::string_view usage = "Usage: status | validate | preview up|down [--to N] | up [--to N] | down --to "
-                                       "N | baseline --to N | resolve --version N --checksum SHA256 "
-                                       "--resolution completed|reverted\nConnection: ORM_CXX_DATABASE_URL\n";
+    constexpr std::string_view usage =
+        "Usage: status | validate | preview up|down [--to N] | up [--to N] | down --to "
+        "N | baseline --to N | resolve --version N --checksum SHA256 "
+        "--resolution completed|reverted\nConnection: ORM_CXX_DATABASE_BACKEND and ORM_CXX_DATABASE_* fields\n";
     if (args.empty() || (args.size() == 1 && (args[0] == "--help" || args[0] == "help")))
     {
         output << usage;
@@ -97,13 +99,8 @@ auto detail::runCatalogCommandWithConnection(std::span<const std::string_view> a
     }
     try
     {
-        if (!connection || connection->empty())
-        {
-            errors << "Set ORM_CXX_DATABASE_URL before running migrations\n";
-            return 1;
-        }
-        Database database;
-        database.connect(std::string{*connection});
+        const auto config = connectionConfiguration(connection);
+        auto database = std::visit([](const auto& value) { return Database{value}; }, config);
         Runner runner{database, catalog};
         if (command == "status")
         {
@@ -192,7 +189,7 @@ auto runCommandLine(std::span<const std::string_view> args, model::SchemaView mo
         "make NAME [--decisions FILE | --manual] | finalize VERSION --accept-schema | status | validate | "
         "preview up|down [--to N] | up [--to N] | down --to N | baseline --to N | "
         "resolve --version N --checksum SHA256 --resolution completed|reverted\n"
-        "Generation is offline. Execution uses ORM_CXX_DATABASE_URL.\n";
+        "Generation is offline. Execution uses ORM_CXX_DATABASE_BACKEND and ORM_CXX_DATABASE_* fields.\n";
     if (args.empty() || (args.size() == 1 && (args[0] == "--help" || args[0] == "help")))
     {
         output << usage;
@@ -329,10 +326,8 @@ auto runCommandLine(std::span<const std::string_view> args, model::SchemaView mo
             output << "Migration " << version << " finalized and immutable\n";
             return 0;
         }
-        const auto* connection = std::getenv("ORM_CXX_DATABASE_URL");
-        return detail::runCatalogCommandWithConnection(
-            args, Catalog::fromDirectory(directory),
-            connection == nullptr ? std::nullopt : std::optional<std::string_view>{connection}, output, errors);
+        return detail::runCatalogCommandWithConnection(args, Catalog::fromDirectory(directory),
+                                                       detail::connectionEnvironmentFromProcess(), output, errors);
     }
     catch (const GenerationError& error)
     {

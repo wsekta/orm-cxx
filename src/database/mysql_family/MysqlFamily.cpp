@@ -14,6 +14,7 @@ module;
 #include <utility>
 #include <vector>
 
+#include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
 #include "soci/mysql/soci-mysql.h"
 #include "soci/soci.h"
@@ -21,6 +22,7 @@ module;
 module orm;
 
 import :internal;
+import :connection_config;
 
 namespace orm::db::mysql_family
 {
@@ -598,16 +600,23 @@ public:
 class Runtime final : public BackendRuntime
 {
 public:
-    Runtime(BackendType type, std::string_view prefix) : type_{type}, prefix_{prefix} {}
-    auto open(soci::session& session, std::string_view connection) const -> void override
+    explicit Runtime(BackendType type) : type_{type} {}
+    auto open(soci::session& session, ConnectionConfigView config) const -> void override
     {
-        if (connection.find('\0') != std::string_view::npos || !connection.starts_with(prefix_))
+        std::string arguments;
+        try
         {
-            throw std::invalid_argument{"Invalid MySQL-family connection string"};
+            if (type_ == BackendType::Mysql)
+                arguments = orm_mysql_connection::serialize(config.get<MysqlConfig>());
+            else
+                arguments = orm_mysql_connection::serialize(config.get<MariadbConfig>());
         }
-        const std::string arguments{connection.substr(prefix_.size())};
-        // SOCI has no automatic reconnect by default. It would lose transactions and session locks.
-        rejectReconnectOption(arguments);
+        catch (const std::invalid_argument&)
+        {
+            throw DatabaseError{DatabaseErrorCode::Connection, type_, "connect",
+                                "Invalid MySQL-family connection configuration"};
+        }
+        // No reconnect option is exposed: transactions and locks must never be silently lost.
         static const Factory factory;
         session.open(factory, arguments);
     }
@@ -972,44 +981,6 @@ public:
     }
 
 private:
-    static auto rejectReconnectOption(std::string_view arguments) -> void
-    {
-        for (std::size_t i = 0; i < arguments.size();)
-        {
-            while (i < arguments.size() && std::isspace(static_cast<unsigned char>(arguments[i])))
-                ++i;
-            const auto begin = i;
-            while (i < arguments.size() &&
-                   (std::isalpha(static_cast<unsigned char>(arguments[i])) || arguments[i] == '_'))
-                ++i;
-            const auto name = arguments.substr(begin, i - begin);
-            if (name == "reconnect")
-                throw std::invalid_argument{"Automatic reconnect is not supported by the ORM"};
-            while (i < arguments.size() && std::isspace(static_cast<unsigned char>(arguments[i])))
-                ++i;
-            if (i == arguments.size() || arguments[i] != '=')
-                return; // SOCI reports malformed syntax.
-            ++i;
-            while (i < arguments.size() && std::isspace(static_cast<unsigned char>(arguments[i])))
-                ++i;
-            const bool quoted = i < arguments.size() && arguments[i] == '\'';
-            if (quoted)
-                ++i;
-            while (i < arguments.size())
-            {
-                if (arguments[i] == '\\')
-                    i += std::min<std::size_t>(2, arguments.size() - i);
-                else if ((quoted && arguments[i] == '\'') ||
-                         (!quoted && std::isspace(static_cast<unsigned char>(arguments[i]))))
-                {
-                    ++i;
-                    break;
-                }
-                else
-                    ++i;
-            }
-        }
-    }
     static auto handle(soci::session& session) -> MYSQL*
     {
         return static_cast<SessionBackend*>(session.get_backend())->connectionHandle();
@@ -1073,12 +1044,11 @@ private:
                                          std::to_string(code)};
     }
     BackendType type_;
-    std::string prefix_;
 };
 }
 
-auto makeRuntime(BackendType type, std::string_view prefix) -> std::unique_ptr<BackendRuntime>
+auto makeRuntime(BackendType type) -> std::unique_ptr<BackendRuntime>
 {
-    return std::make_unique<Runtime>(type, prefix);
+    return std::make_unique<Runtime>(type);
 }
 }

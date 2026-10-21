@@ -1,10 +1,17 @@
+#include <chrono>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <variant>
 #include <vector>
 
 import orm;
+
+#include "Connection.hpp"
 
 struct User
 {
@@ -32,16 +39,11 @@ inline constexpr auto eraseUser = remove<User>().where(col<&User::id>() == param
 
 int main(int argc, char** argv)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
-        return 2;
-    }
     try
     {
-        orm::Database database;
+        auto database = makeExampleDatabase(argc, argv);
         auto context = database.orm<AppSchema>();
-        database.connect(argv[1]);
+
         context.createTable<User>();
         context.insert(std::vector<User>{{1, 18, "Ada", std::nullopt}, {2, 21, "Grace", "grace@example.test"}});
 

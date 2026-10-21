@@ -11,6 +11,20 @@ module orm;
 import :internal;
 import :test_support;
 import :migrations_internal;
+#include "tests/migrations/ConnectionTestSupport.hpp"
+
+struct NontransactionalSqliteConfig
+{
+    orm::SqliteConfig sqlite;
+};
+namespace orm::db
+{
+template <>
+struct ConnectionTraits<NontransactionalSqliteConfig>
+{
+    static constexpr auto backendType = BackendType::Mysql;
+};
+}
 
 using namespace orm::migrations;
 using namespace orm::test::fixtures;
@@ -83,9 +97,8 @@ public:
 TEST(MigrationRunnerTest, FailedCommitDisconnectsAndRequiresReinspection)
 {
     TempDirectory directory;
-    const auto url = "sqlite3://" + (directory.path / "commit.db").string();
-    orm::Database database;
-    database.connect(url);
+    const auto config = orm::SqliteConfig{directory.path / "commit.db"};
+    orm::Database database{config};
     Runner runner{database, Catalog{migration(
                                 1, "PRAGMA defer_foreign_keys=ON; CREATE TABLE parent(id INTEGER PRIMARY KEY); CREATE "
                                    "TABLE child(id INTEGER REFERENCES parent(id)); INSERT INTO child VALUES(1);")}};
@@ -101,14 +114,13 @@ TEST(MigrationRunnerTest, FailedCommitDisconnectsAndRequiresReinspection)
         EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
     }
     EXPECT_FALSE(database.isConnected());
-    database.connect(url);
+    database.connect(config);
     EXPECT_EQ(runner.status().currentVersion, 0);
 }
 
 TEST(MigrationRunnerTest, BaselineChecksThatHistoryWasActuallyRecorded)
 {
-    orm::Database database;
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     Runner runner{database, initialCatalog()};
     runner.up(10);
     runner.down(0);
@@ -120,8 +132,7 @@ TEST(MigrationRunnerTest, BaselineChecksThatHistoryWasActuallyRecorded)
 
 TEST(MigrationRunnerTest, SQLiteRebuildPreservesDataForeignKeysIndexesAndTriggers)
 {
-    orm::Database database;
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     Runner runner{
         database,
         Catalog{
@@ -157,9 +168,12 @@ class InstrumentedRuntime final : public orm::db::BackendRuntime
 {
 public:
     explicit InstrumentedRuntime(const BackendRuntime& runtime) : delegate{runtime} {}
-    auto open(soci::session& session, std::string_view url) const -> void override
+    auto open(soci::session& session, orm::db::ConnectionConfigView config) const -> void override
     {
-        delegate.open(session, url);
+        if (config.backendType() == orm::db::BackendType::Mysql)
+            delegate.open(session, orm::db::ConnectionConfigView{config.get<NontransactionalSqliteConfig>().sqlite});
+        else
+            delegate.open(session, config);
     }
     auto onConnect(soci::session& session) const -> void override
     {
@@ -292,10 +306,6 @@ public:
     {
         return backendType;
     }
-    auto acceptsConnectionString(std::string_view url) const noexcept -> bool override
-    {
-        return delegate.acceptsConnectionString(url);
-    }
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
     {
         return capabilitiesValue;
@@ -323,9 +333,10 @@ public:
 class NontransactionalMigrationTest : public ::testing::Test
 {
 public:
-    NontransactionalMigrationTest() : database{factory()}, runner{database, catalog}
+    NontransactionalMigrationTest()
+        : database{NontransactionalSqliteConfig{orm::SqliteConfig{orm::SqliteMemory{}}}, factory()},
+          runner{database, catalog}
     {
-        database.connect("sqlite3://:memory:");
     }
     auto session() -> soci::session&
     {
@@ -476,9 +487,9 @@ TEST_F(NontransactionalMigrationTest, ResolutionRechecksMarkerAfterAcquiringLock
 TEST_F(NontransactionalMigrationTest, CleanupPreservesOriginalFailureEvenWhenLockReleaseAndDisconnectFail)
 {
     TempDirectory temporary;
-    const auto url = "sqlite3://" + (temporary.path / "cleanup.db").generic_string();
+    const auto config = orm::SqliteConfig{temporary.path / "cleanup.db"};
     database.disconnect();
-    database.connect(url);
+    database.connect(NontransactionalSqliteConfig{config});
     backend->runtimeValue.beforeEnd = [&](soci::session& active)
     {
         // Simulate a broken provider that starts an application transaction and
@@ -494,7 +505,7 @@ TEST_F(NontransactionalMigrationTest, CleanupPreservesOriginalFailureEvenWhenLoc
     EXPECT_FALSE(database.isConnected());
     backend->runtimeValue.beforeEnd = {};
     backend->runtimeValue.afterScript = {};
-    database.connect(url);
+    database.connect(NontransactionalSqliteConfig{config});
     ASSERT_TRUE(runner.status().incomplete);
     EXPECT_TRUE(hasDurableStep());
     runner.resolve(1, checksum(), Resolution::Completed);
@@ -508,8 +519,7 @@ TEST(MigrationRunnerTest, OptInHooksAndDriverFailures)
     auto* backend = provider.get();
     orm::db::CommandGeneratorFactory factory{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
     factory.registerBackend(std::move(provider));
-    orm::Database database{std::move(factory)};
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}, std::move(factory)};
     auto& session = orm::migrations::detail::DatabaseAccess::session(database);
     Runner runner{database, initialCatalog()};
     backend->runtimeValue.checkDefaultHooks(session);
@@ -544,8 +554,7 @@ TEST(MigrationRunnerTest, HistoryChangedBetweenReadAndWrite)
     std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
     providers.push_back(std::move(provider));
     orm::db::CommandGeneratorFactory factory{std::move(providers)};
-    orm::Database database{std::move(factory)};
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}, std::move(factory)};
     Runner runner{database, initialCatalog()};
     runner.up(10);
     backend->runtimeValue.beforeBegin = [](soci::session& session)
@@ -561,12 +570,13 @@ TEST(MigrationRunnerTest, HistoryChangedBetweenReadAndWrite)
 TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
 {
     TempDirectory directory;
-    const auto url = "sqlite3://" + (directory.path / "cli.db").generic_string();
+    const auto config = orm::SqliteConfig{directory.path / "cli.db"};
     const auto call = [&](std::initializer_list<std::string_view> args, const Catalog& catalog)
     {
         std::ostringstream output, errors;
         const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
-            std::span{args.begin(), args.size()}, catalog, url, output, errors);
+            std::span{args.begin(), args.size()}, catalog, migration_connection_test::environment(config), output,
+            errors);
         return std::tuple{result, output.str(), errors.str()};
     };
     const auto catalog = initialCatalog();
@@ -575,8 +585,7 @@ TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
     EXPECT_EQ(std::get<0>(call({"down", "--to", "0"}, catalog)), 0);
     EXPECT_EQ(std::get<0>(call({"baseline", "--to", "10"}, catalog)), 0);
     EXPECT_NE(std::get<1>(call({"status"}, catalog)).find("step_10 baseline"), std::string::npos);
-    orm::Database database;
-    database.connect(url);
+    orm::Database database{config};
     orm::migrations::detail::DatabaseAccess::session(database) << "UPDATE _orm_migrations SET checksum='changed'";
     database.disconnect();
     const auto diagnostic = call({"status"}, catalog);
@@ -584,8 +593,9 @@ TEST(MigrationCommandLineTest, PersistentHistoryDiagnosticsAndNativeErrors)
     EXPECT_NE(std::get<2>(diagnostic).find("SQL has changed"), std::string::npos);
     std::ostringstream output, errors;
     const std::string_view up[]{"up"};
-    EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(up, Catalog{migration(1, "NOT VALID SQL;")},
-                                                                       "sqlite3://:memory:", output, errors),
+    EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(
+                  up, Catalog{migration(1, "NOT VALID SQL;")},
+                  migration_connection_test::environment(orm::SqliteConfig{orm::SqliteMemory{}}), output, errors),
               1);
     EXPECT_NE(errors.str().find("(1)"), std::string::npos);
     EXPECT_EQ(errors.str().find("NOT VALID SQL"), std::string::npos);

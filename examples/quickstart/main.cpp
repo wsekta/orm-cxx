@@ -1,5 +1,8 @@
+#include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <string>
+#include <variant>
 #include <vector>
 
 import orm;
@@ -15,9 +18,8 @@ int main()
     using namespace orm::query;
     using AppSchema = orm::Schema<User>;
 
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
     auto context = database.orm<AppSchema>();
-    database.connect("sqlite3://:memory:");
     context.createTable<User>();
 
     context.insert(User{1, "Ada"});

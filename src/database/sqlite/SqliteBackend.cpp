@@ -5,11 +5,13 @@ module;
 #include <bit>
 #include <cassert>
 #include <charconv>
+#include <chrono>
 #include <cmath>
 #include <compare>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include <functional>
 #include <initializer_list>
@@ -43,6 +45,7 @@ module;
 module orm;
 
 import :internal;
+import :connection_config;
 
 namespace sqlite_api
 {
@@ -58,8 +61,6 @@ auto nativeSqliteConnection(Handle* handle, Result (*)(Native*, Args...)) -> Nat
     // SOCI's opaque handle and the C API's handle refer to the same SQLite connection.
     return reinterpret_cast<Native*>(handle);
 }
-
-constexpr std::string_view connectionStringPrefix{"sqlite3://"};
 
 class SqliteRuntime final : public orm::db::BackendRuntime
 {
@@ -174,19 +175,72 @@ public:
         }
     }
 
-    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    auto open(soci::session& session, orm::db::ConnectionConfigView view) const -> void override
     {
-        if (connectionString.find('\0') != std::string_view::npos)
+        const auto& config = view.get<orm::SqliteConfig>();
+        const auto invalid = []() -> void
         {
-            throw std::invalid_argument{"SQLite connection string must not contain an embedded NUL byte"};
-        }
-
-        if (not connectionString.starts_with(connectionStringPrefix))
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Connection, orm::db::BackendType::Sqlite, "connect",
+                                     "Invalid SQLite connection configuration"};
+        };
+        std::string database;
+        if (const auto* path = std::get_if<std::filesystem::path>(&config.database))
         {
-            throw std::invalid_argument{"SQLite connection string must start with sqlite3://"};
+            try
+            {
+                const auto utf8 = path->u8string();
+                database.assign(reinterpret_cast<const char*>(utf8.data()), utf8.size());
+            }
+            catch (...)
+            {
+                invalid();
+            }
+            if (database.empty() || database == ":memory:")
+                invalid();
         }
-
-        session.open(*soci::factory_sqlite3(), std::string{connectionString.substr(connectionStringPrefix.size())});
+        else
+        {
+            database = ":memory:";
+        }
+        if (database.find('\0') != std::string::npos ||
+            (config.busyTimeout &&
+             (config.busyTimeout->count() < 0 || config.busyTimeout->count() > std::numeric_limits<int>::max())))
+            invalid();
+        soci::connection_parameters parameters{*soci::factory_sqlite3(), ""};
+        parameters.set_option("dbname", database);
+        if (config.openMode)
+        {
+            switch (*config.openMode)
+            {
+            case orm::SqliteOpenMode::ReadWriteCreate:
+                break;
+            case orm::SqliteOpenMode::ReadWrite:
+                parameters.set_option("nocreate", "true");
+                break;
+            case orm::SqliteOpenMode::ReadOnly:
+                parameters.set_option("readonly", "true");
+                break;
+            default:
+                invalid();
+            }
+        }
+        try
+        {
+            session.open(parameters);
+            if (config.busyTimeout)
+            {
+                auto* handle = nativeSqliteConnection(
+                    static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_, sqlite3_busy_timeout);
+                if (sqlite3_busy_timeout(handle, static_cast<int>(config.busyTimeout->count())) != SQLITE_OK)
+                    invalid();
+            }
+        }
+        catch (...)
+        {
+            session.close();
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Connection, orm::db::BackendType::Sqlite, "connect",
+                                     "SQLite connection failed"};
+        }
     }
 
     auto onConnect(soci::session& session) const -> void override
@@ -383,11 +437,6 @@ SqliteBackend::~SqliteBackend() = default;
 auto SqliteBackend::type() const noexcept -> BackendType
 {
     return BackendType::Sqlite;
-}
-
-auto SqliteBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
-{
-    return connectionString.starts_with(connectionStringPrefix);
 }
 
 auto SqliteBackend::capabilities() const noexcept -> const BackendCapabilities&

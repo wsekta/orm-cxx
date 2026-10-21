@@ -8,6 +8,7 @@ import orm.reflection;
 import :internal;
 import :config;
 import :foundation;
+import :connection_config;
 import :model;
 import :expressions;
 import :dynamic_query;
@@ -21,6 +22,7 @@ import :database;
 #include "tests/compile_fail/TypedQueryModels.hpp"
 #include "tests/database/DatabaseTest.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/support/ConnectionConfig.hpp"
 #include "tests/utils/GenerateModels.hpp"
 #include "tests/utils/QueryTestAccess.hpp"
 #include "tests/utils/RuntimeQueryBuilder.hpp"

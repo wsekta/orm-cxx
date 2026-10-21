@@ -5,6 +5,7 @@ set(ORM_CXX_SOURCES
     migrations/Runner.cpp
     migrations/MigrationState.cpp
     migrations/CommandLine.cpp
+    migrations/ConnectionEnvironment.cpp
     migrations/SchemaSnapshot.cpp
     migrations/SchemaDiff.cpp
     migrations/SchemaGeneration.cpp
@@ -148,6 +149,7 @@ target_sources(
            FILES
            "${PROJECT_SOURCE_DIR}/modules/orm.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/connection.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/database/config.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/context.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/numeric.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/object_binding.cppm"
@@ -225,8 +227,13 @@ install(FILES "${PROJECT_SOURCE_DIR}/modules/detail/SociTypes.inc"
 )
 
 if(MSVC)
+    # MSVC re-emits SOCI's STL/DLL diagnostics at module import sites, outside the dependency's /external:W0 scope.
+    # Consumers rebuild these module sources.
+    target_compile_options(orm-cxx PUBLIC /wd4251 /wd4275)
     # The standard getenv API is portable and only reads a process-owned variable.
-    set_source_files_properties(migrations/CommandLine.cpp PROPERTIES COMPILE_OPTIONS /wd4996)
+    set_source_files_properties(
+        migrations/CommandLine.cpp migrations/ConnectionEnvironment.cpp PROPERTIES COMPILE_OPTIONS /wd4996
+    )
 endif()
 
 include(CMakePackageConfigHelpers)

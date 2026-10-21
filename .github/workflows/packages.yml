@@ -142,9 +142,21 @@ jobs:
           fi
           cat >> "$GITHUB_ENV" <<'EOF'
           ORM_CXX_REQUIRE_PACKAGE_DATABASE_TESTS=1
-          ORM_CXX_POSTGRESQL_TEST_DSN=postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-          ORM_CXX_MYSQL_TEST_DSN=mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
-          ORM_CXX_MARIADB_TEST_DSN=mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
+          ORM_CXX_POSTGRESQL_TEST_HOST=localhost
+          ORM_CXX_POSTGRESQL_TEST_PORT=5432
+          ORM_CXX_POSTGRESQL_TEST_DATABASE=orm_cxx
+          ORM_CXX_POSTGRESQL_TEST_USER=orm_cxx
+          ORM_CXX_POSTGRESQL_TEST_PASSWORD=orm_cxx
+          ORM_CXX_MYSQL_TEST_HOST=127.0.0.1
+          ORM_CXX_MYSQL_TEST_PORT=3306
+          ORM_CXX_MYSQL_TEST_DATABASE=orm_cxx
+          ORM_CXX_MYSQL_TEST_USER=root
+          ORM_CXX_MYSQL_TEST_PASSWORD=orm_cxx
+          ORM_CXX_MARIADB_TEST_HOST=127.0.0.1
+          ORM_CXX_MARIADB_TEST_PORT=3307
+          ORM_CXX_MARIADB_TEST_DATABASE=orm_cxx
+          ORM_CXX_MARIADB_TEST_USER=root
+          ORM_CXX_MARIADB_TEST_PASSWORD=orm_cxx
           EOF
       - name: Build package and run installed consumer
         run: python scripts/check_packages.py --manager ${{ matrix.manager }} --backends ${{ matrix.backends }} ${{ matrix.triplet != 'default' && format('--triplet {0}', matrix.triplet) || '' }}

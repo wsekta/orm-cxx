@@ -62,9 +62,21 @@ jobs:
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 2s --health-timeout 5s --health-retries 60
     env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      ORM_CXX_MYSQL_TEST_DSN: mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
-      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_HOST: localhost
+      ORM_CXX_POSTGRESQL_TEST_PORT: "5432"
+      ORM_CXX_POSTGRESQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_USER: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MYSQL_TEST_HOST: 127.0.0.1
+      ORM_CXX_MYSQL_TEST_PORT: "3306"
+      ORM_CXX_MYSQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_MYSQL_TEST_USER: root
+      ORM_CXX_MYSQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MARIADB_TEST_HOST: 127.0.0.1
+      ORM_CXX_MARIADB_TEST_PORT: "3307"
+      ORM_CXX_MARIADB_TEST_DATABASE: orm_cxx
+      ORM_CXX_MARIADB_TEST_USER: root
+      ORM_CXX_MARIADB_TEST_PASSWORD: orm_cxx
     steps:
       - uses: actions/checkout@v5
         with:
@@ -77,7 +89,14 @@ jobs:
       - name: Install selected client libraries and compiler
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes clang-${{ matrix.clang }} clang-tools-${{ matrix.clang }} libclang-rt-${{ matrix.clang }}-dev llvm-${{ matrix.clang }} libpq-dev libsqlite3-dev libmysqlclient-dev
+          sudo apt-get install --no-install-recommends --yes clang-${{ matrix.clang }} clang-tools-${{ matrix.clang }} libclang-rt-${{ matrix.clang }}-dev llvm-${{ matrix.clang }} openssl socat libpq-dev libsqlite3-dev libmysqlclient-dev
+      - name: Provision required password, anonymous and verified TLS profiles
+        run: |
+          python3 scripts/provision_connection_tests.py \
+            --postgres-container '${{ job.services.postgres.id }}' \
+            --mysql-container '${{ job.services.mysql.id }}' \
+            --mariadb-container '${{ job.services.mariadb.id }}' \
+            --output "$RUNNER_TEMP/orm-cxx-connection-tls"
       - name: Configure all four adapters
         run: |
           preset=linux-clang-all-backends
@@ -126,9 +145,21 @@ jobs:
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 2s --health-timeout 5s --health-retries 60
     env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      ORM_CXX_MYSQL_TEST_DSN: mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx
-      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_HOST: postgres
+      ORM_CXX_POSTGRESQL_TEST_PORT: "5432"
+      ORM_CXX_POSTGRESQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_USER: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MYSQL_TEST_HOST: mysql
+      ORM_CXX_MYSQL_TEST_PORT: "3306"
+      ORM_CXX_MYSQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_MYSQL_TEST_USER: root
+      ORM_CXX_MYSQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MARIADB_TEST_HOST: mariadb
+      ORM_CXX_MARIADB_TEST_PORT: "3306"
+      ORM_CXX_MARIADB_TEST_DATABASE: orm_cxx
+      ORM_CXX_MARIADB_TEST_USER: root
+      ORM_CXX_MARIADB_TEST_PASSWORD: orm_cxx
     steps:
       - uses: actions/checkout@v5
         with:
@@ -136,13 +167,23 @@ jobs:
       - name: Install selected dependencies and pinned build tools
         run: |
           apt-get update
-          apt-get install --no-install-recommends --yes python3 python3-venv libpq-dev libsqlite3-dev
+          apt-get install --no-install-recommends --yes python3 python3-venv docker-cli openssl socat libpq-dev libsqlite3-dev
+          # The GitHub runner mounts /var/run/docker.sock into its job container.
+          test -S /var/run/docker.sock
+          docker info >/dev/null
           sh scripts/install_mysql_client_debian.sh
           ln -sf /usr/local/bin/gcc /usr/local/bin/gcc-15
           ln -sf /usr/local/bin/g++ /usr/local/bin/g++-15
           python3 -m venv .ci-tools
           .ci-tools/bin/pip install cmake==3.31.6 ninja==1.13.0
           printf '%s\n' "$GITHUB_WORKSPACE/.ci-tools/bin" >> "$GITHUB_PATH"
+      - name: Provision required password, anonymous and verified TLS profiles
+        run: |
+          python3 scripts/provision_connection_tests.py \
+            --postgres-container '${{ job.services.postgres.id }}' \
+            --mysql-container '${{ job.services.mysql.id }}' \
+            --mariadb-container '${{ job.services.mariadb.id }}' \
+            --output "$RUNNER_TEMP/orm-cxx-connection-tls"
       - name: Build and run conformance, compile contracts and 16 consumer subsets
         run: cmake --workflow --preset linux-gcc-15-all-backends
 
@@ -182,9 +223,21 @@ jobs:
           --health-cmd "healthcheck.sh --connect --innodb_initialized"
           --health-interval 2s --health-timeout 5s --health-retries 60
     env:
-      ORM_CXX_POSTGRESQL_TEST_DSN: postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx
-      ORM_CXX_MYSQL_TEST_DSN: mysql://host=127.0.0.1 port=3306 db=orm_cxx user=root password=orm_cxx
-      ORM_CXX_MARIADB_TEST_DSN: mariadb://host=127.0.0.1 port=3307 db=orm_cxx user=root password=orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_HOST: localhost
+      ORM_CXX_POSTGRESQL_TEST_PORT: "5432"
+      ORM_CXX_POSTGRESQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_USER: orm_cxx
+      ORM_CXX_POSTGRESQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MYSQL_TEST_HOST: 127.0.0.1
+      ORM_CXX_MYSQL_TEST_PORT: "3306"
+      ORM_CXX_MYSQL_TEST_DATABASE: orm_cxx
+      ORM_CXX_MYSQL_TEST_USER: root
+      ORM_CXX_MYSQL_TEST_PASSWORD: orm_cxx
+      ORM_CXX_MARIADB_TEST_HOST: 127.0.0.1
+      ORM_CXX_MARIADB_TEST_PORT: "3307"
+      ORM_CXX_MARIADB_TEST_DATABASE: orm_cxx
+      ORM_CXX_MARIADB_TEST_USER: root
+      ORM_CXX_MARIADB_TEST_PASSWORD: orm_cxx
     steps:
       - uses: actions/checkout@v5
         with:
@@ -197,7 +250,14 @@ jobs:
       - name: Install compiler, coverage tools and selected clients
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 lcov libpq-dev libsqlite3-dev libmysqlclient-dev
+          sudo apt-get install --no-install-recommends --yes clang-18 clang-tools-18 libclang-rt-18-dev llvm-18 lcov openssl socat libpq-dev libsqlite3-dev libmysqlclient-dev
+      - name: Provision required password, anonymous and verified TLS profiles
+        run: |
+          python3 scripts/provision_connection_tests.py \
+            --postgres-container '${{ job.services.postgres.id }}' \
+            --mysql-container '${{ job.services.mysql.id }}' \
+            --mariadb-container '${{ job.services.mariadb.id }}' \
+            --output "$RUNNER_TEMP/orm-cxx-connection-tls"
       - name: Test coverage exporter and merger
         run: python -m unittest discover -s tests/coverage -v
       - name: Generate independent coverage reports

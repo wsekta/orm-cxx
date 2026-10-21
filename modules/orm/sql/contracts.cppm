@@ -15,6 +15,7 @@ module;
 export module orm:sql_contracts;
 
 import :foundation;
+import :connection_config;
 import :model;
 import :expressions;
 
@@ -196,8 +197,6 @@ export
         virtual ~BackendProvider() = default;
 
         [[nodiscard]] virtual auto type() const noexcept -> BackendType = 0;
-        [[nodiscard]] virtual auto
-        acceptsConnectionString(std::string_view connectionString) const noexcept -> bool = 0;
         [[nodiscard]] virtual auto capabilities() const noexcept -> const BackendCapabilities& = 0;
         [[nodiscard]] virtual auto dialect() const noexcept -> const SqlDialect& = 0;
         [[nodiscard]] virtual auto runtime() const noexcept -> const BackendRuntime& = 0;
@@ -316,7 +315,7 @@ export
         /** Releases session-scoped locks; transaction-scoped locks need no hook. */
         virtual auto endMigration(soci::session&, std::string_view) const -> void {}
 
-        virtual auto open(soci::session& session, std::string_view connectionString) const -> void = 0;
+        virtual auto open(soci::session& session, ConnectionConfigView config) const -> void = 0;
         virtual auto onConnect(soci::session& session) const -> void = 0;
         [[nodiscard]] virtual auto tableExists(soci::session& session, std::string_view tableName) const -> bool = 0;
         [[nodiscard]] virtual auto limits(soci::session& session) const -> BackendRuntimeLimits = 0;

@@ -48,9 +48,9 @@ struct User
 };
 
 using AppSchema = orm::Schema<User, Profile>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = std::filesystem::path{"test.db"}}};
 auto context = database.orm<AppSchema>();
-database.connect("sqlite3://test.db");
+
 
 orm::Query<User> query;
 auto users = context.select(query);

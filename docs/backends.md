@@ -60,19 +60,18 @@ before they reach a database driver's C API.
 
 ## SQLite
 
-Connect with a SOCI SQLite connection string:
+Open with a typed configuration; a filesystem path is converted to UTF-8:
 
 ```cpp
-orm::Database database;
-database.connect("sqlite3://application.db");
+orm::Database database{orm::SqliteConfig{.database = std::filesystem::path{"application.db"}}};
+
 ```
 
-Applications that already know the backend may select it explicitly and inspect
-the negotiated capability profile:
+The configuration type selects the backend. Inspect its negotiated capability profile:
 
 ```cpp
-orm::Database database;
-database.connect(orm::db::BackendType::Sqlite, "sqlite3://application.db");
+orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+
 
 const auto& capabilities = database.getBackendCapabilities();
 if (capabilities.query.groupBy)
@@ -109,30 +108,34 @@ only after a backend with meaningful native types is implemented.
 
 ## PostgreSQL
 
-Enable the adapter at configure time and connect with a `postgresql://`
-selector followed by SOCI's keyword/value connection payload:
+Enable the adapter and provide owned, optional connection fields:
 
 ```sh
-cmake -S . -B build/postgresql \
-  -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON
+cmake -S . -B build/postgresql -DORM_CXX_ENABLE_POSTGRESQL_BACKEND=ON
 ```
 
 ```cpp
-orm::Database database;
-database.connect(
-    "postgresql://host=localhost port=5432 dbname=application user=application password=secret");
+orm::Database database{orm::PostgresConfig{
+    .host = "localhost", .port = 5432, .database = "application",
+    .user = "application", .password = password,
+    .connectTimeout = std::chrono::seconds{5},
+    .tls = {.mode = orm::PostgresSslMode::VerifyFull,
+            .caCertificate = std::filesystem::path{"ca.pem"}},
+}};
 ```
 
-The payload is passed to the SOCI PostgreSQL backend. It is not the RFC-style
-`postgresql://user@host/database` URI syntax. Passwords and complete connection
-strings are excluded from ORM diagnostics. The vendored SOCI parser cannot
-preserve whitespace inside keyword values, so connection values must not contain
-spaces. Prefer a PostgreSQL passfile/`PGPASSFILE` instead of embedding a complex
-password in the DSN.
+Omitted fields preserve libpq defaults, including environment and passfile
+behavior. `PostgresConfig{}` delegates all connection parameters to libpq.
+An explicitly empty string remains distinct from an omitted field, but does not
+override native authentication semantics: an empty password may still allow
+passfile lookup. `passfile` provides a specific file path. Passwords with spaces,
+quotes, backslashes, equals signs and Unicode are transported as data. NUL is
+rejected. TLS modes are `Disable`, `Allow`, `Prefer`, `Require`, `VerifyCa`,
+`VerifyFull`; optional certificate/key paths do not implicitly select a mode.
+No URI parser or authentication retry is involved.
 
-With examples enabled, `backend-connection-example` accepts a connection
-string as its only argument, reports capabilities and disconnects without
-creating database objects. The same example supports every selected adapter.
+With examples enabled, `backend-connection-example <backend> <database-or-file>`
+reports capabilities and disconnects. Server credentials use native client defaults.
 
 The server test matrix covers PostgreSQL 15 and 18. MSVC compiles and links the
 adapter and consumer configurations; live server behavior runs on Linux.
@@ -180,11 +183,15 @@ tracks that state: `commitTransaction()` returns
 Live tests require a dedicated database role that may create and drop schemas.
 Each test creates a random `orm_cxx_test_...` schema, sets it as `search_path`,
 and removes it with a prefix-validated `DROP SCHEMA ... CASCADE`. Tests never
-target `public` or a caller-provided schema name. Set the DSN and enable the live
+target `public` or a caller-provided schema name. Set typed fields and enable the live
 profile explicitly:
 
 ```sh
-export ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=localhost port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx'
+export ORM_CXX_POSTGRESQL_TEST_HOST=localhost
+export ORM_CXX_POSTGRESQL_TEST_PORT=5432
+export ORM_CXX_POSTGRESQL_TEST_DATABASE=orm_cxx
+export ORM_CXX_POSTGRESQL_TEST_USER=orm_cxx
+export ORM_CXX_POSTGRESQL_TEST_PASSWORD=orm_cxx
 cmake --workflow --preset linux-gcc-postgresql
 ```
 
@@ -193,7 +200,9 @@ The Compose service provides a disposable PostgreSQL 18 instance:
 ```sh
 docker compose --profile postgresql up --detach --wait postgres
 docker compose run --rm \
-  -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
+  -e ORM_CXX_POSTGRESQL_TEST_HOST=postgres -e ORM_CXX_POSTGRESQL_TEST_PORT=5432 \
+  -e ORM_CXX_POSTGRESQL_TEST_DATABASE=orm_cxx -e ORM_CXX_POSTGRESQL_TEST_USER=orm_cxx \
+  -e ORM_CXX_POSTGRESQL_TEST_PASSWORD=orm_cxx \
   dev cmake --workflow --preset linux-gcc-postgresql
 ```
 
@@ -205,13 +214,13 @@ transport and one Oracle MySQL C client. Enabling MariaDB alone does not
 register MySQL. Enabling MySQL alone does not register MariaDB. A connection to
 the wrong server family is rejected during session initialization.
 
-```text
-mysql://host=localhost port=3306 db=application user=application password=secret
-mariadb://host=localhost port=3307 db=application user=application password=secret
+```cpp
+orm::Database mysql{orm::MysqlConfig{.host = "localhost", .database = "application"}};
+orm::Database maria{orm::MariadbConfig{.host = "localhost", .port = 3307,
+                                      .database = "application"}};
 ```
 
-These are SOCI keyword/value payloads. Explicit selection uses
-`BackendType::Mysql` or `BackendType::Mariadb`. ORM sessions use InnoDB,
+ORM sessions use InnoDB,
 `utf8mb4`, a binary no-pad collation, strict SQL mode including
 `ONLY_FULL_GROUP_BY`, foreign-key checks and explicit autocommit. Automatic
 reconnection is rejected because it would discard transaction state and locks.
@@ -249,9 +258,15 @@ MySQL-family DDL cannot be rolled back; read the migration recovery contract
 before applying schema changes.
 
 The selected Oracle client supports MySQL's default `caching_sha2_password` and
-MariaDB's default `mysql_native_password`. TLS uses SOCI MySQL options such as `ssl_mode=REQUIRED`,
-`ssl_mode=VERIFY_IDENTITY` and `sslca=/path/to/ca.pem`; configure the server
-certificate and CA for verified TLS. Optional MariaDB authentication plugins
+MariaDB's default `mysql_native_password`. `MysqlConfig` and `MariadbConfig` expose the same optional host, port,
+database, user, password, socket, and connection timeout fields, and `MysqlTls`.
+TLS modes are `Disabled`, `Preferred`, `Required`, `VerifyCa`, `VerifyIdentity`;
+set `tls.caCertificate` and configure the server certificate for verified TLS.
+Omitted TLS fields retain native client policy. Unix sockets use `socket`.
+MySQL-family `connectTimeout` accepts 1..UINT_MAX seconds; explicit zero is rejected
+because SOCI does not represent it. Omission preserves the native timeout.
+Missing user/password fields preserve native defaults. Anonymous account selection
+is a server rule, not an ORM mode; no fallback follows authentication failure. Optional MariaDB authentication plugins
 require matching client plugins and are outside the default package contract.
 The package uses `libmysql` in vcpkg and `libmysqlclient` through Conan;
 MariaDB Connector/C is not a second dependency. On Debian,
@@ -277,16 +292,26 @@ The generated module exposes four booleans in `orm::config`:
 `mariadbBackendEnabled`. Parent-project tests and examples default to `OFF`.
 
 Each server has an independent `ORM_CXX_ENABLE_<BACKEND>_INTEGRATION_TESTS`
-option and `ORM_CXX_<BACKEND>_TEST_DSN`. Live tests use isolated PostgreSQL
+option and typed `ORM_CXX_<BACKEND>_TEST_*` fields. Live tests use isolated PostgreSQL
 schemas or MySQL/MariaDB databases. The test role must be permitted to create
-and drop these namespaces. Missing DSNs in an enabled live profile are errors.
+and drop these namespaces. The suffixes are `HOST`, `PORT`, `DATABASE`, `USER`, `PASSWORD`,
+`CONNECT_TIMEOUT_SECONDS`, `SSL_MODE`, `SSL_CA`, `SSL_CERT`, `SSL_KEY`, plus
+PostgreSQL `PASSFILE` and MySQL-family `SOCKET`. Omitted fields preserve native
+client defaults; an explicitly empty string is preserved. SSL mode text follows
+the [migration CLI](schema-migrations.md). A failed live connection is an error.
 
 ```sh
 docker compose --profile all-backends up --detach --wait postgres mysql mariadb
 docker compose run --rm \
-  -e ORM_CXX_POSTGRESQL_TEST_DSN='postgresql://host=postgres port=5432 dbname=orm_cxx user=orm_cxx password=orm_cxx' \
-  -e ORM_CXX_MYSQL_TEST_DSN='mysql://host=mysql port=3306 db=orm_cxx user=root password=orm_cxx' \
-  -e ORM_CXX_MARIADB_TEST_DSN='mariadb://host=mariadb port=3306 db=orm_cxx user=root password=orm_cxx' \
+  -e ORM_CXX_POSTGRESQL_TEST_HOST=postgres -e ORM_CXX_POSTGRESQL_TEST_PORT=5432 \
+  -e ORM_CXX_POSTGRESQL_TEST_DATABASE=orm_cxx -e ORM_CXX_POSTGRESQL_TEST_USER=orm_cxx \
+  -e ORM_CXX_POSTGRESQL_TEST_PASSWORD=orm_cxx \
+  -e ORM_CXX_MYSQL_TEST_HOST=mysql -e ORM_CXX_MYSQL_TEST_PORT=3306 \
+  -e ORM_CXX_MYSQL_TEST_DATABASE=orm_cxx -e ORM_CXX_MYSQL_TEST_USER=root \
+  -e ORM_CXX_MYSQL_TEST_PASSWORD=orm_cxx \
+  -e ORM_CXX_MARIADB_TEST_HOST=mariadb -e ORM_CXX_MARIADB_TEST_PORT=3306 \
+  -e ORM_CXX_MARIADB_TEST_DATABASE=orm_cxx -e ORM_CXX_MARIADB_TEST_USER=root \
+  -e ORM_CXX_MARIADB_TEST_PASSWORD=orm_cxx \
   dev cmake --workflow --preset linux-clang-all-backends
 ```
 

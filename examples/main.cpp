@@ -1,9 +1,16 @@
+#include <chrono>
+#include <filesystem>
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <variant>
 #include <vector>
 
 import orm;
+
+#include "Connection.hpp"
 
 struct ObjectModel
 {
@@ -44,18 +51,12 @@ struct ObjectStats
 
 int main(int argc, char** argv) // NOLINT(bugprone-exception-escape)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
-        return 2;
-    }
     using namespace orm::query;
 
-    // connect with standard connection string
+    // Open synchronously using a typed backend configuration.
     using AppSchema = orm::Schema<ObjectModel>;
-    orm::Database database;
+    auto database = makeExampleDatabase(argc, argv);
     auto context = database.orm<AppSchema>();
-    database.connect(argv[1]);
 
     // drop table if exists
     context.deleteTable<ObjectModel>();

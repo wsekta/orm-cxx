@@ -196,7 +196,7 @@ public:
 class TestRuntime final : public db::BackendRuntime
 {
 public:
-    auto open(soci::session&, std::string_view) const -> void override
+    auto open(soci::session&, db::ConnectionConfigView) const -> void override
     {
         throw std::logic_error{"SQL fixture has no driver"};
     }
@@ -226,17 +226,13 @@ public:
 class TestBackend final : public db::BackendProvider
 {
 public:
-    explicit TestBackend(db::BackendType type = db::BackendType::Oracle, bool accepts = false)
-        : type_{type}, accepts_{accepts}, generator_{dialect_}
+    explicit TestBackend(db::BackendType type = db::BackendType::Oracle, bool /*accepts*/ = false)
+        : type_{type}, generator_{dialect_}
     {
     }
     auto type() const noexcept -> db::BackendType override
     {
         return type_;
-    }
-    auto acceptsConnectionString(std::string_view) const noexcept -> bool override
-    {
-        return accepts_;
     }
     auto capabilities() const noexcept -> const db::BackendCapabilities& override
     {
@@ -257,7 +253,6 @@ public:
 
 private:
     db::BackendType type_;
-    bool accepts_;
     db::BackendCapabilities capabilities_;
     TestSqlDialect dialect_;
     TestRuntime runtime_;

@@ -24,9 +24,9 @@ struct User
 };
 
 using AppSchema = orm::Schema<User>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = std::filesystem::path{"test.db"}}};
 auto context = database.orm<AppSchema>();
-database.connect("sqlite3://test.db");
+
 ```
 
 Every model used by `select`, `insert`, schema operations, or relation
@@ -35,8 +35,7 @@ well. Missing models and invalid mappings fail during compilation.
 
 `Database` owns the connection and transaction. `OrmContext<Schema>` borrows
 that database; it does not own a connection or cache a backend. Creating or
-copying a context requires no allocation. A context can be created before
-connecting, copied, moved, or assigned to another database's context of the same
+copying a context requires no allocation. A context can be copied, moved, or assigned to another database's context of the same
 schema. Model operations require a connected database.
 
 The database must outlive every context that refers to it. Contexts cannot be
@@ -52,48 +51,62 @@ does not select a PostgreSQL namespace or verify the physical database layout.
 The remaining fragments are independent examples. In each case, the
 `context` object's schema must contain every model named by that operation.
 
-Automatic selection requires exactly one registered backend to accept the
-connection string. Select a known backend explicitly when desired:
+Constructing `Database{config}` synchronously opens and initializes the session,
+or throws `DatabaseError` with operation `connect`. There is no empty constructor.
+The four owned configuration values are available even in core-only builds:
 
-```cpp
-database.connect(orm::db::BackendType::Sqlite, "sqlite3://test.db");
-```
-
-PostgreSQL uses a `postgresql://` backend selector followed by SOCI's
-keyword/value connection payload:
-
-```cpp
-database.connect(
-    orm::db::BackendType::Postgres,
-    "postgresql://host=localhost port=5432 dbname=application user=application password=secret");
-```
-
-This is not an RFC-style `postgresql://user@host/database` URI. Connection
-strings are never copied into `DatabaseError` diagnostics. Keyword values with
-whitespace are not supported by the vendored SOCI parser; use a PostgreSQL
-passfile/`PGPASSFILE` for credentials that cannot be represented safely.
-
-Each enabled provider has its own selector and explicit type:
-
-| Provider | Explicit `BackendType` | Connection example |
+| Configuration | Backend | Source |
 | --- | --- | --- |
-| SQLite | `Sqlite` | `sqlite3://test.db` |
-| PostgreSQL | `Postgres` | `postgresql://host=localhost dbname=application user=application` |
-| MySQL | `Mysql` | `mysql://host=localhost db=application user=application` |
-| MariaDB | `Mariadb` | `mariadb://host=localhost db=application user=application` |
+| `SqliteConfig` | SQLite | `std::filesystem::path` or explicit `SqliteMemory{}` |
+| `PostgresConfig` | PostgreSQL | Optional libpq connection fields |
+| `MysqlConfig` | MySQL | Optional Oracle MySQL client connection fields |
+| `MariadbConfig` | MariaDB | Optional Oracle MySQL client connection fields |
 
-MySQL and MariaDB use separate selectors and capability profiles while sharing
-the Oracle MySQL client transport. Their payloads use SOCI keyword/value options
-such as `ssl_mode=VERIFY_IDENTITY` and `sslca=/path/to/ca.pem`. All providers
-default to disabled at build time; enable the required adapter explicitly.
-See [Backends](backends.md) for authentication, TLS and session requirements.
+All adapters default to disabled at build time. Using a configuration whose
+adapter is not registered throws `UnsupportedBackend`. Selection uses
+`db::ConnectionTraits<Config>::backendType`; it does not inspect parameter text.
 
-Use `isConnected()` and `getBackendType()` to inspect lifecycle state. Calling
-`disconnect()` rolls back an active transaction before closing the session; the
-same `Database` object can then connect again; existing ORM contexts use its new
-session and backend. A `Database` is intentionally
-neither copyable nor movable because an active transaction is tied to its SOCI
-session.
+```cpp
+orm::Database server{orm::PostgresConfig{
+    .host = "localhost", .port = 5432, .database = "application",
+    .user = "application", .password = password,
+}};
+server.disconnect();
+server.connect(orm::PostgresConfig{.database = "application"});
+```
+
+Server strings, port and connection timeout are optional. Omitted fields are not
+sent, preserving client and environment defaults. An explicitly empty string is
+preserved as a distinct value; the native client decides its meaning. Omitting
+credentials does not imply anonymous login. PostgreSQL still authenticates a role;
+MySQL/MariaDB may match an anonymous account according to server rules. There is
+no anonymous flag, authentication fallback, automatic retry, or reconnect.
+
+SQLite requires a nonempty path or explicit memory tag. Paths use UTF-8.
+`openMode` optionally selects `ReadWriteCreate`, `ReadWrite`, or `ReadOnly`;
+`busyTimeout` is milliseconds. Server `connectTimeout` is seconds (PostgreSQL 0..INT_MAX; MySQL/MariaDB 1..UINT_MAX). Invalid ranges
+are rejected before opening without silent truncation; these timeouts do not
+promise a common bound on the whole startup operation. Embedded NUL is rejected.
+Whitespace, quotes, backslashes, equals signs and Unicode remain parameter data.
+
+`PostgresTls` provides optional `PostgresSslMode` and CA, client certificate and
+key paths. `MysqlTls` provides corresponding `MysqlSslMode` and paths for both
+MySQL-family configurations. Empty TLS fields preserve native policy; specifying
+a CA does not implicitly choose a verification mode. PostgreSQL also exposes
+`passfile`; MySQL-family configurations expose `socket`. See [Backends](backends.md).
+
+`connect(config)` on an active owner throws `AlreadyConnected`. Call
+`disconnect()` first; it rolls back an active transaction and reports rollback
+errors after closing. Failed construction releases opened resources; failed
+reconnect leaves the owner disconnected and ready for another explicit attempt.
+Cleanup depends on resource ownership, including when a health check fails.
+The destructor never propagates exceptions.
+
+`Database` is neither copyable nor movable. Existing contexts use the current
+session after reconnect; transactions and migration locks are not restored.
+The owner does not retain configurations for a parameterless reconnect. SOCI and
+native clients may retain internal copies of connection parameters. Diagnostics
+exclude configuration values and passwords. No URI parser is provided.
 
 All four supported backends enforce generated foreign keys. SQLite connections
 automatically enable `PRAGMA foreign_keys=ON`; PostgreSQL requires no equivalent

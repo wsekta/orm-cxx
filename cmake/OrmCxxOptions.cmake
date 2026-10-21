@@ -16,13 +16,13 @@ function(orm_cxx_define_options)
     option(ORM_CXX_ENABLE_MARIADB_BACKEND "Build and register the MariaDB backend" OFF)
     option(ORM_CXX_USE_SYSTEM_SOCI "Use an installed SOCI package instead of the bundled submodule" OFF)
     option(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS
-           "Build live PostgreSQL integration tests (requires ORM_CXX_POSTGRESQL_TEST_DSN at runtime)" OFF
+           "Build live PostgreSQL integration tests (requires ORM_CXX_POSTGRESQL_TEST_* fields at runtime)" OFF
     )
-    option(ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS "Build live MySQL tests (requires ORM_CXX_MYSQL_TEST_DSN at runtime)"
-           OFF
+    option(ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS
+           "Build live MySQL tests (requires ORM_CXX_MYSQL_TEST_* fields at runtime)" OFF
     )
     option(ORM_CXX_ENABLE_MARIADB_INTEGRATION_TESTS
-           "Build live MariaDB tests (requires ORM_CXX_MARIADB_TEST_DSN at runtime)" OFF
+           "Build live MariaDB tests (requires ORM_CXX_MARIADB_TEST_* fields at runtime)" OFF
     )
     option(ORM_CXX_WARNINGS_AS_ERRORS "Treat warnings from orm-cxx sources as errors" "${developer_default}")
 endfunction()

@@ -1,7 +1,9 @@
 module;
 
 #include <algorithm>
+#include <array>
 #include <charconv>
+#include <chrono>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -13,6 +15,7 @@ module;
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -380,6 +383,41 @@ auto loadEntries(const Path& root, std::span<const db::BackendType> backends) ->
     return result;
 }
 
+auto publishDirectory(const Path& source, const Path& destination) -> void
+{
+    constexpr std::array delays{std::chrono::milliseconds{5}, std::chrono::milliseconds{10},
+                                std::chrono::milliseconds{20}, std::chrono::milliseconds{40}};
+    std::size_t retries{};
+    for (;;)
+    {
+        try
+        {
+            std::filesystem::rename(source, destination);
+            return;
+        }
+        catch (const std::filesystem::filesystem_error& error)
+        {
+            if constexpr (Path::preferred_separator == '\\')
+            {
+                if (error.code() == std::errc::permission_denied && retries < delays.size())
+                {
+                    std::error_code sourceError, destinationError;
+                    const auto sourceExists = std::filesystem::exists(source, sourceError);
+                    const auto destinationExists = std::filesystem::exists(destination, destinationError);
+                    if (!sourceError && !destinationError && sourceExists && !destinationExists)
+                    {
+                        // Windows readers can briefly deny renaming a newly written tree.
+                        // Keep publication atomic and never retry a destination collision.
+                        std::this_thread::sleep_for(delays[retries++]);
+                        continue;
+                    }
+                }
+            }
+            throw;
+        }
+    }
+}
+
 auto publishDraft(const Path& root, std::span<const db::BackendType> backends, const Migration& migration,
                   Version parent, bool manual) -> void
 {
@@ -409,7 +447,7 @@ auto publishDraft(const Path& root, std::span<const db::BackendType> backends, c
                    {"scripts", scripts}}
                       .dump(2) +
                   '\n');
-    std::filesystem::rename(staging.path, root / (std::to_string(migration.version) + '_' + migration.name));
+    publishDirectory(staging.path, root / (std::to_string(migration.version) + '_' + migration.name));
 }
 
 template <typename Function>

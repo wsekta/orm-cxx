@@ -65,7 +65,6 @@ export
 
         auto registerBackend(std::unique_ptr<BackendProvider> backend) -> void;
         [[nodiscard]] auto getBackend(BackendType backendType) const -> const BackendProvider&;
-        [[nodiscard]] auto findBackend(std::string_view connectionString) const noexcept -> const BackendProvider*;
         auto getCommandGenerator(BackendType backendType) const -> const CommandGenerator&;
 
     private:

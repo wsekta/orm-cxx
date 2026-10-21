@@ -12,6 +12,7 @@ module orm;
 import :internal;
 import :test_support;
 import :migrations_internal;
+#include "tests/migrations/ConnectionTestSupport.hpp"
 
 using namespace orm::migrations;
 using namespace orm::test::fixtures;
@@ -361,17 +362,14 @@ TEST_P(MigrationTest, QuotesCommentsAndProceduralBodies)
 TEST_P(MigrationTest, LocksRejectACompetingSession)
 {
     TempDirectory directory;
-    orm::Database competitor;
+    auto competitor = makeTestDatabase();
     if (GetParam().type == orm::db::BackendType::Sqlite)
     {
         connection.disconnect();
-        const auto url = "sqlite3://" + (directory.path / "lock.db").string();
-        connection.connect(url);
-        competitor.connect(url);
-    }
-    else
-    {
-        competitor.connect(GetParam().type, testConnectionString());
+        const auto config = orm::SqliteConfig{directory.path / "lock.db"};
+        connection.connect(config);
+        competitor.disconnect();
+        competitor.connect(config);
     }
     auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
     const auto table = runtime.migrationTable(session());
@@ -522,7 +520,7 @@ TEST_P(MigrationTest, NontransactionalUpRequiresRepairAndExplicitResolution)
     expectMigrationError([&] { edited.resolve(1, checksum, Resolution::Completed); }, ErrorCode::ChecksumMismatch);
 
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_EQ(runner.status().incomplete, interrupted.incomplete);
     session() << "DROP TABLE migration_users";
     runner.resolve(1, checksum, Resolution::Reverted);
@@ -589,7 +587,7 @@ TEST_P(MigrationTest, DurableMarkerSurvivesLossBeforeHistoryFinalization)
     auto runner = orm::migrations::detail::RunnerAccess::withSessionOperations(connection, catalog, operations);
     expectMigrationError([&] { runner.up(); }, ErrorCode::Execution);
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     awaitMigrationConnectionCleanup(connection);
     Runner restarted{connection, catalog};
     const auto interrupted = restarted.status();
@@ -670,11 +668,11 @@ public:
         MigrationTest::SetUp();
         if (HasFatalFailure())
             return;
-        reconnectUrl_ = testConnectionString();
+        reconnectConfig_ = testConnectionConfig();
         if (GetParam().type == orm::db::BackendType::Sqlite)
         {
             // Reconnection must inspect the same durable SQLite database.
-            reconnectUrl_ = "sqlite3://" + (directory_.path / "migration-state.db").string();
+            reconnectConfig_ = orm::SqliteConfig{directory_.path / "migration-state.db"};
             reconnect();
         }
     }
@@ -682,7 +680,7 @@ public:
     auto reconnect() -> void
     {
         connection.disconnect();
-        connection.connect(GetParam().type, reconnectUrl_);
+        std::visit([&](const auto& config) { connection.connect(config); }, reconnectConfig_);
         awaitMigrationConnectionCleanup(connection);
     }
 
@@ -801,7 +799,7 @@ public:
 
 private:
     TempDirectory directory_;
-    std::string reconnectUrl_;
+    orm::migrations::detail::ConnectionConfiguration reconnectConfig_;
 };
 
 TEST_P(MigrationStateFailureTest, LossAfterDurableMarkerRequiresResolutionBeforeRetry)
@@ -880,7 +878,8 @@ TEST_P(MigrationTest, CommandLineReportsAndResolvesAnIncompleteMigration)
     {
         std::ostringstream output, errors;
         const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
-            std::span{args.begin(), args.size()}, catalog, testConnectionString(), output, errors);
+            std::span{args.begin(), args.size()}, catalog,
+            migration_connection_test::environment(testConnectionConfig()), output, errors);
         return std::tuple{result, output.str(), errors.str()};
     };
     const auto status = call({"status"});
@@ -982,7 +981,7 @@ TEST_P(MigrationTest, MysqlFamilyDetectsSettingsChangesThroughStoredRoutine)
                                                    "CREATE TABLE migration_users(id INTEGER PRIMARY KEY);")}};
     expectMigrationError([&] { runner.up(); }, ErrorCode::InvalidSql);
     EXPECT_FALSE(connection.isConnected());
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     const auto state = runner.status();
     ASSERT_TRUE(state.incomplete);
     EXPECT_EQ(state.currentVersion, 0);
@@ -1315,16 +1314,17 @@ TEST(MigrationCatalogTest, StrictDirectoryLayoutAndUnreadableFiles)
 
 TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
 {
-    const auto call = [](std::initializer_list<std::string_view> args, std::optional<std::string_view> connection)
+    const auto call = [](std::initializer_list<std::string_view> args,
+                         const orm::migrations::detail::ConnectionEnvironment& connection)
     {
         std::ostringstream output, errors;
         const auto result = orm::migrations::detail::runCatalogCommandWithConnection(
             std::span{args.begin(), args.size()}, initialCatalog(), connection, output, errors);
         return std::tuple{result, output.str(), errors.str()};
     };
-    EXPECT_EQ(std::get<0>(call({}, std::nullopt)), 0);
-    EXPECT_EQ(std::get<0>(call({"--help"}, std::nullopt)), 0);
-    EXPECT_EQ(std::get<0>(call({"help"}, std::nullopt)), 0);
+    EXPECT_EQ(std::get<0>(call({}, {})), 0);
+    EXPECT_EQ(std::get<0>(call({"--help"}, {})), 0);
+    EXPECT_EQ(std::get<0>(call({"help"}, {})), 0);
     for (const auto& args : {std::vector<std::string_view>{"invalid"},
                              {"preview"},
                              {"preview", "sideways"},
@@ -1342,13 +1342,11 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
                              {"resolve", "--version", "1", "--checksum", "bad", "--resolution", "invalid"}})
     {
         std::ostringstream out, err;
-        EXPECT_EQ(
-            orm::migrations::detail::runCatalogCommandWithConnection(args, initialCatalog(), std::nullopt, out, err),
-            2);
+        EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(args, initialCatalog(), {}, out, err), 2);
     }
-    EXPECT_EQ(std::get<0>(call({"status"}, std::nullopt)), 1);
-    EXPECT_EQ(std::get<0>(call({"status"}, "")), 1);
-    const auto secretFailure = call({"status"}, "invalid://super-secret");
+    EXPECT_EQ(std::get<0>(call({"status"}, {})), 1);
+    EXPECT_EQ(std::get<0>(call({"status"}, {{"ORM_CXX_DATABASE_BACKEND", ""}})), 1);
+    const auto secretFailure = call({"status"}, {{"ORM_CXX_DATABASE_BACKEND", "super-secret"}});
     EXPECT_EQ(std::get<0>(secretFailure), 1);
     EXPECT_EQ(std::get<2>(secretFailure).find("super-secret"), std::string::npos);
     if constexpr (orm::config::sqliteBackendEnabled)
@@ -1362,12 +1360,15 @@ TEST(MigrationCommandLineTest, ArgumentsConnectionsAndCommands)
                                  {"baseline", "--to", "10"}})
         {
             std::ostringstream out, err;
-            EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(args, initialCatalog(),
-                                                                               "sqlite3://:memory:", out, err),
+            EXPECT_EQ(orm::migrations::detail::runCatalogCommandWithConnection(
+                          args, initialCatalog(),
+                          migration_connection_test::environment(orm::SqliteConfig{orm::SqliteMemory{}}), out, err),
                       0)
                 << err.str();
         }
-        EXPECT_EQ(std::get<0>(call({"up", "--to", "999"}, "sqlite3://:memory:")), 1);
+        EXPECT_EQ(std::get<0>(call({"up", "--to", "999"},
+                                   migration_connection_test::environment(orm::SqliteConfig{orm::SqliteMemory{}}))),
+                  1);
     }
     std::ostringstream out, err;
     const std::string_view help[]{"--help"};

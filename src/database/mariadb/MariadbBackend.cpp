@@ -14,7 +14,7 @@ namespace orm::db::mariadb
 {
 MariadbBackend::MariadbBackend()
     : backendCapabilities{mysql_family::capabilities()},
-      backendRuntime{mysql_family::makeRuntime(BackendType::Mariadb, "mariadb://")},
+      backendRuntime{mysql_family::makeRuntime(BackendType::Mariadb)},
       mariadbCommandGenerator{mariadbDialect}
 {
     backendCapabilities.query.maxOrderedStringLength = 16'383;
@@ -23,10 +23,6 @@ MariadbBackend::~MariadbBackend() = default;
 auto MariadbBackend::type() const noexcept -> BackendType
 {
     return BackendType::Mariadb;
-}
-auto MariadbBackend::acceptsConnectionString(std::string_view value) const noexcept -> bool
-{
-    return value.starts_with("mariadb://");
 }
 auto MariadbBackend::capabilities() const noexcept -> const BackendCapabilities&
 {

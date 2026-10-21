@@ -82,7 +82,6 @@ auto rebuildMigration(const SchemaSnapshot& before) -> Migration
 }
 auto setup(orm::Database& database, const SchemaSnapshot& before) -> void
 {
-    database.connect("sqlite3://:memory:");
     auto initial = generate(1, "initial", compare(emptySnapshot(std::array{Backend::Sqlite}), before)).migration;
     Runner{database, Catalog{initial}}.up();
     auto& session = Access::session(database);
@@ -111,7 +110,7 @@ auto expectInvalid(orm::Database& database, const SchemaSnapshot& before) -> voi
 TEST(MigrationRebuildTest, PreservesReferencingRowsBackfillAndDeletedIdentityHighwater)
 {
     const auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "INSERT INTO rebuild_parent(id) VALUES(500)";
@@ -139,7 +138,7 @@ TEST(MigrationRebuildTest, PreservesReferencingRowsBackfillAndDeletedIdentityHig
 TEST(MigrationRebuildTest, RestoresDeletedTargetSequenceMetadataFromTheSourceHighwater)
 {
     const auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "INSERT INTO rebuild_parent(id) VALUES(500)";
@@ -163,7 +162,7 @@ TEST(MigrationRebuildTest, PreservesEmptyIdentityTableAndMaximumHighwaterWithout
     for (const auto highwater : {0LL, 800LL, (std::numeric_limits<long long>::max)()})
     {
         const auto before = sourceSnapshot();
-        orm::Database database;
+        orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
         setup(database, before);
         auto& session = Access::session(database);
         session << "DELETE FROM rebuild_child";
@@ -194,7 +193,7 @@ TEST(MigrationRebuildTest, RejectsUnmanagedObjectsAndSourceDriftBeforeAnyChanges
           "ALTER TABLE rebuild_parent ADD COLUMN extra TEXT"})
     {
         const auto before = sourceSnapshot();
-        orm::Database database;
+        orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
         setup(database, before);
         Access::session(database) << sql;
         expectInvalid(database, before);
@@ -204,7 +203,7 @@ TEST(MigrationRebuildTest, RejectsUnmanagedObjectsAndSourceDriftBeforeAnyChanges
 TEST(MigrationRebuildTest, RejectsStagingCollisionAndRestoresForeignKeys)
 {
     const auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     const auto change = rebuildMigration(before);
     const auto& stage = change.scripts.at(Backend::Sqlite).upContext.rebuildTables.front().staging;
@@ -215,7 +214,7 @@ TEST(MigrationRebuildTest, RejectsStagingCollisionAndRestoresForeignKeys)
 TEST(MigrationRebuildTest, ForeignKeyCheckRollsBackAndRestoresSession)
 {
     auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "PRAGMA foreign_keys=OFF";
@@ -230,7 +229,7 @@ TEST(MigrationRebuildTest, ForeignKeyCheckRollsBackAndRestoresSession)
 TEST(MigrationRebuildTest, PreservesDisabledForeignKeySetting)
 {
     const auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "PRAGMA foreign_keys=OFF";
@@ -244,7 +243,7 @@ TEST(MigrationRebuildTest, PreservesDisabledForeignKeySetting)
 TEST(MigrationRebuildTest, RejectsEvenEmptyUnmanagedInboundForeignKey)
 {
     const auto before = sourceSnapshot();
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     Access::session(database) << "CREATE TABLE unmanaged_child(parent_id INTEGER REFERENCES rebuild_parent(id))";
     expectInvalid(database, before);
@@ -258,7 +257,7 @@ TEST(MigrationRebuildTest, DetectsMissingAndAlteredManagedIndexes)
         auto& parent =
             *std::ranges::find(before.backends.at(Backend::Sqlite).tables, "rebuild_parent", &PhysicalTable::name);
         parent.indexes.push_back({.name = "managed_index", .columns = {"id"}, .unique = false});
-        orm::Database database;
+        orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
         setup(database, before);
         auto& session = Access::session(database);
         session << "DROP INDEX managed_index";
@@ -286,8 +285,7 @@ TEST(MigrationRebuildTest, QuotedTableNameWithParenthesisCanBeRebuilt)
     const auto first =
         generate(1, "quoted_initial", compare(emptySnapshot(std::array{Backend::Sqlite}), before)).migration;
     const auto change = generate(2, "quoted_change", compare(before, after)).migration;
-    orm::Database database;
-    database.connect("sqlite3://:memory:");
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     Runner{database, Catalog{first}}.up();
     auto& session = Access::session(database);
     session << "INSERT INTO " + detail::quoteIdentifier(Backend::Sqlite, name) + "(id) VALUES(1)";
@@ -312,11 +310,10 @@ TEST(MigrationRebuildTest, BeginFailureRestoresForeignKeysAndOwnership)
             std::filesystem::remove(path, error);
         }
     } cleanup{path};
-    orm::Database database, locker;
-    const auto url = "sqlite3://" + path.string();
-    database.connect(url);
+    const auto config = orm::SqliteConfig{path};
+    orm::Database database{config};
     Runner{database, Catalog{first}}.up();
-    locker.connect(url);
+    orm::Database locker{config};
     Access::session(locker) << "BEGIN IMMEDIATE";
     Access::session(database) << "PRAGMA busy_timeout=0";
     try
@@ -356,7 +353,7 @@ TEST(MigrationRebuildTest, PreservesSetNullChildrenAndSelfReferences)
                                   .onDelete = "NO ACTION",
                                   .onUpdate = "NO ACTION"});
     detail::canonicalize(before);
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "UPDATE rebuild_parent SET previous_id=1";
@@ -387,7 +384,7 @@ TEST(MigrationRebuildTest, CopiesAllCyclicTablesBeforeDroppingAnySource)
                                   .onDelete = "SET NULL",
                                   .onUpdate = "NO ACTION"});
     detail::canonicalize(before);
-    orm::Database database;
+    orm::Database database{orm::SqliteConfig{orm::SqliteMemory{}}};
     setup(database, before);
     auto& session = Access::session(database);
     session << "UPDATE rebuild_parent SET child_id=9";

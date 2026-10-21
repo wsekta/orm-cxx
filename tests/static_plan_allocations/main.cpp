@@ -1,7 +1,9 @@
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstdlib>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <limits>
 #include <new>
@@ -9,6 +11,7 @@
 #include <string>
 #include <tuple>
 #include <type_traits>
+#include <variant>
 
 #ifdef _MSC_VER
 #include <malloc.h>
@@ -122,22 +125,25 @@ int main(int argc, char**)
         if (allocationCount.load() != 1)
             return 2;
 
-        orm::Database database;
-        orm::Database otherDatabase;
-        using EmptySchema = orm::Schema<>;
-        allocationCount.store(0);
-        countAllocations.store(true);
-        auto context = database.orm<EmptySchema>();
-        auto copiedContext = context;
-        auto movedContext = std::move(copiedContext);
-        movedContext = otherDatabase.orm<EmptySchema>();
-        copiedContext = movedContext;
-        (void)copiedContext;
-        countAllocations.store(false);
-        const auto contextAllocations = allocationCount.load();
-        std::cout << "Created, copied and rebound ORM contexts; allocations: " << contextAllocations << '\n';
-        if (contextAllocations != 0)
-            return 3;
+        if constexpr (orm::config::sqliteBackendEnabled)
+        {
+            orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+            orm::Database otherDatabase{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+            using EmptySchema = orm::Schema<>;
+            allocationCount.store(0);
+            countAllocations.store(true);
+            auto context = database.orm<EmptySchema>();
+            auto copiedContext = context;
+            auto movedContext = std::move(copiedContext);
+            movedContext = otherDatabase.orm<EmptySchema>();
+            copiedContext = movedContext;
+            (void)copiedContext;
+            countAllocations.store(false);
+            const auto contextAllocations = allocationCount.load();
+            std::cout << "Created, copied and rebound ORM contexts; allocations: " << contextAllocations << '\n';
+            if (contextAllocations != 0)
+                return 3;
+        }
 
         allocationCount.store(0);
         countAllocations.store(true);

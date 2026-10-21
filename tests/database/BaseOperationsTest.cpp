@@ -62,50 +62,19 @@ class BaseOperationsTest : public DatabaseTest<base_operations_models::Schema>
 {
 };
 
-TEST_P(BaseOperationsTest, shouldAutoDetectBackendFromConnectionString)
+TEST_P(BaseOperationsTest, typedConfigurationSelectsBackend)
 {
-    BaseOperationsDatabase database;
-
-    database.connect(testConnectionString());
-
+    auto database = makeTestDatabase();
     EXPECT_TRUE(database.isConnected());
     EXPECT_EQ(database.getBackendType(), GetParam().type);
     database.disconnect();
 }
 
-TEST_P(BaseOperationsTest, explicitBackendShouldRejectMismatchedConnectionString)
-{
-    BaseOperationsDatabase database;
-
-    expectDatabaseError([&]() { database.connect(GetParam().type, "mismatch://database"); },
-                        orm::DatabaseErrorCode::Connection, GetParam().type, "connect");
-
-    EXPECT_FALSE(database.isConnected());
-    EXPECT_EQ(database.getBackendType(), orm::db::BackendType::Empty);
-}
-
-TEST_P(BaseOperationsTest, unknownConnectionSchemeShouldReportUnsupportedBackend)
-{
-    BaseOperationsDatabase database;
-
-    expectDatabaseError([&]() { database.connect("unknown://database"); }, orm::DatabaseErrorCode::UnsupportedBackend,
-                        orm::db::BackendType::Empty, "connect");
-}
-
-TEST_P(BaseOperationsTest, unimplementedExplicitBackendShouldReportUnsupportedBackend)
-{
-    BaseOperationsDatabase database;
-
-    expectDatabaseError([&]() { database.connect(orm::db::BackendType::Oracle, "oracle://localhost/test"); },
-                        orm::DatabaseErrorCode::UnsupportedBackend, orm::db::BackendType::Oracle, "connect");
-}
-
 TEST_P(BaseOperationsTest, secondConnectShouldReportAlreadyConnected)
 {
-    BaseOperationsDatabase database;
-    database.connect(testConnectionString());
+    auto database = makeTestDatabase();
 
-    expectDatabaseError([&]() { database.connect(testConnectionString()); }, orm::DatabaseErrorCode::AlreadyConnected,
+    expectDatabaseError([&]() { connectTestDatabase(database); }, orm::DatabaseErrorCode::AlreadyConnected,
                         GetParam().type, "connect");
 
     EXPECT_TRUE(database.isConnected());
@@ -114,7 +83,8 @@ TEST_P(BaseOperationsTest, secondConnectShouldReportAlreadyConnected)
 
 TEST_P(BaseOperationsTest, capabilitiesWithoutConnectionShouldReportNotConnected)
 {
-    BaseOperationsDatabase database;
+    auto database = makeTestDatabase();
+    database.disconnect();
 
     expectDatabaseError([&]() { (void)database.getBackendCapabilities(); }, orm::DatabaseErrorCode::NotConnected,
                         orm::db::BackendType::Empty, "database operation");
@@ -122,7 +92,8 @@ TEST_P(BaseOperationsTest, capabilitiesWithoutConnectionShouldReportNotConnected
 
 TEST_P(BaseOperationsTest, operationWithoutConnectionShouldReportNotConnected)
 {
-    BaseOperationsDatabase database;
+    auto database = makeTestDatabase();
+    database.disconnect();
 
     expectDatabaseError([&]() { database.orm<base_operations_models::Schema>().createTable<models::SomeDataModel>(); },
                         orm::DatabaseErrorCode::NotConnected, orm::db::BackendType::Empty, "database operation");

@@ -102,19 +102,17 @@ TEST_P(OrmContextTest, copiesAndMovesBorrowTheSameSessionWithoutEndingItsTransac
     EXPECT_TRUE(copy.select(query).empty());
 }
 
-TEST_P(OrmContextTest, contextCreatedBeforeConnectUsesTheCurrentSessionAfterReconnect)
+TEST_P(OrmContextTest, contextUsesTheCurrentSessionAfterReconnect)
 {
     using namespace context_models;
-    orm::Database owner;
+    auto owner = makeTestDatabase();
     auto records = owner.orm<Records>();
-    EXPECT_THROW(records.createTable<Record>(), orm::DatabaseError);
-    owner.connect(GetParam().type, testConnectionString());
     records.createTable<Record>();
     records.insert(Record{1, "before"});
     owner.disconnect();
     orm::Query<Record> query;
     EXPECT_THROW((void)records.select(query), orm::DatabaseError);
-    owner.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(owner);
     records.createTable<Record>();
     records.insert(Record{2, "after"});
     query.where(orm::query::col<&Record::id>() == 2);

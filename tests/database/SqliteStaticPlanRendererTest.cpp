@@ -19,6 +19,16 @@ using namespace orm::test::fixtures;
 using namespace orm::query;
 using namespace static_plan_models;
 
+struct RendererConfig
+{
+    orm::SqliteConfig sqlite;
+};
+template <>
+struct orm::db::ConnectionTraits<RendererConfig>
+{
+    static constexpr auto backendType = orm::db::BackendType::Oracle;
+};
+
 namespace
 {
 struct RendererCalls
@@ -71,17 +81,52 @@ private:
     RendererCalls& calls;
 };
 
+class RendererRuntime final : public orm::db::BackendRuntime
+{
+public:
+    explicit RendererRuntime(const orm::db::BackendRuntime& delegate) : delegate{delegate} {}
+    auto open(soci::session& session, orm::db::ConnectionConfigView view) const -> void override
+    {
+        const auto& config = view.get<RendererConfig>();
+        delegate.open(session, orm::db::ConnectionConfigView{config.sqlite});
+    }
+    auto onConnect(soci::session& s) const -> void override
+    {
+        delegate.onConnect(s);
+    }
+    auto tableExists(soci::session& s, std::string_view n) const -> bool override
+    {
+        return delegate.tableExists(s, n);
+    }
+    auto limits(soci::session& s) const -> orm::db::BackendRuntimeLimits override
+    {
+        return delegate.limits(s);
+    }
+    auto normalizeAffectedRows(long long n) const -> std::size_t override
+    {
+        return delegate.normalizeAffectedRows(n);
+    }
+    auto bind(soci::values& v, std::string_view n, const orm::db::BoundValue& b) const -> void override
+    {
+        delegate.bind(v, n, b);
+    }
+    auto translateError(const soci::soci_error& e, orm::DatabaseErrorCode c,
+                        std::string_view op) const -> orm::DatabaseError override
+    {
+        return delegate.translateError(e, c, op);
+    }
+
+private:
+    const orm::db::BackendRuntime& delegate;
+};
+
 class ObservedBackend : public orm::db::BackendProvider
 {
 public:
-    ObservedBackend() : generator{sqlite.commandGenerator(), calls} {}
+    ObservedBackend() : generator{sqlite.commandGenerator(), calls}, runtime_{sqlite.runtime()} {}
     auto type() const noexcept -> orm::db::BackendType override
     {
         return orm::db::BackendType::Oracle;
-    }
-    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
-    {
-        return connectionString.starts_with("sqlite3://");
     }
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
     {
@@ -93,7 +138,7 @@ public:
     }
     auto runtime() const noexcept -> const orm::db::BackendRuntime& override
     {
-        return sqlite.runtime();
+        return runtime_;
     }
     auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
     {
@@ -105,6 +150,7 @@ public:
 private:
     orm::db::sqlite::SqliteBackend sqlite;
     ObservedCommands generator;
+    RendererRuntime runtime_;
 };
 
 class CachedObservedBackend final : public ObservedBackend
@@ -124,9 +170,9 @@ struct ObserverBundle
         backend = provider.get();
         orm::db::CommandGeneratorFactory factory;
         factory.registerBackend(std::move(provider));
-        connection = std::make_unique<orm::Database>(std::move(factory));
+        connection = std::make_unique<orm::Database>(RendererConfig{orm::SqliteConfig{.database = orm::SqliteMemory{}}},
+                                                     std::move(factory));
         database = std::make_unique<static_plan_models::Context>(connection->orm<static_plan_models::Schema>());
-        connection->connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
         database->createTable<Profile>();
         database->createTable<User>();
         database->insert(User{1, 18, "Ada", {}, {}, {}});
@@ -145,7 +191,7 @@ TEST(StaticPlanRendererTest, existingContextUsesNewBackendAfterReconnect)
     constexpr auto byId = select<User>().where(col<&User::id>() == param<int, 0>());
     EXPECT_EQ(context.select(byId, 1).size(), 1);
     bundle.connection->disconnect();
-    bundle.connection->connect(orm::db::BackendType::Sqlite, "sqlite3://:memory:");
+    bundle.connection->connect(orm::SqliteConfig{.database = orm::SqliteMemory{}});
     context.createTable<Profile>();
     context.createTable<User>();
     context.insert(User{2, 21, "Grace", {}, {}, {}});

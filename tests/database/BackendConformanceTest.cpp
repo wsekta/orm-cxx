@@ -236,11 +236,9 @@ TEST_P(BackendConformanceTest, supportedBackendAdvertisesRequiredCoreCapabilitie
     EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::String));
 }
 
-TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBackend)
+TEST_P(BackendConformanceTest, typedConfigurationSelectsConfiguredBackend)
 {
-    orm::Database detectedDatabaseConnection;
-
-    detectedDatabaseConnection.connect(testConnectionString());
+    auto detectedDatabaseConnection = makeTestDatabase();
 
     EXPECT_TRUE(detectedDatabaseConnection.isConnected());
     EXPECT_EQ(detectedDatabaseConnection.getBackendType(), GetParam().type);
@@ -249,14 +247,15 @@ TEST_P(BackendConformanceTest, connectionStringAutoDetectionSelectsConfiguredBac
 
 TEST_P(BackendConformanceTest, connectedDatabaseRejectsSecondConnect)
 {
-    expectDatabaseError([this]() { connection.connect(testConnectionString()); },
-                        orm::DatabaseErrorCode::AlreadyConnected, GetParam().type, "connect");
+    expectDatabaseError([this]() { connectTestDatabase(connection); }, orm::DatabaseErrorCode::AlreadyConnected,
+                        GetParam().type, "connect");
     EXPECT_TRUE(connection.isConnected());
 }
 
 TEST_P(BackendConformanceTest, disconnectedDatabaseRejectsCapabilitiesAndOperations)
 {
-    orm::Database disconnectedDatabaseConnection;
+    auto disconnectedDatabaseConnection = makeTestDatabase();
+    disconnectedDatabaseConnection.disconnect();
     orm::OrmContext<conformance_models::Schema> disconnectedDatabase =
         disconnectedDatabaseConnection.orm<conformance_models::Schema>();
 
@@ -273,7 +272,7 @@ TEST_P(BackendConformanceTest, disconnectAllowsReconnect)
     EXPECT_FALSE(connection.isConnected());
     EXPECT_EQ(connection.getBackendType(), orm::db::BackendType::Empty);
 
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
 
     EXPECT_TRUE(connection.isConnected());
     EXPECT_EQ(connection.getBackendType(), GetParam().type);
@@ -1081,7 +1080,7 @@ TEST_P(BackendConformanceTest, disconnectRollsBackActiveTransactionAndAllowsReco
 
     ASSERT_NO_THROW(connection.disconnect());
     EXPECT_FALSE(connection.isConnected());
-    ASSERT_NO_THROW(connection.connect(GetParam().type, testConnectionString()));
+    ASSERT_NO_THROW(connectTestDatabase(connection));
 
     // Recreate SQLite's in-memory table while remaining a no-op for persistent
     // backends. In both cases the uncommitted row must be absent.

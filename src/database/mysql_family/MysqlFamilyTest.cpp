@@ -2,12 +2,14 @@ module;
 
 #include <future>
 
+#include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
 
 import :internal;
+import :connection_config;
 import :test_support;
 import :foundation;
 import :model;
@@ -66,7 +68,7 @@ TEST(MysqlFamilyTest, categorizedDriverErrorsPreserveFallbackAndSanitizeMessages
     private:
         error_category category_;
     };
-    const auto runtime = orm::db::mysql_family::makeRuntime(orm::db::BackendType::Mysql, "mysql://");
+    const auto runtime = orm::db::mysql_family::makeRuntime(orm::db::BackendType::Mysql);
     for (const auto& [category, expected] :
          std::array<std::pair<soci::soci_error::error_category, orm::DatabaseErrorCode>, 4>{
              {{soci::soci_error::connection_error, orm::DatabaseErrorCode::Connection},
@@ -84,15 +86,61 @@ TEST(MysqlFamilyTest, categorizedDriverErrorsPreserveFallbackAndSanitizeMessages
     }
 }
 
-TEST(MysqlFamilyTest, reconnectOptionScannerHandlesSpacesEscapesAndMalformedOptions)
+TEST(MysqlFamilyTest, typedConfigurationRejectsInvalidValuesBeforeOpening)
 {
-    const auto runtime = orm::db::mysql_family::makeRuntime(orm::db::BackendType::Mysql, "mysql://");
-    soci::session session;
-    for (const auto dsn : {"mysql:// \t reconnect = 0", "mysql://user = 'quoted\\'value' \t reconnect=1",
-                           "mysql://password = 'back\\\\slash' db = test reconnect=0"})
-        EXPECT_THROW(runtime->open(session, dsn), std::invalid_argument);
-    EXPECT_THROW(runtime->open(session, "mysql://broken_option"), soci::soci_error);
-    EXPECT_FALSE(session.is_connected());
+    for (const auto type : {orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb})
+    {
+        const auto runtime = orm::db::mysql_family::makeRuntime(type);
+        soci::session session;
+        const auto check = [&runtime, &session](const auto& config)
+        {
+            try
+            {
+                runtime->open(session, orm::db::ConnectionConfigView{config});
+                FAIL() << "Invalid configuration unexpectedly opened";
+            }
+            catch (const orm::DatabaseError& error)
+            {
+                EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Connection);
+                EXPECT_EQ(error.getOperation(), "connect");
+                EXPECT_EQ(std::string_view{error.what()}.find("private"), std::string_view::npos);
+            }
+            EXPECT_FALSE(session.is_connected());
+        };
+        const auto cases = [&check]<class Config>()
+        {
+            Config config;
+            config.password = std::string{"private"} + '\0';
+            check(config);
+            config.password.reset();
+            for (const auto seconds : {-1LL, 0LL, static_cast<long long>(std::numeric_limits<unsigned int>::max()) + 1})
+            {
+                config.connectTimeout = std::chrono::seconds{seconds};
+                check(config);
+            }
+            config.connectTimeout.reset();
+            config.tls.mode = static_cast<orm::MysqlSslMode>(-1);
+            check(config);
+        };
+        if (type == orm::db::BackendType::Mysql)
+            cases.operator()<orm::MysqlConfig>();
+        else
+            cases.operator()<orm::MariadbConfig>();
+    }
+}
+
+TEST(MysqlFamilyTest, configurationKeepsNulloptEmptyValuesAndPrivateEscapingDistinct)
+{
+    const orm::MysqlConfig defaults;
+    EXPECT_EQ(orm_mysql_connection::serialize(defaults), "");
+    auto config = defaults;
+    config.password = "";
+    EXPECT_EQ(orm_mysql_connection::serialize(config), "password=''");
+    config.password = " space'\\=\"value ";
+    EXPECT_EQ(orm_mysql_connection::serialize(config), "password=' space\\'\\\\=\"value '");
+    config = defaults;
+    config.tls.mode = orm::MysqlSslMode::VerifyIdentity;
+    EXPECT_EQ(orm_mysql_connection::serialize(config), "ssl_mode='VERIFY_IDENTITY'");
 }
 
 TEST(MysqlFamilyTest, relationInsertSpecificationRejectsIncompleteMetadata)
@@ -209,32 +257,212 @@ public:
     {
         std::promise<void> ready;
         auto readyFuture = ready.get_future();
-        auto result =
-            std::async(std::launch::async,
-                       [type = GetParam().type, dsn = testConnectionString(), start, ready = std::move(ready)]() mutable
-                       {
-                           orm::Database second;
-                           try
-                           {
-                               second.connect(type, dsn);
-                               ready.set_value();
-                           }
-                           catch (...)
-                           {
-                               ready.set_exception(std::current_exception());
-                               throw;
-                           }
-                           start.wait();
-                           return second.orm<LinkSchema>().link<&collection_models::User::roles>(
-                               collection_models::User{.id = 1, .name = {}, .roles = {}},
-                               collection_models::Role{.id = 1, .name = {}, .users = {}});
-                       });
+        auto result = std::async(std::launch::async,
+                                 [config = testConnectionConfig(), start, ready = std::move(ready)]() mutable
+                                 {
+                                     std::unique_ptr<orm::Database> second;
+                                     try
+                                     {
+                                         second =
+                                             std::visit([](const auto& selected)
+                                                        { return std::make_unique<orm::Database>(selected); }, config);
+                                         ready.set_value();
+                                     }
+                                     catch (...)
+                                     {
+                                         ready.set_exception(std::current_exception());
+                                         throw;
+                                     }
+                                     start.wait();
+                                     return second->orm<LinkSchema>().link<&collection_models::User::roles>(
+                                         collection_models::User{.id = 1, .name = {}, .roles = {}},
+                                         collection_models::Role{.id = 1, .name = {}, .users = {}});
+                                 });
         readyFuture.get();
         return result;
     }
 };
 
 thread_local unsigned int migrationMetadataQueries{};
+}
+
+TEST_P(MysqlFamilyLinkTest, TypedCredentialsKeepSpecialPasswordAndDoNotRetryAfterFailure)
+{
+    const auto user = postgresql_test::generateSchemaName().substr(0, 30);
+    const auto unicode = std::u8string{u8"żółć"};
+    const std::string password = std::string{" 'quoted"} + char{92} + "password=" + char{34} + char{9} +
+                                 std::string{unicode.begin(), unicode.end()};
+    session() << "CREATE USER :user@'%' IDENTIFIED BY :password", soci::use(user, "user"),
+        soci::use(password, "password");
+    try
+    {
+        std::string databaseName;
+        session() << "SELECT DATABASE()", soci::into(databaseName);
+        orm::db::CommandGeneratorFactory factory;
+        const auto& dialect = factory.getBackend(GetParam().type).dialect();
+        session() << "GRANT ALL ON " + dialect.quoteIdentifier(databaseName) + ".* TO :user@'%'",
+            soci::use(user, "user");
+        auto config = testConnectionConfig();
+        std::visit(
+            [&](auto& selected)
+            {
+                if constexpr (requires {
+                                  selected.user;
+                                  selected.password;
+                              })
+                {
+                    selected.user = user;
+                    selected.password = password;
+                }
+            },
+            config);
+        auto authenticated = std::visit([](const auto& selected) { return orm::Database{selected}; }, config);
+        std::string actual;
+        orm::migrations::detail::DatabaseAccess::session(authenticated) << "SELECT CURRENT_USER()", soci::into(actual);
+        EXPECT_EQ(actual, user + "@%");
+        authenticated.disconnect();
+        std::visit(
+            [](auto& selected)
+            {
+                if constexpr (requires { selected.password; })
+                    selected.password = "wrong-private-password";
+            },
+            config);
+        try
+        {
+            std::visit([](const auto& selected) { orm::Database denied{selected}; }, config);
+            FAIL() << "Wrong password unexpectedly authenticated";
+        }
+        catch (const orm::DatabaseError& error)
+        {
+            EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Connection);
+            EXPECT_EQ(error.getOperation(), "connect");
+            EXPECT_EQ(std::string_view{error.what()}.find("wrong-private-password"), std::string_view::npos);
+            EXPECT_EQ(std::string_view{error.what()}.find(user), std::string_view::npos);
+        }
+        const std::string emptyPassword;
+        session() << "ALTER USER :user@'%' IDENTIFIED BY :password", soci::use(user, "user"),
+            soci::use(emptyPassword, "password");
+        std::visit(
+            [](auto& selected)
+            {
+                if constexpr (requires { selected.password; })
+                    selected.password = "";
+            },
+            config);
+        auto emptyAuthenticated = std::visit([](const auto& selected) { return orm::Database{selected}; }, config);
+        orm::migrations::detail::DatabaseAccess::session(emptyAuthenticated) << "SELECT CURRENT_USER()",
+            soci::into(actual);
+        EXPECT_EQ(actual, user + "@%");
+        emptyAuthenticated.disconnect();
+        std::visit(
+            [](auto& selected)
+            {
+                if constexpr (requires { selected.password; })
+                    selected.password.reset();
+            },
+            config);
+        auto defaultAuthenticated = std::visit([](const auto& selected) { return orm::Database{selected}; }, config);
+        orm::migrations::detail::DatabaseAccess::session(defaultAuthenticated) << "SELECT CURRENT_USER()",
+            soci::into(actual);
+        EXPECT_EQ(actual, user + "@%");
+        defaultAuthenticated.disconnect();
+    }
+    catch (...)
+    {
+        session() << "DROP USER IF EXISTS :user@'%'", soci::use(user, "user");
+        throw;
+    }
+    session() << "DROP USER IF EXISTS :user@'%'", soci::use(user, "user");
+}
+
+TEST_P(MysqlFamilyLinkTest, IsolatedAnonymousAccountIsIdentifiedByCurrentUser)
+{
+    // The verifier provisions a separate disposable server/account for this profile.
+    // Its transport fields must identify that isolated server, never the normal admin session.
+    const auto mysql = GetParam().type == orm::db::BackendType::Mysql;
+    const auto prefix = mysql ? "ORM_CXX_MYSQL_ANONYMOUS_TEST_" : "ORM_CXX_MARIADB_ANONYMOUS_TEST_";
+    if (orm::test::connectionEnvironment(prefix, "ENABLED") != std::optional<std::string>{"1"})
+        GTEST_SKIP() << "Isolated anonymous authentication profile was not provisioned";
+    const auto check = [](const auto& config)
+    {
+        orm::Database anonymous{config};
+        std::string identity;
+        orm::migrations::detail::DatabaseAccess::session(anonymous) << "SELECT CURRENT_USER()", soci::into(identity);
+        EXPECT_TRUE(identity.starts_with("@"));
+    };
+    if (mysql)
+        check(orm::test::serverConfigFromEnvironment<orm::MysqlConfig>(prefix));
+    else
+        check(orm::test::serverConfigFromEnvironment<orm::MariadbConfig>(prefix));
+}
+
+TEST_P(MysqlFamilyLinkTest, ExplicitTlsProfileActuallyEncryptsTheSession)
+{
+    const auto mysql = GetParam().type == orm::db::BackendType::Mysql;
+    const auto prefix = mysql ? "ORM_CXX_MYSQL_TLS_TEST_" : "ORM_CXX_MARIADB_TLS_TEST_";
+    if (orm::test::connectionEnvironment(prefix, "ENABLED") != std::optional<std::string>{"1"})
+        GTEST_SKIP() << "TLS authentication profile was not provisioned";
+    const auto check = [](auto config)
+    {
+        if (!config.tls.mode)
+            config.tls.mode = orm::MysqlSslMode::Required;
+        ASSERT_NE(*config.tls.mode, orm::MysqlSslMode::Disabled);
+        orm::Database encrypted{config};
+        std::string key, cipher;
+        orm::migrations::detail::DatabaseAccess::session(encrypted) << "SHOW SESSION STATUS LIKE 'Ssl_cipher'",
+            soci::into(key), soci::into(cipher);
+        EXPECT_FALSE(cipher.empty());
+    };
+    if (mysql)
+        check(orm::test::serverConfigFromEnvironment<orm::MysqlConfig>(prefix));
+    else
+        check(orm::test::serverConfigFromEnvironment<orm::MariadbConfig>(prefix));
+}
+
+TEST_P(MysqlFamilyLinkTest, PositiveTimeoutReachesTheRealClientConnect)
+{
+    auto config = testConnectionConfig();
+    std::visit(
+        [](auto& selected)
+        {
+            if constexpr (requires { selected.connectTimeout; })
+                selected.connectTimeout = std::chrono::seconds{1};
+        },
+        config);
+    auto timed = std::visit([](const auto& selected) { return orm::Database{selected}; }, config);
+    int value{};
+    orm::migrations::detail::DatabaseAccess::session(timed) << "SELECT 42", soci::into(value);
+    EXPECT_EQ(value, 42);
+}
+
+TEST_P(MysqlFamilyLinkTest, ExplicitUnixSocketReachesTheServerWithoutTcpFallback)
+{
+    const auto mysql = GetParam().type == orm::db::BackendType::Mysql;
+    const auto socketPrefix = mysql ? "ORM_CXX_MYSQL_SOCKET_TEST_" : "ORM_CXX_MARIADB_SOCKET_TEST_";
+    const auto socket = orm::test::connectionPath(socketPrefix, "SOCKET");
+    if (!socket)
+        GTEST_SKIP() << "Isolated Unix socket transport profile was not provisioned";
+    const auto tlsPrefix = mysql ? "ORM_CXX_MYSQL_TLS_TEST_" : "ORM_CXX_MARIADB_TLS_TEST_";
+    const auto check = [&socket](auto config)
+    {
+        config.host = "localhost";
+        config.port = 1; // This cannot reach the TCP test service; the client must select its Unix socket.
+        config.socket = socket;
+        // The proxy forwards to the isolated TLS server; its certificate names the actual server alias.
+        config.tls.mode = orm::MysqlSslMode::Required;
+        orm::Database connected{config};
+        int value{};
+        orm::migrations::detail::DatabaseAccess::session(connected) << "SELECT 42", soci::into(value);
+        EXPECT_EQ(value, 42);
+        connected.disconnect();
+        *config.socket += ".does-not-exist";
+        EXPECT_THROW((void)orm::Database{config}, orm::DatabaseError);
+    };
+    if (mysql)
+        check(orm::test::serverConfigFromEnvironment<orm::MysqlConfig>(tlsPrefix));
+    else
+        check(orm::test::serverConfigFromEnvironment<orm::MariadbConfig>(tlsPrefix));
 }
 
 TEST_P(MysqlFamilyLinkTest, ClientCharsetSetupFailurePreservesItsNativeError)
@@ -361,7 +589,7 @@ TEST_P(MysqlFamilyLinkTest, ClientFailureDisablingMultiStatementsDisconnectsAfte
     }
     EXPECT_FALSE(session().is_connected());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_TRUE(runtime().tableExists(session(), "committed_before_failure"));
     runtime().beginMigration(session(), history);
     runtime().endMigration(session(), history);
@@ -400,7 +628,7 @@ TEST_P(MysqlFamilyLinkTest, ReentrantMigrationLocksAreReleasedByDisconnectAndCan
                            orm::migrations::ErrorCode::LockUnavailable);
     EXPECT_FALSE(session().is_connected());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     runtime().beginMigration(session(), history);
     runtime().endMigration(session(), history);
 }
@@ -420,7 +648,15 @@ TEST_P(MysqlFamilyLinkTest, NativeBackendForwardsMetadataProceduresAndUnsupporte
         tables.push_back(name);
     EXPECT_NE(std::ranges::find(tables, "native_identity"), tables.end());
     EXPECT_THROW((void)session().make_rowid_backend(), soci::soci_error);
-    EXPECT_THROW((void)session().make_blob_backend(), soci::soci_error);
+    std::unique_ptr<soci::details::blob_backend> blob{session().make_blob_backend()};
+    ASSERT_NE(blob, nullptr);
+    EXPECT_EQ(blob->get_len(), 0);
+    const std::array<char, 4> bytes{'A', '\0', '\\', '\''};
+    EXPECT_EQ(blob->append(bytes.data(), bytes.size()), bytes.size());
+    EXPECT_EQ(blob->get_len(), bytes.size());
+    std::array<char, 4> restored{};
+    EXPECT_EQ(blob->read_from_start(restored.data(), restored.size(), 0), restored.size());
+    EXPECT_EQ(restored, bytes);
 
     std::unique_ptr<soci::details::statement_backend> statement{session().get_backend()->make_statement_backend()};
     statement->alloc();
@@ -438,7 +674,7 @@ TEST_P(MysqlFamilyLinkTest, ServerIdentityAndMalformedJunctionMappingsFailBefore
 {
     const auto other =
         GetParam().type == orm::db::BackendType::Mysql ? orm::db::BackendType::Mariadb : orm::db::BackendType::Mysql;
-    const auto mismatched = orm::db::mysql_family::makeRuntime(other, "unused://");
+    const auto mismatched = orm::db::mysql_family::makeRuntime(other);
     EXPECT_THROW(mismatched->onConnect(session()), std::invalid_argument);
     createEndpoints();
     const auto owner = orm::modelView<LinkSchema, collection_models::User>();
@@ -470,14 +706,13 @@ TEST_P(MysqlFamilyLinkTest, FailedRollbackDisconnectsAndReleasesHeldLinkLocks)
     EXPECT_EQ(link(), 1);
     int id{};
     session() << "SELECT CONNECTION_ID()", soci::into(id);
-    orm::Database killer;
-    killer.connect(GetParam().type, testConnectionString());
+    orm::Database killer = makeTestDatabase();
     orm::migrations::detail::DatabaseAccess::session(killer) << "KILL " + std::to_string(id);
     EXPECT_THROW(session().get_backend()->rollback(), soci::soci_error);
     EXPECT_FALSE(session().get_backend()->is_connected());
     EXPECT_NO_THROW(session().get_backend()->rollback());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_EQ(link(), 1);
 }
 
@@ -492,7 +727,7 @@ TEST_P(MysqlFamilyLinkTest, MissingLinkLockOnCommitDisconnectsInsteadOfTrustingR
     EXPECT_NO_THROW(session().get_backend()->commit());
     EXPECT_FALSE(session().get_backend()->is_connected());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_EQ(link(), 0);
 }
 
@@ -513,7 +748,7 @@ TEST_P(MysqlFamilyLinkTest, ConnectionLossDuringJunctionWriteCleansUpTheAutocomm
                  soci::soci_error);
     EXPECT_FALSE(session().get_backend()->is_connected());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_EQ(link(), 1);
 }
 
@@ -531,18 +766,15 @@ TEST_P(MysqlFamilyLinkTest, MigrationHooksRejectWrongNamespacesMissingLocksAndDe
     EXPECT_THROW(runtime().executeMigrationScript(session(), "SELECT 1"), orm::migrations::MigrationError);
     EXPECT_FALSE(session().is_connected());
     connection.disconnect();
-    connection.connect(GetParam().type, testConnectionString());
+    connectTestDatabase(connection);
     EXPECT_TRUE(connection.isConnected());
 }
 
 TEST_P(MysqlFamilyLinkTest, MigrationHooksRequireAnExplicitDatabaseSelection)
 {
-    auto dsn = testConnectionString();
-    const auto databaseOption = dsn.rfind("db=");
-    ASSERT_NE(databaseOption, std::string::npos);
-    dsn.erase(databaseOption);
-    orm::Database noDatabase;
-    noDatabase.connect(GetParam().type, dsn);
+    auto config = testConnectionConfig();
+    std::visit([](auto& selected) { selected.database = {}; }, config);
+    auto noDatabase = std::visit([](const auto& selected) { return orm::Database{selected}; }, config);
     auto& selectedSession = orm::migrations::detail::DatabaseAccess::session(noDatabase);
     const auto& selectedRuntime = orm::migrations::detail::DatabaseAccess::runtime(noDatabase);
     EXPECT_THROW((void)selectedRuntime.migrationTable(selectedSession), orm::migrations::MigrationError);
@@ -663,8 +895,7 @@ TEST_P(MysqlFamilyLinkTest, OtherUniqueConstraintsAndTriggerDuplicateErrorsArePr
     expectConstraint();
     EXPECT_EQ(link(), 0);
     session() << "DROP TRIGGER link_fails";
-    orm::Database second;
-    second.connect(GetParam().type, testConnectionString());
+    orm::Database second = makeTestDatabase();
     EXPECT_EQ(second.orm<LinkSchema>().link<&collection_models::User::roles>(
                   collection_models::User{.id = 1, .name = {}, .roles = {}},
                   collection_models::Role{.id = 2, .name = {}, .users = {}}),
@@ -674,8 +905,7 @@ TEST_P(MysqlFamilyLinkTest, OtherUniqueConstraintsAndTriggerDuplicateErrorsArePr
 TEST_P(MysqlFamilyLinkTest, LinkLockTimeoutRequiresRollbackAndDisconnectReleasesLocks)
 {
     createEndpoints();
-    orm::Database second;
-    second.connect(GetParam().type, testConnectionString());
+    orm::Database second = makeTestDatabase();
     second.beginTransaction();
     EXPECT_EQ(second.orm<LinkSchema>().link<&collection_models::User::roles>(
                   collection_models::User{.id = 1, .name = {}, .roles = {}},
@@ -704,8 +934,7 @@ TEST_P(MysqlFamilyLinkTest, NativeDeadlockBlocksTheVictimUntilRollback)
 {
     createEndpoints();
     database.insert(collection_models::User{.id = 2, .name = "second", .roles = {}});
-    orm::Database second;
-    second.connect(GetParam().type, testConnectionString());
+    orm::Database second = makeTestDatabase();
     auto secondContext = second.orm<LinkSchema>();
     const auto updateName = [](auto& context, int id, std::string name)
     {
@@ -777,9 +1006,9 @@ INSTANTIATE_TEST_SUITE_P(DatabaseTest, MysqlFamilyLinkTest,
                              {
                                  std::vector<BackendTestConfig> result;
                                  if constexpr (orm::test::config::mysqlIntegrationEnabled)
-                                     result.push_back({orm::db::BackendType::Mysql, "Mysql", {}, true});
+                                     result.push_back({orm::db::BackendType::Mysql, "Mysql", true});
                                  if constexpr (orm::test::config::mariadbIntegrationEnabled)
-                                     result.push_back({orm::db::BackendType::Mariadb, "Mariadb", {}, true});
+                                     result.push_back({orm::db::BackendType::Mariadb, "Mariadb", true});
                                  return result;
                              }()),
                          orm::test::fixtures::backendTestName);

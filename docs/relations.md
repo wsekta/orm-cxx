@@ -141,7 +141,7 @@ closed schema:
 
 ```cpp
 using AppSchema = orm::Schema<Author, Book, User, Role>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
 auto context = database.orm<AppSchema>();
 ```
 
@@ -316,9 +316,9 @@ only by `include`:
 
 ```cpp
 using AppSchema = orm::Schema<Author, Book, User, Role>;
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = std::filesystem::path{"application.db"}}};
 auto context = database.orm<AppSchema>();
-database.connect("sqlite3://application.db");
+
 
 // 1. Create base tables before the owning many-to-many junction table.
 context.createTable<Author>();

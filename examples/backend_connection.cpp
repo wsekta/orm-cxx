@@ -1,16 +1,19 @@
+#include <chrono>
+#include <filesystem>
 #include <iostream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <variant>
 
 import orm;
 
+#include "Connection.hpp"
+
 int main(int argc, char** argv) // NOLINT(bugprone-exception-escape)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
-        return 2;
-    }
-    orm::Database database;
-    database.connect(argv[1]);
+    auto database = makeExampleDatabase(argc, argv);
+
     const auto& capabilities = database.getBackendCapabilities();
     std::cout << "Connected; transactions=" << std::boolalpha << capabilities.transactions
               << ", projections=" << capabilities.query.projections

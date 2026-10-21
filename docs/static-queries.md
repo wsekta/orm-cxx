@@ -23,7 +23,7 @@ inline constexpr auto adults =
                   .orderBy(asc(col<&User::id>()))
                   .limit(10);
 
-orm::Database database;
+orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
 auto context = database.orm<AppSchema>();
 // Connect and create/populate the table before executing the plan.
 auto first = context.select(adults, 18);

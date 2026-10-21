@@ -1,5 +1,26 @@
 include_guard(GLOBAL)
 
+function(orm_cxx_require_soci_version soci_target)
+    get_target_property(soci_include_dirs "${soci_target}" INTERFACE_INCLUDE_DIRECTORIES)
+    set(version_header_found OFF)
+    foreach(directory IN LISTS soci_include_dirs)
+        string(REGEX REPLACE "\\$<BUILD_INTERFACE:([^<>]*)>" "\\1" directory "${directory}")
+        if(EXISTS "${directory}/soci/version.h")
+            file(STRINGS "${directory}/soci/version.h" version_line REGEX "^#define SOCI_VERSION [0-9]+")
+            string(REGEX REPLACE "^#define SOCI_VERSION ([0-9]+).*" "\\1" version_number "${version_line}")
+            if(NOT version_number MATCHES "^[0-9]+$" OR version_number LESS 400104)
+                message(FATAL_ERROR "orm-cxx requires SOCI 4.1.4 or newer.")
+            endif()
+            set(version_header_found ON)
+        endif()
+    endforeach()
+    if(NOT version_header_found)
+        message(
+            FATAL_ERROR "Cannot verify the parent-provided SOCI version; expose soci/version.h in its public includes."
+        )
+    endif()
+endfunction()
+
 function(orm_cxx_require_oracle_mysql_client soci_target)
     # Resolve headers from the selected driver graph before trying platform defaults.
     set(pending_targets "${soci_target}")
@@ -60,7 +81,7 @@ function(orm_cxx_require_oracle_mysql_client soci_target)
 #if defined(MARIADB_BASE_VERSION) || defined(MARIADB_VERSION_ID)
 #error ORM_CXX_REQUIRES_ORACLE_MYSQL_CLIENT
 #endif
-static_assert(SOCI_VERSION >= 400100, \"MySQL-family TLS requires SOCI 4.1.0 or newer\");
+static_assert(SOCI_VERSION >= 400104, \"orm-cxx requires SOCI 4.1.4 or newer\");
 int main() { auto mode = MYSQL_OPT_SSL_MODE; (void)mode; }"
         orm_cxx_oracle_mysql_client
     )
@@ -120,7 +141,7 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         )
     endforeach()
     if(ORM_CXX_USE_SYSTEM_SOCI)
-        find_package(SOCI 4.1.0 CONFIG REQUIRED COMPONENTS ${soci_export_components})
+        find_package(SOCI 4.1.4 CONFIG REQUIRED COMPONENTS ${soci_export_components})
 
         foreach(component IN LISTS soci_components)
             # Recent SOCI exports component names; older packages and Conan distinguish static and shared targets. Keep
@@ -173,6 +194,7 @@ function(orm_cxx_add_runtime_dependencies source_dir)
     endif()
 
     if(TARGET soci_core)
+        orm_cxx_require_soci_version(soci_core)
         foreach(component IN LISTS soci_components)
             if(NOT TARGET soci_${component})
                 message(
@@ -192,18 +214,17 @@ function(orm_cxx_add_runtime_dependencies source_dir)
         set(SOCI_SHARED ON)
         set(SOCI_STATIC OFF)
         set(SOCI_TESTS OFF)
+        # SOCI 4.1.4 disables installation when embedded unless explicitly enabled.
+        set(SOCI_INSTALL ON)
         set(WITH_BOOST OFF)
         set(SOCI_BOOST OFF)
         set(SOCI_EMPTY OFF)
-        set(WITH_DB2 OFF)
-        set(WITH_FIREBIRD OFF)
-        set(WITH_MYSQL "${mysql_family_enabled}")
+        set(SOCI_DB2 OFF)
+        set(SOCI_FIREBIRD OFF)
         set(SOCI_MYSQL "${mysql_family_enabled}")
-        set(WITH_ODBC OFF)
-        set(WITH_ORACLE OFF)
-        set(WITH_POSTGRESQL "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}")
+        set(SOCI_ODBC OFF)
+        set(SOCI_ORACLE OFF)
         set(SOCI_POSTGRESQL "${ORM_CXX_ENABLE_POSTGRESQL_BACKEND}")
-        set(WITH_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
         set(SOCI_SQLITE3 "${ORM_CXX_ENABLE_SQLITE_BACKEND}")
 
         if(ORM_CXX_ENABLE_SQLITE_BACKEND)
@@ -234,7 +255,7 @@ function(orm_cxx_add_runtime_dependencies source_dir)
                 PARENT_SCOPE
             )
             set(ORM_CXX_SOCI_${component_upper}_INSTALLED_TARGET
-                "SOCI::soci_${component}"
+                "SOCI::${soci_export_${component}}"
                 PARENT_SCOPE
             )
         endif()

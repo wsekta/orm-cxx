@@ -35,7 +35,7 @@ target_link_libraries(app-migrate PRIVATE orm-cxx::orm-cxx)
 
 The [example](../examples/migrations.cpp) builds as `migrations-example`.
 Generation commands use the `migrations` directory by default; the API accepts
-an explicit project directory. They never read `ORM_CXX_DATABASE_URL`.
+an explicit project directory. They never read connection environment fields.
 
 ```sh
 app-migrate init
@@ -202,8 +202,8 @@ const auto version = project.make("initial", AppSchema::view);
 // Inspect the generated files.
 project.finalize(version, AppSchema::view, true);
 
-orm::Database database;
-database.connect("sqlite3://application.db");
+orm::Database database{orm::SqliteConfig{.database = std::filesystem::path{"application.db"}}};
+
 orm::migrations::Runner runner{database, project.catalog()};
 runner.validate();
 const auto plan = runner.preview(orm::migrations::Direction::Up);
@@ -223,10 +223,21 @@ the latest version; an explicit target must be an exact catalog version or zero.
 `down(target)` checks the whole requested downgrade for missing scripts before
 executing its first step. A present empty down script declares a no-op inverse.
 
-Set `ORM_CXX_DATABASE_URL` only for execution commands. It accepts the same
-`sqlite3://`, `postgresql://`, `mysql://` and `mariadb://` connection strings as
-`Database::connect`. Credentials are supplied by the deployment environment and
-are omitted from diagnostics.
+Execution commands require `ORM_CXX_DATABASE_BACKEND` (`sqlite`, `postgresql`,
+`mysql`, `mariadb`). Supply connection fields through `ORM_CXX_DATABASE_NAME`,
+`HOST`, `PORT`, `USER`, `PASSWORD` with the same `ORM_CXX_DATABASE_` prefix.
+The CLI constructs typed configurations; the library does not read environment
+variables. A missing field stays omitted, while an explicitly empty string stays
+empty. For SQLite, NAME is required and `:memory:` explicitly selects memory.
+
+Backend-specific suffixes are `SOCKET`, `CONNECT_TIMEOUT_SECONDS`,
+`BUSY_TIMEOUT_MS`, `PASSFILE`, `SSL_MODE`, `SSL_CA`, `SSL_CERT`, `SSL_KEY`, and
+`SQLITE_OPEN_MODE`. Fields inappropriate for the selected backend are rejected.
+Ports and timeouts require complete decimal values within their native ranges.
+PostgreSQL SSL modes are `disable|allow|prefer|require|verify-ca|verify-full`;
+MySQL-family modes are `disabled|preferred|required|verify-ca|verify-identity`.
+SQLite modes are `read-write-create|read-write|read-only`. Passwords belong in
+the deployment environment and are omitted from diagnostics and process arguments.
 
 ```sh
 app-migrate status

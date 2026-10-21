@@ -26,6 +26,11 @@ INCLUDE = re.compile(r"<!-- include: ([^\n]+) -->\s*```[^\n]*\n(.*?)\n```", re.S
 FENCED = re.compile(r"^([ \t]*)(`{3,}|~{3,})[^\n]*\n(.*?)^\1\2[ \t]*$", re.M | re.S)
 REQUIRED = {
     "orm::Database": {"connect", "orm", "beginTransaction"},
+    "orm::SqliteConfig": {"database", "openMode", "busyTimeout"},
+    "orm::PostgresConfig": {"host", "database", "password", "passfile", "tls"},
+    "orm::MysqlConfig": {"host", "database", "password", "socket", "tls"},
+    "orm::MariadbConfig": {"host", "database", "password", "socket", "tls"},
+    "orm::db::ConnectionConfigView": {"get", "backendType"},
     "orm::OrmContext": {"select", "insert", "update", "remove"},
     "orm::Query": {"where"},
     "orm::ProjectionQuery": {"project"},

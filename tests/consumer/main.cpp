@@ -1,13 +1,24 @@
+#include <chrono>
 #include <concepts>
 #include <cstddef>
 #include <exception>
+#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
+
+namespace soci
+{
+class session;
+class values;
+class soci_error;
+}
 
 import orm;
 import orm_cxx_consumer.models;
@@ -27,8 +38,66 @@ static_assert(orm::modelView<GlobalConsumerSchema, GlobalConsumerModel>()->table
 static_assert(orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>()->tableName ==
               "consumer_models_ConsumerModel");
 
+struct ConsumerConfig
+{
+    orm::SqliteConfig sqlite;
+};
+template <>
+struct orm::db::ConnectionTraits<ConsumerConfig>
+{
+    static constexpr auto backendType = orm::db::BackendType::Oracle;
+};
+
+[[maybe_unused]] auto checkBorrowedApi(orm::Database& database) -> void
+{
+    const orm::migrations::Catalog migrations{};
+    orm::migrations::Runner runner{database, migrations};
+    auto context = database.orm<consumer_models::Schema>();
+    (void)runner;
+    (void)context;
+}
+
 namespace
 {
+class ConsumerRuntime final : public orm::db::BackendRuntime
+{
+public:
+    explicit ConsumerRuntime(const orm::db::BackendRuntime& delegate) : delegate{delegate} {}
+    auto open(soci::session& session, orm::db::ConnectionConfigView view) const -> void override
+    {
+        const auto& config = view.get<ConsumerConfig>();
+        delegate.open(session, orm::db::ConnectionConfigView{config.sqlite});
+    }
+    auto onConnect(soci::session& s) const -> void override
+    {
+        delegate.onConnect(s);
+    }
+    auto tableExists(soci::session& s, std::string_view n) const -> bool override
+    {
+        return delegate.tableExists(s, n);
+    }
+    auto limits(soci::session& s) const -> orm::db::BackendRuntimeLimits override
+    {
+        return delegate.limits(s);
+    }
+    auto normalizeAffectedRows(long long n) const -> std::size_t override
+    {
+        return delegate.normalizeAffectedRows(n);
+    }
+    auto bind(soci::values& v, std::string_view n, const orm::db::BoundValue& b) const -> void override
+    {
+        delegate.bind(v, n, b);
+    }
+    auto translateError(const soci::soci_error& e, orm::DatabaseErrorCode c,
+                        std::string_view op) const -> orm::DatabaseError override
+    {
+        return delegate.translateError(e, c, op);
+    }
+
+private:
+    const orm::db::BackendRuntime& delegate;
+};
+
 class ConsumerDialect final : public orm::db::SqlDialect
 {
 public:
@@ -94,17 +163,13 @@ class ConsumerBackend final : public orm::db::BackendProvider
 {
 public:
     explicit ConsumerBackend(const orm::db::BackendProvider& delegate)
-        : commands{delegate.dialect()}, delegate{delegate}
+        : commands{delegate.dialect()}, delegate{delegate}, runtime_{delegate.runtime()}
     {
     }
 
     auto type() const noexcept -> orm::db::BackendType override
     {
         return orm::db::BackendType::Oracle;
-    }
-    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
-    {
-        return delegate.acceptsConnectionString(connectionString);
     }
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
     {
@@ -116,7 +181,7 @@ public:
     }
     auto runtime() const noexcept -> const orm::db::BackendRuntime& override
     {
-        return delegate.runtime();
+        return runtime_;
     }
     auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
     {
@@ -127,6 +192,7 @@ public:
 
 private:
     const orm::db::BackendProvider& delegate;
+    ConsumerRuntime runtime_;
 };
 } // namespace
 
@@ -143,10 +209,6 @@ try
         return 4;
     }
 
-    orm::Database database;
-    const orm::migrations::Catalog migrations{};
-    orm::migrations::Runner runner{database, migrations};
-    (void)runner;
     const auto generatedSnapshot = orm::migrations::capture(consumer_models::Schema::view);
     const auto generation = orm::migrations::generate(
         1, "consumer_initial", orm::migrations::compare(orm::migrations::emptySnapshot(), generatedSnapshot));
@@ -154,8 +216,6 @@ try
     {
         return 5;
     }
-    auto context = database.orm<consumer_models::Schema>();
-    (void)context;
     orm::Query<consumer_models::ConsumerModel> query;
     query.where(orm::query::col<&consumer_models::ConsumerModel::id>() == 7)
         .orderBy(orm::query::asc(orm::query::col<&consumer_models::ConsumerModel::id>()));
@@ -182,10 +242,21 @@ try
     (void)removePlan.toDynamic(7);
 
     const orm::db::CommandGeneratorFactory factory;
-    const auto* sqlite = factory.findBackend("sqlite3://:memory:");
-    const auto* postgresql = factory.findBackend("postgresql://host=localhost dbname=orm_cxx");
-    const auto* mysql = factory.findBackend("mysql://host=localhost db=orm_cxx");
-    const auto* mariadb = factory.findBackend("mariadb://host=localhost db=orm_cxx");
+    const auto registered = [&factory](orm::db::BackendType type) -> const orm::db::BackendProvider*
+    {
+        try
+        {
+            return &factory.getBackend(type);
+        }
+        catch (const std::out_of_range&)
+        {
+            return nullptr;
+        }
+    };
+    const auto* sqlite = registered(orm::db::BackendType::Sqlite);
+    const auto* postgresql = registered(orm::db::BackendType::Postgres);
+    const auto* mysql = registered(orm::db::BackendType::Mysql);
+    const auto* mariadb = registered(orm::db::BackendType::Mariadb);
 
     if ((sqlite != nullptr) != orm::config::sqliteBackendEnabled)
     {
@@ -233,8 +304,8 @@ try
         const auto* observed = provider.get();
         orm::db::CommandGeneratorFactory registry{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
         registry.registerBackend(std::move(provider));
-        orm::Database customDatabase{std::move(registry)};
-        customDatabase.connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
+        orm::Database customDatabase{ConsumerConfig{orm::SqliteConfig{.database = orm::SqliteMemory{}}},
+                                     std::move(registry)};
         auto custom = customDatabase.orm<consumer_models::Schema>();
         custom.createTable<consumer_models::ConsumerModel>();
         custom.insert(consumer_models::ConsumerModel{7});

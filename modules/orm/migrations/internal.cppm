@@ -1,6 +1,7 @@
 module;
 
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -8,6 +9,7 @@ module;
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "../../detail/SociTypes.inc"
@@ -20,6 +22,7 @@ import :model_views;
 import :foundation;
 import :sql;
 import :database;
+import :connection_config;
 
 namespace orm::migrations::detail
 {
@@ -124,7 +127,12 @@ auto canonicalize(SchemaSnapshot& snapshot) -> void;
 auto validateSnapshot(const SchemaSnapshot& snapshot) -> void;
 auto validateScript(std::string_view script, db::BackendType backend, Version version) -> void;
 [[nodiscard]] auto backendName(db::BackendType backend) -> std::string_view;
+using ConnectionEnvironment = std::map<std::string, std::string>;
+using ConnectionConfiguration = std::variant<SqliteConfig, PostgresConfig, MysqlConfig, MariadbConfig>;
+[[nodiscard]] auto connectionEnvironmentFromProcess() -> ConnectionEnvironment;
+[[nodiscard]] auto connectionConfiguration(const ConnectionEnvironment& environment) -> ConnectionConfiguration;
+
 auto runCatalogCommandWithConnection(std::span<const std::string_view> args, const Catalog& catalog,
-                                     std::optional<std::string_view> connection, std::ostream& output,
+                                     const ConnectionEnvironment& connection, std::ostream& output,
                                      std::ostream& errors) -> int;
 } // namespace orm::migrations::detail

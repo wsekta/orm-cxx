@@ -76,10 +76,6 @@ public:
     {
         return delegate.type();
     }
-    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
-    {
-        return delegate.acceptsConnectionString(connectionString);
-    }
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
     {
         return delegate.capabilities();

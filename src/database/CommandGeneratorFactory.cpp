@@ -97,31 +97,6 @@ auto CommandGeneratorFactory::getBackend(BackendType backendType) const -> const
     return *backends.at(backendType);
 }
 
-auto CommandGeneratorFactory::findBackend(std::string_view connectionString) const noexcept -> const BackendProvider*
-{
-    const BackendProvider* match = nullptr;
-
-    for (const auto& entry : backends)
-    {
-        const auto& backend = entry.second;
-
-        if (backend->acceptsConnectionString(connectionString))
-        {
-            if (match != nullptr)
-            {
-                // Predicate-based discovery must never depend on the iteration
-                // order of the registry. Treat overlapping providers as an
-                // ambiguous, unsupported connection string.
-                return nullptr;
-            }
-
-            match = backend.get();
-        }
-    }
-
-    return match;
-}
-
 auto CommandGeneratorFactory::getCommandGenerator(BackendType backendType) const -> const CommandGenerator&
 {
     return getBackend(backendType).commandGenerator();

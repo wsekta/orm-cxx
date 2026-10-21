@@ -14,9 +14,8 @@ static_assert(orm::reflection::fieldName<PublicImportModel, 0>() == "id");
 static_assert(PublicImportSchema::contains<PublicImportModel>);
 static_assert(std::same_as<typename decltype(orm::query::col<&PublicImportModel::id>())::Model, PublicImportModel>);
 
-[[maybe_unused]] auto publicImportsCompile() -> void
+[[maybe_unused]] auto publicImportsCompile(orm::Database& database) -> void
 {
-    orm::Database database;
     auto context = database.orm<PublicImportSchema>();
     const auto plan = orm::query::select<PublicImportModel>().where(orm::query::col<&PublicImportModel::id>() ==
                                                                     orm::query::param<int, 0>());

@@ -538,9 +538,10 @@ TEST_P(CollectionRelationDatabaseTest, includeMetadata_shouldMatchCollectionWrap
     EXPECT_EQ(target->type, orm::model::typeId<target_t>());
 }
 
-TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnection_shouldReportNotConnected)
+TEST_P(CollectionRelationDatabaseTest, createRelationTablesWithoutConnection_shouldReportNotConnected)
 {
-    orm::Database disconnectedConnection;
+    auto disconnectedConnection = makeTestDatabase();
+    disconnectedConnection.disconnect();
     orm::OrmContext<collection_models::Schema> disconnected = disconnectedConnection.orm<collection_models::Schema>();
 
     try
@@ -555,9 +556,10 @@ TEST(CollectionRelationDatabaseStandaloneTest, createRelationTablesWithoutConnec
     }
 }
 
-TEST(CollectionRelationDatabaseStandaloneTest, relationTableLifecycleWithoutOwnedJunctionShouldBeNoOp)
+TEST_P(CollectionRelationDatabaseTest, relationTableLifecycleWithoutOwnedJunctionShouldBeNoOp)
 {
-    orm::Database disconnectedConnection;
+    auto disconnectedConnection = makeTestDatabase();
+    disconnectedConnection.disconnect();
     orm::OrmContext<collection_models::Schema> disconnected = disconnectedConnection.orm<collection_models::Schema>();
 
     EXPECT_NO_THROW(disconnected.createRelationTables<collection_models::Role>());

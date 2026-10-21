@@ -5,6 +5,7 @@ module;
 module orm;
 
 import :internal;
+import :connection_config;
 import :test_support;
 import :foundation;
 import :model;
@@ -23,16 +24,21 @@ using EmptyDatabase = orm::Database;
 class ThrowingConnectRuntime final : public orm::db::BackendRuntime
 {
 public:
-    explicit ThrowingConnectRuntime(const orm::db::BackendRuntime& delegateInit) : delegate{delegateInit} {}
-
-    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    ThrowingConnectRuntime(const orm::db::BackendRuntime& delegateInit, const bool& failInit)
+        : delegate{delegateInit}, fail{failInit}
     {
-        delegate.open(session, connectionString);
     }
 
-    auto onConnect(soci::session& /*session*/) const -> void override
+    auto open(soci::session& session, orm::db::ConnectionConfigView config) const -> void override
     {
-        throw std::runtime_error{"test runtime initialization failure"};
+        delegate.open(session, config);
+    }
+
+    auto onConnect(soci::session& session) const -> void override
+    {
+        if (fail)
+            throw std::runtime_error{"test runtime initialization failure"};
+        delegate.onConnect(session);
     }
 
     auto tableExists(soci::session& session, std::string_view tableName) const -> bool override
@@ -63,21 +69,17 @@ public:
 
 private:
     const orm::db::BackendRuntime& delegate;
+    const bool& fail;
 };
 
 class ThrowingConnectBackend final : public orm::db::BackendProvider
 {
 public:
-    ThrowingConnectBackend() : runtimeStrategy{sqlite.runtime()} {}
+    explicit ThrowingConnectBackend(const bool& fail) : runtimeStrategy{sqlite.runtime(), fail} {}
 
     auto type() const noexcept -> orm::db::BackendType override
     {
-        return orm::db::BackendType::Oracle;
-    }
-
-    auto acceptsConnectionString(std::string_view connectionString) const noexcept -> bool override
-    {
-        return connectionString.starts_with("sqlite3://");
+        return orm::db::BackendType::Sqlite;
     }
 
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
@@ -108,24 +110,29 @@ private:
 
 TEST(DatabaseErrorTest, nonDriverConnectHookFailureClosesSessionAndAllowsReconnect)
 {
-    auto factory = orm::db::CommandGeneratorFactory{};
-    factory.registerBackend(std::make_unique<ThrowingConnectBackend>());
-    auto database = EmptyDatabase{std::move(factory)};
+    bool fail = false;
+    std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
+    providers.push_back(std::make_unique<ThrowingConnectBackend>(fail));
+    auto database =
+        EmptyDatabase{orm::SqliteConfig{orm::SqliteMemory{}}, orm::db::CommandGeneratorFactory{std::move(providers)}};
+    database.disconnect();
+    fail = true;
 
     try
     {
-        database.connect(orm::db::BackendType::Oracle, "sqlite3://:memory:");
+        database.connect(orm::SqliteConfig{orm::SqliteMemory{}});
         FAIL() << "Expected backend initialization failure";
     }
     catch (const orm::DatabaseError& error)
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Connection);
-        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Oracle);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
         EXPECT_EQ(error.getOperation(), "connect");
     }
 
     EXPECT_FALSE(database.isConnected());
-    EXPECT_NO_THROW(database.connect(orm::db::BackendType::Sqlite, "sqlite3://:memory:"));
+    fail = false;
+    EXPECT_NO_THROW(database.connect(orm::SqliteConfig{orm::SqliteMemory{}}));
     EXPECT_TRUE(database.isConnected());
     database.disconnect();
 }

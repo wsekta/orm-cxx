@@ -2,4 +2,4 @@
 
 import orm;
 
-auto context = orm::Database{}.orm<orm::Schema<>>();
+auto context = orm::Database{orm::SqliteConfig{.database = orm::SqliteMemory{}}}.orm<orm::Schema<>>();

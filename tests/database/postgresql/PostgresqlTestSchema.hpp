@@ -2,31 +2,7 @@
 
 namespace postgresql_test
 {
-inline constexpr std::string_view connectionStringPrefix{"postgresql://"};
 inline constexpr std::string_view schemaPrefix{"orm_cxx_test_"};
-
-inline auto configuredDsn() -> std::string
-{
-    const auto* value = std::getenv("ORM_CXX_POSTGRESQL_TEST_DSN");
-    return value == nullptr ? std::string{} : std::string{value};
-}
-
-inline auto connectionPayload(std::string_view connectionString) -> std::string
-{
-    if (not connectionString.starts_with(connectionStringPrefix))
-    {
-        throw std::invalid_argument{
-            "ORM_CXX_POSTGRESQL_TEST_DSN must use the postgresql:// keyword/value connection format"};
-    }
-
-    const auto payload = connectionString.substr(connectionStringPrefix.size());
-    if (payload.empty())
-    {
-        throw std::invalid_argument{"ORM_CXX_POSTGRESQL_TEST_DSN must contain PostgreSQL connection parameters"};
-    }
-
-    return std::string{payload};
-}
 
 inline auto isSafeSchemaName(std::string_view schemaName) -> bool
 {
@@ -73,34 +49,146 @@ inline auto quotedSchemaName(std::string_view schemaName) -> std::string
     return "\"" + std::string{schemaName} + "\"";
 }
 
+class SchemaRuntime : public orm::db::BackendRuntime
+{
+public:
+    SchemaRuntime(const orm::db::BackendRuntime& backend, std::string schema)
+        : delegate{backend}, schemaName{std::move(schema)}
+    {
+    }
+    auto open(soci::session& session, orm::db::ConnectionConfigView config) const -> void override
+    {
+        delegate.open(session, config);
+    }
+    auto onConnect(soci::session& session) const -> void override
+    {
+        delegate.onConnect(session);
+        session << "SET search_path TO " + quotedSchemaName(schemaName);
+    }
+    auto tableExists(soci::session& session, std::string_view name) const -> bool override
+    {
+        return delegate.tableExists(session, name);
+    }
+    auto limits(soci::session& session) const -> orm::db::BackendRuntimeLimits override
+    {
+        return delegate.limits(session);
+    }
+    auto normalizeAffectedRows(long long rows) const -> std::size_t override
+    {
+        return delegate.normalizeAffectedRows(rows);
+    }
+    auto bind(soci::values& values, std::string_view name, const orm::db::BoundValue& value) const -> void override
+    {
+        delegate.bind(values, name, value);
+    }
+    auto translateError(const soci::soci_error& error, orm::DatabaseErrorCode fallback,
+                        std::string_view operation) const -> orm::DatabaseError override
+    {
+        return delegate.translateError(error, fallback, operation);
+    }
+    auto statementErrorInvalidatesTransaction(const soci::soci_error& error) const noexcept -> bool override
+    {
+        return delegate.statementErrorInvalidatesTransaction(error);
+    }
+    auto executeInsertIfAbsent(soci::session& session, orm::db::StatementView statement,
+                               const orm::db::InsertIfAbsentSpec& spec) const -> std::size_t override
+    {
+        return delegate.executeInsertIfAbsent(session, statement, spec);
+    }
+    auto validateMigrationSession(soci::session& session) const -> void override
+    {
+        delegate.validateMigrationSession(session);
+    }
+    auto migrationTable(soci::session& session) const -> std::string override
+    {
+        return delegate.migrationTable(session);
+    }
+    auto beginMigration(soci::session& session, std::string_view table) const -> void override
+    {
+        delegate.beginMigration(session, table);
+    }
+    auto executeMigrationScript(soci::session& session, std::string_view sql) const -> void override
+    {
+        delegate.executeMigrationScript(session, sql);
+    }
+    auto migrationHistoryExists(soci::session& session, std::string_view table) const -> bool override
+    {
+        return delegate.migrationHistoryExists(session, table);
+    }
+    auto createMigrationHistory(soci::session& session, std::string_view table) const -> void override
+    {
+        delegate.createMigrationHistory(session, table);
+    }
+    auto migrationJournalTable(soci::session& session, std::string_view table) const -> std::string override
+    {
+        return delegate.migrationJournalTable(session, table);
+    }
+    auto endMigration(soci::session& session, std::string_view table) const -> void override
+    {
+        delegate.endMigration(session, table);
+    }
+
+private:
+    const orm::db::BackendRuntime& delegate;
+    std::string schemaName;
+};
+
+class SchemaBackend final : public orm::db::BackendProvider
+{
+public:
+    explicit SchemaBackend(std::string schema)
+        : delegate{backends.getBackend(orm::db::BackendType::Postgres)},
+          schemaRuntime{delegate.runtime(), std::move(schema)}
+    {
+    }
+    auto type() const noexcept -> orm::db::BackendType override
+    {
+        return delegate.type();
+    }
+    auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
+    {
+        return delegate.capabilities();
+    }
+    auto dialect() const noexcept -> const orm::db::SqlDialect& override
+    {
+        return delegate.dialect();
+    }
+    auto runtime() const noexcept -> const orm::db::BackendRuntime& override
+    {
+        return schemaRuntime;
+    }
+    auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
+    {
+        return delegate.commandGenerator();
+    }
+    auto compiledSqlFlavor() const noexcept -> orm::db::CompiledSqlFlavor override
+    {
+        return delegate.compiledSqlFlavor();
+    }
+
+private:
+    orm::db::CommandGeneratorFactory backends;
+    const orm::db::BackendProvider& delegate;
+    SchemaRuntime schemaRuntime;
+};
+
 class PostgresqlTestSchema
 {
 public:
-    explicit PostgresqlTestSchema(std::string baseConnectionStringInit)
-        : baseConnectionString{std::move(baseConnectionStringInit)}, schemaNameValue{generateSchemaName()}
+    explicit PostgresqlTestSchema(orm::PostgresConfig config)
+        : configValue{std::move(config)}, schemaNameValue{generateSchemaName()}
     {
-        if (not isSafeSchemaName(schemaNameValue))
-        {
-            throw std::logic_error{"Generated an invalid PostgreSQL test schema name"};
-        }
-
-        adminSession.open("postgresql", connectionPayload(baseConnectionString));
-        adminSession << "CREATE SCHEMA " + quotedSchemaName(schemaNameValue) + ";";
+        const orm::db::CommandGeneratorFactory backends;
+        const auto& runtime = backends.getBackend(orm::db::BackendType::Postgres).runtime();
+        runtime.open(adminSession, orm::db::ConnectionConfigView{configValue});
+        runtime.onConnect(adminSession);
+        adminSession << "CREATE SCHEMA " + quotedSchemaName(schemaNameValue);
         active = true;
-
-        isolatedConnectionString = baseConnectionString;
-        if (not isolatedConnectionString.empty() and isolatedConnectionString.back() != ' ')
-        {
-            isolatedConnectionString.push_back(' ');
-        }
-        isolatedConnectionString += "options=-csearch_path=" + schemaNameValue;
     }
-
     PostgresqlTestSchema(const PostgresqlTestSchema&) = delete;
     PostgresqlTestSchema(PostgresqlTestSchema&&) = delete;
     auto operator=(const PostgresqlTestSchema&) -> PostgresqlTestSchema& = delete;
     auto operator=(PostgresqlTestSchema&&) -> PostgresqlTestSchema& = delete;
-
     ~PostgresqlTestSchema()
     {
         try
@@ -111,48 +199,44 @@ public:
         {
         }
     }
-
-    [[nodiscard]] auto connectionString() const noexcept -> const std::string&
+    [[nodiscard]] auto connectionConfig() const -> orm::PostgresConfig
     {
-        return isolatedConnectionString;
+        return configValue;
     }
-
-    [[nodiscard]] auto baseDsn() const noexcept -> const std::string&
+    [[nodiscard]] auto baseConfig() const noexcept -> const orm::PostgresConfig&
     {
-        return baseConnectionString;
+        return configValue;
     }
-
+    [[nodiscard]] auto registry() const -> orm::db::CommandGeneratorFactory
+    {
+        std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
+        providers.push_back(std::make_unique<SchemaBackend>(schemaNameValue));
+        return orm::db::CommandGeneratorFactory{std::move(providers)};
+    }
     [[nodiscard]] auto schemaName() const noexcept -> const std::string&
     {
         return schemaNameValue;
     }
-
+    auto prepare(soci::session& session) const -> void
+    {
+        session << "SET search_path TO " + quotedSchemaName(schemaNameValue);
+    }
     auto admin() noexcept -> soci::session&
     {
         return adminSession;
     }
-
     auto drop() -> void
     {
-        if (not active)
-        {
+        if (!active)
             return;
-        }
-
-        if (not isSafeSchemaName(schemaNameValue))
-        {
-            throw std::logic_error{"Refusing to drop an unsafe PostgreSQL test schema"};
-        }
-
-        adminSession << "DROP SCHEMA " + quotedSchemaName(schemaNameValue) + " CASCADE;";
+        adminSession << "DROP SCHEMA " + quotedSchemaName(schemaNameValue) + " CASCADE";
         active = false;
         adminSession.close();
     }
 
 private:
-    std::string baseConnectionString;
+    orm::PostgresConfig configValue;
     std::string schemaNameValue;
-    std::string isolatedConnectionString;
     soci::session adminSession;
     bool active = false;
 };

@@ -1,4 +1,6 @@
 set(ORM_CXX_TEST_SOURCES
+    database/ConnectionConfigTest.cpp
+    migrations/ConnectionEnvironmentTest.cpp
     migrations/MigrationTest.cpp
     migrations/SnapshotTest.cpp
     migrations/GeneratorTest.cpp
@@ -61,6 +63,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         ORM_CXX_TEST_SOURCES
         database/DatabaseCoverageCompletionTest.cpp
         database/SqliteConnectErrorTest.cpp
+        database/SqliteConnectionTest.cpp
         database/StatementParameterBindingTest.cpp
         database/SqliteStaticPlanRendererTest.cpp
         database/SqliteContextBindingTest.cpp
@@ -118,13 +121,24 @@ foreach(backend Mysql Mariadb)
 endforeach()
 
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
-    list(APPEND ORM_CXX_TEST_SOURCES ../src/database/postgresql/PostgresqlBackendTest.cpp
-         ../src/database/postgresql/PostgresqlDialectTest.cpp
-         ../src/database/postgresql/PostgresqlTypeTranslatorTest.cpp
+    list(
+        APPEND
+        ORM_CXX_TEST_SOURCES
+        ../src/database/postgresql/PostgresqlBackendTest.cpp
+        ../src/database/postgresql/PostgresqlDialectTest.cpp
+        ../src/database/postgresql/PostgresqlTypeTranslatorTest.cpp
+        database/postgresql/PostgresConnectionTransportTest.cpp
     )
 
     if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-        list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/PostgresqlIntegrationTest.cpp)
+        if(WIN32)
+            list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentWindows.cpp)
+        else()
+            list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentPosix.cpp)
+        endif()
+        list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/PostgresqlIntegrationTest.cpp
+             database/postgresql/PostgresConnectionTest.cpp
+        )
     endif()
 endif()
 
@@ -134,6 +148,10 @@ set_target_properties(orm-cxx-UT PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_
 target_link_libraries(orm-cxx-UT PRIVATE gtest_main gmock_main orm-cxx::orm-cxx)
 if(ORM_CXX_ENABLE_SQLITE_BACKEND)
     target_link_libraries(orm-cxx-UT PRIVATE SQLite::SQLite3)
+endif()
+if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
+    find_package(PostgreSQL REQUIRED)
+    target_link_libraries(orm-cxx-UT PRIVATE PostgreSQL::PostgreSQL)
 endif()
 foreach(backend POSTGRESQL MYSQL MARIADB)
     string(TOLOWER "${backend}" backend_lower)
@@ -164,6 +182,7 @@ foreach(component SQLITE3 POSTGRESQL MYSQL)
 endforeach()
 
 if(MSVC)
+    target_compile_options(orm-cxx-UT PRIVATE /bigobj)
     set_source_files_properties(database/BackendConformanceTest.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
     set_source_files_properties(reflection/TypeNameTest.cpp PROPERTIES COMPILE_OPTIONS "/bigobj")
     set(orm_cxx_test_working_directory "${PROJECT_BINARY_DIR}/bin")
@@ -175,7 +194,7 @@ set_tests_properties(orm-cxx-static-plan-allocations PROPERTIES WORKING_DIRECTOR
 
 add_test(
     NAME orm-cxx-UT
-    COMMAND orm-cxx-UT --gtest_filter=-DatabaseTest/*:Postgresql/*:PostgresqlTestSchemaTest.*
+    COMMAND orm-cxx-UT --gtest_filter=-DatabaseTest/*:Postgresql/*:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
     WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
 )
 set_tests_properties(orm-cxx-UT PROPERTIES LABELS "unit;core")
@@ -200,7 +219,9 @@ endforeach()
 if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
     add_test(
         NAME orm-cxx-postgresql-integration
-        COMMAND orm-cxx-UT --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*
+        COMMAND
+            orm-cxx-UT
+            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     set_tests_properties(

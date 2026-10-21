@@ -15,7 +15,7 @@ versioned plugin interface.
 
 The backend boundary is split into focused contracts:
 
-- `BackendProvider` owns backend identity, connection-string recognition,
+- `BackendProvider` owns backend identity,
   capabilities, and access to the remaining strategies;
 - `BackendRuntime` owns session initialization, catalog access, runtime limits,
   canonical value binding, affected-row normalization, and driver-error
@@ -28,18 +28,28 @@ The backend boundary is split into focused contracts:
 - `CommandGeneratorFactory` is the registry and deterministic selection point.
 
 `Database` consumes these interfaces and does not branch on individual backend
-types. A provider is registered once by `BackendType`; automatic selection must
-recognize exactly one provider. Overlapping connection-string recognizers are
-treated as ambiguous instead of depending on registry iteration order.
-
-Applications embedding an additional source-level provider pass an owned
-registry into `Database`:
+types. A provider is registered once by `BackendType`. Define a configuration
+value and specialize its trait to choose the provider without parsing text:
 
 ```cpp
+struct MyConfig { std::string endpoint; };
+template<> struct orm::db::ConnectionTraits<MyConfig>
+{
+    static constexpr auto backendType = orm::db::BackendType::Oracle;
+};
 orm::db::CommandGeneratorFactory backends;
 backends.registerBackend(std::make_unique<MyBackend>());
-orm::Database database{std::move(backends)};
+orm::Database database{MyConfig{"endpoint"}, std::move(backends)};
 ```
+
+`BackendRuntime::open(soci::session&, db::ConnectionConfigView)` borrows the
+configuration only during synchronous opening. Read `view.get<MyConfig>()`,
+which checks type identity using `std::type_info` equality and throws a sanitized
+`DatabaseError` on a mismatch, even for two types mapping to the same backend.
+Do not cache the view or a reference to its data. Temporary configurations passed
+to `Database` remain valid for that synchronous call. Inline trait/view/template
+definitions are reachable through `import orm;` and available without clients.
+`onConnect` establishes required invariants before the owner publishes the session.
 
 The registry and its providers become owned by the database object. In-tree
 backends may also be registered by the factory's default construction path.
@@ -119,7 +129,7 @@ centrally selected adapter or equivalent contract:
 
 1. **Identity and selection**
    - provide a stable backend name and type;
-   - declare accepted connection-string schemes;
+   - specialize `ConnectionTraits<Config>` and read the checked configuration;
    - reject unknown or disabled backends before generating SQL.
 2. **Session lifecycle**
    - open and close the appropriate SOCI session;

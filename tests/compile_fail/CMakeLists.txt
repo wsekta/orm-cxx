@@ -33,6 +33,16 @@ function(orm_cxx_expect_compile_failure name source expected_diagnostic)
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
+foreach(case Default String Registry)
+    orm_cxx_expect_compile_failure("database-construction-${case}" "DatabaseConstruction${case}.cpp" "Database")
+endforeach()
+orm_cxx_expect_compile_failure(
+    connection-config-missing-traits ConnectionConfigMissingTraits.cpp "ConnectionConfigView"
+)
+orm_cxx_expect_compile_failure(connection-config-invalid-get ConnectionConfigInvalidGet.cpp "get")
+orm_cxx_expect_compile_failure(
+    connection-config-temporary-view ConnectionConfigTemporaryView.cpp "ConnectionConfigView"
+)
 orm_cxx_expect_compile_success(schema-bound-api-positive SchemaBoundApiPositive.cpp)
 foreach(case Zero NonString Duplicate OtherModel)
     orm_cxx_expect_compile_failure("string-length-${case}" "StringLength${case}.cpp" "ORM_MODEL_STRING_LENGTH")

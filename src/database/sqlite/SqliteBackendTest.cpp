@@ -1,10 +1,13 @@
 module;
 
+#include <filesystem>
+
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
 
 import :internal;
+import :connection_config;
 import :test_support;
 import :foundation;
 import :model;
@@ -40,8 +43,6 @@ TEST(SqliteBackendTest, exposesSQLiteIdentityAndCapabilities)
     const auto& capabilities = backend.capabilities();
 
     EXPECT_EQ(backend.type(), orm::db::BackendType::Sqlite);
-    EXPECT_TRUE(backend.acceptsConnectionString("sqlite3://:memory:"));
-    EXPECT_FALSE(backend.acceptsConnectionString("postgresql://localhost/test"));
     EXPECT_TRUE(capabilities.schema.createTableIfNotExists);
     EXPECT_TRUE(capabilities.schema.dropTableIfExists);
     EXPECT_TRUE(capabilities.schema.autoIncrementPrimaryKey);
@@ -81,7 +82,8 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
 {
     const orm::db::sqlite::SqliteBackend backend;
     soci::session session;
-    backend.runtime().open(session, "sqlite3://:memory:");
+    const auto config = orm::SqliteConfig{orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
 
     backend.runtime().onConnect(session);
 
@@ -98,14 +100,15 @@ TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
     EXPECT_EQ(limits.maxBindParameters.value(), 900);
 }
 
-TEST(SqliteBackendTest, runtimeRejectsInvalidConnectionStringsBeforeOpeningADriver)
+TEST(SqliteBackendTest, runtimeRejectsInvalidConfigurationsBeforeOpeningADriver)
 {
     const orm::db::sqlite::SqliteBackend backend;
     soci::session session;
 
-    EXPECT_THROW(backend.runtime().open(session, "postgresql://host=localhost"), std::invalid_argument);
-    EXPECT_THROW(backend.runtime().open(session, std::string{"sqlite3://safe.db"} + '\0' + "ignored.db"),
-                 std::invalid_argument);
+    const auto wrongBackend = orm::PostgresConfig{};
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{wrongBackend}), orm::DatabaseError);
+    const auto invalid = orm::SqliteConfig{std::filesystem::path{std::string{"safe.db"} + '\0' + "ignored.db"}};
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{invalid}), orm::DatabaseError);
     EXPECT_FALSE(session.is_connected());
 }
 

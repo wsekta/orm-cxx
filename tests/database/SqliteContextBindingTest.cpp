@@ -42,10 +42,8 @@ class OrmContextTest : public DatabaseTest<context_models::Combined>
 TEST(OrmContextBindingTest, assignmentRebindsTheViewToAnotherDatabase)
 {
     using namespace context_models;
-    orm::Database first;
-    orm::Database second;
-    first.connect("sqlite3://:memory:");
-    second.connect("sqlite3://:memory:");
+    orm::Database first{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    orm::Database second{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
     auto firstRecords = first.orm<Records>();
     auto secondRecords = second.orm<Records>();
     firstRecords.createTable<Record>();

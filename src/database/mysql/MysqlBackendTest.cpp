@@ -6,6 +6,7 @@ module;
 module orm;
 
 import :internal;
+import :connection_config;
 import :test_support;
 import :foundation;
 import :model;
@@ -20,8 +21,6 @@ TEST(MysqlBackendTest, advertisesEqualCapabilitiesWithBackendSpecificAtomicity)
     const orm::db::mysql::MysqlBackend backend;
     EXPECT_EQ(backend.type(), orm::db::BackendType::Mysql);
     EXPECT_EQ(backend.compiledSqlFlavor(), orm::db::CompiledSqlFlavor::MySQLFamily);
-    EXPECT_TRUE(backend.acceptsConnectionString("mysql://db=test"));
-    EXPECT_FALSE(backend.acceptsConnectionString("postgresql://dbname=test"));
     EXPECT_FALSE(backend.capabilities().schema.transactionalDdl);
     EXPECT_FALSE(backend.capabilities().query.maxOrderedStringLength.has_value());
     EXPECT_TRUE(backend.capabilities().schema.boundedStringKeys);
@@ -32,9 +31,10 @@ TEST(MysqlBackendTest, advertisesEqualCapabilitiesWithBackendSpecificAtomicity)
     EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::String));
     EXPECT_FALSE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Uuid));
     soci::session session;
-    EXPECT_THROW(backend.runtime().open(session, "sqlite3://:memory:"), std::invalid_argument);
-    EXPECT_THROW(backend.runtime().open(session, std::string{"mysql://"} + '\0'), std::invalid_argument);
-    EXPECT_THROW(backend.runtime().open(session, "mysql://reconnect=1"), std::invalid_argument);
+    const orm::PostgresConfig mismatched;
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{mismatched}), orm::DatabaseError);
+    const orm::MysqlConfig invalid{.password = std::string{"private"} + '\0'};
+    EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{invalid}), orm::DatabaseError);
     EXPECT_EQ(backend.runtime().normalizeAffectedRows(0), 0);
     EXPECT_EQ(backend.runtime().normalizeAffectedRows(7), 7);
     EXPECT_THROW((void)backend.runtime().normalizeAffectedRows(-1), std::runtime_error);

@@ -1,9 +1,16 @@
+#include <chrono>
 #include <cstddef>
+#include <filesystem>
 #include <iostream>
 #include <optional>
+#include <stdexcept>
 #include <string>
+#include <string_view>
+#include <variant>
 
 import orm;
+
+#include "Connection.hpp"
 
 struct Book;
 
@@ -46,17 +53,11 @@ struct Role
 
 int main(int argc, char** argv) // NOLINT(bugprone-exception-escape)
 {
-    if (argc != 2)
-    {
-        std::cerr << "Pass a connection string for an explicitly enabled backend.\n";
-        return 2;
-    }
     using namespace orm::query;
 
     using AppSchema = orm::Schema<Author, Book, User, Role>;
-    orm::Database database;
+    auto database = makeExampleDatabase(argc, argv);
     auto context = database.orm<AppSchema>();
-    database.connect(argv[1]);
 
     // Junction tables are dropped before either endpoint table.
     context.deleteRelationTables<User>();

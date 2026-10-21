@@ -5,11 +5,13 @@ module;
 #include <bit>
 #include <cassert>
 #include <charconv>
+#include <chrono>
 #include <cmath>
 #include <compare>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <format>
 #include <functional>
 #include <initializer_list>
@@ -33,16 +35,17 @@ module;
 #include <variant>
 #include <vector>
 
+#include "ConnectionParameters.hpp"
 #include "soci/postgresql/soci-postgresql.h"
 #include "soci/soci.h"
 
 module orm;
 
 import :internal;
+import :connection_config;
 
 namespace
 {
-constexpr std::string_view connectionStringPrefix{"postgresql://"};
 
 auto codeFromSqlState(std::string_view sqlState, orm::DatabaseErrorCode fallback) -> orm::DatabaseErrorCode
 {
@@ -172,19 +175,84 @@ public:
         }
     }
 
-    auto open(soci::session& session, std::string_view connectionString) const -> void override
+    auto open(soci::session& session, orm::db::ConnectionConfigView view) const -> void override
     {
-        if (connectionString.find('\0') != std::string_view::npos)
+        const auto& config = view.get<orm::PostgresConfig>();
+        soci::connection_parameters parameters{*soci::factory_postgresql(), ""};
+        const auto invalid = []() -> void
         {
-            throw std::invalid_argument{"PostgreSQL connection string must not contain an embedded NUL byte"};
-        }
-
-        if (not connectionString.starts_with(connectionStringPrefix))
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Connection, orm::db::BackendType::Postgres, "connect",
+                                     "Invalid PostgreSQL connection configuration"};
+        };
+        const auto add = [&](const char* name, const std::optional<std::string>& value)
         {
-            throw std::invalid_argument{"PostgreSQL connection string must start with postgresql://"};
+            if (value)
+                parameters.set_option(name, orm_postgresql_connection_detail::prepareValue(*value));
+        };
+        const auto addPath = [&](const char* name, const std::optional<std::filesystem::path>& value)
+        {
+            if (value)
+            {
+                const auto utf8 = value->u8string();
+                parameters.set_option(name, orm_postgresql_connection_detail::prepareValue(std::string_view{
+                                                reinterpret_cast<const char*>(utf8.data()), utf8.size()}));
+            }
+        };
+        try
+        {
+            add("host", config.host);
+            add("dbname", config.database);
+            add("user", config.user);
+            add("password", config.password);
+            if (config.port)
+                parameters.set_option("port", std::to_string(*config.port));
+            if (config.connectTimeout)
+            {
+                const auto seconds = config.connectTimeout->count();
+                if (seconds < 0 || seconds > std::numeric_limits<int>::max())
+                    invalid();
+                parameters.set_option("connect_timeout", std::to_string(seconds));
+            }
+            addPath("passfile", config.passfile);
+            if (config.tls.mode)
+            {
+                const char* mode = nullptr;
+                switch (*config.tls.mode)
+                {
+                case orm::PostgresSslMode::Disable:
+                    mode = "disable";
+                    break;
+                case orm::PostgresSslMode::Allow:
+                    mode = "allow";
+                    break;
+                case orm::PostgresSslMode::Prefer:
+                    mode = "prefer";
+                    break;
+                case orm::PostgresSslMode::Require:
+                    mode = "require";
+                    break;
+                case orm::PostgresSslMode::VerifyCa:
+                    mode = "verify-ca";
+                    break;
+                case orm::PostgresSslMode::VerifyFull:
+                    mode = "verify-full";
+                    break;
+                default:
+                    invalid();
+                }
+                parameters.set_option("sslmode", mode);
+            }
+            addPath("sslrootcert", config.tls.caCertificate);
+            addPath("sslcert", config.tls.clientCertificate);
+            addPath("sslkey", config.tls.clientKey);
+            session.open(parameters);
         }
-
-        session.open(*soci::factory_postgresql(), std::string{connectionString.substr(connectionStringPrefix.size())});
+        catch (...)
+        {
+            session.close();
+            throw orm::DatabaseError{orm::DatabaseErrorCode::Connection, orm::db::BackendType::Postgres, "connect",
+                                     "PostgreSQL connection failed"};
+        }
     }
 
     auto onConnect(soci::session& /*session*/) const -> void override {}
@@ -409,11 +477,6 @@ PostgresqlBackend::~PostgresqlBackend() = default;
 auto PostgresqlBackend::type() const noexcept -> BackendType
 {
     return BackendType::Postgres;
-}
-
-auto PostgresqlBackend::acceptsConnectionString(std::string_view connectionString) const noexcept -> bool
-{
-    return connectionString.starts_with(connectionStringPrefix);
 }
 
 auto PostgresqlBackend::capabilities() const noexcept -> const BackendCapabilities&

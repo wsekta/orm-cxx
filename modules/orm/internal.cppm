@@ -123,7 +123,7 @@ namespace orm::db::aliases
 namespace orm::db::mysql_family
 {
 [[nodiscard]] auto capabilities() -> BackendCapabilities;
-[[nodiscard]] auto makeRuntime(BackendType type, std::string_view prefix) -> std::unique_ptr<BackendRuntime>;
+[[nodiscard]] auto makeRuntime(BackendType type) -> std::unique_ptr<BackendRuntime>;
 [[nodiscard]] auto sqlType(model::ColumnType type, std::optional<std::size_t> maxStringLength) -> std::string;
 [[nodiscard]] auto renderInsert(const InsertIfAbsentSpec& insert) -> std::string;
 struct StatementTokens

@@ -11,13 +11,13 @@
 #include "tests/database/MysqlTestDatabase.hpp"
 #include "tests/database/postgresql/PostgresqlTestSchema.hpp"
 #include "tests/ModelsDefinitions.hpp"
+#include "tests/support/ConnectionConfig.hpp"
 #include "tests/utils/GenerateModels.hpp"
 
 struct BackendTestConfig
 {
     orm::db::BackendType type;
     std::string name;
-    std::string connectionString;
     bool supported;
 };
 
@@ -28,14 +28,12 @@ inline constexpr std::size_t modelCount = 10;
 extern const auto sqliteBackendTestConfig = BackendTestConfig{
     .type = orm::db::BackendType::Sqlite,
     .name = "Sqlite",
-    .connectionString = "sqlite3://:memory:",
     .supported = true,
 };
 
 extern const auto postgresqlBackendTestConfig = BackendTestConfig{
     .type = orm::db::BackendType::Postgres,
     .name = "Postgresql",
-    .connectionString = {},
     .supported = true,
 };
 
@@ -50,9 +48,9 @@ extern const auto postgresqlBackendTestConfig = BackendTestConfig{
             configs.push_back(postgresqlBackendTestConfig);
         }
         if constexpr (orm::test::config::mysqlIntegrationEnabled)
-            configs.push_back({orm::db::BackendType::Mysql, "Mysql", {}, true});
+            configs.push_back({orm::db::BackendType::Mysql, "Mysql", true});
         if constexpr (orm::test::config::mariadbIntegrationEnabled)
-            configs.push_back({orm::db::BackendType::Mariadb, "Mariadb", {}, true});
+            configs.push_back({orm::db::BackendType::Mariadb, "Mariadb", true});
         return configs;
     }());
 [[maybe_unused]] extern const auto conformanceBackendTestConfigs = backendTestConfigs;
@@ -66,50 +64,67 @@ auto backendTestName(const ::testing::TestParamInfo<BackendTestConfig>& info) ->
 template <typename SchemaType = models::Schema>
 class DatabaseTest : public ::testing::TestWithParam<BackendTestConfig>
 {
+private:
+    using TestConnectionConfig =
+        std::variant<orm::SqliteConfig, orm::PostgresConfig, orm::MysqlConfig, orm::MariadbConfig>;
+    std::vector<std::function<void()>> tearDownFunctions;
+    std::unique_ptr<postgresql_test::PostgresqlTestSchema> postgresqlSchema;
+    std::unique_ptr<mysql_test::MysqlTestDatabase> mysqlDatabase;
+    TestConnectionConfig activeConfig = initializeTestConfiguration();
+
+    auto initializeTestConfiguration() -> TestConnectionConfig
+    {
+        switch (this->GetParam().type)
+        {
+        case orm::db::BackendType::Sqlite:
+            return orm::SqliteConfig{.database = orm::SqliteMemory{}};
+        case orm::db::BackendType::Postgres:
+            postgresqlSchema =
+                std::make_unique<postgresql_test::PostgresqlTestSchema>(orm::test::postgresConfigFromEnvironment());
+            return postgresqlSchema->connectionConfig();
+        case orm::db::BackendType::Mysql:
+            mysqlDatabase = std::make_unique<mysql_test::MysqlTestDatabase>(orm::test::mysqlConfigFromEnvironment());
+            return mysqlDatabase->mysqlConfig();
+        case orm::db::BackendType::Mariadb:
+            mysqlDatabase = std::make_unique<mysql_test::MysqlTestDatabase>(orm::test::mariadbConfigFromEnvironment());
+            return mysqlDatabase->mariadbConfig();
+        default:
+            throw std::logic_error{"Unsupported test backend"};
+        }
+    }
+
 public:
-    orm::Database connection;
+    [[nodiscard]] auto makeTestDatabase() -> orm::Database
+    {
+        switch (this->GetParam().type)
+        {
+        case orm::db::BackendType::Sqlite:
+            return orm::Database{std::get<orm::SqliteConfig>(activeConfig)};
+        case orm::db::BackendType::Postgres:
+            return orm::Database{std::get<orm::PostgresConfig>(activeConfig), postgresqlSchema->registry()};
+        case orm::db::BackendType::Mysql:
+            return orm::Database{std::get<orm::MysqlConfig>(activeConfig)};
+        case orm::db::BackendType::Mariadb:
+            return orm::Database{std::get<orm::MariadbConfig>(activeConfig)};
+        default:
+            throw std::logic_error{"Unsupported test backend"};
+        }
+    }
+
+    auto connectTestDatabase(orm::Database& owner) const -> void
+    {
+        std::visit([&owner](const auto& config) { owner.connect(config); }, activeConfig);
+    }
+
+    [[nodiscard]] auto testConnectionConfig() const noexcept -> const TestConnectionConfig&
+    {
+        return activeConfig;
+    }
+
+    orm::Database connection = makeTestDatabase();
     orm::OrmContext<SchemaType> database = connection.orm<SchemaType>();
 
-    auto SetUp() -> void override
-    {
-        activeConnectionString = GetParam().connectionString;
-        if constexpr (orm::test::config::postgresqlIntegrationEnabled)
-        {
-            if (GetParam().type == orm::db::BackendType::Postgres)
-            {
-                const auto dsn = postgresql_test::configuredDsn();
-                ASSERT_FALSE(dsn.empty())
-                    << "ORM_CXX_POSTGRESQL_TEST_DSN is required when PostgreSQL integration tests are enabled";
-
-                try
-                {
-                    postgresqlSchema = std::make_unique<postgresql_test::PostgresqlTestSchema>(dsn);
-                    activeConnectionString = postgresqlSchema->connectionString();
-                }
-                catch (const std::exception& error)
-                {
-                    FAIL() << "Failed to create an isolated PostgreSQL test schema: " << error.what();
-                }
-            }
-        }
-
-        if (GetParam().type == orm::db::BackendType::Mysql or GetParam().type == orm::db::BackendType::Mariadb)
-        {
-            const auto dsn = mysql_test::configuredDsn(GetParam().type);
-            ASSERT_FALSE(dsn.empty())
-                << "The enabled backend requires ORM_CXX_MYSQL_TEST_DSN or ORM_CXX_MARIADB_TEST_DSN";
-            try
-            {
-                mysqlDatabase = std::make_unique<mysql_test::MysqlTestDatabase>(GetParam().type, dsn);
-                activeConnectionString = mysqlDatabase->connectionString();
-            }
-            catch (const std::exception& error)
-            {
-                FAIL() << "Failed to isolate test database: " << error.what();
-            }
-        }
-        connection.connect(GetParam().type, activeConnectionString);
-    }
+    auto SetUp() -> void override {}
 
     auto TearDown() -> void override
     {
@@ -189,19 +204,8 @@ public:
         tearDownFunctions.emplace_back([this]() { database.template deleteRelationTables<T>(); });
     }
 
-    [[nodiscard]] auto testConnectionString() const noexcept -> const std::string&
-    {
-        return activeConnectionString;
-    }
-
     auto postgresqlTestSchema() noexcept -> postgresql_test::PostgresqlTestSchema*
     {
         return postgresqlSchema.get();
     }
-
-private:
-    std::vector<std::function<void()>> tearDownFunctions;
-    std::string activeConnectionString;
-    std::unique_ptr<postgresql_test::PostgresqlTestSchema> postgresqlSchema;
-    std::unique_ptr<mysql_test::MysqlTestDatabase> mysqlDatabase;
 };
