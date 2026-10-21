@@ -26,6 +26,12 @@ var hierarchy =
       [ "orm::db::DefaultCommandGenerator", "classorm_1_1db_1_1DefaultCommandGenerator.html", null ]
     ] ],
     [ "orm::db::CommandGeneratorFactory", "classorm_1_1db_1_1CommandGeneratorFactory.html", null ],
+    [ "orm::db::ConnectionConfigView", "classorm_1_1db_1_1ConnectionConfigView.html", null ],
+    [ "orm::db::ConnectionTraits&lt; Config &gt;", "structorm_1_1db_1_1ConnectionTraits.html", null ],
+    [ "orm::db::ConnectionTraits&lt; MariadbConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01MariadbConfig_01_4.html", null ],
+    [ "orm::db::ConnectionTraits&lt; MysqlConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01MysqlConfig_01_4.html", null ],
+    [ "orm::db::ConnectionTraits&lt; PostgresConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01PostgresConfig_01_4.html", null ],
+    [ "orm::db::ConnectionTraits&lt; SqliteConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01SqliteConfig_01_4.html", null ],
     [ "orm::Database", "classorm_1_1Database.html", null ],
     [ "orm::migrations::Diagnostic", "structorm_1_1migrations_1_1Diagnostic.html", null ],
     [ "std::false_type", null, [
@@ -61,6 +67,7 @@ var hierarchy =
     [ "orm::model::LogicalTypeTraits&lt; unsigned long long &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01long_01long_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; unsigned short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01short_01_4.html", null ],
     [ "orm::ManyToManyDescriptor&lt; Member, MappedByMember, MappedByName, ThroughTable, OwnerColumnNames, TargetColumnNames &gt;", "structorm_1_1ManyToManyDescriptor.html", null ],
+    [ "orm::MariadbConfig", "structorm_1_1MariadbConfig.html", null ],
     [ "Meta", null, [
       [ "orm::query::Expression< Kind, Meta, Children >", "classorm_1_1query_1_1Expression.html", null ]
     ] ],
@@ -72,6 +79,8 @@ var hierarchy =
     [ "orm::model::ModelDataView", "structorm_1_1model_1_1ModelDataView.html", null ],
     [ "orm::model::ModelView", "structorm_1_1model_1_1ModelView.html", null ],
     [ "orm::db::MutationCapabilities", "structorm_1_1db_1_1MutationCapabilities.html", null ],
+    [ "orm::MysqlConfig", "structorm_1_1MysqlConfig.html", null ],
+    [ "orm::MysqlTls", "structorm_1_1MysqlTls.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValues&lt; ResultField &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValues&lt; std::optional&lt; ResultField &gt; &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValuesWithCast&lt; ResultField, SociType &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html", null ],
@@ -102,6 +111,8 @@ var hierarchy =
     [ "orm::migrations::PhysicalTable", "structorm_1_1migrations_1_1PhysicalTable.html", null ],
     [ "orm::migrations::Plan", "structorm_1_1migrations_1_1Plan.html", null ],
     [ "orm::migrations::PlannedMigration", "structorm_1_1migrations_1_1PlannedMigration.html", null ],
+    [ "orm::PostgresConfig", "structorm_1_1PostgresConfig.html", null ],
+    [ "orm::PostgresTls", "structorm_1_1PostgresTls.html", null ],
     [ "orm::model::PrimaryKey&lt; Members &gt;", "structorm_1_1model_1_1PrimaryKey.html", null ],
     [ "orm::db::binding::PrimaryKeyLess", "structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html", null ],
     [ "orm::db::binding::ProjectionPayload&lt; T &gt;", "structorm_1_1db_1_1binding_1_1ProjectionPayload.html", null ],
@@ -136,6 +147,8 @@ var hierarchy =
       [ "orm::db::postgresql::PostgresqlDialect", "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html", null ],
       [ "orm::db::sqlite::SqliteDialect", "classorm_1_1db_1_1sqlite_1_1SqliteDialect.html", null ]
     ] ],
+    [ "orm::SqliteConfig", "structorm_1_1SqliteConfig.html", null ],
+    [ "orm::SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
     [ "orm::migrations::SqlMigration", "structorm_1_1migrations_1_1SqlMigration.html", null ],
     [ "orm::db::Statement", "structorm_1_1db_1_1Statement.html", null ],
     [ "orm::db::StatementParameter", "structorm_1_1db_1_1StatementParameter.html", null ],

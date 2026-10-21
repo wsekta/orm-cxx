@@ -3,7 +3,7 @@ var searchData=
   ['offset_0',['offset',['../classorm_1_1ProjectionQuery.html#ac404aee04e5dffeb920d8fef3ae5cb48',1,'orm::ProjectionQuery::offset()'],['../classorm_1_1Query.html#ad277561652627e31187604dd6487fec8',1,'orm::Query::offset()'],['../classorm_1_1query_1_1StaticPlan.html#a46256a79bea48cd0ee4bdd8ec289e9b3',1,'orm::query::StaticPlan::offset(std::size_t value) const'],['../classorm_1_1query_1_1StaticPlan.html#a4c3f7ff57d67d7887137021e2afd2e50',1,'orm::query::StaticPlan::offset(Parameter&lt; std::size_t, I &gt; value) const']]],
   ['onconnect_1',['onConnect',['../classorm_1_1db_1_1BackendRuntime.html#a470b887fbba3d926c6fe542dfbcb5f8b',1,'orm::db::BackendRuntime']]],
   ['onetomany_2',['oneToMany',['../namespaceorm.html#ac32047dd1ee094fe7bd3ab9922aaaa45',1,'orm']]],
-  ['open_3',['open',['../classorm_1_1db_1_1BackendRuntime.html#a8d69a7b8bc6706092c894374a4b4376c',1,'orm::db::BackendRuntime']]],
+  ['open_3',['open',['../classorm_1_1db_1_1BackendRuntime.html#a0e1f5c70d2aefe89b696cfdca6984b48',1,'orm::db::BackendRuntime']]],
   ['operator_20bool_4',['operator bool',['../structorm_1_1model_1_1ModelView.html#ab0b446a6c089cd2ae6a4b5d6b4f692a4',1,'orm::model::ModelView']]],
   ['operator_20std_3a_3astring_5fview_5',['operator std::string_view',['../structorm_1_1reflection_1_1FixedString.html#aaccaa38c3f5dc94efc4043a85347f648',1,'orm::reflection::FixedString::string_view() const &amp;noexcept'],['../structorm_1_1reflection_1_1FixedString.html#a3d74a8ca3542b8b770f7e662ba66b49c',1,'orm::reflection::FixedString::string_view() const &amp;&amp;=delete']]],
   ['operator_21_6',['operator!',['../namespaceorm_1_1query.html#a071c4728db85c528bac926521cd00c45',1,'orm::query']]],

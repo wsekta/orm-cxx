@@ -23,6 +23,7 @@ var searchData=
   ['updateassignment_20',['UpdateAssignment',['../namespaceorm_1_1db_1_1ast.html#ade8ff7ce1614e0b1ec795e5880edfb00',1,'orm::db::ast']]],
   ['updatespec_21',['UpdateSpec',['../namespaceorm_1_1db.html#a2c91edaf8b6c8c59bcbcbb09d45a08e3',1,'orm::db']]],
   ['updatevalue_22',['UpdateValue',['../namespaceorm_1_1db_1_1ast.html#ad6ff5962b2eeec5a5e2d1627a6deb9fc',1,'orm::db::ast']]],
-  ['utilities_2ecppm_23',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
-  ['uuid_24',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
+  ['user_23',['user',['../structorm_1_1PostgresConfig.html#ae87ffffc026faefa0e2893dc9a39255d',1,'orm::PostgresConfig::user'],['../structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea',1,'orm::MysqlConfig::user'],['../structorm_1_1MariadbConfig.html#acc3786acce683fabf2efcd7c07d9e3fa',1,'orm::MariadbConfig::user']]],
+  ['utilities_2ecppm_24',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
+  ['uuid_25',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
 ];

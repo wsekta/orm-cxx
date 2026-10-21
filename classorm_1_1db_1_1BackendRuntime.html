@@ -129,7 +129,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac2137e1914015e454871918fc28c03b9" id="r_ac2137e1914015e454871918fc28c03b9"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#ac2137e1914015e454871918fc28c03b9">createMigrationHistory</a> (soci::session &amp;, std::string_view) const -&gt; void</td></tr>
 <tr class="memitem:a5a375c53df0c995555b3aa2ffc64a316" id="r_a5a375c53df0c995555b3aa2ffc64a316"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a5a375c53df0c995555b3aa2ffc64a316">migrationJournalTable</a> (soci::session &amp;, std::string_view) const -&gt; std::string</td></tr>
 <tr class="memitem:a4b0bddabe48fbaf1b881d1a452ae7ced" id="r_a4b0bddabe48fbaf1b881d1a452ae7ced"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a4b0bddabe48fbaf1b881d1a452ae7ced">endMigration</a> (soci::session &amp;, std::string_view) const -&gt; void</td></tr>
-<tr class="memitem:a8d69a7b8bc6706092c894374a4b4376c" id="r_a8d69a7b8bc6706092c894374a4b4376c"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a8d69a7b8bc6706092c894374a4b4376c">open</a> (soci::session &amp;session, std::string_view connectionString) const -&gt; void=0</td></tr>
+<tr class="memitem:a0e1f5c70d2aefe89b696cfdca6984b48" id="r_a0e1f5c70d2aefe89b696cfdca6984b48"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a0e1f5c70d2aefe89b696cfdca6984b48">open</a> (soci::session &amp;session, <a class="el" href="classorm_1_1db_1_1ConnectionConfigView.html">ConnectionConfigView</a> config) const -&gt; void=0</td></tr>
 <tr class="memitem:a470b887fbba3d926c6fe542dfbcb5f8b" id="r_a470b887fbba3d926c6fe542dfbcb5f8b"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a470b887fbba3d926c6fe542dfbcb5f8b">onConnect</a> (soci::session &amp;session) const -&gt; void=0</td></tr>
 <tr class="memitem:ad5e09e8bc12f057593084e2c7bb621f0" id="r_ad5e09e8bc12f057593084e2c7bb621f0"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#ad5e09e8bc12f057593084e2c7bb621f0">tableExists</a> (soci::session &amp;session, std::string_view tableName) const -&gt; bool=0</td></tr>
 <tr class="memitem:a9f852ceea66fa2323da20f5de4b458fb" id="r_a9f852ceea66fa2323da20f5de4b458fb"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a9f852ceea66fa2323da20f5de4b458fb">limits</a> (soci::session &amp;session) const -&gt; <a class="el" href="structorm_1_1db_1_1BackendRuntimeLimits.html">BackendRuntimeLimits</a>=0</td></tr>
@@ -141,7 +141,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00276">276</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00275">275</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a32d982efc863d13ce040cc3a7a492e7d" name="a32d982efc863d13ce040cc3a7a492e7d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a32d982efc863d13ce040cc3a7a492e7d">&#9670;&#160;</a></span>~BackendRuntime()</h2>
@@ -196,7 +196,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00289">289</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00288">288</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -261,7 +261,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00305">305</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00304">304</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -293,7 +293,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Releases session-scoped locks; transaction-scoped locks need no hook. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00316">316</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00315">315</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -359,7 +359,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00294">294</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00293">293</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -415,7 +415,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00300">300</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00299">299</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -447,7 +447,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Nontransactional engines return a qualified durable journal table. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00311">311</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00310">310</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -474,7 +474,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00284">284</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00283">283</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -528,8 +528,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a8d69a7b8bc6706092c894374a4b4376c" name="a8d69a7b8bc6706092c894374a4b4376c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8d69a7b8bc6706092c894374a4b4376c">&#9670;&#160;</a></span>open()</h2>
+<a id="a0e1f5c70d2aefe89b696cfdca6984b48" name="a0e1f5c70d2aefe89b696cfdca6984b48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0e1f5c70d2aefe89b696cfdca6984b48">&#9670;&#160;</a></span>open()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -545,7 +545,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span>&#160;) const -&gt;  void</td>
+          <td class="paramtype"><a class="el" href="classorm_1_1db_1_1ConnectionConfigView.html">ConnectionConfigView</a></td>          <td class="paramname"><span class="paramname"><em>config</em></span>&#160;) const -&gt;  void</td>
         </tr>
       </table>
   </td>
@@ -580,7 +580,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00327">327</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00326">326</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -671,7 +671,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Migration hooks are opt-in for application-supplied backends. Checks session parsing and binding invariants before history access. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00283">283</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00282">282</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>

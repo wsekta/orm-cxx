@@ -1,5 +1,6 @@
 var dir_87a21a2abcae43573af0cac8b8d3974b =
 [
+    [ "config.cppm", "config_8cppm.html", "config_8cppm" ],
     [ "connection.cppm", "connection_8cppm.html", "connection_8cppm" ],
     [ "context.cppm", "context_8cppm.html", "context_8cppm" ],
     [ "numeric.cppm", "numeric_8cppm.html", "numeric_8cppm" ],

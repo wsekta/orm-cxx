@@ -13,7 +13,7 @@ var classorm_1_1db_1_1BackendRuntime =
     [ "migrationTable", "classorm_1_1db_1_1BackendRuntime.html#a175ec8f92513141e57b2047a3257d75b", null ],
     [ "normalizeAffectedRows", "classorm_1_1db_1_1BackendRuntime.html#aa86ce3f2e7edbf83ff62e416616dc946", null ],
     [ "onConnect", "classorm_1_1db_1_1BackendRuntime.html#a470b887fbba3d926c6fe542dfbcb5f8b", null ],
-    [ "open", "classorm_1_1db_1_1BackendRuntime.html#a8d69a7b8bc6706092c894374a4b4376c", null ],
+    [ "open", "classorm_1_1db_1_1BackendRuntime.html#a0e1f5c70d2aefe89b696cfdca6984b48", null ],
     [ "statementErrorInvalidatesTransaction", "classorm_1_1db_1_1BackendRuntime.html#ac34c7d24e7f610c69876fa0537f59b75", null ],
     [ "tableExists", "classorm_1_1db_1_1BackendRuntime.html#ad5e09e8bc12f057593084e2c7bb621f0", null ],
     [ "translateError", "classorm_1_1db_1_1BackendRuntime.html#a8eb46e3e44c21e37e72d9cb8ee0036a2", null ],

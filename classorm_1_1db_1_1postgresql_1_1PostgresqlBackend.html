@@ -143,7 +143,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8f3ab8af8cf7cda552cfd3f2df41d787" id="r_a8f3ab8af8cf7cda552cfd3f2df41d787"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a8f3ab8af8cf7cda552cfd3f2df41d787">PostgresqlBackend</a> ()</td></tr>
 <tr class="memitem:a3d29a90957d1d6065da09104f6babf1b" id="r_a3d29a90957d1d6065da09104f6babf1b"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a3d29a90957d1d6065da09104f6babf1b">~PostgresqlBackend</a> () override</td></tr>
 <tr class="memitem:a65f7c839369b3aaa4013c8b448aa6b04" id="r_a65f7c839369b3aaa4013c8b448aa6b04"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a65f7c839369b3aaa4013c8b448aa6b04">type</a> () const noexcept -&gt; <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> override</td></tr>
-<tr class="memitem:a9e03f1cd826462442edcbed6e53eaa18" id="r_a9e03f1cd826462442edcbed6e53eaa18"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a9e03f1cd826462442edcbed6e53eaa18">acceptsConnectionString</a> (std::string_view connectionString) const noexcept -&gt; bool override</td></tr>
 <tr class="memitem:aba264ab10a0364c5f72f6c5c007cbcf8" id="r_aba264ab10a0364c5f72f6c5c007cbcf8"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aba264ab10a0364c5f72f6c5c007cbcf8">capabilities</a> () const noexcept -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">BackendCapabilities</a> &amp;override</td></tr>
 <tr class="memitem:a5b782ad752e1889feed1294bff61a0e6" id="r_a5b782ad752e1889feed1294bff61a0e6"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a5b782ad752e1889feed1294bff61a0e6">dialect</a> () const noexcept -&gt; const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;override</td></tr>
 <tr class="memitem:a3c7d82961f4ab359aac0e34158929da7" id="r_a3c7d82961f4ab359aac0e34158929da7"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3c7d82961f4ab359aac0e34158929da7">runtime</a> () const noexcept -&gt; const <a class="el" href="classorm_1_1db_1_1BackendRuntime.html">BackendRuntime</a> &amp;override</td></tr>
@@ -199,33 +198,6 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a9e03f1cd826462442edcbed6e53eaa18" name="a9e03f1cd826462442edcbed6e53eaa18"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9e03f1cd826462442edcbed6e53eaa18">&#9670;&#160;</a></span>acceptsConnectionString()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto orm::db::postgresql::PostgresqlBackend::acceptsConnectionString </td>
-          <td>(</td>
-          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span></td><td>)</td>
-          <td> const -&gt;  bool</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span><span class="mlabel noexcept">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implements <a class="el" href="classorm_1_1db_1_1BackendProvider.html#a9b31b7e8e3849a8df9d07f25e3f77e17">orm::db::BackendProvider</a>.</p>
-
-</div>
-</div>
 <a id="aba264ab10a0364c5f72f6c5c007cbcf8" name="aba264ab10a0364c5f72f6c5c007cbcf8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aba264ab10a0364c5f72f6c5c007cbcf8">&#9670;&#160;</a></span>capabilities()</h2>
 

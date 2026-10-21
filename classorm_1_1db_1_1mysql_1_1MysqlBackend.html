@@ -143,7 +143,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ad19c6afcfabd61057091c5b10051a269" id="r_ad19c6afcfabd61057091c5b10051a269"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ad19c6afcfabd61057091c5b10051a269">MysqlBackend</a> ()</td></tr>
 <tr class="memitem:acacb54a2fe11ff39f06ee1a592078c62" id="r_acacb54a2fe11ff39f06ee1a592078c62"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#acacb54a2fe11ff39f06ee1a592078c62">~MysqlBackend</a> () override</td></tr>
 <tr class="memitem:ab71f56c6f9ba221366bbb62ba8055e9d" id="r_ab71f56c6f9ba221366bbb62ba8055e9d"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ab71f56c6f9ba221366bbb62ba8055e9d">type</a> () const noexcept -&gt; <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> override</td></tr>
-<tr class="memitem:ac7900f5ba7e8df916a120bddf0b8a3fc" id="r_ac7900f5ba7e8df916a120bddf0b8a3fc"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ac7900f5ba7e8df916a120bddf0b8a3fc">acceptsConnectionString</a> (std::string_view connectionString) const noexcept -&gt; bool override</td></tr>
 <tr class="memitem:ae6d01e17a2e8f964e135242a532ba745" id="r_ae6d01e17a2e8f964e135242a532ba745"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ae6d01e17a2e8f964e135242a532ba745">capabilities</a> () const noexcept -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">BackendCapabilities</a> &amp;override</td></tr>
 <tr class="memitem:acbd4fbbbd4fd6cbe99cbb77a3275cc1f" id="r_acbd4fbbbd4fd6cbe99cbb77a3275cc1f"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#acbd4fbbbd4fd6cbe99cbb77a3275cc1f">dialect</a> () const noexcept -&gt; const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;override</td></tr>
 <tr class="memitem:a449dd13e82099c90ad564a6554b141e1" id="r_a449dd13e82099c90ad564a6554b141e1"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a449dd13e82099c90ad564a6554b141e1">runtime</a> () const noexcept -&gt; const <a class="el" href="classorm_1_1db_1_1BackendRuntime.html">BackendRuntime</a> &amp;override</td></tr>
@@ -154,7 +153,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="BackendRelations_8cppm_source.html#l00169">169</a> of file <a class="el" href="BackendRelations_8cppm_source.html">BackendRelations.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="BackendRelations_8cppm_source.html#l00167">167</a> of file <a class="el" href="BackendRelations_8cppm_source.html">BackendRelations.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad19c6afcfabd61057091c5b10051a269" name="ad19c6afcfabd61057091c5b10051a269"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad19c6afcfabd61057091c5b10051a269">&#9670;&#160;</a></span>MysqlBackend()</h2>
@@ -199,33 +198,6 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="ac7900f5ba7e8df916a120bddf0b8a3fc" name="ac7900f5ba7e8df916a120bddf0b8a3fc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac7900f5ba7e8df916a120bddf0b8a3fc">&#9670;&#160;</a></span>acceptsConnectionString()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto orm::db::mysql::MysqlBackend::acceptsConnectionString </td>
-          <td>(</td>
-          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span></td><td>)</td>
-          <td> const -&gt;  bool</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span><span class="mlabel noexcept">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Implements <a class="el" href="classorm_1_1db_1_1BackendProvider.html#a9b31b7e8e3849a8df9d07f25e3f77e17">orm::db::BackendProvider</a>.</p>
-
-</div>
-</div>
 <a id="ae6d01e17a2e8f964e135242a532ba745" name="ae6d01e17a2e8f964e135242a532ba745"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae6d01e17a2e8f964e135242a532ba745">&#9670;&#160;</a></span>capabilities()</h2>
 

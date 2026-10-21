@@ -12,5 +12,6 @@ var searchData=
   ['here_9',['Start here',['../index.html#docs-main-start-here',1,'']]],
   ['history_20transactions_20and_20recovery_10',['History, transactions and recovery',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery',1,'']]],
   ['historychanged_11',['HistoryChanged',['../namespaceorm_1_1migrations.html#a87136024db9b820b5a9437f985f55914ad4bfcc8e508351114ec1910965b0267e',1,'orm::migrations']]],
-  ['how_20to_20contribute_12',['How to contribute',['../CONTRIBUTING-how-to-contribute.html',1,'']]]
+  ['host_12',['host',['../structorm_1_1PostgresConfig.html#af1ef307943879d657ca29d20ca38f278',1,'orm::PostgresConfig::host'],['../structorm_1_1MysqlConfig.html#a9a487c40b6ce9e35a7f3494c86bfb020',1,'orm::MysqlConfig::host'],['../structorm_1_1MariadbConfig.html#ac0edcc9eed163bfde8c419c49998ed4c',1,'orm::MariadbConfig::host']]],
+  ['how_20to_20contribute_13',['How to contribute',['../CONTRIBUTING-how-to-contribute.html',1,'']]]
 ];

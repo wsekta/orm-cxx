@@ -9,11 +9,13 @@ var searchData=
   ['physicaltable_6',['PhysicalTable',['../structorm_1_1migrations_1_1PhysicalTable.html',1,'orm::migrations']]],
   ['plan_7',['Plan',['../structorm_1_1migrations_1_1Plan.html',1,'orm::migrations']]],
   ['plannedmigration_8',['PlannedMigration',['../structorm_1_1migrations_1_1PlannedMigration.html',1,'orm::migrations']]],
-  ['postgresqlbackend_9',['PostgresqlBackend',['../classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html',1,'orm::db::postgresql']]],
-  ['postgresqldialect_10',['PostgresqlDialect',['../classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html',1,'orm::db::postgresql']]],
-  ['postgresqltypetranslator_11',['PostgresqlTypeTranslator',['../classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator.html',1,'orm::db::postgresql']]],
-  ['primarykey_12',['PrimaryKey',['../structorm_1_1model_1_1PrimaryKey.html',1,'orm::model']]],
-  ['primarykeyless_13',['PrimaryKeyLess',['../structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html',1,'orm::db::binding']]],
-  ['projectionpayload_14',['ProjectionPayload',['../structorm_1_1db_1_1binding_1_1ProjectionPayload.html',1,'orm::db::binding']]],
-  ['projectionquery_15',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]]
+  ['postgresconfig_9',['PostgresConfig',['../structorm_1_1PostgresConfig.html',1,'orm']]],
+  ['postgresqlbackend_10',['PostgresqlBackend',['../classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html',1,'orm::db::postgresql']]],
+  ['postgresqldialect_11',['PostgresqlDialect',['../classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html',1,'orm::db::postgresql']]],
+  ['postgresqltypetranslator_12',['PostgresqlTypeTranslator',['../classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator.html',1,'orm::db::postgresql']]],
+  ['postgrestls_13',['PostgresTls',['../structorm_1_1PostgresTls.html',1,'orm']]],
+  ['primarykey_14',['PrimaryKey',['../structorm_1_1model_1_1PrimaryKey.html',1,'orm::model']]],
+  ['primarykeyless_15',['PrimaryKeyLess',['../structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html',1,'orm::db::binding']]],
+  ['projectionpayload_16',['ProjectionPayload',['../structorm_1_1db_1_1binding_1_1ProjectionPayload.html',1,'orm::db::binding']]],
+  ['projectionquery_17',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]]
 ];

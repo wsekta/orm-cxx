@@ -128,7 +128,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a79e6c312383a34fb45048a9a946e06fa" id="r_a79e6c312383a34fb45048a9a946e06fa"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a79e6c312383a34fb45048a9a946e06fa">operator=</a> (<a class="el" href="#ad88fb5fd07d0e1f1f22efe51d5d6668d">CommandGeneratorFactory</a> &amp;&amp;) -&gt; <a class="el" href="#ad88fb5fd07d0e1f1f22efe51d5d6668d">CommandGeneratorFactory</a> &amp;=default</td></tr>
 <tr class="memitem:a57e6331a08057a85627b1edd7c4ab555" id="r_a57e6331a08057a85627b1edd7c4ab555"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a57e6331a08057a85627b1edd7c4ab555">registerBackend</a> (std::unique_ptr&lt; <a class="el" href="classorm_1_1db_1_1BackendProvider.html">BackendProvider</a> &gt; backend) -&gt; void</td></tr>
 <tr class="memitem:a2e3747aad2b715f4f8593598face76eb" id="r_a2e3747aad2b715f4f8593598face76eb"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a2e3747aad2b715f4f8593598face76eb">getBackend</a> (<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> backendType) const -&gt; const <a class="el" href="classorm_1_1db_1_1BackendProvider.html">BackendProvider</a> &amp;</td></tr>
-<tr class="memitem:a1c5c442563a82df187083698da3a6bf6" id="r_a1c5c442563a82df187083698da3a6bf6"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1c5c442563a82df187083698da3a6bf6">findBackend</a> (std::string_view connectionString) const noexcept -&gt; const <a class="el" href="classorm_1_1db_1_1BackendProvider.html">BackendProvider</a> *</td></tr>
 <tr class="memitem:a1090586f7cd4d5bcbbd72ab34b66d44b" id="r_a1090586f7cd4d5bcbbd72ab34b66d44b"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a1090586f7cd4d5bcbbd72ab34b66d44b">getCommandGenerator</a> (<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> backendType) const -&gt; const <a class="el" href="classorm_1_1db_1_1CommandGenerator.html">CommandGenerator</a> &amp;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
@@ -229,31 +228,6 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a1c5c442563a82df187083698da3a6bf6" name="a1c5c442563a82df187083698da3a6bf6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1c5c442563a82df187083698da3a6bf6">&#9670;&#160;</a></span>findBackend()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto orm::db::CommandGeneratorFactory::findBackend </td>
-          <td>(</td>
-          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span></td><td>)</td>
-          <td> const -&gt;  const <a class="el" href="classorm_1_1db_1_1BackendProvider.html">BackendProvider</a> *</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel noexcept">noexcept</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a2e3747aad2b715f4f8593598face76eb" name="a2e3747aad2b715f4f8593598face76eb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2e3747aad2b715f4f8593598face76eb">&#9670;&#160;</a></span>getBackend()</h2>
 

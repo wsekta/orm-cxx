@@ -121,18 +121,17 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1Da
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0cf947c50ac4c47b8478d66ec49a104b" id="r_a0cf947c50ac4c47b8478d66ec49a104b"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> ()</td></tr>
-<tr class="memdesc:a0cf947c50ac4c47b8478d66ec49a104b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new Database object.  <br /></td></tr>
-<tr class="memitem:a48021088c2e868b668340280e04c20b5" id="r_a48021088c2e868b668340280e04c20b5"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a48021088c2e868b668340280e04c20b5">Database</a> (<a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a> factory)</td></tr>
-<tr class="memdesc:a48021088c2e868b668340280e04c20b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a database with an application-supplied backend registry.  <br /></td></tr>
+<tr class="memitem:a401bd5725397130cbfe16d382af02793" id="r_a401bd5725397130cbfe16d382af02793"><td class="memTemplParams" colspan="2">template&lt;db::ConnectionConfiguration Config&gt; </td></tr>
+<tr class="memitem:a401bd5725397130cbfe16d382af02793 template"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> (const Config &amp;config, <a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a> registry={})</td></tr>
+<tr class="memdesc:a401bd5725397130cbfe16d382af02793"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new Database object.  <br /></td></tr>
+<tr class="memitem:a0347250e82fb64d206ef62d1dd7d4a69" id="r_a0347250e82fb64d206ef62d1dd7d4a69"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a0347250e82fb64d206ef62d1dd7d4a69">~Database</a> () noexcept</td></tr>
 <tr class="memitem:a4a8e0cab6afc9fa09b55065f4b0bda01" id="r_a4a8e0cab6afc9fa09b55065f4b0bda01"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a4a8e0cab6afc9fa09b55065f4b0bda01">Database</a> (const Database &amp;)=delete</td></tr>
 <tr class="memitem:a42a37cbd257520af833fbbf201811aee" id="r_a42a37cbd257520af833fbbf201811aee"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a42a37cbd257520af833fbbf201811aee">Database</a> (Database &amp;&amp;)=delete</td></tr>
-<tr class="memitem:aba0eb5e2b7cacdc0f61b13317a6c0451" id="r_aba0eb5e2b7cacdc0f61b13317a6c0451"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aba0eb5e2b7cacdc0f61b13317a6c0451">operator=</a> (const <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;) -&gt; <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td></tr>
-<tr class="memitem:a270afca31a98d211b5a801e99adb0218" id="r_a270afca31a98d211b5a801e99adb0218"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a270afca31a98d211b5a801e99adb0218">operator=</a> (<a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;&amp;) -&gt; <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td></tr>
-<tr class="memitem:a86f01ed300b1a8a7a74bedbf61e45fa2" id="r_a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a> (const std::string &amp;connectionString) -&gt; void</td></tr>
-<tr class="memdesc:a86f01ed300b1a8a7a74bedbf61e45fa2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
-<tr class="memitem:a838dec6f6358add79205f223cd164e04" id="r_a838dec6f6358add79205f223cd164e04"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a838dec6f6358add79205f223cd164e04">connect</a> (<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a> requestedBackend, const std::string &amp;connectionString) -&gt; void</td></tr>
-<tr class="memdesc:a838dec6f6358add79205f223cd164e04"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects using an explicitly selected registered backend.  <br /></td></tr>
+<tr class="memitem:aba0eb5e2b7cacdc0f61b13317a6c0451" id="r_aba0eb5e2b7cacdc0f61b13317a6c0451"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aba0eb5e2b7cacdc0f61b13317a6c0451">operator=</a> (const <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;) -&gt; <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;=delete</td></tr>
+<tr class="memitem:a270afca31a98d211b5a801e99adb0218" id="r_a270afca31a98d211b5a801e99adb0218"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a270afca31a98d211b5a801e99adb0218">operator=</a> (<a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;&amp;) -&gt; <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;=delete</td></tr>
+<tr class="memitem:a029ee83678785e77e2bb5fb04cb891a8" id="r_a029ee83678785e77e2bb5fb04cb891a8"><td class="memTemplParams" colspan="2">template&lt;db::ConnectionConfiguration Config&gt; </td></tr>
+<tr class="memitem:a029ee83678785e77e2bb5fb04cb891a8 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a029ee83678785e77e2bb5fb04cb891a8">connect</a> (const Config &amp;config) -&gt; void</td></tr>
+<tr class="memdesc:a029ee83678785e77e2bb5fb04cb891a8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Connects to a database.  <br /></td></tr>
 <tr class="memitem:aed77524f1815ead26234adf09898f469" id="r_aed77524f1815ead26234adf09898f469"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aed77524f1815ead26234adf09898f469">disconnect</a> () -&gt; void</td></tr>
 <tr class="memdesc:aed77524f1815ead26234adf09898f469"><td class="mdescLeft">&#160;</td><td class="mdescRight">Disconnects from the database.  <br /></td></tr>
 <tr class="memitem:a21c93399fd9432c3ce395297d761034c" id="r_a21c93399fd9432c3ce395297d761034c"><td class="memTemplParams" colspan="2">template&lt;typename SchemaType&gt; </td></tr>
@@ -159,29 +158,45 @@ Friends</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00024">24</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00026">26</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0cf947c50ac4c47b8478d66ec49a104b" name="a0cf947c50ac4c47b8478d66ec49a104b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0cf947c50ac4c47b8478d66ec49a104b">&#9670;&#160;</a></span>Database() <span class="overload">[1/4]</span></h2>
+<a id="a401bd5725397130cbfe16d382af02793" name="a401bd5725397130cbfe16d382af02793"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a401bd5725397130cbfe16d382af02793">&#9670;&#160;</a></span>Database() <span class="overload">[1/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;db::ConnectionConfiguration Config&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">orm::Database::Database </td>
           <td>(</td>
-          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td class="paramtype">const Config &amp;</td>          <td class="paramname"><span class="paramname"><em>config</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a></td>          <td class="paramname"><span class="paramname"><em>registry</em></span><span class="paramdefsep"> = </span><span class="paramdefval">{}</span>&#160;)</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel explicit">explicit</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Constructs a new Database object. </p>
 
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00033">33</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+
 </div>
 </div>
-<a id="a48021088c2e868b668340280e04c20b5" name="a48021088c2e868b668340280e04c20b5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a48021088c2e868b668340280e04c20b5">&#9670;&#160;</a></span>Database() <span class="overload">[2/4]</span></h2>
+<a id="a0347250e82fb64d206ef62d1dd7d4a69" name="a0347250e82fb64d206ef62d1dd7d4a69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0347250e82fb64d206ef62d1dd7d4a69">&#9670;&#160;</a></span>~Database()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -190,25 +205,23 @@ Friends</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">orm::Database::Database </td>
+          <td class="memname">orm::Database::~Database </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">db::CommandGeneratorFactory</a></td>          <td class="paramname"><span class="paramname"><em>factory</em></span></td><td>)</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
           <td></td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel explicit">explicit</span></span>  </td>
+<span class="mlabels"><span class="mlabel noexcept">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Constructs a database with an application-supplied backend registry. </p>
-
 </div>
 </div>
 <a id="a4a8e0cab6afc9fa09b55065f4b0bda01" name="a4a8e0cab6afc9fa09b55065f4b0bda01"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a8e0cab6afc9fa09b55065f4b0bda01">&#9670;&#160;</a></span>Database() <span class="overload">[3/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a4a8e0cab6afc9fa09b55065f4b0bda01">&#9670;&#160;</a></span>Database() <span class="overload">[2/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -233,7 +246,7 @@ Friends</h2></td></tr>
 </div>
 </div>
 <a id="a42a37cbd257520af833fbbf201811aee" name="a42a37cbd257520af833fbbf201811aee"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a42a37cbd257520af833fbbf201811aee">&#9670;&#160;</a></span>Database() <span class="overload">[4/4]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a42a37cbd257520af833fbbf201811aee">&#9670;&#160;</a></span>Database() <span class="overload">[3/3]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -296,51 +309,40 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="a86f01ed300b1a8a7a74bedbf61e45fa2" name="a86f01ed300b1a8a7a74bedbf61e45fa2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a86f01ed300b1a8a7a74bedbf61e45fa2">&#9670;&#160;</a></span>connect() <span class="overload">[1/2]</span></h2>
+<a id="a029ee83678785e77e2bb5fb04cb891a8" name="a029ee83678785e77e2bb5fb04cb891a8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a029ee83678785e77e2bb5fb04cb891a8">&#9670;&#160;</a></span>connect()</h2>
 
 <div class="memitem">
 <div class="memproto">
+<div class="memtemplate">
+template&lt;db::ConnectionConfiguration Config&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">auto orm::Database::connect </td>
           <td>(</td>
-          <td class="paramtype">const std::string &amp;</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span></td><td>)</td>
-          <td> -&gt;  void</td>
+          <td class="paramtype">const Config &amp;</td>          <td class="paramname"><span class="paramname"><em>config</em></span></td><td>)</td>
+          <td> -&gt; void</td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>Connects to a database. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">connectionString</td><td>The connection string for the database. </td></tr>
+    <tr><td class="paramname">config</td><td>The typed connection parameters, borrowed during opening. </td></tr>
   </table>
   </dd>
 </dl>
 
-</div>
-</div>
-<a id="a838dec6f6358add79205f223cd164e04" name="a838dec6f6358add79205f223cd164e04"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a838dec6f6358add79205f223cd164e04">&#9670;&#160;</a></span>connect() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">auto orm::Database::connect </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a></td>          <td class="paramname"><span class="paramname"><em>requestedBackend</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const std::string &amp;</td>          <td class="paramname"><span class="paramname"><em>connectionString</em></span>&#160;) -&gt;  void</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Connects using an explicitly selected registered backend. </p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00049">49</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>
@@ -463,8 +465,8 @@ Friends</h2></td></tr>
         <tr>
           <td class="memname">auto orm::Database::operator= </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> -&gt;  <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td>
+          <td class="paramtype">const <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt;  <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;=delete</td>
         </tr>
       </table>
   </td>
@@ -488,8 +490,8 @@ Friends</h2></td></tr>
         <tr>
           <td class="memname">auto orm::Database::operator= </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> -&gt;  <a class="el" href="#a0cf947c50ac4c47b8478d66ec49a104b">Database</a> &amp;=delete</td>
+          <td class="paramtype"><a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;&amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt;  <a class="el" href="#a401bd5725397130cbfe16d382af02793">Database</a> &amp;=delete</td>
         </tr>
       </table>
   </td>
@@ -554,7 +556,7 @@ template&lt;typename SchemaType&gt; </div>
 </div><div class="memdoc">
 <p>Creates a borrowed ORM context. This Database must outlive the context. </p>
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00060">60</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00061">61</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>
@@ -600,7 +602,7 @@ template&lt;typename&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00104">104</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00107">107</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>

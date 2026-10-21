@@ -10,7 +10,8 @@ var concepts =
           [ "SociConvertableToDouble", "conceptorm_1_1db_1_1binding_1_1SociConvertableToDouble.html", null ],
           [ "SociDefaultSupported", "conceptorm_1_1db_1_1binding_1_1SociDefaultSupported.html", null ],
           [ "SchemaModel", "conceptorm_1_1db_1_1binding_1_1SchemaModel.html", null ]
-        ] ]
+        ] ],
+        [ "ConnectionConfiguration", "conceptorm_1_1db_1_1ConnectionConfiguration.html", null ]
       ] ]
     ] ]
 ];

@@ -157,8 +157,11 @@ Build and run</h1>
 <h1 class="doxsection"><a class="anchor" id="docs-quickstart-the-application"></a>
 The application</h1>
 <p>The complete <a href="https://github.com/wsekta/orm-cxx/blob/main/examples/quickstart/main.cpp">main.cpp</a> is:</p>
-<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#include &lt;chrono&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;filesystem&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;variant&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">import</span> <a class="code" href="module__orm.html">orm</a>;</div>
@@ -174,9 +177,8 @@ The application</h1>
 <div class="line">    <span class="keyword">using namespace </span><a class="code hl_namespace" href="namespaceorm_1_1query.html">orm::query</a>;</div>
 <div class="line">    <span class="keyword">using </span>AppSchema = <a class="code hl_typedef" href="namespaceorm.html#af6417eb2aa4837d7e7ca503962ee69bc">orm::Schema&lt;User&gt;</a>;</div>
 <div class="line"> </div>
-<div class="line">    <a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database;</div>
+<div class="line">    <a class="code hl_class" href="classorm_1_1Database.html">orm::Database</a> database{<a class="code hl_struct" href="structorm_1_1SqliteConfig.html">orm::SqliteConfig</a>{.database = <a class="code hl_struct" href="structorm_1_1SqliteMemory.html">orm::SqliteMemory</a>{}}};</div>
 <div class="line">    <span class="keyword">auto</span> context = database.<a class="code hl_function" href="classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c">orm</a>&lt;AppSchema&gt;();</div>
-<div class="line">    database.<a class="code hl_function" href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">connect</a>(<span class="stringliteral">&quot;sqlite3://:memory:&quot;</span>);</div>
 <div class="line">    context.createTable&lt;User&gt;();</div>
 <div class="line"> </div>
 <div class="line">    context.insert(User{1, <span class="stringliteral">&quot;Ada&quot;</span>});</div>
@@ -201,9 +203,8 @@ The application</h1>
 <div class="line">        <span class="keywordflow">return</span> 1;</div>
 <div class="line">    std::cout &lt;&lt; <span class="stringliteral">&quot;Deleted: &quot;</span> &lt;&lt; removed &lt;&lt; <span class="stringliteral">&quot;\nRemaining: &quot;</span> &lt;&lt; users.size() &lt;&lt; <span class="charliteral">&#39;\n&#39;</span>;</div>
 <div class="line">}</div>
-<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> <a href="connection_8cppm_source.html#l00024">connection.cppm:25</a></div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a21c93399fd9432c3ce395297d761034c"><div class="ttname"><a href="classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c">orm::Database::orm</a></div><div class="ttdeci">auto orm() &amp;noexcept -&gt; OrmContext&lt; SchemaType &gt;</div><div class="ttdef"><b>Definition</b> <a href="connection_8cppm_source.html#l00060">connection.cppm:60</a></div></div>
-<div class="ttc" id="aclassorm_1_1Database_html_a86f01ed300b1a8a7a74bedbf61e45fa2"><div class="ttname"><a href="classorm_1_1Database.html#a86f01ed300b1a8a7a74bedbf61e45fa2">orm::Database::connect</a></div><div class="ttdeci">auto connect(const std::string &amp;connectionString) -&gt; void</div><div class="ttdoc">Connects to a database.</div></div>
+<div class="ttc" id="aclassorm_1_1Database_html"><div class="ttname"><a href="classorm_1_1Database.html">orm::Database</a></div><div class="ttdef"><b>Definition</b> <a href="connection_8cppm_source.html#l00026">connection.cppm:27</a></div></div>
+<div class="ttc" id="aclassorm_1_1Database_html_a21c93399fd9432c3ce395297d761034c"><div class="ttname"><a href="classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c">orm::Database::orm</a></div><div class="ttdeci">auto orm() &amp;noexcept -&gt; OrmContext&lt; SchemaType &gt;</div><div class="ttdef"><b>Definition</b> <a href="connection_8cppm_source.html#l00061">connection.cppm:61</a></div></div>
 <div class="ttc" id="aclassorm_1_1Query_html"><div class="ttname"><a href="classorm_1_1Query.html">orm::Query</a></div><div class="ttdoc">A template class representing a select query in the ORM framework.</div><div class="ttdef"><b>Definition</b> <a href="select_8cppm_source.html#l00038">select.cppm:39</a></div></div>
 <div class="ttc" id="aclassorm_1_1Update_html"><div class="ttname"><a href="classorm_1_1Update.html">orm::Update</a></div><div class="ttdef"><b>Definition</b> <a href="update_8cppm_source.html#l00027">update.cppm:28</a></div></div>
 <div class="ttc" id="amodule__orm_html"><div class="ttname"><a href="module__orm.html">orm</a></div></div>
@@ -211,6 +212,8 @@ The application</h1>
 <div class="ttc" id="anamespaceorm_1_1query_html_a448f0836907fb5dbb75637be3f8a51c0"><div class="ttname"><a href="namespaceorm_1_1query.html#a448f0836907fb5dbb75637be3f8a51c0">orm::query::update</a></div><div class="ttdeci">constexpr auto update()</div><div class="ttdef"><b>Definition</b> <a href="static__plan_8cppm_source.html#l00368">static_plan.cppm:368</a></div></div>
 <div class="ttc" id="anamespaceorm_1_1query_html_ae3ad658f59647d758037cb9f79b69f3d"><div class="ttname"><a href="namespaceorm_1_1query.html#ae3ad658f59647d758037cb9f79b69f3d">orm::query::col</a></div><div class="ttdeci">constexpr auto col() -&gt; TypedColumn&lt; Members... &gt;</div><div class="ttdef"><b>Definition</b> <a href="query_2columns_8cppm_source.html#l00336">columns.cppm:336</a></div></div>
 <div class="ttc" id="anamespaceorm_html_af6417eb2aa4837d7e7ca503962ee69bc"><div class="ttname"><a href="namespaceorm.html#af6417eb2aa4837d7e7ca503962ee69bc">orm::Schema</a></div><div class="ttdeci">model::Schema&lt; Models... &gt; Schema</div><div class="ttdef"><b>Definition</b> <a href="model_2schema_8cppm_source.html#l00502">schema.cppm:502</a></div></div>
+<div class="ttc" id="astructorm_1_1SqliteConfig_html"><div class="ttname"><a href="structorm_1_1SqliteConfig.html">orm::SqliteConfig</a></div><div class="ttdef"><b>Definition</b> <a href="config_8cppm_source.html#l00030">config.cppm:31</a></div></div>
+<div class="ttc" id="astructorm_1_1SqliteMemory_html"><div class="ttname"><a href="structorm_1_1SqliteMemory.html">orm::SqliteMemory</a></div><div class="ttdef"><b>Definition</b> <a href="config_8cppm_source.html#l00020">config.cppm:21</a></div></div>
 </div><!-- fragment --><p><span class="tt">User</span> is an aggregate model. Its <span class="tt">id</span> field is the default primary key. <span class="tt">Schema&lt;User&gt;</span> declares the application's model set. <span class="tt">Database</span> owns the connection, while <span class="tt">context</span> borrows it and performs schema-bound operations. Values in the typed predicates and update are bound parameters.</p>
 <p>The complete <a href="https://github.com/wsekta/orm-cxx/blob/main/examples/quickstart/CMakeLists.txt">CMakeLists.txt</a> is:</p>
 <div class="fragment"><div class="line">cmake_minimum_required(VERSION 3.31)</div>

@@ -140,14 +140,21 @@ Classes</h2></td></tr>
 <tr class="memitem:ManyToMany" id="r_ManyToMany"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1ManyToMany.html">ManyToMany</a></td></tr>
 <tr class="memitem:ManyToManyDescriptor" id="r_ManyToManyDescriptor"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typed many-to-many mapping and its compile-time builder.  <a href="structorm_1_1ManyToManyDescriptor.html#details">More...</a><br /></td></tr>
+<tr class="memitem:MariadbConfig" id="r_MariadbConfig"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1MariadbConfig.html">MariadbConfig</a></td></tr>
+<tr class="memitem:MysqlConfig" id="r_MysqlConfig"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1MysqlConfig.html">MysqlConfig</a></td></tr>
+<tr class="memitem:MysqlTls" id="r_MysqlTls"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1MysqlTls.html">MysqlTls</a></td></tr>
 <tr class="memitem:OneToMany" id="r_OneToMany"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1OneToMany.html">OneToMany</a></td></tr>
 <tr class="memitem:OneToManyDescriptor" id="r_OneToManyDescriptor"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1OneToManyDescriptor.html">OneToManyDescriptor</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Typed one-to-many mapping. The descriptor stores no runtime strings: every member and fallback name is encoded in its type.  <a href="structorm_1_1OneToManyDescriptor.html#details">More...</a><br /></td></tr>
 <tr class="memitem:OrmContext" id="r_OrmContext"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1OrmContext.html">OrmContext</a></td></tr>
+<tr class="memitem:PostgresConfig" id="r_PostgresConfig"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1PostgresConfig.html">PostgresConfig</a></td></tr>
+<tr class="memitem:PostgresTls" id="r_PostgresTls"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1PostgresTls.html">PostgresTls</a></td></tr>
 <tr class="memitem:ProjectionQuery" id="r_ProjectionQuery"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1ProjectionQuery.html">ProjectionQuery</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A select query that returns a user-defined DTO instead of the full source model.  <a href="classorm_1_1ProjectionQuery.html#details">More...</a><br /></td></tr>
 <tr class="memitem:Query" id="r_Query"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Query.html">Query</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A template class representing a select query in the ORM framework.  <a href="classorm_1_1Query.html#details">More...</a><br /></td></tr>
+<tr class="memitem:SqliteConfig" id="r_SqliteConfig"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1SqliteConfig.html">SqliteConfig</a></td></tr>
+<tr class="memitem:SqliteMemory" id="r_SqliteMemory"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1SqliteMemory.html">SqliteMemory</a></td></tr>
 <tr class="memitem:Update" id="r_Update"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Update.html">Update</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
@@ -159,6 +166,29 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-enum-members" class="groupheader"><a id="enum-members" name="enum-members"></a>
 Enumerations</h2></td></tr>
+<tr class="memitem:a068b3ccdd65d4f9cc41fc498d8a00a12" id="r_a068b3ccdd65d4f9cc41fc498d8a00a12"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="#a068b3ccdd65d4f9cc41fc498d8a00a12">SqliteOpenMode</a> { <a class="el" href="#a068b3ccdd65d4f9cc41fc498d8a00a12a35922c9206688344b8c677f130135999">ReadWriteCreate</a>
+, <a class="el" href="#a068b3ccdd65d4f9cc41fc498d8a00a12a70a2a84088d405a2e3f1e3accaa16723">ReadWrite</a>
+, <a class="el" href="#a068b3ccdd65d4f9cc41fc498d8a00a12a131fb182a881796e7606ed6da27f1197">ReadOnly</a>
+ }</td></tr>
+<tr class="memitem:a601e62e7791d2114397dfe7a30b6864d" id="r_a601e62e7791d2114397dfe7a30b6864d"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="#a601e62e7791d2114397dfe7a30b6864d">PostgresSslMode</a> { <br />
+&#160;&#160;<a class="el" href="#a601e62e7791d2114397dfe7a30b6864dabcfaccebf745acfd5e75351095a5394a">Disable</a>
+, <a class="el" href="#a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b">Allow</a>
+, <a class="el" href="#a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0">Prefer</a>
+, <a class="el" href="#a601e62e7791d2114397dfe7a30b6864daa942541eeaaaa1b2ab8cf0e43b5a03f9">Require</a>
+, <br />
+&#160;&#160;<a class="el" href="#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51">VerifyCa</a>
+, <a class="el" href="#a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99">VerifyFull</a>
+<br />
+ }</td></tr>
+<tr class="memitem:ab96e008ba0aace9ea9ffcf723bcc8337" id="r_ab96e008ba0aace9ea9ffcf723bcc8337"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337">MysqlSslMode</a> { <br />
+&#160;&#160;<a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337ab9f5c797ebbf55adccdd8539a65a0241">Disabled</a>
+, <a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337aa054ccb4ff684c73cbc2d272d45e32df">Preferred</a>
+, <a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337ab651efdb98a5d6bd2b3935d0c3f4a5e2">Required</a>
+, <a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337a72a0813a0f19d8926626b0cf25f89f51">VerifyCa</a>
+, <br />
+&#160;&#160;<a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337a075aa9f5eef02c4cdb2d0013762f868c">VerifyIdentity</a>
+<br />
+ }</td></tr>
 <tr class="memitem:a11a157f026d723aaf6e4135bca472f62" id="r_a11a157f026d723aaf6e4135bca472f62"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="#a11a157f026d723aaf6e4135bca472f62">DatabaseErrorCode</a> { <br />
 &#160;&#160;<a class="el" href="#a11a157f026d723aaf6e4135bca472f62a4075072d219e061ca0f3124f8fbef463">NotConnected</a>
 , <a class="el" href="#a11a157f026d723aaf6e4135bca472f62a026d4490386eaf538cd104d5b3cb5b34">AlreadyConnected</a>
@@ -298,6 +328,98 @@ template&lt;typename... Models&gt; </div>
 </table>
 
 <p class="definition">Definition at line <a class="el" href="types_8cppm_source.html#l00094">94</a> of file <a class="el" href="types_8cppm_source.html">types.cppm</a>.</p>
+
+</div>
+</div>
+<a id="ab96e008ba0aace9ea9ffcf723bcc8337" name="ab96e008ba0aace9ea9ffcf723bcc8337"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab96e008ba0aace9ea9ffcf723bcc8337">&#9670;&#160;</a></span>MysqlSslMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="#ab96e008ba0aace9ea9ffcf723bcc8337">orm::MysqlSslMode</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel strong">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ab96e008ba0aace9ea9ffcf723bcc8337ab9f5c797ebbf55adccdd8539a65a0241" name="ab96e008ba0aace9ea9ffcf723bcc8337ab9f5c797ebbf55adccdd8539a65a0241"></a>Disabled&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ab96e008ba0aace9ea9ffcf723bcc8337aa054ccb4ff684c73cbc2d272d45e32df" name="ab96e008ba0aace9ea9ffcf723bcc8337aa054ccb4ff684c73cbc2d272d45e32df"></a>Preferred&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ab96e008ba0aace9ea9ffcf723bcc8337ab651efdb98a5d6bd2b3935d0c3f4a5e2" name="ab96e008ba0aace9ea9ffcf723bcc8337ab651efdb98a5d6bd2b3935d0c3f4a5e2"></a>Required&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ab96e008ba0aace9ea9ffcf723bcc8337a72a0813a0f19d8926626b0cf25f89f51" name="ab96e008ba0aace9ea9ffcf723bcc8337a72a0813a0f19d8926626b0cf25f89f51"></a>VerifyCa&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ab96e008ba0aace9ea9ffcf723bcc8337a075aa9f5eef02c4cdb2d0013762f868c" name="ab96e008ba0aace9ea9ffcf723bcc8337a075aa9f5eef02c4cdb2d0013762f868c"></a>VerifyIdentity&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="config_8cppm_source.html#l00054">54</a> of file <a class="el" href="config_8cppm_source.html">config.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a601e62e7791d2114397dfe7a30b6864d" name="a601e62e7791d2114397dfe7a30b6864d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a601e62e7791d2114397dfe7a30b6864d">&#9670;&#160;</a></span>PostgresSslMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="#a601e62e7791d2114397dfe7a30b6864d">orm::PostgresSslMode</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel strong">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864dabcfaccebf745acfd5e75351095a5394a" name="a601e62e7791d2114397dfe7a30b6864dabcfaccebf745acfd5e75351095a5394a"></a>Disable&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b" name="a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b"></a>Allow&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0" name="a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0"></a>Prefer&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864daa942541eeaaaa1b2ab8cf0e43b5a03f9" name="a601e62e7791d2114397dfe7a30b6864daa942541eeaaaa1b2ab8cf0e43b5a03f9"></a>Require&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51" name="a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51"></a>VerifyCa&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99" name="a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99"></a>VerifyFull&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="config_8cppm_source.html#l00037">37</a> of file <a class="el" href="config_8cppm_source.html">config.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a068b3ccdd65d4f9cc41fc498d8a00a12" name="a068b3ccdd65d4f9cc41fc498d8a00a12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a068b3ccdd65d4f9cc41fc498d8a00a12">&#9670;&#160;</a></span>SqliteOpenMode</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum class <a class="el" href="#a068b3ccdd65d4f9cc41fc498d8a00a12">orm::SqliteOpenMode</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span><span class="mlabel strong">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a068b3ccdd65d4f9cc41fc498d8a00a12a35922c9206688344b8c677f130135999" name="a068b3ccdd65d4f9cc41fc498d8a00a12a35922c9206688344b8c677f130135999"></a>ReadWriteCreate&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a068b3ccdd65d4f9cc41fc498d8a00a12a70a2a84088d405a2e3f1e3accaa16723" name="a068b3ccdd65d4f9cc41fc498d8a00a12a70a2a84088d405a2e3f1e3accaa16723"></a>ReadWrite&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a068b3ccdd65d4f9cc41fc498d8a00a12a131fb182a881796e7606ed6da27f1197" name="a068b3ccdd65d4f9cc41fc498d8a00a12a131fb182a881796e7606ed6da27f1197"></a>ReadOnly&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+<p class="definition">Definition at line <a class="el" href="config_8cppm_source.html#l00023">23</a> of file <a class="el" href="config_8cppm_source.html">config.cppm</a>.</p>
 
 </div>
 </div>

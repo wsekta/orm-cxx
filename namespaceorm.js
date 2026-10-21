@@ -22,11 +22,18 @@ var namespaceorm =
     [ "DatabaseError", "classorm_1_1DatabaseError.html", "classorm_1_1DatabaseError" ],
     [ "ManyToMany", "classorm_1_1ManyToMany.html", null ],
     [ "ManyToManyDescriptor", "structorm_1_1ManyToManyDescriptor.html", "structorm_1_1ManyToManyDescriptor" ],
+    [ "MariadbConfig", "structorm_1_1MariadbConfig.html", "structorm_1_1MariadbConfig" ],
+    [ "MysqlConfig", "structorm_1_1MysqlConfig.html", "structorm_1_1MysqlConfig" ],
+    [ "MysqlTls", "structorm_1_1MysqlTls.html", "structorm_1_1MysqlTls" ],
     [ "OneToMany", "classorm_1_1OneToMany.html", null ],
     [ "OneToManyDescriptor", "structorm_1_1OneToManyDescriptor.html", "structorm_1_1OneToManyDescriptor" ],
     [ "OrmContext", "classorm_1_1OrmContext.html", "classorm_1_1OrmContext" ],
+    [ "PostgresConfig", "structorm_1_1PostgresConfig.html", "structorm_1_1PostgresConfig" ],
+    [ "PostgresTls", "structorm_1_1PostgresTls.html", "structorm_1_1PostgresTls" ],
     [ "ProjectionQuery", "classorm_1_1ProjectionQuery.html", "classorm_1_1ProjectionQuery" ],
     [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ],
+    [ "SqliteConfig", "structorm_1_1SqliteConfig.html", "structorm_1_1SqliteConfig" ],
+    [ "SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
     [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ],
     [ "relation_target_t", "namespaceorm.html#a2753e67871ca8adab07de8977b9e1b80", null ],
     [ "Schema", "namespaceorm.html#af6417eb2aa4837d7e7ca503962ee69bc", null ],
@@ -41,6 +48,26 @@ var namespaceorm =
       [ "Transaction", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a1b0ffaae3973401f71cd000ab9f7856e", null ],
       [ "Conversion", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a3bb1503332637805beddb73a2dd1fe1b", null ],
       [ "AffectedRowsUnavailable", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ]
+    ] ],
+    [ "MysqlSslMode", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337", [
+      [ "Disabled", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337ab9f5c797ebbf55adccdd8539a65a0241", null ],
+      [ "Preferred", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337aa054ccb4ff684c73cbc2d272d45e32df", null ],
+      [ "Required", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337ab651efdb98a5d6bd2b3935d0c3f4a5e2", null ],
+      [ "VerifyCa", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337a72a0813a0f19d8926626b0cf25f89f51", null ],
+      [ "VerifyIdentity", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337a075aa9f5eef02c4cdb2d0013762f868c", null ]
+    ] ],
+    [ "PostgresSslMode", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864d", [
+      [ "Disable", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864dabcfaccebf745acfd5e75351095a5394a", null ],
+      [ "Allow", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b", null ],
+      [ "Prefer", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0", null ],
+      [ "Require", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864daa942541eeaaaa1b2ab8cf0e43b5a03f9", null ],
+      [ "VerifyCa", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51", null ],
+      [ "VerifyFull", "namespaceorm.html#a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99", null ]
+    ] ],
+    [ "SqliteOpenMode", "namespaceorm.html#a068b3ccdd65d4f9cc41fc498d8a00a12", [
+      [ "ReadWriteCreate", "namespaceorm.html#a068b3ccdd65d4f9cc41fc498d8a00a12a35922c9206688344b8c677f130135999", null ],
+      [ "ReadWrite", "namespaceorm.html#a068b3ccdd65d4f9cc41fc498d8a00a12a70a2a84088d405a2e3f1e3accaa16723", null ],
+      [ "ReadOnly", "namespaceorm.html#a068b3ccdd65d4f9cc41fc498d8a00a12a131fb182a881796e7606ed6da27f1197", null ]
     ] ],
     [ "autoIncrement", "namespaceorm.html#ac365d1affaa1b0d86cb1cf5bbf97a919", null ],
     [ "columnName", "namespaceorm.html#a6ff425d4a8346e817e3966c638612fea", null ],
