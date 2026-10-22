@@ -385,19 +385,19 @@ auto loadEntries(const Path& root, std::span<const db::BackendType> backends) ->
 
 auto publishDirectory(const Path& source, const Path& destination) -> void
 {
-    constexpr std::array delays{std::chrono::milliseconds{5}, std::chrono::milliseconds{10},
-                                std::chrono::milliseconds{20}, std::chrono::milliseconds{40}};
-    std::size_t retries{};
-    for (;;)
+    if constexpr (Path::preferred_separator == '\\')
     {
-        try
+        constexpr std::array delays{std::chrono::milliseconds{5}, std::chrono::milliseconds{10},
+                                    std::chrono::milliseconds{20}, std::chrono::milliseconds{40}};
+        std::size_t retries{};
+        for (;;)
         {
-            std::filesystem::rename(source, destination);
-            return;
-        }
-        catch (const std::filesystem::filesystem_error& error)
-        {
-            if constexpr (Path::preferred_separator == '\\')
+            try
+            {
+                std::filesystem::rename(source, destination);
+                return;
+            }
+            catch (const std::filesystem::filesystem_error& error)
             {
                 if (error.code() == std::errc::permission_denied && retries < delays.size())
                 {
@@ -412,9 +412,13 @@ auto publishDirectory(const Path& source, const Path& destination) -> void
                         continue;
                     }
                 }
+                throw;
             }
-            throw;
         }
+    }
+    else
+    {
+        std::filesystem::rename(source, destination);
     }
 }
 

@@ -59,6 +59,8 @@ TEST(PostgresConnectionTransportTest, rejectsInvalidFieldsBeforeOpeningWithoutVa
         {.connectTimeout = std::chrono::seconds{-1}},
         {.connectTimeout = std::chrono::seconds{static_cast<long long>(std::numeric_limits<int>::max()) + 1}},
         {.passfile = std::filesystem::path{nul}},
+        // Deliberately invalid input must be rejected before opening a client connection.
+        // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
         {.tls = {.mode = static_cast<orm::PostgresSslMode>(99)}},
         {.tls = {.caCertificate = std::filesystem::path{nul}}},
         {.tls = {.clientCertificate = std::filesystem::path{nul}}},

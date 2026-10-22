@@ -131,15 +131,16 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     )
 
     if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-        if(WIN32)
-            list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentWindows.cpp)
-        else()
-            list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentPosix.cpp)
-        endif()
         list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/PostgresqlIntegrationTest.cpp
              database/postgresql/PostgresConnectionTest.cpp
         )
     endif()
+endif()
+
+if(WIN32)
+    list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentWindows.cpp)
+else()
+    list(APPEND ORM_CXX_TEST_SOURCES support/ConnectionEnvironmentPosix.cpp)
 endif()
 
 add_executable(orm-cxx-UT ${ORM_CXX_TEST_SOURCES})

@@ -113,7 +113,8 @@ TEST(MysqlFamilyTest, typedConfigurationRejectsInvalidValuesBeforeOpening)
             config.password = std::string{"private"} + '\0';
             check(config);
             config.password.reset();
-            for (const auto seconds : {-1LL, 0LL, static_cast<long long>(std::numeric_limits<unsigned int>::max()) + 1})
+            for (const auto seconds :
+                 {-1LL, 0LL, static_cast<long long>((std::numeric_limits<unsigned int>::max)()) + 1})
             {
                 config.connectTimeout = std::chrono::seconds{seconds};
                 check(config);
@@ -413,6 +414,40 @@ TEST_P(MysqlFamilyLinkTest, ExplicitTlsProfileActuallyEncryptsTheSession)
         orm::migrations::detail::DatabaseAccess::session(encrypted) << "SHOW SESSION STATUS LIKE 'Ssl_cipher'",
             soci::into(key), soci::into(cipher);
         EXPECT_FALSE(cipher.empty());
+    };
+    if (mysql)
+        check(orm::test::serverConfigFromEnvironment<orm::MysqlConfig>(prefix));
+    else
+        check(orm::test::serverConfigFromEnvironment<orm::MariadbConfig>(prefix));
+}
+
+TEST_P(MysqlFamilyLinkTest, ExplicitTlsModesPreserveTheirSociOptionsAndReachTheServer)
+{
+    const auto mysql = GetParam().type == orm::db::BackendType::Mysql;
+    const auto prefix = mysql ? "ORM_CXX_MYSQL_TLS_TEST_" : "ORM_CXX_MARIADB_TLS_TEST_";
+    if (orm::test::connectionEnvironment(prefix, "ENABLED") != std::optional<std::string>{"1"})
+        GTEST_SKIP() << "TLS authentication profile was not provisioned";
+    const auto check = [](auto config)
+    {
+        for (const auto& [mode, option] : std::array<std::pair<orm::MysqlSslMode, std::string_view>, 3>{
+                 {{orm::MysqlSslMode::Disabled, "DISABLED"},
+                  {orm::MysqlSslMode::Preferred, "PREFERRED"},
+                  {orm::MysqlSslMode::VerifyCa, "VERIFY_CA"}}})
+        {
+            config.tls.mode = mode;
+            const auto serialized = orm_mysql_connection::serialize(config);
+            const auto position = serialized.rfind("ssl_mode=");
+            ASSERT_NE(position, std::string::npos);
+            EXPECT_EQ(serialized.substr(position), "ssl_mode='" + std::string{option} + "'");
+            orm::Database connected{config};
+            std::string key, cipher;
+            orm::migrations::detail::DatabaseAccess::session(connected) << "SHOW SESSION STATUS LIKE 'Ssl_cipher'",
+                soci::into(key), soci::into(cipher);
+            if (mode == orm::MysqlSslMode::Disabled)
+                EXPECT_TRUE(cipher.empty());
+            else
+                EXPECT_FALSE(cipher.empty());
+        }
     };
     if (mysql)
         check(orm::test::serverConfigFromEnvironment<orm::MysqlConfig>(prefix));

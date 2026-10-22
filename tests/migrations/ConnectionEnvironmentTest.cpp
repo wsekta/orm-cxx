@@ -7,6 +7,11 @@ import :internal;
 import :connection_config;
 import :migrations_internal;
 
+namespace orm::test
+{
+auto setConnectionEnvironment(const char* key, const std::optional<std::string>& value) -> void;
+}
+
 namespace
 {
 using Environment = orm::migrations::detail::ConnectionEnvironment;
@@ -18,6 +23,35 @@ auto sqlite() -> Environment
 {
     return {{"ORM_CXX_DATABASE_BACKEND", "sqlite"}, {"ORM_CXX_DATABASE_NAME", ":memory:"}};
 }
+class ProcessBackend
+{
+public:
+    ProcessBackend() : previous{orm::migrations::detail::connectionEnvironmentFromProcess()}
+    {
+        orm::test::setConnectionEnvironment("ORM_CXX_DATABASE_BACKEND", "postgresql");
+    }
+    ~ProcessBackend()
+    {
+        const auto found = previous.find("ORM_CXX_DATABASE_BACKEND");
+        orm::test::setConnectionEnvironment("ORM_CXX_DATABASE_BACKEND", found == previous.end() ?
+                                                                            std::nullopt :
+                                                                            std::optional<std::string>{found->second});
+    }
+
+private:
+    Environment previous;
+};
+}
+
+TEST(MigrationConnectionEnvironmentTest, readsPresentProcessValuesAndRestoresTheEnvironment)
+{
+    const auto previous = orm::migrations::detail::connectionEnvironmentFromProcess();
+    {
+        const ProcessBackend backend;
+        const auto environment = orm::migrations::detail::connectionEnvironmentFromProcess();
+        EXPECT_EQ(environment.at("ORM_CXX_DATABASE_BACKEND"), "postgresql");
+    }
+    EXPECT_EQ(orm::migrations::detail::connectionEnvironmentFromProcess(), previous);
 }
 
 TEST(MigrationConnectionEnvironmentTest, requiresBackendAndExplicitSqliteSource)
@@ -185,6 +219,8 @@ TEST(MigrationConnectionEnvironmentTest, rejectsNulAndNeverExposesSuppliedValues
 {
     const std::vector<Environment> invalid{
         {{"ORM_CXX_DATABASE_BACKEND", "secret-backend"}},
+        {{"ORM_CXX_DATABASE_BACKEND", std::string{"postgresql\0secret", 17}}},
+        {{"ORM_CXX_DATABASE_BACKEND", "postgresql"}, {"UNRELATED_SECRET", "secret-value"}},
         {{"ORM_CXX_DATABASE_BACKEND", "postgresql"}, {"ORM_CXX_DATABASE_PASSWORD", std::string{"secret\0value", 12}}},
         {{"ORM_CXX_DATABASE_BACKEND", "postgresql"}, {"ORM_CXX_DATABASE_PORT", "secret-port"}}};
     for (const auto& environment : invalid)

@@ -53,6 +53,9 @@ class OrmCxxConan(ConanFile):
                 "with_mysql": bool(self.options.with_mysql or self.options.with_mariadb),
             },
         )
+        if self.options.with_sqlite3:
+            # orm-cxx calls the SQLite C API directly, including when SOCI is shared.
+            self.requires("sqlite3/[>=3.44 <4]", transitive_headers=True, transitive_libs=True)
 
     def build_requirements(self):
         self.tool_requires("cmake/[>=3.31 <4]")
@@ -132,7 +135,7 @@ class OrmCxxConan(ConanFile):
         core.builddirs = [os.path.join("lib", "cmake", "orm-cxx")]
         core.requires = ["reflection", "soci::soci_core"]
         if self.options.with_sqlite3:
-            core.requires.append("soci::soci_sqlite3")
+            core.requires.extend(["soci::soci_sqlite3", "sqlite3::sqlite3"])
         if self.options.with_postgresql:
             core.requires.append("soci::soci_postgresql")
         if self.options.with_mysql or self.options.with_mariadb:

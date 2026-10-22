@@ -186,15 +186,9 @@ public:
         std::string database;
         if (const auto* path = std::get_if<std::filesystem::path>(&config.database))
         {
-            try
-            {
-                const auto utf8 = path->u8string();
-                database.assign(reinterpret_cast<const char*>(utf8.data()), utf8.size());
-            }
-            catch (...)
-            {
-                invalid();
-            }
+            // Database translates conversion/allocation failures at the connection boundary.
+            const auto utf8 = path->u8string();
+            database.assign(reinterpret_cast<const char*>(utf8.data()), utf8.size());
             if (database.empty() || database == ":memory:")
                 invalid();
         }
@@ -231,8 +225,8 @@ public:
             {
                 auto* handle = nativeSqliteConnection(
                     static_cast<soci::sqlite3_session_backend*>(session.get_backend())->conn_, sqlite3_busy_timeout);
-                if (sqlite3_busy_timeout(handle, static_cast<int>(config.busyTimeout->count())) != SQLITE_OK)
-                    invalid();
+                // For the successfully opened handle this setter always returns SQLITE_OK.
+                (void)sqlite3_busy_timeout(handle, static_cast<int>(config.busyTimeout->count()));
             }
         }
         catch (...)

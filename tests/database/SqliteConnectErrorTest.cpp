@@ -21,11 +21,16 @@ namespace
 {
 using EmptyDatabase = orm::Database;
 
+struct ConnectFaultState
+{
+    bool failInitialization{};
+};
+
 class ThrowingConnectRuntime final : public orm::db::BackendRuntime
 {
 public:
-    ThrowingConnectRuntime(const orm::db::BackendRuntime& delegateInit, const bool& failInit)
-        : delegate{delegateInit}, fail{failInit}
+    ThrowingConnectRuntime(const orm::db::BackendRuntime& delegateInit, const ConnectFaultState& faultStateInit)
+        : delegate{delegateInit}, faultState{faultStateInit}
     {
     }
 
@@ -36,7 +41,7 @@ public:
 
     auto onConnect(soci::session& session) const -> void override
     {
-        if (fail)
+        if (faultState.failInitialization)
             throw std::runtime_error{"test runtime initialization failure"};
         delegate.onConnect(session);
     }
@@ -69,13 +74,15 @@ public:
 
 private:
     const orm::db::BackendRuntime& delegate;
-    const bool& fail;
+    const ConnectFaultState& faultState;
 };
 
 class ThrowingConnectBackend final : public orm::db::BackendProvider
 {
 public:
-    explicit ThrowingConnectBackend(const bool& fail) : runtimeStrategy{sqlite.runtime(), fail} {}
+    explicit ThrowingConnectBackend(const ConnectFaultState& faultState) : runtimeStrategy{sqlite.runtime(), faultState}
+    {
+    }
 
     auto type() const noexcept -> orm::db::BackendType override
     {
@@ -110,13 +117,13 @@ private:
 
 TEST(DatabaseErrorTest, nonDriverConnectHookFailureClosesSessionAndAllowsReconnect)
 {
-    bool fail = false;
+    ConnectFaultState faultState;
     std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
-    providers.push_back(std::make_unique<ThrowingConnectBackend>(fail));
+    providers.push_back(std::make_unique<ThrowingConnectBackend>(faultState));
     auto database =
         EmptyDatabase{orm::SqliteConfig{orm::SqliteMemory{}}, orm::db::CommandGeneratorFactory{std::move(providers)}};
     database.disconnect();
-    fail = true;
+    faultState.failInitialization = true;
 
     try
     {
@@ -131,7 +138,7 @@ TEST(DatabaseErrorTest, nonDriverConnectHookFailureClosesSessionAndAllowsReconne
     }
 
     EXPECT_FALSE(database.isConnected());
-    fail = false;
+    faultState.failInitialization = false;
     EXPECT_NO_THROW(database.connect(orm::SqliteConfig{orm::SqliteMemory{}}));
     EXPECT_TRUE(database.isConnected());
     database.disconnect();

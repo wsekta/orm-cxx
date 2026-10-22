@@ -33,7 +33,7 @@ TEST(SqliteConnectionTest, preservesPathAndPerformsCrud)
 {
     SqliteConnectionFile file;
     soci::session session;
-    openSqlite(session, orm::SqliteConfig{file.path});
+    openSqlite(session, orm::SqliteConfig{.database = file.path, .openMode = orm::SqliteOpenMode::ReadWriteCreate});
     std::string actual;
     session << "SELECT file FROM pragma_database_list WHERE name='main'", soci::into(actual);
     EXPECT_TRUE(std::filesystem::equivalent(
@@ -81,13 +81,14 @@ TEST(SqliteConnectionTest, preservesDoubleQuoteWhereTheFilesystemPermitsIt)
 TEST(SqliteConnectionTest, rejectsMissingSourceNulAndInvalidTimeoutsBeforeOpening)
 {
     std::vector<orm::SqliteConfig> configs{
-        orm::SqliteConfig{},
-        orm::SqliteConfig{std::filesystem::path{":memory:"}},
+        orm::SqliteConfig{}, orm::SqliteConfig{std::filesystem::path{":memory:"}},
         orm::SqliteConfig{std::filesystem::path{std::string{"secret\0path", 11}}},
         orm::SqliteConfig{.database = orm::SqliteMemory{}, .busyTimeout = std::chrono::milliseconds{-1}},
         orm::SqliteConfig{.database = orm::SqliteMemory{},
                           .busyTimeout =
                               std::chrono::milliseconds{static_cast<long long>(std::numeric_limits<int>::max()) + 1}},
+        // Deliberately invalid input must be rejected before opening a client connection.
+        // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
         orm::SqliteConfig{.database = orm::SqliteMemory{}, .openMode = static_cast<orm::SqliteOpenMode>(99)}};
     for (const auto& config : configs)
     {
