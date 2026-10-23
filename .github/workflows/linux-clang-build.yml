@@ -12,7 +12,7 @@ permissions:
 jobs:
   clang-18:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     name: Clang 18
     steps:
       - name: Checkout
@@ -54,7 +54,7 @@ jobs:
 
   clang-19:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     name: Clang 19
     steps:
       - name: Checkout
@@ -81,7 +81,7 @@ jobs:
 
   clang-20:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 60
     name: Clang 20
     steps:
       - name: Checkout
