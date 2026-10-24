@@ -110,6 +110,18 @@ int main()
 {
     try
     {
+        const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};
+        const orm::LocalDateTime local{std::chrono::microseconds{123456}};
+        const orm::UtcTimestamp utc{std::chrono::microseconds{123456}};
+        const orm::TimeOfDay time{std::chrono::microseconds{123456}};
+        const auto uuid = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+        if (!date.ok() || local.time_since_epoch() != time.sinceMidnight() ||
+            utc.time_since_epoch() != time.sinceMidnight() || orm::Uuid{uuid.bytes()} != uuid ||
+            uuid.toString() != "00112233-4455-6677-8899-aabbccddeeff")
+        {
+            throw std::runtime_error{"Installed value type round trip failed"};
+        }
+
         using namespace orm::query;
         // Compile the public typed API even for a package with no drivers.
         constexpr auto plan = select<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());

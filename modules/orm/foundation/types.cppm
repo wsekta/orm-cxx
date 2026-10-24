@@ -28,6 +28,10 @@ export
         Double,
         String,
         Uuid,
+        Date,
+        TimeOfDay,
+        LocalDateTime,
+        UtcTimestamp,
     };
 
     auto toString(ColumnType type) -> std::string;

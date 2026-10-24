@@ -80,6 +80,10 @@ auto serializedBoundValue(const soci::values& values, const std::string& name,
         return makeValue(values.get<double>(name));
     case orm::model::ColumnType::String:
         return makeValue(values.get<std::string>(name));
+    case orm::model::ColumnType::Date:
+    case orm::model::ColumnType::TimeOfDay:
+    case orm::model::ColumnType::LocalDateTime:
+    case orm::model::ColumnType::UtcTimestamp:
     case orm::model::ColumnType::Uuid:
         break;
     }

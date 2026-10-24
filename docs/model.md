@@ -72,6 +72,10 @@ use native signed/unsigned integer types, `DOUBLE`, and `LONGTEXT` or bounded
 [backend matrix](backends.md) for backend-specific limits and semantics. Types
 outside this list are not supported as scalar columns.
 
+The standalone [date, time and UUID value types](value-types.md) are available
+through `import orm;`, but their model-column and query support is not yet
+implemented.
+
 SQLite and PostgreSQL exchange the widest integer values through signed
 64-bit storage. Consequently, `unsigned long long` and 64-bit `unsigned long`
 values are supported through `INT64_MAX`; larger values fail with

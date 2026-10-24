@@ -224,6 +224,10 @@ inline auto getPrimaryKeyValue(const soci::values& values, const std::string& na
         return fromStorage(getNumericValue<double>(values, name));
     case model::ColumnType::String:
         return fromStorage(values.get<std::string>(name));
+    case model::ColumnType::Date:
+    case model::ColumnType::TimeOfDay:
+    case model::ColumnType::LocalDateTime:
+    case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
         break;
     }

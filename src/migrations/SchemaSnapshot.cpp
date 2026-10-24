@@ -174,6 +174,10 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
             return "DOUBLE";
         case String:
             return length ? std::format("VARCHAR({})", *length) : "LONGTEXT";
+        case Date:
+        case TimeOfDay:
+        case LocalDateTime:
+        case UtcTimestamp:
         case Uuid:
             break;
         }
@@ -202,6 +206,10 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
             return "REAL";
         case String:
             return "TEXT";
+        case Date:
+        case TimeOfDay:
+        case LocalDateTime:
+        case UtcTimestamp:
         case Uuid:
             break;
         }
@@ -228,6 +236,10 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
             return "DOUBLE PRECISION";
         case String:
             return length ? std::format("VARCHAR({})", *length) : "TEXT";
+        case Date:
+        case TimeOfDay:
+        case LocalDateTime:
+        case UtcTimestamp:
         case Uuid:
             break;
         }

@@ -621,6 +621,10 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
             case Double:
                 break;
             case String:
+            case Date:
+            case TimeOfDay:
+            case LocalDateTime:
+            case UtcTimestamp:
             case Uuid:
                 continue;
             }

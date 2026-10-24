@@ -37,6 +37,7 @@ sources and native CMake metadata; CMake builds BMIs locally.
 
 ## Integration reference
 
+- [Date, time and UUID values](value-types.md): standalone value types and current integration limits.
 - [Backends](backends.md): typed configurations, adapter selection and differences.
 - [Package installation](packaging.md): vcpkg, Conan and native installation.
 - [C++20 modules and CMake consumers](modules.md): toolchain and ABI requirements.

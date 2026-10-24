@@ -240,6 +240,10 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     case model::ColumnType::String:
         bindTypedNull(values, name, std::string{});
         return;
+    case model::ColumnType::Date:
+    case model::ColumnType::TimeOfDay:
+    case model::ColumnType::LocalDateTime:
+    case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
         throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
     }

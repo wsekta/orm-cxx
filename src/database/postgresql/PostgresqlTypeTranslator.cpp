@@ -69,6 +69,10 @@ auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type,
     case model::ColumnType::String:
         return maxStringLength ? std::format("VARCHAR({})", *maxStringLength) : "TEXT";
 
+    case model::ColumnType::Date:
+    case model::ColumnType::TimeOfDay:
+    case model::ColumnType::LocalDateTime:
+    case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
         break;
     }

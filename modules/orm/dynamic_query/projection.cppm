@@ -41,6 +41,10 @@ inline auto isSupportedProjectionResultType(model::ColumnType type) -> bool
     case model::ColumnType::Double:
     case model::ColumnType::String:
         return true;
+    case model::ColumnType::Date:
+    case model::ColumnType::TimeOfDay:
+    case model::ColumnType::LocalDateTime:
+    case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
         return false;
     }

@@ -185,6 +185,10 @@ auto sqlType(model::ColumnType type, std::optional<std::size_t> maxStringLength)
             return std::format("VARCHAR({})", *maxStringLength);
         }
         return "LONGTEXT";
+    case Date:
+    case TimeOfDay:
+    case LocalDateTime:
+    case UtcTimestamp:
     case Uuid:
         break;
     }

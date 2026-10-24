@@ -185,6 +185,10 @@ inline auto bindNull(soci::values& values, std::string_view name, model::ColumnT
     case model::ColumnType::String:
         bindTypedNull(values, name, std::string{});
         return;
+    case model::ColumnType::Date:
+    case model::ColumnType::TimeOfDay:
+    case model::ColumnType::LocalDateTime:
+    case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
         break;
     }

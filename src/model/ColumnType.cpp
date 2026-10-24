@@ -70,6 +70,14 @@ auto toString(ColumnType type) -> std::string
         return "std::string";
     case ColumnType::Uuid:
         return "uuid";
+    case ColumnType::Date:
+        return "date";
+    case ColumnType::TimeOfDay:
+        return "time_of_day";
+    case ColumnType::LocalDateTime:
+        return "local_date_time";
+    case ColumnType::UtcTimestamp:
+        return "utc_timestamp";
     }
 
     return "unknown";

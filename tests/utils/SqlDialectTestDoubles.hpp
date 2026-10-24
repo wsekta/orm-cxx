@@ -43,6 +43,10 @@ public:
             return "REAL";
         case model::ColumnType::String:
             return "TEXT";
+        case model::ColumnType::Date:
+        case model::ColumnType::TimeOfDay:
+        case model::ColumnType::LocalDateTime:
+        case model::ColumnType::UtcTimestamp:
         case model::ColumnType::Uuid:
             break;
         }

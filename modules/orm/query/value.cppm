@@ -144,6 +144,10 @@ export
                 return doubleValue != nullptr and std::isfinite(*doubleValue);
             case model::ColumnType::String:
                 return std::holds_alternative<std::string>(storedValue);
+            case model::ColumnType::Date:
+            case model::ColumnType::TimeOfDay:
+            case model::ColumnType::LocalDateTime:
+            case model::ColumnType::UtcTimestamp:
             case model::ColumnType::Uuid:
                 return false;
             }

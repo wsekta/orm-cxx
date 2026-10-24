@@ -1,5 +1,6 @@
 set(ORM_CXX_SOURCES
     Database.cpp
+    foundation/Uuid.cpp
     migrations/Catalog.cpp
     migrations/SqlValidation.cpp
     migrations/Runner.cpp
@@ -169,6 +170,7 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/relation_descriptors.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/types.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/utilities.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/foundation/values.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/internal.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/model/columns.cppm"

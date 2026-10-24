@@ -1,4 +1,5 @@
 set(ORM_CXX_TEST_SOURCES
+    foundation/ValueTypesTest.cpp
     database/ConnectionConfigTest.cpp
     migrations/ConnectionEnvironmentTest.cpp
     migrations/MigrationTest.cpp

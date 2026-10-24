@@ -61,6 +61,10 @@ TEST(ColumnTypeTest, toStringCoversEveryColumnType)
     EXPECT_EQ(toString(ColumnType::Double), "double");
     EXPECT_EQ(toString(ColumnType::String), "std::string");
     EXPECT_EQ(toString(ColumnType::Uuid), "uuid");
+    EXPECT_EQ(toString(ColumnType::Date), "date");
+    EXPECT_EQ(toString(ColumnType::TimeOfDay), "time_of_day");
+    EXPECT_EQ(toString(ColumnType::LocalDateTime), "local_date_time");
+    EXPECT_EQ(toString(ColumnType::UtcTimestamp), "utc_timestamp");
 }
 
 TEST(ColumnTypeTest, toStringLabelsInvalidEnumValues)

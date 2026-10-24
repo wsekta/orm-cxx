@@ -53,7 +53,7 @@ modules/
 
 | Directory | Responsibilities |
 | --- | --- |
-| `orm/foundation` | Utilities, backend and column types, relation collections and descriptors |
+| `orm/foundation` | Utilities, backend and column types, date/time/UUID values, relation collections and descriptors |
 | `orm/model` | Mapping, metadata views, column and relation descriptors, static models and schemas |
 | `orm/query` | Values, runtime predicates, parameters, typed expressions, columns, aggregates and projections |
 | `orm/dynamic_query` | Select, projection and update builders |

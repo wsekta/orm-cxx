@@ -1,3 +1,4 @@
+#include <array>
 #include <chrono>
 #include <concepts>
 #include <cstddef>
@@ -199,6 +200,18 @@ private:
 int main()
 try
 {
+    const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};
+    const orm::LocalDateTime local{std::chrono::microseconds{123456}};
+    const orm::UtcTimestamp utc{std::chrono::microseconds{123456}};
+    const orm::TimeOfDay time{std::chrono::microseconds{123456}};
+    const auto uuid = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    if (!date.ok() || local.time_since_epoch() != time.sinceMidnight() ||
+        utc.time_since_epoch() != time.sinceMidnight() || orm::Uuid{uuid.bytes()} != uuid ||
+        uuid.toString() != "00112233-4455-6677-8899-aabbccddeeff")
+    {
+        throw std::runtime_error{"Public value type round trip failed"};
+    }
+
     static_assert(orm::reflection::fieldCount<consumer_models::ConsumerModel> == 1);
     static_assert(orm::reflection::fieldName<consumer_models::ConsumerModel, 0>() == "id");
 
