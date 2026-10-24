@@ -155,12 +155,17 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A template class representing a select query in the ORM framework.  <a href="classorm_1_1Query.html#details">More...</a><br /></td></tr>
 <tr class="memitem:SqliteConfig" id="r_SqliteConfig"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1SqliteConfig.html">SqliteConfig</a></td></tr>
 <tr class="memitem:SqliteMemory" id="r_SqliteMemory"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1SqliteMemory.html">SqliteMemory</a></td></tr>
+<tr class="memitem:TimeOfDay" id="r_TimeOfDay"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1TimeOfDay.html">TimeOfDay</a></td></tr>
 <tr class="memitem:Update" id="r_Update"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Update.html">Update</a></td></tr>
+<tr class="memitem:Uuid" id="r_Uuid"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Uuid.html">Uuid</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
 <tr class="memitem:a2753e67871ca8adab07de8977b9e1b80" id="r_a2753e67871ca8adab07de8977b9e1b80"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a2753e67871ca8adab07de8977b9e1b80 template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a2753e67871ca8adab07de8977b9e1b80">relation_target_t</a> = typename detail::RelationCollectionTraits&lt;std::remove_cvref_t&lt;T&gt;&gt;::Target</td></tr>
+<tr class="memitem:a6cffce23ae50752497f414ad28395277" id="r_a6cffce23ae50752497f414ad28395277"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a6cffce23ae50752497f414ad28395277">Date</a> = std::chrono::year_month_day</td></tr>
+<tr class="memitem:a8e19e63826a35572bab9e398b29f349a" id="r_a8e19e63826a35572bab9e398b29f349a"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a> = std::chrono::local_time&lt;std::chrono::microseconds&gt;</td></tr>
+<tr class="memitem:af7177df0bc6e7d9d553605ea4081c913" id="r_af7177df0bc6e7d9d553605ea4081c913"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a> = std::chrono::sys_time&lt;std::chrono::microseconds&gt;</td></tr>
 <tr class="memitem:af6417eb2aa4837d7e7ca503962ee69bc" id="r_af6417eb2aa4837d7e7ca503962ee69bc"><td class="memTemplParams" colspan="2">template&lt;typename... Models&gt; </td></tr>
 <tr class="memitem:af6417eb2aa4837d7e7ca503962ee69bc template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#af6417eb2aa4837d7e7ca503962ee69bc">Schema</a> = <a class="el" href="structorm_1_1model_1_1Schema.html">model::Schema</a>&lt;Models...&gt;</td></tr>
 </table><table class="memberdecls">
@@ -242,6 +247,56 @@ Variables</h2></td></tr>
 <tr class="memitem:a54982f9b3ae6fc5d26a8b2fcdef94c65 template"><td class="memItemLeft">constexpr bool&#160;</td><td class="memItemRight"><a class="el" href="#a54982f9b3ae6fc5d26a8b2fcdef94c65">is_one_to_many_v</a></td></tr>
 </table>
 <a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Typedef Documentation</h2>
+<a id="a6cffce23ae50752497f414ad28395277" name="a6cffce23ae50752497f414ad28395277"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6cffce23ae50752497f414ad28395277">&#9670;&#160;</a></span>Date</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a6cffce23ae50752497f414ad28395277">orm::Date</a> = std::chrono::year_month_day</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>A calendar date. Database operations validate the calendar and backend range. </p>
+
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00016">16</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a8e19e63826a35572bab9e398b29f349a" name="a8e19e63826a35572bab9e398b29f349a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e19e63826a35572bab9e398b29f349a">&#9670;&#160;</a></span>LocalDateTime</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#a8e19e63826a35572bab9e398b29f349a">orm::LocalDateTime</a> = std::chrono::local_time&lt;std::chrono::microseconds&gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>A civil date and time without an associated time zone. </p>
+
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00019">19</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+
+</div>
+</div>
 <a id="a2753e67871ca8adab07de8977b9e1b80" name="a2753e67871ca8adab07de8977b9e1b80"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a2753e67871ca8adab07de8977b9e1b80">&#9670;&#160;</a></span>relation_target_t</h2>
 
@@ -294,6 +349,31 @@ template&lt;typename... Models&gt; </div>
 
 </div>
 </div>
+<a id="af7177df0bc6e7d9d553605ea4081c913" name="af7177df0bc6e7d9d553605ea4081c913"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af7177df0bc6e7d9d553605ea4081c913">&#9670;&#160;</a></span>UtcTimestamp</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="#af7177df0bc6e7d9d553605ea4081c913">orm::UtcTimestamp</a> = std::chrono::sys_time&lt;std::chrono::microseconds&gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>An instant on the UTC timeline, with microsecond resolution. </p>
+
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00022">22</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+
+</div>
+</div>
 <a name="doc-enum-members" id="doc-enum-members"></a><h2 id="header-doc-enum-members" class="groupheader">Enumeration Type Documentation</h2>
 <a id="a11a157f026d723aaf6e4135bca472f62" name="a11a157f026d723aaf6e4135bca472f62"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a11a157f026d723aaf6e4135bca472f62">&#9670;&#160;</a></span>DatabaseErrorCode</h2>
@@ -327,7 +407,7 @@ template&lt;typename... Models&gt; </div>
 <tr><td class="fieldname"><a id="a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e" name="a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e"></a>AffectedRowsUnavailable&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
-<p class="definition">Definition at line <a class="el" href="types_8cppm_source.html#l00094">94</a> of file <a class="el" href="types_8cppm_source.html">types.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="types_8cppm_source.html#l00098">98</a> of file <a class="el" href="types_8cppm_source.html">types.cppm</a>.</p>
 
 </div>
 </div>

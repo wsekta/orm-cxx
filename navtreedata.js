@@ -171,6 +171,7 @@ var NAVTREE =
       [ "Projections and writes", "docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes", null ],
       [ "Runtime shapes and explicit conversion", "docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion", null ]
     ] ],
+    [ "Date, time and UUID values", "docs-value-types-date-time-and-uuid-values.html", null ],
     [ "How to contribute", "CONTRIBUTING-how-to-contribute.html", [
       [ "Getting started", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-getting-started", null ],
       [ "Fastest supported setup", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-fastest-supported-setup", null ],
@@ -224,19 +225,19 @@ var NAVTREEINDEX =
 [
 "BackendRelations_8cppm.html",
 "classorm_1_1Query.html#aae966c137c3e919f57366a85f7478ca0",
-"classorm_1_1db_1_1SqlDialect.html#adf30e9fe05f04eb2936b7700ffef1fd4",
-"classorm_1_1db_1_1sqlite_1_1SqliteDialect.html#a249606a7aae8c4ffbcb35b584433fdc9",
-"classorm_1_1query_1_1StaticPlan.html#a17dfab9d295cbd0458c71a43c8665186",
-"classorm_1_1query_1_1TypedOrderBy.html#a790a13ef28b95f2aa2086fec719ecc6c",
-"fixed__string_8cppm.html",
-"module__orm.html#a87136024db9b820b5a9437f985f55914ae00ade238470a0fe23395c4c7914ad12",
-"namespaceorm_1_1db_1_1binding.html#a5a8243ca14ad8dacc9e5aab4e5a12c05",
-"structorm_1_1ManyToManyDescriptor.html#a67fc9b3fef79e59b0aa8d70da33dbdd2",
-"structorm_1_1db_1_1MigrationCapabilities.html#abb2736fcfe2b5806d488dc35d267f0c8",
-"structorm_1_1migrations_1_1AppliedMigration.html",
-"structorm_1_1migrations_1_1PhysicalIndex.html#a7cb748d5cfbf60951083d924efc4d6e3",
-"structorm_1_1model_1_1ColumnView.html#afedcb807781f76031f3fc4d091e1b8d3",
-"structorm_1_1reflection_1_1FieldDescriptor.html#a9931a63b54ac1bae6ade2f06e1aba421"
+"classorm_1_1db_1_1SqlDialect.html",
+"classorm_1_1db_1_1sqlite_1_1SqliteBackend.html",
+"classorm_1_1query_1_1QueryValue.html#ab6dbb000ef0ff8f177c0d6c4982ab2fd",
+"classorm_1_1query_1_1TypedColumn.html#ac47b3b607c692c569702b15f05dfd051",
+"docs-relations-collection-relations.html#docs-relations-junction-column-names",
+"module__orm.html#a7d253f0ea99bc2d12666c42851581707",
+"namespaceorm_1_1db.html#af41d2e3b9117809dc4ad4b30735d550c",
+"orm_8cppm_source.html",
+"structorm_1_1db_1_1BoundValue.html",
+"structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html",
+"structorm_1_1migrations_1_1PhysicalColumn.html#aa66665559a099a7936edda7afd3084f2",
+"structorm_1_1migrations_1_1TableRename.html#a1bfe3751f75c54373aa4c4053c925de3",
+"structorm_1_1model_1_1SchemaView.html#a9e34e2524eb55621a1f17407f910680f"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

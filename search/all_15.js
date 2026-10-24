@@ -24,6 +24,8 @@ var searchData=
   ['updatespec_21',['UpdateSpec',['../namespaceorm_1_1db.html#a2c91edaf8b6c8c59bcbcbb09d45a08e3',1,'orm::db']]],
   ['updatevalue_22',['UpdateValue',['../namespaceorm_1_1db_1_1ast.html#ad6ff5962b2eeec5a5e2d1627a6deb9fc',1,'orm::db::ast']]],
   ['user_23',['user',['../structorm_1_1PostgresConfig.html#ae87ffffc026faefa0e2893dc9a39255d',1,'orm::PostgresConfig::user'],['../structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea',1,'orm::MysqlConfig::user'],['../structorm_1_1MariadbConfig.html#acc3786acce683fabf2efcd7c07d9e3fa',1,'orm::MariadbConfig::user']]],
-  ['utilities_2ecppm_24',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
-  ['uuid_25',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
+  ['utctimestamp_24',['UtcTimestamp',['../namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913',1,'orm::UtcTimestamp'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2',1,'orm::model::UtcTimestamp']]],
+  ['utilities_2ecppm_25',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
+  ['uuid_26',['Uuid',['../classorm_1_1Uuid.html',1,'orm::Uuid'],['../classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780',1,'orm::Uuid::Uuid() noexcept=default'],['../classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b',1,'orm::Uuid::Uuid(std::array&lt; std::byte, 16 &gt; valueInit) noexcept'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model::Uuid']]],
+  ['uuid_20values_27',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
 ];

@@ -36,11 +36,12 @@ var searchData=
   ['and_20unlink_33',['Link and unlink',['../docs-relations-collection-relations.html#docs-relations-link-and-unlink',1,'']]],
   ['and_20unlink_20relations_34',['Link and unlink relations',['../docs-database-database.html#docs-database-link-and-unlink-relations',1,'']]],
   ['and_20unsupported_20mappings_35',['Validation and unsupported mappings',['../docs-relations-collection-relations.html#docs-relations-validation-and-unsupported-mappings',1,'']]],
-  ['and_20writes_36',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
-  ['api_20and_20execution_37',['C++ API and execution',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-c-api-and-execution',1,'']]],
-  ['api_20reference_38',['API reference',['../index.html#docs-main-api-reference',1,'']]],
-  ['application_39',['The application',['../docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-the-application',1,'']]],
-  ['application_20cli_40',['Application CLI',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-application-cli',1,'']]],
-  ['at_20a_20glance_41',['Compatibility at a glance',['../docs-backends-backends.html#docs-backends-compatibility-at-a-glance',1,'']]],
-  ['auto_20increment_20primary_20key_42',['Auto-increment primary key',['../docs-model-model.html#docs-model-auto-increment-primary-key',1,'']]]
+  ['and_20uuid_20values_36',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]],
+  ['and_20writes_37',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
+  ['api_20and_20execution_38',['C++ API and execution',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-c-api-and-execution',1,'']]],
+  ['api_20reference_39',['API reference',['../index.html#docs-main-api-reference',1,'']]],
+  ['application_40',['The application',['../docs-quickstart-quickstart-sqlite-crud.html#docs-quickstart-the-application',1,'']]],
+  ['application_20cli_41',['Application CLI',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-application-cli',1,'']]],
+  ['at_20a_20glance_42',['Compatibility at a glance',['../docs-backends-backends.html#docs-backends-compatibility-at-a-glance',1,'']]],
+  ['auto_20increment_20primary_20key_43',['Auto-increment primary key',['../docs-model-model.html#docs-model-auto-increment-primary-key',1,'']]]
 ];

@@ -142,6 +142,8 @@ Concepts</h2></td></tr>
 Classes</h2></td></tr>
 <tr class="memitem:orm_3A_3ADatabaseError" id="r_orm_3A_3ADatabaseError"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1DatabaseError.html">orm::DatabaseError</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">A backend-neutral database runtime error.  <a href="classorm_1_1DatabaseError.html#details">More...</a><br /></td></tr>
+<tr class="memitem:orm_3A_3ATimeOfDay" id="r_orm_3A_3ATimeOfDay"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1TimeOfDay.html">orm::TimeOfDay</a></td></tr>
+<tr class="memitem:orm_3A_3AUuid" id="r_orm_3A_3AUuid"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Uuid.html">orm::Uuid</a></td></tr>
 <tr class="memitem:orm_3A_3AOrmContext_3C_20SchemaType_20_3E" id="r_orm_3A_3AOrmContext_3C_20SchemaType_20_3E"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1OrmContext.html">orm::OrmContext&lt; SchemaType &gt;</a></td></tr>
 <tr class="memitem:orm_3A_3Adetail_3A_3ARelationCollection_3C_20T_20_3E" id="r_orm_3A_3Adetail_3A_3ARelationCollection_3C_20T_20_3E"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><b>orm::detail::RelationCollection&lt; T &gt;</b></td></tr>
 <tr class="memitem:orm_3A_3AOneToMany_3C_20T_20_3E" id="r_orm_3A_3AOneToMany_3C_20T_20_3E"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1OneToMany.html">orm::OneToMany&lt; T &gt;</a></td></tr>
@@ -332,6 +334,11 @@ Enumerations</h2></td></tr>
 , <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a27118326006d3829667a400ad23d5d98">orm::model::String</a>
 , <br />
 &#160;&#160;<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc">orm::model::Uuid</a>
+, <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a44749712dbec183e983dcd78a7736c41">orm::model::Date</a>
+, <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a0f094b17d6d26c3925824223a3c97fdd">orm::model::TimeOfDay</a>
+, <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a6f69c05fa97a9903e682b7cdf2c2874d">orm::model::LocalDateTime</a>
+, <br />
+&#160;&#160;<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2">orm::model::UtcTimestamp</a>
 <br />
  }</td></tr>
 <tr class="memitem:a9cb88089d8de2ce12bcad4bd6d597f43" id="r_a9cb88089d8de2ce12bcad4bd6d597f43"><td class="memItemLeft">enum class &#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43">orm::model::RelationKind</a> { <a class="el" href="namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43a5383860ddcc8860b5ebe890ae4ab5eb3">orm::model::ToOne</a>
@@ -480,6 +487,9 @@ Enumerations</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
+<tr class="memitem:a6cffce23ae50752497f414ad28395277" id="r_a6cffce23ae50752497f414ad28395277"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">orm::Date</a> = std::chrono::year_month_day</td></tr>
+<tr class="memitem:a8e19e63826a35572bab9e398b29f349a" id="r_a8e19e63826a35572bab9e398b29f349a"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">orm::LocalDateTime</a> = std::chrono::local_time&lt;std::chrono::microseconds&gt;</td></tr>
+<tr class="memitem:af7177df0bc6e7d9d553605ea4081c913" id="r_af7177df0bc6e7d9d553605ea4081c913"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">orm::UtcTimestamp</a> = std::chrono::sys_time&lt;std::chrono::microseconds&gt;</td></tr>
 <tr class="memitem:a2753e67871ca8adab07de8977b9e1b80" id="r_a2753e67871ca8adab07de8977b9e1b80"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a2753e67871ca8adab07de8977b9e1b80 template"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm.html#a2753e67871ca8adab07de8977b9e1b80">orm::relation_target_t</a> = typename detail::RelationCollectionTraits&lt;std::remove_cvref_t&lt;T&gt;&gt;::Target</td></tr>
 <tr class="memitem:af6417eb2aa4837d7e7ca503962ee69bc" id="r_af6417eb2aa4837d7e7ca503962ee69bc"><td class="memTemplParams" colspan="2">template&lt;typename... Models&gt; </td></tr>
@@ -722,6 +732,7 @@ Files</h2></td></tr>
 <tr class="memitem:update_2Ecppm" id="r_update_2Ecppm"><td class="memItemLeft">file &#160;</td><td class="memItemRight">modules/orm/dynamic_query/<a class="el" href="update_8cppm.html">update.cppm</a></td></tr>
 <tr class="memitem:utilities_2Ecppm" id="r_utilities_2Ecppm"><td class="memItemLeft">file &#160;</td><td class="memItemRight">modules/orm/foundation/<a class="el" href="utilities_8cppm.html">utilities.cppm</a></td></tr>
 <tr class="memitem:value_2Ecppm" id="r_value_2Ecppm"><td class="memItemLeft">file &#160;</td><td class="memItemRight">modules/orm/query/<a class="el" href="value_8cppm.html">value.cppm</a></td></tr>
+<tr class="memitem:values_2Ecppm" id="r_values_2Ecppm"><td class="memItemLeft">file &#160;</td><td class="memItemRight">modules/orm/foundation/<a class="el" href="values_8cppm.html">values.cppm</a></td></tr>
 <tr class="memitem:views_2Ecppm" id="r_views_2Ecppm"><td class="memItemLeft">file &#160;</td><td class="memItemRight">modules/orm/model/<a class="el" href="views_8cppm.html">views.cppm</a></td></tr>
 </table>
 </div><!-- contents -->

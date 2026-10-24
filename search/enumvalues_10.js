@@ -8,5 +8,6 @@ var searchData=
   ['unsupportedbackend_5',['UnsupportedBackend',['../namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a7e04808831a3678fd73fff0bf6900416',1,'orm::UnsupportedBackend'],['../namespaceorm_1_1migrations.html#a87136024db9b820b5a9437f985f55914a7e04808831a3678fd73fff0bf6900416',1,'orm::migrations::UnsupportedBackend']]],
   ['unsupportedfeature_6',['UnsupportedFeature',['../namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a6dcca67f0df2a0038edf5a82b1399527',1,'orm']]],
   ['up_7',['Up',['../namespaceorm_1_1migrations.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a258f49887ef8d14ac268c92b02503aaa',1,'orm::migrations']]],
-  ['uuid_8',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
+  ['utctimestamp_8',['UtcTimestamp',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2',1,'orm::model']]],
+  ['uuid_9',['Uuid',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model']]]
 ];

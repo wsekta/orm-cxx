@@ -159,6 +159,7 @@ var hierarchy =
     [ "orm::model::StringLength&lt; Member, Length &gt;", "structorm_1_1model_1_1StringLength.html", null ],
     [ "orm::model::StringLengths&lt; Definitions &gt;", "structorm_1_1model_1_1StringLengths.html", null ],
     [ "orm::migrations::TableRename", "structorm_1_1migrations_1_1TableRename.html", null ],
+    [ "orm::TimeOfDay", "classorm_1_1TimeOfDay.html", null ],
     [ "std::true_type", null, [
       [ "orm::db::binding::IsOptional< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
       [ "orm::db::binding::IsOptionalBoundField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
@@ -180,5 +181,6 @@ var hierarchy =
       [ "orm::db::postgresql::PostgresqlTypeTranslator", "classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator.html", null ],
       [ "orm::db::sqlite::SqliteTypeTranslator", "classorm_1_1db_1_1sqlite_1_1SqliteTypeTranslator.html", null ]
     ] ],
-    [ "orm::Update&lt; T &gt;", "classorm_1_1Update.html", null ]
+    [ "orm::Update&lt; T &gt;", "classorm_1_1Update.html", null ],
+    [ "orm::Uuid", "classorm_1_1Uuid.html", null ]
 ];

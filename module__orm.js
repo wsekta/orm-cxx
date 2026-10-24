@@ -1,6 +1,8 @@
 var module__orm =
 [
     [ "DatabaseError", "classorm_1_1DatabaseError.html", "classorm_1_1DatabaseError" ],
+    [ "TimeOfDay", "classorm_1_1TimeOfDay.html", "classorm_1_1TimeOfDay" ],
+    [ "Uuid", "classorm_1_1Uuid.html", "classorm_1_1Uuid" ],
     [ "OrmContext", "classorm_1_1OrmContext.html", "classorm_1_1OrmContext" ],
     [ "OneToMany", "classorm_1_1OneToMany.html", null ],
     [ "ManyToMany", "classorm_1_1ManyToMany.html", null ],
@@ -155,7 +157,11 @@ var module__orm =
       [ "orm::model::ColumnType::Float", "module__orm.html#a62580828a2846e7e39a0365413f8e659a22ae0e2b89e5e3d477f988cc36d3272b", null ],
       [ "orm::model::ColumnType::Double", "module__orm.html#a62580828a2846e7e39a0365413f8e659ad909d38d705ce75386dd86e611a82f5b", null ],
       [ "orm::model::ColumnType::String", "module__orm.html#a62580828a2846e7e39a0365413f8e659a27118326006d3829667a400ad23d5d98", null ],
-      [ "orm::model::ColumnType::Uuid", "module__orm.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc", null ]
+      [ "orm::model::ColumnType::Uuid", "module__orm.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc", null ],
+      [ "orm::model::ColumnType::Date", "module__orm.html#a62580828a2846e7e39a0365413f8e659a44749712dbec183e983dcd78a7736c41", null ],
+      [ "orm::model::ColumnType::TimeOfDay", "module__orm.html#a62580828a2846e7e39a0365413f8e659a0f094b17d6d26c3925824223a3c97fdd", null ],
+      [ "orm::model::ColumnType::LocalDateTime", "module__orm.html#a62580828a2846e7e39a0365413f8e659a6f69c05fa97a9903e682b7cdf2c2874d", null ],
+      [ "orm::model::ColumnType::UtcTimestamp", "module__orm.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2", null ]
     ] ],
     [ "orm::model::RelationKind", "module__orm.html#a9cb88089d8de2ce12bcad4bd6d597f43", [
       [ "orm::model::RelationKind::ToOne", "module__orm.html#a9cb88089d8de2ce12bcad4bd6d597f43a5383860ddcc8860b5ebe890ae4ab5eb3", null ],
@@ -287,6 +293,9 @@ var module__orm =
       [ "orm::db::MigrationAtomicity::WholeMigration", "module__orm.html#adc074b2196f10358716dae7a2f71ecc0a380c24a36ef13a989c0f3e0f06787d2a", null ],
       [ "orm::db::MigrationAtomicity::NonTransactional", "module__orm.html#adc074b2196f10358716dae7a2f71ecc0a6f859f30378d75f119c58a75d8806123", null ]
     ] ],
+    [ "orm::Date", "module__orm.html#a6cffce23ae50752497f414ad28395277", null ],
+    [ "orm::LocalDateTime", "module__orm.html#a8e19e63826a35572bab9e398b29f349a", null ],
+    [ "orm::UtcTimestamp", "module__orm.html#af7177df0bc6e7d9d553605ea4081c913", null ],
     [ "orm::relation_target_t", "module__orm.html#a2753e67871ca8adab07de8977b9e1b80", null ],
     [ "orm::Schema", "module__orm.html#af6417eb2aa4837d7e7ca503962ee69bc", null ],
     [ "orm::migrations::Version", "module__orm.html#a63ba143908e8fcfd637508cbe31622f4", null ],

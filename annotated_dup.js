@@ -170,7 +170,9 @@ var annotated_dup =
       [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ],
       [ "SqliteConfig", "structorm_1_1SqliteConfig.html", "structorm_1_1SqliteConfig" ],
       [ "SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
-      [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ]
+      [ "TimeOfDay", "classorm_1_1TimeOfDay.html", "classorm_1_1TimeOfDay" ],
+      [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ],
+      [ "Uuid", "classorm_1_1Uuid.html", "classorm_1_1Uuid" ]
     ] ],
     [ "soci", "namespacesoci.html", [
       [ "type_conversion&lt; BindingPayload&lt; T, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4" ],

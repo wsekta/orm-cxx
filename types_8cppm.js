@@ -25,7 +25,11 @@ var types_8cppm =
       [ "orm::model::ColumnType::Float", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a22ae0e2b89e5e3d477f988cc36d3272b", null ],
       [ "orm::model::ColumnType::Double", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659ad909d38d705ce75386dd86e611a82f5b", null ],
       [ "orm::model::ColumnType::String", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a27118326006d3829667a400ad23d5d98", null ],
-      [ "orm::model::ColumnType::Uuid", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc", null ]
+      [ "orm::model::ColumnType::Uuid", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc", null ],
+      [ "orm::model::ColumnType::Date", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a44749712dbec183e983dcd78a7736c41", null ],
+      [ "orm::model::ColumnType::TimeOfDay", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a0f094b17d6d26c3925824223a3c97fdd", null ],
+      [ "orm::model::ColumnType::LocalDateTime", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a6f69c05fa97a9903e682b7cdf2c2874d", null ],
+      [ "orm::model::ColumnType::UtcTimestamp", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2", null ]
     ] ],
     [ "orm::db::CompiledSqlFlavor", "namespaceorm_1_1db.html#aac4666a45bf17dfd14437132b34d9e60", [
       [ "orm::db::CompiledSqlFlavor::None", "namespaceorm_1_1db.html#aac4666a45bf17dfd14437132b34d9e60a6adf97f83acf6453d4a6a4b1070f3754", null ],

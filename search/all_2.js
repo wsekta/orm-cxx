@@ -59,5 +59,6 @@ var searchData=
   ['build_20select_56',['Build select',['../docs-query-query.html#docs-query-build-select',1,'']]],
   ['buildconfig_2ecppm_57',['BuildConfig.cppm',['../BuildConfig_8cppm.html',1,'']]],
   ['busytimeout_58',['busyTimeout',['../structorm_1_1SqliteConfig.html#ae72efcd9ffadfdf320fcbd54bde06210',1,'orm::SqliteConfig']]],
-  ['by_20collections_59',['Filtering by collections',['../docs-relations-collection-relations.html#docs-relations-filtering-by-collections',1,'']]]
+  ['by_20collections_59',['Filtering by collections',['../docs-relations-collection-relations.html#docs-relations-filtering-by-collections',1,'']]],
+  ['bytes_60',['bytes',['../classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178',1,'orm::Uuid']]]
 ];
