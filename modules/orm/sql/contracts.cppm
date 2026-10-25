@@ -1,6 +1,7 @@
 module;
 
 #include <algorithm>
+#include <chrono>
 #include <compare>
 #include <cstddef>
 #include <optional>

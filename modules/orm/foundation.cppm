@@ -1,3 +1,7 @@
+module;
+
+#include <compare>
+
 export module orm:foundation;
 
 export import :foundation_utilities;
