@@ -1,6 +1,6 @@
 var classorm_1_1query_1_1QueryValue =
 [
-    [ "Value", "classorm_1_1query_1_1QueryValue.html#aec19eb8e0c38f2405d383bcf57a9bf24", null ],
+    [ "Value", "classorm_1_1query_1_1QueryValue.html#ad02b1e99b22081549db0fc5723d50a77", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#adc96495840e5cb13208564ae5984562b", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#aa96fd7465f75557a0d0d082c9e09eef5", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a09b5a11d37df1f3411531c2a8a092be5", null ],
@@ -18,6 +18,11 @@ var classorm_1_1query_1_1QueryValue =
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#ac4090d0277e163b75a2852e79f97604c", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a8b6d043b3ed4f3d9f77399d010be79b4", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a041a7e890c24d0ce6d9ae070854edd62", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a46556eed25b3912519f1f41d06250dcf", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#ac0916694c1fe7574de704d815e274a90", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a80d24fe689fa11e51066af66135ee824", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#aaf5d2b88c0d053e782efd3abdc82b6e7", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a9234c193e601c1bb49623cfc447c6bac", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a5c65c12b922f443bd15fa9c5f250a671", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a2c86abce82f92ca92e6ee29946cded9e", null ],
     [ "get", "classorm_1_1query_1_1QueryValue.html#aa9e8f73e99919f6ceec54e740eb99b1a", null ],

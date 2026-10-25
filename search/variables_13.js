@@ -15,7 +15,7 @@ var searchData=
   ['toone_12',['toOne',['../structorm_1_1db_1_1RelationCapabilities.html#aa9032539f836080af28b9187bc5edb8f',1,'orm::db::RelationCapabilities']]],
   ['transactionalddl_13',['transactionalDdl',['../structorm_1_1db_1_1SchemaCapabilities.html#abab5a5ec32308d6ecb2b16a305c7a308',1,'orm::db::SchemaCapabilities']]],
   ['transactions_14',['transactions',['../structorm_1_1db_1_1BackendCapabilities.html#a54b6c6eb419d6f691c743ee55e95ed6b',1,'orm::db::BackendCapabilities']]],
-  ['type_15',['type',['../structorm_1_1model_1_1ColumnView.html#a3cd799ee7b027e0fc618e342e9e17d9e',1,'orm::model::ColumnView::type'],['../structorm_1_1model_1_1ModelDataView.html#a167f39e50f462c05b39df672fe729210',1,'orm::model::ModelDataView::type']]],
+  ['type_15',['type',['../structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties.html#acfd3dca24ba927f05adea589aaac2bdd',1,'orm::db::binding::TypedResultStorage::Properties::type'],['../structorm_1_1model_1_1ColumnView.html#a3cd799ee7b027e0fc618e342e9e17d9e',1,'orm::model::ColumnView::type'],['../structorm_1_1model_1_1ModelDataView.html#a167f39e50f462c05b39df672fe729210',1,'orm::model::ModelDataView::type']]],
   ['typename_16',['typeName',['../structorm_1_1model_1_1ModelDataView.html#a63be0b193363eebddfc6ef612558fc62',1,'orm::model::ModelDataView::typeName'],['../structorm_1_1reflection_1_1FieldDescriptor.html#a87084d5d0838f512fa9908655d96ef4b',1,'orm::reflection::FieldDescriptor::typeName']]],
   ['typenamestorage_17',['typeNameStorage',['../namespaceorm_1_1reflection.html#afb60b9f7d71d48e0c0bcb18f87437a66',1,'orm::reflection']]]
 ];

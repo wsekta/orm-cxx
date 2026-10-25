@@ -73,10 +73,12 @@ var searchData=
   ['projection_2ecppm_70',['projection.cppm',['../dynamic__query_2projection_8cppm.html',1,'(Global Namespace)'],['../query_2projection_8cppm.html',1,'(Global Namespace)']]],
   ['projectionpayload_71',['ProjectionPayload',['../structorm_1_1db_1_1binding_1_1ProjectionPayload.html',1,'orm::db::binding::ProjectionPayload&lt; T &gt;'],['../classorm_1_1OrmContext.html#a00d89b320f157c2d612af11030c4ee8b',1,'orm::OrmContext::ProjectionPayload'],['../namespacesoci.html#ae84496f2aca421f37a8bbc003e61eeb4',1,'soci::ProjectionPayload']]],
   ['projectionquery_72',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm::ProjectionQuery&lt; Source, Result &gt;'],['../classorm_1_1ProjectionQuery.html#a810eaf71f94f4b80814d7d92c06e1b65',1,'orm::ProjectionQuery::ProjectionQuery()']]],
-  ['projections_73',['Projections',['../classorm_1_1query_1_1StaticPlan.html#a17659ebc846c124a1856a1232dbd7bd5',1,'orm::query::StaticPlan']]],
-  ['projections_74',['projections',['../structorm_1_1db_1_1QueryCapabilities.html#a8715cbaa08ab9f16f2589d250bb57712',1,'orm::db::QueryCapabilities']]],
-  ['projections_20and_20writes_75',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
-  ['projectionsource_76',['ProjectionSource',['../namespaceorm_1_1db_1_1ast.html#a5fd760801895c224a35e060f295fa6a0',1,'orm::db::ast']]],
-  ['publishing_77',['Maintainer setup and publishing',['../docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing',1,'']]],
-  ['pull_20request_78',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]]
+  ['projectionresultcolumns_73',['projectionResultColumns',['../namespaceorm_1_1db_1_1binding.html#aa9b209d81e32340fd221f3d0ce0c5821',1,'orm::db::binding']]],
+  ['projections_74',['Projections',['../classorm_1_1query_1_1StaticPlan.html#a17659ebc846c124a1856a1232dbd7bd5',1,'orm::query::StaticPlan']]],
+  ['projections_75',['projections',['../structorm_1_1db_1_1QueryCapabilities.html#a8715cbaa08ab9f16f2589d250bb57712',1,'orm::db::QueryCapabilities::projections'],['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-queries-and-projections',1,'Queries and projections']]],
+  ['projections_20and_20writes_76',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
+  ['projectionsource_77',['ProjectionSource',['../namespaceorm_1_1db_1_1ast.html#a5fd760801895c224a35e060f295fa6a0',1,'orm::db::ast']]],
+  ['properties_78',['Properties',['../structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties.html',1,'orm::db::binding::TypedResultStorage']]],
+  ['publishing_79',['Maintainer setup and publishing',['../docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing',1,'']]],
+  ['pull_20request_80',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]]
 ];

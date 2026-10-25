@@ -171,7 +171,13 @@ var NAVTREE =
       [ "Projections and writes", "docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes", null ],
       [ "Runtime shapes and explicit conversion", "docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion", null ]
     ] ],
-    [ "Date, time and UUID values", "docs-value-types-date-time-and-uuid-values.html", null ],
+    [ "Date, time and UUID values", "docs-value-types-date-time-and-uuid-values.html", [
+      [ "Native mappings", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-native-mappings", null ],
+      [ "Models and values", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-models-and-values", null ],
+      [ "Ranges and time zones", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-ranges-and-time-zones", null ],
+      [ "Queries and projections", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-queries-and-projections", null ],
+      [ "UUID representation", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation", null ]
+    ] ],
     [ "How to contribute", "CONTRIBUTING-how-to-contribute.html", [
       [ "Getting started", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-getting-started", null ],
       [ "Fastest supported setup", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-fastest-supported-setup", null ],
@@ -195,7 +201,7 @@ var NAVTREE =
     [ "Namespaces", "namespaces.html", [
       [ "Namespace List", "namespaces.html", "namespaces_dup" ],
       [ "Namespace Members", "namespacemembers.html", [
-        [ "All", "namespacemembers.html", null ],
+        [ "All", "namespacemembers.html", "namespacemembers_dup" ],
         [ "Functions", "namespacemembers_func.html", null ],
         [ "Variables", "namespacemembers_vars.html", null ],
         [ "Typedefs", "namespacemembers_type.html", null ],
@@ -226,18 +232,19 @@ var NAVTREEINDEX =
 "BackendRelations_8cppm.html",
 "classorm_1_1Query.html#aae966c137c3e919f57366a85f7478ca0",
 "classorm_1_1db_1_1SqlDialect.html",
-"classorm_1_1db_1_1sqlite_1_1SqliteBackend.html",
-"classorm_1_1query_1_1QueryValue.html#ab6dbb000ef0ff8f177c0d6c4982ab2fd",
-"classorm_1_1query_1_1TypedColumn.html#ac47b3b607c692c569702b15f05dfd051",
-"docs-relations-collection-relations.html#docs-relations-junction-column-names",
-"module__orm.html#a7d253f0ea99bc2d12666c42851581707",
-"namespaceorm_1_1db.html#af41d2e3b9117809dc4ad4b30735d550c",
-"orm_8cppm_source.html",
-"structorm_1_1db_1_1BoundValue.html",
-"structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html",
-"structorm_1_1migrations_1_1PhysicalColumn.html#aa66665559a099a7936edda7afd3084f2",
-"structorm_1_1migrations_1_1TableRename.html#a1bfe3751f75c54373aa4c4053c925de3",
-"structorm_1_1model_1_1SchemaView.html#a9e34e2524eb55621a1f17407f910680f"
+"classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html#adad5d76df266eb2b3cc71ab607496f72",
+"classorm_1_1query_1_1QueryValue.html#a6f0a224b77b3eeece6e08ff941074d73",
+"classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217",
+"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-query-behavior",
+"module__orm.html#a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0",
+"namespaceorm.html#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51",
+"namespaceorm_1_1query.html#a7d253f0ea99bc2d12666c42851581707a22cfc7a7c173a29a0ae03c559e741f4f",
+"structorm_1_1SqliteConfig.html#a2c05e43829883e4ce7704e2988e2f9b7",
+"structorm_1_1db_1_1RelationCapabilities.html#acd758e04efd55de1c6cd8dfe3334c712",
+"structorm_1_1migrations_1_1GenerationDecisions.html#a99f76e75edc93e943e738f678f725aa8",
+"structorm_1_1migrations_1_1SchemaChange.html#a32125359c85b27d162a66a9006050858",
+"structorm_1_1model_1_1ModelDataView.html#a21b91dede913889c6d3a997575a8162c",
+"values_8cppm.html"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

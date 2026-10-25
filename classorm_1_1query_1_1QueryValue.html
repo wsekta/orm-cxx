@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('classorm_1_1qu
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-types" class="groupheader"><a id="pub-types" name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:aec19eb8e0c38f2405d383bcf57a9bf24" id="r_aec19eb8e0c38f2405d383bcf57a9bf24"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> = std::variant&lt;int, long long, unsigned long long, double, std::string&gt;</td></tr>
+<tr class="memitem:ad02b1e99b22081549db0fc5723d50a77" id="r_ad02b1e99b22081549db0fc5723d50a77"><td class="memItemLeft">using&#160;</td><td class="memItemRight"><a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -146,46 +146,58 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac4090d0277e163b75a2852e79f97604c" id="r_ac4090d0277e163b75a2852e79f97604c"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ac4090d0277e163b75a2852e79f97604c">QueryValue</a> (const char *inputValue)</td></tr>
 <tr class="memitem:a8b6d043b3ed4f3d9f77399d010be79b4" id="r_a8b6d043b3ed4f3d9f77399d010be79b4"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a8b6d043b3ed4f3d9f77399d010be79b4">QueryValue</a> (std::string inputValue)</td></tr>
 <tr class="memitem:a041a7e890c24d0ce6d9ae070854edd62" id="r_a041a7e890c24d0ce6d9ae070854edd62"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a041a7e890c24d0ce6d9ae070854edd62">QueryValue</a> (std::string_view inputValue)</td></tr>
+<tr class="memitem:a46556eed25b3912519f1f41d06250dcf" id="r_a46556eed25b3912519f1f41d06250dcf"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a46556eed25b3912519f1f41d06250dcf">QueryValue</a> (<a class="el" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">Date</a> inputValue)</td></tr>
+<tr class="memitem:ac0916694c1fe7574de704d815e274a90" id="r_ac0916694c1fe7574de704d815e274a90"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ac0916694c1fe7574de704d815e274a90">QueryValue</a> (<a class="el" href="classorm_1_1TimeOfDay.html">TimeOfDay</a> inputValue)</td></tr>
+<tr class="memitem:a80d24fe689fa11e51066af66135ee824" id="r_a80d24fe689fa11e51066af66135ee824"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a80d24fe689fa11e51066af66135ee824">QueryValue</a> (<a class="el" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a> inputValue)</td></tr>
+<tr class="memitem:aaf5d2b88c0d053e782efd3abdc82b6e7" id="r_aaf5d2b88c0d053e782efd3abdc82b6e7"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#aaf5d2b88c0d053e782efd3abdc82b6e7">QueryValue</a> (<a class="el" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a> inputValue)</td></tr>
+<tr class="memitem:a9234c193e601c1bb49623cfc447c6bac" id="r_a9234c193e601c1bb49623cfc447c6bac"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a9234c193e601c1bb49623cfc447c6bac">QueryValue</a> (<a class="el" href="classorm_1_1Uuid.html">Uuid</a> inputValue)</td></tr>
 <tr class="memitem:a5c65c12b922f443bd15fa9c5f250a671" id="r_a5c65c12b922f443bd15fa9c5f250a671"><td class="memTemplParams" colspan="2">template&lt;std::size_t Size&gt; </td></tr>
 <tr class="memitem:a5c65c12b922f443bd15fa9c5f250a671 template"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a5c65c12b922f443bd15fa9c5f250a671">QueryValue</a> (const char(&amp;inputValue)[Size])</td></tr>
 <tr class="memitem:a2c86abce82f92ca92e6ee29946cded9e" id="r_a2c86abce82f92ca92e6ee29946cded9e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a2c86abce82f92ca92e6ee29946cded9e template"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a2c86abce82f92ca92e6ee29946cded9e">QueryValue</a> (const std::optional&lt; T &gt; &amp;optionalValue)</td></tr>
 <tr class="memitem:ac2df17649dc61165dbed9d143be5090b" id="r_ac2df17649dc61165dbed9d143be5090b"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ac2df17649dc61165dbed9d143be5090b">getLogicalType</a> () const noexcept -&gt; <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a></td></tr>
-<tr class="memitem:aa9e8f73e99919f6ceec54e740eb99b1a" id="r_aa9e8f73e99919f6ceec54e740eb99b1a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa9e8f73e99919f6ceec54e740eb99b1a">get</a> () const -&gt; const <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> &amp;</td></tr>
+<tr class="memitem:aa9e8f73e99919f6ceec54e740eb99b1a" id="r_aa9e8f73e99919f6ceec54e740eb99b1a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa9e8f73e99919f6ceec54e740eb99b1a">get</a> () const -&gt; const <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> &amp;</td></tr>
 <tr class="memitem:a6c1bb8b5e044700154141ddc2cacc69c" id="r_a6c1bb8b5e044700154141ddc2cacc69c"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a6c1bb8b5e044700154141ddc2cacc69c">operator&lt;=&gt;</a> (const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;) const -&gt; std::partial_ordering=default</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
-<tr class="memitem:adcf879e2f13067b007413452121c73c3" id="r_adcf879e2f13067b007413452121c73c3"><td class="memItemLeft">static auto&#160;</td><td class="memItemRight"><a class="el" href="#adcf879e2f13067b007413452121c73c3">fromStorage</a> (<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a> logicalType, <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> value) -&gt; <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a></td></tr>
+<tr class="memitem:adcf879e2f13067b007413452121c73c3" id="r_adcf879e2f13067b007413452121c73c3"><td class="memItemLeft">static auto&#160;</td><td class="memItemRight"><a class="el" href="#adcf879e2f13067b007413452121c73c3">fromStorage</a> (<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a> logicalType, <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> value) -&gt; <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a></td></tr>
 <tr class="memdesc:adcf879e2f13067b007413452121c73c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Restores a canonical transport value with its model-level type.  <br /></td></tr>
-<tr class="memitem:a87c5b1236c72485a4fb13a375ab45979" id="r_a87c5b1236c72485a4fb13a375ab45979"><td class="memItemLeft">static auto&#160;</td><td class="memItemRight"><a class="el" href="#a87c5b1236c72485a4fb13a375ab45979">isCompatibleStorage</a> (<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a> logicalType, const <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> &amp;storedValue) noexcept -&gt; bool</td></tr>
+<tr class="memitem:a87c5b1236c72485a4fb13a375ab45979" id="r_a87c5b1236c72485a4fb13a375ab45979"><td class="memItemLeft">static auto&#160;</td><td class="memItemRight"><a class="el" href="#a87c5b1236c72485a4fb13a375ab45979">isCompatibleStorage</a> (<a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a> logicalType, const <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> &amp;storedValue) noexcept -&gt; bool</td></tr>
 <tr class="memdesc:a87c5b1236c72485a4fb13a375ab45979"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks both the canonical variant alternative and its logical range.  <br /></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A value that can be bound as a query parameter. </p>
 <p>QueryValue stores the subset of C++ values supported by the SELECT query DSL. Values are rendered as SOCI bind parameters, not interpolated into SQL. </p>
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00029">29</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00030">30</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
-<a id="aec19eb8e0c38f2405d383bcf57a9bf24" name="aec19eb8e0c38f2405d383bcf57a9bf24"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aec19eb8e0c38f2405d383bcf57a9bf24">&#9670;&#160;</a></span>Value</h2>
+<a id="ad02b1e99b22081549db0fc5723d50a77" name="ad02b1e99b22081549db0fc5723d50a77"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad02b1e99b22081549db0fc5723d50a77">&#9670;&#160;</a></span>Value</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">using <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">orm::query::QueryValue::Value</a> = std::variant&lt;int, long long, unsigned long long, double, std::string&gt;</td>
+          <td class="memname">using <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">orm::query::QueryValue::Value</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
-
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00032">32</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<b>Initial value:</b><div class="fragment"><div class="line">std::variant&lt;int, <span class="keywordtype">long</span> long, <span class="keywordtype">unsigned</span> <span class="keywordtype">long</span> long, double, std::string, <a class="code hl_typedef" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">Date</a>, <a class="code hl_class" href="classorm_1_1TimeOfDay.html">TimeOfDay</a>,</div>
+<div class="line">                                  <a class="code hl_typedef" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a>, <a class="code hl_typedef" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a>, <a class="code hl_class" href="classorm_1_1Uuid.html">Uuid</a>&gt;</div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html"><div class="ttname"><a href="classorm_1_1TimeOfDay.html">orm::TimeOfDay</a></div><div class="ttdef"><b>Definition</b> <a href="values_8cppm_source.html#l00025">values.cppm:26</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html"><div class="ttname"><a href="classorm_1_1Uuid.html">orm::Uuid</a></div><div class="ttdef"><b>Definition</b> <a href="values_8cppm_source.html#l00057">values.cppm:58</a></div></div>
+<div class="ttc" id="anamespaceorm_html_a6cffce23ae50752497f414ad28395277"><div class="ttname"><a href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">orm::Date</a></div><div class="ttdeci">std::chrono::year_month_day Date</div><div class="ttdef"><b>Definition</b> <a href="values_8cppm_source.html#l00016">values.cppm:16</a></div></div>
+<div class="ttc" id="anamespaceorm_html_a8e19e63826a35572bab9e398b29f349a"><div class="ttname"><a href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">orm::LocalDateTime</a></div><div class="ttdeci">std::chrono::local_time&lt; std::chrono::microseconds &gt; LocalDateTime</div><div class="ttdef"><b>Definition</b> <a href="values_8cppm_source.html#l00019">values.cppm:19</a></div></div>
+<div class="ttc" id="anamespaceorm_html_af7177df0bc6e7d9d553605ea4081c913"><div class="ttname"><a href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">orm::UtcTimestamp</a></div><div class="ttdeci">std::chrono::sys_time&lt; std::chrono::microseconds &gt; UtcTimestamp</div><div class="ttdef"><b>Definition</b> <a href="values_8cppm_source.html#l00022">values.cppm:22</a></div></div>
+</div><!-- fragment -->
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00033">33</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="adc96495840e5cb13208564ae5984562b" name="adc96495840e5cb13208564ae5984562b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adc96495840e5cb13208564ae5984562b">&#9670;&#160;</a></span>QueryValue() <span class="overload">[1/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#adc96495840e5cb13208564ae5984562b">&#9670;&#160;</a></span>QueryValue() <span class="overload">[1/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -207,12 +219,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00034">34</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00036">36</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="aa96fd7465f75557a0d0d082c9e09eef5" name="aa96fd7465f75557a0d0d082c9e09eef5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa96fd7465f75557a0d0d082c9e09eef5">&#9670;&#160;</a></span>QueryValue() <span class="overload">[2/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aa96fd7465f75557a0d0d082c9e09eef5">&#9670;&#160;</a></span>QueryValue() <span class="overload">[2/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -234,12 +246,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00035">35</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00037">37</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a09b5a11d37df1f3411531c2a8a092be5" name="a09b5a11d37df1f3411531c2a8a092be5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a09b5a11d37df1f3411531c2a8a092be5">&#9670;&#160;</a></span>QueryValue() <span class="overload">[3/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a09b5a11d37df1f3411531c2a8a092be5">&#9670;&#160;</a></span>QueryValue() <span class="overload">[3/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -261,12 +273,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00036">36</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00038">38</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="ad5d962e9d4fcceb3083c5aa1a33e1e2b" name="ad5d962e9d4fcceb3083c5aa1a33e1e2b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad5d962e9d4fcceb3083c5aa1a33e1e2b">&#9670;&#160;</a></span>QueryValue() <span class="overload">[4/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ad5d962e9d4fcceb3083c5aa1a33e1e2b">&#9670;&#160;</a></span>QueryValue() <span class="overload">[4/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -288,12 +300,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00039">39</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00041">41</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a47ff96ae6093332692d523062e244eae" name="a47ff96ae6093332692d523062e244eae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a47ff96ae6093332692d523062e244eae">&#9670;&#160;</a></span>QueryValue() <span class="overload">[5/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a47ff96ae6093332692d523062e244eae">&#9670;&#160;</a></span>QueryValue() <span class="overload">[5/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -315,12 +327,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00043">43</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00045">45</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="ab6dbb000ef0ff8f177c0d6c4982ab2fd" name="ab6dbb000ef0ff8f177c0d6c4982ab2fd"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab6dbb000ef0ff8f177c0d6c4982ab2fd">&#9670;&#160;</a></span>QueryValue() <span class="overload">[6/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab6dbb000ef0ff8f177c0d6c4982ab2fd">&#9670;&#160;</a></span>QueryValue() <span class="overload">[6/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -342,12 +354,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00044">44</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00046">46</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="ab921cac316a39becbab4fa0e44bc54c3" name="ab921cac316a39becbab4fa0e44bc54c3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab921cac316a39becbab4fa0e44bc54c3">&#9670;&#160;</a></span>QueryValue() <span class="overload">[7/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ab921cac316a39becbab4fa0e44bc54c3">&#9670;&#160;</a></span>QueryValue() <span class="overload">[7/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -369,12 +381,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00048">48</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00050">50</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="ae8fce4098a7cd9983fb6e09b9ec037c9" name="ae8fce4098a7cd9983fb6e09b9ec037c9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8fce4098a7cd9983fb6e09b9ec037c9">&#9670;&#160;</a></span>QueryValue() <span class="overload">[8/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8fce4098a7cd9983fb6e09b9ec037c9">&#9670;&#160;</a></span>QueryValue() <span class="overload">[8/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -396,12 +408,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00049">49</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00051">51</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a191649769931ed2969dfff580af2c78f" name="a191649769931ed2969dfff580af2c78f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a191649769931ed2969dfff580af2c78f">&#9670;&#160;</a></span>QueryValue() <span class="overload">[9/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a191649769931ed2969dfff580af2c78f">&#9670;&#160;</a></span>QueryValue() <span class="overload">[9/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -423,12 +435,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00053">53</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00055">55</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a6f0a224b77b3eeece6e08ff941074d73" name="a6f0a224b77b3eeece6e08ff941074d73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6f0a224b77b3eeece6e08ff941074d73">&#9670;&#160;</a></span>QueryValue() <span class="overload">[10/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a6f0a224b77b3eeece6e08ff941074d73">&#9670;&#160;</a></span>QueryValue() <span class="overload">[10/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -450,12 +462,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00058">58</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00060">60</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="aed1acfea1bd15111ff8e7dea96c4ecdb" name="aed1acfea1bd15111ff8e7dea96c4ecdb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aed1acfea1bd15111ff8e7dea96c4ecdb">&#9670;&#160;</a></span>QueryValue() <span class="overload">[11/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#aed1acfea1bd15111ff8e7dea96c4ecdb">&#9670;&#160;</a></span>QueryValue() <span class="overload">[11/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -477,12 +489,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00064">64</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00066">66</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a11cccdead0c7f9f3b3bf3c57881431b0" name="a11cccdead0c7f9f3b3bf3c57881431b0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a11cccdead0c7f9f3b3bf3c57881431b0">&#9670;&#160;</a></span>QueryValue() <span class="overload">[12/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a11cccdead0c7f9f3b3bf3c57881431b0">&#9670;&#160;</a></span>QueryValue() <span class="overload">[12/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -504,12 +516,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00065">65</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00067">67</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a9c3de2f71ec31327164631c8ac2803f3" name="a9c3de2f71ec31327164631c8ac2803f3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c3de2f71ec31327164631c8ac2803f3">&#9670;&#160;</a></span>QueryValue() <span class="overload">[13/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c3de2f71ec31327164631c8ac2803f3">&#9670;&#160;</a></span>QueryValue() <span class="overload">[13/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -531,12 +543,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00068">68</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00070">70</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a04f9c8844b7f310ea202d2970abfd11f" name="a04f9c8844b7f310ea202d2970abfd11f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a04f9c8844b7f310ea202d2970abfd11f">&#9670;&#160;</a></span>QueryValue() <span class="overload">[14/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a04f9c8844b7f310ea202d2970abfd11f">&#9670;&#160;</a></span>QueryValue() <span class="overload">[14/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -558,12 +570,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00069">69</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00071">71</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="ac4090d0277e163b75a2852e79f97604c" name="ac4090d0277e163b75a2852e79f97604c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac4090d0277e163b75a2852e79f97604c">&#9670;&#160;</a></span>QueryValue() <span class="overload">[15/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ac4090d0277e163b75a2852e79f97604c">&#9670;&#160;</a></span>QueryValue() <span class="overload">[15/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -585,12 +597,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00070">70</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00072">72</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a8b6d043b3ed4f3d9f77399d010be79b4" name="a8b6d043b3ed4f3d9f77399d010be79b4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8b6d043b3ed4f3d9f77399d010be79b4">&#9670;&#160;</a></span>QueryValue() <span class="overload">[16/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b6d043b3ed4f3d9f77399d010be79b4">&#9670;&#160;</a></span>QueryValue() <span class="overload">[16/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -612,12 +624,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00071">71</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00073">73</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a041a7e890c24d0ce6d9ae070854edd62" name="a041a7e890c24d0ce6d9ae070854edd62"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a041a7e890c24d0ce6d9ae070854edd62">&#9670;&#160;</a></span>QueryValue() <span class="overload">[17/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a041a7e890c24d0ce6d9ae070854edd62">&#9670;&#160;</a></span>QueryValue() <span class="overload">[17/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -639,12 +651,147 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00072">72</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00074">74</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a46556eed25b3912519f1f41d06250dcf" name="a46556eed25b3912519f1f41d06250dcf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a46556eed25b3912519f1f41d06250dcf">&#9670;&#160;</a></span>QueryValue() <span class="overload">[18/24]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">orm::query::QueryValue::QueryValue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">Date</a></td>          <td class="paramname"><span class="paramname"><em>inputValue</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00078">78</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="ac0916694c1fe7574de704d815e274a90" name="ac0916694c1fe7574de704d815e274a90"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0916694c1fe7574de704d815e274a90">&#9670;&#160;</a></span>QueryValue() <span class="overload">[19/24]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">orm::query::QueryValue::QueryValue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classorm_1_1TimeOfDay.html">TimeOfDay</a></td>          <td class="paramname"><span class="paramname"><em>inputValue</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00079">79</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a80d24fe689fa11e51066af66135ee824" name="a80d24fe689fa11e51066af66135ee824"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80d24fe689fa11e51066af66135ee824">&#9670;&#160;</a></span>QueryValue() <span class="overload">[20/24]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">orm::query::QueryValue::QueryValue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a></td>          <td class="paramname"><span class="paramname"><em>inputValue</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00080">80</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="aaf5d2b88c0d053e782efd3abdc82b6e7" name="aaf5d2b88c0d053e782efd3abdc82b6e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf5d2b88c0d053e782efd3abdc82b6e7">&#9670;&#160;</a></span>QueryValue() <span class="overload">[21/24]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">orm::query::QueryValue::QueryValue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a></td>          <td class="paramname"><span class="paramname"><em>inputValue</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00081">81</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a9234c193e601c1bb49623cfc447c6bac" name="a9234c193e601c1bb49623cfc447c6bac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9234c193e601c1bb49623cfc447c6bac">&#9670;&#160;</a></span>QueryValue() <span class="overload">[22/24]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">orm::query::QueryValue::QueryValue </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="classorm_1_1Uuid.html">Uuid</a></td>          <td class="paramname"><span class="paramname"><em>inputValue</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00082">82</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a5c65c12b922f443bd15fa9c5f250a671" name="a5c65c12b922f443bd15fa9c5f250a671"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5c65c12b922f443bd15fa9c5f250a671">&#9670;&#160;</a></span>QueryValue() <span class="overload">[18/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5c65c12b922f443bd15fa9c5f250a671">&#9670;&#160;</a></span>QueryValue() <span class="overload">[23/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -668,12 +815,12 @@ template&lt;std::size_t Size&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00077">77</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00085">85</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a2c86abce82f92ca92e6ee29946cded9e" name="a2c86abce82f92ca92e6ee29946cded9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2c86abce82f92ca92e6ee29946cded9e">&#9670;&#160;</a></span>QueryValue() <span class="overload">[19/19]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c86abce82f92ca92e6ee29946cded9e">&#9670;&#160;</a></span>QueryValue() <span class="overload">[24/24]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -697,7 +844,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00083">83</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00091">91</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
@@ -719,7 +866,7 @@ template&lt;typename T&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a></td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;) -&gt; <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a></td>
+          <td class="paramtype"><a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a></td>          <td class="paramname"><span class="paramname"><em>value</em></span>&#160;) -&gt; <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a></td>
         </tr>
       </table>
   </td>
@@ -732,7 +879,7 @@ template&lt;typename T&gt; </div>
 <p>Restores a canonical transport value with its model-level type. </p>
 <p>Hydration and backend adapters use this factory when several logical column types share the same SOCI exchange representation. </p>
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00093">93</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00101">101</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
@@ -749,7 +896,7 @@ template&lt;typename T&gt; </div>
           <td class="memname">auto orm::query::QueryValue::get </td>
           <td>(</td>
           <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const -&gt; const <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> &amp;</td>
+          <td> const -&gt; const <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> &amp;</td>
         </tr>
       </table>
   </td>
@@ -759,7 +906,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00162">162</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00174">174</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
@@ -786,7 +933,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00157">157</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00169">169</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
@@ -807,7 +954,7 @@ template&lt;typename T&gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="#aec19eb8e0c38f2405d383bcf57a9bf24">Value</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>storedValue</em></span>&#160;) -&gt; bool</td>
+          <td class="paramtype">const <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>storedValue</em></span>&#160;) -&gt; bool</td>
         </tr>
       </table>
   </td>
@@ -819,7 +966,7 @@ template&lt;typename T&gt; </div>
 
 <p>Checks both the canonical variant alternative and its logical range. </p>
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00106">106</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00114">114</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>

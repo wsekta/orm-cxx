@@ -61,5 +61,6 @@ var contracts_8cppm =
     [ "orm::db::MigrationAtomicity", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0", [
       [ "orm::db::MigrationAtomicity::WholeMigration", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0a380c24a36ef13a989c0f3e0f06787d2a", null ],
       [ "orm::db::MigrationAtomicity::NonTransactional", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0a6f859f30378d75f119c58a75d8806123", null ]
-    ] ]
+    ] ],
+    [ "orm::db::binding::isWithinValueLimits", "namespaceorm_1_1db_1_1binding.html#a0a2b22b2d3142106413779d6ff11fd09", null ]
 ];

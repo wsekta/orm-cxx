@@ -16,6 +16,7 @@ var searchData=
   ['min_13',['min',['../namespaceorm_1_1query.html#a1b6befc7e196e3f22843f009fbab6431',1,'orm::query']]],
   ['modelat_14',['modelAt',['../structorm_1_1model_1_1Schema.html#a41992964e77df318346a64ac13e7fda2',1,'orm::model::Schema']]],
   ['modeldescriptor_15',['modelDescriptor',['../structorm_1_1db_1_1binding_1_1BindingPayload.html#a0e13591b8ef05673884f1868f9f0a24d',1,'orm::db::binding::BindingPayload::modelDescriptor()'],['../namespaceorm_1_1model.html#a78ed0ecd07eabf8cfe4c39325e05483d',1,'orm::model::modelDescriptor()'],['../namespaceorm.html#aa0cd654fad5a07abbc3040328c687fde',1,'orm::modelDescriptor()']]],
-  ['modelview_16',['modelView',['../namespaceorm_1_1model.html#af7e0af7adf06646a17a0ea67dca323da',1,'orm::model::modelView()'],['../namespaceorm.html#a2b67d3b5b004c67b5fc30d098b5f8aec',1,'orm::modelView()']]],
-  ['mysqlbackend_17',['MysqlBackend',['../classorm_1_1db_1_1mysql_1_1MysqlBackend.html#ad19c6afcfabd61057091c5b10051a269',1,'orm::db::mysql::MysqlBackend']]]
+  ['modelresultcolumns_16',['modelResultColumns',['../namespaceorm_1_1db_1_1binding.html#a4dd8a03b7b6305e449797bb678fc1ca0',1,'orm::db::binding']]],
+  ['modelview_17',['modelView',['../namespaceorm_1_1model.html#af7e0af7adf06646a17a0ea67dca323da',1,'orm::model::modelView()'],['../namespaceorm.html#a2b67d3b5b004c67b5fc30d098b5f8aec',1,'orm::modelView()']]],
+  ['mysqlbackend_18',['MysqlBackend',['../classorm_1_1db_1_1mysql_1_1MysqlBackend.html#ad19c6afcfabd61057091c5b10051a269',1,'orm::db::mysql::MysqlBackend']]]
 ];

@@ -1,0 +1,15 @@
+<map id="modules/orm/foundation/value_codec.cppm" name="modules/orm/foundation/value_codec.cppm">
+<area shape="rect" id="Node000001" title=" " alt="" coords="46,5,229,45"/>
+<area shape="rect" id="Node000002" title=" " alt="" coords="5,93,64,119"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="114,48,62,87,59,83,111,43"/>
+<area shape="rect" id="Node000003" title=" " alt="" coords="89,93,186,119"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="140,46,140,79,135,79,135,46"/>
+<area shape="rect" id="Node000004" href="$orm_8cppm.html" title=" " alt="" coords="210,93,382,119"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="177,43,262,85,259,90,174,48"/>
+<area shape="poly" id="edge5_Node000004_Node000004" title=" " alt="" coords="348,91,389,92,403,97,409,106,404,114,393,119,361,122,361,117,392,114,401,110,403,106,399,101,388,97,347,96"/>
+<area shape="rect" id="Node000005" title=" " alt="" coords="197,167,275,192"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="288,121,257,158,252,154,284,117"/>
+<area shape="rect" id="Node000006" href="$orm_8reflection_8cppm.html" title=" " alt="" coords="299,167,413,192"/>
+<area shape="poly" id="edge6_Node000004_Node000006" title=" " alt="" coords="308,117,340,154,335,158,304,121"/>
+<area shape="poly" id="edge7_Node000006_Node000006" title=" " alt="" coords="394,164,424,165,435,170,439,179,436,187,429,192,408,195,407,190,427,187,432,183,434,179,431,174,423,170,394,169"/>
+</map>

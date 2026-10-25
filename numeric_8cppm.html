@@ -207,6 +207,7 @@ Concepts</h2></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3Abinding_3A_3ASociConvertableToDouble" id="r_orm_3A_3Adb_3A_3Abinding_3A_3ASociConvertableToDouble"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1db_1_1binding_1_1SociConvertableToDouble.html">orm::db::binding::SociConvertableToDouble</a></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3Abinding_3A_3ASociDefaultSupported" id="r_orm_3A_3Adb_3A_3Abinding_3A_3ASociDefaultSupported"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1db_1_1binding_1_1SociDefaultSupported.html">orm::db::binding::SociDefaultSupported</a></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3Abinding_3A_3ASchemaModel" id="r_orm_3A_3Adb_3A_3Abinding_3A_3ASchemaModel"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1db_1_1binding_1_1SchemaModel.html">orm::db::binding::SchemaModel</a></td></tr>
+<tr class="memitem:orm_3A_3Adb_3A_3Abinding_3A_3ASociEncodedValue" id="r_orm_3A_3Adb_3A_3Abinding_3A_3ASociEncodedValue"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1db_1_1binding_1_1SociEncodedValue.html">orm::db::binding::SociEncodedValue</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -215,6 +216,12 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a55e3fcf9ee4b3065a844ef0b10c60182" id="r_a55e3fcf9ee4b3065a844ef0b10c60182"><td class="memTemplParams" colspan="2">template&lt;SociEncodedValue T&gt; </td></tr>
+<tr class="memitem:a55e3fcf9ee4b3065a844ef0b10c60182 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a55e3fcf9ee4b3065a844ef0b10c60182">orm::db::binding::encodeScalarValue</a> (const T &amp;value) -&gt; std::string</td></tr>
+<tr class="memitem:a4d86db417c2ff7f0aeb2fb21e9623fe6" id="r_a4d86db417c2ff7f0aeb2fb21e9623fe6"><td class="memTemplParams" colspan="2">template&lt;SociEncodedValue T&gt; </td></tr>
+<tr class="memitem:a4d86db417c2ff7f0aeb2fb21e9623fe6 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a4d86db417c2ff7f0aeb2fb21e9623fe6">orm::db::binding::decodeScalarValue</a> (std::string_view text) -&gt; T</td></tr>
+<tr class="memitem:a47b86b76fcaf3dc9e1d954961c182909" id="r_a47b86b76fcaf3dc9e1d954961c182909"><td class="memTemplParams" colspan="2">template&lt;SociEncodedValue T&gt; </td></tr>
+<tr class="memitem:a47b86b76fcaf3dc9e1d954961c182909 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a47b86b76fcaf3dc9e1d954961c182909">orm::db::binding::getEncodedScalarValue</a> (const auto &amp;values, const std::string &amp;name) -&gt; T</td></tr>
 <tr class="memitem:a993ecfd00ccf0a7b7f512f3f8b8a6ed6" id="r_a993ecfd00ccf0a7b7f512f3f8b8a6ed6"><td class="memTemplParams" colspan="2">template&lt;typename Result, typename Source&gt; </td></tr>
 <tr class="memitem:a993ecfd00ccf0a7b7f512f3f8b8a6ed6 template"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a993ecfd00ccf0a7b7f512f3f8b8a6ed6">orm::db::binding::isIntegralInRange</a> (Source value) noexcept -&gt; bool</td></tr>
 <tr class="memitem:a0cffad668e6913d36c8d064af1d8168a" id="r_a0cffad668e6913d36c8d064af1d8168a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a0cffad668e6913d36c8d064af1d8168a">orm::db::binding::throwLossyNumericConversion</a> (std::string_view fieldName) -&gt; void</td></tr>
@@ -222,10 +229,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a57c5b17b1cd1bd27e8bc896a82a64061 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a57c5b17b1cd1bd27e8bc896a82a64061">orm::db::binding::checkedNumericCast</a> (Source value, std::string_view fieldName) -&gt; Result</td></tr>
 <tr class="memitem:ac3c129de33c248c1fc7d39de1d2c823d" id="r_ac3c129de33c248c1fc7d39de1d2c823d"><td class="memTemplParams" colspan="2">template&lt;typename Result&gt; </td></tr>
 <tr class="memitem:ac3c129de33c248c1fc7d39de1d2c823d template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#ac3c129de33c248c1fc7d39de1d2c823d">orm::db::binding::parseNumericValue</a> (std::string_view value, std::string_view fieldName) -&gt; Result</td></tr>
-<tr class="memitem:a648715c92c81e0aca38ad618011a831a" id="r_a648715c92c81e0aca38ad618011a831a"><td class="memTemplParams" colspan="2">template&lt;typename Result, typename Stored&gt; </td></tr>
-<tr class="memitem:a648715c92c81e0aca38ad618011a831a template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a648715c92c81e0aca38ad618011a831a">orm::db::binding::tryGetNumericValue</a> (Result *result, const soci::values &amp;values, const std::string &amp;fieldName) -&gt; bool</td></tr>
-<tr class="memitem:a0ec21ef1dd077a3819d1f8fef77c2cf3" id="r_a0ec21ef1dd077a3819d1f8fef77c2cf3"><td class="memTemplParams" colspan="2">template&lt;typename Result&gt; </td></tr>
-<tr class="memitem:a0ec21ef1dd077a3819d1f8fef77c2cf3 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a0ec21ef1dd077a3819d1f8fef77c2cf3">orm::db::binding::getNumericValue</a> (const soci::values &amp;values, const std::string &amp;fieldName) -&gt; Result</td></tr>
+<tr class="memitem:a70a053b59b05943921d4f07e0b3606cc" id="r_a70a053b59b05943921d4f07e0b3606cc"><td class="memTemplParams" colspan="2">template&lt;typename Result, typename Stored&gt; </td></tr>
+<tr class="memitem:a70a053b59b05943921d4f07e0b3606cc template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a70a053b59b05943921d4f07e0b3606cc">orm::db::binding::tryGetNumericValue</a> (Result *result, const auto &amp;values, const std::string &amp;fieldName) -&gt; bool</td></tr>
+<tr class="memitem:a6142bec7184a520e96b77742526be4d6" id="r_a6142bec7184a520e96b77742526be4d6"><td class="memTemplParams" colspan="2">template&lt;typename Result&gt; </td></tr>
+<tr class="memitem:a6142bec7184a520e96b77742526be4d6 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1binding.html#a6142bec7184a520e96b77742526be4d6">orm::db::binding::getNumericValue</a> (const auto &amp;values, const std::string &amp;fieldName) -&gt; Result</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->

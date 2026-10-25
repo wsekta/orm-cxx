@@ -181,6 +181,8 @@ Connect</h1>
 Capabilities and errors</h1>
 <p><span class="tt">getBackendCapabilities()</span> returns the selected backend's centralized schema, query, mutation, relation, type, value-limit, and transaction feature profile. Unsupported optional behavior is rejected before SQL execution with <span class="tt">DatabaseErrorCode::UnsupportedFeature</span>.</p>
 <p>Operations crossing the backend boundary throw <span class="tt">orm::DatabaseError</span>. Inspect <span class="tt">getCode()</span>, <span class="tt">getBackendType()</span>, <span class="tt">getOperation()</span>, and the optional <span class="tt">getNativeCode()</span> instead of parsing vendor message text. Diagnostics are sanitized and do not contain connection strings or bound values.</p>
+<p>Native <a class="el" href="docs-value-types-date-time-and-uuid-values.html" title="Date, time and UUID values">date/time and UUID values</a> share the CRUD, nullable, projection, manual/composite-key and relation paths. <span class="tt">supportedColumnTypes</span> reports availability, and <span class="tt">valueLimits</span> reports static temporal bounds. Execution also applies connection-specific limits, including the actual MariaDB server's timestamp range. Unsupported native types give <span class="tt">UnsupportedFeature</span>; invalid calendars, storage representations and ranges give <span class="tt">Conversion</span> before binding or when decoding a result.</p>
+<p>PostgreSQL sessions establish ISO/YMD date formatting and UTC. MySQL/MariaDB establish UTC, strict mode and explicit timestamp defaults. Reconnect repeats this initialization. Applications must preserve these settings; in particular, changing the MySQL-family session zone changes native <span class="tt">TIMESTAMP</span> interpretation. <span class="tt">LocalDateTime</span> and <span class="tt">UtcTimestamp</span> remain distinct even when the host uses a different time zone. The ORM does not add automatic timestamp defaults or UUID generation.</p>
 <h1 class="doxsection"><a class="anchor" id="docs-database-create-table"></a>
 Create table</h1>
 <p>To create a table in the database, use <span class="tt">createTable</span> method and pass model as template argument:</p>
@@ -236,7 +238,7 @@ Insert objects</h1>
 <div class="line"> </div>
 <div class="line">context.createTable&lt;User&gt;();</div>
 <div class="line">context.insert(User{0, <span class="stringliteral">&quot;Ann&quot;</span>});</div>
-<div class="ttc" id="anamespaceorm_html_ac365d1affaa1b0d86cb1cf5bbf97a919"><div class="ttname"><a href="namespaceorm.html#ac365d1affaa1b0d86cb1cf5bbf97a919">orm::autoIncrement</a></div><div class="ttdeci">consteval auto autoIncrement()</div><div class="ttdef"><b>Definition</b> <a href="mapping_8cppm_source.html#l00543">mapping.cppm:543</a></div></div>
+<div class="ttc" id="anamespaceorm_html_ac365d1affaa1b0d86cb1cf5bbf97a919"><div class="ttname"><a href="namespaceorm.html#ac365d1affaa1b0d86cb1cf5bbf97a919">orm::autoIncrement</a></div><div class="ttdeci">consteval auto autoIncrement()</div><div class="ttdef"><b>Definition</b> <a href="mapping_8cppm_source.html#l00569">mapping.cppm:569</a></div></div>
 </div><!-- fragment --><p><span class="tt">insert</span> does not mutate the passed object. Select the row after insertion if you need the generated id.</p>
 <p>Optional fields and optional one-to-one relations store <span class="tt">std::nullopt</span> as SQL <span class="tt">NULL</span>:</p>
 <div class="fragment"><div class="line"><span class="keyword">struct </span>Profile</div>

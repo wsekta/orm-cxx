@@ -17,5 +17,6 @@ var searchData=
   ['primarykey_14',['PrimaryKey',['../structorm_1_1model_1_1PrimaryKey.html',1,'orm::model']]],
   ['primarykeyless_15',['PrimaryKeyLess',['../structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html',1,'orm::db::binding']]],
   ['projectionpayload_16',['ProjectionPayload',['../structorm_1_1db_1_1binding_1_1ProjectionPayload.html',1,'orm::db::binding']]],
-  ['projectionquery_17',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]]
+  ['projectionquery_17',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]],
+  ['properties_18',['Properties',['../structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties.html',1,'orm::db::binding::TypedResultStorage']]]
 ];

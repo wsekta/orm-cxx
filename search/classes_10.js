@@ -16,6 +16,7 @@ var searchData=
   ['typedpredicate_3c_20typename_20s_3a_3amodel_2c_20s_3a_3awritesafe_2c_20s_3a_3acontainscollection_20_3e_13',['TypedPredicate&lt; typename S::Model, S::writeSafe, S::containsCollection &gt;',['../classorm_1_1query_1_1TypedPredicate.html',1,'orm::query']]],
   ['typedprojection_14',['TypedProjection',['../classorm_1_1query_1_1TypedProjection.html',1,'orm::query']]],
   ['typedprojection_3c_20typename_20s_3a_3amodel_20_3e_15',['TypedProjection&lt; typename S::Model &gt;',['../classorm_1_1query_1_1TypedProjection.html',1,'orm::query']]],
-  ['typeid_16',['TypeId',['../structorm_1_1model_1_1TypeId.html',1,'orm::model']]],
-  ['typetranslator_17',['TypeTranslator',['../classorm_1_1db_1_1TypeTranslator.html',1,'orm::db']]]
+  ['typedresultstorage_16',['TypedResultStorage',['../classorm_1_1db_1_1binding_1_1TypedResultStorage.html',1,'orm::db::binding']]],
+  ['typeid_17',['TypeId',['../structorm_1_1model_1_1TypeId.html',1,'orm::model']]],
+  ['typetranslator_18',['TypeTranslator',['../classorm_1_1db_1_1TypeTranslator.html',1,'orm::db']]]
 ];

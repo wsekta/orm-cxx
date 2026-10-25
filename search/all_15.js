@@ -27,5 +27,6 @@ var searchData=
   ['utctimestamp_24',['UtcTimestamp',['../namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913',1,'orm::UtcTimestamp'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2',1,'orm::model::UtcTimestamp']]],
   ['utilities_2ecppm_25',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
   ['uuid_26',['Uuid',['../classorm_1_1Uuid.html',1,'orm::Uuid'],['../classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780',1,'orm::Uuid::Uuid() noexcept=default'],['../classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b',1,'orm::Uuid::Uuid(std::array&lt; std::byte, 16 &gt; valueInit) noexcept'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model::Uuid']]],
-  ['uuid_20values_27',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
+  ['uuid_20representation_27',['UUID representation',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation',1,'']]],
+  ['uuid_20values_28',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
 ];

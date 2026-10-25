@@ -18,7 +18,8 @@ var searchData=
   ['principles_15',['Roadmap Principles',['../ROADMAP-orm-c-roadmap.html#ROADMAP-roadmap-principles',1,'']]],
   ['project_20files_16',['Project files',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-project-files',1,'']]],
   ['projection_20queries_17',['Aggregate projection queries',['../docs-query-query.html#docs-query-aggregate-projection-queries',1,'']]],
-  ['projections_20and_20writes_18',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
-  ['publishing_19',['Maintainer setup and publishing',['../docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing',1,'']]],
-  ['pull_20request_20',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]]
+  ['projections_18',['Queries and projections',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-queries-and-projections',1,'']]],
+  ['projections_20and_20writes_19',['Projections and writes',['../docs-static-queries-static-query-plans.html#docs-static-queries-projections-and-writes',1,'']]],
+  ['publishing_20',['Maintainer setup and publishing',['../docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing',1,'']]],
+  ['pull_20request_21',['Before submitting a pull request',['../CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-before-submitting-a-pull-request',1,'']]]
 ];

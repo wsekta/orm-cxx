@@ -9,5 +9,6 @@ var searchData=
   ['primarykey_6',['primaryKey',['../namespaceorm_1_1model.html#a0f1f0a2ef72c816ee25bbfb684b63cce',1,'orm::model::primaryKey()'],['../namespaceorm.html#ac203b55bf07c6bad5a7ebf8f843a0628',1,'orm::primaryKey()']]],
   ['primarykeysize_7',['primaryKeySize',['../structorm_1_1model_1_1ModelView.html#a481dfb9e37d78472e17a0232bb1f094b',1,'orm::model::ModelView']]],
   ['project_8',['project',['../classorm_1_1ProjectionQuery.html#af740c5877f5cc866e9ac5717b2d056e4',1,'orm::ProjectionQuery::project()'],['../classorm_1_1query_1_1StaticPlan.html#a42ab3cfa9706314bdccae07280a38dff',1,'orm::query::StaticPlan::project()']]],
-  ['projectionquery_9',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html#a810eaf71f94f4b80814d7d92c06e1b65',1,'orm::ProjectionQuery']]]
+  ['projectionquery_9',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html#a810eaf71f94f4b80814d7d92c06e1b65',1,'orm::ProjectionQuery']]],
+  ['projectionresultcolumns_10',['projectionResultColumns',['../namespaceorm_1_1db_1_1binding.html#aa9b209d81e32340fd221f3d0ce0c5821',1,'orm::db::binding']]]
 ];

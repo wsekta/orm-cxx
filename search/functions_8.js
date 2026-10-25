@@ -9,9 +9,11 @@ var searchData=
   ['iscompatiblestorage_6',['isCompatibleStorage',['../classorm_1_1query_1_1QueryValue.html#a87c5b1236c72485a4fb13a375ab45979',1,'orm::query::QueryValue']]],
   ['isconfigured_7',['isConfigured',['../structorm_1_1model_1_1JunctionView.html#a3611f55aea058e7345b21c5bd295ab3c',1,'orm::model::JunctionView']]],
   ['isconnected_8',['isConnected',['../classorm_1_1Database.html#a64d431e5f73bc213b6e16406d6c4516e',1,'orm::Database']]],
-  ['isintegralinrange_9',['isIntegralInRange',['../namespaceorm_1_1db_1_1binding.html#a993ecfd00ccf0a7b7f512f3f8b8a6ed6',1,'orm::db::binding']]],
-  ['isnotnull_10',['isNotNull',['../classorm_1_1query_1_1TypedColumn.html#a4d03594388c8c9acf6f8ec11b11175df',1,'orm::query::TypedColumn']]],
-  ['isnull_11',['isNull',['../classorm_1_1query_1_1TypedColumn.html#ae1b819f4f6110b6a320676283aba3d29',1,'orm::query::TypedColumn::isNull()'],['../structorm_1_1db_1_1BoundValue.html#af853a4fbbe73a88f55f6cb9f19ae006f',1,'orm::db::BoundValue::isNull()']]],
-  ['isvalid_12',['isValid',['../structorm_1_1migrations_1_1Status.html#a0378e3f4340e76bf9ce8e01b95a065dc',1,'orm::migrations::Status']]],
-  ['isvalidfor_13',['isValidFor',['../structorm_1_1model_1_1ColumnNames.html#a309dabe2a07c5601f30540d4ac8ff6b6',1,'orm::model::ColumnNames::isValidFor()'],['../structorm_1_1model_1_1StringLengths.html#afa839259b8976289000b2afe95eb967e',1,'orm::model::StringLengths::isValidFor()'],['../structorm_1_1model_1_1PrimaryKey.html#a4bfec017a8b29d4641580d76df4079c3',1,'orm::model::PrimaryKey::isValidFor()'],['../structorm_1_1model_1_1AutoIncrement.html#aec95176aa3ae79d8428d00ef57e5c821',1,'orm::model::AutoIncrement::isValidFor()']]]
+  ['isencodedresulttype_9',['isEncodedResultType',['../namespaceorm_1_1db_1_1binding.html#a04552a6fade17873677032103d2e8705',1,'orm::db::binding']]],
+  ['isintegralinrange_10',['isIntegralInRange',['../namespaceorm_1_1db_1_1binding.html#a993ecfd00ccf0a7b7f512f3f8b8a6ed6',1,'orm::db::binding']]],
+  ['isnotnull_11',['isNotNull',['../classorm_1_1query_1_1TypedColumn.html#a4d03594388c8c9acf6f8ec11b11175df',1,'orm::query::TypedColumn']]],
+  ['isnull_12',['isNull',['../classorm_1_1query_1_1TypedColumn.html#ae1b819f4f6110b6a320676283aba3d29',1,'orm::query::TypedColumn::isNull()'],['../structorm_1_1db_1_1BoundValue.html#af853a4fbbe73a88f55f6cb9f19ae006f',1,'orm::db::BoundValue::isNull()']]],
+  ['isvalid_13',['isValid',['../structorm_1_1migrations_1_1Status.html#a0378e3f4340e76bf9ce8e01b95a065dc',1,'orm::migrations::Status']]],
+  ['isvalidfor_14',['isValidFor',['../structorm_1_1model_1_1ColumnNames.html#a309dabe2a07c5601f30540d4ac8ff6b6',1,'orm::model::ColumnNames::isValidFor()'],['../structorm_1_1model_1_1StringLengths.html#afa839259b8976289000b2afe95eb967e',1,'orm::model::StringLengths::isValidFor()'],['../structorm_1_1model_1_1PrimaryKey.html#a4bfec017a8b29d4641580d76df4079c3',1,'orm::model::PrimaryKey::isValidFor()'],['../structorm_1_1model_1_1AutoIncrement.html#aec95176aa3ae79d8428d00ef57e5c821',1,'orm::model::AutoIncrement::isValidFor()']]],
+  ['iswithinvaluelimits_15',['isWithinValueLimits',['../namespaceorm_1_1db_1_1binding.html#a0a2b22b2d3142106413779d6ff11fd09',1,'orm::db::binding']]]
 ];

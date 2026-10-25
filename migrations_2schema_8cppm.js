@@ -16,7 +16,7 @@ var migrations_2schema_8cppm =
     [ "orm::migrations::GenerationDiagnostic", "structorm_1_1migrations_1_1GenerationDiagnostic.html", "structorm_1_1migrations_1_1GenerationDiagnostic" ],
     [ "orm::migrations::SchemaDiff", "structorm_1_1migrations_1_1SchemaDiff.html", "structorm_1_1migrations_1_1SchemaDiff" ],
     [ "orm::migrations::GenerationError", "classorm_1_1migrations_1_1GenerationError.html", "classorm_1_1migrations_1_1GenerationError" ],
-    [ "orm::migrations::GenerationLiteral", "namespaceorm_1_1migrations.html#a4db4a96f4171365b5885196f80a2ec9b", null ],
+    [ "orm::migrations::GenerationLiteral", "namespaceorm_1_1migrations.html#a937d2eed6c2b0221cae0060c35bf2592", null ],
     [ "orm::migrations::MigrationExecutionMode", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87", [
       [ "orm::migrations::MigrationExecutionMode::Normal", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0", null ],
       [ "orm::migrations::MigrationExecutionMode::SqliteRebuild", "namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a4671c13cf009a082b84b4d3ac5153355", null ]

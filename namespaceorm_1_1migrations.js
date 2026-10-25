@@ -30,7 +30,7 @@ var namespaceorm_1_1migrations =
     [ "SqlMigration", "structorm_1_1migrations_1_1SqlMigration.html", "structorm_1_1migrations_1_1SqlMigration" ],
     [ "Status", "structorm_1_1migrations_1_1Status.html", "structorm_1_1migrations_1_1Status" ],
     [ "TableRename", "structorm_1_1migrations_1_1TableRename.html", "structorm_1_1migrations_1_1TableRename" ],
-    [ "GenerationLiteral", "namespaceorm_1_1migrations.html#a4db4a96f4171365b5885196f80a2ec9b", null ],
+    [ "GenerationLiteral", "namespaceorm_1_1migrations.html#a937d2eed6c2b0221cae0060c35bf2592", null ],
     [ "Version", "namespaceorm_1_1migrations.html#a63ba143908e8fcfd637508cbe31622f4", null ],
     [ "Direction", "namespaceorm_1_1migrations.html#a5a5d6b20c2fb0917a24b6f42e5eb6710", [
       [ "Up", "namespaceorm_1_1migrations.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a258f49887ef8d14ac268c92b02503aaa", null ],
