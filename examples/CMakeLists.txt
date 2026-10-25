@@ -2,6 +2,10 @@ add_executable(migrations-example migrations.cpp)
 set_target_properties(migrations-example PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(migrations-example PRIVATE orm-cxx::orm-cxx)
 
+add_executable(temporal-values-example temporal_values.cpp)
+set_target_properties(temporal-values-example PROPERTIES CXX_SCAN_FOR_MODULES ON)
+target_link_libraries(temporal-values-example PRIVATE orm-cxx::orm-cxx)
+
 if(ORM_CXX_ENABLE_SQLITE_BACKEND
    OR ORM_CXX_ENABLE_POSTGRESQL_BACKEND
    OR ORM_CXX_ENABLE_MYSQL_BACKEND

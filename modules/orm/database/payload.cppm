@@ -136,6 +136,8 @@ auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::Q
     }
     else if constexpr (requires { query::QueryValue{value}; })
     {
+        if constexpr (SociEncodedValue<value_t>)
+            (void)encodeScalarValue(value);
         return query::QueryValue{value};
     }
     else
@@ -185,12 +187,11 @@ auto getPrimaryKey(const T& object) -> PrimaryKey
     return key;
 }
 
-inline auto getPrimaryKeyValue(const soci::values& values, const std::string& name,
-                               model::ColumnType type) -> query::QueryValue
+inline auto getPrimaryKeyValue(const auto& values, const std::string& name, model::ColumnType type) -> query::QueryValue
 {
     if (values.get_indicator(name) == soci::i_null)
     {
-        throw std::runtime_error{"Cannot hydrate NULL relation primary key: " + name};
+        throw ConversionError{"Cannot hydrate NULL relation primary key: " + name};
     }
 
     const auto fromStorage = [type, &name](query::QueryValue::Value value)
@@ -223,13 +224,17 @@ inline auto getPrimaryKeyValue(const soci::values& values, const std::string& na
     case model::ColumnType::Double:
         return fromStorage(getNumericValue<double>(values, name));
     case model::ColumnType::String:
-        return fromStorage(values.get<std::string>(name));
+        return fromStorage(values.template get<std::string>(name));
     case model::ColumnType::Date:
+        return fromStorage(getEncodedScalarValue<Date>(values, name));
     case model::ColumnType::TimeOfDay:
+        return fromStorage(getEncodedScalarValue<TimeOfDay>(values, name));
     case model::ColumnType::LocalDateTime:
+        return fromStorage(getEncodedScalarValue<LocalDateTime>(values, name));
     case model::ColumnType::UtcTimestamp:
+        return fromStorage(getEncodedScalarValue<UtcTimestamp>(values, name));
     case model::ColumnType::Uuid:
-        break;
+        return fromStorage(getEncodedScalarValue<Uuid>(values, name));
     }
 
     throw std::invalid_argument{"Unsupported relation primary-key column: " + name};

@@ -175,10 +175,16 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
         case String:
             return length ? std::format("VARCHAR({})", *length) : "LONGTEXT";
         case Date:
+            return "DATE";
         case TimeOfDay:
+            return "TIME(6)";
         case LocalDateTime:
+            return "DATETIME(6)";
         case UtcTimestamp:
+            return "TIMESTAMP(6)";
         case Uuid:
+            if (backend == db::BackendType::Mariadb)
+                return "UUID";
             break;
         }
     }
@@ -237,11 +243,15 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
         case String:
             return length ? std::format("VARCHAR({})", *length) : "TEXT";
         case Date:
+            return "DATE";
         case TimeOfDay:
+            return "TIME(6) WITHOUT TIME ZONE";
         case LocalDateTime:
+            return "TIMESTAMP(6) WITHOUT TIME ZONE";
         case UtcTimestamp:
+            return "TIMESTAMP(6) WITH TIME ZONE";
         case Uuid:
-            break;
+            return "UUID";
         }
     }
     invalid("The logical column type has no supported physical SQL type", backend);
@@ -508,11 +518,21 @@ auto validSqlType(std::string_view type) -> bool
         return false;
     if (name.find(' ') == std::string::npos)
         return true;
-    constexpr std::array<std::string_view, 11> multiword{
-        "UNSIGNED BIG INT",      "DOUBLE PRECISION", "BIG INT",
-        "CHARACTER VARYING",     "CHAR VARYING",     "VARYING CHARACTER",
-        "NATIONAL CHARACTER",    "NATIONAL CHAR",    "NATIONAL CHARACTER VARYING",
-        "NATIONAL CHAR VARYING", "BIT VARYING"};
+    constexpr std::array<std::string_view, 15> multiword{"UNSIGNED BIG INT",
+                                                         "DOUBLE PRECISION",
+                                                         "BIG INT",
+                                                         "CHARACTER VARYING",
+                                                         "CHAR VARYING",
+                                                         "VARYING CHARACTER",
+                                                         "NATIONAL CHARACTER",
+                                                         "NATIONAL CHAR",
+                                                         "NATIONAL CHARACTER VARYING",
+                                                         "NATIONAL CHAR VARYING",
+                                                         "BIT VARYING",
+                                                         "TIME WITHOUT TIME ZONE",
+                                                         "TIME WITH TIME ZONE",
+                                                         "TIMESTAMP WITHOUT TIME ZONE",
+                                                         "TIMESTAMP WITH TIME ZONE"};
     if (std::ranges::find(multiword, name) != multiword.end())
         return true;
     constexpr std::array<std::string_view, 12> numeric{"TINYINT", "SMALLINT", "MEDIUMINT",        "INT",
@@ -530,9 +550,9 @@ auto validSqlType(std::string_view type) -> bool
 auto validLogicalType(model::ColumnType type) -> bool
 {
     using enum model::ColumnType;
-    constexpr std::array values{Bool,        Char,     UnsignedChar,     Short, UnsignedShort, Int,
-                                UnsignedInt, LongLong, UnsignedLongLong, Float, Double,        String,
-                                Uuid};
+    constexpr std::array values{Bool,        Char,     UnsignedChar,     Short,         UnsignedShort, Int,
+                                UnsignedInt, LongLong, UnsignedLongLong, Float,         Double,        String,
+                                Uuid,        Date,     TimeOfDay,        LocalDateTime, UtcTimestamp};
     return std::ranges::find(values, type) != values.end();
 }
 
@@ -594,6 +614,8 @@ auto renderColumn(db::BackendType backend, const PhysicalColumn& column, bool in
     }
     if (!column.nullable && !(column.autoIncrement && (family(backend) || backend == db::BackendType::Sqlite)))
         result += " NOT NULL";
+    if (column.nullable && family(backend) && column.logicalType == model::ColumnType::UtcTimestamp)
+        result += " NULL";
     if (inlinePrimary)
     {
         if (!primaryName.empty() && primaryName != "PRIMARY")
@@ -693,7 +715,12 @@ auto renderCreateTable(const db::SqlDialect& dialect, const PhysicalTable& table
                 return result;
             }
             static_cast<void>(primary);
-            return dialect.quoteIdentifier(column.name) + " " + column.sqlType + (column.nullable ? "" : " NOT NULL") +
+            const bool nullableTimestamp = column.nullable && column.logicalType == model::ColumnType::UtcTimestamp &&
+                                           dialect.renderCreateTableSuffix().find("ENGINE=InnoDB") != std::string::npos;
+            return dialect.quoteIdentifier(column.name) + " " + column.sqlType +
+                   (nullableTimestamp ? " NULL" :
+                    column.nullable   ? "" :
+                                        " NOT NULL") +
                    dialect.renderStringLengthConstraint(column.name, column.maxStringLength);
         });
 }
@@ -740,6 +767,14 @@ auto validateSnapshot(const SchemaSnapshot& snapshot) -> void
                 if (!columnNames.insert(column.name).second || !validLogicalType(column.logicalType) ||
                     !validSqlType(column.sqlType))
                     invalid("Snapshot column names and types must be valid and unique", backend, path);
+                if (column.logicalType == model::ColumnType::Uuid || column.logicalType == model::ColumnType::Date ||
+                    column.logicalType == model::ColumnType::TimeOfDay ||
+                    column.logicalType == model::ColumnType::LocalDateTime ||
+                    column.logicalType == model::ColumnType::UtcTimestamp)
+                {
+                    if (column.sqlType != sqlType(backend, column.logicalType, column.maxStringLength))
+                        invalid("Temporal and UUID columns require their canonical native SQL type", backend, path);
+                }
                 if (column.maxStringLength &&
                     (column.logicalType != model::ColumnType::String || *column.maxStringLength == 0 ||
                      (family(backend) && *column.maxStringLength > 16'383)))
@@ -793,7 +828,8 @@ auto validateSnapshot(const SchemaSnapshot& snapshot) -> void
                 {
                     const auto* local = columnNamed(table, key.columns[index]);
                     const auto* remote = columnNamed(*target, key.targetColumns[index]);
-                    if (local->sqlType != remote->sqlType || local->maxStringLength != remote->maxStringLength ||
+                    if (local->logicalType != remote->logicalType || local->sqlType != remote->sqlType ||
+                        local->maxStringLength != remote->maxStringLength ||
                         ((key.onDelete == "SET NULL" || key.onUpdate == "SET NULL") && !local->nullable))
                         invalid("Snapshot foreign-key columns must have matching types and compatible nullability",
                                 backend, table.name);

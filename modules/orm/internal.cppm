@@ -87,6 +87,8 @@ struct WriteColumn
 [[nodiscard]] auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::string;
 [[nodiscard]] auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec,
                                          const SqlDialect& dialect) -> SelectStatement;
+auto appendSelectPredicates(detail::SqlProgram& program, RenderContext& context,
+                            const query::detail::SelectSpec& spec) -> void;
 [[nodiscard]] auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSpec& spec,
                                          const SqlDialect& dialect) -> Statement;
 [[nodiscard]] auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate,

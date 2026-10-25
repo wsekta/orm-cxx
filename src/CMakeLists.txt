@@ -1,6 +1,7 @@
 set(ORM_CXX_SOURCES
     Database.cpp
     foundation/Uuid.cpp
+    foundation/ValueCodec.cpp
     migrations/Catalog.cpp
     migrations/SqlValidation.cpp
     migrations/Runner.cpp
@@ -156,6 +157,7 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/database/object_binding.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/payload.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/result_binding.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/database/result_storage.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database/soci.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/database.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/migrations.cppm"
@@ -171,6 +173,7 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/types.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/utilities.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation/values.cppm"
+           "${PROJECT_SOURCE_DIR}/modules/orm/foundation/value_codec.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/foundation.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/internal.cppm"
            "${PROJECT_SOURCE_DIR}/modules/orm/model/columns.cppm"

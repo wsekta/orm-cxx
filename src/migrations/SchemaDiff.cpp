@@ -43,13 +43,14 @@ auto renamedColumn(std::string_view table, std::string_view source, const Genera
 }
 
 auto transformation(const std::vector<ColumnTransformation>& values, std::string_view table, std::string_view column,
-                    Backend backend) -> bool
+                    Backend backend, bool requiresExpression = false) -> bool
 {
     return std::ranges::any_of(values,
                                [&](const auto& value)
                                {
                                    return value.table == table && value.column == column &&
-                                          (value.constant || value.sourceColumn || value.expressions.contains(backend));
+                                          (value.expressions.contains(backend) ||
+                                           (!requiresExpression && (value.constant || value.sourceColumn)));
                                });
 }
 
@@ -270,8 +271,12 @@ auto compareTables(SchemaDiff& diff, const PhysicalSchema& before, const Physica
             const bool conversion = !safeTypeChange(backend, column, *targetColumn);
             const bool identity = column.autoIncrement != targetColumn->autoIncrement;
             const bool required = column.nullable && !targetColumn->nullable;
-            const bool missingConversion =
-                conversion && !transformation(decisions.conversions, target.name, targetName, backend);
+            const bool timezoneConversion = (column.logicalType == orm::model::ColumnType::LocalDateTime &&
+                                             targetColumn->logicalType == orm::model::ColumnType::UtcTimestamp) ||
+                                            (column.logicalType == orm::model::ColumnType::UtcTimestamp &&
+                                             targetColumn->logicalType == orm::model::ColumnType::LocalDateTime);
+            const bool missingConversion = conversion && !transformation(decisions.conversions, target.name, targetName,
+                                                                         backend, timezoneConversion);
             const bool missingBackfill = required &&
                                          !transformation(decisions.backfills, target.name, targetName, backend) &&
                                          !transformation(decisions.conversions, target.name, targetName, backend);

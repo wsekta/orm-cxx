@@ -127,6 +127,22 @@ Operations crossing the backend boundary throw `orm::DatabaseError`. Inspect
 `getNativeCode()` instead of parsing vendor message text. Diagnostics are
 sanitized and do not contain connection strings or bound values.
 
+Native [date/time and UUID values](value-types.md) share the CRUD, nullable,
+projection, manual/composite-key and relation paths. `supportedColumnTypes`
+reports availability, and `valueLimits` reports static temporal bounds.
+Execution also applies connection-specific limits, including the actual
+MariaDB server's timestamp range. Unsupported native types give
+`UnsupportedFeature`; invalid calendars, storage representations and ranges
+give `Conversion` before binding or when decoding a result.
+
+PostgreSQL sessions establish ISO/YMD date formatting and UTC. MySQL/MariaDB
+establish UTC, strict mode and explicit timestamp defaults. Reconnect repeats
+this initialization. Applications must preserve these settings; in particular,
+changing the MySQL-family session zone changes native `TIMESTAMP` interpretation.
+`LocalDateTime` and `UtcTimestamp` remain distinct even when the host uses a
+different time zone. The ORM does not add automatic timestamp defaults or UUID
+generation.
+
 ## Create table
 
 To create a table in the database, use `createTable` method and pass model as template argument:

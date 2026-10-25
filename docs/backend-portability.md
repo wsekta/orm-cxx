@@ -81,6 +81,21 @@ and hydrate those values without silent narrowing or null loss. A backend may
 adapt SQL types or exchange representations internally, but those details must
 not leak into model or query code.
 
+The native [date/time and UUID types](value-types.md) are optional capabilities:
+PostgreSQL and MariaDB support all five, MySQL the four temporal types, and
+SQLite none. Text exchanged with native columns is an internal transport
+representation, not a text-column fallback. Values retain their logical type
+until adapter encoding. Results explicitly receive native text through SOCI,
+preserving microseconds without its `std::tm` path or SQL formatting casts.
+This preserves `DISTINCT`, grouping and native ordering semantics.
+
+Temporal precision is fixed at six digits. Static bounds and negotiated
+connection-specific bounds both apply to inputs and results. Local datetimes
+and UTC instants remain distinct. ISO output, UTC sessions and explicit
+timestamp defaults are adapter invariants, restored after reconnect and
+protected by migration guards. UUID equality and keys are shared; typed UUID
+ordering, range predicates and `MIN`/`MAX` are excluded.
+
 Connection-string parsing, session initialization, affected-row normalization,
 and driver exception translation are also backend responsibilities. Connection
 strings and credentials must not be copied into public error messages.

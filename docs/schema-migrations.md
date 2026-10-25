@@ -167,6 +167,35 @@ For example, `"expressions":{"sqlite":"CAST(old_value AS TEXT)",
 nullability requires a backfill. Conversions are explicit when losslessness
 cannot be established. Decisions for upgrades and downgrades are separate.
 
+Native temporal and UUID constants use a tagged object. Existing boolean,
+numeric, string and `null` constants retain their meaning:
+
+```json
+{
+  "backfills": [
+    {"table": "events", "column": "date", "constant": {"type": "date", "value": "2026-10-24"}},
+    {"table": "events", "column": "starts_at", "constant": {"type": "time_of_day", "value": "09:00:00.123456"}},
+    {"table": "events", "column": "starts_local", "constant": {"type": "local_date_time", "value": "2026-10-24 09:00:00.123456"}},
+    {"table": "events", "column": "recorded_at", "constant": {"type": "utc_timestamp", "value": "2026-10-24 07:00:00.123456+00:00"}},
+    {"table": "events", "column": "external_id", "constant": {"type": "uuid", "value": "019a1122-3344-7788-99aa-bbccddeeff00"}}
+  ]
+}
+```
+
+The C++ `GenerationLiteral` variant also accepts `Date`, `TimeOfDay`,
+`LocalDateTime`, `UtcTimestamp` and `Uuid` directly. The generator validates the
+logical target type, calendar/range and native backend support before rendering
+a backend literal. UUID constants require PostgreSQL or MariaDB; SQLite native
+values and MySQL UUID are rejected. See [Value types](value-types.md).
+
+Temporal snapshots preserve `(6)` precision and with/without-time-zone semantics.
+Native drift inspection compares those properties explicitly; changing `(6)`
+to `(0)` is drift. Changing `LocalDateTime` to `UtcTimestamp` requires an explicit
+conversion that chooses the interpretation of existing civil times. It is not
+an automatic lossless type change. External columns with smaller precision must
+be brought into the declared schema contract; queries do not introspect the
+whole database before each operation.
+
 The transformation's `table` and `column` identify the target schema for that
 direction, after any declared renames. `sourceColumn` identifies a column in the
 original source table. SQL expressions also use the original table and column
@@ -311,6 +340,13 @@ Scripts contain backend-native SQL with multiple statements and quoted bodies.
 SQLite uses prepare/tail parsing; PostgreSQL sends the whole script through libpq;
 MySQL/MariaDB execute native multi-statements and drain all results. SQL is never
 split on semicolons.
+
+Temporal session invariants are checked before scripts and protected through
+execution: PostgreSQL uses ISO/YMD and UTC; MySQL/MariaDB use UTC, strict mode
+and explicit timestamp defaults. Reconnect restores those settings. Scripts
+cannot change them to reinterpret timestamp values or alter generated types.
+Native date/time support does not change the migration history format,
+`applied_at`, durable markers or the migration state protocol.
 
 The executor owns transaction boundaries. Scripts cannot control transactions,
 savepoints, migration ledgers or locks, or change session settings. SQLite scripts

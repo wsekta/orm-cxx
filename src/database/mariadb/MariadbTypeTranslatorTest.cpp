@@ -37,5 +37,9 @@ TEST(MariadbTypeTranslatorTest, preservesAllScalarRangesAndRequiresBoundedVarcha
     EXPECT_EQ(translator.toSqlType(String, 16383), "VARCHAR(16383)");
     EXPECT_THROW((void)translator.toSqlType(String, 0), std::invalid_argument);
     EXPECT_THROW((void)translator.toSqlType(String, 16384), std::invalid_argument);
-    EXPECT_THROW((void)translator.toSqlType(Uuid), std::runtime_error);
+    EXPECT_EQ(translator.toSqlType(Uuid), "UUID");
+    EXPECT_EQ(translator.toSqlType(Date), "DATE");
+    EXPECT_EQ(translator.toSqlType(TimeOfDay), "TIME(6)");
+    EXPECT_EQ(translator.toSqlType(LocalDateTime), "DATETIME(6)");
+    EXPECT_EQ(translator.toSqlType(UtcTimestamp), "TIMESTAMP(6)");
 }

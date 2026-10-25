@@ -1,9 +1,11 @@
 set(ORM_CXX_TEST_SOURCES
     foundation/ValueTypesTest.cpp
+    foundation/ValueCodecTest.cpp
     database/ConnectionConfigTest.cpp
     migrations/ConnectionEnvironmentTest.cpp
     migrations/MigrationTest.cpp
     migrations/SnapshotTest.cpp
+    migrations/TemporalTypesTest.cpp
     migrations/GeneratorTest.cpp
     migrations/GeneratorCoverageTest.cpp
     migrations/DiffCoverageTest.cpp
@@ -79,6 +81,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND
         APPEND
         ORM_CXX_TEST_SOURCES
         database/BackendConformanceTest.cpp
+        database/TemporalBindingTest.cpp
         database/StringLengthTest.cpp
         database/OrmContextTest.cpp
         database/StaticPlanTest.cpp

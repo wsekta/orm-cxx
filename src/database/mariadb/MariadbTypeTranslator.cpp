@@ -15,6 +15,8 @@ namespace orm::db::mariadb
 auto MariadbTypeTranslator::toSqlType(model::ColumnType type,
                                       std::optional<std::size_t> maxStringLength) const -> std::string
 {
+    if (type == model::ColumnType::Uuid)
+        return "UUID";
     return mysql_family::sqlType(type, maxStringLength);
 }
 }

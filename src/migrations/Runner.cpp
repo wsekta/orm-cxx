@@ -19,6 +19,7 @@ module;
 #include <string_view>
 #include <typeinfo>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "soci/soci.h"
@@ -27,6 +28,7 @@ module orm;
 
 import :migrations_internal;
 import :database_numeric;
+import :value_codec;
 
 namespace orm::migrations
 {
@@ -256,11 +258,12 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                      << "SELECT column_name,column_default," +
                             std::string{
                                 postgres ? "data_type,is_nullable,CAST(character_maximum_length AS BIGINT),is_identity,"
-                                           "identity_generation,collation_name,is_generated" :
+                                           "identity_generation,collation_name,is_generated,"
+                                           "CAST(datetime_precision AS BIGINT)" :
                                            "column_type,is_nullable,CAST(character_maximum_length AS SIGNED),extra,"
                                            "'' AS identity_generation,collation_name,"
                                            "CASE WHEN generation_expression IS NULL OR generation_expression='' "
-                                           "THEN 'NEVER' ELSE 'ALWAYS' END"} +
+                                           "THEN 'NEVER' ELSE 'ALWAYS' END,CAST(datetime_precision AS SIGNED)"} +
                             " FROM information_schema.columns WHERE "
                             "table_schema=" +
                             std::string{schema} + " AND table_name=:name",
@@ -284,7 +287,11 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                 const auto identity = row.get<std::string>(5);
                 const auto actualIdentity =
                     postgres ? identity == "YES" : identity.find("auto_increment") != std::string::npos;
+                const bool preciseTemporal = expected->logicalType == model::ColumnType::TimeOfDay ||
+                                             expected->logicalType == model::ColumnType::LocalDateTime ||
+                                             expected->logicalType == model::ColumnType::UtcTimestamp;
                 if (nativeType(row.get<std::string>(2)) != nativeType(expected->sqlType) ||
+                    (preciseTemporal && (row.get_indicator(9) == soci::i_null || row.get<long long>(9) != 6)) ||
                     (row.get<std::string>(3) == "YES") != expected->nullable ||
                     actualIdentity != expected->autoIncrement || row.get<std::string>(8) != "NEVER" ||
                     (postgres && actualIdentity && row.get<std::string>(6) != "BY DEFAULT") ||
@@ -563,11 +570,13 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
     }
 }
 
-auto validateTargetValues(soci::session& session, db::BackendType backend,
+auto validateTargetValues(Database& database, soci::session& session, db::BackendType backend,
                           const MigrationExecutionContext& context) -> void
 {
     if (!context.target)
         return;
+    const auto& runtime = Access::runtime(database);
+    const auto limits = runtime.limits(session);
     for (const auto& table : context.target->tables)
     {
         for (const auto& column : table.columns)
@@ -621,12 +630,61 @@ auto validateTargetValues(soci::session& session, db::BackendType backend,
             case Double:
                 break;
             case String:
+                continue;
             case Date:
             case TimeOfDay:
             case LocalDateTime:
             case UtcTimestamp:
             case Uuid:
+            {
+                soci::rowset<std::string> values =
+                    (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
+                                                    detail::quoteIdentifier(backend, table.name), name));
+                try
+                {
+                    for (const auto& text : values)
+                    {
+                        const auto parsed = [&]() -> query::QueryValue::Value
+                        {
+                            switch (column.logicalType)
+                            {
+                            case Date:
+                                return orm::detail::values::parseDate(text);
+                            case TimeOfDay:
+                                return orm::detail::values::parseTimeOfDay(text);
+                            case LocalDateTime:
+                                return orm::detail::values::parseLocalDateTime(text);
+                            case UtcTimestamp:
+                                return orm::detail::values::parseUtcTimestamp(
+                                    backend == db::BackendType::Postgres ? text : text + "+00:00");
+                            case Uuid:
+                                return orm::Uuid::parse(text);
+                            default:
+                                throw std::invalid_argument{"Unexpected migrated logical value"};
+                            }
+                        }();
+                        const db::BoundValue value{.logicalType = column.logicalType, .value = parsed};
+                        if (!db::binding::isWithinValueLimits(value, database.getBackendCapabilities().valueLimits,
+                                                              limits))
+                            throw std::invalid_argument{"Migrated value exceeds the backend domain"};
+                        std::visit(
+                            [backend](const auto& stored)
+                            {
+                                if constexpr (requires { orm::detail::values::validateNative(stored, backend); })
+                                    orm::detail::values::validateNative(stored, backend);
+                                else
+                                    throw std::invalid_argument{"Unexpected migrated value storage"};
+                            },
+                            parsed);
+                    }
+                }
+                catch (const std::invalid_argument&)
+                {
+                    schemaFailure(std::format("Migrated values are outside the target model domain: {}.{}", table.name,
+                                              column.name));
+                }
                 continue;
+            }
             }
             if (column.logicalType == model::ColumnType::Float || column.logicalType == model::ColumnType::Double)
             {
@@ -898,7 +956,7 @@ auto Runner::execute(Direction direction, std::optional<Version> target) -> void
                 [&]
                 {
                     rebuild.validateAndRestoreSequences();
-                    validateTargetValues(session, backend, context);
+                    validateTargetValues(*database_, session, backend, context);
                 });
             rebuild.restoreAfterCommit(step.version);
         }

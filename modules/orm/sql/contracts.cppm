@@ -8,6 +8,8 @@ module;
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <variant>
 #include <vector>
 
 #include "../../detail/SociTypes.inc"
@@ -135,6 +137,12 @@ export
          * An empty value means that the full C++ range is supported.
          */
         std::optional<unsigned long long> maxUnsignedLongLong;
+        std::optional<Date> minDate{};
+        std::optional<Date> maxDate{};
+        std::optional<LocalDateTime> minLocalDateTime{};
+        std::optional<LocalDateTime> maxLocalDateTime{};
+        std::optional<UtcTimestamp> minUtcTimestamp{};
+        std::optional<UtcTimestamp> maxUtcTimestamp{};
 
         auto operator==(const BackendValueLimits&) const -> bool = default;
     };
@@ -176,11 +184,14 @@ export
     {
         std::optional<std::size_t> maxBindParameters{};
         std::optional<std::size_t> maxIndexBytes{};
+        std::optional<UtcTimestamp> minUtcTimestamp{};
+        std::optional<UtcTimestamp> maxUtcTimestamp{};
 
         auto operator==(const BackendRuntimeLimits&) const -> bool = default;
     };
 }
 } // namespace orm::db
+
 namespace orm::db
 {
 export
@@ -421,3 +432,34 @@ export
     };
 }
 } // namespace orm::db
+
+export namespace orm::db::binding
+{
+inline auto isWithinValueLimits(const BoundValue& bound, const BackendValueLimits& limits,
+                                const BackendRuntimeLimits& runtime = {}) noexcept -> bool
+{
+    if (bound.isNull())
+        return true;
+    if (!query::QueryValue::isCompatibleStorage(bound.logicalType, *bound.value))
+        return false;
+    const auto within = [](const auto& value, const auto& minimum, const auto& maximum)
+    { return (!minimum || value >= *minimum) && (!maximum || value <= *maximum); };
+    return std::visit(
+        [&](const auto& value)
+        {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, Date>)
+                return within(value, limits.minDate, limits.maxDate);
+            else if constexpr (std::is_same_v<T, LocalDateTime>)
+                return within(value, limits.minLocalDateTime, limits.maxLocalDateTime);
+            else if constexpr (std::is_same_v<T, UtcTimestamp>)
+                return within(value, limits.minUtcTimestamp, limits.maxUtcTimestamp) &&
+                       within(value, runtime.minUtcTimestamp, runtime.maxUtcTimestamp);
+            else if constexpr (std::is_same_v<T, unsigned long long>)
+                return !limits.maxUnsignedLongLong || value <= *limits.maxUnsignedLongLong;
+            else
+                return true;
+        },
+        *bound.value);
+}
+}

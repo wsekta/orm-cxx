@@ -33,6 +33,17 @@ function(orm_cxx_expect_compile_failure name source expected_diagnostic)
 endfunction()
 
 orm_cxx_expect_compile_success(public-import-positive PublicImportPositive.cpp)
+orm_cxx_expect_compile_success(temporal-query-positive TemporalQueryPositive.cpp)
+orm_cxx_expect_compile_failure(query-temporal-type-mismatch QueryTemporalTypeMismatch.cpp "ORM_QUERY_VALUE")
+orm_cxx_expect_compile_failure(query-temporal-string QueryTemporalString.cpp "ORM_QUERY_VALUE")
+orm_cxx_expect_compile_failure(query-temporal-precision QueryTemporalPrecision.cpp "ORM_QUERY_VALUE")
+orm_cxx_expect_compile_failure(query-time-of-day-duration QueryTimeOfDayDuration.cpp "ORM_QUERY_VALUE")
+orm_cxx_expect_compile_failure(query-uuid-order QueryUuidOrder.cpp "ORM_QUERY_ORDERABLE")
+orm_cxx_expect_compile_failure(query-uuid-aggregate QueryUuidAggregate.cpp "ORM_QUERY_ORDERABLE")
+orm_cxx_expect_compile_failure(query-temporal-sum QueryTemporalSum.cpp "ORM_QUERY_NUMERIC")
+orm_cxx_expect_compile_failure(
+    schema-temporal-auto-increment SchemaTemporalAutoIncrement.cpp "ORM_MODEL_AUTO_INCREMENT"
+)
 foreach(case Default String Registry)
     orm_cxx_expect_compile_failure("database-construction-${case}" "DatabaseConstruction${case}.cpp" "Database")
 endforeach()

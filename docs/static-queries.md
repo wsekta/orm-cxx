@@ -38,6 +38,16 @@ filter values, nullable fields, model ownership, and writable paths also apply
 to plans. A filter on an optional field takes its scalar type; `std::optional`
 arguments are available for nullable `SET` values.
 
+Native temporal and UUID slots use the same types as their model fields, such
+as `param<orm::Date, 0>()` or `param<orm::Uuid, 0>()`. They retain their logical
+type through parameter collection. `LocalDateTime` and `UtcTimestamp` slots
+are distinct; text and other temporal types cannot substitute for them.
+Backend capabilities and effective runtime bounds are checked on execution,
+including cached SQL. SQLite native types and MySQL UUID fail with
+`UnsupportedFeature` before SQL. Temporal `MIN`/`MAX` and ordering are supported;
+UUID typed ordering, range operations and `MIN`/`MAX` are unavailable.
+See [Value types](value-types.md) for mappings and nullable results.
+
 Clause methods return a new plan. Keep the returned value:
 
 ```cpp

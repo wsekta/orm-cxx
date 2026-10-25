@@ -18,6 +18,8 @@ module;
 
 export module orm:database_numeric;
 
+import :foundation;
+import :value_codec;
 export import :database_soci;
 
 namespace orm::db::binding
@@ -71,6 +73,62 @@ class ConversionError final : public std::runtime_error
 public:
     explicit ConversionError(std::string message) : std::runtime_error{std::move(message)} {}
 };
+
+template <typename T>
+concept SociEncodedValue = IsOneOfTypes<std::remove_cv_t<T>, Date, TimeOfDay, LocalDateTime, UtcTimestamp, Uuid>;
+
+template <SociEncodedValue T>
+auto encodeScalarValue(const T& value) -> std::string
+{
+    try
+    {
+        orm::detail::values::validate(value);
+        return orm::detail::values::format(value);
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw ConversionError{"A value cannot be represented by its logical column type"};
+    }
+}
+
+template <SociEncodedValue T>
+auto decodeScalarValue(std::string_view text) -> T
+{
+    try
+    {
+        if constexpr (std::is_same_v<T, Date>)
+            return orm::detail::values::parseDate(text);
+        else if constexpr (std::is_same_v<T, TimeOfDay>)
+            return orm::detail::values::parseTimeOfDay(text);
+        else if constexpr (std::is_same_v<T, LocalDateTime>)
+            return orm::detail::values::parseLocalDateTime(text);
+        else if constexpr (std::is_same_v<T, UtcTimestamp>)
+            return orm::detail::values::parseUtcTimestamp(text);
+        else
+            return Uuid::parse(text);
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw ConversionError{"A database value cannot be represented by its logical column type"};
+    }
+}
+
+template <SociEncodedValue T>
+auto getEncodedScalarValue(const auto& values, const std::string& name) -> T
+{
+    try
+    {
+        return decodeScalarValue<T>(values.template get<std::string>(name));
+    }
+    catch (const ConversionError&)
+    {
+        throw;
+    }
+    catch (const std::exception&)
+    {
+        throw ConversionError{"A database value has an incompatible result representation"};
+    }
+}
 } // namespace orm::db::binding
 namespace orm::db::binding
 {
@@ -305,11 +363,11 @@ auto parseNumericValue(std::string_view value, std::string_view fieldName) -> Re
 
 template <typename Result, typename Stored>
     requires(std::is_arithmetic_v<Result> and std::is_arithmetic_v<Stored>)
-auto tryGetNumericValue(Result* result, const soci::values& values, const std::string& fieldName) -> bool
+auto tryGetNumericValue(Result* result, const auto& values, const std::string& fieldName) -> bool
 {
     try
     {
-        *result = checkedNumericCast<Result>(values.get<Stored>(fieldName), fieldName);
+        *result = checkedNumericCast<Result>(values.template get<Stored>(fieldName), fieldName);
         return true;
     }
     catch (const ConversionError&)
@@ -324,10 +382,10 @@ auto tryGetNumericValue(Result* result, const soci::values& values, const std::s
 
 template <typename Result>
     requires std::is_arithmetic_v<Result>
-auto getNumericValue(const soci::values& values, const std::string& fieldName) -> Result
+auto getNumericValue(const auto& values, const std::string& fieldName) -> Result
 {
     auto convertStoredValue = [&values, &fieldName]<typename Stored>() -> Result
-    { return checkedNumericCast<Result>(values.get<Stored>(fieldName), fieldName); };
+    { return checkedNumericCast<Result>(values.template get<Stored>(fieldName), fieldName); };
 
     try
     {
@@ -342,7 +400,7 @@ auto getNumericValue(const soci::values& values, const std::string& fieldName) -
         case soci::dt_double:
             return convertStoredValue.template operator()<double>();
         case soci::dt_string:
-            return parseNumericValue<Result>(values.get<std::string>(fieldName), fieldName);
+            return parseNumericValue<Result>(values.template get<std::string>(fieldName), fieldName);
         default:
             throw ConversionError{"Cannot hydrate numeric field: " + fieldName};
         }
@@ -368,7 +426,7 @@ auto getNumericValue(const soci::values& values, const std::string& fieldName) -
 
     try
     {
-        return parseNumericValue<Result>(values.get<std::string>(fieldName), fieldName);
+        return parseNumericValue<Result>(values.template get<std::string>(fieldName), fieldName);
     }
     catch (const ConversionError&)
     {

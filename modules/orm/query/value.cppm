@@ -14,6 +14,7 @@ module;
 export module orm:query_value;
 
 import :foundation;
+import :value_codec;
 
 // query/QueryValue.hpp
 namespace orm::query
@@ -30,7 +31,8 @@ export
     class QueryValue
     {
     public:
-        using Value = std::variant<int, long long, unsigned long long, double, std::string>;
+        using Value = std::variant<int, long long, unsigned long long, double, std::string, Date, TimeOfDay,
+                                   LocalDateTime, UtcTimestamp, Uuid>;
 
         QueryValue(bool inputValue) : logicalType{model::ColumnType::Bool}, value{static_cast<int>(inputValue)} {}
         QueryValue(char inputValue) : logicalType{model::ColumnType::Char}, value{static_cast<int>(inputValue)} {}
@@ -73,6 +75,12 @@ export
         QueryValue(std::string_view inputValue) : logicalType{model::ColumnType::String}, value{std::string{inputValue}}
         {
         }
+
+        QueryValue(Date inputValue) : logicalType{model::ColumnType::Date}, value{inputValue} {}
+        QueryValue(TimeOfDay inputValue) : logicalType{model::ColumnType::TimeOfDay}, value{inputValue} {}
+        QueryValue(LocalDateTime inputValue) : logicalType{model::ColumnType::LocalDateTime}, value{inputValue} {}
+        QueryValue(UtcTimestamp inputValue) : logicalType{model::ColumnType::UtcTimestamp}, value{inputValue} {}
+        QueryValue(Uuid inputValue) : logicalType{model::ColumnType::Uuid}, value{inputValue} {}
 
         template <std::size_t Size>
         QueryValue(const char (&inputValue)[Size])
@@ -145,11 +153,15 @@ export
             case model::ColumnType::String:
                 return std::holds_alternative<std::string>(storedValue);
             case model::ColumnType::Date:
+                return compatibleValue<Date>(storedValue);
             case model::ColumnType::TimeOfDay:
+                return compatibleValue<TimeOfDay>(storedValue);
             case model::ColumnType::LocalDateTime:
+                return compatibleValue<LocalDateTime>(storedValue);
             case model::ColumnType::UtcTimestamp:
+                return compatibleValue<UtcTimestamp>(storedValue);
             case model::ColumnType::Uuid:
-                return false;
+                return compatibleValue<Uuid>(storedValue);
             }
 
             return false;
@@ -168,6 +180,13 @@ export
         auto operator<=>(const QueryValue&) const -> std::partial_ordering = default;
 
     private:
+        template <typename T>
+        static auto compatibleValue(const Value& stored) noexcept -> bool
+        {
+            const auto* typed = std::get_if<T>(&stored);
+            return typed != nullptr && orm::detail::values::valid(*typed);
+        }
+
         struct StorageValueTag
         {
         };

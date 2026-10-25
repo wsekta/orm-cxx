@@ -32,7 +32,7 @@ struct IsOptionalBoundField<std::optional<T>> : std::true_type
 };
 
 template <typename ModelField>
-auto getScalarFieldValue(const soci::values& values, const std::string& fieldName) -> ModelField
+auto getScalarFieldValue(const auto& values, const std::string& fieldName) -> ModelField
 {
     if constexpr (IsOptionalBoundField<ModelField>::value)
     {
@@ -44,13 +44,17 @@ auto getScalarFieldValue(const soci::values& values, const std::string& fieldNam
         using value_type = typename IsOptionalBoundField<ModelField>::value_type;
         return getScalarFieldValue<value_type>(values, fieldName);
     }
+    else if constexpr (SociEncodedValue<ModelField>)
+    {
+        return getEncodedScalarValue<ModelField>(values, fieldName);
+    }
     else if constexpr (std::is_arithmetic_v<ModelField>)
     {
         return getNumericValue<ModelField>(values, fieldName);
     }
     else if constexpr (SociDefaultSupported<ModelField>)
     {
-        return values.get<ModelField>(fieldName);
+        return values.template get<ModelField>(fieldName);
     }
     else
     {
@@ -82,7 +86,7 @@ template <bool JoinedValues>
 
 template <typename Related, typename SchemaType, bool JoinedValues>
 auto hydrateRelated(Related& related, const model::ModelView& owner, const model::ColumnView& relationColumn,
-                    const soci::values& values) -> void
+                    const auto& values) -> void
 {
     using related_t = std::remove_cv_t<Related>;
     auto relatedFields = reflection::fieldPointers(related);
@@ -118,7 +122,7 @@ auto hydrateRelated(Related& related, const model::ModelView& owner, const model
 
 template <typename Related, typename SchemaType, bool JoinedValues>
 [[nodiscard]] auto relatedPrimaryKeyIsPresent(const model::ModelView& owner, const model::ColumnView& relationColumn,
-                                              const soci::values& values) -> bool
+                                              const auto& values) -> bool
 {
     constexpr auto related = model::modelView<SchemaType, Related>();
     bool hasPresentPrimaryKey{};
@@ -155,7 +159,7 @@ struct ObjectFieldFromValues
 {
     template <typename T, typename SchemaType, bool JoinedValues>
     static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>&,
-                    const model::ColumnView& column, const soci::values& values) -> void
+                    const model::ColumnView& column, const auto& values) -> void
     {
         constexpr auto owner = model::modelView<SchemaType, T>();
 
@@ -186,14 +190,14 @@ struct ObjectFieldFromValues
 
     template <typename T, typename SchemaType, bool JoinedValues, std::size_t FieldIndex>
     static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>& payload,
-                    std::integral_constant<std::size_t, FieldIndex>, const soci::values& values) -> void
+                    std::integral_constant<std::size_t, FieldIndex>, const auto& values) -> void
     {
         get(field, payload, payload.template columnDescriptor<FieldIndex>(), values);
     }
 
     template <typename T, typename SchemaType, bool JoinedValues>
     static auto get(ModelField* field, const BindingPayload<T, SchemaType, JoinedValues>& payload,
-                    std::size_t fieldIndex, const soci::values& values) -> void
+                    std::size_t fieldIndex, const auto& values) -> void
     {
         get(field, payload, payload.columnDescriptor(fieldIndex), values);
     }
@@ -245,7 +249,8 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     case model::ColumnType::LocalDateTime:
     case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
-        throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
+        bindTypedNull(values, name, std::string{});
+        return;
     }
 
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
@@ -326,6 +331,10 @@ auto setScalarFieldValue(soci::values& values, const std::string& fieldName, con
         }
 
         setScalarFieldValue(values, fieldName, field.value(), columnType, maxStringLength);
+    }
+    else if constexpr (SociEncodedValue<ModelField>)
+    {
+        values.set(fieldName, encodeScalarValue(field));
     }
     else if constexpr (SociConvertableToDouble<ModelField>)
     {

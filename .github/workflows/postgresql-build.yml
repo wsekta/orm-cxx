@@ -8,6 +8,9 @@ on:
 permissions:
   contents: read
 
+env:
+  TZ: Europe/Warsaw
+
 jobs:
   clang:
     runs-on: ubuntu-24.04

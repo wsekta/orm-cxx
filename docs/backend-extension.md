@@ -175,6 +175,28 @@ largest numeric value a driver can exchange without loss.
 `query.maxOrderedStringLength` requires typed string ordering to use a declared
 column bound no greater than that limit; an empty value imposes no such restriction.
 
+`supportedColumnTypes` governs native `Date`, `TimeOfDay`, `LocalDateTime`,
+`UtcTimestamp` and `Uuid` too. Advertise real native types without implicit
+text, binary or epoch-number fallback. Static temporal bounds belong to
+`BackendValueLimits`; connection/version-dependent bounds belong to
+`BackendRuntimeLimits`. Execution applies their intersection without mutating
+shared providers, including standalone parameters, related keys and static plans.
+
+Preserve all six microsecond digits in binding and hydration. The bundled
+adapters use stable text result buffers and explicit SOCI
+`into(storage, indicator)` followed by logical-type decoding. Avoid dynamic
+`db_date`/`std::tm`, which loses fractions, and result-formatting casts that
+change `DISTINCT` or grouping semantics. Preserve aliases, positions, lifetime
+and null indicators across model/DTO/collection results. Invalid native values
+give `Conversion`; unavailable types give `UnsupportedFeature` before SQL.
+
+Establish temporal session invariants in `onConnect`, repeat them after
+reconnect, and check them in migration hooks before binding history values
+and accepting script success. The bundled profiles use ISO/YMD and UTC for
+PostgreSQL, and UTC/strict mode/explicit timestamp defaults for MySQL/MariaDB.
+UUID equality and keys are supported; typed ordering, range operations and
+`MIN`/`MAX` are intentionally unavailable. See [Value types](value-types.md).
+
 Adapter implementation details include, for example:
 
 - identifier quoting and qualification;

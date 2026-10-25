@@ -208,7 +208,7 @@ TEST(CollectionRelationCoverageTest, hydratedPrimaryKeySupportsEveryStorageCateg
     EXPECT_THROW((void)orm::db::binding::getPrimaryKeyValue(values, "null_value", orm::model::ColumnType::Int),
                  std::runtime_error);
     EXPECT_THROW((void)orm::db::binding::getPrimaryKeyValue(values, "integer", orm::model::ColumnType::Uuid),
-                 std::invalid_argument);
+                 orm::db::binding::ConversionError);
 }
 
 TEST(CollectionRelationCoverageTest, staticRelationViewsResolveTargetsAndInverseJunctions)

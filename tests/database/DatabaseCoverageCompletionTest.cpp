@@ -1186,7 +1186,7 @@ TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackend
     serialized.set("id", 7);
 
     EXPECT_THROW((void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized, schema.at(0)),
-                 std::invalid_argument);
+                 orm::db::binding::ConversionError);
 }
 
 TEST(DatabaseCoverageCompletionTest, modelBindingRejectsToOneColumnWithoutSchemaTarget)

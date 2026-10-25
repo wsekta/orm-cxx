@@ -37,6 +37,7 @@ module;
 module orm;
 
 import :internal;
+import :value_codec;
 
 namespace
 {
@@ -61,31 +62,46 @@ auto serializedBoundValue(const soci::values& values, const std::string& name,
         return orm::db::BoundValue{.logicalType = type, .value = std::move(value)};
     };
 
-    switch (type)
+    try
     {
-    case orm::model::ColumnType::Bool:
-    case orm::model::ColumnType::Char:
-    case orm::model::ColumnType::UnsignedChar:
-    case orm::model::ColumnType::Short:
-    case orm::model::ColumnType::UnsignedShort:
-    case orm::model::ColumnType::Int:
-        return makeValue(values.get<int>(name));
-    case orm::model::ColumnType::UnsignedInt:
-    case orm::model::ColumnType::UnsignedLongLong:
-        return makeValue(values.get<unsigned long long>(name));
-    case orm::model::ColumnType::LongLong:
-        return makeValue(values.get<long long>(name));
-    case orm::model::ColumnType::Float:
-    case orm::model::ColumnType::Double:
-        return makeValue(values.get<double>(name));
-    case orm::model::ColumnType::String:
-        return makeValue(values.get<std::string>(name));
-    case orm::model::ColumnType::Date:
-    case orm::model::ColumnType::TimeOfDay:
-    case orm::model::ColumnType::LocalDateTime:
-    case orm::model::ColumnType::UtcTimestamp:
-    case orm::model::ColumnType::Uuid:
-        break;
+        switch (type)
+        {
+        case orm::model::ColumnType::Bool:
+        case orm::model::ColumnType::Char:
+        case orm::model::ColumnType::UnsignedChar:
+        case orm::model::ColumnType::Short:
+        case orm::model::ColumnType::UnsignedShort:
+        case orm::model::ColumnType::Int:
+            return makeValue(values.get<int>(name));
+        case orm::model::ColumnType::UnsignedInt:
+        case orm::model::ColumnType::UnsignedLongLong:
+            return makeValue(values.get<unsigned long long>(name));
+        case orm::model::ColumnType::LongLong:
+            return makeValue(values.get<long long>(name));
+        case orm::model::ColumnType::Float:
+        case orm::model::ColumnType::Double:
+            return makeValue(values.get<double>(name));
+        case orm::model::ColumnType::String:
+            return makeValue(values.get<std::string>(name));
+        case orm::model::ColumnType::Date:
+            return makeValue(orm::detail::values::parseDate(values.get<std::string>(name)));
+        case orm::model::ColumnType::TimeOfDay:
+            return makeValue(orm::detail::values::parseTimeOfDay(values.get<std::string>(name)));
+        case orm::model::ColumnType::LocalDateTime:
+            return makeValue(orm::detail::values::parseLocalDateTime(values.get<std::string>(name)));
+        case orm::model::ColumnType::UtcTimestamp:
+            return makeValue(orm::detail::values::parseUtcTimestamp(values.get<std::string>(name)));
+        case orm::model::ColumnType::Uuid:
+            return makeValue(orm::Uuid::parse(values.get<std::string>(name)));
+        }
+    }
+    catch (const orm::db::binding::ConversionError&)
+    {
+        throw;
+    }
+    catch (const std::exception&)
+    {
+        throw orm::db::binding::ConversionError{"Serialized model value has an incompatible representation"};
     }
 
     throw std::invalid_argument{"Cannot bind a serialized model value with an unsupported column type: " + name};
@@ -330,9 +346,17 @@ auto detail::requireCollectionTarget(model::ModelView owner, const model::Relati
 }
 
 auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
-                                 const soci::values& serializedModel, model::ModelView descriptor) -> std::size_t
+                                 const soci::values& serializedModel, model::ModelView descriptor,
+                                 const db::BackendValueLimits& valueLimits,
+                                 const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t
 {
     std::size_t parameterCount{};
+    auto bind = [&](std::string_view name, const db::BoundValue& value)
+    {
+        if (!db::binding::isWithinValueLimits(value, valueLimits, runtimeLimits))
+            throw db::binding::ConversionError{"A model value exceeds the backend value limits"};
+        runtime.bind(targetValues, name, value);
+    };
 
     for (const auto& column : descriptor->columns)
     {
@@ -357,16 +381,14 @@ auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values
                 }
 
                 const auto parameterName = std::format("{}_{}", column.name, relatedColumn.name);
-                runtime.bind(targetValues, parameterName,
-                             serializedBoundValue(serializedModel, parameterName, relatedColumn.type.value()));
+                bind(parameterName, serializedBoundValue(serializedModel, parameterName, relatedColumn.type.value()));
                 ++parameterCount;
             }
 
             continue;
         }
 
-        runtime.bind(targetValues, column.name,
-                     serializedBoundValue(serializedModel, std::string{column.name}, column.type.value()));
+        bind(column.name, serializedBoundValue(serializedModel, std::string{column.name}, column.type.value()));
         ++parameterCount;
     }
 
@@ -625,6 +647,8 @@ auto Database::executeMutation(db::StatementView statement, std::string_view ope
     ensureSessionUsable(operation);
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
+    for (const auto& parameter : statement.parameters)
+        ensureBoundValueSupported(parameter.getBoundValue(), operation);
     soci::values parameterValues;
 
     try
@@ -689,6 +713,8 @@ auto Database::executeInsertIfAbsent(const db::Statement& statement, const db::I
     ensureSessionUsable(operation);
     ensureStatementWithinBindLimit(statement.parameters.size(), operation);
     ensureAffectedRowsAvailable(operation);
+    for (const auto& parameter : statement.parameters)
+        ensureBoundValueSupported(parameter.getBoundValue(), operation);
     try
     {
         return getBackend().runtime().executeInsertIfAbsent(sql, db::StatementView{statement.sql, statement.parameters},
@@ -780,6 +806,18 @@ auto Database::ensureSchemaSupported(model::ModelView descriptor, bool includeJu
             case model::ColumnType::UnsignedInt:
                 part = 4;
                 break;
+            case model::ColumnType::Date:
+                part = 3;
+                break;
+            case model::ColumnType::TimeOfDay:
+                part = 6;
+                break;
+            case model::ColumnType::UtcTimestamp:
+                part = 7;
+                break;
+            case model::ColumnType::Uuid:
+                part = 16;
+                break;
             default:
                 part = 8;
                 break;
@@ -838,6 +876,8 @@ auto Database::relationEndpointExists(model::ModelView model, const db::binding:
     }
 
     statement.sql = std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(model->tableName), where);
+    for (const auto& parameter : statement.parameters)
+        ensureBoundValueSupported(parameter.getBoundValue(), "validate relation endpoint");
     ensureStatementWithinBindLimit(statement.parameters.size(), "validate relation endpoint");
     soci::values parameterValues;
     long long count{};
@@ -1018,6 +1058,19 @@ auto Database::ensureModelSupported(model::ModelView descriptor, std::string_vie
     }
 }
 
+auto Database::ensurePredicateSupported(model::ModelView model, const query::detail::Predicate& predicate,
+                                        std::string_view operation) const -> void
+{
+    ensurePredicateSupported(predicate, operation);
+    db::detail::SqlProgram requirements;
+    requirements.shouldJoin = false;
+    query::detail::SelectSpec spec;
+    spec.predicate = predicate;
+    db::commands::RenderContext context{.model = model, .dialect = getBackend().dialect(), .shouldJoin = false};
+    db::commands::appendSelectPredicates(requirements, context, spec);
+    ensureQueryTypesSupported(model, requirements.view(), operation);
+}
+
 auto Database::ensurePredicateSupported(const query::detail::Predicate& predicate,
                                         std::string_view operation) const -> void
 {
@@ -1045,7 +1098,6 @@ auto Database::ensureQuerySupported(model::ModelView descriptor, const query::de
     requirements.shouldJoin = spec.shouldJoin;
     requirements.hasLimit = spec.limit.has_value();
     requirements.hasOffset = spec.offset.has_value();
-    requirements.having = spec.having.has_value() ? 0 : db::detail::noSqlNode;
     for (const auto& order : spec.orderBy)
         requirements.orders.push_back({order.isRaw ? db::detail::SqlSource{} : columnSource(order.column),
                                        order.direction, order.isRaw, order.rawSql});
@@ -1072,9 +1124,66 @@ auto Database::ensureQuerySupported(model::ModelView descriptor, const query::de
     }
     for (const auto& include : spec.includes)
         requirements.includes.push_back(include);
-    if (spec.predicate.has_value() && containsCollectionPredicate(spec.predicate->getNode()))
-        requirements.nodes.push_back(db::detail::SqlNode{.kind = db::detail::SqlNodeKind::Collection});
+    db::commands::RenderContext context{
+        .model = descriptor, .dialect = getBackend().dialect(), .shouldJoin = spec.shouldJoin};
+    db::commands::appendSelectPredicates(requirements, context, spec);
     ensureQuerySupported(descriptor, requirements.view());
+}
+
+auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail::SqlQueryView spec,
+                                         std::string_view operation) const -> void
+{
+    const auto& capabilities = getBackendCapabilities();
+    auto checkSource = [&](const db::detail::SqlSource& source, model::ModelView sourceModel)
+    {
+        if (source.pathSize == 0)
+            return;
+        const auto info = db::detail::resolveSqlColumn(source, sourceModel);
+        requireCapability(info.column->type && capabilities.supportsColumnType(*info.column->type), operation,
+                          "A query column type is not supported by the backend");
+    };
+    auto checkNode = [&](auto&& self, std::size_t index, model::ModelView sourceModel) -> void
+    {
+        if (index == db::detail::noSqlNode || index >= spec.nodes.size())
+            return;
+        const auto& node = spec.nodes[index];
+        if (node.kind == db::detail::SqlNodeKind::Collection)
+        {
+            const auto* relation = detail::requireCollectionRelation(sourceModel, node.relation);
+            const auto target = detail::requireRelationTarget(sourceModel, *relation);
+            for (const auto key : target->primaryKeyIndices)
+                requireCapability(capabilities.supportsColumnType(*target->columns[key].type), operation,
+                                  "A collection key type is not supported by the backend");
+            self(self, node.left, target);
+        }
+        else if (node.kind == db::detail::SqlNodeKind::And || node.kind == db::detail::SqlNodeKind::Or ||
+                 node.kind == db::detail::SqlNodeKind::Not)
+        {
+            self(self, node.left, sourceModel);
+            self(self, node.right, sourceModel);
+        }
+        else if (node.kind != db::detail::SqlNodeKind::Raw)
+            checkSource(node.source, sourceModel);
+    };
+    checkNode(checkNode, spec.predicate, descriptor);
+    checkNode(checkNode, spec.having, descriptor);
+    for (const auto& projection : spec.projections)
+        checkSource(projection.source, descriptor);
+    for (const auto& group : spec.groups)
+        checkSource(group, descriptor);
+    for (const auto& order : spec.orders)
+        if (!order.isRaw)
+            checkSource(order.source, descriptor);
+    if (spec.shouldJoin && spec.projections.empty())
+        for (const auto& column : descriptor->columns)
+            if (column.kind == model::FieldKind::ToOne)
+            {
+                const auto related = detail::requireSupportedRelatedTarget(descriptor, column, backendType, operation);
+                for (const auto& field : related->columns)
+                    if (field.type)
+                        requireCapability(capabilities.supportsColumnType(*field.type), operation,
+                                          "A joined column type is not supported by the backend");
+            }
 }
 
 auto Database::ensureQuerySupported(model::ModelView descriptor, db::detail::SqlQueryView spec) const -> void
@@ -1082,6 +1191,7 @@ auto Database::ensureQuerySupported(model::ModelView descriptor, db::detail::Sql
     ensureModelSupported(descriptor, "select");
     const auto& capabilities = getBackendCapabilities();
     const auto& dialect = getBackend().dialect();
+    ensureQueryTypesSupported(descriptor, spec, "select");
     try
     {
         for (const auto& projection : spec.projections)
@@ -1197,6 +1307,16 @@ auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> 
         throw DatabaseError{DatabaseErrorCode::AffectedRowsUnavailable, backendType, std::string{operation},
                             "The backend cannot report exact affected-row counts"};
     }
+}
+
+auto Database::ensureBoundValueSupported(const db::BoundValue& value, std::string_view operation) -> void
+{
+    const auto& capabilities = getBackendCapabilities();
+    requireCapability(capabilities.supportsColumnType(value.logicalType), operation,
+                      "A bound value type is not supported by the backend");
+    if (!db::binding::isWithinValueLimits(value, capabilities.valueLimits, getBackendRuntimeLimits()))
+        throw DatabaseError{DatabaseErrorCode::Conversion, backendType, std::string{operation},
+                            "A bound value exceeds the backend value limits"};
 }
 
 auto Database::requireCapability(bool supported, std::string_view operation, std::string_view message) const -> void

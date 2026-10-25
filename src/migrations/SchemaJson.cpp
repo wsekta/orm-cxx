@@ -5,6 +5,7 @@ module;
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -14,6 +15,7 @@ module;
 module orm;
 
 import :migrations_internal;
+import :value_codec;
 
 namespace orm::migrations::detail
 {
@@ -141,7 +143,7 @@ auto decodeSchema(const Json& value) -> PhysicalSchema
             requireKeys(column, {"name", "logicalType", "sqlType", "nullable", "maxStringLength", "autoIncrement"});
             if (!column.at("logicalType").is_number_integer() ||
                 column.at("logicalType") < static_cast<int>(model::ColumnType::Bool) ||
-                column.at("logicalType") > static_cast<int>(model::ColumnType::Uuid) ||
+                column.at("logicalType") > static_cast<int>(model::ColumnType::UtcTimestamp) ||
                 (!column.at("maxStringLength").is_null() &&
                  (!column.at("maxStringLength").is_number_integer() || column.at("maxStringLength") < 0)))
             {
@@ -216,8 +218,26 @@ auto transform(const Json& value) -> ColumnTransformation
                 result.constant = GenerationLiteral{item.get<double>()};
             else if (item.is_string())
                 result.constant = GenerationLiteral{item.get<std::string>()};
+            else if (item.is_object())
+            {
+                requireKeys(item, {"type", "value"});
+                const auto type = item.at("type").get<std::string>();
+                const auto text = item.at("value").get<std::string>();
+                if (type == "date")
+                    result.constant = orm::detail::values::parseDate(text);
+                else if (type == "time_of_day")
+                    result.constant = orm::detail::values::parseTimeOfDay(text);
+                else if (type == "local_date_time")
+                    result.constant = orm::detail::values::parseLocalDateTime(text);
+                else if (type == "utc_timestamp")
+                    result.constant = orm::detail::values::parseUtcTimestamp(text);
+                else if (type == "uuid")
+                    result.constant = orm::Uuid::parse(text);
+                else
+                    throw MigrationError{ErrorCode::InvalidCatalog, "Unknown typed backfill constant"};
+            }
             else
-                throw MigrationError{ErrorCode::InvalidCatalog, "A backfill constant must be a scalar"};
+                throw MigrationError{ErrorCode::InvalidCatalog, "A backfill constant must be a scalar or typed value"};
         }
         else if (key == "sourceColumn")
         {
@@ -262,6 +282,10 @@ auto parseMetadata(std::string_view text, Function&& function)
     catch (const GenerationError&)
     {
         throw MigrationError{ErrorCode::InvalidCatalog, "Invalid physical schema in migration metadata"};
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw MigrationError{ErrorCode::InvalidCatalog, "Invalid typed migration value"};
     }
 }
 } // namespace

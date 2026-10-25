@@ -17,6 +17,8 @@ import :dynamic_query;
 import :static_plan;
 import :sql;
 import :database;
+import :value_codec;
+import :migrations_internal;
 
 namespace
 {
@@ -82,7 +84,13 @@ TEST(PostgresqlBackendTest, exposesPostgresqlIdentityAndCapabilities)
     EXPECT_TRUE(capabilities.relations.compositeEndpointKeys);
     EXPECT_TRUE(capabilities.transactions);
     EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::String));
-    EXPECT_FALSE(capabilities.supportsColumnType(orm::model::ColumnType::Uuid));
+    EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::Uuid));
+    EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::Date));
+    EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::TimeOfDay));
+    EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::LocalDateTime));
+    EXPECT_TRUE(capabilities.supportsColumnType(orm::model::ColumnType::UtcTimestamp));
+    EXPECT_EQ(capabilities.valueLimits.minDate,
+              (std::optional<orm::Date>{orm::Date{std::chrono::year{1}, std::chrono::month{1}, std::chrono::day{1}}}));
     ASSERT_TRUE(capabilities.valueLimits.maxUnsignedLongLong.has_value());
     EXPECT_EQ(capabilities.valueLimits.maxUnsignedLongLong.value(),
               static_cast<unsigned long long>(std::numeric_limits<long long>::max()));
@@ -195,6 +203,39 @@ TEST(PostgresqlBackendTest, runtimeRejectsMismatchedStringStorageAndAcceptsNullT
     EXPECT_EQ(values.get_indicator("missing_text"), soci::i_null);
 }
 
+TEST(PostgresqlBackendTest, nativeValuesBindAsLosslessTextWithAnExplicitUtcOffset)
+{
+    const orm::db::postgresql::PostgresqlBackend backend;
+    soci::values values;
+    const std::array<std::pair<orm::model::ColumnType, orm::query::QueryValue::Value>, 5> inputs{{
+        {orm::model::ColumnType::Date, orm::detail::values::parseDate("2024-02-29")},
+        {orm::model::ColumnType::TimeOfDay, orm::detail::values::parseTimeOfDay("23:59:59.123456")},
+        {orm::model::ColumnType::LocalDateTime, orm::detail::values::parseLocalDateTime("2024-02-29 23:59:59.123456")},
+        {orm::model::ColumnType::UtcTimestamp,
+         orm::detail::values::parseUtcTimestamp("2024-02-29 23:59:59.123456+00:00")},
+        {orm::model::ColumnType::Uuid, orm::Uuid::parse("123e4567-e89b-12d3-a456-426655440000")},
+    }};
+    const std::array<std::string_view, 5> expected{"2024-02-29", "23:59:59.123456", "2024-02-29 23:59:59.123456",
+                                                   "2024-02-29 23:59:59.123456+00:00",
+                                                   "123e4567-e89b-12d3-a456-426655440000"};
+    for (std::size_t index = 0; index < inputs.size(); ++index)
+    {
+        const auto& [type, value] = inputs[index];
+        const auto name = "value_" + std::to_string(index);
+        backend.runtime().bind(values, name, {.logicalType = type, .value = value});
+        EXPECT_EQ(values.get<std::string>(name), expected[index]);
+        const auto nullName = "null_" + std::to_string(index);
+        backend.runtime().bind(values, nullName, {.logicalType = type, .value = std::nullopt});
+        EXPECT_EQ(values.get_indicator(nullName), soci::i_null);
+        EXPECT_THROW(backend.runtime().bind(values, "mismatch", {.logicalType = type, .value = std::string{"text"}}),
+                     orm::db::binding::ConversionError);
+    }
+    const auto invalidDate = orm::Date{std::chrono::year{2024}, std::chrono::month{2}, std::chrono::day{30}};
+    EXPECT_THROW(backend.runtime().bind(values, "invalid_date",
+                                        {.logicalType = orm::model::ColumnType::Date, .value = invalidDate}),
+                 orm::db::binding::ConversionError);
+}
+
 TEST(PostgresqlBackendTest, runtimeMapsSqlStateClassesAndReturnsSanitizedErrors)
 {
     const orm::db::postgresql::PostgresqlBackend backend;
@@ -221,6 +262,8 @@ TEST(PostgresqlBackendTest, runtimeMapsSqlStateClassesAndReturnsSanitizedErrors)
     expectSqlState("57P03", orm::DatabaseErrorCode::Connection);
     expectSqlState("57P04", orm::DatabaseErrorCode::Connection);
     expectSqlState("23505", orm::DatabaseErrorCode::Constraint);
+    expectSqlState("22008", orm::DatabaseErrorCode::Conversion);
+    expectSqlState("22P02", orm::DatabaseErrorCode::Conversion);
     expectSqlState("25006", orm::DatabaseErrorCode::Transaction);
     expectSqlState("40001", orm::DatabaseErrorCode::Transaction);
     expectSqlState("57014", orm::DatabaseErrorCode::Statement);
@@ -256,3 +299,101 @@ TEST(PostgresqlBackendTest, runtimeTranslatesPortableSociCategoriesWithoutInvent
     expectCode(soci::soci_error::invalid_statement, orm::DatabaseErrorCode::Statement);
     expectCode(soci::soci_error::unknown, orm::DatabaseErrorCode::Statement);
 }
+
+namespace
+{
+class PostgresqlNativeTemporalTest : public DatabaseTest<>
+{
+public:
+    auto session() -> soci::session&
+    {
+        return orm::migrations::detail::DatabaseAccess::session(connection);
+    }
+    auto runtime() -> const orm::db::BackendRuntime&
+    {
+        return orm::migrations::detail::DatabaseAccess::runtime(connection);
+    }
+};
+}
+
+TEST_P(PostgresqlNativeTemporalTest, NativeTextExchangeKeepsMicrosecondsUtcAndUuid)
+{
+    std::string style;
+    std::string zone;
+    session() << "SELECT current_setting('DateStyle'),current_setting('TimeZone')", soci::into(style), soci::into(zone);
+    EXPECT_EQ(style, "ISO, YMD");
+    EXPECT_EQ(zone, "UTC");
+    session() << "CREATE TABLE native_temporal_transport(d DATE,t TIME(6) WITHOUT TIME ZONE,"
+                 "l TIMESTAMP(6) WITHOUT TIME ZONE,u TIMESTAMP(6) WITH TIME ZONE,id UUID PRIMARY KEY)";
+    soci::values input;
+    runtime().bind(
+        input, "d",
+        {.logicalType = orm::model::ColumnType::Date, .value = orm::detail::values::parseDate("2024-02-29")});
+    runtime().bind(input, "t",
+                   {.logicalType = orm::model::ColumnType::TimeOfDay,
+                    .value = orm::detail::values::parseTimeOfDay("23:59:59.123456")});
+    runtime().bind(input, "l",
+                   {.logicalType = orm::model::ColumnType::LocalDateTime,
+                    .value = orm::detail::values::parseLocalDateTime("2024-02-29 23:59:59.123456")});
+    runtime().bind(input, "u",
+                   {.logicalType = orm::model::ColumnType::UtcTimestamp,
+                    .value = orm::detail::values::parseUtcTimestamp("2024-02-29 23:59:59.123456+00:00")});
+    runtime().bind(input, "id",
+                   {.logicalType = orm::model::ColumnType::Uuid,
+                    .value = orm::Uuid::parse("123e4567-e89b-12d3-a456-426655440000")});
+    session() << "INSERT INTO native_temporal_transport VALUES(:d,:t,:l,:u,:id)", soci::use(input);
+    std::string date;
+    std::string time;
+    std::string local;
+    std::string utc;
+    std::string uuid;
+    session() << "SELECT d,t,l,u,id FROM native_temporal_transport", soci::into(date), soci::into(time),
+        soci::into(local), soci::into(utc), soci::into(uuid);
+    EXPECT_EQ(date, "2024-02-29");
+    EXPECT_EQ(time, "23:59:59.123456");
+    EXPECT_EQ(local, "2024-02-29 23:59:59.123456");
+    EXPECT_EQ(orm::detail::values::parseUtcTimestamp(utc),
+              orm::detail::values::parseUtcTimestamp("2024-02-29 23:59:59.123456+00:00"));
+    EXPECT_EQ(uuid, "123e4567-e89b-12d3-a456-426655440000");
+    session()
+        << "CREATE TABLE native_uuid_child(id INT PRIMARY KEY,owner UUID REFERENCES native_temporal_transport(id))";
+    soci::values owner;
+    runtime().bind(owner, "owner", {.logicalType = orm::model::ColumnType::Uuid, .value = orm::Uuid::parse(uuid)});
+    session() << "INSERT INTO native_uuid_child VALUES(1,:owner)", soci::use(owner);
+    int count{};
+    session() << "SELECT COUNT(*) FROM native_uuid_child", soci::into(count);
+    EXPECT_EQ(count, 1);
+    connection.disconnect();
+    connectTestDatabase(connection);
+    session() << "SELECT current_setting('DateStyle'),current_setting('TimeZone')", soci::into(style), soci::into(zone);
+    EXPECT_EQ(style, "ISO, YMD");
+    EXPECT_EQ(zone, "UTC");
+}
+
+TEST_P(PostgresqlNativeTemporalTest, MigrationGuardsRejectNonIsoDatesAndNonUtcSessions)
+{
+    for (const auto setting : {"SET DateStyle TO 'SQL, DMY'", "SET TimeZone TO 'Europe/Warsaw'"})
+    {
+        session() << std::string{setting};
+        EXPECT_THROW(runtime().validateMigrationSession(session()), orm::migrations::MigrationError);
+        runtime().onConnect(session());
+        EXPECT_NO_THROW(runtime().validateMigrationSession(session()));
+        const auto history = runtime().migrationTable(session());
+        runtime().beginMigration(session(), history);
+        EXPECT_THROW(runtime().executeMigrationScript(session(), setting), orm::migrations::MigrationError);
+        session().rollback();
+        EXPECT_NO_THROW(runtime().validateMigrationSession(session()));
+    }
+}
+
+INSTANTIATE_TEST_SUITE_P(DatabaseTest, PostgresqlNativeTemporalTest,
+                         ::testing::ValuesIn(
+                             []
+                             {
+                                 std::vector<BackendTestConfig> result;
+                                 if constexpr (orm::test::config::postgresqlIntegrationEnabled)
+                                     result.push_back({orm::db::BackendType::Postgres, "Postgresql", true});
+                                 return result;
+                             }()),
+                         orm::test::fixtures::backendTestName);
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(PostgresqlNativeTemporalTest);

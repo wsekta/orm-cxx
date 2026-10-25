@@ -31,6 +31,72 @@ struct PackageSummary
 };
 using PackageSchema = orm::Schema<PackageModel>;
 
+struct PackageTemporalValues
+{
+    int id;
+    orm::Date date;
+    orm::TimeOfDay time;
+    orm::LocalDateTime local;
+    std::optional<orm::UtcTimestamp> instant;
+};
+
+struct PackageTemporalSummary
+{
+    std::optional<orm::UtcTimestamp> instant;
+    orm::LocalDateTime local;
+};
+
+struct PackageUuidValue
+{
+    orm::Uuid id;
+};
+
+auto nativeValuesSmoke(orm::Database& database) -> void
+{
+    using namespace orm::query;
+    const auto& capabilities = database.getBackendCapabilities();
+    if (capabilities.supportsColumnType(orm::model::ColumnType::LocalDateTime))
+    {
+        auto context = database.orm<orm::Schema<PackageTemporalValues>>();
+        context.createTable<PackageTemporalValues>();
+        const orm::Date date{std::chrono::year{2024}, std::chrono::February, std::chrono::day{29}};
+        const orm::TimeOfDay time{std::chrono::hours{12} + std::chrono::microseconds{123456}};
+        const orm::LocalDateTime local{std::chrono::local_days{date} + time.sinceMidnight()};
+        const orm::UtcTimestamp instant{std::chrono::sys_days{date} + std::chrono::hours{10} +
+                                        std::chrono::microseconds{1}};
+        context.insert(PackageTemporalValues{1, date, time, local, instant});
+        constexpr auto lookup = select<PackageTemporalValues>().where(col<&PackageTemporalValues::local>() ==
+                                                                      param<orm::LocalDateTime, 0>());
+        const auto rows = context.select(lookup, local);
+        if (rows.size() != 1 || rows.front().date != date || rows.front().time != time || rows.front().local != local ||
+            rows.front().instant != instant)
+            throw std::runtime_error{"Installed native temporal round trip failed"};
+        constexpr auto projected = selectAs<PackageTemporalValues, PackageTemporalSummary>(
+            as<"local">(col<&PackageTemporalValues::local>()), as<"instant">(col<&PackageTemporalValues::instant>()));
+        const auto summaries = context.select(projected);
+        if (summaries.size() != 1 || summaries.front().instant != instant || summaries.front().local != local)
+            throw std::runtime_error{"Installed native temporal projection failed"};
+        constexpr auto clear = update<PackageTemporalValues>()
+                                   .set(col<&PackageTemporalValues::instant>(), std::nullopt)
+                                   .where(col<&PackageTemporalValues::id>() == 1);
+        if (context.update(clear) != 1 || context.select(lookup, local).front().instant.has_value())
+            throw std::runtime_error{"Installed nullable temporal update failed"};
+        context.deleteTable<PackageTemporalValues>();
+    }
+    if (capabilities.supportsColumnType(orm::model::ColumnType::Uuid))
+    {
+        auto context = database.orm<orm::Schema<PackageUuidValue>>();
+        context.createTable<PackageUuidValue>();
+        const auto uuid = orm::Uuid::parse("00112233-4455-4677-8899-aabbccddeeff");
+        context.insert(PackageUuidValue{uuid});
+        constexpr auto lookup = select<PackageUuidValue>().where(col<&PackageUuidValue::id>() == param<orm::Uuid, 0>());
+        const auto rows = context.select(lookup, uuid);
+        if (rows.size() != 1 || rows.front().id != uuid)
+            throw std::runtime_error{"Installed native UUID round trip failed"};
+        context.deleteTable<PackageUuidValue>();
+    }
+}
+
 static_assert(not orm::test::config::expectedSqliteBackend.has_value() or
               orm::config::sqliteBackendEnabled == *orm::test::config::expectedSqliteBackend);
 static_assert(not orm::test::config::expectedPostgresqlBackend.has_value() or
@@ -115,6 +181,7 @@ void databaseSmoke(const BackendProbe& probe, const Config& config)
         throw std::runtime_error("Installed delete failed");
     }
     context.deleteTable<PackageModel>();
+    nativeValuesSmoke(database);
     database.disconnect();
 }
 

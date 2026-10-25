@@ -64,6 +64,11 @@ auto codeFromSqlState(std::string_view sqlState, orm::DatabaseErrorCode fallback
         return orm::DatabaseErrorCode::Constraint;
     }
 
+    if (sqlState.starts_with("22"))
+    {
+        return orm::DatabaseErrorCode::Conversion;
+    }
+
     if (sqlState.starts_with("25") or sqlState.starts_with("40"))
     {
         return orm::DatabaseErrorCode::Transaction;
@@ -130,22 +135,8 @@ public:
 
     auto executeMigrationScript(soci::session& session, std::string_view script) const -> void override
     {
-        const auto settings = [&session]
-        {
-            std::array<std::string, 4> values;
-            session << "SELECT "
-                       "current_setting('search_path'),current_setting('role'),current_setting('session_authorization')"
-                       ",current_setting('standard_conforming_strings')",
-                soci::into(values[0]), soci::into(values[1]), soci::into(values[2]), soci::into(values[3]);
-            return values;
-        };
-        const auto before = settings();
-        if (before[3] != "on")
-        {
-            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidSql,
-                                                  "Migration SQL requires standard_conforming_strings=on", 0,
-                                                  orm::db::BackendType::Postgres};
-        }
+        const auto before = migrationSettings(session);
+        validateMigrationSettings(before);
         auto* handle = static_cast<soci::postgresql_session_backend*>(session.get_backend())->conn_;
         const std::string sql{script};
         auto* result = PQexec(handle, sql.c_str());
@@ -167,7 +158,7 @@ public:
                                                   "Migration transaction ended unexpectedly", 0,
                                                   orm::db::BackendType::Postgres};
         }
-        if (settings() != before)
+        if (migrationSettings(session) != before)
         {
             throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidSql,
                                                   "Migration SQL changed connection settings", 0,
@@ -255,7 +246,16 @@ public:
         }
     }
 
-    auto onConnect(soci::session& /*session*/) const -> void override {}
+    auto onConnect(soci::session& session) const -> void override
+    {
+        session << "SET DateStyle TO 'ISO, YMD'";
+        session << "SET TimeZone TO 'UTC'";
+    }
+
+    auto validateMigrationSession(soci::session& session) const -> void override
+    {
+        validateMigrationSettings(migrationSettings(session));
+    }
 
     [[nodiscard]] auto
     statementErrorInvalidatesTransaction(const soci::soci_error& error) const noexcept -> bool override
@@ -300,6 +300,16 @@ public:
 
     auto bind(soci::values& values, std::string_view name, const orm::db::BoundValue& value) const -> void override
     {
+        if (value.logicalType == orm::model::ColumnType::Date ||
+            value.logicalType == orm::model::ColumnType::TimeOfDay ||
+            value.logicalType == orm::model::ColumnType::LocalDateTime ||
+            value.logicalType == orm::model::ColumnType::UtcTimestamp ||
+            value.logicalType == orm::model::ColumnType::Uuid)
+        {
+            if (not orm::db::binding::hasCompatibleStorage(value))
+                throw orm::db::binding::ConversionError{"Native value storage does not match its logical column type"};
+            // PostgreSQL accepts the complete finite ORM domain; the canonical storage check validates it.
+        }
         if (value.logicalType == orm::model::ColumnType::String)
         {
             if (not orm::db::binding::hasCompatibleStorage(value))
@@ -389,6 +399,26 @@ public:
         return orm::DatabaseError{code, orm::db::BackendType::Postgres, operationName,
                                   "PostgreSQL operation failed: " + operationName, std::move(nativeCode)};
     }
+
+private:
+    static auto migrationSettings(soci::session& session) -> std::array<std::string, 6>
+    {
+        std::array<std::string, 6> values;
+        session << "SELECT current_setting('search_path'),current_setting('role'),"
+                   "current_setting('session_authorization'),current_setting('standard_conforming_strings'),"
+                   "current_setting('DateStyle'),current_setting('TimeZone')",
+            soci::into(values[0]), soci::into(values[1]), soci::into(values[2]), soci::into(values[3]),
+            soci::into(values[4]), soci::into(values[5]);
+        return values;
+    }
+
+    static auto validateMigrationSettings(const std::array<std::string, 6>& values) -> void
+    {
+        if (values[3] != "on" || values[4] != "ISO, YMD" || values[5] != "UTC")
+            throw orm::migrations::MigrationError{orm::migrations::ErrorCode::InvalidSql,
+                                                  "Migration SQL requires the backend's connection settings", 0,
+                                                  orm::db::BackendType::Postgres};
+    }
 };
 
 auto postgresqlCapabilities() -> orm::db::BackendCapabilities
@@ -441,6 +471,18 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
         .valueLimits =
             {
                 .maxUnsignedLongLong = static_cast<unsigned long long>(std::numeric_limits<long long>::max()),
+                .minDate = orm::Date{std::chrono::year{1}, std::chrono::month{1}, std::chrono::day{1}},
+                .maxDate = orm::Date{std::chrono::year{9999}, std::chrono::month{12}, std::chrono::day{31}},
+                .minLocalDateTime = orm::LocalDateTime{std::chrono::local_days{
+                    orm::Date{std::chrono::year{1}, std::chrono::month{1}, std::chrono::day{1}}}},
+                .maxLocalDateTime = orm::LocalDateTime{std::chrono::local_days{orm::Date{
+                                        std::chrono::year{9999}, std::chrono::month{12}, std::chrono::day{31}}}} +
+                                    std::chrono::hours{24} - std::chrono::microseconds{1},
+                .minUtcTimestamp = orm::UtcTimestamp{std::chrono::sys_days{
+                    orm::Date{std::chrono::year{1}, std::chrono::month{1}, std::chrono::day{1}}}},
+                .maxUtcTimestamp = orm::UtcTimestamp{std::chrono::sys_days{orm::Date{
+                                       std::chrono::year{9999}, std::chrono::month{12}, std::chrono::day{31}}}} +
+                                   std::chrono::hours{24} - std::chrono::microseconds{1},
             },
         .migrations = {.supported = true, .atomicity = orm::db::MigrationAtomicity::WholeMigration},
         .supportedColumnTypes =
@@ -457,6 +499,11 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
                 ColumnType::Float,
                 ColumnType::Double,
                 ColumnType::String,
+                ColumnType::Date,
+                ColumnType::TimeOfDay,
+                ColumnType::LocalDateTime,
+                ColumnType::UtcTimestamp,
+                ColumnType::Uuid,
             },
         .transactions = true,
     };

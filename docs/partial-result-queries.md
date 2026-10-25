@@ -205,6 +205,17 @@ Projection DTOs are flat result objects. Supported DTO field types are the
 scalar types already supported by model binding plus `std::optional<T>` for SQL
 `NULL` values.
 
+This includes `orm::Date`, `orm::TimeOfDay`, `orm::LocalDateTime`,
+`orm::UtcTimestamp` and `orm::Uuid` on supporting backends. Project into the
+same logical type as the source column; native values are not implicitly
+converted to strings or to another temporal type. Temporal `MIN`/`MAX` retain
+that type; use `std::optional<T>` when an empty input can return `NULL`.
+`COUNT` uses its existing integer result type. UUID `MIN`/`MAX` and typed
+ordering are unavailable. Result hydration preserves six fractional digits
+without adding formatting expressions to the query, so `DISTINCT`, grouping
+and native ordering keep their original SQL semantics. See
+[Value types](value-types.md).
+
 Alias validation is part of the public contract:
 
 * every DTO field must have exactly one projection alias,

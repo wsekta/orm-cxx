@@ -47,7 +47,7 @@ export
     {
         using base_type = values;
 
-        [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/,
+        [[maybe_unused]] static void from_base(const auto& values, indicator /*ind*/,
                                                BindingPayload<T, SchemaType, JoinedValues>& model)
         {
             auto& modelValue = model.value;
@@ -108,7 +108,7 @@ export
         using base_type = values;
 
         [[maybe_unused]] static void
-        from_base(const soci::values& values, indicator ind,
+        from_base(const auto& values, indicator ind,
                   orm::db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>& payload)
         {
             orm::db::binding::BindingPayload<Target, SchemaType, JoinedValues> targetPayload{};
@@ -150,8 +150,7 @@ export
     {
         using base_type = values;
 
-        [[maybe_unused]] static void from_base(const soci::values& values, indicator /*ind*/,
-                                               ProjectionPayload<T>& payload)
+        [[maybe_unused]] static void from_base(const auto& values, indicator /*ind*/, ProjectionPayload<T>& payload)
         {
             auto resultAsTuple = orm::reflection::fieldPointers(payload.value);
             constexpr auto fields = orm::reflection::fields<T>();
@@ -195,7 +194,9 @@ inline auto bindStatementParameters(const db::BackendRuntime& runtime, soci::val
 }
 
 auto bindModelParameters(const db::BackendRuntime& runtime, soci::values& targetValues,
-                         const soci::values& serializedModel, model::ModelView model) -> std::size_t;
+                         const soci::values& serializedModel, model::ModelView model,
+                         const db::BackendValueLimits& valueLimits = {},
+                         const db::BackendRuntimeLimits& runtimeLimits = {}) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireCollectionRelation(model::ModelView owner,
@@ -335,8 +336,16 @@ export
                     detail::validateProjectionAliases<typename Plan::Result>(requirements.projections);
                 database_->ensureQuerySupported(descriptor, requirements);
                 const auto parameters = query::detail::collectParameters(plan, values);
+                auto resultColumns = [&]
+                {
+                    if constexpr (Plan::isProjection)
+                        return db::binding::projectionResultColumns<typename Plan::Result>(descriptor,
+                                                                                           requirements.projections);
+                    else
+                        return db::binding::modelResultColumns(descriptor, Plan::shouldJoin);
+                }();
                 return executeSelectStatement<typename Plan::Model, typename Plan::Result, Plan::isProjection>(
-                    db::StatementView{compiled.view(), parameters}, Plan::shouldJoin,
+                    db::StatementView{compiled.view(), parameters}, Plan::shouldJoin, std::move(resultColumns),
                     [&](auto& rows)
                     {
                         (void)rows;
@@ -359,6 +368,7 @@ export
                     std::ranges::any_of(requirements.nodes, [](const auto& node)
                                         { return node.kind == db::detail::SqlNodeKind::Collection; }),
                     operation);
+                database_->ensureQueryTypesSupported(descriptor, requirements, operation);
                 const auto parameters = query::detail::collectParameters(plan, values);
                 if constexpr (Plan::operation == query::detail::PlanOperation::Update)
                     for (const auto& assignment : requirements.assignments)
@@ -376,6 +386,7 @@ export
             const auto statement = database_->getCommandGenerator().select(descriptor, query.getData());
             return executeSelectStatement<T, T, false>(
                 db::StatementView{statement.sql, statement.parameters}, query.getData().shouldJoin,
+                db::binding::modelResultColumns(descriptor, query.getData().shouldJoin),
                 [&](auto& rows) { loadIncludedCollections<>(descriptor, query.getData(), rows); });
         }
 
@@ -385,12 +396,14 @@ export
             constexpr auto descriptor = model::modelView<SchemaType, Source>();
             database_->ensureQuerySupported(descriptor, query.getData());
             const auto statement = database_->getCommandGenerator().select(descriptor, query.getData());
-            return executeSelectStatement<Source, Result, true>(db::StatementView{statement.sql, statement.parameters},
-                                                                query.getData().shouldJoin, [](auto&) {});
+            return executeSelectStatement<Source, Result, true>(
+                db::StatementView{statement.sql, statement.parameters}, query.getData().shouldJoin,
+                db::binding::projectionResultColumns<Result>(descriptor, query.getData().projections), [](auto&) {});
         }
 
         template <typename Source, typename Result, bool Projection, typename Loader>
         auto executeSelectStatement(db::StatementView statement, bool shouldJoin,
+                                    std::vector<db::binding::ResultColumn> resultColumns,
                                     Loader loadIncludes) -> std::vector<Result>
         {
             constexpr auto operation = Projection ? "select projection" : "select";
@@ -398,24 +411,65 @@ export
             std::vector<Result> result;
             try
             {
+                std::optional<db::binding::TypedResultStorage> storage;
+                if (db::binding::hasEncodedResult(resultColumns))
+                    storage.emplace(std::move(resultColumns));
                 soci::values parameterValues;
+                for (const auto& parameter : statement.parameters)
+                    database_->ensureBoundValueSupported(parameter.getBoundValue(), operation);
                 detail::bindStatementParameters(database_->getBackend().runtime(), parameterValues,
                                                 statement.parameters);
                 if constexpr (Projection)
                 {
-                    soci::rowset<db::binding::ProjectionPayload<Result>> rows =
-                        (database_->sql.prepare << statement.sql, soci::use(parameterValues));
-                    for (auto& payload : rows)
-                        result.push_back(std::move(payload.value));
+                    if (storage)
+                    {
+                        storage->read(
+                            database_->sql, statement.sql, parameterValues,
+                            [&](const auto& row)
+                            {
+                                db::binding::ProjectionPayload<Result> payload{};
+                                soci::type_conversion<db::binding::ProjectionPayload<Result>>::from_base(
+                                    row, soci::i_ok, payload);
+                                result.push_back(std::move(payload.value));
+                            },
+                            database_->backendType, [&](const db::BoundValue& value)
+                            { database_->ensureBoundValueSupported(value, operation); });
+                    }
+                    else
+                    {
+                        soci::rowset<db::binding::ProjectionPayload<Result>> rows =
+                            (database_->sql.prepare << statement.sql, soci::use(parameterValues));
+                        for (auto& payload : rows)
+                            result.push_back(std::move(payload.value));
+                    }
                 }
                 else
                 {
                     auto readRows = [&]<bool Joined>()
                     {
-                        soci::rowset<db::binding::BindingPayload<Source, SchemaType, Joined>> rows =
-                            (database_->sql.prepare << statement.sql, soci::use(parameterValues));
-                        for (auto& payload : rows)
-                            result.push_back(std::move(payload.value));
+                        if (storage)
+                        {
+                            storage->read(
+                                database_->sql, statement.sql, parameterValues,
+                                [&](const auto& row)
+                                {
+                                    db::binding::BindingPayload<Source, SchemaType, Joined> payload{};
+                                    soci::type_conversion<
+                                        db::binding::BindingPayload<Source, SchemaType, Joined>>::from_base(row,
+                                                                                                            soci::i_ok,
+                                                                                                            payload);
+                                    result.push_back(std::move(payload.value));
+                                },
+                                database_->backendType, [&](const db::BoundValue& value)
+                                { database_->ensureBoundValueSupported(value, operation); });
+                        }
+                        else
+                        {
+                            soci::rowset<db::binding::BindingPayload<Source, SchemaType, Joined>> rows =
+                                (database_->sql.prepare << statement.sql, soci::use(parameterValues));
+                            for (auto& payload : rows)
+                                result.push_back(std::move(payload.value));
+                        }
                     };
                     if (shouldJoin)
                         readRows.template operator()<true>();
@@ -479,8 +533,9 @@ export
                                                                                            indicator);
 
                 soci::values parameterValues;
-                const auto parameterCount = detail::bindModelParameters(database_->getBackend().runtime(),
-                                                                        parameterValues, serializedModel, model);
+                const auto parameterCount = detail::bindModelParameters(
+                    database_->getBackend().runtime(), parameterValues, serializedModel, model,
+                    database_->getBackendCapabilities().valueLimits, database_->getBackendRuntimeLimits());
                 database_->ensureStatementWithinBindLimit(parameterCount, "insert");
 
                 if (parameterCount == 0)
@@ -519,7 +574,7 @@ export
                                          "update is not supported");
             if (update.getData().predicate.has_value())
             {
-                database_->ensurePredicateSupported(*update.getData().predicate, "update");
+                database_->ensurePredicateSupported(model, *update.getData().predicate, "update");
             }
             for (const auto& assignment : update.getData().assignments)
                 database_->ensureStringValueSupported(
@@ -545,7 +600,7 @@ export
             database_->ensureModelSupported(model, "remove");
             database_->requireCapability(database_->getBackendCapabilities().mutations.remove, "remove",
                                          "remove is not supported");
-            database_->ensurePredicateSupported(predicate, "remove");
+            database_->ensurePredicateSupported(model, predicate, "remove");
             const auto statement = database_->getCommandGenerator().remove(model, predicate);
 
             return database_->executeMutation(statement, "remove");
@@ -726,7 +781,32 @@ export
         {
             database_->ensureStatementWithinBindLimit(statement.parameters.size(), "include collection");
             soci::values parameterValues;
+            for (const auto& parameter : statement.parameters)
+                database_->ensureBoundValueSupported(parameter.getBoundValue(), "include collection");
             detail::bindStatementParameters(database_->getBackend().runtime(), parameterValues, statement.parameters);
+            constexpr auto owner = model::modelView<SchemaType, Owner>();
+            std::vector<db::binding::ResultColumn> columns;
+            for (const auto* column : db::binding::getPrimaryKeyColumns(owner))
+                columns.push_back({db::binding::relationOwnerAlias(*column), column->type.value()});
+            auto targetColumns = db::binding::modelResultColumns(model::modelView<SchemaType, Target>(), JoinedValues);
+            for (auto& column : targetColumns)
+                columns.push_back(std::move(column));
+            if (db::binding::hasEncodedResult(columns))
+            {
+                db::binding::TypedResultStorage storage{std::move(columns)};
+                storage.read(
+                    database_->sql, statement.sql, parameterValues,
+                    [&](const auto& row)
+                    {
+                        db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues> payload{};
+                        soci::type_conversion<db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>>::
+                            from_base(row, soci::i_ok, payload);
+                        groupedTargets[payload.ownerKey].push_back(std::move(payload.value));
+                    },
+                    database_->backendType, [&](const db::BoundValue& value)
+                    { database_->ensureBoundValueSupported(value, "include collection"); });
+                return;
+            }
             soci::rowset<db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>> preparedRowSet =
                 (database_->sql.prepare << statement.sql, soci::use(parameterValues));
 

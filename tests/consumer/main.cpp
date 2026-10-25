@@ -34,6 +34,43 @@ struct GlobalConsumerModel
 
 using GlobalConsumerSchema = orm::Schema<GlobalConsumerModel>;
 
+struct ConsumerNativeValues
+{
+    orm::Uuid id;
+    orm::Date date;
+    orm::TimeOfDay time;
+    orm::LocalDateTime local;
+    std::optional<orm::UtcTimestamp> instant;
+};
+
+struct ConsumerNativeProjection
+{
+    orm::Uuid id;
+    std::optional<orm::UtcTimestamp> instant;
+};
+
+[[maybe_unused]] auto checkNativeValueApi(orm::Database& database, const ConsumerNativeValues& value) -> void
+{
+    using namespace orm::query;
+    auto context = database.orm<orm::Schema<ConsumerNativeValues>>();
+    context.insert(value);
+    orm::Query<ConsumerNativeValues> query;
+    query
+        .where((col<&ConsumerNativeValues::date>() == value.date) && (col<&ConsumerNativeValues::time>() >= value.time))
+        .orderBy(asc(col<&ConsumerNativeValues::local>()));
+    (void)context.select(query);
+    constexpr auto projected =
+        selectAs<ConsumerNativeValues, ConsumerNativeProjection>(as<"instant">(col<&ConsumerNativeValues::instant>()),
+                                                                 as<"id">(col<&ConsumerNativeValues::id>()))
+            .where(col<&ConsumerNativeValues::id>() == param<orm::Uuid, 0>());
+    (void)context.select(projected, value.id);
+    constexpr auto change =
+        update<ConsumerNativeValues>()
+            .set(col<&ConsumerNativeValues::instant>(), param<std::optional<orm::UtcTimestamp>, 0>())
+            .where(col<&ConsumerNativeValues::id>() == param<orm::Uuid, 1>());
+    (void)context.update(change, value.instant, value.id);
+}
+
 static_assert(orm::reflection::fieldName<GlobalConsumerModel, 0>() == "id");
 static_assert(orm::modelView<GlobalConsumerSchema, GlobalConsumerModel>()->tableName == "GlobalConsumerModel");
 static_assert(orm::modelView<consumer_models::Schema, consumer_models::ConsumerModel>()->tableName ==

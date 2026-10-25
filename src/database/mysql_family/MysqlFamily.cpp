@@ -3,6 +3,7 @@ module;
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <chrono>
 #include <cstddef>
 #include <format>
 #include <limits>
@@ -12,17 +13,20 @@ module;
 #include <string>
 #include <string_view>
 #include <utility>
+#include <variant>
 #include <vector>
 
 #include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
 #include "soci/mysql/soci-mysql.h"
 #include "soci/soci.h"
+#include "TemporalProfile.hpp"
 
 module orm;
 
 import :internal;
 import :connection_config;
+import :value_codec;
 
 namespace orm::db::mysql_family
 {
@@ -186,9 +190,13 @@ auto sqlType(model::ColumnType type, std::optional<std::size_t> maxStringLength)
         }
         return "LONGTEXT";
     case Date:
+        return "DATE";
     case TimeOfDay:
+        return "TIME(6)";
     case LocalDateTime:
+        return "DATETIME(6)";
     case UtcTimestamp:
+        return "TIMESTAMP(6)";
     case Uuid:
         break;
     }
@@ -254,8 +262,17 @@ auto capabilities() -> BackendCapabilities
     result.mutations.affectedRows = AffectedRowsSupport::Reliable;
     result.relations = {true, true, true, true, true, true, true};
     result.migrations = {true, MigrationAtomicity::NonTransactional};
-    result.supportedColumnTypes = {Bool,        Char,     UnsignedChar,     Short, UnsignedShort, Int,
-                                   UnsignedInt, LongLong, UnsignedLongLong, Float, Double,        String};
+    result.supportedColumnTypes = {Bool,        Char,      UnsignedChar,     Short,       UnsignedShort, Int,
+                                   UnsignedInt, LongLong,  UnsignedLongLong, Float,       Double,        String,
+                                   Date,        TimeOfDay, LocalDateTime,    UtcTimestamp};
+    result.valueLimits.minDate = orm::Date{std::chrono::year{1000}, std::chrono::month{1}, std::chrono::day{1}};
+    result.valueLimits.maxDate = orm::Date{std::chrono::year{9999}, std::chrono::month{12}, std::chrono::day{31}};
+    result.valueLimits.minLocalDateTime = orm::LocalDateTime{std::chrono::local_days{*result.valueLimits.minDate}};
+    result.valueLimits.maxLocalDateTime = orm::LocalDateTime{std::chrono::local_days{*result.valueLimits.maxDate}} +
+                                          std::chrono::hours{24} - std::chrono::microseconds{500001};
+    result.valueLimits.minUtcTimestamp = orm::UtcTimestamp{std::chrono::seconds{1}};
+    result.valueLimits.maxUtcTimestamp =
+        orm::UtcTimestamp{std::chrono::seconds{2'147'483'647}} + std::chrono::microseconds{499999};
     result.transactions = true;
     return result;
 }
@@ -433,6 +450,14 @@ public:
     {
         return maxIndexBytes_;
     }
+    auto setUtcTimestampLimit(orm::UtcTimestamp value) -> void
+    {
+        maxUtcTimestamp_ = value;
+    }
+    [[nodiscard]] auto utcTimestampLimit() const noexcept -> std::optional<orm::UtcTimestamp>
+    {
+        return maxUtcTimestamp_;
+    }
     auto is_connected() -> bool override
     {
         return connectionHandle() != nullptr && native_->is_connected();
@@ -553,6 +578,7 @@ private:
     }
     bool transactionActive_ = false;
     std::optional<std::size_t> maxIndexBytes_;
+    std::optional<orm::UtcTimestamp> maxUtcTimestamp_;
     std::vector<std::string> linkLocks_;
     std::unique_ptr<soci::details::session_backend> native_;
 };
@@ -633,6 +659,10 @@ public:
         {
             throw std::invalid_argument{"Connected server does not match the selected backend"};
         }
+        const auto [maxTimestampSeconds, maxTimestampFraction] = orm_mysql_temporal::timestampMaximum(version, maria);
+        static_cast<SessionBackend*>(session.get_backend())
+            ->setUtcTimestampLimit(orm::UtcTimestamp{std::chrono::seconds{maxTimestampSeconds}} +
+                                   std::chrono::microseconds{maxTimestampFraction});
         const auto collation = type_ == BackendType::Mariadb ? "utf8mb4_nopad_bin" : "utf8mb4_0900_bin";
         if (orm_mysql_native::calls().setCharacterSet(handle(session), "utf8mb4") != 0)
         {
@@ -644,6 +674,8 @@ public:
                    "'STRICT_TRANS_TABLES,ONLY_FULL_GROUP_BY,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'";
         session << "SET SESSION foreign_key_checks = 1";
         session << "SET SESSION autocommit = 1";
+        session << "SET SESSION time_zone = '+00:00'";
+        session << "SET SESSION explicit_defaults_for_timestamp = ON";
         if (type_ == BackendType::Mariadb)
             session << "SET SESSION max_sort_length = 65536";
         // This global setting is fixed when the server starts, so querying it per SQL operation is unnecessary.
@@ -664,7 +696,9 @@ public:
     auto limits(soci::session& session) const -> BackendRuntimeLimits override
     {
         return {.maxBindParameters = std::nullopt,
-                .maxIndexBytes = static_cast<SessionBackend*>(session.get_backend())->indexByteLimit()};
+                .maxIndexBytes = static_cast<SessionBackend*>(session.get_backend())->indexByteLimit(),
+                .minUtcTimestamp = orm::UtcTimestamp{std::chrono::seconds{1}},
+                .maxUtcTimestamp = static_cast<SessionBackend*>(session.get_backend())->utcTimestampLimit()};
     }
     auto normalizeAffectedRows(long long value) const -> std::size_t override
     {
@@ -683,6 +717,44 @@ public:
     }
     auto bind(soci::values& values, std::string_view name, const BoundValue& value) const -> void override
     {
+        if (value.logicalType == model::ColumnType::Date || value.logicalType == model::ColumnType::TimeOfDay ||
+            value.logicalType == model::ColumnType::LocalDateTime ||
+            value.logicalType == model::ColumnType::UtcTimestamp || value.logicalType == model::ColumnType::Uuid)
+        {
+            if (value.logicalType == model::ColumnType::Uuid && type_ != BackendType::Mariadb)
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, type_, "bind",
+                                    "The backend does not support native UUID values"};
+            if (not binding::hasCompatibleStorage(value))
+                throw binding::ConversionError{"Native value storage does not match its logical column type"};
+            if (not value.isNull())
+            {
+                try
+                {
+                    std::visit(
+                        [this](const auto& stored)
+                        {
+                            if constexpr (requires { orm::detail::values::validateNative(stored, type_); })
+                                orm::detail::values::validateNative(stored, type_);
+                        },
+                        *value.value);
+                }
+                catch (const std::invalid_argument&)
+                {
+                    throw binding::ConversionError{"Value is outside the backend's native type range"};
+                }
+            }
+            if (value.logicalType == model::ColumnType::UtcTimestamp)
+            {
+                // TIMESTAMP interprets a local literal in the UTC ORM session. PostgreSQL's offset syntax is
+                // not accepted by every supported MySQL-family server.
+                BoundValue wire{.logicalType = model::ColumnType::String, .value = std::nullopt};
+                if (not value.isNull())
+                    wire.value = query::QueryValue::Value{
+                        orm::detail::values::format(std::get<orm::UtcTimestamp>(*value.value), false)};
+                binding::bindBoundValue(values, name, wire);
+                return;
+            }
+        }
         binding::bindBoundValue(values, name, value);
     }
     auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
@@ -714,7 +786,7 @@ public:
             else if (number == 1045 || number == 1049 || number == 2002 || number == 2003 || number == 2006 ||
                      number == 2013)
                 code = DatabaseErrorCode::Connection;
-            else if (number == 1264 || number == 1366 || number == 1406)
+            else if (number == 1264 || number == 1292 || number == 1366 || number == 1406 || number == 1441)
                 code = DatabaseErrorCode::Conversion;
         }
         else if (const auto* lockError = dynamic_cast<const LinkLockError*>(&error);
@@ -1004,21 +1076,21 @@ private:
                                              0, type_};
         }
     }
-    static auto settings(soci::session& session) -> std::array<std::string, 9>
+    static auto settings(soci::session& session) -> std::array<std::string, 11>
     {
-        std::array<std::string, 9> result;
+        std::array<std::string, 11> result;
         session << "SELECT "
                    "COALESCE(DATABASE(),''),@@SESSION.sql_mode,@@SESSION.character_set_client,@@SESSION.character_set_"
                    "connection,"
                    "COALESCE(@@SESSION.character_set_results,''),@@SESSION.collation_connection,@@SESSION.foreign_key_"
                    "checks,@@SESSION."
-                   "autocommit,@@SESSION.max_sort_length",
+                   "autocommit,@@SESSION.max_sort_length,@@SESSION.time_zone,@@SESSION.explicit_defaults_for_timestamp",
             soci::into(result[0]), soci::into(result[1]), soci::into(result[2]), soci::into(result[3]),
             soci::into(result[4]), soci::into(result[5]), soci::into(result[6]), soci::into(result[7]),
-            soci::into(result[8]);
+            soci::into(result[8]), soci::into(result[9]), soci::into(result[10]);
         return result;
     }
-    auto validateMigrationSettings(const std::array<std::string, 9>& current) const -> void
+    auto validateMigrationSettings(const std::array<std::string, 11>& current) const -> void
     {
         if (current[0].empty())
         {
@@ -1033,9 +1105,10 @@ private:
         const auto collation = type_ == BackendType::Mariadb ? "utf8mb4_nopad_bin" : "utf8mb4_0900_bin";
         if (hasMode("ANSI_QUOTES") || hasMode("NO_BACKSLASH_ESCAPES") || !hasMode("STRICT_TRANS_TABLES") ||
             !hasMode("ONLY_FULL_GROUP_BY") || !hasMode("NO_ENGINE_SUBSTITUTION") ||
-            !hasMode("ERROR_FOR_DIVISION_BY_ZERO") || current[2] != "utf8mb4" || current[3] != "utf8mb4" ||
-            current[4] != "utf8mb4" || current[5] != collation || current[6] != "1" || current[7] != "1" ||
-            (type_ == BackendType::Mariadb && current[8] != "65536"))
+            !hasMode("ERROR_FOR_DIVISION_BY_ZERO") || hasMode("ORACLE") || hasMode("MAXDB") ||
+            current[2] != "utf8mb4" || current[3] != "utf8mb4" || current[4] != "utf8mb4" || current[5] != collation ||
+            current[6] != "1" || current[7] != "1" || (type_ == BackendType::Mariadb && current[8] != "65536") ||
+            current[9] != "+00:00" || current[10] != "1")
         {
             throw migrations::MigrationError{migrations::ErrorCode::InvalidSql,
                                              "Migration SQL requires the backend's connection settings", 0, type_};

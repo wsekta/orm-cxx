@@ -70,11 +70,15 @@ auto PostgresqlTypeTranslator::toSqlType(model::ColumnType type,
         return maxStringLength ? std::format("VARCHAR({})", *maxStringLength) : "TEXT";
 
     case model::ColumnType::Date:
+        return "DATE";
     case model::ColumnType::TimeOfDay:
+        return "TIME(6) WITHOUT TIME ZONE";
     case model::ColumnType::LocalDateTime:
+        return "TIMESTAMP(6) WITHOUT TIME ZONE";
     case model::ColumnType::UtcTimestamp:
+        return "TIMESTAMP(6) WITH TIME ZONE";
     case model::ColumnType::Uuid:
-        break;
+        return "UUID";
     }
 
     throw std::runtime_error{"Unsupported type by PostgreSQL " + orm::model::toString(type)};

@@ -92,6 +92,8 @@ for client dependencies, authentication, TLS and live-test setup.
 - [Models](docs/model.md): aggregate reflection, scalar and nullable fields,
   typed names, closed schemas, composite and generated keys.
 - [Database operations](docs/database.md): CRUD, stable errors and transactions.
+- [Date, time and UUID values](docs/value-types.md): native columns and nullable
+  parameters, microsecond precision, UTC/local semantics and backend ranges.
 - [Queries](docs/query.md), [DTO projections](docs/partial-result-queries.md) and
   [immutable plans](docs/static-queries.md): typed predicates, bound values,
   grouping and reusable SQL shapes.

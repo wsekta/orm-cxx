@@ -9,6 +9,7 @@ module;
 #include <optional>
 #include <ranges>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -19,6 +20,7 @@ module;
 module orm;
 
 import :migrations_internal;
+import :value_codec;
 
 namespace
 {
@@ -188,6 +190,45 @@ auto floatingSql(double value) -> std::string
     return std::string{buffer, result.ptr};
 }
 
+template <typename T>
+auto nativeLiteralSql(const T& item, const PhysicalColumn& column, Backend backend) -> std::string
+{
+    constexpr auto type = []
+    {
+        if constexpr (std::is_same_v<T, orm::Date>)
+            return orm::model::ColumnType::Date;
+        else if constexpr (std::is_same_v<T, orm::TimeOfDay>)
+            return orm::model::ColumnType::TimeOfDay;
+        else if constexpr (std::is_same_v<T, orm::LocalDateTime>)
+            return orm::model::ColumnType::LocalDateTime;
+        else if constexpr (std::is_same_v<T, orm::UtcTimestamp>)
+            return orm::model::ColumnType::UtcTimestamp;
+        else
+            return orm::model::ColumnType::Uuid;
+    }();
+    if (column.logicalType != type)
+        generationFailure("invalid-literal", "Literal does not match the target logical type", column.name, backend);
+    try
+    {
+        orm::detail::values::validateNative(item, backend);
+        const auto text = [&]
+        {
+            if constexpr (std::is_same_v<T, orm::UtcTimestamp>)
+                return orm::detail::values::format(item, backend == Backend::Postgres);
+            else
+                return orm::detail::values::format(item);
+        }();
+        if constexpr (std::is_same_v<T, orm::Uuid>)
+            return "'" + text + "'" + (backend == Backend::Postgres ? "::uuid" : "");
+        else
+            return backend == Backend::Postgres ? "CAST('" + text + "' AS " + column.sqlType + ")" : "'" + text + "'";
+    }
+    catch (const std::invalid_argument&)
+    {
+        generationFailure("invalid-literal", "Literal is outside the target backend domain", column.name, backend);
+    }
+}
+
 auto literalSql(const GenerationLiteral& value, const PhysicalColumn& column, Backend backend) -> std::string
 {
     return std::visit(
@@ -200,27 +241,25 @@ auto literalSql(const GenerationLiteral& value, const PhysicalColumn& column, Ba
                     generationFailure("invalid-literal", "NULL cannot fill a required column", column.name, backend);
                 return "NULL";
             }
+            else if constexpr (std::is_same_v<T, orm::Date> || std::is_same_v<T, orm::TimeOfDay> ||
+                               std::is_same_v<T, orm::LocalDateTime> || std::is_same_v<T, orm::UtcTimestamp> ||
+                               std::is_same_v<T, orm::Uuid>)
+            {
+                return nativeLiteralSql(item, column, backend);
+            }
             else if constexpr (std::is_same_v<T, std::string>)
             {
                 if (column.logicalType == orm::model::ColumnType::Uuid)
                 {
-                    const bool valid =
-                        item.size() == 36 &&
-                        std::ranges::all_of(std::views::iota(std::size_t{}, item.size()),
-                                            [&](std::size_t index)
-                                            {
-                                                if (index == 8 || index == 13 || index == 18 || index == 23)
-                                                    return item[index] == '-';
-                                                const auto character = item[index];
-                                                return (character >= '0' && character <= '9') ||
-                                                       (character >= 'a' && character <= 'f') ||
-                                                       (character >= 'A' && character <= 'F');
-                                            });
-                    if (backend != Backend::Postgres || !valid)
-                        generationFailure("invalid-literal",
-                                          "UUID literals require canonical UUID text and a PostgreSQL target",
-                                          column.name, backend);
-                    return "'" + item + "'::uuid";
+                    try
+                    {
+                        return nativeLiteralSql(orm::Uuid::parse(item), column, backend);
+                    }
+                    catch (const std::invalid_argument&)
+                    {
+                        generationFailure("invalid-literal", "UUID literal requires canonical UUID text", column.name,
+                                          backend);
+                    }
                 }
                 if (column.logicalType != orm::model::ColumnType::String)
                     generationFailure("invalid-literal", "String literal requires a string target", column.name,

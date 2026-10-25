@@ -112,6 +112,7 @@ private:
                                std::string_view operation) -> std::size_t;
     auto executeSql(std::string_view statement, std::string_view operation) -> void;
     auto ensureSessionUsable(std::string_view operation) const -> void;
+    auto ensureBoundValueSupported(const db::BoundValue& value, std::string_view operation) -> void;
     auto ensureDdlSupported(std::string_view operation) const -> void;
     auto ensureSchemaSupported(model::ModelView model, bool includeJunctions, std::string_view operation) -> void;
     auto ensureStringValueSupported(const model::ColumnView& column, const std::optional<query::QueryValue>& value,
@@ -128,6 +129,10 @@ private:
     auto ensureModelSupported(model::ModelView model, std::string_view operation) const -> void;
     auto ensureQuerySupported(model::ModelView model, const query::detail::SelectSpec& spec) const -> void;
     auto ensureQuerySupported(model::ModelView model, db::detail::SqlQueryView query) const -> void;
+    auto ensureQueryTypesSupported(model::ModelView model, db::detail::SqlQueryView query,
+                                   std::string_view operation) const -> void;
+    auto ensurePredicateSupported(model::ModelView model, const query::detail::Predicate& predicate,
+                                  std::string_view operation) const -> void;
     auto ensurePredicateSupported(const query::detail::Predicate& predicate, std::string_view operation) const -> void;
     auto ensurePredicateSupported(bool containsCollection, std::string_view operation) const -> void;
     auto ensureAffectedRowsAvailable(std::string_view operation) const -> void;

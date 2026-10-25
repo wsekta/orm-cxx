@@ -69,12 +69,17 @@ real, and text affinities. PostgreSQL uses `BOOLEAN`, width-appropriate
 `SMALLINT`/`INTEGER`/`BIGINT`, `DOUBLE PRECISION`, and `TEXT`. MySQL and MariaDB
 use native signed/unsigned integer types, `DOUBLE`, and `LONGTEXT` or bounded
 `VARCHAR`. See the
-[backend matrix](backends.md) for backend-specific limits and semantics. Types
-outside this list are not supported as scalar columns.
+[backend matrix](backends.md) for backend-specific limits and semantics.
 
-The standalone [date, time and UUID value types](value-types.md) are available
-through `import orm;`, but their model-column and query support is not yet
-implemented.
+The [date, time and UUID types](value-types.md) are additional native scalars:
+`orm::Date`, `orm::TimeOfDay`, `orm::LocalDateTime` and `orm::UtcTimestamp`
+are supported by PostgreSQL, MySQL and MariaDB; `orm::Uuid` is supported by
+PostgreSQL and MariaDB. Their optional forms, manual/composite primary keys
+and foreign keys use the same model metadata. SQLite rejects these native
+types, and MySQL rejects UUID, before SQL; no text or binary emulation is used.
+Temporal precision is fixed at six fractional digits. Values outside the
+calendar, time-of-day or effective backend range give `Conversion`.
+Other types are not supported as scalar columns.
 
 SQLite and PostgreSQL exchange the widest integer values through signed
 64-bit storage. Consequently, `unsigned long long` and 64-bit `unsigned long`
@@ -124,8 +129,10 @@ struct User {
 };
 ```
 
-Non-optional fields are generated as `NOT NULL`. Optional fields are generated
-without `NOT NULL`, and `std::nullopt` is stored and read back as SQL `NULL`.
+Non-optional fields are generated as `NOT NULL`. Optional fields are nullable,
+and `std::nullopt` is stored and read back as SQL `NULL`. Nullable timestamp
+declarations in MySQL/MariaDB explicitly retain nullability; `NULL` is never
+interpreted as the current time.
 
 ## Table name
 
@@ -375,5 +382,6 @@ Model metadata supports to-one fields and explicitly mapped `OneToMany` and
 `ManyToMany` collection fields. Mapping definitions are compile-time values;
 the old runtime `string`/`string_view`, `vector`, and `map` metadata forms are
 not accepted. It does not support nested collection loading, junction models
-with payload fields, ordered relations, custom converters, date/time fields,
-UUID fields, or `boost::optional`.
+with payload fields, ordered relations, custom converters, or `boost::optional`.
+Native date/time and UUID fields follow the capability and range contract in
+[Value types](value-types.md).

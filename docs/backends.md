@@ -35,6 +35,8 @@ intentional differences before SQL execution.
 | --- | --- | --- | --- | --- |
 | Build mode | Explicit opt-in | Explicit opt-in | Explicit opt-in | Explicit opt-in |
 | Scalar and nullable fields | Portable contract | Portable contract | Portable contract | Portable contract |
+| Native date/time/local datetime/UTC timestamp | Rejected | Native, `(6)` precision | Native, `(6)` precision | Native, `(6)` precision |
+| Native UUID | Rejected | Supported | Rejected | Supported |
 | Manual, composite and generated integer keys | Supported | Supported | Supported | Supported |
 | CRUD and exact affected rows | Supported | Supported | Supported | Supported |
 | Projections and aggregate projections | Supported | Supported | Supported | Supported |
@@ -103,8 +105,9 @@ and batches collection loading accordingly. The runtime reports this value
 through `BackendRuntimeLimits`; applications should not hard-code it.
 
 SQLite does not have native UUID, date, or time column types. Those types are not
-part of the current portable model contract. Converter semantics will be defined
-only after a backend with meaningful native types is implemented.
+emulated: models and parameters using them fail with `UnsupportedFeature` before
+SQL, including optional fields set to `NULL`. The numeric/string contract
+remains available. See [Value types](value-types.md) for other native mappings.
 
 ## PostgreSQL
 
@@ -158,8 +161,7 @@ There are deliberate v1 exclusions:
   backend-specific raw order when explicit NULL placement is required;
 - PostgreSQL `LIKE` is case-sensitive, while SQLite's default ASCII `LIKE` is
   case-insensitive; the ORM preserves each backend's native behavior;
-- UUID, date, time, binary/blob, converter, async, and connection-pool
-  APIs are not included;
+- binary/blob, custom converter, async and connection-pool APIs are not included;
 - model table names are double-quoted identifiers, not schema-qualified paths;
   choose an application schema through PostgreSQL `search_path`;
 - table, column, relation, and generated alias identifiers must fit PostgreSQL's
@@ -179,6 +181,15 @@ PostgreSQL aborts an explicit transaction after a statement error. The ORM
 tracks that state: `commitTransaction()` returns
 `DatabaseErrorCode::Transaction`, and the application must call
 `rollbackTransaction()` before continuing.
+
+Native `Date`, `TimeOfDay`, `LocalDateTime`, `UtcTimestamp` and `Uuid` use
+the model, query, DTO and relation APIs. Temporal precision is `(6)` and dates
+are restricted to years 0001–9999. Local datetimes map to `TIMESTAMP WITHOUT
+TIME ZONE`, UTC instants to `TIMESTAMP WITH TIME ZONE`. Sessions establish
+`DateStyle = ISO, YMD` and `TimeZone = UTC`, including reconnect. Infinity, BC,
+invalid dates and `24:00:00` fail conversion. UUID equality and keys are
+available; typed ordering/range predicates and `MIN`/`MAX` are unavailable.
+See [Value types](value-types.md).
 
 Live tests require a dedicated database role that may create and drop schemas.
 Each test creates a random `orm_cxx_test_...` schema, sets it as `search_path`,
@@ -224,10 +235,16 @@ ORM sessions use InnoDB,
 `utf8mb4`, a binary no-pad collation, strict SQL mode including
 `ONLY_FULL_GROUP_BY`, foreign-key checks and explicit autocommit. Automatic
 reconnection is rejected because it would discard transaction state and locks.
+Sessions also establish `time_zone = '+00:00'` and
+`explicit_defaults_for_timestamp = ON`; nullable timestamps retain SQL `NULL`.
+The ORM adds no automatic timestamp defaults or updates. Migration guards
+protect these settings.
 
 | Contract area | MySQL | MariaDB |
 | --- | --- | --- |
 | Scalar and nullable fields, CRUD, projections, generated/composite keys | Supported | Supported |
+| Native date/time/local datetime/UTC timestamp | Supported, `(6)` precision | Supported, `(6)` precision |
+| Native UUID | Rejected | Supported |
 | To-one, one-to-many and many-to-many relations | Supported | Supported |
 | Grouped projections | Strict grouping | Strict grouping |
 | Full-model grouping | Rejected | Rejected |
@@ -256,6 +273,15 @@ Both adapters implement [versioned SQL migrations](schema-migrations.md),
 including session locks, checksums and explicit recovery of failed migrations.
 MySQL-family DDL cannot be rolled back; read the migration recovery contract
 before applying schema changes.
+
+`Date`/`LocalDateTime` begin at year 1000. `TimeOfDay` restricts native `TIME`
+to `[0, 24h)`. `UtcTimestamp` uses `TIMESTAMP(6)` in the UTC session, with a
+2038 upper bound for MySQL and MariaDB before 11.5; newer MariaDB uses a 2106
+upper bound negotiated from the actual server version. MySQL's declared
+fractional maxima are conservative `.499999` limits; MariaDB uses `.999999`.
+See [Value types](value-types.md) for exact endpoints. MySQL never falls back
+to binary/text UUID. MariaDB UUID has additional version/variant restrictions
+and no typed SQL ordering contract.
 
 The selected Oracle client supports MySQL's default `caching_sha2_password` and
 MariaDB's default `mysql_native_password`. `MysqlConfig` and `MariadbConfig` expose the same optional host, port,

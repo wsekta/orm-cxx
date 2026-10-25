@@ -35,12 +35,15 @@ TEST(PostgresqlTypeTranslatorTest, translatesEverySupportedColumnType)
     EXPECT_EQ(translator.toSqlType(ColumnType::Float), "DOUBLE PRECISION");
     EXPECT_EQ(translator.toSqlType(ColumnType::Double), "DOUBLE PRECISION");
     EXPECT_EQ(translator.toSqlType(ColumnType::String), "TEXT");
+    EXPECT_EQ(translator.toSqlType(ColumnType::Date), "DATE");
+    EXPECT_EQ(translator.toSqlType(ColumnType::TimeOfDay), "TIME(6) WITHOUT TIME ZONE");
+    EXPECT_EQ(translator.toSqlType(ColumnType::LocalDateTime), "TIMESTAMP(6) WITHOUT TIME ZONE");
+    EXPECT_EQ(translator.toSqlType(ColumnType::UtcTimestamp), "TIMESTAMP(6) WITH TIME ZONE");
+    EXPECT_EQ(translator.toSqlType(ColumnType::Uuid), "UUID");
 }
 
 TEST(PostgresqlTypeTranslatorTest, rejectsUnsupportedColumnTypes)
 {
-    EXPECT_THROW((void)translator.toSqlType(orm::model::ColumnType::Uuid), std::runtime_error);
-
     const auto invalidColumnType =
         static_cast<orm::model::ColumnType>(999); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     EXPECT_THROW((void)translator.toSqlType(invalidColumnType), std::runtime_error);

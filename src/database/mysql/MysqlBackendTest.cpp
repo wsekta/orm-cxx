@@ -30,6 +30,10 @@ TEST(MysqlBackendTest, advertisesEqualCapabilitiesWithBackendSpecificAtomicity)
     EXPECT_FALSE(backend.capabilities().valueLimits.maxUnsignedLongLong.has_value());
     EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::String));
     EXPECT_FALSE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Uuid));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Date));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::TimeOfDay));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::LocalDateTime));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::UtcTimestamp));
     soci::session session;
     const orm::PostgresConfig mismatched;
     EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{mismatched}), orm::DatabaseError);
@@ -56,15 +60,17 @@ TEST(MysqlBackendTest, preservesFullUnsignedRangeAndNullBinding)
 TEST(MysqlBackendTest, normalizesNativeErrorsWithoutLeakingDriverMessage)
 {
     const orm::db::mysql::MysqlBackend backend;
-    const std::array<std::pair<int, orm::DatabaseErrorCode>, 9> cases{{{1062, orm::DatabaseErrorCode::Constraint},
-                                                                       {1452, orm::DatabaseErrorCode::Constraint},
-                                                                       {1213, orm::DatabaseErrorCode::Transaction},
-                                                                       {1205, orm::DatabaseErrorCode::Transaction},
-                                                                       {1045, orm::DatabaseErrorCode::Connection},
-                                                                       {2006, orm::DatabaseErrorCode::Connection},
-                                                                       {1264, orm::DatabaseErrorCode::Conversion},
-                                                                       {1406, orm::DatabaseErrorCode::Conversion},
-                                                                       {1064, orm::DatabaseErrorCode::Statement}}};
+    const std::array<std::pair<int, orm::DatabaseErrorCode>, 11> cases{{{1062, orm::DatabaseErrorCode::Constraint},
+                                                                        {1452, orm::DatabaseErrorCode::Constraint},
+                                                                        {1213, orm::DatabaseErrorCode::Transaction},
+                                                                        {1205, orm::DatabaseErrorCode::Transaction},
+                                                                        {1045, orm::DatabaseErrorCode::Connection},
+                                                                        {2006, orm::DatabaseErrorCode::Connection},
+                                                                        {1264, orm::DatabaseErrorCode::Conversion},
+                                                                        {1292, orm::DatabaseErrorCode::Conversion},
+                                                                        {1441, orm::DatabaseErrorCode::Conversion},
+                                                                        {1406, orm::DatabaseErrorCode::Conversion},
+                                                                        {1064, orm::DatabaseErrorCode::Statement}}};
     for (const auto& [number, code] : cases)
     {
         const soci::mysql_soci_error native{"password=secret", number};

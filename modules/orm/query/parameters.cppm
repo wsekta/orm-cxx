@@ -73,8 +73,14 @@ inline constexpr bool numericScalar =
     std::is_arithmetic_v<std::remove_cvref_t<T>> && !std::same_as<std::remove_cvref_t<T>, bool> &&
     requires { model::LogicalTypeTraits<std::remove_cvref_t<T>>::value; };
 template <typename T>
-inline constexpr bool supportedScalar =
-    numericScalar<T> || std::same_as<std::remove_cvref_t<T>, bool> || std::same_as<std::remove_cvref_t<T>, std::string>;
+inline constexpr bool temporalScalar =
+    std::same_as<std::remove_cvref_t<T>, Date> || std::same_as<std::remove_cvref_t<T>, TimeOfDay> ||
+    std::same_as<std::remove_cvref_t<T>, LocalDateTime> || std::same_as<std::remove_cvref_t<T>, UtcTimestamp>;
+
+template <typename T>
+inline constexpr bool supportedScalar = numericScalar<T> || std::same_as<std::remove_cvref_t<T>, bool> ||
+                                        std::same_as<std::remove_cvref_t<T>, std::string> || temporalScalar<T> ||
+                                        std::same_as<std::remove_cvref_t<T>, Uuid>;
 template <typename Target, typename Source>
 inline constexpr bool fitsNumericLimits = []
 {
@@ -116,9 +122,11 @@ struct ParameterValue<Parameter<T, I>>
 template <typename T>
 using parameter_value_t = typename ParameterValue<std::remove_cvref_t<T>>::type;
 template <typename Target, typename Source>
-inline constexpr bool compatibleValue = isSafeNumericWidening<Target, parameter_value_t<Source>> ||
-                                        (std::same_as<Target, bool> && std::same_as<parameter_value_t<Source>, bool>) ||
-                                        (std::same_as<Target, std::string> && stringValue<parameter_value_t<Source>>);
+inline constexpr bool compatibleValue =
+    isSafeNumericWidening<Target, parameter_value_t<Source>> ||
+    (std::same_as<Target, bool> && std::same_as<parameter_value_t<Source>, bool>) ||
+    (std::same_as<Target, std::string> && stringValue<parameter_value_t<Source>>) ||
+    ((temporalScalar<Target> || std::same_as<Target, Uuid>) && std::same_as<Target, parameter_value_t<Source>>);
 template <typename Target, typename Source>
 concept ORM_QUERY_UNBOUND_PARAMETER_VALUE = std::same_as<parameter_value_t<Source>, std::remove_cvref_t<Source>>;
 template <typename Target, typename Source>
@@ -137,7 +145,7 @@ concept ORM_QUERY_NUMERIC = numericScalar<T>;
 template <typename T>
 concept ORM_QUERY_STRING = std::same_as<T, std::string>;
 template <typename T>
-concept ORM_QUERY_ORDERABLE = numericScalar<T> || std::same_as<T, std::string>;
+concept ORM_QUERY_ORDERABLE = numericScalar<T> || std::same_as<T, std::string> || temporalScalar<T>;
 template <bool Nullable>
 concept ORM_QUERY_NULLABLE = Nullable;
 

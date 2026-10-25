@@ -259,6 +259,14 @@ auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::st
     context.parameters.push_back({.name = name, .value = std::nullopt, .nullType = type});
     return context.dialect.bindMarker(name);
 }
+auto appendSelectPredicates(SqlProgram& program, RenderContext& context, const query::detail::SelectSpec& spec) -> void
+{
+    if (spec.predicate.has_value())
+        program.predicate = appendPredicate(program, context, spec.predicate->getNode());
+    if (spec.having.has_value())
+        program.having = appendHaving(program, context, spec.having->getNode());
+}
+
 auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec,
                            const SqlDialect& dialect) -> SelectStatement
 {
@@ -269,12 +277,9 @@ auto renderSelectStatement(model::ModelView model, const query::detail::SelectSp
     for (const auto& projection : spec.projections)
         program.projections.push_back(
             {std::visit([](const auto& item) { return source(item); }, projection.source), projection.resultField});
-    if (spec.predicate.has_value())
-        program.predicate = appendPredicate(program, context, spec.predicate->getNode());
+    appendSelectPredicates(program, context, spec);
     for (const auto& group : spec.groupBy)
         program.groups.push_back(source(group));
-    if (spec.having.has_value())
-        program.having = appendHaving(program, context, spec.having->getNode());
     for (const auto& order : spec.orderBy)
         program.orders.push_back(
             {order.isRaw ? SqlSource{} : source(order.column), order.direction, order.isRaw, order.rawSql});

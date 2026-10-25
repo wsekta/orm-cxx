@@ -105,7 +105,8 @@ struct ColumnRename
     std::string from{};
     std::string to{};
 };
-using GenerationLiteral = std::variant<std::monostate, bool, std::int64_t, std::uint64_t, double, std::string>;
+using GenerationLiteral = std::variant<std::monostate, bool, std::int64_t, std::uint64_t, double, std::string, Date,
+                                       TimeOfDay, LocalDateTime, UtcTimestamp, Uuid>;
 struct ColumnTransformation
 {
     std::string table{};

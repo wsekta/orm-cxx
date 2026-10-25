@@ -4,6 +4,7 @@ module;
 
 #include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
+#include "TemporalProfile.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -19,6 +20,7 @@ import :static_plan;
 import :sql;
 import :database;
 import :migrations_internal;
+import :value_codec;
 
 TEST(MysqlFamilyTest, tokenizerPreservesQuotedIdentifiersStringsAndComments)
 {
@@ -52,6 +54,89 @@ TEST(MysqlFamilyTest, emptyMigrationScriptsAcceptInertCommentsAndSeparators)
     for (const auto sql : {"SELECT 1", "/* unfinished", "/*! SELECT 1 */", "/*M! SELECT 1 */", "--not_a_comment",
                            "'text'", "#\nSELECT 1", "#\rSELECT 1"})
         EXPECT_FALSE(orm::db::mysql_family::isEmptyScript(sql));
+}
+
+TEST(MysqlFamilyTest, temporalProfileParsesRealVersionNumbersAndCompatibilityPrefixes)
+{
+    EXPECT_EQ(orm_mysql_temporal::serverVersion("8.4.8"), (std::pair<unsigned int, unsigned int>{8, 4}));
+    EXPECT_EQ(orm_mysql_temporal::serverVersion("11.4.5-MariaDB"), (std::pair<unsigned int, unsigned int>{11, 4}));
+    EXPECT_EQ(orm_mysql_temporal::serverVersion("5.5.5-11.8.2-MariaDB"),
+              (std::pair<unsigned int, unsigned int>{11, 8}));
+    EXPECT_EQ(orm_mysql_temporal::serverVersion("12.3.1-MariaDB"), (std::pair<unsigned int, unsigned int>{12, 3}));
+    for (const auto version : {"", "unknown", "11", "11x.4.0", "99999999999999999999.4.0", "11.x.0", "11.4", "11.4x",
+                               "11.99999999999999999999.0"})
+        EXPECT_THROW((void)orm_mysql_temporal::serverVersion(version), std::invalid_argument);
+}
+
+TEST(MysqlFamilyTest, temporalProfileUsesTheConnectedServerVersionForTimestampLimits)
+{
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("8.4.8", false), (std::pair<long long, int>{2'147'483'647, 499999}));
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("9.7.0", false), (std::pair<long long, int>{2'147'483'647, 499999}));
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("10.7.0-MariaDB", true),
+              (std::pair<long long, int>{2'147'483'647, 999999}));
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("11.4.5-MariaDB", true),
+              (std::pair<long long, int>{2'147'483'647, 999999}));
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("11.5.0-MariaDB", true),
+              (std::pair<long long, int>{4'294'967'295LL, 999999}));
+    EXPECT_EQ(orm_mysql_temporal::timestampMaximum("12.3.1-MariaDB", true),
+              (std::pair<long long, int>{4'294'967'295LL, 999999}));
+    for (const auto version : {"9.6.0-MariaDB", "10.6.0-MariaDB"})
+        EXPECT_THROW((void)orm_mysql_temporal::timestampMaximum(version, true), std::invalid_argument);
+}
+
+TEST(MysqlFamilyTest, nativeBindingPreservesMicrosecondsAndRejectsUnsupportedValues)
+{
+    for (const auto type : {orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb})
+    {
+        const auto runtime = orm::db::mysql_family::makeRuntime(type);
+        soci::values values;
+        const std::array<std::pair<orm::model::ColumnType, orm::query::QueryValue::Value>, 4> inputs{{
+            {orm::model::ColumnType::Date, orm::detail::values::parseDate("2024-02-29")},
+            {orm::model::ColumnType::TimeOfDay, orm::detail::values::parseTimeOfDay("23:59:59.123456")},
+            {orm::model::ColumnType::LocalDateTime,
+             orm::detail::values::parseLocalDateTime("2024-02-29 23:59:59.123456")},
+            {orm::model::ColumnType::UtcTimestamp,
+             orm::detail::values::parseUtcTimestamp("2024-02-29 23:59:59.123456+00:00")},
+        }};
+        const std::array<std::string_view, 4> expected{"2024-02-29", "23:59:59.123456", "2024-02-29 23:59:59.123456",
+                                                       "2024-02-29 23:59:59.123456"};
+        for (std::size_t index = 0; index < inputs.size(); ++index)
+        {
+            const auto& [logical, value] = inputs[index];
+            const auto name = "value_" + std::to_string(index);
+            runtime->bind(values, name, {.logicalType = logical, .value = value});
+            EXPECT_EQ(values.get<std::string>(name), expected[index]);
+            const auto nullName = "null_" + std::to_string(index);
+            runtime->bind(values, nullName, {.logicalType = logical, .value = std::nullopt});
+            EXPECT_EQ(values.get_indicator(nullName), soci::i_null);
+            EXPECT_THROW(runtime->bind(values, "mismatch", {.logicalType = logical, .value = std::string{"text"}}),
+                         orm::db::binding::ConversionError);
+        }
+        EXPECT_THROW(runtime->bind(values, "early_date",
+                                   {.logicalType = orm::model::ColumnType::Date,
+                                    .value = orm::detail::values::parseDate("0999-12-31")}),
+                     orm::db::binding::ConversionError);
+        EXPECT_THROW(runtime->bind(values, "early_timestamp",
+                                   {.logicalType = orm::model::ColumnType::UtcTimestamp, .value = orm::UtcTimestamp{}}),
+                     orm::db::binding::ConversionError);
+        const auto uuid = orm::Uuid::parse("123e4567-e89b-12d3-a456-426655440000");
+        if (type == orm::db::BackendType::Mariadb)
+        {
+            runtime->bind(values, "uuid", {.logicalType = orm::model::ColumnType::Uuid, .value = uuid});
+            EXPECT_EQ(values.get<std::string>("uuid"), uuid.toString());
+            runtime->bind(values, "null_uuid", {.logicalType = orm::model::ColumnType::Uuid, .value = std::nullopt});
+            EXPECT_EQ(values.get_indicator("null_uuid"), soci::i_null);
+            EXPECT_THROW(runtime->bind(values, "restricted_uuid",
+                                       {.logicalType = orm::model::ColumnType::Uuid,
+                                        .value = orm::Uuid::parse("00000000-0000-8000-0000-000000000000")}),
+                         orm::db::binding::ConversionError);
+        }
+        else
+        {
+            EXPECT_THROW(runtime->bind(values, "uuid", {.logicalType = orm::model::ColumnType::Uuid, .value = uuid}),
+                         orm::DatabaseError);
+        }
+    }
 }
 
 TEST(MysqlFamilyTest, categorizedDriverErrorsPreserveFallbackAndSanitizeMessages)
@@ -285,6 +370,136 @@ public:
 };
 
 thread_local unsigned int migrationMetadataQueries{};
+}
+
+TEST_P(MysqlFamilyLinkTest, NativeTemporalTextExchangeKeepsMicrosecondsAndNegotiatedBounds)
+{
+    std::string zone;
+    int explicitDefaults{};
+    session() << "SELECT @@SESSION.time_zone,@@SESSION.explicit_defaults_for_timestamp", soci::into(zone),
+        soci::into(explicitDefaults);
+    EXPECT_EQ(zone, "+00:00");
+    EXPECT_EQ(explicitDefaults, 1);
+    session() << "CREATE TABLE native_temporal_transport (d DATE NOT NULL,t TIME(6) NOT NULL,"
+                 "l DATETIME(6) NOT NULL,u TIMESTAMP(6) NULL DEFAULT NULL) ENGINE=InnoDB";
+    soci::values input;
+    runtime().bind(
+        input, "d",
+        {.logicalType = orm::model::ColumnType::Date, .value = orm::detail::values::parseDate("2024-02-29")});
+    runtime().bind(input, "t",
+                   {.logicalType = orm::model::ColumnType::TimeOfDay,
+                    .value = orm::detail::values::parseTimeOfDay("23:59:59.123456")});
+    runtime().bind(input, "l",
+                   {.logicalType = orm::model::ColumnType::LocalDateTime,
+                    .value = orm::detail::values::parseLocalDateTime("2024-02-29 23:59:59.123456")});
+    runtime().bind(input, "u",
+                   {.logicalType = orm::model::ColumnType::UtcTimestamp,
+                    .value = orm::detail::values::parseUtcTimestamp("2024-02-29 23:59:59.123456+00:00")});
+    session() << "INSERT INTO native_temporal_transport VALUES(:d,:t,:l,:u)", soci::use(input);
+    std::string date;
+    std::string time;
+    std::string local;
+    std::string utc;
+    session() << "SELECT d,t,l,u FROM native_temporal_transport", soci::into(date), soci::into(time), soci::into(local),
+        soci::into(utc);
+    EXPECT_EQ(date, "2024-02-29");
+    EXPECT_EQ(time, "23:59:59.123456");
+    EXPECT_EQ(local, "2024-02-29 23:59:59.123456");
+    EXPECT_EQ(utc, "2024-02-29 23:59:59.123456");
+
+    const auto limits = runtime().limits(session());
+    std::string version;
+    session() << "SELECT VERSION()", soci::into(version);
+    const auto [major, minor] = orm_mysql_temporal::serverVersion(version);
+    const bool maria = GetParam().type == orm::db::BackendType::Mariadb;
+    const bool extended = maria && (major > 11 || (major == 11 && minor >= 5));
+    const auto maximum = orm::UtcTimestamp{std::chrono::seconds{extended ? 4'294'967'295LL : 2'147'483'647LL}} +
+                         std::chrono::microseconds{maria ? 999999 : 499999};
+    EXPECT_EQ(limits.minUtcTimestamp, std::optional<orm::UtcTimestamp>{orm::UtcTimestamp{std::chrono::seconds{1}}});
+    EXPECT_EQ(limits.maxUtcTimestamp, std::optional<orm::UtcTimestamp>{maximum});
+    const auto& capabilities = connection.getBackendCapabilities();
+    soci::values extremes;
+    runtime().bind(extremes, "max_utc", {.logicalType = orm::model::ColumnType::UtcTimestamp, .value = maximum});
+    runtime().bind(
+        extremes, "max_local",
+        {.logicalType = orm::model::ColumnType::LocalDateTime, .value = *capabilities.valueLimits.maxLocalDateTime});
+    session() << "UPDATE native_temporal_transport SET u=:max_utc,l=:max_local", soci::use(extremes);
+    session() << "SELECT l,u FROM native_temporal_transport", soci::into(local), soci::into(utc);
+    EXPECT_EQ(local, orm::detail::values::format(*capabilities.valueLimits.maxLocalDateTime));
+    EXPECT_EQ(utc, orm::detail::values::format(maximum, false));
+    // Bind only the parameter used by this statement.
+    soci::values minimum;
+    runtime().bind(minimum, "u",
+                   {.logicalType = orm::model::ColumnType::UtcTimestamp, .value = *limits.minUtcTimestamp});
+    session() << "UPDATE native_temporal_transport SET u=:u", soci::use(minimum);
+    session() << "SELECT u FROM native_temporal_transport", soci::into(utc);
+    EXPECT_EQ(utc, "1970-01-01 00:00:01.000000");
+
+    connection.disconnect();
+    connectTestDatabase(connection);
+    session() << "SELECT @@SESSION.time_zone,@@SESSION.explicit_defaults_for_timestamp", soci::into(zone),
+        soci::into(explicitDefaults);
+    EXPECT_EQ(zone, "+00:00");
+    EXPECT_EQ(explicitDefaults, 1);
+    EXPECT_EQ(runtime().limits(session()).maxUtcTimestamp, limits.maxUtcTimestamp);
+}
+
+TEST_P(MysqlFamilyLinkTest, TemporalMigrationGuardsRejectChangedTimezoneAndTimestampDefaults)
+{
+    for (const auto script : {"SET SESSION time_zone = '+01:00'", "SET SESSION explicit_defaults_for_timestamp = OFF"})
+    {
+        session() << std::string{script};
+        EXPECT_THROW(runtime().validateMigrationSession(session()), orm::migrations::MigrationError);
+        runtime().onConnect(session());
+        EXPECT_NO_THROW(runtime().validateMigrationSession(session()));
+        const auto history = runtime().migrationTable(session());
+        runtime().createMigrationHistory(session(), history);
+        runtime().beginMigration(session(), history);
+        expectMigrationFailure([&] { runtime().executeMigrationScript(session(), script); },
+                               orm::migrations::ErrorCode::InvalidSql);
+        EXPECT_FALSE(session().is_connected());
+        connection.disconnect();
+        connectTestDatabase(connection);
+        EXPECT_NO_THROW(runtime().validateMigrationSession(session()));
+    }
+}
+
+TEST_P(MysqlFamilyLinkTest, MariadbNativeUuidRetainsBytesAndSupportsForeignKeys)
+{
+    if (GetParam().type != orm::db::BackendType::Mariadb)
+        GTEST_SKIP() << "MySQL has no native UUID type";
+    session() << "CREATE TABLE native_uuid_parent(id UUID PRIMARY KEY) ENGINE=InnoDB";
+    session() << "CREATE TABLE native_uuid_child(id INT PRIMARY KEY,parent_id UUID,"
+                 "FOREIGN KEY(parent_id) REFERENCES native_uuid_parent(id)) ENGINE=InnoDB";
+    const std::array<orm::Uuid, 5> ids{orm::Uuid{}, orm::Uuid::parse("123e4567-e89b-12d3-a456-426655440000"),
+                                       orm::Uuid::parse("550e8400-e29b-41d4-a716-446655440000"),
+                                       orm::Uuid::parse("0191f6a5-7730-7000-8000-000000000001"),
+                                       orm::Uuid::parse("ffffffff-ffff-ffff-ffff-ffffffffffff")};
+    for (std::size_t index = 0; index < ids.size(); ++index)
+    {
+        soci::values parent;
+        runtime().bind(parent, "id", {.logicalType = orm::model::ColumnType::Uuid, .value = ids[index]});
+        session() << "INSERT INTO native_uuid_parent VALUES(:id)", soci::use(parent);
+        soci::values child;
+        runtime().bind(child, "owner", {.logicalType = orm::model::ColumnType::Uuid, .value = ids[index]});
+        runtime().bind(child, "child", {.logicalType = orm::model::ColumnType::Int, .value = static_cast<int>(index)});
+        session() << "INSERT INTO native_uuid_child VALUES(:child,:owner)", soci::use(child);
+    }
+    std::string result;
+    int child{};
+    soci::statement select = (session().prepare << "SELECT c.id,p.id FROM native_uuid_child c "
+                                                   "JOIN native_uuid_parent p ON c.parent_id=p.id ORDER BY c.id",
+                              soci::into(child), soci::into(result));
+    select.execute();
+    std::size_t count{};
+    while (select.fetch())
+    {
+        ASSERT_LT(count, ids.size());
+        EXPECT_EQ(child, static_cast<int>(count));
+        EXPECT_EQ(orm::Uuid::parse(result), ids[count]);
+        ++count;
+    }
+    EXPECT_EQ(count, ids.size());
 }
 
 TEST_P(MysqlFamilyLinkTest, TypedCredentialsKeepSpecialPasswordAndDoNotRetryAfterFailure)

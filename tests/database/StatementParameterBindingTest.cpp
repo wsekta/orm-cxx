@@ -61,6 +61,9 @@ TEST(StatementParameterBindingTest, shouldBindSupportedNullParameterTypes)
         orm::model::ColumnType::UnsignedInt,   orm::model::ColumnType::UnsignedLongLong,
         orm::model::ColumnType::LongLong,      orm::model::ColumnType::Float,
         orm::model::ColumnType::Double,        orm::model::ColumnType::String,
+        orm::model::ColumnType::Date,          orm::model::ColumnType::TimeOfDay,
+        orm::model::ColumnType::LocalDateTime, orm::model::ColumnType::UtcTimestamp,
+        orm::model::ColumnType::Uuid,
     };
 
     for (const auto type : supportedTypes)
@@ -95,7 +98,6 @@ TEST(StatementParameterBindingTest, backendRuntimeBoundNullShouldRoundTripThroug
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedNullParameterTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -124,6 +126,9 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
         orm::model::ColumnType::UnsignedInt,   orm::model::ColumnType::UnsignedLongLong,
         orm::model::ColumnType::LongLong,      orm::model::ColumnType::Float,
         orm::model::ColumnType::Double,        orm::model::ColumnType::String,
+        orm::model::ColumnType::Date,          orm::model::ColumnType::TimeOfDay,
+        orm::model::ColumnType::LocalDateTime, orm::model::ColumnType::UtcTimestamp,
+        orm::model::ColumnType::Uuid,
     };
 
     for (const auto type : supportedTypes)
@@ -138,7 +143,6 @@ TEST(StatementParameterBindingTest, shouldBindSupportedObjectFieldNullValueTypes
 TEST(StatementParameterBindingTest, shouldRejectUnsupportedObjectFieldNullValueTypes)
 {
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 
@@ -697,10 +701,144 @@ TEST(StatementParameterBindingTest, malformedPrimaryKeyDescriptorsReportTheirSpe
     EXPECT_THROW((void)orm::db::binding::getPrimaryKeyColumns(model), std::invalid_argument);
 }
 
-TEST(StatementParameterBindingTest, unsupportedRelationPrimaryKeyTypeIsRejected)
+TEST(StatementParameterBindingTest, incompatibleUuidRelationPrimaryKeyStorageIsRejected)
 {
     soci::values values;
     values.set("id", 7);
     EXPECT_THROW((void)orm::db::binding::getPrimaryKeyValue(values, "id", orm::model::ColumnType::Uuid),
-                 std::invalid_argument);
+                 orm::db::binding::ConversionError);
+}
+
+TEST(StatementParameterBindingTest, temporalAndUuidModelFieldsUseValidatedTextStorage)
+{
+    using namespace std::chrono_literals;
+    const orm::Date date{std::chrono::year{2026}, std::chrono::October, std::chrono::day{25}};
+    const auto time = orm::TimeOfDay{12h + 34min + 56s + 123456us};
+    const auto local = orm::detail::values::parseLocalDateTime("2026-10-25 12:34:56.123456");
+    const auto utc = orm::detail::values::parseUtcTimestamp("2026-10-25 12:34:56.000001+00");
+    const auto uuid = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    soci::values values;
+    orm::db::binding::setScalarFieldValue(values, "date", date, orm::model::ColumnType::Date);
+    orm::db::binding::setScalarFieldValue(values, "time", time, orm::model::ColumnType::TimeOfDay);
+    orm::db::binding::setScalarFieldValue(values, "local", local, orm::model::ColumnType::LocalDateTime);
+    orm::db::binding::setScalarFieldValue(values, "utc", utc, orm::model::ColumnType::UtcTimestamp);
+    orm::db::binding::setScalarFieldValue(values, "uuid", uuid, orm::model::ColumnType::Uuid);
+
+    EXPECT_EQ(values.get<std::string>("date"), "2026-10-25");
+    EXPECT_EQ(values.get<std::string>("time"), "12:34:56.123456");
+    EXPECT_EQ(values.get<std::string>("local"), "2026-10-25 12:34:56.123456");
+    EXPECT_EQ(values.get<std::string>("uuid"), uuid.toString());
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::Date>(values, "date"), date);
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::TimeOfDay>(values, "time"), time);
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::LocalDateTime>(values, "local"), local);
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::UtcTimestamp>(values, "utc"), utc);
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::Uuid>(values, "uuid"), uuid);
+    EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "uuid", orm::model::ColumnType::Uuid),
+              orm::query::QueryValue{uuid});
+    EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(values, "local", orm::model::ColumnType::LocalDateTime),
+              orm::query::QueryValue{local});
+}
+
+TEST(StatementParameterBindingTest, invalidTemporalAndUuidValuesSignalConversionWithoutLeakingInput)
+{
+    const orm::Date invalid{std::chrono::year{2026}, std::chrono::February, std::chrono::day{30}};
+    soci::values values;
+    EXPECT_THROW(orm::db::binding::setScalarFieldValue(values, "date", invalid, orm::model::ColumnType::Date),
+                 orm::db::binding::ConversionError);
+    values.set("date", std::string{"0000-00-00"});
+    values.set("time", std::string{"24:00:00"});
+    values.set("local", std::string{"2026-02-30 12:00:00.123456"});
+    values.set("utc", std::string{"infinity"});
+    values.set("uuid", std::string{"private-invalid-uuid"});
+    EXPECT_THROW((void)orm::db::binding::getScalarFieldValue<orm::Date>(values, "date"),
+                 orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::getScalarFieldValue<orm::TimeOfDay>(values, "time"),
+                 orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::getScalarFieldValue<orm::LocalDateTime>(values, "local"),
+                 orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::db::binding::getScalarFieldValue<orm::UtcTimestamp>(values, "utc"),
+                 orm::db::binding::ConversionError);
+    try
+    {
+        (void)orm::db::binding::getScalarFieldValue<orm::Uuid>(values, "uuid");
+        FAIL() << "Expected conversion failure";
+    }
+    catch (const orm::db::binding::ConversionError& error)
+    {
+        EXPECT_EQ(std::string{error.what()}.find("private-invalid-uuid"), std::string::npos);
+    }
+}
+
+TEST(StatementParameterBindingTest, explicitResultBuffersPreserveFractionsAcrossNullAndRepeatedFetch)
+{
+    soci::session session;
+    orm::db::sqlite::SqliteBackend backend;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    orm::db::binding::TypedResultStorage storage{{{"time", orm::model::ColumnType::TimeOfDay},
+                                                  {"local", orm::model::ColumnType::LocalDateTime},
+                                                  {"number", orm::model::ColumnType::Int}}};
+    soci::values parameters;
+    std::vector<std::optional<orm::TimeOfDay>> times;
+    std::vector<orm::LocalDateTime> localTimes;
+    storage.read(session,
+                 "SELECT '12:34:56.123456', '2026-10-25 12:34:56.000001', 1 "
+                 "UNION ALL SELECT NULL, '2026-10-25 12:34:56.123456', 2 "
+                 "UNION ALL SELECT '12:34:56.000001', '2026-10-25 12:34:56.123457', 3",
+                 parameters,
+                 [&](const auto& row)
+                 {
+                     times.push_back(orm::db::binding::getScalarFieldValue<std::optional<orm::TimeOfDay>>(row, "time"));
+                     localTimes.push_back(orm::db::binding::getScalarFieldValue<orm::LocalDateTime>(row, "local"));
+                     EXPECT_EQ(orm::db::binding::getNumericValue<int>(row, "number"), static_cast<int>(times.size()));
+                 });
+    ASSERT_EQ(times.size(), 3);
+    ASSERT_TRUE(times[0]);
+    EXPECT_EQ(*times[0], orm::detail::values::parseTimeOfDay("12:34:56.123456"));
+    EXPECT_FALSE(times[1]);
+    ASSERT_TRUE(times[2]);
+    EXPECT_EQ(*times[2], orm::detail::values::parseTimeOfDay("12:34:56.000001"));
+    EXPECT_EQ(localTimes[0], orm::detail::values::parseLocalDateTime("2026-10-25 12:34:56.000001"));
+    EXPECT_EQ(localTimes[2] - localTimes[1], std::chrono::microseconds{1});
+}
+
+TEST(StatementParameterBindingTest, explicitResultBuffersRejectNativeAndEffectiveRuntimeRanges)
+{
+    soci::session session;
+    orm::db::sqlite::SqliteBackend backend;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    soci::values parameters;
+    auto consumed = false;
+    const auto consume = [&](const auto&) { consumed = true; };
+    orm::db::binding::TypedResultStorage dates{{{"date", orm::model::ColumnType::Date}}};
+    EXPECT_THROW(dates.read(session, "SELECT '0999-12-31'", parameters, consume, orm::db::BackendType::Mysql),
+                 orm::db::binding::ConversionError);
+    EXPECT_FALSE(consumed);
+
+    const orm::db::BackendRuntimeLimits runtime{
+        .maxUtcTimestamp = orm::detail::values::parseUtcTimestamp("2038-01-19 03:14:07.999999+00")};
+    orm::db::binding::TypedResultStorage timestamps{{{"utc", orm::model::ColumnType::UtcTimestamp}}};
+    const auto validate = [&](const orm::db::BoundValue& value)
+    {
+        if (!orm::db::binding::isWithinValueLimits(value, {}, runtime))
+            throw orm::db::binding::ConversionError{"The result exceeds its effective runtime range"};
+    };
+    EXPECT_THROW(timestamps.read(session, "SELECT '2040-01-01 00:00:00.000001'", parameters, consume,
+                                 orm::db::BackendType::Mariadb, validate),
+                 orm::db::binding::ConversionError);
+    EXPECT_FALSE(consumed);
+}
+
+TEST(StatementParameterBindingTest, explicitResultBuffersPreserveSignedSqlValuesForUnsignedRangeChecks)
+{
+    soci::session session;
+    orm::db::sqlite::SqliteBackend backend;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    orm::db::binding::TypedResultStorage storage{
+        {{"number", orm::model::ColumnType::UnsignedLongLong}, {"date", orm::model::ColumnType::Date}}};
+    soci::values parameters;
+    EXPECT_THROW(storage.read(
+                     session, "SELECT -1, '2026-10-25'", parameters, [](const auto& row)
+                     { (void)orm::db::binding::getNumericValue<unsigned long long>(row, "number"); },
+                     orm::db::BackendType::Postgres),
+                 orm::db::binding::ConversionError);
 }

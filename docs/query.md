@@ -245,6 +245,15 @@ The rule uses the C++ type, even when the current value is small. Boolean
 values are separate from numbers; text fields accept string literals,
 `std::string`, and `std::string_view`. LIKE is restricted to text.
 
+Native date/time and UUID fields require their exact scalar value type;
+strings, numbers and other temporal types are not implicit conversions.
+Temporal fields support comparisons, `BETWEEN`, ordering and `MIN`/`MAX`.
+UUID supports equality, inequality, membership, null checks, counting,
+`DISTINCT` and grouping; typed UUID ordering, range comparisons and `MIN`/`MAX`
+are rejected at compile time. `SUM`, `AVG` and `LIKE` do not accept these types.
+See [Value types](value-types.md) for native backend availability, UTC/local
+semantics and six-digit precision.
+
 NULL predicates are available only on optional columns and paths through
 optional to-one relations. Filter values cannot be `std::optional<T>`; use a
 value or an explicit null predicate. Empty IN/NOT IN lists remain runtime
@@ -266,6 +275,10 @@ Ordering can also use related field paths:
 ```cpp
 query.orderBy(asc(col<&User::profile, &Profile::city>()));
 ```
+
+Temporal columns sort in their native temporal domain, retaining microseconds.
+UUID ordering is unavailable in the typed API because PostgreSQL and MariaDB
+do not share the same native UUID ordering contract.
 
 ## Distinct
 

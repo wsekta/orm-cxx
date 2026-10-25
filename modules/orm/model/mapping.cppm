@@ -474,6 +474,32 @@ export
         inline static constexpr auto value = ColumnType::String;
     };
 
+    template <>
+    struct LogicalTypeTraits<Date>
+    {
+        inline static constexpr auto value = ColumnType::Date;
+    };
+    template <>
+    struct LogicalTypeTraits<TimeOfDay>
+    {
+        inline static constexpr auto value = ColumnType::TimeOfDay;
+    };
+    template <>
+    struct LogicalTypeTraits<LocalDateTime>
+    {
+        inline static constexpr auto value = ColumnType::LocalDateTime;
+    };
+    template <>
+    struct LogicalTypeTraits<UtcTimestamp>
+    {
+        inline static constexpr auto value = ColumnType::UtcTimestamp;
+    };
+    template <>
+    struct LogicalTypeTraits<Uuid>
+    {
+        inline static constexpr auto value = ColumnType::Uuid;
+    };
+
     /**
      * @brief Resolves a C++ field type to its logical database type at compile
      * time. Users may extend the closed set through LogicalTypeTraits<T>.

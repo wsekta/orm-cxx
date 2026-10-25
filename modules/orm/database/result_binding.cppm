@@ -18,6 +18,7 @@ import :model;
 import :expressions;
 import :sql_contracts;
 export import :database_object_binding;
+export import :database_result_storage;
 
 namespace orm::db::binding
 {
@@ -54,7 +55,7 @@ struct ProjectionPayload
 template <typename ResultField>
 struct ObjectFieldFromProjectionValues
 {
-    static auto get(ResultField* /*field*/, const std::string& fieldName, const soci::values& /*values*/) -> void
+    static auto get(ResultField* /*field*/, const std::string& fieldName, const auto& /*values*/) -> void
     {
         throw ConversionError{"Unsupported projection result field type: " + fieldName};
     }
@@ -67,11 +68,11 @@ auto parseNumericProjectionValue(const std::string& value, const std::string& fi
 }
 
 template <typename ResultField, typename StoredField>
-auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldName, const soci::values& values) -> bool
+auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldName, const auto& values) -> bool
 {
     try
     {
-        *field = checkedNumericCast<ResultField>(values.get<StoredField>(fieldName), fieldName);
+        *field = checkedNumericCast<ResultField>(values.template get<StoredField>(fieldName), fieldName);
 
         return true;
     }
@@ -86,15 +87,24 @@ auto tryGetNumericProjectionValue(ResultField* field, const std::string& fieldNa
 }
 
 template <typename ResultField>
-auto getNumericProjectionValue(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
+auto getNumericProjectionValue(ResultField* field, const std::string& fieldName, const auto& values) -> void
 {
     *field = getNumericValue<ResultField>(values, fieldName);
 }
 
+template <SociEncodedValue ResultField>
+struct ObjectFieldFromProjectionValues<ResultField>
+{
+    static auto get(ResultField* field, const std::string& fieldName, const auto& values) -> void
+    {
+        *field = getEncodedScalarValue<ResultField>(values, fieldName);
+    }
+};
+
 template <SociDefaultSupported ResultField>
 struct ObjectFieldFromProjectionValues<ResultField>
 {
-    static auto get(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
+    static auto get(ResultField* field, const std::string& fieldName, const auto& values) -> void
     {
         if constexpr (std::is_arithmetic_v<ResultField>)
         {
@@ -102,7 +112,7 @@ struct ObjectFieldFromProjectionValues<ResultField>
         }
         else
         {
-            *field = values.get<ResultField>(fieldName);
+            *field = values.template get<ResultField>(fieldName);
         }
     }
 };
@@ -110,7 +120,7 @@ struct ObjectFieldFromProjectionValues<ResultField>
 template <typename ResultField>
 struct ObjectFieldFromProjectionValues<std::optional<ResultField>>
 {
-    static auto get(std::optional<ResultField>* field, const std::string& fieldName, const soci::values& values) -> void
+    static auto get(std::optional<ResultField>* field, const std::string& fieldName, const auto& values) -> void
     {
         if (values.get_indicator(fieldName) == soci::i_null)
         {
@@ -127,7 +137,7 @@ struct ObjectFieldFromProjectionValues<std::optional<ResultField>>
 template <typename ResultField, typename SociType>
 struct ObjectFieldFromProjectionValuesWithCast
 {
-    static auto get(ResultField* field, const std::string& fieldName, const soci::values& values) -> void
+    static auto get(ResultField* field, const std::string& fieldName, const auto& values) -> void
     {
         SociType value{};
         getNumericProjectionValue(&value, fieldName, values);
@@ -190,7 +200,8 @@ inline auto bindNull(soci::values& values, std::string_view name, model::ColumnT
     case model::ColumnType::LocalDateTime:
     case model::ColumnType::UtcTimestamp:
     case model::ColumnType::Uuid:
-        break;
+        bindTypedNull(values, name, std::string{});
+        return;
     }
 
     throw std::invalid_argument{"Cannot bind NULL parameter with unsupported column type"};
@@ -220,8 +231,16 @@ inline auto bindBoundValue(soci::values& values, std::string_view name, const Bo
     }
 
     const auto parameterName = std::string{name};
-    std::visit([&values, &parameterName](const auto& storedValue) { values.set(parameterName, storedValue); },
-               value.value.value());
+    std::visit(
+        [&values, &parameterName](const auto& storedValue)
+        {
+            using stored_t = std::remove_cvref_t<decltype(storedValue)>;
+            if constexpr (SociEncodedValue<stored_t>)
+                values.set(parameterName, encodeScalarValue(storedValue));
+            else
+                values.set(parameterName, storedValue);
+        },
+        value.value.value());
 }
 
 inline auto bindStatementParameter(soci::values& values, const StatementParameter& parameter) -> void

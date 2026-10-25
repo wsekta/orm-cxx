@@ -147,17 +147,29 @@ TEST(MigrationGeneratorCoverageTest, Utf8BoundsCountCharactersAndRejectInvalidSc
         "invalid-literal");
 }
 
-TEST(MigrationGeneratorCoverageTest, UuidConstantsRequireCanonicalTextAndPostgresql)
+TEST(MigrationGeneratorCoverageTest, UuidConstantsUseCanonicalTextAndNativeTargets)
 {
-    const auto canonical = std::string{"01234567-89ab-cdef-0123-456789aBCDEF"};
+    const auto canonical = std::string{"01234567-89ab-7def-8123-456789aBCDEF"};
     const auto accepted = coverageLiteral(Backend::Postgres, Type::Uuid, "UUID", canonical);
-    EXPECT_NE(accepted.migration.scripts.at(Backend::Postgres).up.find("'" + canonical + "'::uuid"), std::string::npos);
+    EXPECT_NE(accepted.migration.scripts.at(Backend::Postgres).up.find("'01234567-89ab-7def-8123-456789abcdef'::uuid"),
+              std::string::npos);
+    const auto maria = coverageLiteral(Backend::Mariadb, Type::Uuid, "UUID", canonical);
+    EXPECT_NE(maria.migration.scripts.at(Backend::Mariadb).up.find("'01234567-89ab-7def-8123-456789abcdef'"),
+              std::string::npos);
+    EXPECT_EQ(maria.migration.scripts.at(Backend::Mariadb).up.find("::uuid"), std::string::npos);
     for (const auto& malformed : {std::string{"short"}, std::string{"01234567_89ab-cdef-0123-456789abcdef"},
                                   std::string{"g1234567-89ab-cdef-0123-456789abcdef"}})
         expectGenerationDiagnostic([&] { (void)coverageLiteral(Backend::Postgres, Type::Uuid, "UUID", malformed); },
                                    "invalid-literal");
-    expectGenerationDiagnostic([&] { (void)coverageLiteral(Backend::Sqlite, Type::Uuid, "TEXT", canonical); },
-                               "invalid-literal");
+    for (const auto backend : {Backend::Sqlite, Backend::Mysql})
+        expectGenerationDiagnostic([&] { (void)coverageLiteral(backend, Type::Uuid, "UUID", canonical); },
+                                   "invalid-snapshot");
+    expectGenerationDiagnostic(
+        [&] {
+            (void)coverageLiteral(Backend::Mariadb, Type::Uuid, "UUID",
+                                  std::string{"01234567-89ab-8def-0123-456789abcdef"});
+        },
+        "invalid-literal");
 }
 
 TEST(MigrationGeneratorCoverageTest, NullableBackfillsAndBackendExpressionsKeepExplicitSemantics)

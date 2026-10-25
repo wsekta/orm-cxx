@@ -29,7 +29,11 @@ TEST(MariadbBackendTest, advertisesEqualCapabilitiesWithBackendSpecificAtomicity
     EXPECT_EQ(backend.capabilities().migrations.atomicity, orm::db::MigrationAtomicity::NonTransactional);
     EXPECT_FALSE(backend.capabilities().valueLimits.maxUnsignedLongLong.has_value());
     EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::String));
-    EXPECT_FALSE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Uuid));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Uuid));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::Date));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::TimeOfDay));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::LocalDateTime));
+    EXPECT_TRUE(backend.capabilities().supportsColumnType(orm::model::ColumnType::UtcTimestamp));
     soci::session session;
     const orm::PostgresConfig mismatched;
     EXPECT_THROW(backend.runtime().open(session, orm::db::ConnectionConfigView{mismatched}), orm::DatabaseError);
