@@ -1,5 +1,6 @@
 var NAVTREEINDEX9 =
 {
+"namespaceorm_1_1query.html#a4abb332659767f86ca79b78817129f15":[22,0,0,4,32],
 "namespaceorm_1_1query.html#a4b1bf69942f7f7946b91194256742fa3":[22,0,0,4,22],
 "namespaceorm_1_1query.html#a50d95cba9a4768ad0dc4c3c16d2fe227":[22,0,0,4,14],
 "namespaceorm_1_1query.html#a5f32d4a72ffe926c0d02f0cc8df39f6a":[22,0,0,4,34],
@@ -248,6 +249,5 @@ var NAVTREEINDEX9 =
 "structorm_1_1PostgresTls.html#a02cf36b3c708fe7d81acb7ecb937ef6a":[22,0,0,18,1],
 "structorm_1_1PostgresTls.html#a02cf36b3c708fe7d81acb7ecb937ef6a":[24,0,0,16,1],
 "structorm_1_1PostgresTls.html#a5b1ead6b36686f511fb13ab96fa35fbe":[21,0,0,8,2],
-"structorm_1_1PostgresTls.html#a5b1ead6b36686f511fb13ab96fa35fbe":[22,0,0,18,2],
-"structorm_1_1PostgresTls.html#a5b1ead6b36686f511fb13ab96fa35fbe":[24,0,0,16,2]
+"structorm_1_1PostgresTls.html#a5b1ead6b36686f511fb13ab96fa35fbe":[22,0,0,18,2]
 };

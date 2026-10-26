@@ -9,5 +9,6 @@ var result__storage_8cppm =
     [ "orm::db::binding::projectionResultColumns", "namespaceorm_1_1db_1_1binding.html#aa9b209d81e32340fd221f3d0ce0c5821", null ],
     [ "orm::db::binding::resultSource", "namespaceorm_1_1db_1_1binding.html#a772f32f78886bd4f6647d844e3bfa35b", null ],
     [ "orm::db::binding::resultSource", "namespaceorm_1_1db_1_1binding.html#a406bf6c786bdad56367bc2d03f98ca23", null ],
-    [ "orm::db::binding::resultSourceType", "namespaceorm_1_1db_1_1binding.html#aee09e63bcd8dbb3ee0adce2d9b6d8868", null ]
+    [ "orm::db::binding::resultSourceType", "namespaceorm_1_1db_1_1binding.html#aee09e63bcd8dbb3ee0adce2d9b6d8868", null ],
+    [ "orm::db::binding::validateResultIndicator", "namespaceorm_1_1db_1_1binding.html#a42ec66f811057e53130d45de65555c2b", null ]
 ];

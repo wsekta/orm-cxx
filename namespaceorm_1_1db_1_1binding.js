@@ -66,6 +66,7 @@ var namespaceorm_1_1db_1_1binding =
     [ "toQueryValue", "namespaceorm_1_1db_1_1binding.html#af6c6712310bbd22f5cb4f27671e94e9d", null ],
     [ "tryGetNumericProjectionValue", "namespaceorm_1_1db_1_1binding.html#a8a17dead736b758f85f8ea6f82dd1809", null ],
     [ "tryGetNumericValue", "namespaceorm_1_1db_1_1binding.html#a70a053b59b05943921d4f07e0b3606cc", null ],
+    [ "validateResultIndicator", "namespaceorm_1_1db_1_1binding.html#a42ec66f811057e53130d45de65555c2b", null ],
     [ "validateStringLength", "namespaceorm_1_1db_1_1binding.html#a25131ada876b1f5b153b807961f44475", null ],
     [ "isOptional", "namespaceorm_1_1db_1_1binding.html#adfcd6923860b2b520f4241fe7a0fe492", null ]
 ];

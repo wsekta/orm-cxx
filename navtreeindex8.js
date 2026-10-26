@@ -102,10 +102,11 @@ var NAVTREEINDEX8 =
 "namespaceorm_1_1db_1_1binding.html#a060049cfc849f8638c312e21878b00f2":[22,0,0,1,1,45],
 "namespaceorm_1_1db_1_1binding.html#a0a2b22b2d3142106413779d6ff11fd09":[22,0,0,1,1,50],
 "namespaceorm_1_1db_1_1binding.html#a0cffad668e6913d36c8d064af1d8168a":[22,0,0,1,1,61],
-"namespaceorm_1_1db_1_1binding.html#a25131ada876b1f5b153b807961f44475":[22,0,0,1,1,66],
+"namespaceorm_1_1db_1_1binding.html#a25131ada876b1f5b153b807961f44475":[22,0,0,1,1,67],
 "namespaceorm_1_1db_1_1binding.html#a29f2c2ed3395e7a199af98476b100773":[22,0,0,1,1,32],
 "namespaceorm_1_1db_1_1binding.html#a2cc41156bb39d24407b5376224f505f5":[22,0,0,1,1,60],
 "namespaceorm_1_1db_1_1binding.html#a406bf6c786bdad56367bc2d03f98ca23":[22,0,0,1,1,57],
+"namespaceorm_1_1db_1_1binding.html#a42ec66f811057e53130d45de65555c2b":[22,0,0,1,1,66],
 "namespaceorm_1_1db_1_1binding.html#a46e5792ef70059a1932cdb7ec7e00617":[22,0,0,1,1,43],
 "namespaceorm_1_1db_1_1binding.html#a47b86b76fcaf3dc9e1d954961c182909":[22,0,0,1,1,39],
 "namespaceorm_1_1db_1_1binding.html#a4d86db417c2ff7f0aeb2fb21e9623fe6":[22,0,0,1,1,37],
@@ -130,7 +131,7 @@ var NAVTREEINDEX8 =
 "namespaceorm_1_1db_1_1binding.html#ac3c129de33c248c1fc7d39de1d2c823d":[22,0,0,1,1,53],
 "namespaceorm_1_1db_1_1binding.html#ac6e579f831772400ace2cfc61396f991":[22,0,0,1,1,30],
 "namespaceorm_1_1db_1_1binding.html#adc681437fd58439f89ba6c4a65c854ba":[22,0,0,1,1,35],
-"namespaceorm_1_1db_1_1binding.html#adfcd6923860b2b520f4241fe7a0fe492":[22,0,0,1,1,67],
+"namespaceorm_1_1db_1_1binding.html#adfcd6923860b2b520f4241fe7a0fe492":[22,0,0,1,1,68],
 "namespaceorm_1_1db_1_1binding.html#aeddc7b939b4a3c2cbb68711c8ad21880":[22,0,0,1,1,62],
 "namespaceorm_1_1db_1_1binding.html#aee09e63bcd8dbb3ee0adce2d9b6d8868":[22,0,0,1,1,58],
 "namespaceorm_1_1db_1_1binding.html#af6c6712310bbd22f5cb4f27671e94e9d":[22,0,0,1,1,63],
@@ -248,6 +249,5 @@ var NAVTREEINDEX8 =
 "namespaceorm_1_1query.html#a30f41203f92463a1751bb012458ffbae":[22,0,0,4,20],
 "namespaceorm_1_1query.html#a3456f22a1f07cb9686496708d25953a2":[22,0,0,4,35],
 "namespaceorm_1_1query.html#a4345f522c4752c4a97d996489839e84d":[22,0,0,4,33],
-"namespaceorm_1_1query.html#a448f0836907fb5dbb75637be3f8a51c0":[22,0,0,4,36],
-"namespaceorm_1_1query.html#a4abb332659767f86ca79b78817129f15":[22,0,0,4,32]
+"namespaceorm_1_1query.html#a448f0836907fb5dbb75637be3f8a51c0":[22,0,0,4,36]
 };
