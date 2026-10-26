@@ -14,6 +14,7 @@ set(ORM_CXX_SOURCES
     migrations/SchemaJson.cpp
     migrations/MigrationProject.cpp
     model/ColumnType.cpp
+    query/QueryValue.cpp
     database/CommandGeneratorFactory.cpp
     utils/StringUtils.cpp
     database/defaults/SqlRenderer.cpp

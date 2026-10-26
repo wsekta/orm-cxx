@@ -40,7 +40,7 @@ public:
         return value;
     }
 
-    constexpr auto operator<=>(const TimeOfDay&) const noexcept = default;
+    constexpr auto operator<=>(const TimeOfDay&) const noexcept -> std::strong_ordering = default;
 
 private:
     std::chrono::microseconds value{};
@@ -71,7 +71,7 @@ public:
 
     [[nodiscard]] auto toString() const -> std::string;
 
-    constexpr auto operator<=>(const Uuid&) const noexcept = default;
+    constexpr auto operator<=>(const Uuid&) const noexcept -> std::strong_ordering = default;
 
 private:
     std::array<std::byte, 16> value{};

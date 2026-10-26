@@ -26,6 +26,7 @@ import orm_cxx_consumer.models;
 
 auto consumerModelTypeId() -> orm::model::TypeId;
 auto consumerModelView() -> orm::model::ModelView;
+auto compareImportedTemporalQueryValues() -> bool;
 
 struct GlobalConsumerModel
 {
@@ -237,6 +238,8 @@ private:
 int main()
 try
 {
+    if (!compareImportedTemporalQueryValues())
+        throw std::runtime_error{"Imported temporal query value comparison failed"};
     const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};
     const orm::LocalDateTime local{std::chrono::microseconds{123456}};
     const orm::UtcTimestamp utc{std::chrono::microseconds{123456}};

@@ -20,6 +20,8 @@ import orm;
 
 #include "ConnectionConfig.hpp"
 
+auto compareImportedTemporalQueryValues() -> bool;
+
 struct PackageModel
 {
     int id;
@@ -189,6 +191,8 @@ int main()
 {
     try
     {
+        if (!compareImportedTemporalQueryValues())
+            throw std::runtime_error{"Installed temporal query value comparison failed"};
         const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};
         const orm::LocalDateTime local{std::chrono::microseconds{123456}};
         const orm::UtcTimestamp utc{std::chrono::microseconds{123456}};

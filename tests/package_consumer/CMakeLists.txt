@@ -4,7 +4,7 @@ project(orm-cxx-package-consumer LANGUAGES CXX)
 
 find_package(orm-cxx CONFIG REQUIRED)
 
-add_executable(orm-cxx-package-consumer main.cpp)
+add_executable(orm-cxx-package-consumer main.cpp ValueTypesImport.cpp)
 set_target_properties(orm-cxx-package-consumer PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-package-consumer PRIVATE orm-cxx::orm-cxx)
 if(MSVC)

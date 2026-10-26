@@ -107,6 +107,35 @@ TEST(QueryValueTest, shouldRestoreAndCompareCanonicalValuesWithLogicalType)
     EXPECT_NE(restored, QueryValue{42});
 }
 
+TEST(QueryValueTest, temporalAndUuidComparisonsPreserveValueAndLogicalType)
+{
+    const orm::LocalDateTime local{std::chrono::microseconds{123456}};
+    const orm::UtcTimestamp utc{std::chrono::microseconds{123456}};
+    const QueryValue localValue{local};
+    const QueryValue nextLocalValue{local + std::chrono::microseconds{1}};
+    const QueryValue utcValue{utc};
+    EXPECT_EQ(localValue, QueryValue{local});
+    EXPECT_LT(localValue, nextLocalValue);
+    EXPECT_GT(nextLocalValue, localValue);
+    EXPECT_EQ(utcValue, QueryValue{utc});
+    EXPECT_NE(localValue, utcValue);
+    EXPECT_NE((localValue <=> utcValue), std::partial_ordering::equivalent);
+
+    const QueryValue date{orm::Date{std::chrono::year{2024}, std::chrono::February, std::chrono::day{29}}};
+    const QueryValue laterDate{orm::Date{std::chrono::year{2024}, std::chrono::March, std::chrono::day{1}}};
+    EXPECT_LT(date, laterDate);
+    EXPECT_LT(QueryValue{orm::TimeOfDay{}}, QueryValue{orm::TimeOfDay{std::chrono::microseconds{1}}});
+    EXPECT_LT(QueryValue{orm::Uuid{}}, QueryValue{orm::Uuid::parse("00000000-0000-0000-0000-000000000001")});
+}
+
+TEST(QueryValueTest, comparisonKeepsLogicalTypeOrderingAndUnorderedFloatingValues)
+{
+    EXPECT_LT(QueryValue{short{42}}, QueryValue{42});
+    const QueryValue unordered{std::numeric_limits<double>::quiet_NaN()};
+    EXPECT_NE(unordered, unordered);
+    EXPECT_EQ((unordered <=> unordered), std::partial_ordering::unordered);
+}
+
 TEST(QueryValueTest, shouldRejectCanonicalStorageThatDoesNotMatchLogicalType)
 {
     EXPECT_THROW((void)QueryValue::fromStorage(orm::model::ColumnType::String, QueryValue::Value{42}),

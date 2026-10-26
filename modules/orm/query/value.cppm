@@ -177,7 +177,8 @@ export
             return value;
         }
 
-        auto operator<=>(const QueryValue&) const -> std::partial_ordering = default;
+        auto operator==(const QueryValue& other) const -> bool;
+        auto operator<=>(const QueryValue& other) const -> std::partial_ordering;
 
     private:
         template <typename T>
