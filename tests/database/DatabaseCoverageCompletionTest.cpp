@@ -1226,7 +1226,9 @@ TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackend
 
 TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsUnknownColumnTypes)
 {
-    constexpr auto unknownType = static_cast<orm::model::ColumnType>(-1);
+    // Deliberately invalid metadata exercises rejection before binding any value.
+    constexpr auto unknownType =
+        static_cast<orm::model::ColumnType>(-1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     const std::array<orm::model::ColumnView, 1> columns{
         {{.fieldIndex = 0, .fieldName = "id", .name = "id", .type = unknownType}}};
     const orm::model::ModelDataView data{
@@ -1250,6 +1252,8 @@ TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsUnknownColumnT
 TEST(DatabaseCoverageCompletionTest, temporalRelationKeysPreserveTheirTypeAndMicroseconds)
 {
     using namespace std::chrono;
+    constexpr auto unknownType =
+        static_cast<orm::model::ColumnType>(-1); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     const orm::db::sqlite::SqliteBackend backend;
     const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
     soci::session session;
@@ -1271,9 +1275,7 @@ TEST(DatabaseCoverageCompletionTest, temporalRelationKeysPreserveTheirTypeAndMic
                   orm::query::QueryValue{local});
         EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(row, "utc_key", orm::model::ColumnType::UtcTimestamp),
                   orm::query::QueryValue{instant});
-        EXPECT_THROW(
-            (void)orm::db::binding::getPrimaryKeyValue(row, "time_key", static_cast<orm::model::ColumnType>(-1)),
-            std::invalid_argument);
+        EXPECT_THROW((void)orm::db::binding::getPrimaryKeyValue(row, "time_key", unknownType), std::invalid_argument);
     }
     EXPECT_EQ(count, 1U);
 }
