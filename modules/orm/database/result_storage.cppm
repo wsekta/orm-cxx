@@ -46,6 +46,12 @@ inline auto hasEncodedResult(const std::vector<ResultColumn>& columns) -> bool
                                });
 }
 
+inline auto validateResultIndicator(soci::indicator indicator) -> void
+{
+    if (indicator != soci::i_ok && indicator != soci::i_null)
+        throw ConversionError{"A database result was truncated by its transport"};
+}
+
 // Keep this ordering identical to emitSqlFullFields, including the flattened
 // to-one aliases used by joined and non-joined hydration.
 inline auto modelResultColumns(model::ModelView model, bool joined) -> std::vector<ResultColumn>
@@ -170,21 +176,16 @@ class TypedResultStorage
     static auto decodedResult(model::ColumnType type, std::string_view text) -> query::QueryValue::Value
     {
         using enum model::ColumnType;
-        switch (type)
-        {
-        case Date:
+        // read() calls this only after isEncodedResultType accepts the logical type.
+        if (type == Date)
             return decodeScalarValue<orm::Date>(text);
-        case TimeOfDay:
+        if (type == TimeOfDay)
             return decodeScalarValue<orm::TimeOfDay>(text);
-        case LocalDateTime:
+        if (type == LocalDateTime)
             return decodeScalarValue<orm::LocalDateTime>(text);
-        case UtcTimestamp:
+        if (type == UtcTimestamp)
             return decodeScalarValue<orm::UtcTimestamp>(text);
-        case Uuid:
-            return decodeScalarValue<orm::Uuid>(text);
-        default:
-            throw ConversionError{"The result column does not use encoded scalar storage"};
-        }
+        return decodeScalarValue<orm::Uuid>(text);
     }
 
     static auto storageFor(model::ColumnType type) -> Storage
@@ -308,8 +309,7 @@ public:
         {
             for (const auto& buffer : buffers)
             {
-                if (buffer->indicator != soci::i_ok && buffer->indicator != soci::i_null)
-                    throw ConversionError{"A database result was truncated by its transport"};
+                validateResultIndicator(buffer->indicator);
                 if (buffer->indicator != soci::i_null && isEncodedResultType(buffer->column.logicalType))
                 {
                     auto value = decodedResult(buffer->column.logicalType, std::get<std::string>(buffer->value));

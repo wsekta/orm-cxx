@@ -2,6 +2,8 @@ module;
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
+#include <compare>
 #include <cstdint>
 #include <ctime>
 #include <exception>
@@ -644,38 +646,26 @@ auto validateTargetValues(Database& database, soci::session& session, db::Backen
                 {
                     for (const auto& text : values)
                     {
-                        const auto parsed = [&]() -> query::QueryValue::Value
+                        const auto checkParsed = [&](const auto& stored)
                         {
-                            switch (column.logicalType)
-                            {
-                            case Date:
-                                return orm::detail::values::parseDate(text);
-                            case TimeOfDay:
-                                return orm::detail::values::parseTimeOfDay(text);
-                            case LocalDateTime:
-                                return orm::detail::values::parseLocalDateTime(text);
-                            case UtcTimestamp:
-                                return orm::detail::values::parseUtcTimestamp(
-                                    backend == db::BackendType::Postgres ? text : text + "+00:00");
-                            case Uuid:
-                                return orm::Uuid::parse(text);
-                            default:
-                                throw std::invalid_argument{"Unexpected migrated logical value"};
-                            }
-                        }();
-                        const db::BoundValue value{.logicalType = column.logicalType, .value = parsed};
-                        if (!db::binding::isWithinValueLimits(value, database.getBackendCapabilities().valueLimits,
-                                                              limits))
-                            throw std::invalid_argument{"Migrated value exceeds the backend domain"};
-                        std::visit(
-                            [backend](const auto& stored)
-                            {
-                                if constexpr (requires { orm::detail::values::validateNative(stored, backend); })
-                                    orm::detail::values::validateNative(stored, backend);
-                                else
-                                    throw std::invalid_argument{"Unexpected migrated value storage"};
-                            },
-                            parsed);
+                            const db::BoundValue value{.logicalType = column.logicalType,
+                                                       .value = query::QueryValue::Value{stored}};
+                            if (!db::binding::isWithinValueLimits(value, database.getBackendCapabilities().valueLimits,
+                                                                  limits))
+                                throw std::invalid_argument{"Migrated value exceeds the backend domain"};
+                            orm::detail::values::validateNative(stored, backend);
+                        };
+                        if (column.logicalType == Date)
+                            checkParsed(orm::detail::values::parseDate(text));
+                        else if (column.logicalType == TimeOfDay)
+                            checkParsed(orm::detail::values::parseTimeOfDay(text));
+                        else if (column.logicalType == LocalDateTime)
+                            checkParsed(orm::detail::values::parseLocalDateTime(text));
+                        else if (column.logicalType == UtcTimestamp)
+                            checkParsed(orm::detail::values::parseUtcTimestamp(
+                                backend == db::BackendType::Postgres ? text : text + "+00:00"));
+                        else
+                            checkParsed(orm::Uuid::parse(text));
                     }
                 }
                 catch (const std::invalid_argument&)

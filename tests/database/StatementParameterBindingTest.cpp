@@ -846,3 +846,169 @@ TEST(StatementParameterBindingTest, explicitResultBuffersPreserveSignedSqlValues
                      orm::db::BackendType::Postgres),
                  orm::db::binding::ConversionError);
 }
+
+TEST(StatementParameterBindingTest, nativeBoundValuesPassThroughExplicitResultDecodingAndValidation)
+{
+    using orm::db::binding::TypedResultStorage;
+    using orm::query::QueryValue;
+    const std::array<QueryValue, 5> inputs{
+        QueryValue{orm::detail::values::parseDate("2026-10-25")},
+        QueryValue{orm::detail::values::parseTimeOfDay("12:34:56.123456")},
+        QueryValue{orm::detail::values::parseLocalDateTime("2026-10-25 12:34:56.000001")},
+        QueryValue{orm::detail::values::parseUtcTimestamp("2026-10-25 13:34:56.123456+01:00")},
+        QueryValue{orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff")}};
+    const std::array<std::string_view, 5> aliases{"day", "clock", "civil", "instant", "identifier"};
+    soci::values parameters;
+    std::vector<orm::db::binding::ResultColumn> columns;
+    for (std::size_t index = 0; index < inputs.size(); ++index)
+    {
+        const auto& value = inputs[index];
+        orm::db::binding::bindBoundValue(parameters, aliases[index],
+                                         {.logicalType = value.getLogicalType(), .value = value.get()});
+        columns.push_back({std::string{aliases[index]}, value.getLogicalType()});
+    }
+    EXPECT_EQ(parameters.get<std::string>("day"), "2026-10-25");
+    EXPECT_EQ(parameters.get<std::string>("clock"), "12:34:56.123456");
+    EXPECT_EQ(parameters.get<std::string>("civil"), "2026-10-25 12:34:56.000001");
+    EXPECT_EQ(parameters.get<std::string>("instant"), "2026-10-25 12:34:56.123456+00:00");
+    EXPECT_EQ(parameters.get<std::string>("identifier"), "00112233-4455-6677-8899-aabbccddeeff");
+
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    TypedResultStorage storage{std::move(columns)};
+    std::vector<QueryValue> validated;
+    auto rows = 0;
+    storage.read(
+        session, "SELECT :day,:clock,:civil,:instant,:identifier", parameters,
+        [&](const TypedResultStorage& row)
+        {
+            ++rows;
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::Date>(row, "day"),
+                      std::get<orm::Date>(inputs[0].get()));
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::TimeOfDay>(row, "clock"),
+                      std::get<orm::TimeOfDay>(inputs[1].get()));
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::LocalDateTime>(row, "civil"),
+                      std::get<orm::LocalDateTime>(inputs[2].get()));
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::UtcTimestamp>(row, "instant"),
+                      std::get<orm::UtcTimestamp>(inputs[3].get()));
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::Uuid>(row, "identifier"),
+                      std::get<orm::Uuid>(inputs[4].get()));
+            EXPECT_EQ(validated.size(), inputs.size());
+        },
+        std::nullopt, [&](const orm::db::BoundValue& value)
+        { validated.push_back(QueryValue::fromStorage(value.logicalType, value.value.value())); });
+    EXPECT_EQ(rows, 1);
+    EXPECT_EQ(validated, std::vector<QueryValue>(inputs.begin(), inputs.end()));
+}
+
+TEST(StatementParameterBindingTest, explicitResultBuffersRetainPrimitiveStorageAndTypeProperties)
+{
+    using orm::db::binding::TypedResultStorage;
+    using enum orm::model::ColumnType;
+    TypedResultStorage storage{{{"boolean", Bool},
+                                {"character", Char},
+                                {"unsigned_character", UnsignedChar},
+                                {"small", Short},
+                                {"unsigned_small", UnsignedShort},
+                                {"integer", Int},
+                                {"unsigned_integer", UnsignedInt},
+                                {"large", LongLong},
+                                {"unsigned_large", UnsignedLongLong},
+                                {"floating", Float},
+                                {"precise", Double},
+                                {"text", String},
+                                {"day", Date}}};
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values parameters;
+    auto rows = 0;
+    storage.read(session,
+                 "SELECT 1,65,200,-123,321,654,4000,9223372036854775806,5000,1.25,2.5,"
+                 "'wire-value','2026-10-25'",
+                 parameters,
+                 [&](const TypedResultStorage& row)
+                 {
+                     ++rows;
+                     EXPECT_TRUE(orm::db::binding::getNumericValue<bool>(row, "boolean"));
+                     EXPECT_EQ(orm::db::binding::getNumericValue<char>(row, "character"), 'A');
+                     EXPECT_EQ(orm::db::binding::getNumericValue<unsigned char>(row, "unsigned_character"), 200);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<short>(row, "small"), -123);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<unsigned short>(row, "unsigned_small"), 321);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<int>(row, "integer"), 654);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<unsigned int>(row, "unsigned_integer"), 4000U);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<long long>(row, "large"), 9223372036854775806LL);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<unsigned long long>(row, "unsigned_large"), 5000ULL);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<float>(row, "floating"), 1.25F);
+                     EXPECT_EQ(orm::db::binding::getNumericValue<double>(row, "precise"), 2.5);
+                     EXPECT_EQ(row.get_properties("unsigned_integer").get_data_type(), soci::dt_unsigned_long_long);
+                     EXPECT_EQ(row.get_properties("floating").get_data_type(), soci::dt_double);
+                     EXPECT_EQ(row.get_properties("text").get_data_type(), soci::dt_string);
+                     EXPECT_EQ(row.get<std::string>("text"), "wire-value");
+                 });
+    EXPECT_EQ(rows, 1);
+}
+
+TEST(StatementParameterBindingTest, explicitResultAccessRejectsMissingNullAndMismatchedStorage)
+{
+    using orm::db::binding::ConversionError;
+    using orm::db::binding::TypedResultStorage;
+    TypedResultStorage storage{{{"missing", orm::model::ColumnType::Int}, {"text", orm::model::ColumnType::String}}};
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values parameters;
+    auto rows = 0;
+    storage.read(session, "SELECT NULL,'present'", parameters,
+                 [&](const TypedResultStorage& row)
+                 {
+                     ++rows;
+                     EXPECT_EQ(row.get_indicator("missing"), soci::i_null);
+                     EXPECT_THROW((void)row.get<int>("missing"), ConversionError);
+                     EXPECT_THROW((void)row.get<int>("text"), ConversionError);
+                     EXPECT_THROW((void)row.get<std::string>("unknown"), ConversionError);
+                     EXPECT_EQ(row.get<std::string>("text"), "present");
+                 });
+    EXPECT_EQ(rows, 1);
+}
+
+TEST(StatementParameterBindingTest, explicitResultMetadataRejectsInvalidTypeAndUnavailableRelatedModel)
+{
+    const std::vector<orm::db::binding::ResultColumn> invalidColumns{
+        {"invalid", static_cast<orm::model::ColumnType>(999)}}; // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    EXPECT_THROW((void)orm::db::binding::TypedResultStorage{invalidColumns}, orm::db::binding::ConversionError);
+    const std::array<orm::model::ColumnView, 1> columns{
+        {{.fieldName = "relation", .name = "relation", .kind = orm::model::FieldKind::ToOne}}};
+    const orm::model::ModelDataView modelData{
+        .type = orm::model::typeId<int>(), .tableName = "missing_target", .columns = columns};
+    const std::array<const orm::model::ModelDataView*, 1> models{&modelData};
+    const orm::model::SchemaView schema{.models = models};
+    EXPECT_THROW((void)orm::db::binding::modelResultColumns(schema.at(0), true), orm::db::binding::ConversionError);
+}
+
+TEST(StatementParameterBindingTest, malformedEncodedResultIsRejectedBeforeValidationAndConsumption)
+{
+    orm::db::binding::TypedResultStorage storage{{{"identifier", orm::model::ColumnType::Uuid}}};
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values parameters;
+    auto consumed = false;
+    auto validated = false;
+    EXPECT_THROW(storage.read(
+                     session, "SELECT 'private-invalid-uuid'", parameters, [&](const auto&) { consumed = true; },
+                     std::nullopt, [&](const orm::db::BoundValue&) { validated = true; }),
+                 orm::db::binding::ConversionError);
+    EXPECT_FALSE(consumed);
+    EXPECT_FALSE(validated);
+}
+
+TEST(StatementParameterBindingTest, transportTruncationIsRejectedBeforeHydration)
+{
+    EXPECT_THROW(orm::db::binding::validateResultIndicator(soci::i_truncated), orm::db::binding::ConversionError);
+}

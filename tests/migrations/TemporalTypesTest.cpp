@@ -78,6 +78,47 @@ namespace temporal_detail = orm::migrations::detail;
 namespace codec = orm::detail::values;
 namespace temporal_models = temporal_migration_models;
 
+class LimitedDateBackend final : public orm::db::BackendProvider
+{
+public:
+    LimitedDateBackend(orm::db::CommandGeneratorFactory registryInit, orm::Date maximumDate)
+        : registry{std::move(registryInit)},
+          delegate{registry.getBackend(Backend::Postgres)},
+          profile{delegate.capabilities()}
+    {
+        profile.valueLimits.maxDate = maximumDate;
+    }
+    auto type() const noexcept -> Backend override
+    {
+        return delegate.type();
+    }
+    auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
+    {
+        return profile;
+    }
+    auto dialect() const noexcept -> const orm::db::SqlDialect& override
+    {
+        return delegate.dialect();
+    }
+    auto runtime() const noexcept -> const orm::db::BackendRuntime& override
+    {
+        return delegate.runtime();
+    }
+    auto commandGenerator() const noexcept -> const orm::db::CommandGenerator& override
+    {
+        return delegate.commandGenerator();
+    }
+    auto compiledSqlFlavor() const noexcept -> orm::db::CompiledSqlFlavor override
+    {
+        return delegate.compiledSqlFlavor();
+    }
+
+private:
+    orm::db::CommandGeneratorFactory registry;
+    const orm::db::BackendProvider& delegate;
+    orm::db::BackendCapabilities profile;
+};
+
 auto temporalColumn(const SchemaSnapshot& snapshot, Backend backend, std::string_view name) -> const PhysicalColumn&
 {
     const auto& columns = snapshot.backends.at(backend).tables.front().columns;
@@ -500,6 +541,48 @@ TEST_P(TemporalMigrationLiveTest, PostgresqlInfinityCannotBecomeAModelDate)
                  "AND table_name='migration_temporal_values' AND column_name='value'",
         soci::into(columns);
     session() << "SELECT COUNT(*) FROM " + quote("migration_temporal_values"), soci::into(rows);
+    EXPECT_EQ(columns, 0);
+    EXPECT_EQ(rows, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, DateBackfillOutsideProviderDomainRollsBackDdlAndHistory)
+{
+    if (GetParam().type != Backend::Postgres)
+        GTEST_SKIP() << "PostgreSQL supplies transactional DDL for the restricted-provider regression";
+    postgresql_test::PostgresqlTestSchema schema{std::get<orm::PostgresConfig>(testConnectionConfig())};
+    std::vector<std::unique_ptr<orm::db::BackendProvider>> providers;
+    providers.push_back(std::make_unique<LimitedDateBackend>(schema.registry(), codec::parseDate("2024-12-31")));
+    orm::Database limited{schema.connectionConfig(), orm::db::CommandGeneratorFactory{std::move(providers)}};
+    auto& limitedSession = temporal_detail::DatabaseAccess::session(limited);
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Postgres});
+    const auto after = capture(temporal_models::DateSchema::view, std::array{Backend::Postgres});
+    const auto first =
+        generate(1, "restricted_initial", compare(emptySnapshot(std::array{Backend::Postgres}), before)).migration;
+    Runner{limited, Catalog{first}}.up();
+    limitedSession << "INSERT INTO migration_temporal_values VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back(
+        {.table = "migration_temporal_values", .column = "value", .constant = codec::parseDate("2025-01-01")});
+    const auto second = generate(2, "restricted_date", compare(before, after, decisions), decisions).migration;
+    Runner runner{limited, Catalog{first, second}};
+    try
+    {
+        runner.up();
+        FAIL() << "A native date outside the provider domain must not be accepted as an applied migration";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema);
+        EXPECT_EQ(error.getVersion(), 2);
+        EXPECT_NE(std::string{error.what()}.find("outside the target model domain"), std::string::npos);
+    }
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    EXPECT_FALSE(runner.status().incomplete);
+    int columns{}, rows{};
+    limitedSession << "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=current_schema() "
+                      "AND table_name='migration_temporal_values' AND column_name='value'",
+        soci::into(columns);
+    limitedSession << "SELECT COUNT(*) FROM migration_temporal_values", soci::into(rows);
     EXPECT_EQ(columns, 0);
     EXPECT_EQ(rows, 1);
 }

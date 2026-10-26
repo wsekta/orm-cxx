@@ -55,6 +55,7 @@ TEST(ValueCodecTest, rejectsInvalidCalendarValuesAndLossOfPrecision)
     EXPECT_FALSE(valid(orm::Date{std::chrono::year{2023}, std::chrono::February, std::chrono::day{29}}));
     EXPECT_FALSE(valid(orm::LocalDateTime{(std::chrono::microseconds::max)()}));
     EXPECT_FALSE(valid(orm::UtcTimestamp{(std::chrono::microseconds::min)()}));
+    EXPECT_THROW((void)format(orm::LocalDateTime{(std::chrono::microseconds::max)()}), std::invalid_argument);
 }
 
 TEST(ValueCodecTest, validatesNativeRangesAndMariaDbUuidRules)
@@ -64,6 +65,9 @@ TEST(ValueCodecTest, validatesNativeRangesAndMariaDbUuidRules)
     EXPECT_THROW(validateNative(parseDate("0999-12-31"), Mysql), std::invalid_argument);
     EXPECT_THROW(validateNative(parseDate("0999-12-31"), Mariadb), std::invalid_argument);
     EXPECT_THROW(validateNative(parseDate("2026-10-25"), Sqlite), std::invalid_argument);
+    EXPECT_NO_THROW(validateNative(parseLocalDateTime("9999-12-31 23:59:59.499999"), Mysql));
+    EXPECT_THROW(validateNative(parseLocalDateTime("9999-12-31 23:59:59.500000"), Mysql), std::invalid_argument);
+    EXPECT_NO_THROW(validateNative(parseLocalDateTime("9999-12-31 23:59:59.999999"), Mariadb));
     EXPECT_THROW(validateNative(parseUtcTimestamp("1970-01-01 00:00:00"), Mysql), std::invalid_argument);
     EXPECT_NO_THROW(validateNative(parseUtcTimestamp("2038-01-19 03:14:07.499999"), Mysql));
     EXPECT_THROW(validateNative(parseUtcTimestamp("2038-01-19 03:14:07.500000"), Mysql), std::invalid_argument);

@@ -107,6 +107,21 @@ struct NarrowKey
     }();
 };
 
+template <typename T>
+struct TemporalKey
+{
+    T id;
+    inline static constexpr auto table_name = []
+    {
+        if constexpr (std::same_as<T, orm::Date>)
+            return orm::reflection::FixedString{"coverage_date_key"};
+        else if constexpr (std::same_as<T, orm::TimeOfDay>)
+            return orm::reflection::FixedString{"coverage_time_key"};
+        else
+            return orm::reflection::FixedString{"coverage_timestamp_key"};
+    }();
+};
+
 struct OverflowKey
 {
     std::string first;
@@ -925,6 +940,26 @@ TEST(DatabaseCoverageCompletionTest, queryCapabilityChecksHandleNegatedCollectio
     }
 }
 
+TEST(DatabaseCoverageCompletionTest, logicalMutationPredicatesCannotHideUnsupportedCollectionsOnEitherSide)
+{
+    DatabaseBundle bundle;
+    bundle.backend->capabilitiesValue.query.collectionPredicates = false;
+    bundle.connect();
+    const auto scalar = col<&collection_models::Author::id>() == 1;
+    const auto collection = any<&collection_models::Author::books>(col<&collection_models::Book::title>() == "book");
+    for (const bool collectionFirst : {false, true})
+    {
+        orm::Update<collection_models::Author> update;
+        update.set(col<&collection_models::Author::id>(), 2);
+        if (collectionFirst)
+            update.where(collection && scalar);
+        else
+            update.where(scalar && collection);
+        expectDatabaseError([&] { (void)bundle.database->update(update); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                            "update");
+    }
+}
+
 TEST(DatabaseCoverageCompletionTest, internalCollectionValidationRejectsInvalidFieldsAndTargetTypes)
 {
     constexpr auto owner = orm::model::modelView<Schema, collection_models::User>();
@@ -1189,6 +1224,60 @@ TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackend
                  orm::db::binding::ConversionError);
 }
 
+TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsUnknownColumnTypes)
+{
+    constexpr auto unknownType = static_cast<orm::model::ColumnType>(-1);
+    const std::array<orm::model::ColumnView, 1> columns{
+        {{.fieldIndex = 0, .fieldName = "id", .name = "id", .type = unknownType}}};
+    const orm::model::ModelDataView data{
+        .type = orm::model::typeId<int>(), .schemaIndex = 0, .tableName = "invalid_column_type", .columns = columns};
+    const std::array<const orm::model::ModelDataView*, 1> models{&data};
+    const orm::model::SchemaView schema{.models = models};
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values serialized;
+    soci::values bound;
+    serialized.set("id", 7);
+    // A statement owns the SOCI exchange data, even when metadata validation prevents execution.
+    [[maybe_unused]] soci::statement owner = (session.prepare << "SELECT :id", soci::use(serialized));
+
+    EXPECT_THROW((void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized, schema.at(0)),
+                 std::invalid_argument);
+}
+
+TEST(DatabaseCoverageCompletionTest, temporalRelationKeysPreserveTheirTypeAndMicroseconds)
+{
+    using namespace std::chrono;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    const orm::Date date{year{2024}, February, day{29}};
+    const orm::TimeOfDay timeOfDay{hours{12} + minutes{34} + seconds{56} + microseconds{123456}};
+    const orm::LocalDateTime local{local_days{date} + timeOfDay.sinceMidnight()};
+    const orm::UtcTimestamp instant{sys_days{date} + hours{10} + minutes{34} + seconds{56} + microseconds{123456}};
+    soci::rowset<soci::row> rows =
+        (session.prepare << "SELECT '12:34:56.123456' AS time_key, '2024-02-29 12:34:56.123456' AS local_key, "
+                            "'2024-02-29 12:34:56.123456+02:00' AS utc_key");
+    std::size_t count{};
+    for (const auto& row : rows)
+    {
+        ++count;
+        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(row, "time_key", orm::model::ColumnType::TimeOfDay),
+                  orm::query::QueryValue{timeOfDay});
+        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(row, "local_key", orm::model::ColumnType::LocalDateTime),
+                  orm::query::QueryValue{local});
+        EXPECT_EQ(orm::db::binding::getPrimaryKeyValue(row, "utc_key", orm::model::ColumnType::UtcTimestamp),
+                  orm::query::QueryValue{instant});
+        EXPECT_THROW(
+            (void)orm::db::binding::getPrimaryKeyValue(row, "time_key", static_cast<orm::model::ColumnType>(-1)),
+            std::invalid_argument);
+    }
+    EXPECT_EQ(count, 1U);
+}
+
 TEST(DatabaseCoverageCompletionTest, modelBindingRejectsToOneColumnWithoutSchemaTarget)
 {
     std::array<orm::model::ColumnView, 1> columns{{{.fieldIndex = 0,
@@ -1244,6 +1333,31 @@ TEST(DatabaseCoverageCompletionTest, indexBudgetUsesBackendWidthsForNarrowKeys)
                         "create table");
     expectDatabaseError([&] { context.createTable<NarrowKey<unsigned short>>(); },
                         orm::DatabaseErrorCode::UnsupportedFeature, "create table");
+}
+
+TEST(DatabaseCoverageCompletionTest, indexBudgetIncludesNativeTemporalKeyWidths)
+{
+    using KeySchema = orm::Schema<TemporalKey<orm::Date>, TemporalKey<orm::TimeOfDay>, TemporalKey<orm::UtcTimestamp>>;
+    // A scripted provider checks the budget independently of the SQLite dialect's unsupported native types.
+    DatabaseBundle bundle{makeScriptedGenerator(CommandScripts{})};
+    bundle.backend->capabilitiesValue.supportedColumnTypes.insert(
+        bundle.backend->capabilitiesValue.supportedColumnTypes.end(),
+        {orm::model::ColumnType::Date, orm::model::ColumnType::TimeOfDay, orm::model::ColumnType::UtcTimestamp});
+    bundle.backend->capabilitiesValue.schema.boundedStringKeys = true;
+    bundle.backend->runtimeStrategy.overrideLimits = true;
+    bundle.connect();
+    auto context = bundle.connection->orm<KeySchema>();
+    const auto checkWidth = [&]<typename T>(std::size_t bytes)
+    {
+        bundle.backend->runtimeStrategy.limitsValue.maxIndexBytes = bytes;
+        EXPECT_NO_THROW(context.createTable<TemporalKey<T>>());
+        bundle.backend->runtimeStrategy.limitsValue.maxIndexBytes = bytes - 1;
+        expectDatabaseError([&] { context.createTable<TemporalKey<T>>(); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                            "create table");
+    };
+    checkWidth.template operator()<orm::Date>(3);
+    checkWidth.template operator()<orm::TimeOfDay>(6);
+    checkWidth.template operator()<orm::UtcTimestamp>(7);
 }
 
 TEST(DatabaseCoverageCompletionTest, oversizedCompositeKeysAreRejectedWithoutWrapping)

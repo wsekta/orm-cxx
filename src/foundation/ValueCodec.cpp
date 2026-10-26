@@ -20,12 +20,10 @@ using namespace std::chrono;
     throw std::invalid_argument{"Invalid date, time or UUID value"};
 }
 
-auto number(std::string_view text, std::size_t start, std::size_t count) -> unsigned int
+auto number(std::string_view digits) -> unsigned int
 {
-    if (start > text.size() || count > text.size() - start)
-        invalidValue();
     unsigned int result{};
-    for (const auto character : text.substr(start, count))
+    for (const auto character : digits)
     {
         if (character < '0' || character > '9')
             invalidValue();
@@ -79,11 +77,8 @@ auto validate(Date value) -> void
         invalidValue();
 }
 
-auto validate(TimeOfDay value) -> void
-{
-    if (!valid(value))
-        invalidValue();
-}
+// TimeOfDay preserves its domain invariant in every constructor.
+auto validate(TimeOfDay) -> void {}
 
 auto validate(LocalDateTime value) -> void
 {
@@ -135,7 +130,8 @@ auto parseDate(std::string_view text) -> Date
 {
     if (text.size() != 10 || text[4] != '-' || text[7] != '-')
         invalidValue();
-    const Date result{year{static_cast<int>(number(text, 0, 4))}, month{number(text, 5, 2)}, day{number(text, 8, 2)}};
+    const Date result{year{static_cast<int>(number(text.substr(0, 4)))}, month{number(text.substr(5, 2))},
+                      day{number(text.substr(8, 2))}};
     validate(result);
     return result;
 }
@@ -144,9 +140,9 @@ auto parseTimeOfDay(std::string_view text) -> TimeOfDay
 {
     if (text.size() < 8 || text.size() > 15 || text[2] != ':' || text[5] != ':')
         invalidValue();
-    const auto hour = number(text, 0, 2);
-    const auto minute = number(text, 3, 2);
-    const auto second = number(text, 6, 2);
+    const auto hour = number(text.substr(0, 2));
+    const auto minute = number(text.substr(3, 2));
+    const auto second = number(text.substr(6, 2));
     if (hour >= 24 || minute >= 60 || second >= 60)
         invalidValue();
     unsigned int fraction{};
@@ -155,7 +151,7 @@ auto parseTimeOfDay(std::string_view text) -> TimeOfDay
         if (text.size() == 9 || text[8] != '.')
             invalidValue();
         const auto digits = text.size() - 9;
-        fraction = number(text, 9, digits);
+        fraction = number(text.substr(9, digits));
         for (auto index = digits; index < 6; ++index)
             fraction *= 10U;
     }
@@ -184,8 +180,8 @@ auto parseUtcTimestamp(std::string_view text) -> UtcTimestamp
             if ((suffix.size() != 3 && suffix.size() != 6) || (suffix[0] != '+' && suffix[0] != '-') ||
                 (suffix.size() == 6 && suffix[3] != ':'))
                 invalidValue();
-            const auto hour = number(suffix, 1, 2);
-            const auto minute = suffix.size() == 6 ? number(suffix, 4, 2) : 0U;
+            const auto hour = number(suffix.substr(1, 2));
+            const auto minute = suffix.size() == 6 ? number(suffix.substr(4, 2)) : 0U;
             if (hour > 23 || minute > 59)
                 invalidValue();
             const auto offset = hours{hour} + minutes{minute};
