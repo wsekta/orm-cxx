@@ -125,7 +125,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d00df34b9e08bf3bec8f4844776454b" id="r_a2d00df34b9e08bf3bec8f4844776454b"><td class="memItemLeft">constexpr&#160;</td><td class="memItemRight"><a class="el" href="#a2d00df34b9e08bf3bec8f4844776454b">Uuid</a> (std::array&lt; std::byte, 16 &gt; valueInit) noexcept</td></tr>
 <tr class="memitem:ab2118c9f286e927e37b09c6ca4f92178" id="r_ab2118c9f286e927e37b09c6ca4f92178"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#ab2118c9f286e927e37b09c6ca4f92178">bytes</a> () const noexcept -&gt; const std::array&lt; std::byte, 16 &gt; &amp;</td></tr>
 <tr class="memitem:a384ac51b7b530cd87684e26ca622ace0" id="r_a384ac51b7b530cd87684e26ca622ace0"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a384ac51b7b530cd87684e26ca622ace0">toString</a> () const -&gt; std::string</td></tr>
-<tr class="memitem:ac2e287fd009d3ad70648bddd94f02138" id="r_ac2e287fd009d3ad70648bddd94f02138"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#ac2e287fd009d3ad70648bddd94f02138">operator&lt;=&gt;</a> (const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;) const noexcept -&gt; std::strong_ordering=default</td></tr>
+<tr class="memitem:a752917ca3d5100f79961c91d8ef83902" id="r_a752917ca3d5100f79961c91d8ef83902"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a752917ca3d5100f79961c91d8ef83902">operator==</a> (const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;other) const noexcept -&gt; bool</td></tr>
+<tr class="memitem:abd2df9598c1876807c2314321932855d" id="r_abd2df9598c1876807c2314321932855d"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#abd2df9598c1876807c2314321932855d">operator&lt;=&gt;</a> (const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;other) const noexcept -&gt; std::strong_ordering</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -135,7 +136,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="textblock"><p>A 128-bit UUID in canonical byte order, independent of a database backend.</p>
 <p>Default construction produces the nil UUID. Parsing accepts exactly the 8-4-4-4-12 hexadecimal format, with either case; formatting uses lowercase. Every 128-bit pattern is representable. Byte ordering in C++ does not promise the same order as a database's native UUID comparisons. </p>
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00057">57</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00073">73</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ae07d59978118d0417e149dba60ccc780" name="ae07d59978118d0417e149dba60ccc780"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae07d59978118d0417e149dba60ccc780">&#9670;&#160;</a></span>Uuid() <span class="overload">[1/2]</span></h2>
@@ -185,7 +186,7 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00062">62</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00078">78</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>
@@ -213,12 +214,12 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00064">64</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00080">80</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>
-<a id="ac2e287fd009d3ad70648bddd94f02138" name="ac2e287fd009d3ad70648bddd94f02138"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac2e287fd009d3ad70648bddd94f02138">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
+<a id="abd2df9598c1876807c2314321932855d" name="abd2df9598c1876807c2314321932855d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd2df9598c1876807c2314321932855d">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -229,16 +230,45 @@ Static Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">auto orm::Uuid::operator&lt;=&gt; </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const -&gt;  std::strong_ordering=default</td>
+          <td class="paramtype">const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>other</em></span></td><td>)</td>
+          <td> const -&gt; std::strong_ordering</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel constexpr">constexpr</span><span class="mlabel default">default</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00102">102</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a752917ca3d5100f79961c91d8ef83902" name="a752917ca3d5100f79961c91d8ef83902"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a752917ca3d5100f79961c91d8ef83902">&#9670;&#160;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Uuid::operator== </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="#ae07d59978118d0417e149dba60ccc780">Uuid</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>other</em></span></td><td>)</td>
+          <td> const -&gt; bool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00090">90</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>

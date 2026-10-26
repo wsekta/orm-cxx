@@ -1,5 +1,11 @@
 var NAVTREEINDEX5 =
 {
+"classorm_1_1query_1_1TypedColumn.html#a62b68f22d96565eb011ed9e3e92f179f":[22,0,0,4,7,26],
+"classorm_1_1query_1_1TypedColumn.html#a62b68f22d96565eb011ed9e3e92f179f":[24,0,0,3,7,26],
+"classorm_1_1query_1_1TypedColumn.html#a6e5f9975d8ede5203a01209df47b803c":[21,0,0,136,1],
+"classorm_1_1query_1_1TypedColumn.html#a6e5f9975d8ede5203a01209df47b803c":[22,0,0,4,7,1],
+"classorm_1_1query_1_1TypedColumn.html#a6e5f9975d8ede5203a01209df47b803c":[24,0,0,3,7,1],
+"classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c":[21,0,0,136,2],
 "classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c":[22,0,0,4,7,2],
 "classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c":[24,0,0,3,7,2],
 "classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217":[21,0,0,136,27],
@@ -243,11 +249,5 @@ var NAVTREEINDEX5 =
 "docs-modules-c20-modules.html#docs-modules-cmake-consumers-and-installation":[10,1],
 "docs-modules-c20-modules.html#docs-modules-source-organization":[10,0],
 "docs-packaging-package-managers-and-releases.html":[11],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-conancenter-after-acceptance":[11,1],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-vcpkg-after-acceptance":[11,0],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-local-package-verification":[11,3],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing":[11,2],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-native-cmake-installation":[11,4],
-"docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release":[11,2,0],
-"docs-partial-result-queries-partial-result-queries.html":[12]
+"docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-conancenter-after-acceptance":[11,1]
 };

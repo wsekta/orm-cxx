@@ -1,5 +1,11 @@
 var NAVTREEINDEX6 =
 {
+"docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-vcpkg-after-acceptance":[11,0],
+"docs-packaging-package-managers-and-releases.html#docs-packaging-local-package-verification":[11,3],
+"docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing":[11,2],
+"docs-packaging-package-managers-and-releases.html#docs-packaging-native-cmake-installation":[11,4],
+"docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release":[11,2,0],
+"docs-partial-result-queries-partial-result-queries.html":[12],
 "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries":[12,2],
 "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-contract":[12,0],
 "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-limitations":[12,4],
@@ -243,11 +249,5 @@ var NAVTREEINDEX6 =
 "module__orm.html#a59248ecbc25e6874846f5262120275e5":[21,0,0,281],
 "module__orm.html#a5a5d6b20c2fb0917a24b6f42e5eb6710":[21,0,0,161],
 "module__orm.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a08a38277b0309070706f6652eeae9a53":[21,0,0,161,1],
-"module__orm.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a258f49887ef8d14ac268c92b02503aaa":[21,0,0,161,0],
-"module__orm.html#a5f32d4a72ffe926c0d02f0cc8df39f6a":[21,0,0,278],
-"module__orm.html#a5fca9aae9796881e35b22b02aea39e2d":[21,0,0,230],
-"module__orm.html#a5fd760801895c224a35e060f295fa6a0":[21,0,0,206],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864d":[21,0,0,155],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b":[21,0,0,155,1],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99":[21,0,0,155,5]
+"module__orm.html#a5a5d6b20c2fb0917a24b6f42e5eb6710a258f49887ef8d14ac268c92b02503aaa":[21,0,0,161,0]
 };

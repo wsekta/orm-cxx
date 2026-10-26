@@ -161,54 +161,106 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('values_8cppm_s
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    }</div>
 </div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a4330405b541e9f823f30edf55afd7cae">   43</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a4330405b541e9f823f30edf55afd7cae">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp;) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering = <span class="keywordflow">default</span>;</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    std::chrono::microseconds value{};</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>};</div>
+<div class="foldopen" id="foldopen00043" data-start="{" data-end="}">
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">   43</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">operator==</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    {</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">return</span> value.count() == other.value.count();</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    }</div>
 </div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span><span class="comment"></span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment">/**</span></div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span><span class="comment"> * A 128-bit UUID in canonical byte order, independent of a database backend.</span></div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span><span class="comment"> * Default construction produces the nil UUID. Parsing accepts exactly the</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span><span class="comment"> * 8-4-4-4-12 hexadecimal format, with either case; formatting uses lowercase.</span></div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span><span class="comment"> * Every 128-bit pattern is representable. Byte ordering in C++ does not promise</span></div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span><span class="comment"> * the same order as a database&#39;s native UUID comparisons.</span></div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span><span class="comment"> */</span></div>
-<div class="foldopen" id="foldopen00057" data-start="{" data-end="};">
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html">   57</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a></div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>{</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">   60</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>() noexcept = default;</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span> </div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b">   62</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>(std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt; valueInit) noexcept : value{valueInit} {}</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="foldopen" id="foldopen00064" data-start="{" data-end="}">
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">   64</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">bytes</a>() const noexcept -&gt; const std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt;&amp;</div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    {</div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>        <span class="keywordflow">return</span> value;</div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>    }</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">   48</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    {</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keywordflow">if</span> (value.count() &lt; other.value.count())</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        {</div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            <span class="keywordflow">return</span> std::strong_ordering::less;</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        }</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keywordflow">if</span> (value.count() &gt; other.value.count())</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        {</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    }</div>
 </div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"></span> </div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment">    /** @throws std::invalid_argument if the input is not in the required format. */</span></div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">   70</a></span>    [[nodiscard]] <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">parse</a>(std::string_view text) -&gt; <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>;</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">   72</a></span>    [[nodiscard]] <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">toString</a>() const -&gt; std::<span class="keywordtype">string</span>;</div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ac2e287fd009d3ad70648bddd94f02138">   74</a></span>    constexpr auto operator&lt;=&gt;(const <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp;) const noexcept -&gt; std::strong_ordering = default;</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>private:</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt; value{};</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>};</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    std::chrono::microseconds value{};</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>};</div>
 </div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>} <span class="comment">// namespace orm</span></div>
-<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a4330405b541e9f823f30edf55afd7cae"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a4330405b541e9f823f30edf55afd7cae">orm::TimeOfDay::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const TimeOfDay &amp;) const noexcept -&gt; std::strong_ordering=default</div></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="comment"></span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="comment">/**</span></div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="comment"> * A 128-bit UUID in canonical byte order, independent of a database backend.</span></div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"> * Default construction produces the nil UUID. Parsing accepts exactly the</span></div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment"> * 8-4-4-4-12 hexadecimal format, with either case; formatting uses lowercase.</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="comment"> * Every 128-bit pattern is representable. Byte ordering in C++ does not promise</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment"> * the same order as a database&#39;s native UUID comparisons.</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment"> */</span></div>
+<div class="foldopen" id="foldopen00073" data-start="{" data-end="};">
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html">   73</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>{</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">   76</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>() noexcept = default;</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b">   78</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>(std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt; valueInit) noexcept : value{valueInit} {}</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
+<div class="foldopen" id="foldopen00080" data-start="{" data-end="}">
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">   80</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">bytes</a>() const noexcept -&gt; const std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt;&amp;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    {</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">return</span> value;</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    }</div>
+</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment"></span> </div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment">    /** @throws std::invalid_argument if the input is not in the required format. */</span></div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">   86</a></span>    [[nodiscard]] <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">parse</a>(std::string_view text) -&gt; <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">   88</a></span>    [[nodiscard]] <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">toString</a>() const -&gt; std::<span class="keywordtype">string</span>;</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
+<div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a752917ca3d5100f79961c91d8ef83902">   90</a></span>    constexpr auto operator==(const <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) const noexcept -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    {</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        {</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordflow">if</span> (value[index] != other.value[index])</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            }</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        }</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    }</div>
+</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
+<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">  102</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    {</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            <span class="keywordflow">if</span> (value[index] &lt; other.value[index])</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            {</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                <span class="keywordflow">return</span> std::strong_ordering::less;</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            }</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            <span class="keywordflow">if</span> (value[index] &gt; other.value[index])</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            {</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            }</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        }</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    }</div>
+</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    std::array&lt;std::byte, 16&gt; value{};</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>};</div>
+</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>} <span class="comment">// namespace orm</span></div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a545fb51fdccc5a26a8037030afc0014f"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">orm::TimeOfDay::operator==</a></div><div class="ttdeci">constexpr auto operator==(const TimeOfDay &amp;other) const noexcept -&gt; bool</div><div class="ttdef"><b>Definition</b> <a href="#l00043">values.cppm:43</a></div></div>
 <div class="ttc" id="aclassorm_1_1TimeOfDay_html_a7eaae7db382d6c8972f80a1af207a2b3"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">orm::TimeOfDay::sinceMidnight</a></div><div class="ttdeci">constexpr auto sinceMidnight() const noexcept -&gt; std::chrono::microseconds</div><div class="ttdef"><b>Definition</b> <a href="#l00038">values.cppm:38</a></div></div>
 <div class="ttc" id="aclassorm_1_1TimeOfDay_html_ac95ebe90e82364159f6fa0e4a895543c"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">orm::TimeOfDay::TimeOfDay</a></div><div class="ttdeci">constexpr TimeOfDay() noexcept=default</div></div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html_aea148f8bfca2484c3e7bcc62419cba6a"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">orm::TimeOfDay::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const TimeOfDay &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00048">values.cppm:48</a></div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_a384ac51b7b530cd87684e26ca622ace0"><div class="ttname"><a href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">orm::Uuid::toString</a></div><div class="ttdeci">auto toString() const -&gt; std::string</div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_a562de0e7fed64877b7169d100ba13eca"><div class="ttname"><a href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">orm::Uuid::parse</a></div><div class="ttdeci">static auto parse(std::string_view text) -&gt; Uuid</div></div>
-<div class="ttc" id="aclassorm_1_1Uuid_html_ab2118c9f286e927e37b09c6ca4f92178"><div class="ttname"><a href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">orm::Uuid::bytes</a></div><div class="ttdeci">constexpr auto bytes() const noexcept -&gt; const std::array&lt; std::byte, 16 &gt; &amp;</div><div class="ttdef"><b>Definition</b> <a href="#l00064">values.cppm:64</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html_ab2118c9f286e927e37b09c6ca4f92178"><div class="ttname"><a href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">orm::Uuid::bytes</a></div><div class="ttdeci">constexpr auto bytes() const noexcept -&gt; const std::array&lt; std::byte, 16 &gt; &amp;</div><div class="ttdef"><b>Definition</b> <a href="#l00080">values.cppm:80</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html_abd2df9598c1876807c2314321932855d"><div class="ttname"><a href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">orm::Uuid::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const Uuid &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00102">values.cppm:102</a></div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_ae07d59978118d0417e149dba60ccc780"><div class="ttname"><a href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">orm::Uuid::Uuid</a></div><div class="ttdeci">constexpr Uuid() noexcept=default</div></div>
 <div class="ttc" id="amodule__orm_html"><div class="ttname"><a href="module__orm.html">orm</a></div></div>
 <div class="ttc" id="anamespaceorm_html"><div class="ttname"><a href="namespaceorm.html">orm</a></div><div class="ttdef"><b>Definition</b> <a href="BackendRelations_8cppm_source.html#l00017">BackendRelations.cppm:18</a></div></div>
