@@ -82,6 +82,7 @@ TEST(TimeOfDayTest, comparesByElapsedTimeSinceMidnight)
     const auto later = orm::TimeOfDay{earlier.sinceMidnight() + 1us};
 
     EXPECT_EQ(earlier, orm::TimeOfDay{12h + 34min + 56s + 123'456us});
+    EXPECT_EQ((earlier <=> earlier), std::strong_ordering::equal);
     EXPECT_NE(earlier, later);
     EXPECT_LT(earlier, later);
     EXPECT_GT(later, earlier);
@@ -201,6 +202,7 @@ TEST(UuidTest, comparesLexicographicallyByCanonicalBytes)
         EXPECT_GT(ordered[index], ordered[index - 1]);
         EXPECT_NE(ordered[index - 1], ordered[index]);
     }
+    EXPECT_EQ((ordered.front() <=> ordered.front()), std::strong_ordering::equal);
 }
 
 } // namespace

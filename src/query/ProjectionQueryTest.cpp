@@ -105,6 +105,11 @@ TEST(ProjectionQueryTest, shouldIdentifySupportedProjectionResultTypes)
         orm::model::ColumnType::Float,
         orm::model::ColumnType::Double,
         orm::model::ColumnType::String,
+        orm::model::ColumnType::Uuid,
+        orm::model::ColumnType::Date,
+        orm::model::ColumnType::TimeOfDay,
+        orm::model::ColumnType::LocalDateTime,
+        orm::model::ColumnType::UtcTimestamp,
     };
 
     for (const auto type : supportedTypes)
@@ -113,7 +118,6 @@ TEST(ProjectionQueryTest, shouldIdentifySupportedProjectionResultTypes)
     }
 
     const auto unsupportedTypes = std::vector<orm::model::ColumnType>{
-        orm::model::ColumnType::Uuid,
         static_cast<orm::model::ColumnType>(999), // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
     };
 

@@ -40,7 +40,23 @@ public:
         return value;
     }
 
-    constexpr auto operator<=>(const TimeOfDay&) const noexcept -> std::strong_ordering = default;
+    constexpr auto operator==(const TimeOfDay& other) const noexcept -> bool
+    {
+        return value.count() == other.value.count();
+    }
+
+    constexpr auto operator<=>(const TimeOfDay& other) const noexcept -> std::strong_ordering
+    {
+        if (value.count() < other.value.count())
+        {
+            return std::strong_ordering::less;
+        }
+        if (value.count() > other.value.count())
+        {
+            return std::strong_ordering::greater;
+        }
+        return std::strong_ordering::equal;
+    }
 
 private:
     std::chrono::microseconds value{};
@@ -71,7 +87,33 @@ public:
 
     [[nodiscard]] auto toString() const -> std::string;
 
-    constexpr auto operator<=>(const Uuid&) const noexcept -> std::strong_ordering = default;
+    constexpr auto operator==(const Uuid& other) const noexcept -> bool
+    {
+        for (auto index = std::size_t{0}; index < value.size(); ++index)
+        {
+            if (value[index] != other.value[index])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    constexpr auto operator<=>(const Uuid& other) const noexcept -> std::strong_ordering
+    {
+        for (auto index = std::size_t{0}; index < value.size(); ++index)
+        {
+            if (value[index] < other.value[index])
+            {
+                return std::strong_ordering::less;
+            }
+            if (value[index] > other.value[index])
+            {
+                return std::strong_ordering::greater;
+            }
+        }
+        return std::strong_ordering::equal;
+    }
 
 private:
     std::array<std::byte, 16> value{};

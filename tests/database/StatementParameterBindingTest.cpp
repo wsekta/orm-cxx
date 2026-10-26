@@ -7,6 +7,7 @@ module orm;
 import :internal;
 import :test_support;
 import :foundation;
+import :value_codec;
 import :model;
 import :expressions;
 import :dynamic_query;
@@ -773,7 +774,8 @@ TEST(StatementParameterBindingTest, explicitResultBuffersPreserveFractionsAcross
 {
     soci::session session;
     orm::db::sqlite::SqliteBackend backend;
-    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     orm::db::binding::TypedResultStorage storage{{{"time", orm::model::ColumnType::TimeOfDay},
                                                   {"local", orm::model::ColumnType::LocalDateTime},
                                                   {"number", orm::model::ColumnType::Int}}};
@@ -805,7 +807,8 @@ TEST(StatementParameterBindingTest, explicitResultBuffersRejectNativeAndEffectiv
 {
     soci::session session;
     orm::db::sqlite::SqliteBackend backend;
-    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     soci::values parameters;
     auto consumed = false;
     const auto consume = [&](const auto&) { consumed = true; };
@@ -832,7 +835,8 @@ TEST(StatementParameterBindingTest, explicitResultBuffersPreserveSignedSqlValues
 {
     soci::session session;
     orm::db::sqlite::SqliteBackend backend;
-    backend.runtime().open(session, orm::db::ConnectionConfigView{orm::SqliteConfig{.database = orm::SqliteMemory{}}});
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     orm::db::binding::TypedResultStorage storage{
         {{"number", orm::model::ColumnType::UnsignedLongLong}, {"date", orm::model::ColumnType::Date}}};
     soci::values parameters;

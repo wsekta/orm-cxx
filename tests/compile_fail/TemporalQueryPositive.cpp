@@ -41,6 +41,25 @@ static_assert(not detail::compatibleValue<orm::UtcTimestamp, std::chrono::sys_ti
 static_assert(not detail::compatibleValue<orm::TimeOfDay, std::chrono::microseconds>);
 static_assert(not detail::ORM_QUERY_ORDERABLE<orm::Uuid>);
 
+template <typename Column>
+consteval auto uuidColumnRejectsOrdering() -> bool
+{
+    static_assert(not requires(Column column) { asc(column); });
+    static_assert(not requires(Column column) { desc(column); });
+    static_assert(not requires(Column column, orm::Uuid value) { column < value; });
+    static_assert(not requires(Column column, orm::Uuid value) { column <= value; });
+    static_assert(not requires(Column column, orm::Uuid value) { column > value; });
+    static_assert(not requires(Column column, orm::Uuid value) { column >= value; });
+    static_assert(not requires(Column column, orm::Uuid value) { column.between(value, value); });
+    static_assert(not requires(Column column, orm::Uuid value) { column.notBetween(value, value); });
+    static_assert(not requires(Column column) { min(column); });
+    static_assert(not requires(Column column) { max(column); });
+    return true;
+}
+
+static_assert(uuidColumnRejectsOrdering<decltype(col<&Record::uuid>())>());
+static_assert(uuidColumnRejectsOrdering<decltype(col<&Record::optionalUuid>())>());
+
 static_assert(std::same_as<typename decltype(min(col<&Record::date>()))::Value, orm::Date>);
 static_assert(std::same_as<typename decltype(max(col<&Record::date>()))::Value, orm::Date>);
 static_assert(std::same_as<typename decltype(min(col<&Record::time>()))::Value, orm::TimeOfDay>);

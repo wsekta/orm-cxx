@@ -154,12 +154,14 @@ export
 {
 
     template <auto... Members>
+        requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
     constexpr auto asc(TypedColumn<Members...> column)
     {
         return detail::makeExpression<ExprKind::Order,
                                       detail::OrderMeta<TypedColumn<Members...>, detail::OrderDirection::Asc>>(column);
     }
     template <auto... Members>
+        requires detail::ORM_QUERY_ORDERABLE<typename TypedColumn<Members...>::Value>
     constexpr auto desc(TypedColumn<Members...> column)
     {
         return detail::makeExpression<ExprKind::Order,
