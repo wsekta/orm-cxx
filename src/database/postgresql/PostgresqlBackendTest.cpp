@@ -280,6 +280,29 @@ TEST(PostgresqlBackendTest, runtimeOmitsBlankSqlStateFromTranslatedError)
     EXPECT_FALSE(translated.getNativeCode().has_value());
 }
 
+TEST(PostgresqlBackendTest, dataErrorsDuringConnectionInitializationKeepConnectionContext)
+{
+    const orm::db::postgresql::PostgresqlBackend backend;
+    for (const auto* sqlState : {"22007", "22008", "22012", "22P02"})
+    {
+        const soci::postgresql_soci_error nativeError{"raw error with password=secret", sqlState};
+        const auto connectionError =
+            backend.runtime().translateError(nativeError, orm::DatabaseErrorCode::Connection, "connect");
+        EXPECT_EQ(connectionError.getCode(), orm::DatabaseErrorCode::Connection);
+        EXPECT_EQ(connectionError.getBackendType(), orm::db::BackendType::Postgres);
+        EXPECT_EQ(connectionError.getOperation(), "connect");
+        EXPECT_EQ(connectionError.getNativeCode(), std::optional<std::string>{sqlState});
+        EXPECT_EQ(std::string_view{connectionError.what()}, "PostgreSQL operation failed: connect");
+
+        const auto mutationError =
+            backend.runtime().translateError(nativeError, orm::DatabaseErrorCode::Statement, "insert");
+        EXPECT_EQ(mutationError.getCode(), orm::DatabaseErrorCode::Conversion);
+        EXPECT_EQ(mutationError.getOperation(), "insert");
+        EXPECT_EQ(mutationError.getNativeCode(), std::optional<std::string>{sqlState});
+        EXPECT_EQ(std::string_view{mutationError.what()}, "PostgreSQL operation failed: insert");
+    }
+}
+
 TEST(PostgresqlBackendTest, runtimeTranslatesPortableSociCategoriesWithoutInventingNativeCodes)
 {
     const orm::db::postgresql::PostgresqlBackend backend;

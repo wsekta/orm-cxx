@@ -3,7 +3,6 @@ module;
 #include <chrono>
 #include <compare>
 #include <optional>
-#include <type_traits>
 #include <variant>
 
 module orm;
@@ -19,24 +18,17 @@ auto isWithinValueLimits(const BoundValue& bound, const BackendValueLimits& limi
         return true;
     if (!query::QueryValue::isCompatibleStorage(bound.logicalType, *bound.value))
         return false;
-    const auto within = [](const auto& value, const auto& minimum, const auto& maximum)
+    const auto within = [](const auto& value, const auto& minimum, const auto& maximum) noexcept
     { return (!minimum || value >= *minimum) && (!maximum || value <= *maximum); };
-    return std::visit(
-        [&](const auto& value)
-        {
-            using T = std::decay_t<decltype(value)>;
-            if constexpr (std::is_same_v<T, Date>)
-                return within(value, limits.minDate, limits.maxDate);
-            else if constexpr (std::is_same_v<T, LocalDateTime>)
-                return within(value, limits.minLocalDateTime, limits.maxLocalDateTime);
-            else if constexpr (std::is_same_v<T, UtcTimestamp>)
-                return within(value, limits.minUtcTimestamp, limits.maxUtcTimestamp) &&
-                       within(value, runtime.minUtcTimestamp, runtime.maxUtcTimestamp);
-            else if constexpr (std::is_same_v<T, unsigned long long>)
-                return !limits.maxUnsignedLongLong || value <= *limits.maxUnsignedLongLong;
-            else
-                return true;
-        },
-        *bound.value);
+    if (const auto* value = std::get_if<Date>(&*bound.value))
+        return within(*value, limits.minDate, limits.maxDate);
+    if (const auto* value = std::get_if<LocalDateTime>(&*bound.value))
+        return within(*value, limits.minLocalDateTime, limits.maxLocalDateTime);
+    if (const auto* value = std::get_if<UtcTimestamp>(&*bound.value))
+        return within(*value, limits.minUtcTimestamp, limits.maxUtcTimestamp) &&
+               within(*value, runtime.minUtcTimestamp, runtime.maxUtcTimestamp);
+    if (const auto* value = std::get_if<unsigned long long>(&*bound.value))
+        return !limits.maxUnsignedLongLong || *value <= *limits.maxUnsignedLongLong;
+    return true;
 }
 }

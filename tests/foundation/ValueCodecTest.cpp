@@ -93,4 +93,33 @@ TEST(ValueCodecTest, preservesLogicalTypesAndIntersectsSessionTimestampBounds)
     EXPECT_FALSE(orm::db::binding::isWithinValueLimits(
         {orm::model::ColumnType::Date, orm::query::QueryValue::Value{std::string{"2026-10-25"}}}, limits));
 }
+
+TEST(ValueCodecTest, appliesInclusiveCivilAndUnsignedBoundsToTheirCanonicalStorage)
+{
+    orm::db::BackendValueLimits limits;
+    limits.minDate = parseDate("2024-01-01");
+    limits.maxDate = parseDate("2024-12-31");
+    limits.minLocalDateTime = parseLocalDateTime("2024-01-01 00:00:00.000001");
+    limits.maxLocalDateTime = parseLocalDateTime("2024-12-31 23:59:59.999998");
+    limits.maxUnsignedLongLong = 42;
+    const auto accepts = [&](const auto& input)
+    {
+        const orm::query::QueryValue value{input};
+        return orm::db::binding::isWithinValueLimits({value.getLogicalType(), value.get()}, limits);
+    };
+
+    EXPECT_TRUE(accepts(*limits.minDate));
+    EXPECT_TRUE(accepts(*limits.maxDate));
+    EXPECT_FALSE(accepts(parseDate("2023-12-31")));
+    EXPECT_FALSE(accepts(parseDate("2025-01-01")));
+    EXPECT_TRUE(accepts(*limits.minLocalDateTime));
+    EXPECT_TRUE(accepts(*limits.maxLocalDateTime));
+    EXPECT_FALSE(accepts(*limits.minLocalDateTime - 1us));
+    EXPECT_FALSE(accepts(*limits.maxLocalDateTime + 1us));
+    EXPECT_TRUE(accepts(42ULL));
+    EXPECT_FALSE(accepts(43ULL));
+    EXPECT_TRUE(accepts(orm::TimeOfDay{12h}));
+    EXPECT_TRUE(accepts(orm::Uuid{}));
+    EXPECT_TRUE(orm::db::binding::isWithinValueLimits({orm::model::ColumnType::Date, std::nullopt}, limits));
+}
 }

@@ -394,6 +394,12 @@ public:
             }
         }
 
+        // Session initialization is part of connecting even when its SQL reports a data error.
+        if (fallback == orm::DatabaseErrorCode::Connection && operation == "connect")
+        {
+            code = orm::DatabaseErrorCode::Connection;
+        }
+
         const auto operationName = std::string{operation};
 
         return orm::DatabaseError{code, orm::db::BackendType::Postgres, operationName,

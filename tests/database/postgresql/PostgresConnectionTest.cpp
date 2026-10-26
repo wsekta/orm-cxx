@@ -358,6 +358,7 @@ TEST(PostgresConnectionTest, reportsServerInitializationFailureAndCanConnectAgai
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Connection);
         EXPECT_EQ(error.getOperation(), "connect");
+        EXPECT_EQ(error.getNativeCode(), std::optional<std::string>{"22012"});
         EXPECT_TRUE(std::string_view{error.what()}.find("SELECT") == std::string_view::npos);
     }
     EXPECT_NO_THROW((orm::Database{config}));
