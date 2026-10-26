@@ -1,5 +1,8 @@
 var NAVTREEINDEX10 =
 {
+"structorm_1_1SqliteConfig.html":[21,0,0,7],
+"structorm_1_1SqliteConfig.html":[22,0,0,21],
+"structorm_1_1SqliteConfig.html":[24,0,0,19],
 "structorm_1_1SqliteConfig.html#a2c05e43829883e4ce7704e2988e2f9b7":[21,0,0,7,2],
 "structorm_1_1SqliteConfig.html#a2c05e43829883e4ce7704e2988e2f9b7":[22,0,0,21,2],
 "structorm_1_1SqliteConfig.html#a2c05e43829883e4ce7704e2988e2f9b7":[24,0,0,19,2],
@@ -246,8 +249,5 @@ var NAVTREEINDEX10 =
 "structorm_1_1db_1_1RelationCapabilities.html#aa9032539f836080af28b9187bc5edb8f":[21,0,0,119,7],
 "structorm_1_1db_1_1RelationCapabilities.html#aa9032539f836080af28b9187bc5edb8f":[22,0,0,1,27,7],
 "structorm_1_1db_1_1RelationCapabilities.html#aa9032539f836080af28b9187bc5edb8f":[24,0,0,0,25,7],
-"structorm_1_1db_1_1RelationCapabilities.html#aab2e6b684baa7a9e30cdded39c0e413c":[21,0,0,119,3],
-"structorm_1_1db_1_1RelationCapabilities.html#aab2e6b684baa7a9e30cdded39c0e413c":[22,0,0,1,27,3],
-"structorm_1_1db_1_1RelationCapabilities.html#aab2e6b684baa7a9e30cdded39c0e413c":[24,0,0,0,25,3],
-"structorm_1_1db_1_1RelationCapabilities.html#acd758e04efd55de1c6cd8dfe3334c712":[21,0,0,119,6]
+"structorm_1_1db_1_1RelationCapabilities.html#aab2e6b684baa7a9e30cdded39c0e413c":[21,0,0,119,3]
 };

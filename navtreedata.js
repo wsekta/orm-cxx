@@ -233,18 +233,18 @@ var NAVTREEINDEX =
 "classorm_1_1Query.html#aae966c137c3e919f57366a85f7478ca0",
 "classorm_1_1db_1_1SqlDialect.html",
 "classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html#adad5d76df266eb2b3cc71ab607496f72",
-"classorm_1_1query_1_1QueryValue.html#a6f0a224b77b3eeece6e08ff941074d73",
-"classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217",
-"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-query-behavior",
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864dafed8597cb02dc50d094035240fdad0b0",
-"namespaceorm.html#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51",
-"namespaceorm_1_1query.html#a7d253f0ea99bc2d12666c42851581707a22cfc7a7c173a29a0ae03c559e741f4f",
-"structorm_1_1SqliteConfig.html#a2c05e43829883e4ce7704e2988e2f9b7",
-"structorm_1_1db_1_1RelationCapabilities.html#acd758e04efd55de1c6cd8dfe3334c712",
-"structorm_1_1migrations_1_1GenerationDecisions.html#a99f76e75edc93e943e738f678f725aa8",
-"structorm_1_1migrations_1_1SchemaChange.html#a32125359c85b27d162a66a9006050858",
-"structorm_1_1model_1_1ModelDataView.html#a21b91dede913889c6d3a997575a8162c",
-"values_8cppm.html"
+"classorm_1_1query_1_1QueryValue.html#a62ec5a4a6bfc34d0a9a441042b2415dc",
+"classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c",
+"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries",
+"module__orm.html#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51",
+"namespaceorm.html#a601e62e7791d2114397dfe7a30b6864d",
+"namespaceorm_1_1query.html#a7d253f0ea99bc2d12666c42851581707a1976d7f704de389d9fe064e08ea35b2d",
+"structorm_1_1SqliteConfig.html",
+"structorm_1_1db_1_1RelationCapabilities.html#aab2e6b684baa7a9e30cdded39c0e413c",
+"structorm_1_1migrations_1_1GenerationDecisions.html#a7abc611a0b26f60af3ee81ad5094ae64",
+"structorm_1_1migrations_1_1SchemaChange.html",
+"structorm_1_1model_1_1ModelDataView.html#a167f39e50f462c05b39df672fe729210",
+"value__codec_8cppm_source.html"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

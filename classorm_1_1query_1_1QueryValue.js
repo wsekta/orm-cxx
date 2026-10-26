@@ -27,5 +27,6 @@ var classorm_1_1query_1_1QueryValue =
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a2c86abce82f92ca92e6ee29946cded9e", null ],
     [ "get", "classorm_1_1query_1_1QueryValue.html#aa9e8f73e99919f6ceec54e740eb99b1a", null ],
     [ "getLogicalType", "classorm_1_1query_1_1QueryValue.html#ac2df17649dc61165dbed9d143be5090b", null ],
-    [ "operator<=>", "classorm_1_1query_1_1QueryValue.html#a6c1bb8b5e044700154141ddc2cacc69c", null ]
+    [ "operator<=>", "classorm_1_1query_1_1QueryValue.html#a62ec5a4a6bfc34d0a9a441042b2415dc", null ],
+    [ "operator==", "classorm_1_1query_1_1QueryValue.html#a4e71a0f6f754358b67d3a3fb61ece924", null ]
 ];

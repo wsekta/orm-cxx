@@ -157,7 +157,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2c86abce82f92ca92e6ee29946cded9e template"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a2c86abce82f92ca92e6ee29946cded9e">QueryValue</a> (const std::optional&lt; T &gt; &amp;optionalValue)</td></tr>
 <tr class="memitem:ac2df17649dc61165dbed9d143be5090b" id="r_ac2df17649dc61165dbed9d143be5090b"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ac2df17649dc61165dbed9d143be5090b">getLogicalType</a> () const noexcept -&gt; <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a></td></tr>
 <tr class="memitem:aa9e8f73e99919f6ceec54e740eb99b1a" id="r_aa9e8f73e99919f6ceec54e740eb99b1a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#aa9e8f73e99919f6ceec54e740eb99b1a">get</a> () const -&gt; const <a class="el" href="#ad02b1e99b22081549db0fc5723d50a77">Value</a> &amp;</td></tr>
-<tr class="memitem:a6c1bb8b5e044700154141ddc2cacc69c" id="r_a6c1bb8b5e044700154141ddc2cacc69c"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a6c1bb8b5e044700154141ddc2cacc69c">operator&lt;=&gt;</a> (const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;) const -&gt; std::partial_ordering=default</td></tr>
+<tr class="memitem:a4e71a0f6f754358b67d3a3fb61ece924" id="r_a4e71a0f6f754358b67d3a3fb61ece924"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a4e71a0f6f754358b67d3a3fb61ece924">operator==</a> (const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;other) const -&gt; bool</td></tr>
+<tr class="memitem:a62ec5a4a6bfc34d0a9a441042b2415dc" id="r_a62ec5a4a6bfc34d0a9a441042b2415dc"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a62ec5a4a6bfc34d0a9a441042b2415dc">operator&lt;=&gt;</a> (const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;other) const -&gt; std::partial_ordering</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-static-methods" class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
@@ -970,27 +971,36 @@ template&lt;typename T&gt; </div>
 
 </div>
 </div>
-<a id="a6c1bb8b5e044700154141ddc2cacc69c" name="a6c1bb8b5e044700154141ddc2cacc69c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6c1bb8b5e044700154141ddc2cacc69c">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
+<a id="a62ec5a4a6bfc34d0a9a441042b2415dc" name="a62ec5a4a6bfc34d0a9a441042b2415dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62ec5a4a6bfc34d0a9a441042b2415dc">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">auto orm::query::QueryValue::operator&lt;=&gt; </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const -&gt;  std::partial_ordering=default</td>
+          <td class="paramtype">const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>other</em></span></td><td>)</td>
+          <td> const -&gt;  std::partial_ordering</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel default">default</span></span>  </td>
-  </tr>
-</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4e71a0f6f754358b67d3a3fb61ece924" name="a4e71a0f6f754358b67d3a3fb61ece924"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4e71a0f6f754358b67d3a3fb61ece924">&#9670;&#160;</a></span>operator==()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::query::QueryValue::operator== </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="#adc96495840e5cb13208564ae5984562b">QueryValue</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>other</em></span></td><td>)</td>
+          <td> const -&gt;  bool</td>
+        </tr>
+      </table>
 </div><div class="memdoc">
 
 </div>

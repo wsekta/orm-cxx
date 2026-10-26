@@ -123,7 +123,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac95ebe90e82364159f6fa0e4a895543c" id="r_ac95ebe90e82364159f6fa0e4a895543c"><td class="memItemLeft">constexpr&#160;</td><td class="memItemRight"><a class="el" href="#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a> () noexcept=default</td></tr>
 <tr class="memitem:a5f891d87793c856067bdcd249f7436b4" id="r_a5f891d87793c856067bdcd249f7436b4"><td class="memItemLeft">constexpr&#160;</td><td class="memItemRight"><a class="el" href="#a5f891d87793c856067bdcd249f7436b4">TimeOfDay</a> (std::chrono::microseconds valueInit)</td></tr>
 <tr class="memitem:a7eaae7db382d6c8972f80a1af207a2b3" id="r_a7eaae7db382d6c8972f80a1af207a2b3"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a7eaae7db382d6c8972f80a1af207a2b3">sinceMidnight</a> () const noexcept -&gt; std::chrono::microseconds</td></tr>
-<tr class="memitem:a1dd932b26ea03c1f33e4c7d711740bf3" id="r_a1dd932b26ea03c1f33e4c7d711740bf3"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a1dd932b26ea03c1f33e4c7d711740bf3">operator&lt;=&gt;</a> (const <a class="el" href="#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a> &amp;) const noexcept=default</td></tr>
+<tr class="memitem:a4330405b541e9f823f30edf55afd7cae" id="r_a4330405b541e9f823f30edf55afd7cae"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a4330405b541e9f823f30edf55afd7cae">operator&lt;=&gt;</a> (const <a class="el" href="#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a> &amp;) const noexcept -&gt; std::strong_ordering=default</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>A time of day in the half-open interval [00:00:00, 24:00:00). </p>
@@ -183,8 +183,8 @@ Public Member Functions</h2></td></tr>
 </div>
 </div>
 <a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
-<a id="a1dd932b26ea03c1f33e4c7d711740bf3" name="a1dd932b26ea03c1f33e4c7d711740bf3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1dd932b26ea03c1f33e4c7d711740bf3">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
+<a id="a4330405b541e9f823f30edf55afd7cae" name="a4330405b541e9f823f30edf55afd7cae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4330405b541e9f823f30edf55afd7cae">&#9670;&#160;</a></span>operator&lt;=&gt;()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -196,7 +196,7 @@ Public Member Functions</h2></td></tr>
           <td class="memname">auto orm::TimeOfDay::operator&lt;=&gt; </td>
           <td>(</td>
           <td class="paramtype">const <a class="el" href="#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
-          <td> const</td>
+          <td> const -&gt;  std::strong_ordering=default</td>
         </tr>
       </table>
   </td>

@@ -1,5 +1,8 @@
 var NAVTREEINDEX6 =
 {
+"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries":[12,2],
+"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-contract":[12,0],
+"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-limitations":[12,4],
 "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-query-behavior":[12,1],
 "docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-result-dto-rules":[12,3],
 "docs-query-query.html":[13],
@@ -246,8 +249,5 @@ var NAVTREEINDEX6 =
 "module__orm.html#a5fd760801895c224a35e060f295fa6a0":[21,0,0,206],
 "module__orm.html#a601e62e7791d2114397dfe7a30b6864d":[21,0,0,155],
 "module__orm.html#a601e62e7791d2114397dfe7a30b6864da45f0fb72a0defdfdb01de4b5a5a6876b":[21,0,0,155,1],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99":[21,0,0,155,5],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864da72a0813a0f19d8926626b0cf25f89f51":[21,0,0,155,4],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864daa942541eeaaaa1b2ab8cf0e43b5a03f9":[21,0,0,155,3],
-"module__orm.html#a601e62e7791d2114397dfe7a30b6864dabcfaccebf745acfd5e75351095a5394a":[21,0,0,155,0]
+"module__orm.html#a601e62e7791d2114397dfe7a30b6864da672cd1e3441bc3d6ff0c69530f08ec99":[21,0,0,155,5]
 };

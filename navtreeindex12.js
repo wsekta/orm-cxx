@@ -1,5 +1,8 @@
 var NAVTREEINDEX12 =
 {
+"structorm_1_1migrations_1_1GenerationDecisions.html#a7abc611a0b26f60af3ee81ad5094ae64":[24,0,0,1,6,0],
+"structorm_1_1migrations_1_1GenerationDecisions.html#a99f76e75edc93e943e738f678f725aa8":[21,0,0,84,1],
+"structorm_1_1migrations_1_1GenerationDecisions.html#a99f76e75edc93e943e738f678f725aa8":[22,0,0,2,6,1],
 "structorm_1_1migrations_1_1GenerationDecisions.html#a99f76e75edc93e943e738f678f725aa8":[24,0,0,1,6,1],
 "structorm_1_1migrations_1_1GenerationDecisions.html#ab4e4e9d7ac9db242c984ccb0ed0d1c91":[21,0,0,84,6],
 "structorm_1_1migrations_1_1GenerationDecisions.html#ab4e4e9d7ac9db242c984ccb0ed0d1c91":[22,0,0,2,6,6],
@@ -246,8 +249,5 @@ var NAVTREEINDEX12 =
 "structorm_1_1migrations_1_1RebuildTable.html#a94ed51fa0f329c08f04ae33274242909":[24,0,0,1,22,3],
 "structorm_1_1migrations_1_1RebuildTable.html#ac21c21ef77f4f4a2d340c8a0a1e6fe26":[21,0,0,79,2],
 "structorm_1_1migrations_1_1RebuildTable.html#ac21c21ef77f4f4a2d340c8a0a1e6fe26":[22,0,0,2,22,2],
-"structorm_1_1migrations_1_1RebuildTable.html#ac21c21ef77f4f4a2d340c8a0a1e6fe26":[24,0,0,1,22,2],
-"structorm_1_1migrations_1_1SchemaChange.html":[21,0,0,85],
-"structorm_1_1migrations_1_1SchemaChange.html":[22,0,0,2,24],
-"structorm_1_1migrations_1_1SchemaChange.html":[24,0,0,1,24]
+"structorm_1_1migrations_1_1RebuildTable.html#ac21c21ef77f4f4a2d340c8a0a1e6fe26":[24,0,0,1,22,2]
 };

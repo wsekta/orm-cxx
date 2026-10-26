@@ -1,5 +1,8 @@
 var NAVTREEINDEX5 =
 {
+"classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c":[22,0,0,4,7,2],
+"classorm_1_1query_1_1TypedColumn.html#a84e1871479573a0931ec960950ad818c":[24,0,0,3,7,2],
+"classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217":[21,0,0,136,27],
 "classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217":[22,0,0,4,7,27],
 "classorm_1_1query_1_1TypedColumn.html#a8db08ac03e6c4c7617b080972fd3e217":[24,0,0,3,7,27],
 "classorm_1_1query_1_1TypedColumn.html#a9b8572a16496b987696219f95e7f7a2c":[21,0,0,136,10],
@@ -246,8 +249,5 @@ var NAVTREEINDEX5 =
 "docs-packaging-package-managers-and-releases.html#docs-packaging-maintainer-setup-and-publishing":[11,2],
 "docs-packaging-package-managers-and-releases.html#docs-packaging-native-cmake-installation":[11,4],
 "docs-packaging-package-managers-and-releases.html#docs-packaging-retry-without-changing-the-release":[11,2,0],
-"docs-partial-result-queries-partial-result-queries.html":[12],
-"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-aggregate-result-queries":[12,2],
-"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-contract":[12,0],
-"docs-partial-result-queries-partial-result-queries.html#docs-partial-result-queries-limitations":[12,4]
+"docs-partial-result-queries-partial-result-queries.html":[12]
 };
