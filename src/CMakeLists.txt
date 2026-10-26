@@ -16,6 +16,7 @@ set(ORM_CXX_SOURCES
     model/ColumnType.cpp
     query/QueryValue.cpp
     database/CommandGeneratorFactory.cpp
+    database/ValueLimits.cpp
     utils/StringUtils.cpp
     database/defaults/SqlRenderer.cpp
     database/defaults/RelationStatements.cpp

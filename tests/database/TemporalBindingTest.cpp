@@ -90,7 +90,7 @@ struct UuidPredicateOwner
 struct UuidPredicateChild
 {
     int id;
-    orm::Uuid value;
+    std::optional<orm::Uuid> value;
     std::optional<UuidPredicateOwner> owner;
 };
 

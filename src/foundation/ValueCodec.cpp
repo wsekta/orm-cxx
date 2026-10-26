@@ -225,11 +225,11 @@ auto validateNative(UtcTimestamp value, db::BackendType backend) -> void
     validate(value);
     if (backend != db::BackendType::Postgres)
     {
-        const auto last =
+        const auto maximumTimestamp =
             backend == db::BackendType::Mysql ?
                 sys_days{year{2038} / January / 19} + hours{3} + minutes{14} + seconds{7} + microseconds{499999} :
                 sys_days{year{2106} / February / 7} + hours{6} + minutes{28} + seconds{15} + microseconds{999999};
-        if (value < sys_days{year{1970} / January / 1} + seconds{1} || value > last)
+        if (value < sys_days{year{1970} / January / 1} + seconds{1} || value > maximumTimestamp)
             invalidValue();
     }
 }
