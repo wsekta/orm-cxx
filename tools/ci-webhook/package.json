@@ -10,7 +10,7 @@
     "types": "wrangler types",
     "check": "tsc --noEmit",
     "test": "vitest run",
-    "test:bridge": "node --test test/bridge.test.mjs",
+    "test:bridge": "node --test test/bridge.test.mjs test/app-server.test.mjs test/desktop.test.mjs",
     "test:transport": "node --test test/transport.test.mjs",
     "dev": "wrangler dev",
     "bundle": "wrangler deploy --dry-run --outdir dist",

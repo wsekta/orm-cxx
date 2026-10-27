@@ -9,13 +9,10 @@ $sourceRoot = Split-Path -Parent $PSScriptRoot
 $nodePath = (Get-Command node.exe).Source
 $launcherPath = Join-Path $PSScriptRoot 'start-bridge.ps1'
 $powershellPath = (Get-Command powershell.exe).Source
-if ($bridgeConfig.appServer -notlike 'unix://*') { throw 'An existing local Codex control socket is required.' }
-$socketPath = $bridgeConfig.appServer.Substring(7)
-if (-not $socketPath) {
-    $codexBase = if ($env:CODEX_HOME) { $env:CODEX_HOME } else { Join-Path $env:USERPROFILE '.codex' }
-    $socketPath = Join-Path $codexBase 'app-server-control/app-server-control.sock'
-}
-if (-not (Test-Path -LiteralPath $socketPath)) { throw 'Codex Desktop has no shared control socket. Do not start a second server for its active conversation.' }
+if (-not (Test-Path -LiteralPath $bridgeConfig.codexPath -PathType Leaf)) { throw 'Configured Codex executable does not exist.' }
+$probePath = Join-Path $sourceRoot 'bridge/app-server.mjs'
+& $nodePath $probePath --probe $bridgeConfig.appServer
+if ($LASTEXITCODE -ne 0) { throw 'Configured Codex app-server is unavailable. Start the shared Desktop endpoint first; delivery remains unverified.' }
 if (-not (Test-Path -LiteralPath $bridgeConfig.tokenFile)) { throw 'Bridge token file does not exist.' }
 $health = Invoke-RestMethod -Uri ($bridgeConfig.endpoint.TrimEnd('/') + '/health') -TimeoutSec 15
 if ($health.service -ne 'codex-ci-webhook') { throw 'Receiver health check failed.' }

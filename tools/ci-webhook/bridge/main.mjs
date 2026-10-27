@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
-import { createConnection } from 'node:net';
+import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import WebSocket from 'ws';
 import { Journal, UncertainDelivery, command, deliverNotice, validateNotice } from './core.mjs';
+import { parseAppServer, probeAppServer } from './app-server.mjs';
 
 export function loadConfig(path) {
   const config = JSON.parse(readFileSync(path, 'utf8'));
@@ -12,25 +12,15 @@ export function loadConfig(path) {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname);
   if (endpoint.protocol !== 'https:' && !(local && endpoint.protocol === 'http:')) throw new Error('Receiver must use HTTPS');
   if (endpoint.username || endpoint.password || endpoint.search || endpoint.hash) throw new Error('Invalid receiver URL');
-  // Use a shared, existing local app-server. Do not auto-start a second server for a Desktop thread.
-  if (!/^unix:\/\//.test(config.appServer ?? '')) throw new Error('This bridge requires a local Codex Unix control socket');
+  // Use a shared, existing local app-server. Never auto-start another thread writer.
+  parseAppServer(config.appServer);
   if (!config.codexPath || !config.journalPath || !config.tokenFile) throw new Error('Missing bridge configuration');
   return config;
 }
 
-function probeSocket(endpoint) {
-  const path = endpoint.slice('unix://'.length) || join(process.env.CODEX_HOME || join(process.env.USERPROFILE || process.env.HOME, '.codex'), 'app-server-control', 'app-server-control.sock');
-  return new Promise((resolveProbe, reject) => {
-    const socket = createConnection({ path });
-    socket.setTimeout(5000);
-    socket.once('connect', () => { socket.destroy(); resolveProbe(); });
-    socket.once('error', reject);
-    socket.once('timeout', () => { socket.destroy(); reject(new Error('Codex control socket timeout')); });
-  });
-}
 export function codexSender(config) {
   return {
-    probe: () => probeSocket(config.appServer),
+    probe: () => probeAppServer(config.appServer),
     send: (thread, text) => command(config.codexPath, ['queue', '--remote', config.appServer, '--thread', thread, '--message', text])
   };
 }

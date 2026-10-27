@@ -7,17 +7,16 @@ deployment; the resumed agent checks its status before declaring the site deploy
 
 ## Current state
 
-The receiver and bridge are implemented and locally tested. **Production is not
-enabled.** Cloudflare currently returns HTTP 403 because its connection lacks
-`workers-scripts.write`. The current Windows Desktop session uses a private stdio
-app-server and has no shared control socket. Connecting to this existing Desktop
-conversation must be verified before installing the bridge. Starting a separate
-server against an active Desktop thread is not a supported workaround here.
-The actual `codex queue --remote unix://` probe on this installation failed with
-`os error 10050`; no message was delivered to the Desktop conversation.
+**Desktop delivery is not yet activated.** The Cloudflare receiver is deployed;
+real GitHub webhook pings returned HTTP 200. The prepared repository webhook is
+inactive until delivery to the same Desktop conversation, including idle wake,
+is established. A health endpoint or ping does not establish that final step.
 
-No GitHub webhook or Windows startup task has been enabled yet. The existing
-temporary CI heartbeat remains active until the replacement works end to end.
+The bridge accepts an existing local Unix control socket or a literal loopback
+WebSocket (`ws://127.0.0.1:PORT` or `ws://[::1]:PORT`). It never starts a server.
+The optional Windows Desktop pilot below can sequentially replace Desktop's
+private stdio server with one shared server. It never opens the active
+conversation in a second server while the original server is running.
 
 ## Architecture
 
@@ -46,7 +45,7 @@ it does not replace GitHub's delivery history or promise to recover an event tha
 never reached it.
 
 The bridge records each notification in local SQLite before sending
-`codex queue --remote unix:// --thread UUID --message TEXT`. An exact
+`codex queue --remote ENDPOINT --thread UUID --message TEXT`. An exact
 repository/SHA route takes precedence over the configured default conversation.
 Pushes from other computers or tools go to that default conversation. The
 integration never changes code or cancels CI automatically.
@@ -58,7 +57,12 @@ message twice. Inspect the destination conversation, then set that record to
 `accepted` if it arrived, or `received` if it did not. Delivery is not claimed to
 be exactly once across that external command boundary.
 
-## Local verification
+## Verification
+
+The repository verifies substantive changes in GitHub Actions (`Quality`). Do not
+run local builds, tests, coverage or static-analysis suites unless the user
+explicitly requests them. These are the component's CI commands; they are also
+available for explicitly requested local troubleshooting:
 
 Requires Node.js 24 or later:
 
@@ -71,6 +75,7 @@ npm test
 npm run test:bridge
 npm run test:transport
 npm run bundle
+python -m unittest discover -s test -p '*_test.py' -v
 ```
 
 The Workers tests run in workerd and cover signed requests, all-workflow
@@ -82,10 +87,63 @@ real WebSocket, including offline replay and acknowledged delivery to a test
 destination. It does not claim to verify delivery to the Desktop app.
 The bundle command is a dry run and does not deploy resources.
 
+## Optional Windows Desktop pilot
+
+This is an opt-in operational procedure, not a stable Desktop integration.
+App-server WebSocket transport is experimental. The pilot also depends on
+Desktop's `CODEX_APP_SERVER_WS_URL` startup setting and its tool-channel bootstrap;
+updates can require a new preparation. Do not enable it without accepting those
+constraints and a controlled Desktop restart.
+
+Requirements: Windows, the installed Desktop package, its matching relocated CLI,
+Node.js 24+, Python 3.12+, an existing private bridge configuration, and the exact
+destination conversation UUID. Keep pilot configuration, logs and backups outside
+the checkout. The preparation script restricts the pilot directory to its owner
+and SYSTEM. It captures the existing server arguments and process creation times;
+it does not read account secrets or another process's environment.
+
+```powershell
+./desktop/prepare.ps1 -BridgeConfig PATH/bridge.local.json -Thread THREAD_UUID `
+  -PythonPath PATH/python.exe -NodePath PATH/node.exe -StateDirectory PATH/private-pilot
+node desktop/launch.mjs --config PATH/private-pilot/desktop.local.json --arm
+```
+
+`--arm` starts a hidden supervisor which waits for all persisted turns to finish
+(up to three minutes). Historical incomplete turns can only be excluded with
+explicit, exact `-IgnoreBusyTurns` IDs after checking they are inactive; never
+exclude the current turn or a whole conversation. No GitHub state is polled.
+
+The supervisor validates the matching four-file CLI runtime by content hash,
+checks the loopback port, then asks Windows Restart Manager to close only the
+identified Desktop process without force. A refusal or a different affected
+process aborts the switch. It waits for the old app-server to exit before copying
+the conversation's rollouts, state/history SQLite databases and WAL/SHM files.
+Backups are never restored over conversation files automatically.
+
+Desktop starts with a process-local WebSocket setting and a deep link to the
+existing UUID. The supervisor discovers its new tool pipe and verifies the
+server PID, then starts the matching real CLI with the original plugin settings
+and that pipe. It checks the same idle conversation, pages its stored turns and
+compares persisted history, attachments and the old JSONL prefix. Missing history
+or an unsuccessful startup triggers a return to normal Desktop startup, provided
+all replacement processes can be stopped safely. A blocked return is recorded in
+`status.json` and never escalates to forcekill or another simultaneous writer.
+
+The final step sends one authorized queue probe to that UUID. The resumed agent
+must verify the nonce, actual Desktop tools, permissions and idle wake. Queue
+acceptance only sets `phase: awaiting-conversation-verification` and leaves
+`notificationsActive: false`. The supervisor does not activate GitHub webhooks,
+install autostart, or claim that CI passed. Inspect `status.json` and private logs
+before retrying; an existing launcher lock prevents a concurrent switch.
+
+After successful operational verification, enable the prepared GitHub webhook
+and install the bridge normally. A plain `GET /readyz` only checks listener
+readiness; it does not establish the conversation's identity or delivery.
+
 ## Production activation
 
-1. Reconnect Cloudflare with Workers Scripts Write on the intended account.
-   Deploy this Worker and its SQLite Durable Object migration. Do not change
+1. Ensure Cloudflare has Workers Scripts Write on the intended account.
+   Deploy the Worker and its SQLite Durable Object migration if needed. Do not change
    unrelated account resources. `wrangler deploy` can be used with an authorized
    local Wrangler session; a connected Cloudflare API can also upload the bundle.
 2. Generate two independent random secrets. Set `GITHUB_WEBHOOK_SECRET` and
@@ -120,8 +178,8 @@ The bundle command is a dry run and does not deploy resources.
    ./scripts/install-bridge.ps1 -ConfigPath PATH/bridge.local.json
    ```
 
-   The installer refuses activation without a local control socket, token file
-   and healthy receiver. It uses the current Windows user and prevents parallel
+   The installer refuses activation without a ready local app-server endpoint,
+   an existing CLI executable, token file and healthy receiver. It uses the current Windows user and prevents parallel
    instances. The computer and Codex backend must be available to analyze events;
    Cloudflare continues receiving while they are offline.
 
@@ -137,5 +195,7 @@ only the matching repository webhook. Pending outbox data is retained. Do not
 delete the Durable Object namespace as a routine shutdown step.
 
 References: [Codex queue](https://learn.chatgpt.com/docs/developer-commands#codex-queue),
+[Codex app-server](https://learn.chatgpt.com/docs/app-server),
+[Windows Restart Manager](https://learn.microsoft.com/en-us/windows/win32/api/restartmanager/nf-restartmanager-rmshutdown),
 [GitHub signatures](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries),
 [Durable Object WebSockets](https://developers.cloudflare.com/durable-objects/best-practices/websockets/).
