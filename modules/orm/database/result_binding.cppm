@@ -231,16 +231,8 @@ inline auto bindBoundValue(soci::values& values, std::string_view name, const Bo
     }
 
     const auto parameterName = std::string{name};
-    std::visit(
-        [&values, &parameterName](const auto& storedValue)
-        {
-            using stored_t = std::remove_cvref_t<decltype(storedValue)>;
-            if constexpr (SociEncodedValue<stored_t>)
-                values.set(parameterName, encodeScalarValue(storedValue));
-            else
-                values.set(parameterName, storedValue);
-        },
-        value.value.value());
+    std::visit([&values, &parameterName, columnType = value.logicalType](const auto& storedValue)
+               { setScalarFieldValue(values, parameterName, storedValue, columnType); }, value.value.value());
 }
 
 inline auto bindStatementParameter(soci::values& values, const StatementParameter& parameter) -> void
