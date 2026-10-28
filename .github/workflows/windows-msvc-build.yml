@@ -2,8 +2,7 @@ name: MSVC
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore: [gh-pages]
   pull_request:
 
 permissions:

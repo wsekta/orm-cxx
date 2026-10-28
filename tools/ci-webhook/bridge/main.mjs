@@ -62,6 +62,7 @@ export function connectBridge(config, journal, sender, log = console.log) {
     });
     current.on('error', error => log(JSON.stringify({ event: 'connection-error', reason: error.message })));
     current.on('close', (code) => {
+      log(JSON.stringify({ event: 'disconnected', code, repository: config.repository }));
       clearInterval(heartbeat);
       if (code === 4001) { stop(); return; } // Another bridge replaced this connection.
       if (!stopped) {

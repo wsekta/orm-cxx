@@ -8,22 +8,28 @@ import { createTestHarness } from 'wrangler';
 import { Journal } from '../bridge/core.mjs';
 import { connectBridge } from '../bridge/main.mjs';
 
-test('real local Worker -> outbound WebSocket -> journal -> destination -> acknowledgment, including offline replay', { timeout: 30000 }, async t => {
+test('real Worker routes the same SHA on two branches independently with offline replay and acknowledgment', { timeout: 30000 }, async t => {
   const repository = 'wsekta/orm-cxx';
   const secret = 'transport-test-webhook-secret', token = 'transport-test-bridge-token';
   const folder = mkdtempSync(join(tmpdir(), 'ci-webhook-transport-'));
   const tokenFile = join(folder, 'token.txt');
   writeFileSync(tokenFile, token);
-  const server = createTestHarness({ workers: [{ configPath: './wrangler.jsonc', secrets: { GITHUB_WEBHOOK_SECRET: secret, BRIDGE_TOKEN: token }, vars: { REPOSITORY_CONFIG: JSON.stringify({ [repository]: { branch: 'main', workflows: ['GCC'] } }) } }] });
+  const policy = { branches: '*', excludedBranches: ['gh-pages'], workflows: ['GCC'], workflowsByBranch: { main: ['GCC', 'Docs'] } };
+  const server = createTestHarness({ workers: [{ configPath: './wrangler.jsonc', secrets: { GITHUB_WEBHOOK_SECRET: secret, BRIDGE_TOKEN: token }, vars: { REPOSITORY_CONFIG: JSON.stringify({ [repository]: policy }) } }] });
   const { url } = await server.listen();
   const journal = new Journal(join(folder, 'journal.sqlite'));
   let bridge;
   t.after(async () => { bridge?.stop(); await server.close(); journal.close(); rmSync(folder, { recursive: true }); });
   const config = { repository, endpoint: url.href, tokenFile, defaultThread: '11111111-1111-1111-1111-111111111111' };
+  const sha = 'd'.repeat(40), feature = 'codex/transport-feature';
+  const mainThread = '22222222-2222-2222-2222-222222222222';
+  const featureThread = '33333333-3333-3333-3333-333333333333';
+  journal.register(repository, 'main', sha, mainThread);
+  journal.register(repository, feature, sha, featureThread);
   const messages = [];
   const sender = { probe: async () => {}, send: async (thread, message) => { messages.push({ thread, message }); } };
-  async function completed(sha, id, conclusion) {
-    const payload = JSON.stringify({ repository: { full_name: repository }, workflow_run: { id, run_attempt: 1, name: 'GCC', event: 'push', status: 'completed', conclusion, head_branch: 'main', head_sha: sha, html_url: `https://github.com/${repository}/actions/runs/${id}` } });
+  async function completed(branch, workflow, id, conclusion, attempt = 1) {
+    const payload = JSON.stringify({ repository: { full_name: repository }, workflow_run: { id, run_attempt: attempt, name: workflow, event: 'push', status: 'completed', conclusion, head_branch: branch, head_sha: sha, html_url: `https://github.com/${repository}/actions/runs/${id}` } });
     const response = await server.fetch('/webhooks/github', { method: 'POST', body: payload, headers: { 'X-GitHub-Event': 'workflow_run', 'X-GitHub-Delivery': crypto.randomUUID(), 'X-Hub-Signature-256': 'sha256=' + createHmac('sha256', secret).update(payload).digest('hex') } });
     assert.equal(response.status, 200);
   }
@@ -36,19 +42,31 @@ test('real local Worker -> outbound WebSocket -> journal -> destination -> ackno
       if (event.event === 'acknowledged' && ++acknowledged === count) resolve();
     });
   });
-  await completed('d'.repeat(40), 11, 'failure');
-  await completed('e'.repeat(40), 12, 'success');
+  await completed('main', 'GCC', 11, 'success');
+  assert.deepEqual(await pending(), [], 'Main still requires Docs');
+  await completed(feature, 'GCC', 12, 'failure');
+  await completed('main', 'Docs', 13, 'success');
   assert.equal((await pending()).length, 2);
   await replay(2);
   assert.equal(messages.length, 2);
-  assert.equal(messages[0].thread, config.defaultThread);
+  assert.deepEqual(messages.map(value => value.thread), [featureThread, mainThread]);
   assert.match(messages[0].message, /"outcome":"failure"/);
+  assert.match(messages[0].message, /"branch":"codex\/transport-feature"/);
   assert.match(messages[1].message, /"outcome":"success"/);
+  assert.match(messages[1].message, /"branch":"main"/);
+  const facts = messages.map(value => JSON.parse(value.message.slice(value.message.indexOf('{"eventId":'))));
+  assert.equal(facts[0].sha, facts[1].sha);
+  assert.notEqual(facts[0].eventId, facts[1].eventId);
   assert.deepEqual(await pending(), []);
   bridge.stop();
-  await completed('f'.repeat(40), 13, 'success');
+  await completed(feature, 'GCC', 12, 'success', 2);
   assert.equal((await pending()).length, 1);
   await replay(1);
   assert.equal(messages.length, 3);
+  assert.equal(messages[2].thread, featureThread);
+  assert.match(messages[2].message, /"branch":"codex\/transport-feature"/);
+  assert.match(messages[2].message, /"outcome":"success"/);
   assert.deepEqual(await pending(), []);
+  await completed('gh-pages', 'GCC', 14, 'failure');
+  assert.deepEqual(await pending(), [], 'The publication branch must not create CI notices');
 });

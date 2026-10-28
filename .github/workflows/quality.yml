@@ -2,8 +2,7 @@ name: Quality
 
 on:
   push:
-    branches:
-      - main
+    branches-ignore: [gh-pages]
   pull_request:
 
 permissions:
@@ -40,6 +39,14 @@ jobs:
           npm run test:transport
           npm run bundle
           python -m unittest discover -s test -p '*_test.py' -v
+
+      - name: Save checked webhook Worker bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-webhook-worker-${{ github.sha }}-attempt-${{ github.run_attempt }}
+          path: tools/ci-webhook/dist
+          if-no-files-found: error
+          retention-days: 7
 
   macros:
     runs-on: ubuntu-24.04
