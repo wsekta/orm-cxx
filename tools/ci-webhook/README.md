@@ -7,10 +7,20 @@ deployment; the resumed agent checks its status before declaring the site deploy
 
 ## Current state
 
-**Desktop delivery is not yet activated.** The Cloudflare receiver is deployed;
-real GitHub webhook pings returned HTTP 200. The prepared repository webhook is
-inactive until delivery to the same Desktop conversation, including idle wake,
-is established. A health endpoint or ping does not establish that final step.
+**The controlled Desktop pilot passed on 2026-10-28.** The same conversation
+resumed automatically after restart, its persisted history and attachments passed
+comparison, and real Desktop tools worked in the resumed turn. The bridge has an
+authenticated connection to the deployed Cloudflare receiver; the repository
+webhook is enabled for `push`, `workflow_job` and `workflow_run`.
+
+**End-to-end GitHub CI delivery is awaiting a real result.** The queued Desktop
+probe establishes idle wake, not the whole GitHub-to-conversation path. The next
+registered push verifies that final step asynchronously. A health endpoint, ping
+or bridge connection alone does not establish notification delivery.
+
+The pilot owns this particular Desktop session. Bridge startup at Windows logon
+does not make a later ordinary Desktop launch use the shared endpoint; prepare
+and launch the pilot again for that new session before relying on notifications.
 
 The bridge accepts an existing local Unix control socket or a literal loopback
 WebSocket (`ws://127.0.0.1:PORT` or `ws://[::1]:PORT`). It never starts a server.
@@ -105,6 +115,10 @@ Preparation resolves physical paths for the configuration, runtime and bridge
 storage. MSIX can redirect newly written AppData files into a private package
 cache; the independent task must use the physical files visible to both contexts.
 Use the exact configuration path printed by preparation for `--config`.
+Other tools can have redirected settings too. If GitHub CLI loses its existing
+login outside the packaged app, point `GH_CONFIG_DIR` at the physical directory
+containing its existing `hosts.yml`; do not copy credentials or request a new login
+before checking that location.
 
 ```powershell
 ./desktop/prepare.ps1 -BridgeConfig PATH/bridge.local.json -Thread THREAD_UUID `
