@@ -1,6 +1,7 @@
 """Persisted-history and quiescent-backup checks, runnable on Linux in CI."""
 
 import importlib.util
+import io
 import json
 import sqlite3
 import tempfile
@@ -20,6 +21,61 @@ OTHER_THREAD = "22222222-2222-4222-8222-222222222222"
 COMPLETED_TURN = "33333333-3333-4333-8333-333333333333"
 STALE_TURN = "44444444-4444-4444-8444-444444444444"
 NEW_TURN = "55555555-5555-4555-8555-555555555555"
+
+
+class PhysicalPathsTest(unittest.TestCase):
+    def setUp(self):
+        self.temporary = tempfile.TemporaryDirectory(prefix="ci-desktop-paths-")
+        self.addCleanup(self.temporary.cleanup)
+        self.root = Path(self.temporary.name).resolve()
+
+    def test_existing_aliases_and_new_journal_use_the_physical_parent(self):
+        physical = self.root / "physical"
+        physical.mkdir()
+        token = physical / "token.txt"
+        token.write_text("fixture", encoding="utf-8")
+        directory_alias = self.root / "directory-alias"
+        directory_alias.symlink_to(physical, target_is_directory=True)
+        file_alias = self.root / "file-alias"
+        file_alias.symlink_to(token)
+        paths = {
+            "directory": str(directory_alias),
+            "file": str(file_alias),
+            "journal": str(directory_alias / "journal.sqlite"),
+        }
+        expected = {
+            "directory": str(physical),
+            "file": str(token),
+            "journal": str(physical / "journal.sqlite"),
+        }
+        self.assertEqual(WINDOWS.physical_paths(paths), expected)
+        output = io.StringIO()
+        with patch.object(WINDOWS.sys, "argv", ["windows.py", "paths"]), \
+                patch.object(WINDOWS.sys, "stdin", io.StringIO(json.dumps(paths))), \
+                patch.object(WINDOWS.sys, "stdout", output):
+            WINDOWS.main()
+        self.assertEqual(json.loads(output.getvalue()), expected)
+        self.assertFalse((physical / "journal.sqlite").exists())
+        self.assertEqual(token.read_text(encoding="utf-8"), "fixture")
+
+    def test_rejects_other_types_empty_values_and_relative_paths(self):
+        for paths in (None, [], "path", {"path": 1}, {1: str(self.root)}):
+            with self.subTest(paths=paths), self.assertRaises(TypeError):
+                WINDOWS.physical_paths(paths)
+        for paths in ({}, {"path": ""}, {"": str(self.root)}, {"path": "journal.sqlite"}):
+            with self.subTest(paths=paths), self.assertRaises(ValueError):
+                WINDOWS.physical_paths(paths)
+
+    def test_rejects_missing_parent_and_dangling_alias_without_creating_files(self):
+        missing_parent = self.root / "missing"
+        with self.assertRaises(FileNotFoundError):
+            WINDOWS.physical_paths({"journal": str(missing_parent / "journal.sqlite")})
+        self.assertFalse(missing_parent.exists())
+        dangling = self.root / "dangling"
+        dangling.symlink_to(missing_parent / "journal.sqlite")
+        with self.assertRaises(FileNotFoundError):
+            WINDOWS.physical_paths({"journal": str(dangling)})
+        self.assertFalse(missing_parent.exists())
 
 
 class DesktopStateTest(unittest.TestCase):

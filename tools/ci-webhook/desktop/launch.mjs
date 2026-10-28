@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
-import { createReadStream, existsSync, mkdirSync, openSync, readFileSync, writeFileSync, renameSync, unlinkSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync, renameSync, unlinkSync } from 'node:fs';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { execFile, spawn } from 'node:child_process';
@@ -33,6 +33,10 @@ async function digest(path, length) {
 export function validateLaunchConfig(config) {
   for (const key of ['desktopPath', 'runtimeRoot', 'codexHome', 'sqliteHome', 'pythonPath', 'nodePath', 'bridgeConfig', 'stateDirectory']) {
     if (typeof config[key] !== 'string' || !isAbsolute(config[key])) throw new Error(`An absolute ${key} is required`);
+  }
+  if (config.bridgePaths !== undefined && (config.bridgePaths === null || typeof config.bridgePaths !== 'object'
+    || Object.keys(config.bridgePaths).length !== 2 || !['tokenFile', 'journalPath'].every(key => typeof config.bridgePaths[key] === 'string' && isAbsolute(config.bridgePaths[key])))) {
+    throw new Error('Invalid physical bridge storage paths');
   }
   if (!/^[a-f0-9-]{36}$/.test(config.thread ?? '')) throw new Error('Invalid destination thread');
   for (const key of ['desktopPid', 'serverPid']) if (!Number.isSafeInteger(config[key]) || config[key] <= 0) throw new Error(`Invalid ${key}`);
@@ -73,14 +77,17 @@ async function reserveCheck(endpoint) {
     probe.listen(Number(url.port || 80), url.hostname === '[::1]' ? '::1' : url.hostname, () => probe.close(accept));
   });
 }
-export async function runPilot(config) {
+export async function runPilot(config, { scheduledTask } = {}) {
   validateLaunchConfig(config);
+  if (process.platform !== 'win32' || !/^CodexCiWebhook-DesktopPilot-[a-f0-9-]{36}$/i.test(scheduledTask ?? '')) {
+    throw new Error('The Windows pilot must be started by its independent scheduled task; use --arm');
+  }
   mkdirSync(config.stateDirectory, { recursive: true });
   const statePath = join(config.stateDirectory, 'status.json');
   const lockPath = join(config.stateDirectory, 'launcher.lock');
   const lock = openSync(lockPath, 'wx', 0o600);
   // The open descriptor and file prevent a concurrent launcher from switching again.
-  const state = { version: 1, thread: config.thread, nonce: randomUUID(), phase: 'waiting-for-idle', launcherPid: process.pid, appServer: config.appServer };
+  const state = { version: 1, thread: config.thread, nonce: randomUUID(), phase: 'waiting-for-idle', launcherPid: process.pid, appServer: config.appServer, scheduledTask };
   const save = phase => { state.phase = phase; state.updatedAt = new Date().toISOString(); writeJson(statePath, state); };
   const native = async (command, ...args) => JSON.parse(await execute(config.pythonPath, [join(directory, 'windows.py'), command, ...args], { jsonErrors: true }));
   const storage = ['--home', config.codexHome, '--sqlite-home', config.sqliteHome, '--thread', config.thread];
@@ -157,7 +164,7 @@ export async function runPilot(config) {
     const originalBridge = readFileSync(config.bridgeConfig, 'utf8');
     writeFileSync(join(config.stateDirectory, `bridge-before-${state.nonce}.json`), originalBridge, { mode: 0o600 });
     const bridge = JSON.parse(originalBridge);
-    writeJson(config.bridgeConfig, { ...bridge, codexPath: runtime.codexPath, appServer: config.appServer });
+    writeJson(config.bridgeConfig, { ...bridge, ...config.bridgePaths, codexPath: runtime.codexPath, appServer: config.appServer });
     save('sending-idle-wake-probe');
     client.close(); client = undefined;
     // A single authorized probe. Do not activate CI based on queue acceptance.
@@ -189,11 +196,15 @@ export async function runPilot(config) {
       const previousBridge = join(config.stateDirectory, `bridge-before-${state.nonce}.json`);
       if (existsSync(previousBridge)) writeFileSync(config.bridgeConfig, readFileSync(previousBridge));
       const restored = startDesktop(cleanEnvironment);
+      const restoredExit = new Promise(accept => restored.once('exit', accept));
       try { await new Promise((accept, reject) => { restored.once('spawn', accept); restored.once('error', reject); }); }
       catch { save('rollback-blocked'); throw new Error('Normal Desktop could not be restarted; inspect the saved status'); }
-      restored.unref();
       state.restoredDesktopPid = restored.pid;
       save('rolled-back');
+      // Task Scheduler may own the process tree too. Keep its action alive until
+      // the restored Desktop exits instead of terminating its job underneath it.
+      process.exitCode = 1;
+      await restoredExit;
     } else save(!oldDesktopAlive || originalClosed ? 'rollback-blocked' : 'aborted-before-restart');
     process.exitCode = 1;
   } finally {
@@ -208,15 +219,19 @@ export async function runPilot(config) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const index = process.argv.indexOf('--config');
   if (index < 0 || !process.argv[index + 1]) throw new Error('Usage: node desktop/launch.mjs --config <private file> --arm|--switch');
-  const configPath = resolve(process.argv[index + 1]);
+  const configPath = realpathSync.native(resolve(process.argv[index + 1]));
   const config = validateLaunchConfig(JSON.parse(readFileSync(configPath, 'utf8')));
   if (process.argv.includes('--arm')) {
-    mkdirSync(config.stateDirectory, { recursive: true });
-    const output = openSync(join(config.stateDirectory, 'launcher.log'), 'a', 0o600);
-    const child = spawn(process.execPath, [fileURLToPath(import.meta.url), '--config', configPath, '--switch'], { detached: true, stdio: ['ignore', output, output], windowsHide: true });
-    await new Promise((accept, reject) => { child.once('spawn', accept); child.once('error', reject); });
-    child.unref();
-    console.log(JSON.stringify({ launcherPid: child.pid, statusFile: join(config.stateDirectory, 'status.json'), waitingForIdle: true }));
-  } else if (process.argv.includes('--switch')) await runPilot(config);
+    if (process.platform !== 'win32') throw new Error('This launcher requires Windows');
+    // detached/unref do not escape an inherited Windows Job Object. The OS
+    // scheduler owns this on-demand task independently of the closing Desktop.
+    const powershell = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+    const output = await execute(powershell, ['-NoProfile', '-NonInteractive', '-WindowStyle', 'Hidden', '-File', join(directory, 'arm.ps1'),
+      '-ConfigPath', configPath, '-NodePath', process.execPath, '-LauncherPath', fileURLToPath(import.meta.url)], { timeout: 45000 });
+    console.log(JSON.stringify(JSON.parse(output.trim())));
+  } else if (process.argv.includes('--switch')) {
+    const taskIndex = process.argv.indexOf('--scheduled-task');
+    await runPilot(config, { scheduledTask: taskIndex < 0 ? undefined : process.argv[taskIndex + 1] });
+  }
   else throw new Error('Explicit --arm or --switch is required');
 }

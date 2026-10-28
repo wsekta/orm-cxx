@@ -241,6 +241,43 @@ def close(pid: int, timeout: float, expected_created: int | None = None) -> dict
         kernel.CloseHandle(handle)
 
 
+def physical_paths(paths: dict[str, str]) -> dict[str, str]:
+    """Resolve paths as seen by this process without creating missing files.
+
+    Existing paths use strict resolution, including Windows package redirects.
+    A new leaf such as the bridge journal may be absent; its parent must already
+    exist and resolve to a directory. Dangling aliases are never treated as new
+    files at their unresolved spelling.
+    """
+    if not isinstance(paths, dict):
+        raise TypeError("Expected a mapping of path names to absolute paths")
+    if not paths:
+        raise ValueError("At least one path is required")
+    result = {}
+    for name, value in paths.items():
+        if not isinstance(name, str) or not isinstance(value, str):
+            raise TypeError("Path names and values must be strings")
+        if not name.strip() or not value.strip() or "\0" in value:
+            raise ValueError("Path names and values must not be empty")
+        path = Path(value)
+        if not path.is_absolute():
+            raise ValueError("Path values must be absolute")
+        try:
+            resolved = path.resolve(strict=True)
+        except FileNotFoundError:
+            if os.path.lexists(path):
+                raise
+            parent = path.parent.resolve(strict=True)
+            if not parent.is_dir():
+                raise ValueError("A new file requires an existing parent directory")
+            resolved = parent / path.name
+        else:
+            if not resolved.is_file() and not resolved.is_dir():
+                raise ValueError("Expected an existing file or directory")
+        result[name] = str(resolved)
+    return result
+
+
 def absolute_directory(value: str, *, exists: bool = True) -> Path:
     path = Path(value)
     if not path.is_absolute():
@@ -490,6 +527,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("arguments")
+    commands.add_parser("paths")
     for name in ("pipe", "alive", "close", "shutdown-plan"):
         command = commands.add_parser(name)
         command.add_argument("--pid", type=positive_pid, required=True)
@@ -510,6 +548,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.command == "arguments":
         result = arguments()
+    elif args.command == "paths":
+        result = physical_paths(json.load(sys.stdin))
     elif args.command == "pipe":
         result = pipe(args.pid)
     elif args.command == "alive":

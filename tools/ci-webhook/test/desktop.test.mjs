@@ -4,7 +4,7 @@ import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
-import { validateLaunchConfig, resolveRuntime, verifyHistory } from '../desktop/launch.mjs';
+import { validateLaunchConfig, resolveRuntime, verifyHistory, runPilot } from '../desktop/launch.mjs';
 import { inspectThread } from '../desktop/rpc.mjs';
 
 const thread = '11111111-1111-1111-1111-111111111111';
@@ -74,6 +74,20 @@ test('pilot rejects a remote endpoint or ambiguous process identity before resta
   assert.throws(() => validateLaunchConfig({ ...config, appServer: 'unix://' }));
   assert.throws(() => validateLaunchConfig({ ...config, serverPid: config.desktopPid }));
   assert.throws(() => validateLaunchConfig({ ...config, stateDirectory: 'relative-state' }));
+});
+
+test('direct pilot invocation cannot close Desktop without an independent scheduled task', async t => {
+  const { config } = fixture(t);
+  await assert.rejects(runPilot(config), /independent scheduled task|use --arm/i);
+  await assert.rejects(runPilot(config, { scheduledTask: 'unrelated-task' }), /independent scheduled task|use --arm/i);
+});
+
+test('physical bridge paths can only replace the two storage locations', t => {
+  const { config, folder } = fixture(t);
+  const bridgePaths = { tokenFile: join(folder, 'token.txt'), journalPath: join(folder, 'journal.sqlite') };
+  assert.doesNotThrow(() => validateLaunchConfig({ ...config, bridgePaths }));
+  assert.throws(() => validateLaunchConfig({ ...config, bridgePaths: { ...bridgePaths, defaultThread: thread } }));
+  assert.throws(() => validateLaunchConfig({ ...config, bridgePaths: { ...bridgePaths, journalPath: 'relative.sqlite' } }));
 });
 
 test('runtime selection verifies all four Desktop binaries rather than accepting an old CLI', async t => {

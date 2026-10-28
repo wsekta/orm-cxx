@@ -101,6 +101,10 @@ destination conversation UUID. Keep pilot configuration, logs and backups outsid
 the checkout. The preparation script restricts the pilot directory to its owner
 and SYSTEM. It captures the existing server arguments and process creation times;
 it does not read account secrets or another process's environment.
+Preparation resolves physical paths for the configuration, runtime and bridge
+storage. MSIX can redirect newly written AppData files into a private package
+cache; the independent task must use the physical files visible to both contexts.
+Use the exact configuration path printed by preparation for `--config`.
 
 ```powershell
 ./desktop/prepare.ps1 -BridgeConfig PATH/bridge.local.json -Thread THREAD_UUID `
@@ -108,8 +112,16 @@ it does not read account secrets or another process's environment.
 node desktop/launch.mjs --config PATH/private-pilot/desktop.local.json --arm
 ```
 
-`--arm` starts a hidden supervisor which waits for all persisted turns to finish
-(up to three minutes). Historical incomplete turns can only be excluded with
+`--arm` asks Windows Task Scheduler to start a hidden supervisor in the current
+user's interactive session, with ordinary user permissions. The task has no
+schedule or logon trigger and does not poll CI. Its wrapper stays alive with the
+supervisor and removes its own task registration on exit. This is necessary
+because a detached child can still belong to Desktop's Windows Job Object and
+be terminated when Desktop closes. Direct `--switch` invocation is refused
+without the task identity.
+
+The supervisor waits for all persisted turns to finish (up to three minutes).
+Historical incomplete turns can only be excluded with
 explicit, exact `-IgnoreBusyTurns` IDs after checking they are inactive; never
 exclude the current turn or a whole conversation. No GitHub state is polled.
 
@@ -135,6 +147,9 @@ acceptance only sets `phase: awaiting-conversation-verification` and leaves
 `notificationsActive: false`. The supervisor does not activate GitHub webhooks,
 install autostart, or claim that CI passed. Inspect `status.json` and private logs
 before retrying; an existing launcher lock prevents a concurrent switch.
+After an interrupted attempt, compare process creation times before archiving a
+stale lock and status. A PID alone can have been reused. Prepare the pilot again
+to capture the current Desktop and app-server identities before another attempt.
 
 After successful operational verification, enable the prepared GitHub webhook
 and install the bridge normally. A plain `GET /readyz` only checks listener
@@ -197,5 +212,7 @@ delete the Durable Object namespace as a routine shutdown step.
 References: [Codex queue](https://learn.chatgpt.com/docs/developer-commands#codex-queue),
 [Codex app-server](https://learn.chatgpt.com/docs/app-server),
 [Windows Restart Manager](https://learn.microsoft.com/en-us/windows/win32/api/restartmanager/nf-restartmanager-rmshutdown),
+[Windows Job Objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects),
+[MSIX AppData redirection](https://learn.microsoft.com/en-us/windows/msix/desktop/desktop-to-uwp-behind-the-scenes),
 [GitHub signatures](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries),
 [Durable Object WebSockets](https://developers.cloudflare.com/durable-objects/best-practices/websockets/).
