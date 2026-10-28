@@ -3,6 +3,7 @@ module;
 #include <filesystem>
 
 #include "tests/UnitTestPrelude.hpp"
+#include "tests/support/Binary16TransportPrototype.hpp"
 
 module orm;
 
@@ -76,6 +77,15 @@ TEST(SqliteBackendTest, exposesSQLiteIdentityAndCapabilities)
     ASSERT_TRUE(capabilities.valueLimits.maxUnsignedLongLong.has_value());
     EXPECT_EQ(capabilities.valueLimits.maxUnsignedLongLong.value(),
               static_cast<unsigned long long>(std::numeric_limits<long long>::max()));
+}
+
+TEST(SqliteBackendTest, binary16TransportPrototype)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::session session;
+    const auto config = orm::SqliteConfig{orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    binary16_transport_prototype::run(session, true);
 }
 
 TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)
