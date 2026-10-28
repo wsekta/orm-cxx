@@ -23,8 +23,12 @@ struct OrderId
     std::array<std::byte, 16> bytes{};
 };
 
-struct MissingFromUuid {};
-struct ReferenceResult {};
+struct MissingFromUuid
+{
+};
+struct ReferenceResult
+{
+};
 } // namespace uuid_application
 
 export namespace orm

@@ -5,8 +5,8 @@ module;
 #include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
 #include "TemporalProfile.hpp"
-#include "tests/UnitTestPrelude.hpp"
 #include "tests/support/Binary16TransportPrototype.hpp"
+#include "tests/UnitTestPrelude.hpp"
 
 module orm;
 

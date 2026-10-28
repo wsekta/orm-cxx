@@ -3,17 +3,16 @@
 // Temporary CI feasibility probe for UUID Binary16 transport through SOCI.
 // This deliberately bypasses ORM binding and uses a session-owned blob directly.
 #include <array>
-#include <string>
-
 #include <gtest/gtest.h>
 #include <soci/soci.h>
+#include <string>
 
 namespace binary16_transport_prototype
 {
 inline auto run(soci::session& session, bool sqlite) -> void
 {
-    session << (sqlite ? "CREATE TEMPORARY TABLE uuid_binary_probe (id INTEGER PRIMARY KEY, value BLOB)"
-                       : "CREATE TEMPORARY TABLE uuid_binary_probe (id INTEGER PRIMARY KEY, value BINARY(16))");
+    session << (sqlite ? "CREATE TEMPORARY TABLE uuid_binary_probe (id INTEGER PRIMARY KEY, value BLOB)" :
+                         "CREATE TEMPORARY TABLE uuid_binary_probe (id INTEGER PRIMARY KEY, value BINARY(16))");
     soci::blob input{session};
     soci::indicator inputIndicator = soci::i_ok;
     int id{};
@@ -28,8 +27,9 @@ inline auto run(soci::session& session, bool sqlite) -> void
         ASSERT_EQ(input.write_from_start(expected.data(), expected.size()), expected.size());
         insert.execute(true);
     }
-    id = 16;
-    inputIndicator = soci::i_null;
+    // The prepared statement retains references to both values until execute().
+    id = 16;                       // NOLINT(clang-analyzer-deadcode.DeadStores)
+    inputIndicator = soci::i_null; // NOLINT(clang-analyzer-deadcode.DeadStores)
     insert.execute(true);
 
     soci::blob output{session};
@@ -38,8 +38,8 @@ inline auto run(soci::session& session, bool sqlite) -> void
         soci::indicator outputIndicator = soci::i_null;
         int length{};
         std::string storageType;
-        session << (sqlite ? "SELECT value, length(value), typeof(value) FROM uuid_binary_probe WHERE id=:id"
-                           : "SELECT value, OCTET_LENGTH(value), 'binary' FROM uuid_binary_probe WHERE id=:id"),
+        session << (sqlite ? "SELECT value, length(value), typeof(value) FROM uuid_binary_probe WHERE id=:id" :
+                             "SELECT value, OCTET_LENGTH(value), 'binary' FROM uuid_binary_probe WHERE id=:id"),
             soci::into(output, outputIndicator), soci::into(length), soci::into(storageType), soci::use(id, "id");
         ASSERT_EQ(outputIndicator, soci::i_ok);
         ASSERT_EQ(length, 16);
