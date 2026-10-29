@@ -3,7 +3,6 @@
   "endpoint": "https://codex-ci-webhook.ACCOUNT.workers.dev",
   "appServer": "unix://",
   "codexPath": "C:/path/to/codex.exe",
-  "defaultThread": "00000000-0000-0000-0000-000000000000",
   "journalPath": "C:/Users/USER/AppData/Local/CodexCiWebhook/journal.sqlite",
   "tokenFile": "C:/Users/USER/AppData/Local/CodexCiWebhook/bridge-token.txt"
 }
