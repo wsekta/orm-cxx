@@ -66,6 +66,19 @@ jobs:
           python -m unittest discover -s tests/macros -v
           python scripts/check-macros.py
 
+  workflow-scripts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Test local workflow scripts
+        run: |
+          python -m unittest discover -s tests/scripts -v
+          python -m unittest discover -s tests/quick_check -v
+
   format:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
