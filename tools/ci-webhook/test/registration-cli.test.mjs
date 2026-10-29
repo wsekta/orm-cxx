@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { githubRepository, inspectWorktree, parseOptions, verifyWaitingPush } from '../bridge/worktree.mjs';
@@ -14,7 +14,7 @@ const thread = '11111111-1111-1111-1111-111111111111';
 const sha = 'a'.repeat(40);
 
 function gitFixture(t) {
-  const folder = mkdtempSync(join(tmpdir(), 'webhook-cli-'));
+  const folder = mkdtempSync(join(tmpdir(), 'webhook cli-'));
   const git = (...args) => execFileSync('git', ['-C', folder, ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
   git('init');
   git('config', 'user.name', 'Webhook test');
@@ -29,12 +29,24 @@ function gitFixture(t) {
 test('pre-push registration identifies an explicit real worktree and rejects stale or detached HEAD', t => {
   const { folder, git, head } = gitFixture(t);
   assert.deepEqual(inspectWorktree(folder, { repository, branch: 'config/first-feature', sha: head }),
-    { repository, branch: 'config/first-feature', sha: head, worktree: realpathSync(folder) });
+    { repository, branch: 'config/first-feature', sha: head, worktree: realpathSync.native(folder) });
   assert.throws(() => inspectWorktree(folder, { repository, branch: 'config/second-feature', sha: head }), /branch/);
   assert.throws(() => inspectWorktree(folder, { repository, branch: 'config/first-feature', sha }), /HEAD/);
   assert.throws(() => inspectWorktree(folder, { repository: 'other/repository', branch: 'config/first-feature', sha: head }), /Origin/);
   git('checkout', '--detach');
   assert.throws(() => inspectWorktree(folder, { repository, branch: 'config/first-feature', sha: head }), /Detached HEAD/);
+});
+
+test('worktree and Git-normalized root spellings agree while a real subdirectory is rejected', t => {
+  const { folder, git, head } = gitFixture(t);
+  const expected = { repository, branch: 'config/first-feature', sha: head };
+  const gitRoot = git('rev-parse', '--show-toplevel');
+  for (const spelling of [folder, gitRoot]) {
+    assert.equal(inspectWorktree(spelling, expected).worktree, realpathSync.native(folder));
+  }
+  const nested = join(folder, 'nested');
+  mkdirSync(nested);
+  assert.throws(() => inspectWorktree(nested, expected), /--worktree must name the worktree root/);
 });
 
 test('origin identity accepts supported GitHub remotes without accepting credentials or lookalike hosts', () => {

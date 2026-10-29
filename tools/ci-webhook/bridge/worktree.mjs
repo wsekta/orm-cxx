@@ -39,11 +39,14 @@ export function githubRepository(remote) {
 
 export function inspectWorktree(path, expected, run = execute) {
   if (typeof path !== 'string' || !isAbsolute(path)) throw new Error('--worktree must be an absolute worktree root');
-  const worktree = realpathSync(path);
+  // Native Windows resolution expands short (8.3) names that Git normalizes.
+  const worktree = realpathSync.native(path);
   const git = (...args) => run('git', ['-C', worktree, ...args]).trim();
-  const top = realpathSync(git('rev-parse', '--show-toplevel'));
+  const top = realpathSync.native(git('rev-parse', '--show-toplevel'));
   const comparable = value => process.platform === 'win32' ? value.toLowerCase() : value;
-  if (comparable(resolve(top)) !== comparable(resolve(worktree))) throw new Error('--worktree must name the worktree root');
+  if (comparable(resolve(top)) !== comparable(resolve(worktree))) {
+    throw new Error(`--worktree must name the worktree root (requested=${JSON.stringify(worktree)}, git=${JSON.stringify(top)})`);
+  }
   const repository = githubRepository(git('remote', 'get-url', 'origin'));
   let branch;
   try { branch = git('symbolic-ref', '--quiet', '--short', 'HEAD'); }
