@@ -2,7 +2,7 @@ name: Packages
 
 on:
   push:
-    branches: [main, release]
+    branches-ignore: [gh-pages]
   pull_request:
   workflow_dispatch:
 
