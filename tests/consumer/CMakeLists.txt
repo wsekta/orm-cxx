@@ -12,8 +12,23 @@ if(ORM_CXX_BUILD_TESTS OR ORM_CXX_BUILD_EXAMPLES)
     message(FATAL_ERROR "Developer-only orm-cxx targets must default to OFF in a parent project")
 endif()
 
-add_executable(orm-cxx-consumer main.cpp ModelIdentity.cpp ../package_consumer/ValueTypesImport.cpp)
-target_sources(orm-cxx-consumer PRIVATE FILE_SET consumer_modules TYPE CXX_MODULES FILES Models.cppm)
+add_executable(
+    orm-cxx-consumer main.cpp ModelIdentity.cpp ../package_consumer/ValueTypesImport.cpp
+                     ../prototypes/uuid-adapter/Consumer.cpp ../prototypes/uuid-adapter/OtherTranslationUnit.cpp
+)
+target_sources(
+    orm-cxx-consumer
+    PRIVATE FILE_SET
+            consumer_modules
+            TYPE
+            CXX_MODULES
+            BASE_DIRS
+            "${CMAKE_CURRENT_SOURCE_DIR}/.."
+            FILES
+            Models.cppm
+            ../prototypes/uuid-adapter/Contract.cppm
+            ../prototypes/uuid-adapter/Application.cppm
+)
 set_target_properties(
     orm-cxx-consumer PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin" CXX_SCAN_FOR_MODULES ON
 )

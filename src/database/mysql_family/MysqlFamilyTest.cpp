@@ -5,6 +5,7 @@ module;
 #include "ConnectionParameters.hpp"
 #include "NativeApi.hpp"
 #include "TemporalProfile.hpp"
+#include "tests/support/Binary16TransportPrototype.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -442,6 +443,11 @@ TEST_P(MysqlFamilyLinkTest, NativeTemporalTextExchangeKeepsMicrosecondsAndNegoti
     EXPECT_EQ(zone, "+00:00");
     EXPECT_EQ(explicitDefaults, 1);
     EXPECT_EQ(runtime().limits(session()).maxUtcTimestamp, limits.maxUtcTimestamp);
+}
+
+TEST_P(MysqlFamilyLinkTest, binary16TransportPrototype)
+{
+    binary16_transport_prototype::run(session(), false);
 }
 
 TEST_P(MysqlFamilyLinkTest, TemporalMigrationGuardsRejectChangedTimezoneAndTimestampDefaults)
