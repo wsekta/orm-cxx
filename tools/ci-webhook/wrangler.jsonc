@@ -10,7 +10,7 @@
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RepositoryEvents"] }],
   "vars": {
-    "REPOSITORY_CONFIG": "{\"wsekta/orm-cxx\":{\"branch\":\"main\",\"workflows\":[\"GCC\",\"MSVC\",\"Quality\",\"Backend conformance\",\"Clang\",\"Packages\",\"Docs\"]}}"
+    "REPOSITORY_CONFIG": "{\"wsekta/orm-cxx\":{\"branches\":\"*\",\"excludedBranches\":[\"gh-pages\"],\"workflows\":[\"GCC\",\"MSVC\",\"Quality\",\"Backend conformance\",\"Clang\",\"Packages\"],\"workflowsByBranch\":{\"main\":[\"GCC\",\"MSVC\",\"Quality\",\"Backend conformance\",\"Clang\",\"Packages\",\"Docs\"]}}}"
   },
   "observability": {
     "enabled": true,

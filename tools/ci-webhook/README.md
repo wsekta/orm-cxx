@@ -1,9 +1,16 @@
 # CI webhooks for Codex
 
 This standalone integration receives real GitHub webhooks. It does not poll GitHub.
-It currently monitors pushes to `main` in `wsekta/orm-cxx` and waits for GCC, MSVC,
-Quality, Backend conformance, Clang, Packages and Docs. GitHub Pages is a separate
-deployment; the resumed agent checks its status before declaring the site deployed.
+It monitors pushes to every branch except `gh-pages` in `wsekta/orm-cxx`. GCC,
+MSVC, Quality, Backend conformance, Clang and Packages are required on each branch;
+`main` additionally requires Docs. Quality validates documentation on feature
+branches. GitHub Pages publication remains a separate, main-only deployment.
+
+Work on one feature branch, push implementation and fixes to that same branch,
+then create a pull request after its current commit passes the required push
+workflows. Pull-request checks still run on GitHub, but do not participate in the
+earlier push result. Creating a PR is not required to start branch CI or receive
+its webhook. Merging the PR remains a separate decision.
 
 ## Current state
 
@@ -13,10 +20,11 @@ comparison, and real Desktop tools worked in the resumed turn. The bridge has an
 authenticated connection to the deployed Cloudflare receiver; the repository
 webhook is enabled for `push`, `workflow_job` and `workflow_run`.
 
-**End-to-end GitHub CI delivery is awaiting a real result.** The queued Desktop
-probe establishes idle wake, not the whole GitHub-to-conversation path. The next
-registered push verifies that final step asynchronously. A health endpoint, ping
-or bridge connection alone does not establish notification delivery.
+**End-to-end GitHub CI delivery was verified on `main` on 2026-10-28.** A real
+seven-workflow success for `64b78da5f7b838bea51c77ff2fc556b0dd73fef9` automatically
+resumed the same Desktop conversation and was acknowledged by the bridge. Branch
+coverage also requires the matching receiver policy and bridge version; a health
+endpoint, ping or bridge connection alone does not establish that delivery.
 
 The pilot owns this particular Desktop session. Bridge startup at Windows logon
 does not make a later ordinary Desktop launch use the shared endpoint; prepare
@@ -37,11 +45,15 @@ is sufficient for this installation; a GitHub App is optional when installing
 centrally across multiple repositories later.
 
 One SQLite Durable Object per repository stores delivery IDs, workflow attempts,
-commit state and a durable outbox. A failed matrix job generates an early failure
-event. Success requires every configured workflow to finish with `success`;
+commit state scoped by branch and SHA, and a durable outbox. A failed matrix job
+generates an early failure event. Success requires every configured workflow to finish with `success`;
 `skipped` and `neutral` do not count as success. Unknown workflows do not satisfy
 the required set. Out-of-order progress and older attempts cannot replace a newer
-result. Only push workflows are monitored, not pull-request runs.
+result. The same SHA on two branches has independent state and notification IDs.
+Only push workflows are monitored. A failed job is attributed to a push only
+after its exact run and attempt are confirmed by a push `workflow_run`; an
+out-of-order job is retained until that confirmation. PR jobs cannot overwrite
+the push result for the same branch and SHA.
 
 The Windows bridge maintains an authenticated outbound WebSocket. There is no
 inbound Windows port and no public Codex server. One bridge connection owns each
@@ -56,7 +68,8 @@ never reached it.
 
 The bridge records each notification in local SQLite before sending
 `codex queue --remote ENDPOINT --thread UUID --message TEXT`. An exact
-repository/SHA route takes precedence over the configured default conversation.
+repository/branch/SHA route takes precedence over the configured default
+conversation.
 Pushes from other computers or tools go to that default conversation. The
 integration never changes code or cancels CI automatically.
 
@@ -66,6 +79,11 @@ leaves an uncertain record. The bridge stops rather than risk sending the same
 message twice. Inspect the destination conversation, then set that record to
 `accepted` if it arrived, or `received` if it did not. Delivery is not claimed to
 be exactly once across that external command boundary.
+
+Existing main-only commit state and routes are migrated once into the branch
+scope. Pending outbox entries and accepted delivery IDs retain their identities.
+Legacy notifications without a branch are interpreted as `main`; their old
+SHA-only routes are never used for a feature branch.
 
 ## Verification
 
@@ -96,6 +114,17 @@ The transport test connects the real Node.js bridge to a local Worker over a
 real WebSocket, including offline replay and acknowledged delivery to a test
 destination. It does not claim to verify delivery to the Desktop app.
 The bundle command is a dry run and does not deploy resources.
+Quality uploads its checked Worker bundle as
+`ci-webhook-worker-FULL_SHA-attempt-N`. Deploy that exact GitHub artifact when
+updating the receiver; a local build is not part
+of the feature workflow. During the first upgrade from a main-only receiver,
+record any temporary bootstrap branch coverage and restore the full configured
+policy after deploying the verified artifact. Do not claim all-branch delivery
+until the receiver and running bridge both use that policy and protocol.
+If the old receiver processed feature commits during bootstrap, supply
+`LEGACY_COMMIT_BRANCHES` as a JSON map from every such SHA to its actual branch
+on the first new-code deployment. The one-time migration uses that hint instead
+of incorrectly importing those commits as `main`.
 
 ## Optional Windows Desktop pilot
 
@@ -212,11 +241,11 @@ readiness; it does not establish the conversation's identity or delivery.
    instances. The computer and Codex backend must be available to analyze events;
    Cloudflare continues receiving while they are offline.
 
-For a push originating in another Codex conversation, register its destination
-before the push; other pushes continue using the default conversation:
+For every push, register its exact branch and SHA in the originating Codex
+conversation before pushing; unregistered pushes use the default conversation:
 
 ```powershell
-node bridge/register.mjs --config PATH/bridge.local.json --sha FULL_SHA --thread THREAD_UUID
+node bridge/register.mjs --config PATH/bridge.local.json --branch FEATURE_BRANCH --sha FULL_SHA --thread THREAD_UUID
 ```
 
 To stop the integration, stop and disable the scheduled task and deactivate
