@@ -22,6 +22,7 @@ function fixture(t) {
 }
 test('accepted delivery survives a restart and a lost remote acknowledgment', async t => {
   const { journal, path } = fixture(t);
+  journal.register(notice.repository, notice.branch, sha, thread);
   let sent = 0;
   const sender = { probe: async () => {}, send: async () => sent++ };
   await deliverNotice(notice, journal, thread, sender);
@@ -32,18 +33,21 @@ test('accepted delivery survives a restart and a lost remote acknowledgment', as
 });
 test('unavailable Codex leaves delivery pending; reconnect can deliver it', async t => {
   const { journal } = fixture(t);
+  journal.register(notice.repository, notice.branch, sha, thread);
   await assert.rejects(deliverNotice(notice, journal, thread, { probe: async () => { throw new Error('offline'); } }), /offline/);
-  assert.equal(journal.receive(notice), 'received');
+  assert.equal(journal.receive(notice), 'ready');
   await deliverNotice(notice, journal, thread, { probe: async () => {}, send: async () => {} });
   assert.equal(journal.receive(notice), 'accepted');
 });
 test('uncertain command result is retained and never blindly replayed', async t => {
   const { journal } = fixture(t);
+  journal.register(notice.repository, notice.branch, sha, thread);
   await assert.rejects(deliverNotice(notice, journal, thread, { probe: async () => {}, send: async () => { throw new Error('timeout'); } }), UncertainDelivery);
   await assert.rejects(deliverNotice(notice, journal, thread, { probe: async () => {}, send: async () => assert.fail('duplicate') }), UncertainDelivery);
 });
 test('crash after claiming is treated as uncertain, not as accepted', async t => {
   const { journal } = fixture(t);
+  journal.register(notice.repository, notice.branch, sha, thread);
   journal.receive(notice); journal.claim(notice.id);
   await assert.rejects(deliverNotice(notice, journal, thread, { probe: async () => {} }), UncertainDelivery);
 });
@@ -54,6 +58,17 @@ test('routes exact repository/branch/SHA to its originating conversation', async
   let received;
   await deliverNotice(notice, journal, thread, { probe: async () => {}, send: async value => { received = value; } });
   assert.equal(received, destination);
+});
+
+test('unregistered notices wait for an exact route instead of using the global fallback', async t => {
+  const { journal } = fixture(t);
+  await assert.rejects(deliverNotice(notice, journal, thread, {
+    probe: async () => assert.fail('No registered recipient'),
+    send: async () => assert.fail('Must not send to the fallback conversation')
+  }), /destination|route/i);
+  assert.equal(journal.receive(notice), 'waiting_for_route');
+  assert.equal(journal.thread(notice, thread), undefined);
+  assert.equal(journal.thread(legacyNotice, thread), undefined);
 });
 
 test('the same SHA on two feature branches reaches independent conversations', async t => {
@@ -73,7 +88,7 @@ test('the same SHA on two feature branches reaches independent conversations', a
   assert.equal(journal.receive(second), 'accepted');
   assert.match(received[0].message, /"branch":"codex\/first-feature"/);
   assert.match(received[1].message, /"branch":"codex\/second-feature"/);
-  assert.equal(journal.thread({ ...first, repository: 'other/repo' }, thread), thread);
+  assert.equal(journal.thread({ ...first, repository: 'other/repo' }, thread), undefined);
 });
 
 test('legacy migration preserves deliveries and routes only main without resurrecting deleted routes', async t => {
@@ -95,7 +110,7 @@ test('legacy migration preserves deliveries and routes only main without resurre
   journal = new Journal(path);
   assert.equal(journal.thread(legacyNotice, thread), destination);
   assert.equal(journal.thread(noticeFor('main'), thread), destination);
-  assert.equal(journal.thread(noticeFor('codex/unregistered'), thread), thread, 'A legacy SHA route must never route a feature notice');
+  assert.equal(journal.thread(noticeFor('codex/unregistered'), thread), undefined, 'A legacy SHA route must never route a feature notice');
   assert.deepEqual(validateNotice(legacyNotice, legacyNotice.repository), legacyNotice);
   assert.match(formatMessage(legacyNotice), /"branch":"main"/);
   await deliverNotice(legacyNotice, journal, thread, { probe: async () => assert.fail('Already accepted'), send: async () => assert.fail('Already accepted') });
@@ -108,7 +123,7 @@ test('legacy migration preserves deliveries and routes only main without resurre
   journal.close();
   journal = undefined;
   journal = new Journal(path);
-  assert.equal(journal.thread(legacyNotice, thread), thread, 'The migration marker prevents reimporting deleted routes');
+  assert.equal(journal.thread(legacyNotice, thread), undefined, 'The migration marker prevents reimporting deleted routes');
   assert.equal(journal.receive(pending), 'accepted');
   assert.equal(journal.receive(uncertain), 'uncertain');
 });

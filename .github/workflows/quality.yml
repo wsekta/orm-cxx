@@ -48,6 +48,35 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  ci-webhook-windows:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: tools/ci-webhook
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: tools/ci-webhook/package-lock.json
+      - name: Install bridge dependency
+        run: npm ci --omit=dev
+      - name: Check registration, journal and dispatcher on Windows
+        run: npm run test:bridge
+      - name: Check installed PowerShell entrypoints
+        shell: powershell
+        run: |
+          Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
+            $parseErrors = $null
+            $parseTokens = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$parseTokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) { throw ($parseErrors | Out-String) }
+          }
+
   macros:
     runs-on: ubuntu-24.04
     timeout-minutes: 5

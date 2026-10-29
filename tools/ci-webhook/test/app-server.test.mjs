@@ -79,9 +79,10 @@ test('failed WS readiness leaves the real journal notice pending before any send
   const sha = 'a'.repeat(40);
   const notice = { id: `${sha}:failure:1:1`, repository: 'wsekta/orm-cxx', sha,
     outcome: 'failure', url: 'https://github.com/wsekta/orm-cxx/actions/runs/1' };
+  journal.register(notice.repository, 'main', sha, '11111111-1111-1111-1111-111111111111');
   const sender = { ...codexSender({ appServer: endpoint }), send: async () => assert.fail('Readiness must precede claiming and sending') };
   await assert.rejects(deliverNotice(notice, journal, '11111111-1111-1111-1111-111111111111', sender), /HTTP 503/);
-  assert.equal(journal.receive(notice), 'received');
+  assert.equal(journal.receive(notice), 'ready');
 });
 
 test('readiness requires HTTP 200 rather than any successful response', async t => {
