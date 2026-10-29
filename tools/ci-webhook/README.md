@@ -293,6 +293,23 @@ Desktop's `CODEX_APP_SERVER_WS_URL` startup setting and its tool-channel bootstr
 updates can require a new preparation. Do not enable it without accepting those
 constraints and a controlled Desktop restart.
 
+For a personal desktop shortcut, use `scripts/start-desktop-webhooks.ps1
+-ProfilePath ABSOLUTE_PRIVATE_PROFILE`. Invoke it with Windows PowerShell 5.1,
+`-NoProfile -ExecutionPolicy Bypass -File`, keeping the console interactive.
+The private JSON profile has `schemaVersion: 1`, `launcherDirectory`, `nodePath`,
+`pythonPath`, `bridgeConfig`, `stateRoot`, `thread`, `appServer` and an explicit
+`ignoreBusyTurns` array containing only individually reviewed historical turns.
+The launcher directory must contain the verified `desktop/` helpers, their
+`bridge/app-server.mjs` import and the locked `ws` dependency outside checkouts.
+
+The shortcut wrapper opens an installed ordinary Desktop when needed, logs before
+preparation, creates a fresh configuration and arms the existing controlled pilot.
+It refuses concurrent starters or overlapping application versions. It waits for
+history verification and the queued conversation probe, then leaves actual
+same-conversation tools/idle-wake verification and bridge activation to the agent.
+An early failure stays visible and is saved in the attempt's `start.log` and
+`error.txt`. `-NoPause` is available for unattended failure-path checks in GitHub.
+
 Requirements: Windows, the installed Desktop package, its matching relocated CLI,
 Node.js 24+, Python 3.12+, an existing private bridge configuration, and the exact
 destination conversation UUID. Keep pilot configuration, logs and backups outside
