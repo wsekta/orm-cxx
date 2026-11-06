@@ -743,6 +743,40 @@ TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
     EXPECT_EQ(getValue<std::string>(statement.parameters[0]), "wojtek");
 }
 
+TEST_F(DefaultSelectCommandTest, rawUuidParametersRequireAndRetainExplicitRepresentationIncludingNull)
+{
+    using orm::model::ColumnType;
+    using orm::model::UuidStorage;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
+    query.where(raw("field1 = :uuid OR :missing IS NULL", param("uuid", orm::Uuid{}, UuidStorage::Binary16),
+                    param("missing", std::nullopt, ColumnType::Uuid, UuidStorage::Binary16)));
+    const auto statement = select(command, query);
+    ASSERT_EQ(statement.parameters.size(), 2U);
+    EXPECT_EQ(statement.parameters[0].uuidStorage, UuidStorage::Binary16);
+    EXPECT_TRUE(statement.parameters[0].value.has_value());
+    EXPECT_EQ(statement.parameters[1].uuidStorage, UuidStorage::Binary16);
+    EXPECT_FALSE(statement.parameters[1].value.has_value());
+    EXPECT_EQ(statement.parameters[1].nullType, ColumnType::Uuid);
+
+    const std::optional<orm::Uuid> empty;
+    const auto optional = param("optional", empty, UuidStorage::Binary16);
+    EXPECT_EQ(optional.nullType, ColumnType::Uuid);
+    EXPECT_THROW((void)param("wrong", std::nullopt, ColumnType::Int, UuidStorage::Binary16), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, rawUuidRejectsMissingOrConflictingRepresentation)
+{
+    using orm::model::UuidStorage;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> missing;
+    missing.where(raw("field1 = :uuid", param("uuid", orm::Uuid{})));
+    EXPECT_THROW((void)select(command, missing), std::invalid_argument);
+
+    orm::tests::RuntimeQuery<models::ModelWithFloat> conflicting;
+    conflicting.where(raw("field1 = :uuid OR field2 = :uuid", param("uuid", orm::Uuid{}, UuidStorage::Native),
+                          param("uuid", orm::Uuid{}, UuidStorage::Binary16)));
+    EXPECT_THROW((void)select(command, conflicting), std::invalid_argument);
+}
+
 TEST_F(DefaultSelectCommandTest, selectWithMappedFieldName)
 {
     orm::tests::RuntimeQuery<models::ModelWithIdAndNamesMapping> query;

@@ -1,6 +1,7 @@
 module;
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -23,11 +24,139 @@ import :database_numeric;
 
 namespace orm::db::binding
 {
+/**
+ * A session-bound, stable exchange buffer for one Binary16 parameter or result.
+ * The buffer and its indicator must outlive the statement using them. SQLite
+ * results additionally require typeof(value) from the same row, because SOCI's
+ * blob exchange converts other storage classes before returning the bytes.
+ */
+class Binary16Buffer
+{
+    soci::blob blob_;
+    soci::indicator indicator_{soci::i_null};
+
+public:
+    explicit Binary16Buffer(soci::session& session) : blob_{session} {}
+
+    auto set(const std::optional<orm::Uuid>& value) -> void
+    {
+        indicator_ = value ? soci::i_ok : soci::i_null;
+        blob_.trim(0);
+        if (value && blob_.write_from_start(value->bytes().data(), value->bytes().size()) != value->bytes().size())
+            throw ConversionError{"Could not write a complete Binary16 value"};
+    }
+
+    auto exchangeUse(soci::statement& statement, const std::string& name) -> void
+    {
+        statement.exchange(soci::use(blob_, indicator_, name));
+    }
+
+    auto exchangeInto(soci::statement& statement) -> void
+    {
+        statement.exchange(soci::into(blob_, indicator_));
+    }
+
+    [[nodiscard]] auto indicator() const noexcept -> soci::indicator
+    {
+        return indicator_;
+    }
+
+    [[nodiscard]] auto read(BackendType backend, std::string_view sqliteStorageClass = {}) -> std::optional<orm::Uuid>
+    {
+        if (backend != BackendType::Sqlite && backend != BackendType::Mysql)
+            throw ConversionError{"Binary16 is unavailable for this backend"};
+        if (indicator_ == soci::i_null)
+            return std::nullopt;
+        if (indicator_ != soci::i_ok)
+            throw ConversionError{"A Binary16 result was truncated by its transport"};
+        if (backend == BackendType::Sqlite && sqliteStorageClass != "blob")
+            throw ConversionError{"A Binary16 result is not a SQLite BLOB"};
+        std::array<std::byte, 16> bytes{};
+        if (blob_.get_len() != bytes.size() || blob_.read_from_start(bytes.data(), bytes.size()) != bytes.size())
+            throw ConversionError{"A Binary16 result must contain exactly 16 bytes"};
+        return orm::Uuid{bytes};
+    }
+};
+
+/** Owns the regular SOCI values and session-bound Binary16 input buffers. */
+class StatementBindings
+{
+    struct BinaryParameter
+    {
+        std::string name;
+        Binary16Buffer buffer;
+        const BackendRuntime& runtime;
+
+        BinaryParameter(std::string nameInit, soci::session& session, const BackendRuntime& runtimeInit)
+            : name{std::move(nameInit)}, buffer{session}, runtime{runtimeInit}
+        {
+        }
+    };
+
+    soci::values values_;
+    soci::values* borrowedValues_{};
+    std::vector<std::unique_ptr<BinaryParameter>> binaries_;
+
+public:
+    StatementBindings() = default;
+    explicit StatementBindings(soci::values& values) : borrowedValues_{&values} {}
+
+    auto add(soci::session& session, const BackendRuntime& runtime, std::string_view name,
+             const BoundValue& bound) -> void
+    {
+        if (bound.uuidStorage == model::UuidStorage::Native)
+        {
+            runtime.bind(values(), name, bound);
+            return;
+        }
+        if (bound.uuidStorage != model::UuidStorage::Binary16)
+            throw ConversionError{"Invalid UUID storage representation"};
+        if (bound.logicalType != model::ColumnType::Uuid)
+            throw ConversionError{"Binary16 requires a logical UUID parameter"};
+
+        std::optional<orm::Uuid> value;
+        if (bound.value)
+        {
+            const auto* uuid = std::get_if<orm::Uuid>(&*bound.value);
+            if (!uuid)
+                throw ConversionError{"A Binary16 parameter has incompatible storage"};
+            value = *uuid;
+        }
+        auto binary = std::make_unique<BinaryParameter>(std::string{name}, session, runtime);
+        binary->buffer.set(value);
+        binaries_.push_back(std::move(binary));
+    }
+
+    auto add(soci::session& session, const BackendRuntime& runtime, const StatementParameter& parameter) -> void
+    {
+        add(session, runtime, parameter.name, parameter.getBoundValue());
+    }
+
+    [[nodiscard]] auto hasBinary() const noexcept -> bool
+    {
+        return !binaries_.empty();
+    }
+
+    auto exchange(soci::statement& statement) -> void
+    {
+        statement.exchange(soci::use(values()));
+        for (auto& binary : binaries_)
+            if (binary->runtime.hasStatementParameter(statement, binary->name))
+                binary->buffer.exchangeUse(statement, binary->name);
+    }
+
+    auto values() noexcept -> soci::values&
+    {
+        return borrowedValues_ ? *borrowedValues_ : values_;
+    }
+};
+
 struct ResultColumn
 {
     std::string alias;
     model::ColumnType logicalType;
     std::optional<model::ColumnType> requestedType = std::nullopt;
+    const model::ColumnView* column = nullptr;
 };
 
 inline auto isEncodedResultType(model::ColumnType type) noexcept -> bool
@@ -61,7 +190,8 @@ inline auto modelResultColumns(model::ModelView model, bool joined) -> std::vect
     {
         if (column.kind == model::FieldKind::Scalar)
         {
-            result.push_back({std::string{model->tableName} + "_" + std::string{column.name}, column.type.value()});
+            result.push_back({std::string{model->tableName} + "_" + std::string{column.name}, column.type.value(),
+                              std::nullopt, &column});
         }
         else
         {
@@ -74,7 +204,8 @@ inline auto modelResultColumns(model::ModelView model, bool joined) -> std::vect
                 {
                     const auto prefix = joined ? std::string{column.name} :
                                                  std::string{model->tableName} + "_" + std::string{column.name};
-                    result.push_back({prefix + "_" + std::string{child.name}, child.type.value()});
+                    result.push_back(
+                        {prefix + "_" + std::string{child.name}, child.type.value(), std::nullopt, &child});
                 }
             }
         }
@@ -118,11 +249,17 @@ auto projectionResultColumns(model::ModelView model, const Projections& projecti
     for (const auto& projection : projections)
     {
         if constexpr (requires { projection.alias; })
+        {
             result.push_back({std::string{projection.alias}, resultSourceType(projection.source, model)});
+            if (result.back().logicalType == model::ColumnType::Uuid)
+                result.back().column = db::detail::resolveSqlColumn(projection.source, model).column;
+        }
         else
         {
             const auto source = std::visit([](const auto& value) { return resultSource(value); }, projection.source);
             result.push_back({projection.resultField, resultSourceType(source, model)});
+            if (result.back().logicalType == model::ColumnType::Uuid)
+                result.back().column = db::detail::resolveSqlColumn(source, model).column;
         }
         [&]<std::size_t... Indices>(std::index_sequence<Indices...>)
         {
@@ -155,6 +292,8 @@ class TypedResultStorage
         ResultColumn column;
         Storage value;
         soci::indicator indicator = soci::i_null;
+        std::unique_ptr<Binary16Buffer> binary;
+        std::string sqliteStorageClass;
     };
 
     std::vector<std::unique_ptr<Buffer>> buffers;
@@ -276,12 +415,13 @@ public:
                 column.logicalType != *column.requestedType)
                 throw ConversionError{"A projected scalar type does not match its requested result field"};
             auto storage = storageFor(column.logicalType);
-            buffers.push_back(std::make_unique<Buffer>(Buffer{std::move(column), std::move(storage), soci::i_null}));
+            buffers.push_back(
+                std::make_unique<Buffer>(Buffer{std::move(column), std::move(storage), soci::i_null, nullptr, {}}));
         }
     }
 
     template <typename Consume, typename Validate = NoResultValidation>
-    auto read(soci::session& session, std::string_view sql, soci::values& parameters, Consume consume,
+    auto read(soci::session& session, std::string_view sql, StatementBindings& parameters, Consume consume,
               std::optional<BackendType> backend = std::nullopt, Validate validate = {}) -> void
     {
         const bool signedSqlIntegers =
@@ -290,30 +430,50 @@ public:
         // SOCI exchange can turn -1 into the maximum unsigned value.
         for (auto& buffer : buffers)
         {
+            buffer->binary.reset();
+            buffer->sqliteStorageClass.clear();
             if (buffer->column.logicalType == model::ColumnType::UnsignedInt ||
                 buffer->column.logicalType == model::ColumnType::UnsignedLongLong)
                 buffer->value = signedSqlIntegers ? Storage{static_cast<long long>(0)} :
                                                     Storage{static_cast<unsigned long long>(0)};
+            if (backend && buffer->column.column && buffer->column.logicalType == model::ColumnType::Uuid &&
+                buffer->column.column->uuidStorage(*backend) == model::UuidStorage::Binary16)
+                buffer->binary = std::make_unique<Binary16Buffer>(session);
         }
         soci::statement statement{session};
         statement.alloc();
         statement.prepare(std::string{sql});
-        statement.exchange(soci::use(parameters));
+        parameters.exchange(statement);
         for (auto& buffer : buffers)
         {
-            std::visit([&](auto& value) { statement.exchange(soci::into(value, buffer->indicator)); }, buffer->value);
+            if (buffer->binary)
+                buffer->binary->exchangeInto(statement);
+            else
+                std::visit([&](auto& value) { statement.exchange(soci::into(value, buffer->indicator)); },
+                           buffer->value);
         }
+        if (backend && *backend == BackendType::Sqlite)
+            for (auto& buffer : buffers)
+                if (buffer->binary)
+                    statement.exchange(soci::into(buffer->sqliteStorageClass));
         statement.define_and_bind();
         statement.execute();
         while (statement.fetch())
         {
             for (const auto& buffer : buffers)
             {
+                if (buffer->binary)
+                {
+                    const auto value = buffer->binary->read(*backend, buffer->sqliteStorageClass);
+                    buffer->indicator = buffer->binary->indicator();
+                    if (value)
+                        buffer->value = value->toString();
+                }
                 validateResultIndicator(buffer->indicator);
                 if (buffer->indicator != soci::i_null && isEncodedResultType(buffer->column.logicalType))
                 {
                     auto value = decodedResult(buffer->column.logicalType, std::get<std::string>(buffer->value));
-                    if (backend)
+                    if (backend && !buffer->binary)
                     {
                         try
                         {
@@ -330,11 +490,22 @@ public:
                             throw ConversionError{"A database result exceeds its native scalar type range"};
                         }
                     }
-                    validate(BoundValue{.logicalType = buffer->column.logicalType, .value = std::move(value)});
+                    validate(BoundValue{.logicalType = buffer->column.logicalType,
+                                        .value = std::move(value),
+                                        .uuidStorage = buffer->binary ? model::UuidStorage::Binary16 :
+                                                                        model::UuidStorage::Native});
                 }
             }
             consume(*this);
         }
+    }
+
+    template <typename Consume, typename Validate = NoResultValidation>
+    auto read(soci::session& session, std::string_view sql, soci::values& parameters, Consume consume,
+              std::optional<BackendType> backend = std::nullopt, Validate validate = {}) -> void
+    {
+        StatementBindings bindings{parameters};
+        read(session, sql, bindings, std::move(consume), backend, std::move(validate));
     }
 };
 } // namespace orm::db::binding

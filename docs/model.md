@@ -71,12 +71,15 @@ use native signed/unsigned integer types, `DOUBLE`, and `LONGTEXT` or bounded
 `VARCHAR`. See the
 [backend matrix](backends.md) for backend-specific limits and semantics.
 
-The [date, time and UUID types](value-types.md) are additional native scalars:
+The [date, time and UUID types](value-types.md) are additional scalars:
 `orm::Date`, `orm::TimeOfDay`, `orm::LocalDateTime` and `orm::UtcTimestamp`
-are supported by PostgreSQL, MySQL and MariaDB; `orm::Uuid` is supported by
-PostgreSQL and MariaDB. Their optional forms, manual/composite primary keys
-and foreign keys use the same model metadata. SQLite rejects these native
-types, and MySQL rejects UUID, before SQL; no text or binary emulation is used.
+are supported by PostgreSQL, MySQL and MariaDB. `orm::Uuid` defaults to native
+UUID on PostgreSQL and MariaDB; SQLite and MySQL require an explicit Binary16
+mapping for each UUID field. An application can specialize `UuidAdapter<T>`
+to use its own UUID type. Optional fields, manual/composite primary keys and
+foreign keys retain the logical UUID type, while related keys inherit their
+target key's physical mapping. SQLite does not provide the native temporal
+types. Unsupported mappings are rejected before SQL.
 Temporal precision is fixed at six fractional digits. Values outside the
 calendar, time-of-day or effective backend range give `Conversion`.
 Other types are not supported as scalar columns.
@@ -382,6 +385,8 @@ Model metadata supports to-one fields and explicitly mapped `OneToMany` and
 `ManyToMany` collection fields. Mapping definitions are compile-time values;
 the old runtime `string`/`string_view`, `vector`, and `map` metadata forms are
 not accepted. It does not support nested collection loading, junction models
-with payload fields, ordered relations, custom converters, or `boost::optional`.
+with payload fields, ordered relations, general-purpose custom converters, or
+`boost::optional`. UUID-specific adapters are described in
+[Value types](value-types.md).
 Native date/time and UUID fields follow the capability and range contract in
 [Value types](value-types.md).

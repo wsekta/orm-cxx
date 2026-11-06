@@ -78,17 +78,22 @@ auto requireKeySize(const orm::db::binding::PrimaryKey& key, const std::vector<c
 }
 
 auto addValueParameter(const orm::db::SqlDialect& dialect, orm::db::Statement& statement, std::string name,
-                       const orm::query::QueryValue& value) -> std::string
+                       const orm::query::QueryValue& value, const orm::model::ColumnView& column,
+                       orm::db::BackendType backend) -> std::string
 {
-    statement.parameters.push_back(orm::db::StatementParameter{
-        .name = name, .value = orm::db::binding::toQueryValue(value), .nullType = std::nullopt});
+    statement.parameters.push_back(orm::db::StatementParameter{.name = name,
+                                                               .value = orm::db::binding::toQueryValue(value),
+                                                               .nullType = std::nullopt,
+                                                               .uuidStorage = column.uuidStorage(backend)});
 
     return dialect.bindMarker(name);
 }
 
 auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement& statement,
                           const std::vector<std::string>& expressions,
-                          const std::vector<orm::db::binding::PrimaryKey>& keys) -> std::string
+                          const std::vector<orm::db::binding::PrimaryKey>& keys,
+                          const std::vector<const orm::model::ColumnView*>& columns,
+                          orm::db::BackendType backend) -> std::string
 {
     if (keys.empty())
     {
@@ -111,7 +116,8 @@ auto renderOwnerKeyFilter(const orm::db::SqlDialect& dialect, orm::db::Statement
         for (std::size_t columnIndex = 0; columnIndex < expressions.size(); ++columnIndex)
         {
             const auto parameterName = std::format("orm_rel_key_{}_{}", keyIndex, columnIndex);
-            const auto parameter = addValueParameter(dialect, statement, parameterName, keys[keyIndex][columnIndex]);
+            const auto parameter = addValueParameter(dialect, statement, parameterName, keys[keyIndex][columnIndex],
+                                                     *columns[columnIndex], backend);
             columnPredicates.push_back(std::format("{} = {}", expressions[columnIndex], parameter));
         }
 
@@ -134,10 +140,11 @@ auto stripTerminator(std::string sql) -> std::string
 
 namespace orm::db::relations
 {
-auto createTableStatements(const SqlDialect& dialect, model::ModelView owner) -> std::vector<std::string>
+auto createTableStatements(const SqlDialect& dialect, model::ModelView owner,
+                           BackendType backend) -> std::vector<std::string>
 {
     std::vector<std::string> statements;
-    for (const auto& table : migrations::detail::physicalJunctions(owner, dialect))
+    for (const auto& table : migrations::detail::physicalJunctions(owner, dialect, backend))
     {
         statements.push_back(migrations::detail::renderCreateTable(dialect, table, true, true));
     }
@@ -196,7 +203,8 @@ auto linkInsertSpec(model::ModelView owner, model::RelationView relation, const 
 }
 
 auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                   const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
+                   const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey,
+                   BackendType backend) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
     const auto target = owner.resolveTarget(relation);
@@ -222,14 +230,14 @@ auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::Rel
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
         {
-            placeholders.push_back(
-                addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]));
+            placeholders.push_back(addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i),
+                                                     ownerKey[i], *ownerPrimaryKey[i], backend));
         }
 
         for (std::size_t i = 0; i < targetKey.size(); ++i)
         {
-            placeholders.push_back(
-                addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]));
+            placeholders.push_back(addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i),
+                                                     targetKey[i], *targetPrimaryKey[i], backend));
         }
 
         auto spec = linkInsertSpec(owner, relation, ownerKey, targetKey);
@@ -253,14 +261,16 @@ auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::Rel
     {
         const auto localColumn = std::format("{}_{}", mappedRelation.columnName, ownerPrimaryKey[i]->name);
         const auto quotedLocalColumn = dialect.quoteIdentifier(localColumn);
-        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i],
+                                                 *ownerPrimaryKey[i], backend);
         assignments.push_back(std::format("{} = {}", quotedLocalColumn, parameter));
         changedPredicates.push_back(std::format("({0} IS NULL OR {0} != {1})", quotedLocalColumn, parameter));
     }
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+        const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i],
+                                                 *targetPrimaryKey[i], backend);
         targetPredicates.push_back(
             std::format("{} = {}", dialect.quoteIdentifier(targetPrimaryKey[i]->name), parameter));
     }
@@ -273,7 +283,8 @@ auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::Rel
 }
 
 auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                     const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey) -> Statement
+                     const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey,
+                     BackendType backend) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
     const auto target = owner.resolveTarget(relation);
@@ -299,15 +310,15 @@ auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::R
 
         for (std::size_t i = 0; i < ownerKey.size(); ++i)
         {
-            const auto parameter =
-                addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+            const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i),
+                                                     ownerKey[i], *ownerPrimaryKey[i], backend);
             predicates.push_back(std::format("{} = {}", dialect.quoteIdentifier(junction.ownerColumns[i]), parameter));
         }
 
         for (std::size_t i = 0; i < targetKey.size(); ++i)
         {
-            const auto parameter =
-                addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+            const auto parameter = addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i),
+                                                     targetKey[i], *targetPrimaryKey[i], backend);
             predicates.push_back(std::format("{} = {}", dialect.quoteIdentifier(junction.targetColumns[i]), parameter));
         }
 
@@ -339,18 +350,20 @@ auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::R
         const auto localColumn = std::format("{}_{}", mappedRelation.columnName, ownerPrimaryKey[i]->name);
         const auto quotedLocalColumn = dialect.quoteIdentifier(localColumn);
         const auto nullParameterName = std::format("orm_rel_null_{}", i);
-        statement.parameters.push_back(StatementParameter{
-            .name = nullParameterName, .value = std::nullopt, .nullType = ownerPrimaryKey[i]->type.value()});
+        statement.parameters.push_back(StatementParameter{.name = nullParameterName,
+                                                          .value = std::nullopt,
+                                                          .nullType = ownerPrimaryKey[i]->type.value(),
+                                                          .uuidStorage = ownerPrimaryKey[i]->uuidStorage(backend)});
         assignments.push_back(std::format("{} = {}", quotedLocalColumn, dialect.bindMarker(nullParameterName)));
-        const auto ownerParameter =
-            addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i), ownerKey[i]);
+        const auto ownerParameter = addValueParameter(dialect, statement, std::format("orm_rel_owner_{}", i),
+                                                      ownerKey[i], *ownerPrimaryKey[i], backend);
         ownerPredicates.push_back(std::format("{} = {}", quotedLocalColumn, ownerParameter));
     }
 
     for (std::size_t i = 0; i < targetPrimaryKey.size(); ++i)
     {
-        const auto targetParameter =
-            addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i), targetKey[i]);
+        const auto targetParameter = addValueParameter(dialect, statement, std::format("orm_rel_target_{}", i),
+                                                       targetKey[i], *targetPrimaryKey[i], backend);
         targetPredicates.push_back(
             std::format("{} = {}", dialect.quoteIdentifier(targetPrimaryKey[i]->name), targetParameter));
     }
@@ -364,7 +377,7 @@ auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::R
 
 auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
                                std::string targetSelectSql, const std::vector<binding::PrimaryKey>& ownerKeys,
-                               bool joinedValues) -> Statement
+                               bool joinedValues, BackendType backend) -> Statement
 {
     const auto ownerPrimaryKey = binding::getPrimaryKeyColumns(owner);
     const auto target = owner.resolveTarget(relation);
@@ -382,6 +395,27 @@ auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner
     const auto quotedTargetAlias = dialect.quoteIdentifier(targetAlias);
     const auto quotedJunctionAlias = dialect.quoteIdentifier(junctionAlias);
 
+    const auto selectedFields = [&]() -> std::string
+    {
+        if (backend != BackendType::Sqlite)
+            return join(selectedOwnerFields, ", ") + ", " + quotedTargetAlias + ".*";
+
+        auto fields = selectedOwnerFields;
+        const auto targetColumns = binding::modelResultColumns(target, joinedValues);
+        for (const auto& column : targetColumns)
+            fields.push_back(aliases::qualifiedIdentifier(dialect, targetAlias, column.alias));
+        for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
+            if (ownerPrimaryKey[i]->type == model::ColumnType::Uuid &&
+                ownerPrimaryKey[i]->uuidStorage(backend) == model::UuidStorage::Binary16)
+                fields.push_back(std::format("typeof({})", ownerExpressions[i]));
+        for (const auto& column : targetColumns)
+            if (column.logicalType == model::ColumnType::Uuid && column.column != nullptr &&
+                column.column->uuidStorage(backend) == model::UuidStorage::Binary16)
+                fields.push_back(
+                    std::format("typeof({})", aliases::qualifiedIdentifier(dialect, targetAlias, column.alias)));
+        return join(fields, ", ");
+    };
+
     if (relation.kind == model::RelationKind::OneToMany)
     {
         const auto& mappedRelation = findRelation(target, relation.mappedBy);
@@ -398,9 +432,10 @@ auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner
                 "{} AS {}", expression, dialect.quoteIdentifier(binding::relationOwnerAlias(*ownerColumn))));
         }
 
-        const auto where = renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys);
-        statement.sql = std::format("SELECT {}, {}.* FROM ({}) AS {} WHERE {};", join(selectedOwnerFields, ", "),
-                                    quotedTargetAlias, targetSelectSql, quotedTargetAlias, where);
+        const auto where =
+            renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys, ownerPrimaryKey, backend);
+        statement.sql = std::format("SELECT {} FROM ({}) AS {} WHERE {};", selectedFields(), targetSelectSql,
+                                    quotedTargetAlias, where);
 
         return statement;
     }
@@ -436,11 +471,10 @@ auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner
                         aliases::qualifiedIdentifier(dialect, junctionAlias, junction.targetColumns[i])));
     }
 
-    const auto where = renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys);
-    statement.sql =
-        std::format("SELECT {}, {}.* FROM {} AS {} JOIN ({}) AS {} ON {} WHERE {};", join(selectedOwnerFields, ", "),
-                    quotedTargetAlias, dialect.quoteIdentifier(junction.tableName), quotedJunctionAlias,
-                    targetSelectSql, quotedTargetAlias, join(joinPredicates, " AND "), where);
+    const auto where = renderOwnerKeyFilter(dialect, statement, ownerExpressions, ownerKeys, ownerPrimaryKey, backend);
+    statement.sql = std::format("SELECT {} FROM {} AS {} JOIN ({}) AS {} ON {} WHERE {};", selectedFields(),
+                                dialect.quoteIdentifier(junction.tableName), quotedJunctionAlias, targetSelectSql,
+                                quotedTargetAlias, join(joinPredicates, " AND "), where);
 
     return statement;
 }

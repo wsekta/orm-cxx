@@ -500,6 +500,12 @@ export
         inline static constexpr auto value = ColumnType::Uuid;
     };
 
+    template <UuidAdaptable T>
+    struct LogicalTypeTraits<T>
+    {
+        inline static constexpr auto value = ColumnType::Uuid;
+    };
+
     /**
      * @brief Resolves a C++ field type to its logical database type at compile
      * time. Users may extend the closed set through LogicalTypeTraits<T>.
@@ -512,6 +518,8 @@ export
 
         if constexpr (requires { LogicalTypeTraits<value_t>::value; })
         {
+            static_assert(not UuidAdaptable<value_t> || LogicalTypeTraits<value_t>::value == ColumnType::Uuid,
+                          "ORM_MODEL_UUID_ADAPTER_TYPE: UuidAdapter requires the UUID logical column type");
             return LogicalTypeTraits<value_t>::value;
         }
         else

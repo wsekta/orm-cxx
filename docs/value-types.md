@@ -2,9 +2,8 @@
 
 `import orm;` exports five scalar types in every backend configuration,
 including core-only builds. Models, query parameters, DTO projections, keys and
-migrations use these types. Database operations require a matching native
-backend capability. The implementation below awaits verification of this change
-in GitHub Actions; no new live-test result is claimed here.
+migrations use these types. Database operations require a supported mapping for
+the selected backend; UUID fields can also explicitly select Binary16.
 
 | Type | Representation | Meaning |
 | --- | --- | --- |
@@ -24,8 +23,8 @@ in GitHub Actions; no new live-test result is claimed here.
 | `UtcTimestamp` | `TIMESTAMP(6) WITH TIME ZONE` | `TIMESTAMP(6)` | `TIMESTAMP(6)` | Unsupported |
 | `Uuid` | `UUID` | Unsupported | `UUID` | Unsupported |
 
-See [Backends](backends.md) for the server profiles. The ORM does not emulate
-these types in SQLite or replace MySQL UUID with `BINARY(16)` or `CHAR(36)`.
+See [Backends](backends.md) for the server profiles. Native UUID is the default;
+the ORM does not silently replace it with `BINARY(16)` or `CHAR(36)`.
 An unsupported type, including a nullable field containing `NULL`, gives
 `DatabaseErrorCode::UnsupportedFeature` before SQL.
 
@@ -147,6 +146,96 @@ whose version is at least 8 and whose variant has its highest bit clear; binding
 such a value gives `Conversion`. C++ comparisons use canonical byte order.
 Native MariaDB SQL UUID ordering can differ, so it is not exposed by the typed
 query API. Raw SQL retains native semantics.
+
+## UUID adapters and Binary16
+
+An application UUID type provides an explicit specialization of
+`orm::UuidAdapter<T>`. Both functions return values of the exact types shown;
+`orm::UuidAdaptable<T>` checks this contract. The adapter converts through the
+canonical `orm::Uuid` value, rather than the foreign type's object layout:
+
+```cpp
+import orm;
+
+struct UserId
+{
+    orm::Uuid value;
+};
+
+template <>
+struct orm::UuidAdapter<UserId>
+{
+    static auto toUuid(const UserId& id) -> orm::Uuid { return id.value; }
+    static auto fromUuid(const orm::Uuid& id) -> UserId { return UserId{id}; }
+};
+
+static_assert(orm::UuidAdaptable<UserId>);
+```
+
+The application owns the specialization, including any integration with a
+third-party UUID library; the ORM does not depend on Boost. The ORM handles
+`std::optional<T>` nulls before calling the adapter and keeps
+distinct domain types such as `UserId` and `OrderId` distinct in typed queries.
+Adapter rejection through `std::invalid_argument` becomes a `Conversion`
+error during a database operation without exposing the value or
+the adapter's exception text. A standalone `QueryValue` construction retains
+the original exception. Other exceptions, including resource failures, are not
+conversion refusals.
+
+Model hydration currently default-constructs the model and assigns its fields;
+model fields therefore need to support those operations. A non-optional UUID
+field in a DTO has the same construction and assignment requirements. For an
+optional adapted UUID field in a DTO, the adapter's value is constructed only
+for a non-NULL result; the adapted type need not be default-constructible or
+assignable, but it must be movable or copyable into the returned DTO.
+
+The opt-in is per field and backend. For example, after defining the adapter
+above, model metadata can declare its storage as follows:
+
+```cpp
+struct User
+{
+    UserId id;
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&User::id, orm::db::BackendType::Mysql,
+                         orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&User::id, orm::db::BackendType::Sqlite,
+                         orm::model::UuidStorage::Binary16>());
+};
+```
+
+The physical types are MySQL `BINARY(16)` and SQLite `BLOB` containing
+exactly 16 bytes in canonical order, including zero bytes. PostgreSQL and
+MariaDB retain native UUID. Related foreign and junction keys inherit the
+mapping of their target keys. No automatic fallback, UUID byte swapping, UUID
+generation, general-purpose blob API, `boost::optional`, or `Text36` mapping is
+provided. Binary16 is still a logical UUID: its physical storage does
+not enable typed ordering, range predicates, arithmetic or string operations.
+
+Existing data needs an explicit, reviewed transformation when its physical UUID
+representation changes; changing only the C++ wrapper does not change the
+schema. SQLite reads validate both the actual storage class and byte length.
+MySQL `BINARY(16)` pads short values with zeroes, so a value read after server
+normalization does not establish that the original input had 16 bytes.
+
+Raw SQL fragments do not provide a model column from which to infer a UUID
+representation. Specify it for every UUID parameter in the fragment:
+
+```cpp
+using namespace orm::query;
+const UserId id{orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff")};
+orm::Query<User> query;
+query.where(raw<User>("id = :id", param("id", id, orm::model::UuidStorage::Binary16)));
+
+// For NULL, provide both the logical type and the representation.
+auto nullId = param("id", std::nullopt, orm::model::ColumnType::Uuid,
+                    orm::model::UuidStorage::Binary16);
+```
+
+Alternatively, pass an `std::optional<UserId>` and the representation; the
+empty optional binds SQL `NULL`. Raw UUID parameters without an explicit
+representation are rejected, as are contradictory declarations for the same
+placeholder. Raw SQL must use a representation compatible with the active backend.
 
 See [schema migrations](schema-migrations.md) for typed constants and precision
 drift detection, and [the executable example](../examples/temporal_values.cpp)

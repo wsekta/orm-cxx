@@ -3,6 +3,7 @@ module;
 #include <algorithm>
 #include <cstddef>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -24,6 +25,10 @@ namespace detail
 template <CompiledSqlFlavor Flavor>
 struct StaticSqlPolicy
 {
+    [[nodiscard]] constexpr auto isSqlite() const noexcept -> bool
+    {
+        return Flavor == CompiledSqlFlavor::SQLite;
+    }
     [[nodiscard]] constexpr auto quoteIdentifier(std::string_view name) const -> std::string
     {
         return quoteStandardIdentifier(name, Flavor);
@@ -80,6 +85,11 @@ struct StaticSqlPolicy
 struct RuntimeSqlPolicy
 {
     const SqlDialect& dialect;
+    BackendType backend = BackendType::Empty;
+    [[nodiscard]] constexpr auto isSqlite() const noexcept -> bool
+    {
+        return backend == BackendType::Sqlite;
+    }
     [[nodiscard]] auto quoteIdentifier(std::string_view name) const -> std::string
     {
         return dialect.quoteIdentifier(name);
@@ -191,6 +201,73 @@ struct SqlColumnInfo
         return {&column, &relation, column.type.value(), relation.isNotNull};
     }
     throw std::invalid_argument{sqlConcat("Only one level of related model paths is supported: ", sqlPath(source))};
+}
+
+// Resolve physical UUID representation from the actual field, after SQL shape
+// construction and before any parameter is exchanged with the backend.
+inline auto applyUuidBindingStorage(const SqlQueryView& query, model::ModelView model, BackendType backend,
+                                    std::span<StatementParameter> parameters) -> void
+{
+    std::vector<std::optional<model::UuidStorage>> assigned(parameters.size());
+    const auto annotate = [&](std::size_t index, const SqlSource& source, model::ModelView scope)
+    {
+        if (index >= query.bindings.size())
+            throw std::logic_error{"SQL binding index is out of range"};
+        const auto name = parameterName(query.bindings[index]);
+        const auto found =
+            std::ranges::find_if(parameters, [&](const auto& parameter) { return parameter.name == name; });
+        if (found == parameters.end())
+            throw std::logic_error{"SQL binding has no matching parameter"};
+        if (found->getLogicalType() == model::ColumnType::Uuid)
+        {
+            const auto column = resolveSqlColumn(source, scope);
+            if (column.logicalType == model::ColumnType::Uuid)
+            {
+                const auto storage = column.column->uuidStorage(backend);
+                const auto parameterIndex = static_cast<std::size_t>(found - parameters.begin());
+                if (assigned[parameterIndex] && *assigned[parameterIndex] != storage)
+                    throw std::invalid_argument{"A SQL parameter has conflicting UUID representations"};
+                assigned[parameterIndex] = storage;
+                found->uuidStorage = storage;
+            }
+        }
+    };
+
+    for (const auto& assignment : query.assignments)
+        annotate(assignment.parameter, assignment.source, model);
+
+    const auto visit = [&](const auto& self, std::size_t index, model::ModelView scope) -> void
+    {
+        if (index == noSqlNode)
+            return;
+        if (index >= query.nodes.size())
+            throw std::logic_error{"SQL predicate index is out of range"};
+        const auto& node = query.nodes[index];
+        if (node.kind == SqlNodeKind::Comparison || node.kind == SqlNodeKind::List || node.kind == SqlNodeKind::Between)
+        {
+            for (std::size_t i = 0; i < node.parameterCount; ++i)
+                annotate(node.firstParameter + i, node.source, scope);
+        }
+        else if (node.kind == SqlNodeKind::And || node.kind == SqlNodeKind::Or)
+        {
+            self(self, node.left, scope);
+            self(self, node.right, scope);
+        }
+        else if (node.kind == SqlNodeKind::Not)
+            self(self, node.left, scope);
+        else if (node.kind == SqlNodeKind::Collection && node.left != noSqlNode)
+        {
+            const auto* relation = scope.findRelation(node.relation);
+            if (relation == nullptr)
+                throw std::invalid_argument{"Unknown collection relation"};
+            const auto target = scope.resolveTarget(*relation);
+            if (!target)
+                throw std::invalid_argument{"Collection relation target is not available"};
+            self(self, node.left, target);
+        }
+    };
+    visit(visit, query.predicate, model);
+    visit(visit, query.having, model);
 }
 
 struct SqlRenderScope
@@ -490,29 +567,34 @@ template <typename Policy>
 [[nodiscard]] constexpr auto emitSqlFullFields(const SqlRenderScope& scope, const Policy& policy) -> std::string
 {
     std::string result;
-    auto append = [&](std::string expression, std::string alias)
+    std::string storageClasses;
+    auto append = [&](std::string expression, std::string alias, const model::ColumnView& column)
     {
         if (!result.empty())
             result += ", ";
         result += sqlConcat(expression, " AS ", policy.quoteIdentifier(alias));
+        if (policy.isSqlite() && column.type == model::ColumnType::Uuid &&
+            column.uuidStorage(BackendType::Sqlite) == model::UuidStorage::Binary16)
+            storageClasses += sqlConcat(", typeof(", expression, ")");
     };
     for (const auto& column : scope.model->columns)
     {
         if (column.kind == model::FieldKind::Scalar)
             append(sqlQualified(policy, scope.model->tableName, column.name),
-                   sqlConcat(scope.model->tableName, "_", column.name));
+                   sqlConcat(scope.model->tableName, "_", column.name), column);
         else
         {
             const auto target = requireSqlTarget(scope.model, column);
             for (const auto& child : target->columns)
                 if (scope.shouldJoin)
-                    append(sqlQualified(policy, column.name, child.name), sqlConcat(column.name, "_", child.name));
+                    append(sqlQualified(policy, column.name, child.name), sqlConcat(column.name, "_", child.name),
+                           child);
                 else if (child.isPrimaryKey)
                     append(sqlQualified(policy, scope.model->tableName, sqlConcat(column.name, "_", child.name)),
-                           sqlConcat(scope.model->tableName, "_", column.name, "_", child.name));
+                           sqlConcat(scope.model->tableName, "_", column.name, "_", child.name), child);
         }
     }
-    return result;
+    return result + storageClasses;
 }
 template <typename Policy>
 [[nodiscard]] constexpr auto emitSql(const SqlQueryView& query, model::ModelView model,
@@ -526,13 +608,25 @@ template <typename Policy>
         if (query.projections.empty())
             result += emitSqlFullFields(scope, policy);
         else
+        {
+            std::string storageClasses;
             for (std::size_t i = 0; i < query.projections.size(); ++i)
             {
                 if (i != 0)
                     result += ", ";
                 result += sqlConcat(emitSqlSource(query.projections[i].source, scope, policy, true), " AS ",
                                     policy.quoteIdentifier(query.projections[i].alias));
+                const auto& source = query.projections[i].source;
+                if (policy.isSqlite() && !source.isAggregate)
+                {
+                    const auto info = resolveSqlColumn(source, model);
+                    if (info.logicalType == model::ColumnType::Uuid &&
+                        info.column->uuidStorage(BackendType::Sqlite) == model::UuidStorage::Binary16)
+                        storageClasses += sqlConcat(", typeof(", emitSqlSource(source, scope, policy, true), ")");
+                }
             }
+            result += storageClasses;
+        }
         result += sqlConcat(" FROM ", policy.quoteIdentifier(model->tableName));
         if (query.shouldJoin)
             result += emitSqlJoins(scope, policy);

@@ -128,9 +128,17 @@ struct ObjectFieldFromProjectionValues<std::optional<ResultField>>
             return;
         }
 
-        ResultField value{};
-        ObjectFieldFromProjectionValues<ResultField>::get(&value, fieldName, values);
-        *field = std::move(value);
+        if constexpr (UuidAdaptable<ResultField>)
+        {
+            auto value = getEncodedScalarValue<ResultField>(values, fieldName);
+            field->emplace(std::move_if_noexcept(value));
+        }
+        else
+        {
+            ResultField value{};
+            ObjectFieldFromProjectionValues<ResultField>::get(&value, fieldName, values);
+            *field = std::move(value);
+        }
     }
 };
 

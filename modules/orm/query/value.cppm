@@ -2,6 +2,7 @@ module;
 
 #include <cmath>
 #include <compare>
+#include <concepts>
 #include <cstddef>
 #include <limits>
 #include <optional>
@@ -14,6 +15,7 @@ module;
 export module orm:query_value;
 
 import :foundation;
+import :model_views;
 import :value_codec;
 
 // query/QueryValue.hpp
@@ -81,6 +83,12 @@ export
         QueryValue(LocalDateTime inputValue) : logicalType{model::ColumnType::LocalDateTime}, value{inputValue} {}
         QueryValue(UtcTimestamp inputValue) : logicalType{model::ColumnType::UtcTimestamp}, value{inputValue} {}
         QueryValue(Uuid inputValue) : logicalType{model::ColumnType::Uuid}, value{inputValue} {}
+
+        template <UuidAdaptable T>
+        QueryValue(const T& inputValue)
+            : logicalType{model::ColumnType::Uuid}, value{UuidAdapter<T>::toUuid(inputValue)}
+        {
+        }
 
         template <std::size_t Size>
         QueryValue(const char (&inputValue)[Size])
@@ -220,6 +228,8 @@ export
     {
         std::string name;
         QueryValue value;
+        std::optional<model::UuidStorage> uuidStorage{};
+        std::optional<model::ColumnType> nullType{};
     };
 
     /**
@@ -231,6 +241,33 @@ export
     auto param(std::string name, T value) -> QueryParameter
     {
         return QueryParameter{.name = std::move(name), .value = QueryValue{std::move(value)}};
+    }
+
+    /** Explicit physical representation for a UUID parameter in opaque SQL. */
+    template <typename T>
+    auto param(std::string name, T value, model::UuidStorage uuidStorage) -> QueryParameter
+    {
+        return QueryParameter{
+            .name = std::move(name), .value = QueryValue{std::move(value)}, .uuidStorage = uuidStorage};
+    }
+
+    /** A raw SQL NULL UUID requires both its logical type and physical representation. */
+    inline auto param(std::string name, std::nullopt_t, model::ColumnType logicalType,
+                      model::UuidStorage uuidStorage) -> QueryParameter
+    {
+        if (logicalType != model::ColumnType::Uuid)
+            throw std::invalid_argument{"A NULL UUID parameter requires the UUID logical type"};
+        return QueryParameter{
+            .name = std::move(name), .value = QueryValue{Uuid{}}, .uuidStorage = uuidStorage, .nullType = logicalType};
+    }
+
+    template <typename T>
+        requires(std::same_as<T, Uuid> || UuidAdaptable<T>)
+    auto param(std::string name, const std::optional<T>& value, model::UuidStorage uuidStorage) -> QueryParameter
+    {
+        if (!value)
+            return param(std::move(name), std::nullopt, model::ColumnType::Uuid, uuidStorage);
+        return param(std::move(name), *value, uuidStorage);
     }
 }
 } // namespace orm::query

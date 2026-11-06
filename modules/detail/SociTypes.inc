@@ -2,6 +2,7 @@
 namespace soci
 {
 class session;
+class statement;
 class values;
 class soci_error;
 }

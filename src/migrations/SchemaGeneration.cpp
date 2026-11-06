@@ -3,6 +3,7 @@ module;
 #include <algorithm>
 #include <charconv>
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <map>
@@ -208,6 +209,22 @@ auto nativeLiteralSql(const T& item, const PhysicalColumn& column, Backend backe
     }();
     if (column.logicalType != type)
         generationFailure("invalid-literal", "Literal does not match the target logical type", column.name, backend);
+    if constexpr (std::is_same_v<T, orm::Uuid>)
+    {
+        if ((backend == Backend::Sqlite && column.sqlType == "BLOB") ||
+            (backend == Backend::Mysql && column.sqlType == "BINARY(16)"))
+        {
+            constexpr std::string_view digits = "0123456789abcdef";
+            std::string result{"X'"};
+            for (const auto byte : item.bytes())
+            {
+                const auto value = std::to_integer<unsigned int>(byte);
+                result += digits[value >> 4];
+                result += digits[value & 15];
+            }
+            return result + "'";
+        }
+    }
     try
     {
         orm::detail::values::validateNative(item, backend);
@@ -610,6 +627,7 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
         const auto* old = matchingSourceColumn(oldTable, table.name, column.name, decisions);
         const auto* conversion = findTransformation(decisions.conversions, table.name, column.name);
         const auto* backfill = findTransformation(decisions.backfills, table.name, column.name);
+        const auto* fill = conversion ? conversion : backfill;
         const bool stagedBackfill = old && backfill && old->nullable && !column.nullable;
         if (!old || conversion || stagedBackfill)
         {
@@ -618,8 +636,22 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
             staged.name = stage;
             staged.nullable = !column.autoIncrement;
             staged.autoIncrement = column.autoIncrement && !old;
+            const bool validateBinaryUuid = backend == Backend::Mysql && fill &&
+                                            column.logicalType == orm::model::ColumnType::Uuid &&
+                                            column.sqlType == "BINARY(16)";
+            // BINARY(16) pads short assignments, so keep the expression result
+            // unpadded until an enforced check has validated its byte length.
+            if (validateBinaryUuid)
+                staged.sqlType = "LONGBLOB";
             std::string add = "ALTER TABLE " + quote(backend, name) + " ADD COLUMN " +
                               orm::migrations::detail::renderColumn(backend, staged);
+            std::string uuidCheck;
+            if (validateBinaryUuid)
+            {
+                uuidCheck = temporaryName(version, direction, name, column.name, "__orm_uuid_check_");
+                add += ", ADD CONSTRAINT " + quote(backend, uuidCheck) + " CHECK (OCTET_LENGTH(" +
+                       quote(backend, stage) + ") = 16) ENFORCED";
+            }
             if (mysql && staged.autoIncrement)
             {
                 const auto index = temporaryName(version, direction, name, column.name, "__orm_identity_");
@@ -627,7 +659,6 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
                 identityIndexes.push_back(index);
             }
             append(sql, std::move(add));
-            const auto* fill = conversion ? conversion : backfill;
             if (fill)
             {
                 auto expression = transformationSql(*fill, oldTable, column, backend);
@@ -642,6 +673,8 @@ auto prepareNativeTable(std::string& sql, Version version, std::string_view dire
                 }
                 append(sql, "UPDATE " + quote(backend, name) + " SET " + quote(backend, stage) + " = " + expression);
             }
+            if (validateBinaryUuid)
+                append(sql, "ALTER TABLE " + quote(backend, name) + " DROP CHECK " + quote(backend, uuidCheck));
             stages[column.name] = stage;
             if (old)
             {

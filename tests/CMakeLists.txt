@@ -70,6 +70,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         database/StatementParameterBindingTest.cpp
         database/SqliteStaticPlanRendererTest.cpp
         database/SqliteContextBindingTest.cpp
+        database/SqliteBinaryUuidTest.cpp
     )
 endif()
 if(ORM_CXX_ENABLE_SQLITE_BACKEND
@@ -82,6 +83,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND
         ORM_CXX_TEST_SOURCES
         database/BackendConformanceTest.cpp
         database/TemporalBindingTest.cpp
+        database/NativeUuidDefaultTest.cpp
         database/StringLengthTest.cpp
         database/OrmContextTest.cpp
         database/StaticPlanTest.cpp
@@ -109,6 +111,9 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         migrations/RebuildTest.cpp
         migrations/RebuildFailureTest.cpp
     )
+endif()
+if(ORM_CXX_ENABLE_MYSQL_BACKEND AND ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS)
+    list(APPEND ORM_CXX_TEST_SOURCES database/MysqlBinaryUuidTest.cpp)
 endif()
 if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)
     list(APPEND ORM_CXX_TEST_SOURCES ../src/database/mysql_family/MysqlFamilyTest.cpp)

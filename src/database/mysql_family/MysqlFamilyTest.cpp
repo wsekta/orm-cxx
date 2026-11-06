@@ -450,6 +450,49 @@ TEST_P(MysqlFamilyLinkTest, binary16TransportPrototype)
     binary16_transport_prototype::run(session(), false);
 }
 
+TEST_P(MysqlFamilyLinkTest, Binary16BindingSkipsUnusedNamesAndDistinguishesPrefixes)
+{
+    using orm::db::BoundValue;
+    using orm::db::binding::StatementBindings;
+    using orm::model::ColumnType;
+    using orm::model::UuidStorage;
+
+    const BoundValue binary{
+        .logicalType = ColumnType::Uuid, .value = orm::Uuid{}, .uuidStorage = UuidStorage::Binary16};
+    StatementBindings firstValues;
+    firstValues.add(session(), runtime(), "keep", BoundValue{.logicalType = ColumnType::Int, .value = 42});
+    firstValues.add(session(), runtime(), "uuid", binary);
+    soci::statement first{session()};
+    first.alloc();
+    first.prepare("SELECT :keep, ':uuid'");
+    EXPECT_TRUE(runtime().hasStatementParameter(first, "keep"));
+    EXPECT_FALSE(runtime().hasStatementParameter(first, "uuid"));
+    int actual{};
+    std::string literal;
+    firstValues.exchange(first);
+    first.exchange(soci::into(actual));
+    first.exchange(soci::into(literal));
+    first.define_and_bind();
+    ASSERT_TRUE(first.execute(true));
+    EXPECT_EQ(actual, 42);
+    EXPECT_EQ(literal, ":uuid");
+
+    StatementBindings secondValues;
+    secondValues.add(session(), runtime(), "uuid", binary);
+    secondValues.add(session(), runtime(), "uuid_long", binary);
+    soci::statement second{session()};
+    second.alloc();
+    second.prepare("SELECT OCTET_LENGTH(:uuid_long)");
+    EXPECT_FALSE(runtime().hasStatementParameter(second, "uuid"));
+    EXPECT_TRUE(runtime().hasStatementParameter(second, "uuid_long"));
+    int length{};
+    secondValues.exchange(second);
+    second.exchange(soci::into(length));
+    second.define_and_bind();
+    ASSERT_TRUE(second.execute(true));
+    EXPECT_EQ(length, 16);
+}
+
 TEST_P(MysqlFamilyLinkTest, TemporalMigrationGuardsRejectChangedTimezoneAndTimestampDefaults)
 {
     for (const auto script : {"SET SESSION time_zone = '+01:00'", "SET SESSION explicit_defaults_for_timestamp = OFF"})

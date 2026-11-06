@@ -1,5 +1,6 @@
 module;
 
+#include <concepts>
 #include <cstddef>
 #include <optional>
 #include <string>
@@ -15,6 +16,7 @@ import orm.reflection;
 import :foundation;
 import :model_mapping;
 import :model_columns;
+import :model_views;
 import :query_value;
 import :query_runtime_predicate;
 import :query_parameters;
@@ -187,6 +189,8 @@ struct Projection
 {
     std::string resultField;
     ProjectionSource source;
+    std::optional<model::TypeId> sourceType{};
+    bool sourceUuidAdapted = false;
 };
 
 /**
@@ -265,7 +269,10 @@ struct ProjectionMeta : ExpressionMeta<typename S::Model>
     template <typename Children, typename Args>
     static auto render(const Children& children, const Args& args)
     {
-        return detail::as(std::string{Alias.view()}, TypedAccess::erase(std::get<0>(children), args));
+        auto projection = detail::as(std::string{Alias.view()}, TypedAccess::erase(std::get<0>(children), args));
+        projection.sourceType = model::typeId<typename S::Value>();
+        projection.sourceUuidAdapted = UuidAdaptable<typename S::Value>;
+        return projection;
     }
     template <typename Children, typename Args, typename Callback>
     static auto visit(const Children&, const Args&, Callback&) -> void
@@ -282,7 +289,10 @@ struct RuntimeProjectionMeta : ExpressionMeta<typename S::Model>
     template <typename Children, typename Args>
     static auto render(const Children& children, const Args& args)
     {
-        return detail::as(std::get<1>(children), TypedAccess::erase(std::get<0>(children), args));
+        auto projection = detail::as(std::get<1>(children), TypedAccess::erase(std::get<0>(children), args));
+        projection.sourceType = model::typeId<typename S::Value>();
+        projection.sourceUuidAdapted = UuidAdaptable<typename S::Value>;
+        return projection;
     }
     template <typename Children, typename Args, typename Callback>
     static auto visit(const Children&, const Args&, Callback&) -> void
@@ -303,6 +313,41 @@ concept ProjectionFor =
     ORM_QUERY_MODEL<std::remove_cvref_t<E>, M> && ORM_QUERY_UNBOUND_PARAMETER<E>;
 template <typename M, typename... Projections>
 concept ORM_QUERY_MODEL_PROJECTIONS = (ProjectionFor<Projections, M> && ...);
+
+// A statically named projection retains the source C++ type. Preserve that
+// type when either side uses an application UUID adapter, rather than
+// silently converting one domain identifier into another through orm::Uuid.
+template <typename Result, typename Projection>
+consteval auto uuidProjectionDomainCompatible() -> bool
+{
+    using P = std::remove_cvref_t<Projection>;
+    if constexpr (requires {
+                      P::alias;
+                      typename P::Source;
+                  })
+    {
+        using source_t = typename P::Source::Value;
+        constexpr auto fields = reflection::fields<Result>();
+        bool compatible = true;
+        [&]<std::size_t... I>(std::index_sequence<I...>)
+        {
+            auto check = [&]<std::size_t Index>()
+            {
+                using target_t = scalar_t<reflection::field_type_t<Result, Index>>;
+                if constexpr (UuidAdaptable<source_t> || UuidAdaptable<target_t>)
+                    if (fields[Index].name == P::alias.view())
+                        compatible = std::same_as<source_t, target_t>;
+            };
+            (check.template operator()<I>(), ...);
+        }(std::make_index_sequence<reflection::fieldCount<Result>>{});
+        return compatible;
+    }
+    else
+        return true;
+}
+template <typename Result, typename... Projections>
+concept ORM_QUERY_UUID_PROJECTION_DOMAINS = (uuidProjectionDomainCompatible<Result, Projections>() && ...);
+
 template <typename S>
 concept ProjectionSourceExpression = IsTypedColumn<std::remove_cvref_t<S>>::value || AggregateExpressionType<S>;
 } // namespace orm::query::detail

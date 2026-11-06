@@ -37,6 +37,15 @@ struct ModelRelatedToLongId
     ModelWithLongId relation;
 };
 
+struct UuidPolicyRecord
+{
+    int id;
+    orm::Uuid value;
+    inline static constexpr orm::reflection::FixedString table_name{"uuid_policy_records"};
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&UuidPolicyRecord::value, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>());
+};
+
 using Schema = orm::Schema<models::ModelWithId, models::ModelRelatedToOtherModel, models::ModelWithOverwrittenId,
                            models::ModelWithAllInts, models::ModelWithOptional, models::ModelWithAllBasicTypes,
                            models::ModelOptionallyRelatedToOtherModel, ModelOptionallyRelatedToCompositeIdModel,
@@ -52,6 +61,57 @@ auto nullParameter(orm::model::ColumnType type) -> orm::db::StatementParameter
 } // namespace
 
 static_assert(std::is_aggregate_v<orm::db::StatementParameter>);
+
+TEST(StatementParameterBindingTest, RejectsUnknownUuidStorageBeforeBinding)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::session session;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    orm::db::binding::StatementBindings bindings;
+    constexpr auto unknownStorage =
+        static_cast<orm::model::UuidStorage>(99); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+
+    // An ordinary integer would otherwise bind successfully through SQLite's
+    // Native path, masking an invalid representation as a valid one.
+    const orm::db::BoundValue integer{
+        .logicalType = orm::model::ColumnType::Int, .value = 42, .uuidStorage = unknownStorage};
+    EXPECT_THROW(bindings.add(session, backend.runtime(), "integer", integer), orm::db::binding::ConversionError);
+    const orm::db::BoundValue nullUuid{
+        .logicalType = orm::model::ColumnType::Uuid, .value = std::nullopt, .uuidStorage = unknownStorage};
+    EXPECT_THROW(bindings.add(session, backend.runtime(), "uuid", nullUuid), orm::db::binding::ConversionError);
+}
+
+TEST(StatementParameterBindingTest, RejectsUnknownRawUuidStorageBeforeExecutingMutation)
+{
+    using Record = binding_test_models::UuidPolicyRecord;
+    using namespace orm::query;
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<orm::Schema<Record>>();
+    context.createTable<Record>();
+    const auto original = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    const auto replacement = orm::Uuid::parse("ffeeddcc-bbaa-9988-7766-554433221100");
+    context.insert(Record{1, original});
+    constexpr auto unknownStorage =
+        static_cast<orm::model::UuidStorage>(99); // NOLINT(clang-analyzer-optin.core.EnumCastOutOfRange)
+    orm::Update<Record> update;
+    update.set(col<&Record::value>(), replacement)
+        .where(raw<Record>("1 = 1 OR :unknown IS NULL", param("unknown", original, unknownStorage)));
+    try
+    {
+        (void)context.update(update);
+        FAIL() << "Expected an unsupported UUID storage error";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::UnsupportedFeature);
+        EXPECT_EQ(error.what(), std::string{"Invalid UUID storage representation"});
+    }
+    orm::Query<Record> query;
+    const auto rows = context.select(query);
+    ASSERT_EQ(rows.size(), 1U);
+    EXPECT_EQ(rows[0].value, original);
+}
 
 TEST(StatementParameterBindingTest, shouldBindSupportedNullParameterTypes)
 {

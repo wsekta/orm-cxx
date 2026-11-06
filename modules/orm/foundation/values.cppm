@@ -3,6 +3,7 @@ module;
 #include <array>
 #include <chrono>
 #include <compare>
+#include <concepts>
 #include <cstddef>
 #include <stdexcept>
 #include <string>
@@ -117,5 +118,15 @@ public:
 
 private:
     std::array<std::byte, 16> value{};
+};
+
+/** Specialize for an application UUID type to convert explicitly to and from Uuid. */
+template <typename T>
+struct UuidAdapter;
+
+template <typename T>
+concept UuidAdaptable = requires(const T& value, const Uuid& uuid) {
+    { UuidAdapter<T>::toUuid(value) } -> std::same_as<Uuid>;
+    { UuidAdapter<T>::fromUuid(uuid) } -> std::same_as<T>;
 };
 } // namespace orm

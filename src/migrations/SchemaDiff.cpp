@@ -275,8 +275,12 @@ auto compareTables(SchemaDiff& diff, const PhysicalSchema& before, const Physica
                                              targetColumn->logicalType == orm::model::ColumnType::UtcTimestamp) ||
                                             (column.logicalType == orm::model::ColumnType::UtcTimestamp &&
                                              targetColumn->logicalType == orm::model::ColumnType::LocalDateTime);
-            const bool missingConversion = conversion && !transformation(decisions.conversions, target.name, targetName,
-                                                                         backend, timezoneConversion);
+            const bool uuidRepresentationConversion = (column.logicalType == orm::model::ColumnType::Uuid ||
+                                                       targetColumn->logicalType == orm::model::ColumnType::Uuid) &&
+                                                      column.sqlType != targetColumn->sqlType;
+            const bool missingConversion =
+                conversion && !transformation(decisions.conversions, target.name, targetName, backend,
+                                              timezoneConversion || uuidRepresentationConversion);
             const bool missingBackfill = required &&
                                          !transformation(decisions.backfills, target.name, targetName, backend) &&
                                          !transformation(decisions.conversions, target.name, targetName, backend);

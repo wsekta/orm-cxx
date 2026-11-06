@@ -63,6 +63,67 @@ struct CompositeBook
 };
 using CompositeSchema = orm::Schema<CompositeAuthor, CompositeBook>;
 
+struct StorageRecord
+{
+    orm::Uuid id;
+    std::optional<orm::Uuid> optionalId;
+    orm::Uuid nativeId;
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&StorageRecord::id, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&StorageRecord::optionalId, orm::db::BackendType::Sqlite,
+                         orm::model::UuidStorage::Binary16>());
+};
+using StorageSchema = orm::Schema<StorageRecord>;
+
+TEST(CompiledSqlCoverageTest, uuidRepresentationFollowsFieldsInCompiledBindingsAndResults)
+{
+    constexpr auto plan = update<StorageRecord>()
+                              .set(col<&StorageRecord::optionalId>(), param<std::optional<orm::Uuid>, 0>())
+                              .where(col<&StorageRecord::id>() == param<orm::Uuid, 1>());
+    const auto args = std::tuple{std::optional<orm::Uuid>{}, orm::Uuid{}};
+    auto parameters = ast::collectParameters(plan, args);
+    constexpr auto& compiled =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(plan)>, Flavor::SQLite>;
+    const auto model = orm::modelView<StorageSchema, StorageRecord>();
+    sql::applyUuidBindingStorage(compiled.program.view(), model, orm::db::BackendType::Sqlite, parameters);
+    ASSERT_EQ(parameters.size(), 2U);
+    EXPECT_FALSE(parameters[0].value.has_value());
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Binary16);
+    EXPECT_EQ(parameters[1].uuidStorage, orm::model::UuidStorage::Binary16);
+    sql::applyUuidBindingStorage(compiled.program.view(), model, orm::db::BackendType::Postgres, parameters);
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
+    EXPECT_EQ(parameters[1].uuidStorage, orm::model::UuidStorage::Native);
+
+    constexpr auto selected = select<StorageRecord>();
+    constexpr auto& sqlite =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(selected)>, Flavor::SQLite>;
+    constexpr auto& postgres =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(selected)>, Flavor::PostgreSQL>;
+    EXPECT_NE(sqlite.view().find("typeof("), std::string_view::npos);
+    EXPECT_EQ(postgres.view().find("typeof("), std::string_view::npos);
+}
+
+TEST(CompiledSqlCoverageTest, rejectsOneBindingWithConflictingUuidPolicies)
+{
+    sql::SqlProgram program;
+    program.bindings.push_back({orm::model::ColumnType::Uuid, 0, {}});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Comparison,
+                             .source = sql::parseSqlSource("id"),
+                             .firstParameter = 0,
+                             .parameterCount = 1});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Comparison,
+                             .source = sql::parseSqlSource("nativeId"),
+                             .firstParameter = 0,
+                             .parameterCount = 1});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::And, .left = 0, .right = 1});
+    program.predicate = 2;
+    std::vector<orm::db::StatementParameter> parameters{
+        {.name = "orm_p0", .value = orm::query::QueryValue{orm::Uuid{}}, .nullType = std::nullopt}};
+    EXPECT_THROW(sql::applyUuidBindingStorage(program.view(), orm::modelView<StorageSchema, StorageRecord>(),
+                                              orm::db::BackendType::Sqlite, parameters),
+                 std::invalid_argument);
+}
+
 template <typename SchemaType = Schema, typename Plan>
 auto expectRuntimeProgramMatchesCache(const Plan&) -> void
 {

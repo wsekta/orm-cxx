@@ -336,6 +336,11 @@ public:
         : native_{session.make_statement_backend()}, nativeSession_{static_cast<soci::mysql_session_backend&>(session)}
     {
     }
+    [[nodiscard]] auto hasParameter(std::string_view name) const -> bool
+    {
+        const auto& statement = static_cast<const soci::mysql_statement_backend&>(*native_);
+        return std::ranges::find(statement.names_, name) != statement.names_.end();
+    }
     auto alloc() -> void override
     {
         native_->alloc();
@@ -631,6 +636,13 @@ class Runtime final : public BackendRuntime
 {
 public:
     explicit Runtime(BackendType type) : type_{type} {}
+    [[nodiscard]] auto hasStatementParameter(soci::statement& statement, std::string_view name) const -> bool override
+    {
+        const auto* backend = dynamic_cast<const StatementBackend*>(statement.get_backend());
+        if (backend == nullptr)
+            throw std::invalid_argument{"Invalid MySQL-family statement"};
+        return backend->hasParameter(name);
+    }
     auto open(soci::session& session, ConnectionConfigView config) const -> void override
     {
         std::string arguments;
@@ -800,10 +812,10 @@ public:
     auto executeInsertIfAbsent(soci::session& session, StatementView statement,
                                const InsertIfAbsentSpec& spec) const -> std::size_t override
     {
-        soci::values values;
+        binding::StatementBindings values;
         for (const auto& parameter : statement.parameters)
         {
-            bind(values, parameter.name, parameter.getBoundValue());
+            values.add(session, *this, parameter);
         }
         std::vector<std::string> primaryKey;
         const std::string table{spec.tableName};
@@ -858,19 +870,26 @@ public:
                          spec.valueExpressions[index];
         }
         int exists{};
-        soci::statement probe =
-            (session.prepare << "SELECT 1 FROM " +
-                                    detail::quoteStandardIdentifier(spec.tableName, CompiledSqlFlavor::MySQLFamily) +
-                                    " WHERE " + predicate + " LIMIT 1 LOCK IN SHARE MODE",
-             soci::use(values), soci::into(exists));
+        soci::statement probe{session};
+        probe.alloc();
+        probe.prepare("SELECT 1 FROM " +
+                      detail::quoteStandardIdentifier(spec.tableName, CompiledSqlFlavor::MySQLFamily) + " WHERE " +
+                      predicate + " LIMIT 1 LOCK IN SHARE MODE");
+        values.exchange(probe);
+        probe.exchange(soci::into(exists));
+        probe.define_and_bind();
         if (probe.execute(true) && exists == 1)
             return 0;
-        soci::values insertValues;
+        binding::StatementBindings insertValues;
         for (const auto& parameter : statement.parameters)
         {
-            bind(insertValues, parameter.name, parameter.getBoundValue());
+            insertValues.add(session, *this, parameter);
         }
-        soci::statement prepared = (session.prepare << statement.sql, soci::use(insertValues));
+        soci::statement prepared{session};
+        prepared.alloc();
+        prepared.prepare(std::string{statement.sql});
+        insertValues.exchange(prepared);
+        prepared.define_and_bind();
         prepared.execute(true);
         return normalizeAffectedRows(prepared.get_affected_rows());
     }

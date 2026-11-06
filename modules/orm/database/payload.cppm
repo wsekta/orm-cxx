@@ -136,7 +136,9 @@ auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::Q
     }
     else if constexpr (requires { query::QueryValue{value}; })
     {
-        if constexpr (SociEncodedValue<value_t>)
+        if constexpr (UuidAdaptable<value_t>)
+            return query::QueryValue{canonicalUuid(value)};
+        else if constexpr (SociEncodedValue<value_t>)
             (void)encodeScalarValue(value);
         return query::QueryValue{value};
     }

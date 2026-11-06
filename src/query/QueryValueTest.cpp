@@ -16,6 +16,137 @@ import :database;
 
 using orm::query::QueryValue;
 
+namespace uuid_adapter_test
+{
+struct UserId
+{
+    std::array<std::byte, 16> bytes{};
+    bool reject{};
+    bool resourceError{};
+};
+struct OrderId
+{
+    std::array<std::byte, 16> bytes{};
+};
+struct MissingFromUuid
+{
+};
+struct ReferenceResult
+{
+};
+struct Record
+{
+    UserId id;
+    std::optional<UserId> optionalId;
+};
+}
+
+namespace orm
+{
+template <>
+struct UuidAdapter<uuid_adapter_test::UserId>
+{
+    static auto toUuid(const uuid_adapter_test::UserId& value) -> Uuid
+    {
+        if (value.resourceError)
+            throw std::bad_alloc{};
+        if (value.reject)
+            throw std::invalid_argument{"sensitive adapter details"};
+        return Uuid{value.bytes};
+    }
+    static auto fromUuid(const Uuid& value) -> uuid_adapter_test::UserId
+    {
+        if (value.bytes()[0] == std::byte{0xfe})
+            throw std::bad_alloc{};
+        if (value.bytes()[0] == std::byte{0xff})
+            throw std::invalid_argument{"sensitive adapter details"};
+        return {.bytes = value.bytes()};
+    }
+};
+template <>
+struct UuidAdapter<uuid_adapter_test::OrderId>
+{
+    static auto toUuid(const uuid_adapter_test::OrderId& value) -> Uuid
+    {
+        return Uuid{value.bytes};
+    }
+    static auto fromUuid(const Uuid& value) -> uuid_adapter_test::OrderId
+    {
+        return {.bytes = value.bytes()};
+    }
+};
+template <>
+struct UuidAdapter<uuid_adapter_test::MissingFromUuid>
+{
+    static auto toUuid(const uuid_adapter_test::MissingFromUuid&) -> Uuid;
+};
+template <>
+struct UuidAdapter<uuid_adapter_test::ReferenceResult>
+{
+    static auto toUuid(const uuid_adapter_test::ReferenceResult&) -> const Uuid&;
+    static auto fromUuid(const Uuid&) -> uuid_adapter_test::ReferenceResult;
+};
+}
+
+static_assert(orm::UuidAdaptable<uuid_adapter_test::UserId>);
+static_assert(!orm::UuidAdaptable<uuid_adapter_test::MissingFromUuid>);
+static_assert(!orm::UuidAdaptable<uuid_adapter_test::ReferenceResult>);
+static_assert(orm::model::logicalType<uuid_adapter_test::UserId>() == orm::model::ColumnType::Uuid);
+static_assert(orm::model::logicalType<std::optional<uuid_adapter_test::UserId>>() == orm::model::ColumnType::Uuid);
+static_assert(orm::query::detail::compatibleValue<uuid_adapter_test::UserId, uuid_adapter_test::UserId>);
+static_assert(!orm::query::detail::compatibleValue<uuid_adapter_test::UserId, uuid_adapter_test::OrderId>);
+static_assert(!orm::query::detail::compatibleValue<uuid_adapter_test::UserId, orm::Uuid>);
+static_assert(!orm::query::detail::ORM_QUERY_ORDERABLE<uuid_adapter_test::UserId>);
+
+TEST(QueryValueTest, adaptedUuidUsesCanonicalValueAndPreservesAdapterException)
+{
+    uuid_adapter_test::UserId id{};
+    for (std::size_t base = 0; base < 256; base += 16)
+    {
+        for (std::size_t i = 0; i < id.bytes.size(); ++i)
+            id.bytes[i] = static_cast<std::byte>(base + i);
+        const QueryValue value{id};
+        EXPECT_EQ(value.getLogicalType(), orm::model::ColumnType::Uuid);
+        EXPECT_EQ(std::get<orm::Uuid>(value.get()).bytes(), id.bytes);
+        EXPECT_EQ(std::get<orm::Uuid>(QueryValue{std::optional{id}}.get()).bytes(), id.bytes);
+    }
+    id.reject = true;
+    try
+    {
+        (void)QueryValue{id};
+        FAIL() << "Expected adapter rejection";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_STREQ(error.what(), "sensitive adapter details");
+    }
+}
+
+TEST(QueryValueTest, adaptedUuidBindingHandlesNullAndSanitizesRejection)
+{
+    soci::values values;
+    const uuid_adapter_test::UserId id{};
+    orm::db::binding::setScalarFieldValue(values, "id", id, orm::model::ColumnType::Uuid);
+    EXPECT_EQ(orm::db::binding::getScalarFieldValue<uuid_adapter_test::UserId>(values, "id").bytes, id.bytes);
+    orm::db::binding::setScalarFieldValue(values, "empty", std::optional<uuid_adapter_test::UserId>{},
+                                          orm::model::ColumnType::Uuid);
+    EXPECT_FALSE(orm::db::binding::getScalarFieldValue<std::optional<uuid_adapter_test::UserId>>(values, "empty"));
+    auto rejected = id;
+    rejected.reject = true;
+    EXPECT_THROW((void)orm::db::binding::canonicalUuid(rejected), orm::db::binding::ConversionError);
+    EXPECT_THROW(
+        (void)orm::db::binding::decodeScalarValue<uuid_adapter_test::UserId>("ff000000-0000-0000-0000-000000000000"),
+        orm::db::binding::ConversionError);
+    EXPECT_THROW((void)orm::query::detail::typedValue<uuid_adapter_test::UserId>(rejected),
+                 orm::query::detail::UuidAdapterRejected);
+    rejected.resourceError = true;
+    EXPECT_THROW((void)orm::db::binding::canonicalUuid(rejected), std::bad_alloc);
+    EXPECT_THROW((void)orm::query::detail::typedValue<uuid_adapter_test::UserId>(rejected), std::bad_alloc);
+    EXPECT_THROW(
+        (void)orm::db::binding::decodeScalarValue<uuid_adapter_test::UserId>("fe000000-0000-0000-0000-000000000000"),
+        std::bad_alloc);
+}
+
 namespace
 {
 template <typename Expected>

@@ -147,9 +147,20 @@ auto appendPredicate(SqlProgram& program, RenderContext& context,
                            (void)context.dialect.bindMarker(parameter.name);
                            if (!context.parameterNames.insert(parameter.name).second)
                                throw std::invalid_argument{"Duplicate query parameter: " + parameter.name};
+                           const auto logicalType = parameter.nullType.value_or(parameter.value.getLogicalType());
+                           if (parameter.nullType && *parameter.nullType != parameter.value.getLogicalType())
+                               throw std::invalid_argument{"A raw NULL parameter has a conflicting logical type"};
+                           if (logicalType == model::ColumnType::Uuid && !parameter.uuidStorage)
+                               throw std::invalid_argument{"A raw UUID parameter requires an explicit representation"};
+                           if (logicalType != model::ColumnType::Uuid && parameter.uuidStorage)
+                               throw std::invalid_argument{"A UUID representation requires a UUID parameter"};
                            context.parameters.push_back(
-                               {.name = parameter.name, .value = parameter.value, .nullType = std::nullopt});
-                           program.bindings.push_back({parameter.value.getLogicalType(), 0, parameter.name});
+                               {.name = parameter.name,
+                                .value = parameter.nullType ? std::optional<query::QueryValue>{} :
+                                                              std::optional{parameter.value},
+                                .nullType = parameter.nullType,
+                                .uuidStorage = parameter.uuidStorage.value_or(model::UuidStorage::Native)});
+                           program.bindings.push_back({logicalType, 0, parameter.name});
                        }
                        return SqlNode{.kind = SqlNodeKind::Raw, .rawSql = expression.sql};
                    },
@@ -267,10 +278,10 @@ auto appendSelectPredicates(SqlProgram& program, RenderContext& context, const q
         program.having = appendHaving(program, context, spec.having->getNode());
 }
 
-auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec,
-                           const SqlDialect& dialect) -> SelectStatement
+auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec, const SqlDialect& dialect,
+                           BackendType backend) -> SelectStatement
 {
-    RenderContext context{.model = model, .dialect = dialect, .shouldJoin = spec.shouldJoin};
+    RenderContext context{.model = model, .dialect = dialect, .shouldJoin = spec.shouldJoin, .backend = backend};
     SqlProgram program;
     program.isDistinct = spec.isDistinct;
     program.shouldJoin = spec.shouldJoin;
@@ -287,14 +298,18 @@ auto renderSelectStatement(model::ModelView model, const query::detail::SelectSp
     program.hasOffset = spec.offset.has_value();
     program.literalLimit = spec.limit.value_or(0);
     program.literalOffset = spec.offset.value_or(0);
-    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect, backend});
+    detail::applyUuidBindingStorage(program.view(), model, backend, context.parameters);
     return {.sql = sql, .parameters = std::move(context.parameters)};
 }
-auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSpec& spec,
-                           const SqlDialect& dialect) -> Statement
+auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSpec& spec, const SqlDialect& dialect,
+                           BackendType backend) -> Statement
 {
-    RenderContext context{
-        .model = model, .dialect = dialect, .shouldJoin = false, .columnRenderMode = ColumnRenderMode::WritePredicate};
+    RenderContext context{.model = model,
+                          .dialect = dialect,
+                          .shouldJoin = false,
+                          .columnRenderMode = ColumnRenderMode::WritePredicate,
+                          .backend = backend};
     SqlProgram program;
     program.operation = detail::SqlOperation::Update;
     program.shouldJoin = false;
@@ -314,19 +329,24 @@ auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSp
         program.assignments.push_back({columnSource, parameter});
     }
     program.predicate = appendPredicate(program, context, spec.predicate->getNode());
-    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect, backend});
+    detail::applyUuidBindingStorage(program.view(), model, backend, context.parameters);
     return {.sql = sql, .parameters = std::move(context.parameters)};
 }
-auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate,
-                           const SqlDialect& dialect) -> Statement
+auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate, const SqlDialect& dialect,
+                           BackendType backend) -> Statement
 {
-    RenderContext context{
-        .model = model, .dialect = dialect, .shouldJoin = false, .columnRenderMode = ColumnRenderMode::WritePredicate};
+    RenderContext context{.model = model,
+                          .dialect = dialect,
+                          .shouldJoin = false,
+                          .columnRenderMode = ColumnRenderMode::WritePredicate,
+                          .backend = backend};
     SqlProgram program;
     program.operation = detail::SqlOperation::Remove;
     program.shouldJoin = false;
     program.predicate = appendPredicate(program, context, predicate.getNode());
-    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect});
+    const auto sql = detail::emitSql(program.view(), model, detail::RuntimeSqlPolicy{dialect, backend});
+    detail::applyUuidBindingStorage(program.view(), model, backend, context.parameters);
     return {.sql = sql, .parameters = std::move(context.parameters)};
 }
 } // namespace orm::db::commands

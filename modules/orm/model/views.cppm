@@ -45,6 +45,13 @@ export
         ToOne,
     };
 
+    /** Physical representation of a logical UUID for a selected backend. */
+    enum class UuidStorage
+    {
+        Native,
+        Binary16,
+    };
+
     inline constexpr auto noTargetModel = std::numeric_limits<std::size_t>::max();
 
     struct ColumnView
@@ -65,6 +72,17 @@ export
         bool isNotNull{};
         /** Maximum number of UTF-8 characters, inherited by physical foreign keys. */
         std::optional<std::size_t> maxStringLength;
+        UuidStorage mysqlUuidStorage{UuidStorage::Native};
+        UuidStorage sqliteUuidStorage{UuidStorage::Native};
+
+        [[nodiscard]] constexpr auto uuidStorage(db::BackendType backend) const noexcept -> UuidStorage
+        {
+            if (backend == db::BackendType::Mysql)
+                return mysqlUuidStorage;
+            if (backend == db::BackendType::Sqlite)
+                return sqliteUuidStorage;
+            return UuidStorage::Native;
+        }
 
         constexpr auto operator==(const ColumnView&) const noexcept -> bool = default;
     };
