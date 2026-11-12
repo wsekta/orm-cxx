@@ -40,6 +40,12 @@ public:
     UuidAdapterRejected() : std::invalid_argument{"A UUID adapter rejected a value"} {}
 };
 
+class ValueConversionRejected final : public std::invalid_argument
+{
+public:
+    ValueConversionRejected() : std::invalid_argument{"A value converter rejected a value"} {}
+};
+
 struct TypedAccess
 {
     template <typename T, typename... Args>
@@ -87,7 +93,8 @@ template <typename T>
 inline constexpr bool supportedScalar =
     numericScalar<T> || std::same_as<std::remove_cvref_t<T>, bool> ||
     std::same_as<std::remove_cvref_t<T>, std::string> || temporalScalar<T> ||
-    std::same_as<std::remove_cvref_t<T>, Uuid> || UuidAdaptable<std::remove_cvref_t<T>>;
+    std::same_as<std::remove_cvref_t<T>, Uuid> || UuidAdaptable<std::remove_cvref_t<T>> ||
+    ValueConvertible<std::remove_cvref_t<T>>;
 template <typename Target, typename Source>
 inline constexpr bool fitsNumericLimits = []
 {
@@ -133,7 +140,7 @@ inline constexpr bool compatibleValue =
     isSafeNumericWidening<Target, parameter_value_t<Source>> ||
     (std::same_as<Target, bool> && std::same_as<parameter_value_t<Source>, bool>) ||
     (std::same_as<Target, std::string> && stringValue<parameter_value_t<Source>>) ||
-    ((temporalScalar<Target> || std::same_as<Target, Uuid> || UuidAdaptable<Target>) &&
+    ((temporalScalar<Target> || std::same_as<Target, Uuid> || UuidAdaptable<Target> || ValueConvertible<Target>) &&
      std::same_as<Target, parameter_value_t<Source>>);
 template <typename Target, typename Source>
 concept ORM_QUERY_UNBOUND_PARAMETER_VALUE = std::same_as<parameter_value_t<Source>, std::remove_cvref_t<Source>>;
@@ -177,6 +184,17 @@ auto typedValue(Source&& value) -> QueryValue
         catch (const std::invalid_argument&)
         {
             throw UuidAdapterRejected{};
+        }
+    }
+    else if constexpr (ValueConvertible<Target>)
+    {
+        try
+        {
+            return QueryValue{static_cast<Target>(value)};
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ValueConversionRejected{};
         }
     }
     else
@@ -248,9 +266,10 @@ constexpr auto captureValue(T&& value)
     }
     else if constexpr (model::isNullable<V>)
     {
-        using Owned = decltype(captureValue(value.value()));
-        if (value.has_value())
-            return std::optional<Owned>{captureValue(value.value())};
+        using Adapter = NullableAdapter<V>;
+        using Owned = decltype(captureValue(Adapter::value(value)));
+        if (Adapter::hasValue(value))
+            return std::optional<Owned>{captureValue(Adapter::value(value))};
         return std::optional<Owned>{};
     }
     else

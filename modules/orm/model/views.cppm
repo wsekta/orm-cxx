@@ -50,6 +50,7 @@ export
     {
         Native,
         Binary16,
+        Text36,
     };
 
     inline constexpr auto noTargetModel = std::numeric_limits<std::size_t>::max();

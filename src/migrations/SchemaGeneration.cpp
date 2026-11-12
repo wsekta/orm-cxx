@@ -227,7 +227,11 @@ auto nativeLiteralSql(const T& item, const PhysicalColumn& column, Backend backe
     }
     try
     {
-        orm::detail::values::validateNative(item, backend);
+        const bool textUuid =
+            std::is_same_v<T, orm::Uuid> && ((backend == Backend::Sqlite && column.sqlType == "TEXT") ||
+                                             (backend == Backend::Mysql && column.sqlType == "CHAR(36)"));
+        if (!textUuid)
+            orm::detail::values::validateNative(item, backend);
         const auto text = [&]
         {
             if constexpr (std::is_same_v<T, orm::UtcTimestamp>)

@@ -164,7 +164,7 @@ auto validateProjectionAliases(const Projections& projections) -> void
             using value_t = query::detail::scalar_t<field_t>;
             constexpr auto type = projectionLogicalType<field_t>();
             resultFields.emplace_back(std::string{fields[Index].name}, type, model::typeId<value_t>(),
-                                      UuidAdaptable<value_t>);
+                                      UuidDomainValue<value_t>);
         };
         (appendField.template operator()<Indices>(), ...);
     }(std::make_index_sequence<reflection::fieldCount<Result>>{});

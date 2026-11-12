@@ -406,11 +406,11 @@ auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner
             fields.push_back(aliases::qualifiedIdentifier(dialect, targetAlias, column.alias));
         for (std::size_t i = 0; i < ownerPrimaryKey.size(); ++i)
             if (ownerPrimaryKey[i]->type == model::ColumnType::Uuid &&
-                ownerPrimaryKey[i]->uuidStorage(backend) == model::UuidStorage::Binary16)
+                ownerPrimaryKey[i]->uuidStorage(backend) != model::UuidStorage::Native)
                 fields.push_back(std::format("typeof({})", ownerExpressions[i]));
         for (const auto& column : targetColumns)
             if (column.logicalType == model::ColumnType::Uuid && column.column != nullptr &&
-                column.column->uuidStorage(backend) == model::UuidStorage::Binary16)
+                column.column->uuidStorage(backend) != model::UuidStorage::Native)
                 fields.push_back(
                     std::format("typeof({})", aliases::qualifiedIdentifier(dialect, targetAlias, column.alias)));
         return join(fields, ", ");

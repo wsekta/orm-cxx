@@ -35,7 +35,8 @@ export
         inline static constexpr auto storage = Storage;
         static_assert(Backend == db::BackendType::Mysql || Backend == db::BackendType::Sqlite,
                       "ORM_MODEL_UUID_STORAGE: storage overrides are supported for MySQL and SQLite only");
-        static_assert(Storage == UuidStorage::Native || Storage == UuidStorage::Binary16,
+        static_assert(Storage == UuidStorage::Native || Storage == UuidStorage::Binary16 ||
+                          Storage == UuidStorage::Text36,
                       "ORM_MODEL_UUID_STORAGE: invalid UUID storage representation");
     };
 
@@ -57,11 +58,8 @@ export
                         if (names[left] == names[right] && backends[left] == backends[right])
                             return false;
                 return (detail::memberExists<Model, Definitions::member>() && ...) &&
-                       ((std::same_as<std::remove_cv_t<
-                                          detail::static_optional_value_t<detail::member_value_t<Definitions::member>>>,
-                                      orm::Uuid> ||
-                         orm::UuidAdaptable<std::remove_cv_t<
-                             detail::static_optional_value_t<detail::member_value_t<Definitions::member>>>>) &&
+                       ((orm::UuidDomainValue<
+                            detail::static_optional_value_t<detail::member_value_t<Definitions::member>>>) &&
                         ...);
             }
         }

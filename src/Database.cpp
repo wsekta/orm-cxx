@@ -48,9 +48,12 @@ auto supportsPhysicalColumn(const orm::db::BackendCapabilities& capabilities, co
 {
     if (!column.type)
         return false;
-    if (*column.type == orm::model::ColumnType::Uuid &&
-        column.uuidStorage(backend) == orm::model::UuidStorage::Binary16)
-        return backend == orm::db::BackendType::Mysql || backend == orm::db::BackendType::Sqlite;
+    if (*column.type == orm::model::ColumnType::Uuid && column.uuidStorage(backend) != orm::model::UuidStorage::Native)
+    {
+        const auto storage = column.uuidStorage(backend);
+        return (backend == orm::db::BackendType::Mysql || backend == orm::db::BackendType::Sqlite) &&
+               (storage == orm::model::UuidStorage::Binary16 || storage == orm::model::UuidStorage::Text36);
+    }
     return capabilities.supportsColumnType(*column.type);
 }
 
@@ -1377,14 +1380,17 @@ auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> 
 
 auto Database::ensureBoundValueSupported(const db::BoundValue& value, std::string_view operation) -> void
 {
-    if (value.uuidStorage == model::UuidStorage::Binary16)
+    if (value.uuidStorage != model::UuidStorage::Native)
     {
         requireCapability(value.logicalType == model::ColumnType::Uuid &&
                               (backendType == db::BackendType::Mysql || backendType == db::BackendType::Sqlite),
-                          operation, "Binary16 is not supported for this value and backend");
+                          operation, "The selected UUID representation is not supported for this backend");
+        if (value.uuidStorage != model::UuidStorage::Binary16 && value.uuidStorage != model::UuidStorage::Text36)
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                "Invalid UUID storage representation"};
         if (value.value && !query::QueryValue::isCompatibleStorage(value.logicalType, *value.value))
             throw DatabaseError{DatabaseErrorCode::Conversion, backendType, std::string{operation},
-                                "A Binary16 value has incompatible storage"};
+                                "An explicitly represented UUID has incompatible storage"};
         return;
     }
     requireCapability(value.uuidStorage == model::UuidStorage::Native, operation,

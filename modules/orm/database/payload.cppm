@@ -125,14 +125,25 @@ auto toPrimaryKeyValue(const T& value, const std::string& fieldName) -> query::Q
 {
     using value_t = std::remove_cv_t<T>;
 
-    if constexpr (isOptional<value_t>)
+    if constexpr (model::isNullable<value_t>)
     {
-        if (not value.has_value())
+        if (not NullableAdapter<value_t>::hasValue(value))
         {
             throw std::invalid_argument{"Primary-key field must not be NULL: " + fieldName};
         }
 
-        return toPrimaryKeyValue(value.value(), fieldName);
+        return toPrimaryKeyValue(NullableAdapter<value_t>::value(value), fieldName);
+    }
+    else if constexpr (ValueConvertible<value_t>)
+    {
+        try
+        {
+            return query::QueryValue{ValueConverter<value_t>::toValue(value)};
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ConversionError{"A primary-key value was rejected by its converter"};
+        }
     }
     else if constexpr (requires { query::QueryValue{value}; })
     {

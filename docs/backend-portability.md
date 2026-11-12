@@ -83,13 +83,14 @@ not leak into model or query code.
 
 The native [date/time and UUID types](value-types.md) are optional capabilities:
 PostgreSQL and MariaDB support all five, MySQL the four temporal types, and
-SQLite none. UUID fields can opt into Binary16 on MySQL and SQLite independently
-of their C++ type. Text exchanged with native columns is an internal transport
+SQLite none. UUID fields can opt into Binary16 or Text36 on MySQL and SQLite
+independently of their C++ type. Text exchanged with native columns is an internal transport
 representation, not a text-column fallback. Values retain their logical type
 until adapter encoding. Native results explicitly receive text through SOCI,
 preserving microseconds without its `std::tm` path or SQL formatting casts.
 This preserves `DISTINCT`, grouping and native ordering semantics. Binary16 uses
-a session-bound binary exchange; SQLite also verifies the actual storage class.
+a session-bound binary exchange and Text36 canonical text; SQLite also verifies
+the actual storage class.
 
 Temporal precision is fixed at six digits. Static bounds and negotiated
 connection-specific bounds both apply to inputs and results. Local datetimes

@@ -574,7 +574,7 @@ template <typename Policy>
             result += ", ";
         result += sqlConcat(expression, " AS ", policy.quoteIdentifier(alias));
         if (policy.isSqlite() && column.type == model::ColumnType::Uuid &&
-            column.uuidStorage(BackendType::Sqlite) == model::UuidStorage::Binary16)
+            column.uuidStorage(BackendType::Sqlite) != model::UuidStorage::Native)
             storageClasses += sqlConcat(", typeof(", expression, ")");
     };
     for (const auto& column : scope.model->columns)
@@ -621,7 +621,7 @@ template <typename Policy>
                 {
                     const auto info = resolveSqlColumn(source, model);
                     if (info.logicalType == model::ColumnType::Uuid &&
-                        info.column->uuidStorage(BackendType::Sqlite) == model::UuidStorage::Binary16)
+                        info.column->uuidStorage(BackendType::Sqlite) != model::UuidStorage::Native)
                         storageClasses += sqlConcat(", typeof(", emitSqlSource(source, scope, policy, true), ")");
                 }
             }

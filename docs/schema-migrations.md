@@ -186,11 +186,11 @@ The C++ `GenerationLiteral` variant also accepts `Date`, `TimeOfDay`,
 `LocalDateTime`, `UtcTimestamp` and `Uuid` directly. The generator validates the
 logical target type, calendar/range and backend representation before rendering
 a backend literal. UUID constants use native UUID on PostgreSQL/MariaDB and can
-also fill explicitly mapped Binary16 columns on SQLite/MySQL. Native UUID on
+also fill explicitly mapped Binary16 or Text36 columns on SQLite/MySQL. Native UUID on
 SQLite/MySQL is rejected. See [Value types](value-types.md).
 
-Snapshots record the physical UUID type, including `BLOB` or `BINARY(16)`,
-and preserve the existing serialization and checksums for native snapshots and
+Snapshots record the physical UUID type, including `BLOB`, `BINARY(16)`, `TEXT`
+and `CHAR(36)`, and preserve the existing serialization and checksums for native snapshots and
 finalized migrations. Replacing a C++ UUID type with an adapter to the same
 mapping does not change the physical schema. A change of representation needs
 an explicit backend SQL expression and decisions for dependent primary and

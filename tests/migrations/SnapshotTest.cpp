@@ -646,6 +646,14 @@ TEST(SnapshotTest, RejectsInvalidRuntimeModelDescriptorsAndUnsupportedTypes)
         EXPECT_THROW((void)snapshot_detail::physicalTable(model.model(), backend), GenerationError);
     for (const auto backend : {BackendType::Postgres, BackendType::Mariadb})
         EXPECT_EQ(snapshot_detail::physicalTable(model.model(), backend).columns.front().sqlType, "UUID");
+    model.columns.front().mysqlUuidStorage = orm::model::UuidStorage::Text36;
+    model.columns.front().sqliteUuidStorage = orm::model::UuidStorage::Text36;
+    EXPECT_EQ(snapshot_detail::physicalTable(model.model(), BackendType::Mysql).columns.front().sqlType, "CHAR(36)");
+    EXPECT_EQ(snapshot_detail::physicalTable(model.model(), BackendType::Sqlite).columns.front().sqlType, "TEXT");
+    for (const auto backend : {BackendType::Postgres, BackendType::Mariadb})
+        EXPECT_THROW((void)snapshot_detail::physicalTable(model.model(), backend), GenerationError);
+    model.columns.front().mysqlUuidStorage = orm::model::UuidStorage::Native;
+    model.columns.front().sqliteUuidStorage = orm::model::UuidStorage::Native;
     model.columns.front().type = orm::model::ColumnType::String;
     model.columns.front().maxStringLength = 0;
     EXPECT_THROW((void)snapshot_detail::physicalTable(model.model(), BackendType::Sqlite), GenerationError);

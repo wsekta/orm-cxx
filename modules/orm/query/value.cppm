@@ -90,6 +90,12 @@ export
         {
         }
 
+        template <ValueConvertible T>
+            requires(!UuidAdaptable<T>)
+        QueryValue(const T& inputValue) : QueryValue{ValueConverter<T>::toValue(inputValue)}
+        {
+        }
+
         template <std::size_t Size>
         QueryValue(const char (&inputValue)[Size])
             : logicalType{model::ColumnType::String}, value{std::string{inputValue}}
@@ -261,8 +267,7 @@ export
             .name = std::move(name), .value = QueryValue{Uuid{}}, .uuidStorage = uuidStorage, .nullType = logicalType};
     }
 
-    template <typename T>
-        requires(std::same_as<T, Uuid> || UuidAdaptable<T>)
+    template <UuidDomainValue T>
     auto param(std::string name, const std::optional<T>& value, model::UuidStorage uuidStorage) -> QueryParameter
     {
         if (!value)

@@ -262,7 +262,10 @@ auto physicalUuidType(const model::ColumnView& column, db::BackendType backend) 
     const auto mysql = column.uuidStorage(db::BackendType::Mysql);
     const auto sqlite = column.uuidStorage(db::BackendType::Sqlite);
     const auto valid = [](model::UuidStorage storage)
-    { return storage == model::UuidStorage::Native || storage == model::UuidStorage::Binary16; };
+    {
+        return storage == model::UuidStorage::Native || storage == model::UuidStorage::Binary16 ||
+               storage == model::UuidStorage::Text36;
+    };
     if (!valid(mysql) || !valid(sqlite) ||
         (column.type != model::ColumnType::Uuid &&
          (mysql != model::UuidStorage::Native || sqlite != model::UuidStorage::Native)))
@@ -271,17 +274,18 @@ auto physicalUuidType(const model::ColumnView& column, db::BackendType backend) 
         return std::nullopt;
     if (backend == db::BackendType::Empty)
     {
-        if (mysql == model::UuidStorage::Binary16 || sqlite == model::UuidStorage::Binary16)
+        if (mysql != model::UuidStorage::Native || sqlite != model::UuidStorage::Native)
             invalid("UUID storage selection requires an explicit backend");
         return std::nullopt;
     }
-    if (column.uuidStorage(backend) != model::UuidStorage::Binary16)
+    const auto storage = column.uuidStorage(backend);
+    if (storage == model::UuidStorage::Native)
         return std::nullopt;
     if (backend == db::BackendType::Sqlite)
-        return "BLOB";
+        return storage == model::UuidStorage::Text36 ? "TEXT" : "BLOB";
     if (backend == db::BackendType::Mysql)
-        return "BINARY(16)";
-    invalid("Binary16 UUID storage is not supported by this backend", backend);
+        return storage == model::UuidStorage::Text36 ? "CHAR(36)" : "BINARY(16)";
+    invalid("Explicit UUID storage is not supported by this backend", backend);
 }
 
 auto keyColumns(model::ModelView model) -> std::vector<const model::ColumnView*>
@@ -827,7 +831,10 @@ auto validateSnapshot(const SchemaSnapshot& snapshot) -> void
                 {
                     const bool binary16 = (backend == db::BackendType::Sqlite && column.sqlType == "BLOB") ||
                                           (backend == db::BackendType::Mysql && column.sqlType == "BINARY(16)");
-                    if (!binary16 && column.sqlType != sqlType(backend, column.logicalType, column.maxStringLength))
+                    const bool text36 = (backend == db::BackendType::Sqlite && column.sqlType == "TEXT") ||
+                                        (backend == db::BackendType::Mysql && column.sqlType == "CHAR(36)");
+                    if (!binary16 && !text36 &&
+                        column.sqlType != sqlType(backend, column.logicalType, column.maxStringLength))
                         invalid("UUID columns require their canonical physical SQL type", backend, path);
                 }
                 else if (column.logicalType == model::ColumnType::Date ||

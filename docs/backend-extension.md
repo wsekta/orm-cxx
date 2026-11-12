@@ -177,8 +177,9 @@ column bound no greater than that limit; an empty value imposes no such restrict
 
 `supportedColumnTypes` governs native `Date`, `TimeOfDay`, `LocalDateTime`,
 `UtcTimestamp` and `Uuid` too. Advertise real native types without implicit
-text, binary or epoch-number fallback. Explicit Binary16 UUID storage is a
-separate per-field/backend mapping and is not a claim of native UUID support.
+text, binary or epoch-number fallback. Explicit Binary16 and Text36 UUID
+storage is a separate per-field/backend mapping and is not a claim of native
+UUID support.
 Static temporal bounds belong to
 `BackendValueLimits`; connection/version-dependent bounds belong to
 `BackendRuntimeLimits`. Execution applies their intersection without mutating
@@ -191,9 +192,9 @@ adapters use stable text result buffers for native temporal and UUID values and 
 change `DISTINCT` or grouping semantics. Preserve aliases, positions, lifetime
 and null indicators across model/DTO/collection results. Invalid native values
 give `Conversion`; unavailable types give `UnsupportedFeature` before SQL.
-Binary16 uses session-bound binary buffers with stable lifetimes; SQLite must
-also validate the actual storage class and all backends must validate the byte
-length. MySQL's fixed-width binary column may pad an external short write
+Binary16 uses session-bound binary buffers with stable lifetimes; Text36 uses
+canonical text. SQLite must validate the actual storage class, and Binary16 also
+requires the exact byte length. MySQL's fixed-width binary column may pad an external short write
 before it can be read.
 
 Establish temporal session invariants in `onConnect`, repeat them after

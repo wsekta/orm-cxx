@@ -45,8 +45,8 @@ Slots retain their logical type through parameter collection. `LocalDateTime` an
 are distinct; text and other temporal types cannot substitute for them.
 Backend capabilities and effective runtime bounds are checked on execution,
 including cached SQL. SQLite native temporal types and native UUID on SQLite or
-MySQL fail with `UnsupportedFeature` before SQL; explicitly mapped Binary16
-UUID fields use their selected representation. Temporal `MIN`/`MAX` and ordering are supported;
+MySQL fail with `UnsupportedFeature` before SQL; explicitly mapped Binary16 or
+Text36 UUID fields use their selected representation. Temporal `MIN`/`MAX` and ordering are supported;
 UUID typed ordering, range operations and `MIN`/`MAX` are unavailable.
 See [Value types](value-types.md) for mappings and nullable results.
 

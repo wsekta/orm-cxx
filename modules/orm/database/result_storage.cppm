@@ -109,6 +109,21 @@ public:
             runtime.bind(values(), name, bound);
             return;
         }
+        if (bound.uuidStorage == model::UuidStorage::Text36)
+        {
+            if (bound.logicalType != model::ColumnType::Uuid)
+                throw ConversionError{"Text36 requires a logical UUID parameter"};
+            BoundValue text{.logicalType = model::ColumnType::String, .value = std::nullopt};
+            if (bound.value)
+            {
+                const auto* uuid = std::get_if<orm::Uuid>(&*bound.value);
+                if (!uuid)
+                    throw ConversionError{"A Text36 parameter has incompatible storage"};
+                text.value = orm::detail::values::format(*uuid);
+            }
+            runtime.bind(values(), name, text);
+            return;
+        }
         if (bound.uuidStorage != model::UuidStorage::Binary16)
             throw ConversionError{"Invalid UUID storage representation"};
         if (bound.logicalType != model::ColumnType::Uuid)
@@ -454,7 +469,8 @@ public:
         }
         if (backend && *backend == BackendType::Sqlite)
             for (auto& buffer : buffers)
-                if (buffer->binary)
+                if (buffer->binary || (buffer->column.column && buffer->column.logicalType == model::ColumnType::Uuid &&
+                                       buffer->column.column->uuidStorage(*backend) == model::UuidStorage::Text36))
                     statement.exchange(soci::into(buffer->sqliteStorageClass));
         statement.define_and_bind();
         statement.execute();
@@ -468,6 +484,13 @@ public:
                     buffer->indicator = buffer->binary->indicator();
                     if (value)
                         buffer->value = value->toString();
+                }
+                else if (backend && *backend == BackendType::Sqlite &&
+                         buffer->column.logicalType == model::ColumnType::Uuid && buffer->column.column != nullptr &&
+                         buffer->column.column->uuidStorage(*backend) == model::UuidStorage::Text36 &&
+                         buffer->indicator != soci::i_null && buffer->sqliteStorageClass != "text")
+                {
+                    throw ConversionError{"A Text36 result is not a SQLite TEXT value"};
                 }
                 validateResultIndicator(buffer->indicator);
                 if (buffer->indicator != soci::i_null && isEncodedResultType(buffer->column.logicalType))
@@ -492,8 +515,13 @@ public:
                     }
                     validate(BoundValue{.logicalType = buffer->column.logicalType,
                                         .value = std::move(value),
-                                        .uuidStorage = buffer->binary ? model::UuidStorage::Binary16 :
-                                                                        model::UuidStorage::Native});
+                                        .uuidStorage = buffer->binary ?
+                                                           model::UuidStorage::Binary16 :
+                                                           (backend && buffer->column.column != nullptr &&
+                                                                    buffer->column.column->uuidStorage(*backend) ==
+                                                                        model::UuidStorage::Text36 ?
+                                                                model::UuidStorage::Text36 :
+                                                                model::UuidStorage::Native)});
                 }
             }
             consume(*this);

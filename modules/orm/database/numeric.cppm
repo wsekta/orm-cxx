@@ -51,14 +51,24 @@ struct OptionalValue
     using Type = T;
 };
 
-template <typename T>
-struct OptionalValue<std::optional<T>>
+template <NullableAdaptable T>
+struct OptionalValue<T>
 {
-    using Type = T;
+    using Type = typename NullableAdapter<T>::Value;
 };
 
 template <typename T>
 using optional_value_t = typename OptionalValue<std::remove_cv_t<T>>::Type;
+
+template <typename Wrapper, typename Value>
+auto makeNullableValue(Value value) -> Wrapper
+{
+    using contained_t = typename NullableAdapter<Wrapper>::Value;
+    if constexpr (std::is_move_constructible_v<contained_t>)
+        return NullableAdapter<Wrapper>::make(std::move(value));
+    else
+        return NullableAdapter<Wrapper>::make(value);
+}
 
 template <typename SchemaType, typename ModelField>
 concept SchemaModel = SchemaType::template contains<std::remove_cv_t<optional_value_t<ModelField>>>;

@@ -85,7 +85,7 @@ export
         inline static constexpr bool staticSqlEligible = false;
         template <typename E>
             requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
-                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
         TypedOrderBy(const E& expression) : data{detail::erase(expression)}
         {
         }
@@ -227,7 +227,7 @@ export
         inline static constexpr bool staticSqlEligible = false;
         template <typename E>
             requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
-                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
         TypedProjection(const E& expression) : data{detail::erase(expression)}
         {
         }
@@ -271,7 +271,7 @@ struct ProjectionMeta : ExpressionMeta<typename S::Model>
     {
         auto projection = detail::as(std::string{Alias.view()}, TypedAccess::erase(std::get<0>(children), args));
         projection.sourceType = model::typeId<typename S::Value>();
-        projection.sourceUuidAdapted = UuidAdaptable<typename S::Value>;
+        projection.sourceUuidAdapted = UuidDomainValue<typename S::Value>;
         return projection;
     }
     template <typename Children, typename Args, typename Callback>
@@ -291,7 +291,7 @@ struct RuntimeProjectionMeta : ExpressionMeta<typename S::Model>
     {
         auto projection = detail::as(std::get<1>(children), TypedAccess::erase(std::get<0>(children), args));
         projection.sourceType = model::typeId<typename S::Value>();
-        projection.sourceUuidAdapted = UuidAdaptable<typename S::Value>;
+        projection.sourceUuidAdapted = UuidDomainValue<typename S::Value>;
         return projection;
     }
     template <typename Children, typename Args, typename Callback>
@@ -334,7 +334,7 @@ consteval auto uuidProjectionDomainCompatible() -> bool
             auto check = [&]<std::size_t Index>()
             {
                 using target_t = scalar_t<reflection::field_type_t<Result, Index>>;
-                if constexpr (UuidAdaptable<source_t> || UuidAdaptable<target_t>)
+                if constexpr (UuidDomainValue<source_t> || UuidDomainValue<target_t>)
                     if (fields[Index].name == P::alias.view())
                         compatible = std::same_as<source_t, target_t>;
             };
