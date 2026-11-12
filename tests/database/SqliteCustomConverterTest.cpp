@@ -176,8 +176,10 @@ TEST(SqliteCustomConverterTest, Text36AndConvertedValuesRoundTripThroughCrudProj
 
     std::string tableSql;
     session << "SELECT sql FROM sqlite_master WHERE name = 'converted_uuid_records'", soci::into(tableSql);
-    EXPECT_NE(tableSql.find("value TEXT NOT NULL"), std::string::npos);
-    EXPECT_NE(tableSql.find("optionalValue TEXT"), std::string::npos);
+    // SQLite DDL quotes identifiers, so the canonical TEXT column type is asserted
+    // against the quoted form the dialect actually emits.
+    EXPECT_NE(tableSql.find("\"value\" TEXT NOT NULL"), std::string::npos);
+    EXPECT_NE(tableSql.find("\"optionalValue\" TEXT"), std::string::npos);
 
     orm::Query<converted::Record> all;
     all.orderBy(asc(col<&converted::Record::id>()));
@@ -202,7 +204,7 @@ TEST(SqliteCustomConverterTest, Text36AndConvertedValuesRoundTripThroughCrudProj
     dto.project(as("id", col<&converted::Record::id>()), as("value", col<&converted::Record::value>()),
                 as("optionalValue", col<&converted::Record::optionalValue>()),
                 as("counter", col<&converted::Record::counter>()))
-        .where(col<&converted::Record::id>() == 0);
+        .where(col<&converted::Record::id>() == 1);
     const auto projection = context.select(dto);
     ASSERT_EQ(projection.size(), 1U);
     EXPECT_EQ(projection.front().value, pattern(1));
@@ -224,10 +226,10 @@ TEST(SqliteCustomConverterTest, Text36AndConvertedValuesRoundTripThroughCrudProj
     orm::Update<converted::Record> update;
     update.set(col<&converted::Record::value>(), pattern(7))
         .set(col<&converted::Record::counter>(), converted::Counter{77})
-        .where(col<&converted::Record::id>() == 0);
+        .where(col<&converted::Record::id>() == 2);
     EXPECT_EQ(context.update(update), 1U);
     orm::Query<converted::Record> changed;
-    changed.where(col<&converted::Record::id>() == 0);
+    changed.where(col<&converted::Record::id>() == 2);
     const auto changedRows = context.select(changed);
     ASSERT_EQ(changedRows.size(), 1U);
     EXPECT_EQ(changedRows.front().value, pattern(7));

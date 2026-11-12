@@ -478,6 +478,12 @@ public:
         {
             for (const auto& buffer : buffers)
             {
+                // A Text36 column stores a canonical TEXT UUID, so the native UUID
+                // validation (Postgres/MariaDB only) must not apply to its result.
+                const bool text36Result =
+                    backend && buffer->column.logicalType == model::ColumnType::Uuid &&
+                    buffer->column.column != nullptr &&
+                    buffer->column.column->uuidStorage(*backend) == model::UuidStorage::Text36;
                 if (buffer->binary)
                 {
                     const auto value = buffer->binary->read(*backend, buffer->sqliteStorageClass);
@@ -496,7 +502,7 @@ public:
                 if (buffer->indicator != soci::i_null && isEncodedResultType(buffer->column.logicalType))
                 {
                     auto value = decodedResult(buffer->column.logicalType, std::get<std::string>(buffer->value));
-                    if (backend && !buffer->binary)
+                    if (backend && !buffer->binary && !text36Result)
                     {
                         try
                         {

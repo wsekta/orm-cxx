@@ -650,8 +650,10 @@ TEST(SnapshotTest, RejectsInvalidRuntimeModelDescriptorsAndUnsupportedTypes)
     model.columns.front().sqliteUuidStorage = orm::model::UuidStorage::Text36;
     EXPECT_EQ(snapshot_detail::physicalTable(model.model(), BackendType::Mysql).columns.front().sqlType, "CHAR(36)");
     EXPECT_EQ(snapshot_detail::physicalTable(model.model(), BackendType::Sqlite).columns.front().sqlType, "TEXT");
+    // A storage override is declared per backend: `uuidStorage(Postgres)` stays
+    // Native, so Postgres and MariaDB keep their native UUID column.
     for (const auto backend : {BackendType::Postgres, BackendType::Mariadb})
-        EXPECT_THROW((void)snapshot_detail::physicalTable(model.model(), backend), GenerationError);
+        EXPECT_EQ(snapshot_detail::physicalTable(model.model(), backend).columns.front().sqlType, "UUID");
     model.columns.front().mysqlUuidStorage = orm::model::UuidStorage::Native;
     model.columns.front().sqliteUuidStorage = orm::model::UuidStorage::Native;
     model.columns.front().type = orm::model::ColumnType::String;

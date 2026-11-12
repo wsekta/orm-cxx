@@ -315,7 +315,9 @@ TEST(TemporalMigrationTest, BinaryUuidSnapshotsAndBackfillsPreserveCanonicalByte
             EXPECT_NE(sql.find("ENFORCED"), std::string::npos);
             EXPECT_NE(sql.find("DROP CHECK"), std::string::npos);
         }
-        columns.back().sqlType = backend == Backend::Sqlite ? "TEXT" : "BINARY(15)";
+        // A wrong-width binary representation stays invalid on both backends.
+        // SQLite TEXT is no longer a rejection case: it is the canonical Text36 form.
+        columns.back().sqlType = "BINARY(15)";
         EXPECT_THROW(temporal_detail::validateSnapshot(snapshot), GenerationError);
     }
 }
