@@ -85,7 +85,7 @@ export
         inline static constexpr bool staticSqlEligible = false;
         template <typename E>
             requires detail::isExpression<E> && E::isOrder && detail::ORM_QUERY_MODEL<E, Owner> &&
-                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
         TypedOrderBy(const E& expression) : data{detail::erase(expression)}
         {
         }
@@ -227,7 +227,7 @@ export
         inline static constexpr bool staticSqlEligible = false;
         template <typename E>
             requires detail::isExpression<E> && E::isProjection && detail::ORM_QUERY_MODEL<E, Owner> &&
-                         detail::ORM_QUERY_UNBOUND_PARAMETER<E>
+                     detail::ORM_QUERY_UNBOUND_PARAMETER<E>
         TypedProjection(const E& expression) : data{detail::erase(expression)}
         {
         }

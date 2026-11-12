@@ -101,8 +101,8 @@ struct orm::NullableAdapter<sqlite_converter_models::OptionalDomainUuid>
         return value.present;
     }
 
-    static auto value(const sqlite_converter_models::OptionalDomainUuid& source)
-        -> const sqlite_converter_models::DomainUuid&
+    static auto
+    value(const sqlite_converter_models::OptionalDomainUuid& source) -> const sqlite_converter_models::DomainUuid&
     {
         return source.value;
     }

@@ -321,8 +321,8 @@ inline auto validateStringLength(std::string_view text, std::optional<std::size_
 
 template <typename ModelField>
 auto setScalarFieldValue(soci::values& values, const std::string& fieldName, const ModelField& field,
-                         model::ColumnType columnType, std::optional<std::size_t> maxStringLength = std::nullopt)
-    -> void
+                         model::ColumnType columnType,
+                         std::optional<std::size_t> maxStringLength = std::nullopt) -> void
 {
     if constexpr (model::isNullable<ModelField>)
     {

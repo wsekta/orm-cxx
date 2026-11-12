@@ -50,9 +50,16 @@ export
                 return false;
             else
             {
-                constexpr std::array<std::string_view, sizeof...(Definitions)> names{
-                    detail::reflectedMemberName<Definitions::member>().view()...};
                 constexpr std::array<db::BackendType, sizeof...(Definitions)> backends{Definitions::backend...};
+                // The same member may be declared once per backend, so only a repeated
+                // (member, backend) pair is a conflict. Mirror `uniqueMemberNames` here:
+                // capture the names into a tuple and view the stored lvalues, because
+                // `.view()` on the prvalue from `reflectedMemberName` selects the deleted
+                // `const&&` overload, and a `constexpr` tuple is rejected outright.
+                const auto nameStorage = std::tuple{detail::reflectedMemberName<Definitions::member>()...};
+                const auto names = std::apply(
+                    [](const auto&... name)
+                    { return std::array<std::string_view, sizeof...(Definitions)>{name.view()...}; }, nameStorage);
                 for (std::size_t left = 0; left < names.size(); ++left)
                     for (std::size_t right = left + 1; right < names.size(); ++right)
                         if (names[left] == names[right] && backends[left] == backends[right])
