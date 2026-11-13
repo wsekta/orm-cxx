@@ -138,10 +138,10 @@ TEST(SqliteBackendTest, binary16BufferPreservesBytesAndChecksStorageClass)
     // `soci::use(id)` binds by reference, so assigning `id` between executions
     // is what selects the row for the next `execute`. The analyzer cannot see
     // that read-through and reports the stores as dead.
-    id = 16;
+    id = 16; // NOLINT(clang-analyzer-deadcode.DeadStores)
     select.execute(true);
     EXPECT_EQ(output.read(orm::db::BackendType::Sqlite, storageClass), std::nullopt);
-    for (id = 17; id <= 18; ++id) // NOLINT(clang-analyzer-deadcode.DeadStores)
+    for (id = 17; id <= 18; ++id)
     {
         select.execute(true);
         EXPECT_THROW((void)output.read(orm::db::BackendType::Sqlite, storageClass), orm::db::binding::ConversionError);

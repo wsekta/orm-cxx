@@ -779,8 +779,12 @@ auto Database::executeInsertIfAbsent(const db::Statement& statement, const db::I
         ensureBoundValueSupported(parameter.getBoundValue(), operation);
     try
     {
-        return getBackend().runtime().executeInsertIfAbsent(sql, db::StatementView{statement.sql, statement.parameters},
-                                                            conflict);
+        // The analyzer follows SOCI's prepare-then-exchange into statement.h and
+        // reports impl_ as uninitialized; the handle constructor always allocates
+        // it, and the pattern cannot use soci::use(values) because that drops the
+        // binary buffers Text36 and Binary16 rely on.
+        return getBackend().runtime().executeInsertIfAbsent( // NOLINT(clang-analyzer-core.CallAndMessage)
+            sql, db::StatementView{statement.sql, statement.parameters}, conflict);
     }
     catch (const db::binding::ConversionError&)
     {
