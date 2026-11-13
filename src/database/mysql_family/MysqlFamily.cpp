@@ -888,7 +888,7 @@ public:
         soci::statement prepared{session};
         prepared.alloc();
         prepared.prepare(std::string{statement.sql});
-        insertValues.exchange(prepared);
+        insertValues.exchange(prepared); // NOLINT(clang-analyzer-core.CallAndMessage)
         prepared.define_and_bind();
         prepared.execute(true);
         return normalizeAffectedRows(prepared.get_affected_rows());

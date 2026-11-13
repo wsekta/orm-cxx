@@ -460,11 +460,14 @@ auto db::BackendRuntime::executeInsertIfAbsent(soci::session& session, Statement
     binding::StatementBindings values;
     for (const auto& parameter : statement.parameters)
         values.add(session, *this, parameter);
+    // `values.exchange` also wires the binary buffers, which `soci::use(values)`
+    // alone cannot do, so the prepare-then-exchange order has to stay. The
+    // analyzer's "impl_ uninitialized" report is a false positive on SOCI's
+    // handle, whose constructor always allocates it.
     soci::statement prepared{session};
     prepared.alloc();
     prepared.prepare(std::string{statement.sql});
-    values.exchange(prepared);
-    prepared.define_and_bind();
+    values.exchange(prepared); // NOLINT(clang-analyzer-core.CallAndMessage)
     prepared.execute(true);
     return normalizeAffectedRows(prepared.get_affected_rows());
 }
@@ -727,7 +730,7 @@ auto Database::executeMutation(db::StatementView statement, std::string_view ope
         soci::statement preparedStatement{sql};
         preparedStatement.alloc();
         preparedStatement.prepare(std::string{statement.sql});
-        parameterValues.exchange(preparedStatement);
+        parameterValues.exchange(preparedStatement); // NOLINT(clang-analyzer-core.CallAndMessage)
         preparedStatement.define_and_bind();
 
         return executeAndGetAffectedRows(preparedStatement);
@@ -951,7 +954,7 @@ auto Database::relationEndpointExists(model::ModelView model, const db::binding:
         soci::statement prepared{sql};
         prepared.alloc();
         prepared.prepare(statement.sql);
-        parameterValues.exchange(prepared);
+        parameterValues.exchange(prepared); // NOLINT(clang-analyzer-core.CallAndMessage)
         prepared.exchange(soci::into(count));
         prepared.define_and_bind();
         prepared.execute(true);

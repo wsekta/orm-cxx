@@ -53,10 +53,23 @@ try {
     $serverUri = [Uri]$launchProfile.appServer
     if ($serverUri.Port -gt 65535) { throw 'Nieprawidlowy port serwera.' }
     $readyAddress = 'http://' + $serverUri.Authority + '/readyz'
+
+    # Create the attempt directory and start its transcript before any validation
+    # so a failed start always leaves evidence behind.
     $startSession = Join-Path $launchProfile.stateRoot ((Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N'))
     New-Item -ItemType Directory -Path $startSession -Force | Out-Null
     Start-Transcript -LiteralPath (Join-Path $startSession 'start.log') | Out-Null
     $transcriptStarted = $true
+
+    # Validate the launcher inputs before touching the mutex or any Desktop API:
+    # a missing file is a configuration error and must fail at once, not after a
+    # Windows query blocks or the app-start loop runs.
+    $preparePath = Join-Path $launchProfile.launcherDirectory 'desktop\prepare.ps1'
+    $launcherPath = Join-Path $launchProfile.launcherDirectory 'desktop\launch.mjs'
+    foreach ($requiredFile in @($preparePath, $launcherPath, $launchProfile.nodePath, $launchProfile.pythonPath, $launchProfile.bridgeConfig)) {
+        if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) { throw ('Brak wymaganego pliku: ' + $requiredFile) }
+    }
+
     Write-Host 'ChatGPT z webhookami' -ForegroundColor Cyan
     Write-Host ('Log tej proby: ' + (Join-Path $startSession 'start.log'))
 
@@ -65,12 +78,6 @@ try {
     try { $ownsMutex = $startupMutex.WaitOne(0) }
     catch [Threading.AbandonedMutexException] { $ownsMutex = $true }
     if (-not $ownsMutex) { throw 'Inna proba uruchomienia juz trwa. Wroc do poprzedniego okna.' }
-
-    $preparePath = Join-Path $launchProfile.launcherDirectory 'desktop\prepare.ps1'
-    $launcherPath = Join-Path $launchProfile.launcherDirectory 'desktop\launch.mjs'
-    foreach ($requiredFile in @($preparePath, $launcherPath, $launchProfile.nodePath, $launchProfile.pythonPath, $launchProfile.bridgeConfig)) {
-        if (-not (Test-Path -LiteralPath $requiredFile -PathType Leaf)) { throw ('Brak wymaganego pliku: ' + $requiredFile) }
-    }
 
     if (Test-SharedListener $readyAddress) {
         Write-Host 'Lokalny serwer juz odpowiada. Nie uruchamiam drugiego launchera ani restartu.' -ForegroundColor Yellow
