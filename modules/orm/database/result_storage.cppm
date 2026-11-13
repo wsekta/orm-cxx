@@ -42,8 +42,14 @@ public:
     {
         indicator_ = value ? soci::i_ok : soci::i_null;
         blob_.trim(0);
-        if (value && blob_.write_from_start(value->bytes().data(), value->bytes().size()) != value->bytes().size())
-            throw ConversionError{"Could not write a complete Binary16 value"};
+        if (value)
+        {
+            // SOCI's blob API takes `const char*`; `std::byte` carries the same
+            // representation and is the type the UUID codec exposes.
+            const auto* bytes = reinterpret_cast<const char*>(value->bytes().data());
+            if (blob_.write_from_start(bytes, value->bytes().size()) != value->bytes().size())
+                throw ConversionError{"Could not write a complete Binary16 value"};
+        }
     }
 
     auto exchangeUse(soci::statement& statement, const std::string& name) -> void
@@ -72,7 +78,8 @@ public:
         if (backend == BackendType::Sqlite && sqliteStorageClass != "blob")
             throw ConversionError{"A Binary16 result is not a SQLite BLOB"};
         std::array<std::byte, 16> bytes{};
-        if (blob_.get_len() != bytes.size() || blob_.read_from_start(bytes.data(), bytes.size()) != bytes.size())
+        auto* buffer = reinterpret_cast<char*>(bytes.data());
+        if (blob_.get_len() != bytes.size() || blob_.read_from_start(buffer, bytes.size()) != bytes.size())
             throw ConversionError{"A Binary16 result must contain exactly 16 bytes"};
         return orm::Uuid{bytes};
     }
