@@ -180,7 +180,7 @@ auto pattern(unsigned int group) -> uuid_models::UserId
 }
 
 template <typename Function>
-auto expectConversion(Function&& operation) -> void
+auto expectConversion(Function&& operation, std::string_view expectedOperation = {}) -> void
 {
     try
     {
@@ -190,6 +190,9 @@ auto expectConversion(Function&& operation) -> void
     catch (const orm::DatabaseError& error)
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Conversion);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
+        if (!expectedOperation.empty())
+            EXPECT_EQ(error.getOperation(), expectedOperation);
         EXPECT_EQ(std::string{error.what()}.find("sensitive adapter detail"), std::string::npos);
     }
 }
@@ -295,6 +298,24 @@ TEST(SqliteBinaryUuidTest, RawSqlRequiresAndUsesExplicitBinaryContext)
     EXPECT_EQ(context.select(extraNull).size(), 1U);
 }
 
+TEST(SqliteBinaryUuidTest, ParameterInspectionRejectsEmbeddedNullWithoutDamagingPreparedStatement)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto& session = orm::migrations::detail::DatabaseAccess::session(connection);
+    const auto& runtime = orm::migrations::detail::DatabaseAccess::runtime(connection);
+    int input = 42;
+    int output{};
+    soci::statement statement = (session.prepare << "SELECT :value", soci::use(input, "value"), soci::into(output));
+    constexpr char invalidName[] = "value\0suffix";
+
+    EXPECT_THROW((void)runtime.hasStatementParameter(statement, std::string_view{invalidName, sizeof(invalidName) - 1}),
+                 std::invalid_argument);
+    EXPECT_TRUE(runtime.hasStatementParameter(statement, "value"));
+    EXPECT_FALSE(runtime.hasStatementParameter(statement, "value_long"));
+    statement.execute(true);
+    EXPECT_EQ(output, input);
+}
+
 TEST(SqliteBinaryUuidTest, InvalidStorageClassAndLengthFailDuringRead)
 {
     for (const auto* invalid : {"'0123456789abcdef'", "X'00'", "zeroblob(17)"})
@@ -323,6 +344,84 @@ TEST(SqliteBinaryUuidTest, AdapterRefusalIsSanitizedAndDoesNotInsert)
     auto& session = orm::migrations::detail::DatabaseAccess::session(connection);
     session << "SELECT COUNT(*) FROM binary_uuid_records", soci::into(count);
     EXPECT_EQ(count, 0);
+}
+
+TEST(SqliteBinaryUuidTest, RejectedQueryAdaptersReportTheOperationAndDoNotChangeStoredRows)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<uuid_models::Schema>();
+    context.createTable<uuid_models::Record>();
+    context.insert(uuid_models::Record{1, pattern(1), pattern(2)});
+    auto rejected = pattern(1);
+    rejected.reject = true;
+
+    constexpr auto lookup =
+        select<uuid_models::Record>().where(col<&uuid_models::Record::value>() == param<uuid_models::UserId, 0>());
+    constexpr auto change = update<uuid_models::Record>()
+                                .set(col<&uuid_models::Record::value>(), param<uuid_models::UserId, 0>())
+                                .where(col<&uuid_models::Record::id>() == 1);
+    constexpr auto erase =
+        remove<uuid_models::Record>().where(col<&uuid_models::Record::value>() == param<uuid_models::UserId, 0>());
+
+    expectConversion([&] { (void)context.select(lookup, rejected); }, "select");
+    expectConversion([&] { (void)context.update(change, rejected); }, "update");
+    expectConversion([&] { (void)context.remove(erase, rejected); }, "remove");
+    expectConversion([&] { (void)context.remove<uuid_models::Record>(col<&uuid_models::Record::value>() == rejected); },
+                     "remove");
+
+    orm::Query<uuid_models::Record> all;
+    const auto unchanged = context.select(all);
+    ASSERT_EQ(unchanged.size(), 1U);
+    EXPECT_EQ(unchanged.front().value, pattern(1));
+    EXPECT_EQ(unchanged.front().optionalValue, pattern(2));
+    EXPECT_EQ(context.select(lookup, pattern(1)).size(), 1U);
+    EXPECT_EQ(context.update(change, pattern(3)), 1U);
+    EXPECT_EQ(context.remove(erase, pattern(3)), 1U);
+    EXPECT_TRUE(context.select(all).empty());
+}
+
+TEST(SqliteBinaryUuidTest, RejectedRelationKeysLeaveExistingLinksIntact)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<uuid_models::Schema>();
+    context.createTable<uuid_models::Tag>();
+    context.createTable<uuid_models::Owner>();
+    context.createRelationTables<uuid_models::Owner>();
+    const uuid_models::Tag tag{pattern(1)};
+    const uuid_models::Owner owner{pattern(2), tag, {}};
+    context.insert(tag);
+    context.insert(owner);
+    ASSERT_EQ(context.link<&uuid_models::Owner::tags>(owner, tag), 1U);
+
+    orm::Query<uuid_models::Owner> query;
+    query.where(col<&uuid_models::Owner::id>() == owner.id).include<&uuid_models::Owner::tags>();
+    for (const auto rejectOwner : {true, false})
+    {
+        SCOPED_TRACE(rejectOwner ? "owner key" : "target key");
+        auto rejectedOwner = owner;
+        auto rejectedTag = tag;
+        if (rejectOwner)
+            rejectedOwner.id.reject = true;
+        else
+            rejectedTag.id.reject = true;
+
+        expectConversion([&] { (void)context.link<&uuid_models::Owner::tags>(rejectedOwner, rejectedTag); },
+                         "link relation");
+        expectConversion([&] { (void)context.unlink<&uuid_models::Owner::tags>(rejectedOwner, rejectedTag); },
+                         "unlink relation");
+        const auto owners = context.select(query);
+        ASSERT_EQ(owners.size(), 1U);
+        ASSERT_EQ(owners.front().tags.size(), 1U);
+        EXPECT_EQ(owners.front().tags[0].id, tag.id);
+        ASSERT_TRUE(owners.front().target);
+        EXPECT_EQ(owners.front().target->id, tag.id);
+    }
+
+    EXPECT_EQ(context.link<&uuid_models::Owner::tags>(owner, tag), 0U);
+    EXPECT_EQ(context.unlink<&uuid_models::Owner::tags>(owner, tag), 1U);
+    const auto owners = context.select(query);
+    ASSERT_EQ(owners.size(), 1U);
+    EXPECT_TRUE(owners.front().tags.empty());
 }
 
 TEST(SqliteBinaryUuidTest, OptionalDtoSupportsUuidTypeWithoutDefaultConstructionOrAssignment)

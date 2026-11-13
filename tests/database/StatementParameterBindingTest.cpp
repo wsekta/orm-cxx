@@ -1,5 +1,6 @@
 module;
 
+#include "soci/trivial-blob-backend.h"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -58,6 +59,129 @@ auto nullParameter(orm::model::ColumnType type) -> orm::db::StatementParameter
 {
     return orm::db::StatementParameter{.name = "value", .value = std::nullopt, .nullType = type};
 }
+
+struct BlobTransferLimits
+{
+    std::size_t write = 16;
+    std::size_t read = 16;
+};
+
+// SQLite's in-memory blob transport always completes transfers. Limit the real
+// SOCI buffer operations to exercise short transfers without private-member access.
+class LimitedBlob final : public soci::details::trivial_blob_backend
+{
+public:
+    LimitedBlob(soci::details::session_backend& session, BlobTransferLimits& limits)
+        : trivial_blob_backend{session}, limits{limits}
+    {
+    }
+    auto write_from_start(const void* data, std::size_t count, std::size_t offset) -> std::size_t override
+    {
+        return trivial_blob_backend::write_from_start(data, std::min(count, limits.write), offset);
+    }
+    auto read_from_start(void* data, std::size_t count, std::size_t offset) -> std::size_t override
+    {
+        return trivial_blob_backend::read_from_start(data, std::min(count, limits.read), offset);
+    }
+
+private:
+    BlobTransferLimits& limits;
+};
+
+class TruncatedBlobInto final : public soci::details::standard_into_type_backend
+{
+public:
+    auto define_by_pos(int& position, void*, soci::details::exchange_type type) -> void override
+    {
+        EXPECT_EQ(type, soci::details::x_blob);
+        ++position;
+    }
+    auto pre_fetch() -> void override {}
+    auto post_fetch(bool gotData, bool, soci::indicator* indicator) -> void override
+    {
+        if (gotData && indicator != nullptr)
+            *indicator = soci::i_truncated;
+    }
+    auto clean_up() -> void override {}
+};
+
+class TruncatedBlobStatement : public soci::details::statement_backend
+{
+public:
+    TruncatedBlobStatement()
+    {
+        ON_CALL(*this, get_number_of_rows()).WillByDefault(testing::Return(1));
+        ON_CALL(*this, execute(testing::_)).WillByDefault(testing::Return(ef_success));
+        ON_CALL(*this, fetch(testing::_)).WillByDefault(testing::Return(ef_no_data));
+        ON_CALL(*this, make_into_type_backend())
+            .WillByDefault(
+                testing::Invoke([]() -> soci::details::standard_into_type_backend* { return new TruncatedBlobInto; }));
+    }
+    MOCK_METHOD(void, alloc, (), (override));
+    MOCK_METHOD(void, clean_up, (), (override));
+    MOCK_METHOD(void, prepare, (const std::string&, soci::details::statement_type), (override));
+    MOCK_METHOD(exec_fetch_result, execute, (int), (override));
+    MOCK_METHOD(exec_fetch_result, fetch, (int), (override));
+    MOCK_METHOD(long long, get_affected_rows, (), (override));
+    MOCK_METHOD(int, get_number_of_rows, (), (override));
+    MOCK_METHOD(std::string, get_parameter_name, (int), (const, override));
+    MOCK_METHOD(std::string, rewrite_for_procedure_call, (const std::string&), (override));
+    MOCK_METHOD(int, prepare_for_describe, (), (override));
+    MOCK_METHOD(void, describe_column, (int, soci::db_type&, std::string&), (override));
+    MOCK_METHOD(soci::details::standard_into_type_backend*, make_into_type_backend, (), (override));
+    MOCK_METHOD(soci::details::standard_use_type_backend*, make_use_type_backend, (), (override));
+    MOCK_METHOD(soci::details::vector_into_type_backend*, make_vector_into_type_backend, (), (override));
+    MOCK_METHOD(soci::details::vector_use_type_backend*, make_vector_use_type_backend, (), (override));
+};
+
+class BlobOnlySession final : public soci::details::session_backend
+{
+public:
+    explicit BlobOnlySession(BlobTransferLimits& limits) : limits{limits} {}
+    auto is_connected() -> bool override
+    {
+        return true;
+    }
+    auto begin() -> void override {}
+    auto commit() -> void override {}
+    auto rollback() -> void override {}
+    auto get_dummy_from_table() const -> std::string override
+    {
+        return {};
+    }
+    auto get_backend_name() const -> std::string override
+    {
+        return "limited-blob";
+    }
+    auto make_statement_backend() -> soci::details::statement_backend* override
+    {
+        return new testing::NiceMock<TruncatedBlobStatement>;
+    }
+    auto make_rowid_backend() -> soci::details::rowid_backend* override
+    {
+        throw std::logic_error{"The blob-only test session has no row identifiers"};
+    }
+    auto make_blob_backend() -> soci::details::blob_backend* override
+    {
+        return new LimitedBlob{*this, limits};
+    }
+
+private:
+    BlobTransferLimits& limits;
+};
+
+class BlobOnlyFactory final : public soci::backend_factory
+{
+public:
+    explicit BlobOnlyFactory(BlobTransferLimits& limits) : limits{limits} {}
+    auto make_session(const soci::connection_parameters&) const -> soci::details::session_backend* override
+    {
+        return new BlobOnlySession{limits};
+    }
+
+private:
+    BlobTransferLimits& limits;
+};
 } // namespace
 
 static_assert(std::is_aggregate_v<orm::db::StatementParameter>);
@@ -1071,4 +1195,285 @@ TEST(StatementParameterBindingTest, malformedEncodedResultIsRejectedBeforeValida
 TEST(StatementParameterBindingTest, transportTruncationIsRejectedBeforeHydration)
 {
     EXPECT_THROW(orm::db::binding::validateResultIndicator(soci::i_truncated), orm::db::binding::ConversionError);
+}
+
+TEST(StatementParameterBindingTest, binary16BufferRejectsShortWritesAndCanBeReused)
+{
+    BlobTransferLimits limits{.write = 15};
+    const BlobOnlyFactory factory{limits};
+    soci::session session{factory, ""};
+    orm::db::binding::Binary16Buffer buffer{session};
+    const auto value = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    try
+    {
+        buffer.set(value);
+        FAIL() << "Expected an incomplete Binary16 write error";
+    }
+    catch (const orm::db::binding::ConversionError& error)
+    {
+        EXPECT_EQ(std::string{error.what()}, "Could not write a complete Binary16 value");
+    }
+    limits.write = 16;
+    buffer.set(value);
+    EXPECT_EQ(buffer.read(orm::db::BackendType::Sqlite, "blob"), value);
+}
+
+TEST(StatementParameterBindingTest, binary16BufferRejectsShortReadsEvenWhenLengthIsSixteen)
+{
+    BlobTransferLimits limits{.read = 15};
+    const BlobOnlyFactory factory{limits};
+    soci::session session{factory, ""};
+    orm::db::binding::Binary16Buffer buffer{session};
+    const auto value = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    buffer.set(value);
+    try
+    {
+        (void)buffer.read(orm::db::BackendType::Sqlite, "blob");
+        FAIL() << "Expected an incomplete Binary16 read error";
+    }
+    catch (const orm::db::binding::ConversionError& error)
+    {
+        EXPECT_EQ(std::string{error.what()}, "A Binary16 result must contain exactly 16 bytes");
+    }
+    limits.read = 16;
+    EXPECT_EQ(buffer.read(orm::db::BackendType::Sqlite, "blob"), value);
+}
+
+TEST(StatementParameterBindingTest, binary16BufferRejectsTransportTruncationBeforeReadingCompleteBytes)
+{
+    BlobTransferLimits limits;
+    const BlobOnlyFactory factory{limits};
+    soci::session session{factory, ""};
+    orm::db::binding::Binary16Buffer buffer{session};
+    buffer.set(orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff"));
+    soci::statement statement{session};
+    statement.alloc();
+    statement.prepare("SELECT value");
+    buffer.exchangeInto(statement);
+    statement.define_and_bind();
+    ASSERT_TRUE(statement.execute(true));
+    ASSERT_EQ(buffer.indicator(), soci::i_truncated);
+    try
+    {
+        (void)buffer.read(orm::db::BackendType::Sqlite, "blob");
+        FAIL() << "Expected a Binary16 transport truncation error";
+    }
+    catch (const orm::db::binding::ConversionError& error)
+    {
+        EXPECT_EQ(std::string{error.what()}, "A Binary16 result was truncated by its transport");
+    }
+}
+
+TEST(StatementParameterBindingTest, binary16BufferPreservesNullTransitionsWhenReused)
+{
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    orm::db::binding::Binary16Buffer buffer{session};
+    const auto value = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    buffer.set(value);
+    EXPECT_EQ(buffer.indicator(), soci::i_ok);
+    EXPECT_EQ(buffer.read(orm::db::BackendType::Sqlite, "blob"), value);
+    buffer.set(std::nullopt);
+    EXPECT_EQ(buffer.indicator(), soci::i_null);
+    EXPECT_FALSE(buffer.read(orm::db::BackendType::Sqlite, "null"));
+    buffer.set(orm::Uuid{});
+    EXPECT_EQ(buffer.indicator(), soci::i_ok);
+    EXPECT_EQ(buffer.read(orm::db::BackendType::Sqlite, "blob"), orm::Uuid{});
+}
+
+TEST(StatementParameterBindingTest, binary16BufferRejectsUnavailableBackendsEvenForNull)
+{
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    orm::db::binding::Binary16Buffer buffer{session};
+    for (const auto present : {false, true})
+    {
+        SCOPED_TRACE(present);
+        buffer.set(present ? std::optional{orm::Uuid{}} : std::nullopt);
+        for (const auto unavailable : {orm::db::BackendType::Postgres, orm::db::BackendType::Mariadb})
+        {
+            SCOPED_TRACE(static_cast<int>(unavailable));
+            try
+            {
+                (void)buffer.read(unavailable);
+                FAIL() << "Expected an unavailable Binary16 backend error";
+            }
+            catch (const orm::db::binding::ConversionError& error)
+            {
+                EXPECT_EQ(std::string{error.what()}, "Binary16 is unavailable for this backend");
+            }
+        }
+    }
+}
+
+TEST(StatementParameterBindingTest, explicitUuidResultsPreserveNullTransitionsAndRepresentationDuringReuse)
+{
+    const auto first = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    const auto last = orm::Uuid::parse("ffeeddcc-bbaa-9988-7766-554433221100");
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    for (const auto representation : {orm::model::UuidStorage::Binary16, orm::model::UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(representation));
+        const orm::model::ColumnView column{.type = orm::model::ColumnType::Uuid, .sqliteUuidStorage = representation};
+        orm::db::binding::TypedResultStorage storage{
+            {{"identifier", orm::model::ColumnType::Uuid, std::nullopt, &column}}};
+        soci::values parameters;
+        std::vector<std::optional<orm::Uuid>> rows;
+        std::vector<orm::Uuid> validated;
+        const auto consume = [&](const auto& row)
+        {
+            rows.push_back(orm::db::binding::getScalarFieldValue<std::optional<orm::Uuid>>(row, "identifier"));
+            EXPECT_EQ(row.get_indicator("identifier"), rows.back() ? soci::i_ok : soci::i_null);
+            if (!rows.back())
+                EXPECT_THROW((void)row.template get<std::string>("identifier"), orm::db::binding::ConversionError);
+        };
+        const auto validate = [&](const orm::db::BoundValue& value)
+        {
+            EXPECT_EQ(value.logicalType, orm::model::ColumnType::Uuid);
+            EXPECT_EQ(value.uuidStorage, representation);
+            ASSERT_TRUE(value.value);
+            validated.push_back(std::get<orm::Uuid>(*value.value));
+        };
+        const auto* sql = representation == orm::model::UuidStorage::Binary16 ?
+                              "SELECT X'00112233445566778899aabbccddeeff', 'blob' "
+                              "UNION ALL SELECT NULL, 'null' "
+                              "UNION ALL SELECT X'ffeeddccbbaa99887766554433221100', 'blob'" :
+                              "SELECT '00112233-4455-6677-8899-aabbccddeeff', 'text' "
+                              "UNION ALL SELECT NULL, 'null' "
+                              "UNION ALL SELECT 'ffeeddcc-bbaa-9988-7766-554433221100', 'text'";
+        storage.read(session, sql, parameters, consume, orm::db::BackendType::Sqlite, validate);
+        EXPECT_EQ(rows, (std::vector<std::optional<orm::Uuid>>{first, std::nullopt, last}));
+        EXPECT_EQ(validated, (std::vector<orm::Uuid>{first, last}));
+
+        storage.read(session, "SELECT NULL, 'null'", parameters, consume, orm::db::BackendType::Sqlite, validate);
+        ASSERT_EQ(rows.size(), 4U);
+        EXPECT_FALSE(rows.back());
+        EXPECT_EQ(validated, (std::vector<orm::Uuid>{first, last}));
+        storage.read(session, sql, parameters, consume, orm::db::BackendType::Sqlite, validate);
+        EXPECT_EQ(rows, (std::vector<std::optional<orm::Uuid>>{first, std::nullopt, last, std::nullopt, first,
+                                                               std::nullopt, last}));
+        EXPECT_EQ(validated, (std::vector<orm::Uuid>{first, last, first, last}));
+    }
+}
+
+TEST(StatementParameterBindingTest, text36ResultsRejectNonTextBeforeValidationAndConsumption)
+{
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    const orm::model::ColumnView column{.type = orm::model::ColumnType::Uuid,
+                                        .sqliteUuidStorage = orm::model::UuidStorage::Text36};
+    orm::db::binding::TypedResultStorage storage{{{"identifier", orm::model::ColumnType::Uuid, std::nullopt, &column}}};
+    soci::values parameters;
+    // A canonical UUID BLOB would decode successfully after SOCI's conversion
+    // to string. Numeric expressions avoid the TEXT affinity of a real column.
+    for (const auto* expression : {"CAST('00112233-4455-6677-8899-aabbccddeeff' AS BLOB)", "42", "1.25"})
+    {
+        SCOPED_TRACE(expression);
+        auto consumed = false;
+        auto validated = false;
+        const auto sql = std::string{"SELECT value, typeof(value) FROM (SELECT "} + expression + " AS value)";
+        try
+        {
+            storage.read(
+                session, sql, parameters, [&](const auto&) { consumed = true; }, orm::db::BackendType::Sqlite,
+                [&](const orm::db::BoundValue&) { validated = true; });
+            FAIL() << "Expected a SQLite TEXT storage class error";
+        }
+        catch (const orm::db::binding::ConversionError& error)
+        {
+            EXPECT_EQ(std::string{error.what()}, "A Text36 result is not a SQLite TEXT value");
+        }
+        EXPECT_FALSE(consumed);
+        EXPECT_FALSE(validated);
+    }
+    auto rows = 0;
+    storage.read(
+        session, "SELECT '00112233-4455-6677-8899-aabbccddeeff', 'text'", parameters,
+        [&](const auto& row)
+        {
+            ++rows;
+            EXPECT_EQ(orm::db::binding::getScalarFieldValue<orm::Uuid>(row, "identifier"),
+                      orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff"));
+        },
+        orm::db::BackendType::Sqlite);
+    EXPECT_EQ(rows, 1);
+}
+
+TEST(StatementParameterBindingTest, uuidRepresentationsRejectNonUuidLogicalParametersIncludingNull)
+{
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    for (const auto representation : {orm::model::UuidStorage::Binary16, orm::model::UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(representation));
+        for (const auto present : {false, true})
+        {
+            SCOPED_TRACE(present);
+            orm::db::binding::StatementBindings bindings;
+            orm::db::BoundValue value{
+                .logicalType = orm::model::ColumnType::Int, .value = std::nullopt, .uuidStorage = representation};
+            if (present)
+                value.value = 42;
+            try
+            {
+                bindings.add(session, backend.runtime(), "value", value);
+                FAIL() << "Expected a logical UUID parameter error";
+            }
+            catch (const orm::db::binding::ConversionError& error)
+            {
+                EXPECT_EQ(std::string{error.what()}, representation == orm::model::UuidStorage::Binary16 ?
+                                                         "Binary16 requires a logical UUID parameter" :
+                                                         "Text36 requires a logical UUID parameter");
+            }
+            EXPECT_FALSE(bindings.hasBinary());
+            EXPECT_THROW((void)bindings.values().get_indicator("value"), soci::soci_error);
+        }
+    }
+}
+
+TEST(StatementParameterBindingTest, uuidRepresentationsRejectIncompatibleParameterStorage)
+{
+    soci::session session;
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    // Even canonical UUID text is not a logical UUID payload. Accepting it here
+    // would bypass the representation-specific validation and conversion.
+    const std::array<orm::query::QueryValue::Value, 2> invalidValues{
+        42, std::string{"00112233-4455-6677-8899-aabbccddeeff"}};
+    for (const auto representation : {orm::model::UuidStorage::Binary16, orm::model::UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(representation));
+        for (const auto& invalid : invalidValues)
+        {
+            SCOPED_TRACE(invalid.index());
+            orm::db::binding::StatementBindings bindings;
+            const orm::db::BoundValue value{
+                .logicalType = orm::model::ColumnType::Uuid, .value = invalid, .uuidStorage = representation};
+            try
+            {
+                bindings.add(session, backend.runtime(), "value", value);
+                FAIL() << "Expected an incompatible UUID storage error";
+            }
+            catch (const orm::db::binding::ConversionError& error)
+            {
+                EXPECT_EQ(std::string{error.what()}, representation == orm::model::UuidStorage::Binary16 ?
+                                                         "A Binary16 parameter has incompatible storage" :
+                                                         "A Text36 parameter has incompatible storage");
+            }
+            EXPECT_FALSE(bindings.hasBinary());
+            EXPECT_THROW((void)bindings.values().get_indicator("value"), soci::soci_error);
+        }
+    }
 }

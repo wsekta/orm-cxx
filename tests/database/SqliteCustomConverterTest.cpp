@@ -50,6 +50,18 @@ struct RecordDto
     Counter counter;
 };
 
+struct CounterDto
+{
+    Counter counter;
+};
+
+struct NumericRecord
+{
+    int id;
+    double value;
+    inline static constexpr orm::reflection::FixedString table_name{"converted_numeric_records"};
+};
+
 struct NativeUuidRecord
 {
     int id;
@@ -83,10 +95,15 @@ struct orm::ValueConverter<sqlite_converter_models::Counter>
     using Value = int;
     static auto toValue(const sqlite_converter_models::Counter& value) -> int
     {
+        if (value.value < 0)
+            throw std::invalid_argument{"sensitive converter detail"};
         return value.value;
     }
     static auto fromValue(const int& value) -> sqlite_converter_models::Counter
     {
+        // A valid SQL integer need not be valid for the nonnegative domain counter.
+        if (value < 0)
+            throw std::invalid_argument{"sensitive converter detail"};
         return {.value = value};
     }
 };
@@ -144,7 +161,7 @@ auto optionalPattern(unsigned int group) -> converted::OptionalDomainUuid
 }
 
 template <typename Function>
-auto expectConversion(Function&& operation) -> void
+auto expectConversion(Function&& operation, std::string_view expectedOperation = {}) -> void
 {
     try
     {
@@ -154,7 +171,24 @@ auto expectConversion(Function&& operation) -> void
     catch (const orm::DatabaseError& error)
     {
         EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Conversion);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
+        if (!expectedOperation.empty())
+            EXPECT_EQ(error.getOperation(), expectedOperation);
         EXPECT_EQ(std::string{error.what()}.find("sensitive converter detail"), std::string::npos);
+    }
+}
+
+template <typename Function>
+auto expectRejectedParameter(Function&& operation) -> void
+{
+    try
+    {
+        operation();
+        FAIL() << "Expected the converter to reject the query parameter";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_STREQ(error.what(), "A value converter rejected a value");
     }
 }
 
@@ -337,6 +371,104 @@ TEST(SqliteCustomConverterTest, ConverterRefusalIsSanitizedAndDoesNotInsert)
     int count{};
     session << "SELECT COUNT(*) FROM converted_uuid_records", soci::into(count);
     EXPECT_EQ(count, 0);
+}
+
+TEST(SqliteCustomConverterTest, ConverterRefusalDuringModelAndProjectionReadsIsSanitized)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<converted::Schema>();
+    context.createTable<converted::Record>();
+    context.insert(converted::Record{1, pattern(1), optionalPattern(1), {7}});
+
+    // Simulate a legacy writer storing an integer outside the domain's range.
+    auto& session = orm::migrations::detail::DatabaseAccess::session(connection);
+    session << "UPDATE converted_uuid_records SET counter = -1 WHERE id = 1";
+
+    orm::Query<converted::Record> all;
+    constexpr auto allPlan = select<converted::Record>();
+    expectConversion([&] { (void)context.select(all); }, "select");
+    expectConversion([&] { (void)context.select(allPlan); }, "select");
+
+    orm::ProjectionQuery<converted::Record, converted::CounterDto> projected;
+    projected.project(as("counter", col<&converted::Record::counter>()));
+    constexpr auto projectionPlan =
+        selectAs<converted::Record, converted::CounterDto>(as<"counter">(col<&converted::Record::counter>()));
+    expectConversion([&] { (void)context.select(projected); }, "select projection");
+    expectConversion([&] { (void)context.select(projectionPlan); }, "select projection");
+
+    orm::Update<converted::Record> repair;
+    repair.set(col<&converted::Record::counter>(), converted::Counter{7}).where(col<&converted::Record::id>() == 1);
+    EXPECT_EQ(context.update(repair), 1U);
+    const auto rows = context.select(all);
+    ASSERT_EQ(rows.size(), 1U);
+    EXPECT_EQ(rows.front().value, pattern(1));
+    EXPECT_EQ(rows.front().optionalValue, optionalPattern(1));
+    EXPECT_EQ(rows.front().counter, converted::Counter{7});
+    const auto projection = context.select(projectionPlan);
+    ASSERT_EQ(projection.size(), 1U);
+    EXPECT_EQ(projection.front().counter, converted::Counter{7});
+}
+
+TEST(SqliteCustomConverterTest, ConvertedProjectionRejectsFractionalCanonicalValuesWithoutRounding)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<orm::Schema<converted::NumericRecord>>();
+    context.createTable<converted::NumericRecord>();
+    context.insert(converted::NumericRecord{1, 1.5});
+
+    orm::ProjectionQuery<converted::NumericRecord, converted::CounterDto> projected;
+    projected.project(as("counter", col<&converted::NumericRecord::value>()));
+    constexpr auto projectionPlan = selectAs<converted::NumericRecord, converted::CounterDto>(
+        as<"counter">(col<&converted::NumericRecord::value>()));
+    expectConversion([&] { (void)context.select(projected); }, "select projection");
+    expectConversion([&] { (void)context.select(projectionPlan); }, "select projection");
+
+    // The same projections succeed once the source is exactly representable.
+    orm::Update<converted::NumericRecord> repair;
+    repair.set(col<&converted::NumericRecord::value>(), 2.0).where(col<&converted::NumericRecord::id>() == 1);
+    EXPECT_EQ(context.update(repair), 1U);
+    const auto dynamicRows = context.select(projected);
+    const auto staticRows = context.select(projectionPlan);
+    ASSERT_EQ(dynamicRows.size(), 1U);
+    ASSERT_EQ(staticRows.size(), 1U);
+    EXPECT_EQ(dynamicRows.front().counter, converted::Counter{2});
+    EXPECT_EQ(staticRows.front().counter, converted::Counter{2});
+}
+
+TEST(SqliteCustomConverterTest, RejectedQueryParametersAreSanitizedAndDoNotChangeStoredRows)
+{
+    orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
+    auto context = connection.orm<converted::Schema>();
+    context.createTable<converted::Record>();
+    context.insert(converted::Record{1, pattern(1), optionalPattern(1), {7}});
+    const converted::Counter rejected{-1};
+
+    constexpr auto lookup =
+        select<converted::Record>().where(col<&converted::Record::counter>() == param<converted::Counter, 0>());
+    constexpr auto change = update<converted::Record>()
+                                .set(col<&converted::Record::counter>(), param<converted::Counter, 0>())
+                                .where(col<&converted::Record::id>() == 1);
+    constexpr auto erase =
+        remove<converted::Record>().where(col<&converted::Record::counter>() == param<converted::Counter, 0>());
+
+    // Converter failures during query construction remain sanitized application
+    // invalid_argument errors, unlike backend/model hydration failures.
+    expectRejectedParameter([&] { (void)context.select(lookup, rejected); });
+    expectRejectedParameter([&] { (void)context.update(change, rejected); });
+    expectRejectedParameter([&] { (void)context.remove(erase, rejected); });
+    expectRejectedParameter(
+        [&] { (void)context.remove<converted::Record>(col<&converted::Record::counter>() == rejected); });
+
+    orm::Query<converted::Record> all;
+    const auto unchanged = context.select(all);
+    ASSERT_EQ(unchanged.size(), 1U);
+    EXPECT_EQ(unchanged.front().value, pattern(1));
+    EXPECT_EQ(unchanged.front().optionalValue, optionalPattern(1));
+    EXPECT_EQ(unchanged.front().counter, converted::Counter{7});
+    EXPECT_EQ(context.select(lookup, converted::Counter{7}).size(), 1U);
+    EXPECT_EQ(context.update(change, converted::Counter{8}), 1U);
+    EXPECT_EQ(context.remove(erase, converted::Counter{8}), 1U);
+    EXPECT_TRUE(context.select(all).empty());
 }
 
 TEST(SqliteCustomConverterTest, NativeUuidWithoutExplicitRepresentationStaysUnsupported)

@@ -626,6 +626,111 @@ TEST(SnapshotTest, ValidatesForeignKeyReferencesTypesActionsAndUniqueTargets)
     EXPECT_NO_THROW(snapshot_detail::validateSnapshot(snapshot));
 }
 
+TEST(SnapshotTest, RejectsMisappliedAndUnknownUuidStorageDescriptors)
+{
+    using Type = orm::model::ColumnType;
+    using Storage = orm::model::UuidStorage;
+    struct Descriptor
+    {
+        Type type;
+        Storage mysql;
+        Storage sqlite;
+    };
+    // NOLINTNEXTLINE(clang-analyzer-optin.core.EnumCastOutOfRange)
+    const auto unknown = static_cast<Storage>(-1);
+    const std::array descriptors{Descriptor{Type::Int, Storage::Binary16, Storage::Native},
+                                 Descriptor{Type::Int, Storage::Text36, Storage::Native},
+                                 Descriptor{Type::Int, Storage::Native, Storage::Binary16},
+                                 Descriptor{Type::Int, Storage::Native, Storage::Text36},
+                                 Descriptor{Type::Uuid, unknown, Storage::Native},
+                                 Descriptor{Type::Uuid, Storage::Native, unknown}};
+    for (const auto& descriptor : descriptors)
+        for (const auto backend : generationBackends)
+        {
+            SCOPED_TRACE(static_cast<int>(backend));
+            SCOPED_TRACE(static_cast<int>(descriptor.type));
+            SCOPED_TRACE(static_cast<int>(descriptor.mysql));
+            SCOPED_TRACE(static_cast<int>(descriptor.sqlite));
+            RuntimeModel runtime;
+            runtime.columns.front().type = descriptor.type;
+            runtime.columns.front().mysqlUuidStorage = descriptor.mysql;
+            runtime.columns.front().sqliteUuidStorage = descriptor.sqlite;
+            static_cast<void>(runtime.model());
+            try
+            {
+                static_cast<void>(capture(runtime.schema, std::array{backend}));
+                FAIL() << "Expected invalid UUID storage descriptor";
+            }
+            catch (const GenerationError& error)
+            {
+                ASSERT_EQ(error.diagnostics().size(), 1U);
+                const auto& diagnostic = error.diagnostics().front();
+                EXPECT_EQ(diagnostic.code, "invalid-snapshot");
+                EXPECT_EQ(diagnostic.message, "UUID storage must be declared on a UUID column");
+                EXPECT_EQ(diagnostic.backend, backend);
+                EXPECT_EQ(diagnostic.path, "id");
+            }
+        }
+}
+
+TEST(SnapshotTest, CapturesUuidStorageOverridesOnlyForTheirSelectedBackends)
+{
+    using Storage = orm::model::UuidStorage;
+    for (const auto mysql : {Storage::Binary16, Storage::Text36})
+        for (const auto sqlite : {Storage::Binary16, Storage::Text36})
+        {
+            SCOPED_TRACE(static_cast<int>(mysql));
+            SCOPED_TRACE(static_cast<int>(sqlite));
+            RuntimeModel runtime;
+            runtime.columns.front().type = orm::model::ColumnType::Uuid;
+            runtime.columns.front().mysqlUuidStorage = mysql;
+            runtime.columns.front().sqliteUuidStorage = sqlite;
+            static_cast<void>(runtime.model());
+            const auto snapshot = capture(runtime.schema);
+            ASSERT_EQ(snapshot.backends.size(), generationBackends.size());
+            EXPECT_EQ(column(physical(snapshot, BackendType::Mysql, "runtime_model"), "id").sqlType,
+                      mysql == Storage::Binary16 ? "BINARY(16)" : "CHAR(36)");
+            EXPECT_EQ(column(physical(snapshot, BackendType::Sqlite, "runtime_model"), "id").sqlType,
+                      sqlite == Storage::Binary16 ? "BLOB" : "TEXT");
+            for (const auto backend : {BackendType::Postgres, BackendType::Mariadb})
+                EXPECT_EQ(column(physical(snapshot, backend, "runtime_model"), "id").sqlType, "UUID");
+        }
+}
+
+TEST(SnapshotTest, RejectsNoncanonicalNativeUuidPhysicalTypesWithColumnDiagnostics)
+{
+    for (const auto backend : {BackendType::Postgres, BackendType::Mariadb})
+    {
+        SCOPED_TRACE(static_cast<int>(backend));
+        RuntimeModel runtime;
+        runtime.columns.front().type = orm::model::ColumnType::Uuid;
+        static_cast<void>(runtime.model());
+        auto snapshot = capture(runtime.schema, std::array{backend});
+        auto& uuid = snapshot.backends.at(backend).tables.front().columns.front();
+        ASSERT_EQ(uuid.sqlType, "UUID");
+        for (const std::string_view type :
+             {"BLOB", "TEXT", "BINARY(16)", "CHAR(36)", "BINARY(15)", "CHAR(35)", "VARCHAR(36)"})
+        {
+            SCOPED_TRACE(type);
+            uuid.sqlType = std::string{type};
+            try
+            {
+                snapshot_detail::validateSnapshot(snapshot);
+                FAIL() << "Expected invalid native UUID physical type";
+            }
+            catch (const GenerationError& error)
+            {
+                ASSERT_EQ(error.diagnostics().size(), 1U);
+                const auto& diagnostic = error.diagnostics().front();
+                EXPECT_EQ(diagnostic.code, "invalid-snapshot");
+                EXPECT_EQ(diagnostic.message, "UUID columns require their canonical physical SQL type");
+                EXPECT_EQ(diagnostic.backend, backend);
+                EXPECT_EQ(diagnostic.path, "runtime_model.id");
+            }
+        }
+    }
+}
+
 TEST(SnapshotTest, RejectsInvalidRuntimeModelDescriptorsAndUnsupportedTypes)
 {
     EXPECT_THROW((void)snapshot_detail::physicalTable({}, BackendType::Sqlite), GenerationError);
