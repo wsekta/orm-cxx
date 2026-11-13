@@ -362,6 +362,11 @@ public:
 
     auto open(soci::session& session, orm::db::ConnectionConfigView config) const -> void override
     {
+        if (config.backendType() == orm::db::BackendType::Sqlite)
+        {
+            delegate.open(session, config);
+            return;
+        }
         (void)config.get<CoverageConnectionConfig>();
         if (ownershipProbe != nullptr)
         {
@@ -508,7 +513,7 @@ public:
 
     auto type() const noexcept -> orm::db::BackendType override
     {
-        return orm::db::BackendType::Oracle;
+        return backendTypeValue;
     }
 
     auto capabilities() const noexcept -> const orm::db::BackendCapabilities& override
@@ -533,6 +538,7 @@ public:
 
     ConfigurableDialect dialectStrategy;
     ConfigurableRuntime runtimeStrategy;
+    orm::db::BackendType backendTypeValue = orm::db::BackendType::Oracle;
     orm::db::BackendCapabilities capabilitiesValue;
 
 private:
@@ -1205,6 +1211,229 @@ TEST(DatabaseCoverageCompletionTest, insertExecutesUnboundCommandForAutoOnlyMode
 
     bundle.database->createTable<AutoOnly>();
     EXPECT_NO_THROW(bundle.database->insert(AutoOnly{}));
+}
+
+TEST(DatabaseCoverageCompletionTest, serializedModelBindingSkipsAutoIncrementWithoutReadingItsValue)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::values serialized;
+    soci::values bound;
+
+    EXPECT_EQ(
+        orm::detail::bindModelParameters(backend.runtime(), bound, serialized, orm::modelView<Schema, AutoOnly>()), 0U);
+    EXPECT_THROW((void)bound.get_indicator("id"), soci::soci_error);
+}
+
+TEST(DatabaseCoverageCompletionTest, serializedModelBindingFlattensOnlyRelatedPrimaryKeysAndPreservesNull)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+
+    for (const bool nullAuthor : {false, true})
+    {
+        SCOPED_TRACE(nullAuthor);
+        soci::values serialized;
+        soci::values bound;
+        serialized.set("id", 7);
+        serialized.set("title", std::string{"book"});
+        serialized.set("author_id", 42, nullAuthor ? soci::i_null : soci::i_ok);
+        // The source has no author_name: non-key fields must not be read or bound.
+        [[maybe_unused]] soci::statement sourceOwner =
+            (session.prepare << "SELECT :id, :title, :author_id", soci::use(serialized));
+
+        EXPECT_EQ(orm::detail::bindModelParameters(backend.runtime(), bound, serialized,
+                                                   orm::modelView<Schema, collection_models::Book>()),
+                  3U);
+        EXPECT_EQ(bound.get<int>("id"), 7);
+        EXPECT_EQ(bound.get<std::string>("title"), "book");
+        EXPECT_EQ(bound.get_indicator("author_id"), nullAuthor ? soci::i_null : soci::i_ok);
+        EXPECT_THROW((void)bound.get_indicator("author_name"), soci::soci_error);
+
+        int id{}, authorId{};
+        std::string title;
+        soci::indicator authorIndicator = soci::i_ok;
+        soci::statement statement = (session.prepare << "SELECT :id, :title, :author_id", soci::use(bound),
+                                     soci::into(id), soci::into(title), soci::into(authorId, authorIndicator));
+        statement.execute(true);
+        EXPECT_EQ(id, 7);
+        EXPECT_EQ(title, "book");
+        EXPECT_EQ(authorIndicator, nullAuthor ? soci::i_null : soci::i_ok);
+        if (!nullAuthor)
+            EXPECT_EQ(authorId, 42);
+    }
+}
+
+TEST(DatabaseCoverageCompletionTest, serializedModelBindingRejectsOverLimitValueBeforeBindingAndAcceptsBoundary)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values serialized;
+    soci::values bound;
+    serialized.set("id", 8ULL);
+    [[maybe_unused]] soci::statement sourceOwner = (session.prepare << "SELECT :id", soci::use(serialized));
+    const orm::db::BackendValueLimits limits{.maxUnsignedLongLong = 7ULL};
+
+    try
+    {
+        (void)orm::detail::bindModelParameters(backend.runtime(), bound, serialized,
+                                               orm::modelView<Schema, WideTarget>(), limits);
+        FAIL() << "Expected a backend value-limit error";
+    }
+    catch (const orm::db::binding::ConversionError& error)
+    {
+        EXPECT_EQ(std::string{error.what()}, "A model value exceeds the backend value limits");
+    }
+    EXPECT_THROW((void)bound.get_indicator("id"), soci::soci_error);
+
+    serialized.set("id", 7ULL);
+    EXPECT_EQ(orm::detail::bindModelParameters(backend.runtime(), bound, serialized,
+                                               orm::modelView<Schema, WideTarget>(), limits),
+              1U);
+    // SQLite binds representable unsigned values through its signed 64-bit transport.
+    EXPECT_EQ(bound.get<long long>("id"), 7LL);
+    long long echoed{};
+    soci::statement statement = (session.prepare << "SELECT :id", soci::use(bound), soci::into(echoed));
+    statement.execute(true);
+    EXPECT_EQ(echoed, 7);
+}
+
+TEST(DatabaseCoverageCompletionTest, binaryModelBindingRejectsToOneColumnWithoutSchemaTarget)
+{
+    const std::array<orm::model::ColumnView, 1> columns{{{.fieldIndex = 0,
+                                                          .fieldName = "owner",
+                                                          .name = "owner",
+                                                          .kind = orm::model::FieldKind::ToOne,
+                                                          .targetModelIndex = orm::model::noTargetModel}}};
+    const orm::model::ModelDataView data{
+        .type = orm::model::typeId<int>(), .schemaIndex = 0, .tableName = "missing_binary_target", .columns = columns};
+    const std::array<const orm::model::ModelDataView*, 1> models{&data};
+    const orm::model::SchemaView schema{.models = models};
+    const orm::db::sqlite::SqliteBackend backend;
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    soci::values serialized;
+    orm::db::binding::StatementBindings bound;
+
+    try
+    {
+        (void)orm::detail::bindModelParameters(backend.runtime(), bound, session, orm::db::BackendType::Sqlite,
+                                               serialized, schema.at(0), {}, {});
+        FAIL() << "Expected a missing to-one target error";
+    }
+    catch (const std::invalid_argument& error)
+    {
+        EXPECT_EQ(std::string{error.what()}, "To-one column has no target model in the schema");
+    }
+    EXPECT_FALSE(bound.hasBinary());
+    EXPECT_THROW((void)bound.values().get_indicator("owner_id"), soci::soci_error);
+}
+
+TEST(DatabaseCoverageCompletionTest, binaryBindingRejectsRuntimeWithoutParameterInspectionBeforeExecuting)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    const ConfigurableRuntime runtime{backend.runtime()};
+    const orm::SqliteConfig config{.database = orm::SqliteMemory{}};
+    soci::session session;
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    session << "CREATE TABLE binary_inspection_guard (id BLOB)";
+    orm::db::binding::StatementBindings bound;
+    bound.add(session, runtime, "id",
+              orm::db::BoundValue{.logicalType = orm::model::ColumnType::Uuid,
+                                  .value = orm::Uuid{},
+                                  .uuidStorage = orm::model::UuidStorage::Binary16});
+    ASSERT_TRUE(bound.hasBinary());
+    soci::statement statement{session};
+    statement.alloc();
+    statement.prepare("INSERT INTO binary_inspection_guard (id) VALUES (:id)");
+
+    try
+    {
+        bound.exchange(statement);
+        FAIL() << "Expected unsupported Binary16 parameter inspection";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::UnsupportedFeature);
+        EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Empty);
+        EXPECT_EQ(error.getOperation(), "bind parameter");
+        EXPECT_EQ(std::string{error.what()}, "Backend does not support Binary16 parameter inspection");
+    }
+    int count{};
+    session << "SELECT COUNT(*) FROM binary_inspection_guard", soci::into(count);
+    EXPECT_EQ(count, 0);
+}
+
+TEST(DatabaseCoverageCompletionTest, explicitUuidStorageIsRejectedOnUnsupportedBackendWithoutMutating)
+{
+    DatabaseBundle bundle;
+    bundle.connect();
+    bundle.database->createTable<BoolBindingModel>();
+    bundle.database->insert(BoolBindingModel{true});
+
+    for (const auto storage : {orm::model::UuidStorage::Binary16, orm::model::UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(storage));
+        orm::Update<BoolBindingModel> update;
+        update.set(col<&BoolBindingModel::flag>(), false)
+            .where(raw<BoolBindingModel>("1 = 1 OR :uuid IS NULL", param("uuid", orm::Uuid{}, storage)));
+        expectDatabaseError([&] { (void)bundle.database->update(update); }, orm::DatabaseErrorCode::UnsupportedFeature,
+                            "update");
+
+        orm::Query<BoolBindingModel> query;
+        const auto rows = bundle.database->select(query);
+        ASSERT_EQ(rows.size(), 1U);
+        EXPECT_TRUE(rows.front().flag);
+    }
+}
+
+TEST(DatabaseCoverageCompletionTest, incompatibleExplicitUuidStorageFromGeneratorCannotExecuteMutation)
+{
+    for (const auto storage : {orm::model::UuidStorage::Binary16, orm::model::UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(storage));
+        CommandScripts scripts;
+        scripts.create = "CREATE TABLE coverage_binding (flag INTEGER NOT NULL)";
+        scripts.insert = "INSERT INTO coverage_binding (flag) VALUES (:flag)";
+        scripts.select.sql = "SELECT flag AS coverage_binding_flag FROM coverage_binding";
+        scripts.update.sql = "UPDATE coverage_binding SET flag = 0 WHERE :uuid IS NOT NULL";
+        scripts.update.parameters.push_back({.name = "uuid", .value = orm::Uuid{}, .uuidStorage = storage});
+        // Fault-inject malformed generator output: public QueryValue factories
+        // prevent this mismatch, but Database must still reject it at its boundary.
+        auto& value = scripts.update.parameters.front().value.value();
+        const_cast<orm::query::QueryValue::Value&>(value.get()) = std::string{"not a UUID"};
+        auto provider = std::make_unique<ConfigurableBackend>(makeScriptedGenerator(std::move(scripts)));
+        provider->backendTypeValue = orm::db::BackendType::Sqlite;
+        orm::db::CommandGeneratorFactory registry{std::vector<std::unique_ptr<orm::db::BackendProvider>>{}};
+        registry.registerBackend(std::move(provider));
+        orm::Database connection{orm::SqliteConfig{.database = orm::SqliteMemory{}}, std::move(registry)};
+        auto context = connection.orm<Schema>();
+        context.createTable<BoolBindingModel>();
+        context.insert(BoolBindingModel{true});
+        orm::Update<BoolBindingModel> update;
+        update.set(col<&BoolBindingModel::flag>(), false).where(col<&BoolBindingModel::flag>() == true);
+
+        try
+        {
+            (void)context.update(update);
+            FAIL() << "Expected incompatible explicitly represented UUID storage";
+        }
+        catch (const orm::DatabaseError& error)
+        {
+            EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Conversion);
+            EXPECT_EQ(error.getBackendType(), orm::db::BackendType::Sqlite);
+            EXPECT_EQ(error.getOperation(), "update");
+            EXPECT_EQ(std::string{error.what()}, "An explicitly represented UUID has incompatible storage");
+        }
+        orm::Query<BoolBindingModel> query;
+        const auto rows = context.select(query);
+        ASSERT_EQ(rows.size(), 1U);
+        EXPECT_TRUE(rows.front().flag);
+    }
 }
 
 TEST(DatabaseCoverageCompletionTest, serializedUuidColumnIsRejectedBeforeBackendBinding)

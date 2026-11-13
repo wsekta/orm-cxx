@@ -63,6 +63,67 @@ struct CompositeBook
 };
 using CompositeSchema = orm::Schema<CompositeAuthor, CompositeBook>;
 
+struct StorageRecord
+{
+    orm::Uuid id;
+    std::optional<orm::Uuid> optionalId;
+    orm::Uuid nativeId;
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&StorageRecord::id, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&StorageRecord::optionalId, orm::db::BackendType::Sqlite,
+                         orm::model::UuidStorage::Binary16>());
+};
+using StorageSchema = orm::Schema<StorageRecord>;
+
+TEST(CompiledSqlCoverageTest, uuidRepresentationFollowsFieldsInCompiledBindingsAndResults)
+{
+    constexpr auto plan = update<StorageRecord>()
+                              .set(col<&StorageRecord::optionalId>(), param<std::optional<orm::Uuid>, 0>())
+                              .where(col<&StorageRecord::id>() == param<orm::Uuid, 1>());
+    const auto args = std::tuple{std::optional<orm::Uuid>{}, orm::Uuid{}};
+    auto parameters = ast::collectParameters(plan, args);
+    constexpr auto& compiled =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(plan)>, Flavor::SQLite>;
+    const auto model = orm::modelView<StorageSchema, StorageRecord>();
+    sql::applyUuidBindingStorage(compiled.program.view(), model, orm::db::BackendType::Sqlite, parameters);
+    ASSERT_EQ(parameters.size(), 2U);
+    EXPECT_FALSE(parameters[0].value.has_value());
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Binary16);
+    EXPECT_EQ(parameters[1].uuidStorage, orm::model::UuidStorage::Binary16);
+    sql::applyUuidBindingStorage(compiled.program.view(), model, orm::db::BackendType::Postgres, parameters);
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
+    EXPECT_EQ(parameters[1].uuidStorage, orm::model::UuidStorage::Native);
+
+    constexpr auto selected = select<StorageRecord>();
+    constexpr auto& sqlite =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(selected)>, Flavor::SQLite>;
+    constexpr auto& postgres =
+        ast::compiledStatement<StorageSchema, std::remove_cvref_t<decltype(selected)>, Flavor::PostgreSQL>;
+    EXPECT_NE(sqlite.view().find("typeof("), std::string_view::npos);
+    EXPECT_EQ(postgres.view().find("typeof("), std::string_view::npos);
+}
+
+TEST(CompiledSqlCoverageTest, rejectsOneBindingWithConflictingUuidPolicies)
+{
+    sql::SqlProgram program;
+    program.bindings.push_back({orm::model::ColumnType::Uuid, 0, {}});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Comparison,
+                             .source = sql::parseSqlSource("id"),
+                             .firstParameter = 0,
+                             .parameterCount = 1});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Comparison,
+                             .source = sql::parseSqlSource("nativeId"),
+                             .firstParameter = 0,
+                             .parameterCount = 1});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::And, .left = 0, .right = 1});
+    program.predicate = 2;
+    std::vector<orm::db::StatementParameter> parameters{
+        {.name = "orm_p0", .value = orm::query::QueryValue{orm::Uuid{}}, .nullType = std::nullopt}};
+    EXPECT_THROW(sql::applyUuidBindingStorage(program.view(), orm::modelView<StorageSchema, StorageRecord>(),
+                                              orm::db::BackendType::Sqlite, parameters),
+                 std::invalid_argument);
+}
+
 template <typename SchemaType = Schema, typename Plan>
 auto expectRuntimeProgramMatchesCache(const Plan&) -> void
 {
@@ -112,6 +173,117 @@ struct MutableSchema
         schema.models = pointers;
     }
 };
+
+// Public plan builders keep these indices, names, and relation targets consistent.
+// Exercise malformed internal views directly rather than feeding them to emitSql,
+// which assumes valid indices when rendering SQL before UUID storage annotation.
+TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsAssignmentBindingOutsideDescriptorRange)
+{
+    sql::SqlProgram program;
+    program.assignments.push_back({sql::parseSqlSource("id"), 0});
+    std::vector<orm::db::StatementParameter> parameters{
+        {.name = "orm_p0", .value = orm::query::QueryValue{orm::Uuid{}}, .nullType = std::nullopt}};
+    const auto model = orm::modelView<StorageSchema, StorageRecord>();
+    const auto annotate = [&]
+    { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
+
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL binding index is out of range"));
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
+
+    program.bindings.push_back({orm::model::ColumnType::Uuid, 0, {}});
+    EXPECT_NO_THROW(annotate());
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Binary16);
+}
+
+TEST(CompiledSqlCoverageTest, uuidAnnotationRequiresTheBindingNameNotItsParameterPosition)
+{
+    sql::SqlProgram program;
+    program.bindings.push_back({orm::model::ColumnType::Uuid, 0, "named_uuid"});
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Comparison,
+                             .source = sql::parseSqlSource("id"),
+                             .firstParameter = 0,
+                             .parameterCount = 1});
+    program.predicate = 0;
+    std::vector<orm::db::StatementParameter> parameters{
+        {.name = "orm_p0", .value = orm::query::QueryValue{orm::Uuid{}}, .nullType = std::nullopt}};
+    const auto model = orm::modelView<StorageSchema, StorageRecord>();
+    const auto annotate = [&]
+    { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
+
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL binding has no matching parameter"));
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
+
+    parameters[0].name = "named_uuid";
+    EXPECT_NO_THROW(annotate());
+    EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Binary16);
+}
+
+TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsDanglingPredicateHavingAndChildIndexes)
+{
+    sql::SqlProgram program;
+    std::vector<orm::db::StatementParameter> parameters;
+    const auto model = orm::modelView<StorageSchema, StorageRecord>();
+    const auto annotate = [&]
+    { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
+
+    program.predicate = 0;
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+    program.predicate = sql::noSqlNode;
+    program.having = 0;
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+
+    program.having = sql::noSqlNode;
+    program.nodes.push_back({.kind = sql::SqlNodeKind::Not, .left = 1});
+    program.predicate = 0;
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+
+    program.predicate = sql::noSqlNode;
+    EXPECT_NO_THROW(annotate());
+    EXPECT_TRUE(parameters.empty());
+}
+
+TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsAnUnknownCollectionRelation)
+{
+    constexpr auto plan = select<User>().where(any<&User::roles>(col<&Role::id>() == param<int, 0>()));
+    auto program = ast::compiled::program<std::remove_cvref_t<decltype(plan)>>();
+    auto parameters = ast::collectParameters(plan, std::tuple{42});
+    const auto model = orm::modelView<Schema, User>();
+    const auto annotate = [&]
+    { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
+    program.nodes[program.predicate].relation = "missing_roles";
+
+    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::invalid_argument>("Unknown collection relation"));
+
+    program.nodes[program.predicate].relation = "roles";
+    EXPECT_NO_THROW(annotate());
+    ASSERT_EQ(parameters.size(), 1U);
+    EXPECT_EQ(std::get<int>(parameters[0].value->get()), 42);
+}
+
+TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsACollectionTargetOutsideTheSchema)
+{
+    constexpr auto plan = select<User>().where(any<&User::roles>(col<&Role::id>() == param<int, 0>()));
+    const auto program = ast::compiled::program<std::remove_cvref_t<decltype(plan)>>();
+    auto parameters = ast::collectParameters(plan, std::tuple{42});
+    MutableSchema schema{Schema::view};
+    const auto userIndex = orm::modelView<Schema, User>().modelIndex;
+    const auto model = schema.schema.at(userIndex);
+    const auto* roles = model.findRelation("roles");
+    ASSERT_NE(roles, nullptr);
+    auto& relation = schema.relations[userIndex][static_cast<std::size_t>(roles - schema.relations[userIndex].data())];
+    const auto target = relation.targetModelIndex;
+    relation.targetModelIndex = orm::model::noTargetModel;
+    const auto annotate = [&]
+    { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
+
+    EXPECT_THAT(annotate,
+                ::testing::ThrowsMessage<std::invalid_argument>("Collection relation target is not available"));
+
+    relation.targetModelIndex = target;
+    EXPECT_NO_THROW(annotate());
+    ASSERT_EQ(parameters.size(), 1U);
+    EXPECT_EQ(std::get<int>(parameters[0].value->get()), 42);
+}
 
 TEST(CompiledSqlCoverageTest, runtimeProgramAndFrozenCacheShareAllPredicateShapes)
 {

@@ -121,7 +121,10 @@ auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
 }
 } // namespace
 
-DefaultCommandGenerator::DefaultCommandGenerator(const SqlDialect& dialectInit) : dialect{dialectInit} {}
+DefaultCommandGenerator::DefaultCommandGenerator(const SqlDialect& dialectInit, BackendType backendInit)
+    : dialect{dialectInit}, backend{backendInit}
+{
+}
 
 auto DefaultCommandGenerator::insert(model::ModelView model) const -> std::string
 {
@@ -138,7 +141,7 @@ auto DefaultCommandGenerator::insert(model::ModelView model) const -> std::strin
 
 auto DefaultCommandGenerator::createTable(model::ModelView model) const -> std::string
 {
-    const auto table = migrations::detail::physicalTable(model, dialect);
+    const auto table = migrations::detail::physicalTable(model, dialect, backend);
     return migrations::detail::renderCreateTable(dialect, table, true, true);
 }
 
@@ -148,14 +151,14 @@ auto DefaultCommandGenerator::dropTable(model::ModelView model) const -> std::st
 }
 auto DefaultCommandGenerator::select(model::ModelView model, const SelectSpec& spec) const -> SelectStatement
 {
-    return commands::renderSelectStatement(model, spec, dialect);
+    return commands::renderSelectStatement(model, spec, dialect, backend);
 }
 auto DefaultCommandGenerator::update(model::ModelView model, const UpdateSpec& spec) const -> Statement
 {
-    return commands::renderUpdateStatement(model, spec, dialect);
+    return commands::renderUpdateStatement(model, spec, dialect, backend);
 }
 auto DefaultCommandGenerator::remove(model::ModelView model, const Predicate& predicate) const -> Statement
 {
-    return commands::renderRemoveStatement(model, predicate, dialect);
+    return commands::renderRemoveStatement(model, predicate, dialect, backend);
 }
 } // namespace orm::db

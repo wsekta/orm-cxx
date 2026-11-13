@@ -1,7 +1,8 @@
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Journal } from './core.mjs';
-import { loadConfig, codexSender } from './main.mjs';
+import { loadConfig } from './main.mjs';
+import { createSender } from './sender.mjs';
 import { createDispatcher } from './dispatcher.mjs';
 import { acquireDispatcherLock } from './dispatcher-lock.mjs';
 import { parseOptions } from './worktree.mjs';
@@ -48,7 +49,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
     const options = parseOptions(process.argv.slice(2), ['config'], ['config']);
     const config = loadConfig(options.config);
     journal = new Journal(config.journalPath);
-    const report = await runDraining(config, journal, codexSender(config), line => process.stderr.write(line + '\n'));
+    const report = await runDraining(config, journal, createSender(config, line => process.stderr.write(line + '\n')), line => process.stderr.write(line + '\n'));
     console.log(JSON.stringify(report));
     if (!report.complete) process.exitCode = 2;
   } catch (error) {

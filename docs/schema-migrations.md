@@ -167,7 +167,7 @@ For example, `"expressions":{"sqlite":"CAST(old_value AS TEXT)",
 nullability requires a backfill. Conversions are explicit when losslessness
 cannot be established. Decisions for upgrades and downgrades are separate.
 
-Native temporal and UUID constants use a tagged object. Existing boolean,
+Temporal and UUID constants use a tagged object. Existing boolean,
 numeric, string and `null` constants retain their meaning:
 
 ```json
@@ -184,9 +184,29 @@ numeric, string and `null` constants retain their meaning:
 
 The C++ `GenerationLiteral` variant also accepts `Date`, `TimeOfDay`,
 `LocalDateTime`, `UtcTimestamp` and `Uuid` directly. The generator validates the
-logical target type, calendar/range and native backend support before rendering
-a backend literal. UUID constants require PostgreSQL or MariaDB; SQLite native
-values and MySQL UUID are rejected. See [Value types](value-types.md).
+logical target type, calendar/range and backend representation before rendering
+a backend literal. UUID constants use native UUID on PostgreSQL/MariaDB and can
+also fill explicitly mapped Binary16 or Text36 columns on SQLite/MySQL. Native UUID on
+SQLite/MySQL is rejected. See [Value types](value-types.md).
+
+Snapshots record the physical UUID type, including `BLOB`, `BINARY(16)`, `TEXT`
+and `CHAR(36)`, and preserve the existing serialization and checksums for native snapshots and
+finalized migrations. Replacing a C++ UUID type with an adapter to the same
+mapping does not change the physical schema. A change of representation needs
+an explicit backend SQL expression and decisions for dependent primary and
+foreign key columns; it is not generated as an implicit lossless cast. Supply
+and review separate down-conversions when a rollback is needed.
+
+For a MySQL Binary16 backfill or conversion, generated SQL first stores the
+expression result without fixed-width padding and checks its byte length before
+assigning it to `BINARY(16)`. This check uses an enforced MySQL `CHECK`
+constraint, available from MySQL 8.0.16; older servers reject that syntax.
+The expression itself must not hide invalid input by padding or truncating it
+before this check. For example, casting a short input to `BINARY(16)` inside the
+expression has already padded it. MySQL migration DDL is nontransactional: a
+failed check leaves an incomplete migration marker for operator inspection,
+not a successful history entry. SQLite verifies the actual `BLOB` storage
+class and 16-byte length before accepting the migration.
 
 Temporal snapshots preserve `(6)` precision and with/without-time-zone semantics.
 Native drift inspection compares those properties explicitly; changing `(6)`

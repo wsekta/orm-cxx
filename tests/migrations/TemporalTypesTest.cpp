@@ -9,6 +9,27 @@ import :test_support;
 import :migrations_internal;
 import :value_codec;
 
+namespace migration_adapter_types
+{
+struct DomainUuid
+{
+    orm::Uuid value;
+};
+} // namespace migration_adapter_types
+
+template <>
+struct orm::UuidAdapter<migration_adapter_types::DomainUuid>
+{
+    static auto toUuid(const migration_adapter_types::DomainUuid& value) -> orm::Uuid
+    {
+        return value.value;
+    }
+    static auto fromUuid(const orm::Uuid& value) -> migration_adapter_types::DomainUuid
+    {
+        return {value};
+    }
+};
+
 namespace temporal_migration_models
 {
 struct Seed
@@ -60,12 +81,67 @@ struct UuidOwner
                                                                 .ownerColumns<"owner_id">()
                                                                 .targetColumns<"target_id">());
 };
+struct BinaryUuidTarget
+{
+    orm::Uuid id;
+    inline static constexpr orm::reflection::FixedString table_name{"migration_binary_targets"};
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&BinaryUuidTarget::id, orm::db::BackendType::Mysql, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&BinaryUuidTarget::id, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>());
+};
+struct BinaryUuidOwner
+{
+    orm::Uuid id;
+    std::optional<BinaryUuidTarget> target;
+    orm::ManyToMany<BinaryUuidTarget> targets;
+    inline static constexpr orm::reflection::FixedString table_name{"migration_binary_owners"};
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&BinaryUuidOwner::id, orm::db::BackendType::Mysql, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&BinaryUuidOwner::id, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>());
+    inline static constexpr auto relations = orm::relations(orm::manyToMany<&BinaryUuidOwner::targets>()
+                                                                .through<"migration_binary_links">()
+                                                                .ownerColumns<"owner_id">()
+                                                                .targetColumns<"target_id">());
+};
+struct CanonicalUuidMapping
+{
+    int id;
+    orm::Uuid value;
+    std::optional<orm::Uuid> optionalValue;
+    inline static constexpr orm::reflection::FixedString table_name{"uuid_mapping_no_diff"};
+    inline static constexpr auto uuid_storage =
+        orm::uuidStorages(orm::uuidStorage<&CanonicalUuidMapping::value, orm::db::BackendType::Mysql,
+                                           orm::model::UuidStorage::Binary16>(),
+                          orm::uuidStorage<&CanonicalUuidMapping::value, orm::db::BackendType::Sqlite,
+                                           orm::model::UuidStorage::Binary16>(),
+                          orm::uuidStorage<&CanonicalUuidMapping::optionalValue, orm::db::BackendType::Mysql,
+                                           orm::model::UuidStorage::Binary16>(),
+                          orm::uuidStorage<&CanonicalUuidMapping::optionalValue, orm::db::BackendType::Sqlite,
+                                           orm::model::UuidStorage::Binary16>());
+};
+struct AdaptedUuidMapping
+{
+    int id;
+    migration_adapter_types::DomainUuid value;
+    std::optional<migration_adapter_types::DomainUuid> optionalValue;
+    inline static constexpr orm::reflection::FixedString table_name{"uuid_mapping_no_diff"};
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&AdaptedUuidMapping::value, orm::db::BackendType::Mysql, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&AdaptedUuidMapping::value, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&AdaptedUuidMapping::optionalValue, orm::db::BackendType::Mysql,
+                         orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&AdaptedUuidMapping::optionalValue, orm::db::BackendType::Sqlite,
+                         orm::model::UuidStorage::Binary16>());
+};
 using SeedSchema = orm::Schema<Seed>;
 using ValueSchema = orm::Schema<Values>;
 using DateSchema = orm::Schema<DateOnly>;
 using TimeSchema = orm::Schema<TimeOnly>;
 using UuidValueSchema = orm::Schema<UuidOnly>;
 using UuidSchema = orm::Schema<UuidOwner, UuidTarget>;
+using BinaryUuidSchema = orm::Schema<BinaryUuidOwner, BinaryUuidTarget>;
+using CanonicalUuidMappingSchema = orm::Schema<CanonicalUuidMapping>;
+using AdaptedUuidMappingSchema = orm::Schema<AdaptedUuidMapping>;
 } // namespace temporal_migration_models
 
 namespace
@@ -215,6 +291,135 @@ TEST(TemporalMigrationTest, UuidKeysForeignKeysAndJunctionsStayNative)
         EXPECT_THROW((void)capture(temporal_models::UuidSchema::view, std::array{backend}), GenerationError);
 }
 
+TEST(TemporalMigrationTest, BinaryUuidSnapshotsAndBackfillsPreserveCanonicalBytes)
+{
+    const auto value = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    for (const auto backend : {Backend::Sqlite, Backend::Mysql})
+    {
+        SCOPED_TRACE(static_cast<int>(backend));
+        const auto physicalType = backend == Backend::Sqlite ? "BLOB" : "BINARY(16)";
+        auto snapshot = capture(temporal_models::SeedSchema::view, std::array{backend});
+        auto& columns = snapshot.backends.at(backend).tables.front().columns;
+        columns.push_back({.name = "value", .logicalType = Type::Uuid, .sqlType = physicalType, .nullable = false});
+        const auto json = temporal_detail::snapshotJson(snapshot);
+        EXPECT_EQ(temporal_detail::snapshotFromJson(json), snapshot);
+        EXPECT_TRUE(compare(snapshot, temporal_detail::snapshotFromJson(json)).changes.empty());
+        const auto migration = temporalLiteral(backend, Type::Uuid, physicalType, value);
+        EXPECT_NE(migration.migration.scripts.at(backend).up.find("X'00112233445566778899aabbccddeeff'"),
+                  std::string::npos);
+        if (backend == Backend::Mysql)
+        {
+            const auto& sql = migration.migration.scripts.at(backend).up;
+            EXPECT_NE(sql.find("LONGBLOB"), std::string::npos);
+            EXPECT_NE(sql.find("CHECK (OCTET_LENGTH("), std::string::npos);
+            EXPECT_NE(sql.find("ENFORCED"), std::string::npos);
+            EXPECT_NE(sql.find("DROP CHECK"), std::string::npos);
+        }
+        // A wrong-width binary representation stays invalid on both backends.
+        // SQLite TEXT is no longer a rejection case: it is the canonical Text36 form.
+        columns.back().sqlType = "BINARY(15)";
+        EXPECT_THROW(temporal_detail::validateSnapshot(snapshot), GenerationError);
+    }
+}
+
+TEST(TemporalMigrationTest, LegacyNativeUuidSnapshotKeepsCanonicalJsonAndHash)
+{
+    constexpr std::string_view legacy = R"json({
+  "backends": {
+    "postgresql": {
+      "backend": "postgresql",
+      "profile": "orm-cxx-ddl-v1:postgresql",
+      "tables": [
+        {
+          "columns": [
+            {
+              "autoIncrement": false,
+              "logicalType": 12,
+              "maxStringLength": null,
+              "name": "value",
+              "nullable": false,
+              "sqlType": "UUID"
+            }
+          ],
+          "foreignKeys": [],
+          "indexes": [],
+          "name": "legacy_uuid",
+          "options": "",
+          "primaryKey": [],
+          "primaryKeyName": ""
+        }
+      ]
+    }
+  },
+  "formatVersion": 1
+}
+)json";
+    const auto snapshot = temporal_detail::snapshotFromJson(legacy);
+    EXPECT_EQ(temporal_detail::snapshotJson(snapshot), legacy);
+    EXPECT_EQ(temporal_detail::snapshotHash(snapshot, Backend::Postgres),
+              "87e8b84c9ecc87a09fcaaf3aefed5b724bc8ac17cde21c0ebc85de84d07234da");
+    const auto physical = snapshot.backends.at(Backend::Postgres);
+    SqlMigration scripts;
+    scripts.up = "SELECT 1;\r\n";
+    scripts.down = "SELECT 2;\n";
+    scripts.upContext.source = physical;
+    scripts.upContext.target = physical;
+    scripts.downContext.source = physical;
+    scripts.downContext.target = physical;
+    scripts.beforeHash = temporal_detail::snapshotHash(snapshot, Backend::Postgres);
+    scripts.afterHash = scripts.beforeHash;
+    const Catalog catalog{Migration{.version = 1,
+                                    .name = "legacy_native_uuid",
+                                    .scripts = {{Backend::Postgres, scripts}},
+                                    .before = snapshot,
+                                    .after = snapshot}};
+    EXPECT_EQ(temporal_detail::checksum(catalog.migrations().front().scripts.at(Backend::Postgres)),
+              "6022cb4503728c560758ca79f68dde2f4bbb2d33091dbf6f55a114cf1aa4e1d1");
+}
+
+TEST(TemporalMigrationTest, BinaryUuidKeyMappingsPropagateToForeignAndJunctionColumns)
+{
+    orm::db::CommandGeneratorFactory registry;
+    for (const auto backend : {Backend::Sqlite, Backend::Mysql, Backend::Postgres, Backend::Mariadb})
+    {
+        const auto snapshot = capture(temporal_models::BinaryUuidSchema::view, std::array{backend});
+        const auto expected = backend == Backend::Sqlite ? "BLOB" : backend == Backend::Mysql ? "BINARY(16)" : "UUID";
+        ASSERT_EQ(snapshot.backends.at(backend).tables.size(), 3U);
+        for (const auto& table : snapshot.backends.at(backend).tables)
+            for (const auto& column : table.columns)
+            {
+                EXPECT_EQ(column.logicalType, Type::Uuid);
+                EXPECT_EQ(column.sqlType, expected);
+            }
+        EXPECT_EQ(temporal_detail::snapshotFromJson(temporal_detail::snapshotJson(snapshot)), snapshot);
+        const bool enabled = backend == Backend::Sqlite   ? orm::config::sqliteBackendEnabled :
+                             backend == Backend::Mysql    ? orm::config::mysqlBackendEnabled :
+                             backend == Backend::Postgres ? orm::config::postgresqlBackendEnabled :
+                                                            orm::config::mariadbBackendEnabled;
+        if (!enabled)
+            continue;
+        const auto owner = temporal_models::BinaryUuidSchema::view.at(0);
+        const auto& provider = registry.getBackend(backend);
+        EXPECT_NE(provider.commandGenerator().createTable(owner).find(expected), std::string::npos);
+        const auto junctions = orm::db::relations::createTableStatements(provider.dialect(), owner, backend);
+        ASSERT_EQ(junctions.size(), 1U);
+        EXPECT_NE(junctions.front().find(expected), std::string::npos);
+        EXPECT_THROW((void)orm::db::relations::createTableStatements(provider.dialect(), owner), GenerationError);
+    }
+}
+
+TEST(TemporalMigrationTest, AdaptingTheCppUuidTypeDoesNotChangeThePhysicalSchema)
+{
+    for (const auto backend : {Backend::Sqlite, Backend::Mysql, Backend::Postgres, Backend::Mariadb})
+    {
+        const auto canonical = capture(temporal_models::CanonicalUuidMappingSchema::view, std::array{backend});
+        const auto adapted = capture(temporal_models::AdaptedUuidMappingSchema::view, std::array{backend});
+        EXPECT_EQ(canonical, adapted);
+        EXPECT_TRUE(compare(canonical, adapted).changes.empty());
+        EXPECT_EQ(temporal_detail::snapshotHash(canonical, backend), temporal_detail::snapshotHash(adapted, backend));
+    }
+}
+
 TEST(TemporalMigrationTest, TypedLiteralsRetainMicrosecondsAndUseNativeCasts)
 {
     const auto day = codec::parseDate("2024-02-29");
@@ -329,6 +534,37 @@ TEST(TemporalMigrationTest, LocalAndUtcConversionsRequireAnExplicitBackendExpres
                                                                        "CONVERT_TZ(`value`, '+00:00', '+00:00')");
         EXPECT_FALSE(compare(before, after, decisions).changes.front().unresolved);
         EXPECT_NO_THROW((void)generate(2, "explicit_timezone", compare(before, after, decisions), decisions));
+    }
+}
+
+TEST(TemporalMigrationTest, BinaryUuidConversionRequiresAnExplicitBackendExpression)
+{
+    for (const auto backend : {Backend::Sqlite, Backend::Mysql})
+    {
+        auto before = capture(temporal_models::SeedSchema::view, std::array{backend});
+        before.backends.at(backend).tables.front().columns.push_back(
+            {.name = "value",
+             .logicalType = Type::String,
+             .sqlType = backend == Backend::Sqlite ? "TEXT" : "LONGTEXT",
+             .nullable = false});
+        auto after = before;
+        auto& target = after.backends.at(backend).tables.front().columns.back();
+        target.logicalType = Type::Uuid;
+        target.sqlType = backend == Backend::Sqlite ? "BLOB" : "BINARY(16)";
+        auto pending = compare(before, after);
+        ASSERT_EQ(pending.changes.size(), 1U);
+        EXPECT_TRUE(pending.changes.front().unresolved);
+        GenerationDecisions decisions;
+        decisions.allowDataLossUp.push_back(pending.changes.front().id);
+        decisions.conversions.push_back(
+            {.table = "migration_temporal_values", .column = "value", .sourceColumn = "value"});
+        EXPECT_TRUE(compare(before, after, decisions).changes.front().unresolved);
+        decisions.conversions.front().sourceColumn.reset();
+        decisions.conversions.front().constant = orm::Uuid{};
+        EXPECT_TRUE(compare(before, after, decisions).changes.front().unresolved);
+        decisions.conversions.front().constant.reset();
+        decisions.conversions.front().expressions.emplace(backend, "X'00112233445566778899aabbccddeeff'");
+        EXPECT_FALSE(compare(before, after, decisions).changes.front().unresolved);
     }
 }
 } // namespace
@@ -484,6 +720,200 @@ TEST_P(TemporalMigrationLiveTest, NativeUuidBackfillsRemainHydratable)
         EXPECT_EQ(row.value, uuid);
     ASSERT_NO_THROW(runner.down(1));
     EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, BinaryUuidBackfillRoundTripsAndRollsBack)
+{
+    if (GetParam().type != Backend::Sqlite && GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "Binary UUID columns require SQLite or MySQL";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{GetParam().type});
+    auto after = before;
+    after.backends.at(GetParam().type)
+        .tables.front()
+        .columns.push_back({.name = "value",
+                            .logicalType = Type::Uuid,
+                            .sqlType = GetParam().type == Backend::Sqlite ? "BLOB" : "BINARY(16)",
+                            .nullable = false});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back({.table = "migration_temporal_values",
+                                   .column = "value",
+                                   .constant = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff")});
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    const auto second = generate(2, "binary_uuid_backfill", compare(before, after, decisions), decisions).migration;
+    Runner runner{connection, Catalog{first, second}};
+    ASSERT_NO_THROW(runner.up());
+    std::string hex;
+    session() << "SELECT HEX(" + quote("value") + ") FROM " + quote("migration_temporal_values"), soci::into(hex);
+    EXPECT_EQ(hex, "00112233445566778899AABBCCDDEEFF");
+    ASSERT_NO_THROW(runner.down(1));
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, SqliteRejectsInvalidBinaryUuidBackfills)
+{
+    if (GetParam().type != Backend::Sqlite)
+        GTEST_SKIP() << "SQLite storage classes need explicit validation";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Sqlite});
+    auto after = before;
+    after.backends.at(Backend::Sqlite)
+        .tables.front()
+        .columns.push_back({.name = "value", .logicalType = Type::Uuid, .sqlType = "BLOB", .nullable = false});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    for (const auto* invalid : {"'0123456789abcdef'", "X'0011'"})
+    {
+        GenerationDecisions decisions;
+        decisions.backfills.push_back(
+            {.table = "migration_temporal_values", .column = "value", .expressions = {{Backend::Sqlite, invalid}}});
+        decisions = temporalApprovals(before, after, std::move(decisions));
+        const auto second = generate(2, "invalid_binary_uuid", compare(before, after, decisions), decisions).migration;
+        Runner runner{connection, Catalog{first, second}};
+        EXPECT_THROW(runner.up(), MigrationError);
+        EXPECT_EQ(runner.status().currentVersion, 1);
+        EXPECT_FALSE(runner.status().incomplete);
+    }
+}
+
+TEST_P(TemporalMigrationLiveTest, CompositeUuidConversionPreservesForeignKeysAndRollsBack)
+{
+    const auto backend = GetParam().type;
+    if (backend != Backend::Sqlite && backend != Backend::Mysql)
+        GTEST_SKIP() << "Binary UUID columns require SQLite or MySQL";
+    auto before = emptySnapshot(std::array{backend});
+    auto& schema = before.backends.at(backend);
+    const auto options =
+        capture(temporal_models::SeedSchema::view, std::array{backend}).backends.at(backend).tables.front().options;
+    const auto textType = backend == Backend::Sqlite ? "TEXT" : "VARCHAR(16)";
+    PhysicalTable parent;
+    parent.name = "uuid_composite_parent";
+    parent.options = options;
+    parent.columns = {
+        {.name = "part_a", .logicalType = Type::String, .sqlType = textType, .nullable = false, .maxStringLength = 16},
+        {.name = "part_b", .logicalType = Type::String, .sqlType = textType, .nullable = false, .maxStringLength = 16}};
+    parent.primaryKey = {"part_a", "part_b"};
+    parent.primaryKeyName = backend == Backend::Mysql ? "PRIMARY" : "uuid_composite_parent_pk";
+    PhysicalTable child;
+    child.name = "uuid_composite_child";
+    child.options = options;
+    child.columns = {
+        {.name = "id",
+         .logicalType = Type::Int,
+         .sqlType = backend == Backend::Sqlite ? "INTEGER" : "INT",
+         .nullable = false},
+        {.name = "ref_a", .logicalType = Type::String, .sqlType = textType, .nullable = false, .maxStringLength = 16},
+        {.name = "ref_b", .logicalType = Type::String, .sqlType = textType, .nullable = false, .maxStringLength = 16}};
+    child.primaryKey = {"id"};
+    child.primaryKeyName = backend == Backend::Mysql ? "PRIMARY" : "uuid_composite_child_pk";
+    child.foreignKeys.push_back({.name = "uuid_composite_fk",
+                                 .columns = {"ref_a", "ref_b"},
+                                 .targetTable = parent.name,
+                                 .targetColumns = {"part_a", "part_b"}});
+    if (backend == Backend::Mysql)
+        child.indexes.push_back({.name = "uuid_composite_fk_index", .columns = {"ref_a", "ref_b"}});
+    schema.tables = {parent, child};
+    temporal_detail::canonicalize(before);
+
+    auto after = before;
+    for (auto& table : after.backends.at(backend).tables)
+        for (auto& column : table.columns)
+            if (column.logicalType == Type::String)
+            {
+                column.logicalType = Type::Uuid;
+                column.sqlType = backend == Backend::Sqlite ? "BLOB" : "BINARY(16)";
+                column.maxStringLength.reset();
+            }
+    GenerationDecisions decisions;
+    for (const auto& [table, column] :
+         std::array{std::pair{"uuid_composite_parent", "part_a"}, std::pair{"uuid_composite_parent", "part_b"},
+                    std::pair{"uuid_composite_child", "ref_a"}, std::pair{"uuid_composite_child", "ref_b"}})
+    {
+        const auto name = quote(column);
+        const auto up = "CAST(" + name + (backend == Backend::Sqlite ? " AS BLOB)" : " AS BINARY(16))");
+        const auto down =
+            backend == Backend::Sqlite ? "CAST(" + name + " AS TEXT)" : "CONVERT(" + name + " USING utf8mb4)";
+        decisions.conversions.push_back({.table = table, .column = column, .expressions = {{backend, up}}});
+        decisions.downConversions.push_back({.table = table, .column = column, .expressions = {{backend, down}}});
+    }
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    auto missing = decisions;
+    missing.conversions.pop_back();
+    EXPECT_TRUE(std::ranges::any_of(compare(before, after, missing).changes,
+                                    [](const auto& change) { return change.unresolved; }));
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote(parent.name) + " (" + quote("part_a") + "," + quote("part_b") +
+                     ") VALUES ('0123456789ABCDEF','fedcba9876543210')";
+    session() << "INSERT INTO " + quote(child.name) + " (" + quote("id") + "," + quote("ref_a") + "," + quote("ref_b") +
+                     ") VALUES (1,'0123456789ABCDEF','fedcba9876543210')";
+    const auto second = generate(2, "binary_composite_fk", compare(before, after, decisions), decisions).migration;
+    ASSERT_TRUE(second.scripts.at(backend).down);
+    Runner runner{connection, Catalog{first, second}};
+    ASSERT_NO_THROW(runner.up());
+    const auto join = " FROM " + quote(child.name) + " c JOIN " + quote(parent.name) + " p ON c." + quote("ref_a") +
+                      " = p." + quote("part_a") + " AND c." + quote("ref_b") + " = p." + quote("part_b");
+    int joined{};
+    std::string hex;
+    session() << "SELECT COUNT(*)" + join, soci::into(joined);
+    session() << "SELECT HEX(p." + quote("part_a") + ")" + join, soci::into(hex);
+    EXPECT_EQ(joined, 1);
+    EXPECT_EQ(hex, "30313233343536373839414243444546");
+    ASSERT_NO_THROW(runner.down(1));
+    std::string restored;
+    joined = 0;
+    session() << "SELECT COUNT(*)" + join, soci::into(joined);
+    session() << "SELECT c." + quote("ref_a") + join, soci::into(restored);
+    EXPECT_EQ(joined, 1);
+    EXPECT_EQ(restored, "0123456789ABCDEF");
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, MysqlRejectsBinaryUuidLengthDrift)
+{
+    if (GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "MySQL owns the fixed-width binary UUID representation";
+    auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Mysql});
+    before.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "value", .logicalType = Type::Uuid, .sqlType = "BINARY(16)", .nullable = true});
+    const auto first = initial(before);
+    auto after = before;
+    after.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "extra", .logicalType = Type::Int, .sqlType = "INT", .nullable = true});
+    const auto second = generate(2, "binary_uuid_drift", compare(before, after)).migration;
+    session() << "ALTER TABLE " + quote("migration_temporal_values") + " MODIFY COLUMN " + quote("value") +
+                     " BINARY(15) NULL";
+    expectDriftRejected(Catalog{first, second});
+}
+
+TEST_P(TemporalMigrationLiveTest, MysqlRejectsShortUuidBackfillBeforePadding)
+{
+    if (GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "MySQL pads fixed-width binary values";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Mysql});
+    auto after = before;
+    after.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "value", .logicalType = Type::Uuid, .sqlType = "BINARY(16)", .nullable = false});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back(
+        {.table = "migration_temporal_values", .column = "value", .expressions = {{Backend::Mysql, "X'01'"}}});
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    const auto second = generate(2, "short_binary_uuid", compare(before, after, decisions), decisions).migration;
+    Runner runner{connection, Catalog{first, second}};
+    EXPECT_THROW(runner.up(), MigrationError);
+    const auto status = runner.status();
+    EXPECT_EQ(status.currentVersion, 1);
+    ASSERT_TRUE(status.incomplete);
+    EXPECT_EQ(status.incomplete->version, 2);
+    int finalColumns{};
+    session() << "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() "
+                 "AND table_name='migration_temporal_values' AND column_name='value'",
+        soci::into(finalColumns);
+    EXPECT_EQ(finalColumns, 0);
 }
 
 TEST_P(TemporalMigrationLiveTest, GeneratedUuidPrimaryForeignAndJunctionKeysUseNativeColumns)

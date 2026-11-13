@@ -229,6 +229,7 @@ export
     {
         model::ColumnType logicalType;
         std::optional<query::QueryValue::Value> value;
+        model::UuidStorage uuidStorage{model::UuidStorage::Native};
 
         [[nodiscard]] auto isNull() const noexcept -> bool
         {
@@ -241,6 +242,7 @@ export
         std::string name;
         std::optional<query::QueryValue> value;
         std::optional<model::ColumnType> nullType;
+        model::UuidStorage uuidStorage{model::UuidStorage::Native};
 
         [[nodiscard]] auto getLogicalType() const -> model::ColumnType
         {
@@ -259,10 +261,11 @@ export
         {
             if (value.has_value())
             {
-                return BoundValue{.logicalType = value->getLogicalType(), .value = value->get()};
+                return BoundValue{
+                    .logicalType = value->getLogicalType(), .value = value->get(), .uuidStorage = uuidStorage};
             }
 
-            return BoundValue{.logicalType = getLogicalType(), .value = std::nullopt};
+            return BoundValue{.logicalType = getLogicalType(), .value = std::nullopt, .uuidStorage = uuidStorage};
         }
     };
 
@@ -341,6 +344,12 @@ export
             return false;
         }
         virtual auto bind(soci::values& values, std::string_view name, const BoundValue& value) const -> void = 0;
+        /** Tests the backend's prepared parameter names, without interpreting raw SQL in the ORM. */
+        [[nodiscard]] virtual auto hasStatementParameter(soci::statement&, std::string_view) const -> bool
+        {
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, BackendType::Empty, "bind parameter",
+                                "Backend does not support Binary16 parameter inspection"};
+        }
         [[nodiscard]] virtual auto translateError(const soci::soci_error& error, DatabaseErrorCode fallback,
                                                   std::string_view operation) const -> DatabaseError = 0;
     };

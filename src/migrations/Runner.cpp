@@ -302,6 +302,9 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                     (!postgres && row.get_indicator(7) != soci::i_null &&
                      row.get<std::string>(7) !=
                          (backend == db::BackendType::Mysql ? "utf8mb4_0900_bin" : "utf8mb4_nopad_bin")) ||
+                    (backend == db::BackendType::Mysql && expected->logicalType == model::ColumnType::Uuid &&
+                     expected->sqlType == "BINARY(16)" &&
+                     (row.get_indicator(4) == soci::i_null || row.get<long long>(4) != 16)) ||
                     (expected->maxStringLength &&
                      (row.get_indicator(4) == soci::i_null ||
                       static_cast<std::size_t>(row.get<long long>(4)) != *expected->maxStringLength)))
@@ -639,6 +642,22 @@ auto validateTargetValues(Database& database, soci::session& session, db::Backen
             case UtcTimestamp:
             case Uuid:
             {
+                if (column.logicalType == Uuid &&
+                    ((backend == db::BackendType::Sqlite && column.sqlType == "BLOB") ||
+                     (backend == db::BackendType::Mysql && column.sqlType == "BINARY(16)")))
+                {
+                    long long invalid{};
+                    const auto storageCheck = backend == db::BackendType::Sqlite ?
+                                                  std::format("typeof({}) <> 'blob' OR ", name) :
+                                                  std::string{};
+                    session << std::format("SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND ({}length({}) <> 16)",
+                                           detail::quoteIdentifier(backend, table.name), name, storageCheck, name),
+                        soci::into(invalid);
+                    if (invalid != 0)
+                        schemaFailure(std::format("Migrated UUID values have incompatible storage: {}.{}", table.name,
+                                                  column.name));
+                    continue;
+                }
                 soci::rowset<std::string> values =
                     (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
                                                     detail::quoteIdentifier(backend, table.name), name));

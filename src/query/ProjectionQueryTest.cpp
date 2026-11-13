@@ -1,5 +1,7 @@
 module;
 
+#include <typeinfo>
+
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -42,12 +44,187 @@ struct AggregateProjectionDto
     long long users;
     double averageField1;
 };
+
+struct UserId
+{
+    orm::Uuid value;
+    auto operator==(const UserId&) const -> bool = default;
+};
+
+struct OrderId
+{
+    orm::Uuid value;
+};
+
+struct UuidRecord
+{
+    UserId id;
+    std::optional<UserId> optionalId;
+    orm::Uuid nativeId;
+};
+
+struct UserIdDto
+{
+    UserId id;
+};
+
+struct OptionalUserIdDto
+{
+    std::optional<UserId> id;
+};
+
+struct OrderIdDto
+{
+    OrderId id;
+};
+
+struct NativeUuidDto
+{
+    orm::Uuid id;
+};
+
+struct RepeatedUserIdDto
+{
+    UserId id;
+    std::optional<UserId> copy;
+};
+
+struct MixedUuidDto
+{
+    UserId id;
+    OrderId copy;
+};
 } // namespace projection_query_test_models
+
+template <>
+struct orm::UuidAdapter<projection_query_test_models::UserId>
+{
+    static auto toUuid(const projection_query_test_models::UserId& value) -> orm::Uuid
+    {
+        return value.value;
+    }
+    static auto fromUuid(const orm::Uuid& value) -> projection_query_test_models::UserId
+    {
+        return {value};
+    }
+};
+
+template <>
+struct orm::UuidAdapter<projection_query_test_models::OrderId>
+{
+    static auto toUuid(const projection_query_test_models::OrderId& value) -> orm::Uuid
+    {
+        return value.value;
+    }
+    static auto fromUuid(const orm::Uuid& value) -> projection_query_test_models::OrderId
+    {
+        return {value};
+    }
+};
 
 using namespace projection_query_test_models;
 
 namespace
 {
+template <typename Result, typename... Projections>
+concept AcceptsDynamicUuidProjections = requires(orm::ProjectionQuery<UuidRecord, Result> query,
+                                                 Projections... projections) { query.project(projections...); };
+
+template <typename Result, typename... Projections>
+concept AcceptsStaticUuidProjections =
+    requires(Projections... projections) { selectAs<UuidRecord, Result>(projections...); };
+
+using NamedUserProjection = decltype(as<"id">(col<&UuidRecord::id>()));
+using NamedOptionalUserProjection = decltype(as<"id">(col<&UuidRecord::optionalId>()));
+using NamedNativeProjection = decltype(as<"id">(col<&UuidRecord::nativeId>()));
+using NamedCopyProjection = decltype(as<"copy">(col<&UuidRecord::id>()));
+
+// These constraints are checked by immediate functions, not executable line coverage.
+// Assert each API separately so one rejecting correctly cannot hide a regression in the other.
+static_assert(AcceptsDynamicUuidProjections<UserIdDto, NamedUserProjection>);
+static_assert(AcceptsDynamicUuidProjections<OptionalUserIdDto, NamedUserProjection>);
+static_assert(AcceptsDynamicUuidProjections<UserIdDto, NamedOptionalUserProjection>);
+static_assert(AcceptsDynamicUuidProjections<OptionalUserIdDto, NamedOptionalUserProjection>);
+static_assert(AcceptsDynamicUuidProjections<NativeUuidDto, NamedNativeProjection>);
+static_assert(!AcceptsDynamicUuidProjections<OrderIdDto, NamedUserProjection>);
+static_assert(!AcceptsDynamicUuidProjections<OrderIdDto, NamedOptionalUserProjection>);
+static_assert(!AcceptsDynamicUuidProjections<NativeUuidDto, NamedUserProjection>);
+static_assert(!AcceptsDynamicUuidProjections<UserIdDto, NamedNativeProjection>);
+static_assert(AcceptsDynamicUuidProjections<RepeatedUserIdDto, NamedUserProjection, NamedCopyProjection>);
+static_assert(!AcceptsDynamicUuidProjections<MixedUuidDto, NamedUserProjection, NamedCopyProjection>);
+
+static_assert(AcceptsStaticUuidProjections<UserIdDto, NamedUserProjection>);
+static_assert(AcceptsStaticUuidProjections<OptionalUserIdDto, NamedUserProjection>);
+static_assert(AcceptsStaticUuidProjections<UserIdDto, NamedOptionalUserProjection>);
+static_assert(AcceptsStaticUuidProjections<OptionalUserIdDto, NamedOptionalUserProjection>);
+static_assert(AcceptsStaticUuidProjections<NativeUuidDto, NamedNativeProjection>);
+static_assert(!AcceptsStaticUuidProjections<OrderIdDto, NamedUserProjection>);
+static_assert(!AcceptsStaticUuidProjections<OrderIdDto, NamedOptionalUserProjection>);
+static_assert(!AcceptsStaticUuidProjections<NativeUuidDto, NamedUserProjection>);
+static_assert(!AcceptsStaticUuidProjections<UserIdDto, NamedNativeProjection>);
+static_assert(AcceptsStaticUuidProjections<RepeatedUserIdDto, NamedUserProjection, NamedCopyProjection>);
+static_assert(!AcceptsStaticUuidProjections<MixedUuidDto, NamedUserProjection, NamedCopyProjection>);
+
+// The values reader is a template seam: fail the string extraction itself,
+// without replacing global operator new or throwing later from a UUID adapter.
+class ProjectionReadAllocationFailure final : public std::bad_alloc
+{
+};
+
+template <typename Failure>
+struct FailingProjectionValues
+{
+    mutable std::size_t reads{};
+    mutable const std::string* requestedField{};
+
+    template <typename T>
+    auto get(const std::string& name) const -> T
+    {
+        static_assert(std::same_as<T, std::string>);
+        ++reads;
+        requestedField = &name;
+        throw Failure{};
+    }
+
+    auto get_indicator(const std::string&) const -> soci::indicator
+    {
+        return soci::i_ok;
+    }
+};
+
+template <typename Result>
+auto expectUuidDomainRejection(const auto& projection) -> void
+{
+    orm::ProjectionQuery<UuidRecord, Result> query;
+    EXPECT_THAT([&] { query.project(projection); }, ::testing::ThrowsMessage<std::invalid_argument>(
+                                                        "Projection UUID domain type does not match the result field"));
+}
+
+template <typename Result>
+auto expectMatchingUuidDomain(const auto& projection) -> void
+{
+    orm::ProjectionQuery<UuidRecord, Result> query;
+    ASSERT_NO_THROW(query.project(projection));
+    const auto& spec = orm::detail::QueryTestAccess::getSelectSpec(query);
+    ASSERT_EQ(spec.projections.size(), 1U);
+    EXPECT_EQ(spec.projections.front().sourceType, orm::model::typeId<UserId>());
+    EXPECT_TRUE(spec.projections.front().sourceUuidAdapted);
+}
+
+template <typename Field>
+auto expectProjectionReadAllocationFailure(Field initial) -> void
+{
+    const FailingProjectionValues<ProjectionReadAllocationFailure> values;
+    const std::string alias{"id"};
+    auto field = initial;
+
+    EXPECT_THROW(orm::db::binding::ObjectFieldFromProjectionValues<Field>::get(&field, alias, values),
+                 ProjectionReadAllocationFailure);
+    EXPECT_EQ(field, initial);
+    EXPECT_EQ(values.reads, 1U);
+    EXPECT_EQ(values.requestedField, &alias);
+}
+
 auto projectionColumnPath(const detail::Projection& projection) -> std::string
 {
     return std::get<detail::Column>(projection.source).getPath();
@@ -236,4 +413,101 @@ TEST(ProjectionQueryTest, shouldRejectUnsupportedDtoField)
     EXPECT_THROW(
         query.project(as("id", col<&models::ModelWithId::id>()), as("nested", col<&models::ModelWithId::field1>())),
         std::invalid_argument);
+}
+
+TEST(ProjectionQueryTest, runtimeAliasRejectsDifferentUuidDomains)
+{
+    const auto projection = as("id", col<&UuidRecord::id>());
+    expectUuidDomainRejection<OrderIdDto>(projection);
+    expectUuidDomainRejection<OrderIdDto>(projection.dynamic());
+    expectUuidDomainRejection<OrderIdDto>(as("id", col<&UuidRecord::optionalId>()));
+}
+
+TEST(ProjectionQueryTest, runtimeAliasRejectsAdaptedUuidAsNative)
+{
+    expectUuidDomainRejection<NativeUuidDto>(as("id", col<&UuidRecord::id>()));
+}
+
+TEST(ProjectionQueryTest, runtimeAliasRejectsNativeUuidAsAdapted)
+{
+    expectUuidDomainRejection<UserIdDto>(as("id", col<&UuidRecord::nativeId>()));
+}
+
+TEST(ProjectionQueryTest, erasedNamedProjectionRetainsItsUuidDomain)
+{
+    const auto user = as<"id">(col<&UuidRecord::id>()).dynamic();
+    const auto native = as<"id">(col<&UuidRecord::nativeId>()).dynamic();
+    expectUuidDomainRejection<OrderIdDto>(user);
+    expectUuidDomainRejection<NativeUuidDto>(user);
+    expectUuidDomainRejection<UserIdDto>(native);
+    expectMatchingUuidDomain<UserIdDto>(user);
+}
+
+TEST(ProjectionQueryTest, runtimeAliasesPreserveMatchingUuidDomainsAcrossOptionality)
+{
+    const auto required = as("id", col<&UuidRecord::id>());
+    const auto optional = as("id", col<&UuidRecord::optionalId>());
+    expectMatchingUuidDomain<UserIdDto>(required);
+    expectMatchingUuidDomain<OptionalUserIdDto>(required.dynamic());
+    expectMatchingUuidDomain<UserIdDto>(optional);
+    expectMatchingUuidDomain<OptionalUserIdDto>(optional.dynamic());
+}
+
+TEST(ProjectionQueryTest, shouldAllowOneUuidColumnProjectedUnderDifferentAliases)
+{
+    orm::ProjectionQuery<UuidRecord, RepeatedUserIdDto> query;
+    ASSERT_NO_THROW(query.project(as("id", col<&UuidRecord::id>()), as("copy", col<&UuidRecord::id>())));
+
+    const auto& spec = orm::detail::QueryTestAccess::getSelectSpec(query);
+    ASSERT_EQ(spec.projections.size(), 2U);
+    EXPECT_EQ(spec.projections[0].resultField, "id");
+    EXPECT_EQ(spec.projections[1].resultField, "copy");
+    EXPECT_EQ(projectionColumnPath(spec.projections[0]), "id");
+    EXPECT_EQ(projectionColumnPath(spec.projections[1]), "id");
+}
+
+TEST(ProjectionQueryTest, shouldRejectDuplicateAliasesForTheSameUuidColumn)
+{
+    orm::ProjectionQuery<UuidRecord, UserIdDto> query;
+    EXPECT_THAT([&] { query.project(as("id", col<&UuidRecord::id>()), as("id", col<&UuidRecord::id>())); },
+                ::testing::ThrowsMessage<std::invalid_argument>("Duplicate projection alias: id"));
+}
+
+TEST(ProjectionQueryTest, shouldCheckTheUuidDomainOfEachProjectedAlias)
+{
+    orm::ProjectionQuery<UuidRecord, MixedUuidDto> query;
+    EXPECT_THAT(
+        [&] { query.project(as("id", col<&UuidRecord::id>()), as("copy", col<&UuidRecord::id>())); },
+        ::testing::ThrowsMessage<std::invalid_argument>("Projection UUID domain type does not match the result field"));
+}
+
+TEST(ProjectionQueryTest, uuidProjectionReadPropagatesAllocationFailureWithoutReplacingTheField)
+{
+    expectProjectionReadAllocationFailure(orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff"));
+}
+
+TEST(ProjectionQueryTest, adaptedUuidProjectionReadPropagatesAllocationFailureWithoutReplacingTheField)
+{
+    expectProjectionReadAllocationFailure(UserId{orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff")});
+}
+
+TEST(ProjectionQueryTest, optionalUuidProjectionReadPropagatesAllocationFailureWithoutReplacingTheField)
+{
+    expectProjectionReadAllocationFailure(
+        std::optional{UserId{orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff")}});
+}
+
+TEST(ProjectionQueryTest, uuidProjectionReadStillWrapsIncompatibleRepresentations)
+{
+    const FailingProjectionValues<std::bad_cast> values;
+    const std::string alias{"id"};
+    const auto original = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    auto field = original;
+
+    EXPECT_THAT([&] { orm::db::binding::ObjectFieldFromProjectionValues<orm::Uuid>::get(&field, alias, values); },
+                ::testing::ThrowsMessage<orm::db::binding::ConversionError>(
+                    "A database value has an incompatible result representation"));
+    EXPECT_EQ(field, original);
+    EXPECT_EQ(values.reads, 1U);
+    EXPECT_EQ(values.requestedField, &alias);
 }

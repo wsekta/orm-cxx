@@ -24,9 +24,103 @@ export
 
     template <typename... Models>
     struct Schema;
+
+    /** A physical UUID representation for one field and backend. */
+    template <auto Member, db::BackendType Backend, UuidStorage Storage>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    struct UuidStorageDefinition
+    {
+        inline static constexpr auto member = Member;
+        inline static constexpr auto backend = Backend;
+        inline static constexpr auto storage = Storage;
+        static_assert(Backend == db::BackendType::Mysql || Backend == db::BackendType::Sqlite,
+                      "ORM_MODEL_UUID_STORAGE: storage overrides are supported for MySQL and SQLite only");
+        static_assert(Storage == UuidStorage::Native || Storage == UuidStorage::Binary16 ||
+                          Storage == UuidStorage::Text36,
+                      "ORM_MODEL_UUID_STORAGE: invalid UUID storage representation");
+    };
+
+    template <typename... Definitions>
+    struct UuidStorages
+    {
+        template <typename Model>
+        [[nodiscard]] static consteval auto isValidFor() -> bool
+        {
+            if constexpr (not(std::same_as<detail::member_owner_t<Definitions::member>, Model> && ...))
+                return false;
+            else
+            {
+                constexpr std::array<db::BackendType, sizeof...(Definitions)> backends{Definitions::backend...};
+                // The same member may be declared once per backend, so only a repeated
+                // (member, backend) pair is a conflict. Mirror `uniqueMemberNames` here:
+                // capture the names into a tuple and view the stored lvalues, because
+                // `.view()` on the prvalue from `reflectedMemberName` selects the deleted
+                // `const&&` overload, and a `constexpr` tuple is rejected outright.
+                const auto nameStorage = std::tuple{detail::reflectedMemberName<Definitions::member>()...};
+                const auto names = [&]<std::size_t... I>(std::index_sequence<I...>) consteval {
+                    return std::array<std::string_view, sizeof...(Definitions)>{std::get<I>(nameStorage).view()...};
+                }(std::make_index_sequence<sizeof...(Definitions)>{});
+                for (std::size_t left = 0; left < names.size(); ++left)
+                    for (std::size_t right = left + 1; right < names.size(); ++right)
+                        if (names[left] == names[right] && backends[left] == backends[right])
+                            return false;
+                return (detail::memberExists<Model, Definitions::member>() && ...) &&
+                       ((orm::UuidDomainValue<
+                            detail::static_optional_value_t<detail::member_value_t<Definitions::member>>>) &&
+                        ...);
+            }
+        }
+
+        [[nodiscard]] consteval auto find(std::string_view name, db::BackendType backend) const -> UuidStorage
+        {
+            auto result = UuidStorage::Native;
+            ((detail::reflectedMemberName<Definitions::member>() == name && Definitions::backend == backend ?
+                  static_cast<void>(result = Definitions::storage) :
+                  static_cast<void>(0)),
+             ...);
+            return result;
+        }
+    };
 }
 namespace detail
 {
+template <typename>
+struct IsUuidStorages : std::false_type
+{
+};
+
+template <typename... Definitions>
+struct IsUuidStorages<UuidStorages<Definitions...>> : std::true_type
+{
+};
+
+template <typename Model>
+consteval auto hasValidUuidStorageDefinition() -> bool
+{
+    if constexpr (requires { Model::uuid_storage; })
+    {
+        using definition_t = std::remove_cvref_t<decltype(Model::uuid_storage)>;
+        if constexpr (IsUuidStorages<definition_t>::value)
+            return definition_t::template isValidFor<Model>();
+        else
+            return false;
+    }
+    else
+        return true;
+}
+
+template <typename Model>
+consteval auto mappedUuidStorage(std::string_view name, db::BackendType backend) -> UuidStorage
+{
+    if constexpr (requires { Model::uuid_storage; })
+    {
+        using definition_t = std::remove_cvref_t<decltype(Model::uuid_storage)>;
+        if constexpr (IsUuidStorages<definition_t>::value && definition_t::template isValidFor<Model>())
+            return Model::uuid_storage.find(name, backend);
+    }
+    return UuidStorage::Native;
+}
+
 template <typename>
 struct StaticSchemaTraits;
 
@@ -408,6 +502,8 @@ consteval auto makeColumn() -> ColumnView
             .isAutoIncrement = isAutoIncrement<Model>(fieldName),
             .isNotNull = not isNullable<field_t>,
             .maxStringLength = mappedStringLength<Model>(fieldName),
+            .mysqlUuidStorage = mappedUuidStorage<Model>(fieldName, db::BackendType::Mysql),
+            .sqliteUuidStorage = mappedUuidStorage<Model>(fieldName, db::BackendType::Sqlite),
         };
     }
 }
@@ -605,3 +701,22 @@ template <typename Model, typename SchemaType>
 inline constexpr auto staticPrimaryKeyIndices = makeModelPrimaryKeyIndices<Model>(staticColumns<Model, SchemaType>);
 } // namespace detail
 } // namespace orm::model
+
+namespace orm
+{
+export
+{
+    template <auto Member, db::BackendType Backend, model::UuidStorage Storage>
+        requires std::is_member_object_pointer_v<decltype(Member)>
+    consteval auto uuidStorage() -> model::UuidStorageDefinition<Member, Backend, Storage>
+    {
+        return {};
+    }
+
+    template <typename... Definitions>
+    consteval auto uuidStorages(Definitions...) -> model::UuidStorages<Definitions...>
+    {
+        return {};
+    }
+}
+} // namespace orm

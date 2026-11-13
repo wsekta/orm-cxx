@@ -20,29 +20,40 @@ export import :database_payload;
 
 namespace orm::db::binding
 {
-template <typename T>
-struct IsOptionalBoundField : std::false_type
-{
-};
-
-template <typename T>
-struct IsOptionalBoundField<std::optional<T>> : std::true_type
-{
-    using value_type = T;
-};
-
 template <typename ModelField>
 auto getScalarFieldValue(const auto& values, const std::string& fieldName) -> ModelField
 {
-    if constexpr (IsOptionalBoundField<ModelField>::value)
+    if constexpr (model::isNullable<ModelField>)
     {
         if (values.get_indicator(fieldName) == soci::i_null)
         {
-            return std::nullopt;
+            return NullableAdapter<ModelField>::none();
         }
 
-        using value_type = typename IsOptionalBoundField<ModelField>::value_type;
-        return getScalarFieldValue<value_type>(values, fieldName);
+        using value_type = typename NullableAdapter<ModelField>::Value;
+        return makeNullableValue<ModelField>(getScalarFieldValue<value_type>(values, fieldName));
+    }
+    else if constexpr (ValueConvertible<ModelField>)
+    {
+        using canonical_type = typename ValueConverter<ModelField>::Value;
+        canonical_type canonical;
+        if constexpr (SociEncodedValue<canonical_type>)
+            canonical = getEncodedScalarValue<canonical_type>(values, fieldName);
+        else if constexpr (std::is_arithmetic_v<canonical_type>)
+            canonical = getNumericValue<canonical_type>(values, fieldName);
+        else if constexpr (SociDefaultSupported<canonical_type>)
+            canonical = values.template get<canonical_type>(fieldName);
+        else
+            throw ConversionError{"Unsupported value converter canonical type: " + fieldName};
+
+        try
+        {
+            return ValueConverter<ModelField>::fromValue(canonical);
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ConversionError{"A database value was rejected by its converter"};
+        }
     }
     else if constexpr (SociEncodedValue<ModelField>)
     {
@@ -167,14 +178,16 @@ struct ObjectFieldFromValues
         {
             using related_t = std::remove_cv_t<optional_value_t<ModelField>>;
 
-            if constexpr (IsOptionalBoundField<ModelField>::value)
+            if constexpr (model::isNullable<ModelField>)
             {
                 if (not detail::relatedPrimaryKeyIsPresent<related_t, SchemaType, JoinedValues>(owner, column, values))
                 {
-                    *field = std::nullopt;
+                    *field = NullableAdapter<ModelField>::none();
                     return;
                 }
-                detail::hydrateRelated<related_t, SchemaType, JoinedValues>(field->emplace(), owner, column, values);
+                related_t related{};
+                detail::hydrateRelated<related_t, SchemaType, JoinedValues>(related, owner, column, values);
+                *field = makeNullableValue<ModelField>(std::move(related));
             }
             else
             {
@@ -256,17 +269,6 @@ inline auto setNullValue(soci::values& values, const std::string& name, model::C
     throw std::invalid_argument{"Cannot bind NULL value with unsupported column type"};
 }
 
-template <typename T>
-struct IsOptionalScalarField : std::false_type
-{
-};
-
-template <typename T>
-struct IsOptionalScalarField<std::optional<T>> : std::true_type
-{
-    using value_type = T;
-};
-
 inline auto validateStringLength(std::string_view text, std::optional<std::size_t> limit) -> void
 {
     if (!limit)
@@ -322,15 +324,27 @@ auto setScalarFieldValue(soci::values& values, const std::string& fieldName, con
                          model::ColumnType columnType,
                          std::optional<std::size_t> maxStringLength = std::nullopt) -> void
 {
-    if constexpr (IsOptionalScalarField<ModelField>::value)
+    if constexpr (model::isNullable<ModelField>)
     {
-        if (not field.has_value())
+        if (not NullableAdapter<ModelField>::hasValue(field))
         {
             setNullValue(values, fieldName, columnType);
             return;
         }
 
-        setScalarFieldValue(values, fieldName, field.value(), columnType, maxStringLength);
+        setScalarFieldValue(values, fieldName, NullableAdapter<ModelField>::value(field), columnType, maxStringLength);
+    }
+    else if constexpr (ValueConvertible<ModelField>)
+    {
+        try
+        {
+            const auto canonical = ValueConverter<ModelField>::toValue(field);
+            setScalarFieldValue(values, fieldName, canonical, columnType, maxStringLength);
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ConversionError{"A value was rejected by its converter"};
+        }
     }
     else if constexpr (SociEncodedValue<ModelField>)
     {
@@ -431,11 +445,12 @@ struct ObjectFieldToValues
         if constexpr (SchemaModel<SchemaType, ModelField>)
         {
             using related_t = std::remove_cv_t<optional_value_t<ModelField>>;
-            if constexpr (IsOptionalScalarField<ModelField>::value)
+            if constexpr (model::isNullable<ModelField>)
             {
-                if (field->has_value())
+                if (NullableAdapter<ModelField>::hasValue(*field))
                 {
-                    detail::serializeRelated<related_t, SchemaType>(field->value(), column, values);
+                    detail::serializeRelated<related_t, SchemaType>(NullableAdapter<ModelField>::value(*field), column,
+                                                                    values);
                 }
                 else
                 {

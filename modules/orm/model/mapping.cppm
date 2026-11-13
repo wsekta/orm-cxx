@@ -30,11 +30,11 @@ struct StaticOptionalTraits
     using Value = T;
 };
 
-template <typename T>
-struct StaticOptionalTraits<std::optional<T>>
+template <NullableAdaptable T>
+struct StaticOptionalTraits<T>
 {
     inline static constexpr bool isOptional = true;
-    using Value = T;
+    using Value = typename NullableAdapter<T>::Value;
 };
 
 template <typename T>
@@ -500,6 +500,27 @@ export
         inline static constexpr auto value = ColumnType::Uuid;
     };
 
+    template <UuidAdaptable T>
+    struct LogicalTypeTraits<T>
+    {
+        inline static constexpr auto value = ColumnType::Uuid;
+    };
+
+    /** A converter derives its logical type from the canonical value it returns. */
+    template <ValueConvertible T>
+        requires(!UuidAdaptable<T>)
+    struct LogicalTypeTraits<T>
+    {
+        inline static constexpr auto value = []() consteval
+        {
+            using Canonical = typename ValueConverter<T>::Value;
+            static_assert(
+                requires { LogicalTypeTraits<Canonical>::value; },
+                "ORM_MODEL_VALUE_CONVERTER: the canonical converter value has no logical column type");
+            return LogicalTypeTraits<Canonical>::value;
+        }();
+    };
+
     /**
      * @brief Resolves a C++ field type to its logical database type at compile
      * time. Users may extend the closed set through LogicalTypeTraits<T>.
@@ -512,6 +533,12 @@ export
 
         if constexpr (requires { LogicalTypeTraits<value_t>::value; })
         {
+            static_assert(not UuidAdaptable<value_t> || LogicalTypeTraits<value_t>::value == ColumnType::Uuid,
+                          "ORM_MODEL_UUID_ADAPTER_TYPE: UuidAdapter requires the UUID logical column type");
+            static_assert(not UuidConvertible<value_t> || LogicalTypeTraits<value_t>::value == ColumnType::Uuid,
+                          "ORM_MODEL_VALUE_CONVERTER: a UUID canonical value requires the UUID logical column type");
+            static_assert(not(UuidAdaptable<value_t> && ValueConvertible<value_t>),
+                          "ORM_MODEL_VALUE_CONVERTER: declare either UuidAdapter or ValueConverter for a UUID type");
             return LogicalTypeTraits<value_t>::value;
         }
         else

@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import WebSocket from 'ws';
 import { Journal, command, validateNotice } from './core.mjs';
 import { parseAppServer, probeAppServer } from './app-server.mjs';
+import { createSender } from './sender.mjs';
 import { createDispatcher } from './dispatcher.mjs';
 import { acquireDispatcherLock } from './dispatcher-lock.mjs';
 
@@ -14,9 +15,19 @@ export function loadConfig(path) {
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(endpoint.hostname);
   if (endpoint.protocol !== 'https:' && !(local && endpoint.protocol === 'http:')) throw new Error('Receiver must use HTTPS');
   if (endpoint.username || endpoint.password || endpoint.search || endpoint.hash) throw new Error('Invalid receiver URL');
-  // Use a shared, existing local app-server. Never auto-start another thread writer.
-  parseAppServer(config.appServer);
-  if (!config.codexPath || !config.journalPath || !config.tokenFile) throw new Error('Missing bridge configuration');
+  // Delivery targets: plain webhook receivers work without any Desktop install.
+  // A local app-server stays supported as an opt-in extra target.
+  const notifyUrls = config.notifyUrls ?? [];
+  if (!Array.isArray(notifyUrls) || notifyUrls.some(url => typeof url !== 'string')) throw new Error('Invalid notifyUrls');
+  for (const url of notifyUrls) {
+    const target = new URL(url);
+    if (target.protocol !== 'https:' && !(local && target.protocol === 'http:')) throw new Error('Webhook target must use HTTPS');
+  }
+  const hasCodex = Boolean(config.codexPath && config.appServer);
+  if (hasCodex) parseAppServer(config.appServer);
+  if (notifyUrls.length === 0 && !hasCodex)
+    throw new Error('No delivery target configured: set notifyUrls, or both codexPath and appServer');
+  if (!config.journalPath || !config.tokenFile) throw new Error('Missing bridge configuration');
   return config;
 }
 
@@ -130,7 +141,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const config = loadConfig(process.argv[index + 1]);
   const journal = new Journal(config.journalPath);
   try {
-    const bridge = connectBridge(config, journal, codexSender(config));
+    const bridge = connectBridge(config, journal, createSender(config, line => process.stderr.write(line + '\n')));
     for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { void bridge.stop(); });
     const { error } = await bridge.closed;
     if (error) process.exitCode = 2;

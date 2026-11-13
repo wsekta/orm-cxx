@@ -42,6 +42,27 @@ The optional Windows Desktop pilot below can sequentially replace Desktop's
 private stdio server with one shared server. It never opens the active
 conversation in a second server while the original server is running.
 
+### Delivering without Codex Desktop
+
+Delivery does not require a Codex Desktop install. `notifyUrls` lists one or
+more HTTP receivers; the bridge POSTs each notice to every one of them as
+generic JSON (`repository`, `thread`, `text`, `notice`) and treats the
+delivery as accepted when at least one target answers 2xx.
+
+```json
+{
+  "repository": "wsekta/orm-cxx",
+  "endpoint": "https://codex-ci-webhook.ACCOUNT.workers.dev",
+  "notifyUrls": ["https://example.com/ci-hook"]
+}
+```
+
+`codexPath` plus `appServer` remain supported as an additional target, and both
+still have to be set together, but neither is required. A configuration with no
+target at all is rejected at startup instead of silently dropping notices, and
+`loadConfig` only parses `appServer` when the Codex path is present.
+
+
 ## Architecture
 
 GitHub `push`, `workflow_job` and `workflow_run` events enter `/webhooks/github`.

@@ -92,6 +92,54 @@ auto getNumericProjectionValue(ResultField* field, const std::string& fieldName,
     *field = getNumericValue<ResultField>(values, fieldName);
 }
 
+template <typename ResultField>
+auto readProjectedValue(const auto& values, const std::string& fieldName) -> ResultField
+{
+    if constexpr (UuidAdaptable<ResultField>)
+    {
+        return getEncodedScalarValue<ResultField>(values, fieldName);
+    }
+    else if constexpr (ValueConvertible<ResultField>)
+    {
+        using canonical_type = typename ValueConverter<ResultField>::Value;
+        try
+        {
+            if constexpr (SociEncodedValue<canonical_type>)
+                return ValueConverter<ResultField>::fromValue(getEncodedScalarValue<canonical_type>(values, fieldName));
+            else
+            {
+                canonical_type canonical{};
+                ObjectFieldFromProjectionValues<canonical_type>::get(&canonical, fieldName, values);
+                return ValueConverter<ResultField>::fromValue(canonical);
+            }
+        }
+        catch (const ConversionError&)
+        {
+            throw;
+        }
+        catch (const std::invalid_argument&)
+        {
+            throw ConversionError{"A database value was rejected by its converter"};
+        }
+    }
+    else
+    {
+        ResultField value{};
+        ObjectFieldFromProjectionValues<ResultField>::get(&value, fieldName, values);
+        return value;
+    }
+}
+
+template <ValueConvertible ResultField>
+    requires(!UuidAdaptable<ResultField>)
+struct ObjectFieldFromProjectionValues<ResultField>
+{
+    static auto get(ResultField* field, const std::string& fieldName, const auto& values) -> void
+    {
+        *field = readProjectedValue<ResultField>(values, fieldName);
+    }
+};
+
 template <SociEncodedValue ResultField>
 struct ObjectFieldFromProjectionValues<ResultField>
 {
@@ -117,20 +165,31 @@ struct ObjectFieldFromProjectionValues<ResultField>
     }
 };
 
-template <typename ResultField>
-struct ObjectFieldFromProjectionValues<std::optional<ResultField>>
+template <NullableAdaptable ResultField>
+struct ObjectFieldFromProjectionValues<ResultField>
 {
-    static auto get(std::optional<ResultField>* field, const std::string& fieldName, const auto& values) -> void
+    static auto get(ResultField* field, const std::string& fieldName, const auto& values) -> void
     {
         if (values.get_indicator(fieldName) == soci::i_null)
         {
-            *field = std::nullopt;
+            if constexpr (isOptional<ResultField>)
+                field->reset();
+            else
+                *field = NullableAdapter<ResultField>::none();
             return;
         }
 
-        ResultField value{};
-        ObjectFieldFromProjectionValues<ResultField>::get(&value, fieldName, values);
-        *field = std::move(value);
+        using contained_type = typename NullableAdapter<ResultField>::Value;
+        if constexpr (isOptional<ResultField>)
+        {
+            auto value = readProjectedValue<contained_type>(values, fieldName);
+            if constexpr (std::is_move_constructible_v<contained_type>)
+                field->emplace(std::move(value));
+            else
+                field->emplace(value);
+        }
+        else
+            *field = makeNullableValue<ResultField>(readProjectedValue<contained_type>(values, fieldName));
     }
 };
 

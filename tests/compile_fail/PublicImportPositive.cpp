@@ -2,6 +2,28 @@
 
 import orm;
 
+struct PublicUuidId
+{
+    int value;
+};
+
+template <>
+struct orm::UuidAdapter<PublicUuidId>
+{
+    static auto toUuid(const PublicUuidId&) -> orm::Uuid;
+    static auto fromUuid(const orm::Uuid&) -> PublicUuidId;
+};
+
+template <>
+struct orm::model::LogicalTypeTraits<PublicUuidId>
+{
+    inline static constexpr auto value = orm::model::ColumnType::Uuid;
+};
+
+static_assert(orm::UuidAdaptable<PublicUuidId>);
+static_assert(orm::model::logicalType<PublicUuidId>() == orm::model::ColumnType::Uuid);
+static_assert(orm::model::logicalType<std::optional<PublicUuidId>>() == orm::model::ColumnType::Uuid);
+
 struct PublicImportModel
 {
     int id;

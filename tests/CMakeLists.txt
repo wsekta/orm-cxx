@@ -1,6 +1,7 @@
 set(ORM_CXX_TEST_SOURCES
     foundation/ValueTypesTest.cpp
     foundation/ValueCodecTest.cpp
+    foundation/CustomConverterTest.cpp
     database/ConnectionConfigTest.cpp
     migrations/ConnectionEnvironmentTest.cpp
     migrations/MigrationTest.cpp
@@ -70,7 +71,22 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         database/StatementParameterBindingTest.cpp
         database/SqliteStaticPlanRendererTest.cpp
         database/SqliteContextBindingTest.cpp
+        database/SqliteBinaryUuidTest.cpp
+        database/SqliteCustomConverterTest.cpp
     )
+    find_path(
+        ORM_CXX_BOOST_INCLUDE_DIR
+        NAMES boost/uuid/uuid.hpp
+        HINTS "${Boost_ROOT}" "${BOOST_ROOT}" ENV BOOST_ROOT
+        PATH_SUFFIXES include
+        DOC "Boost include directory for the optional SQLite converter integration test"
+    )
+    if(ORM_CXX_BOOST_INCLUDE_DIR)
+        list(APPEND ORM_CXX_TEST_SOURCES database/BoostConverterTest.cpp)
+        message(STATUS "BoostConverterTest enabled: ${ORM_CXX_BOOST_INCLUDE_DIR}")
+    else()
+        message(STATUS "BoostConverterTest disabled: Boost headers not found; set ORM_CXX_BOOST_INCLUDE_DIR to enable")
+    endif()
 endif()
 if(ORM_CXX_ENABLE_SQLITE_BACKEND
    OR (ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
@@ -82,6 +98,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND
         ORM_CXX_TEST_SOURCES
         database/BackendConformanceTest.cpp
         database/TemporalBindingTest.cpp
+        database/NativeUuidDefaultTest.cpp
         database/StringLengthTest.cpp
         database/OrmContextTest.cpp
         database/StaticPlanTest.cpp
@@ -109,6 +126,9 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         migrations/RebuildTest.cpp
         migrations/RebuildFailureTest.cpp
     )
+endif()
+if(ORM_CXX_ENABLE_MYSQL_BACKEND AND ORM_CXX_ENABLE_MYSQL_INTEGRATION_TESTS)
+    list(APPEND ORM_CXX_TEST_SOURCES database/MysqlBinaryUuidTest.cpp)
 endif()
 if(ORM_CXX_ENABLE_MYSQL_BACKEND OR ORM_CXX_ENABLE_MARIADB_BACKEND)
     list(APPEND ORM_CXX_TEST_SOURCES ../src/database/mysql_family/MysqlFamilyTest.cpp)
@@ -170,6 +190,9 @@ configure_file(
     "${PROJECT_BINARY_DIR}/generated/test-include/orm-cxx-tests/TestConfig.hpp" @ONLY
 )
 target_include_directories(orm-cxx-UT PRIVATE "${PROJECT_SOURCE_DIR}" "${PROJECT_BINARY_DIR}/generated/test-include")
+if(ORM_CXX_BOOST_INCLUDE_DIR)
+    target_include_directories(orm-cxx-UT SYSTEM PRIVATE "${ORM_CXX_BOOST_INCLUDE_DIR}")
+endif()
 
 add_executable(orm-cxx-static-plan-allocations static_plan_allocations/main.cpp static_plan_allocations/Plans.cpp)
 target_link_libraries(orm-cxx-static-plan-allocations PRIVATE orm-cxx::orm-cxx orm-cxx-project-warnings)
