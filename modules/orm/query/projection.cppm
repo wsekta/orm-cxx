@@ -329,9 +329,9 @@ consteval auto uuidProjectionDomainCompatible() -> bool
         using source_t = typename P::Source::Value;
         constexpr auto fields = reflection::fields<Result>();
         bool compatible = true;
-        [&]<std::size_t... I>(std::index_sequence<I...>)
+        [&]<std::size_t... I>(std::index_sequence<I...>) consteval
         {
-            auto check = [&]<std::size_t Index>()
+            auto check = [&]<std::size_t Index>() consteval
             {
                 using target_t = scalar_t<reflection::field_type_t<Result, Index>>;
                 if constexpr (UuidDomainValue<source_t> || UuidDomainValue<target_t>)

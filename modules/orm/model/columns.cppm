@@ -57,9 +57,9 @@ export
                 // `.view()` on the prvalue from `reflectedMemberName` selects the deleted
                 // `const&&` overload, and a `constexpr` tuple is rejected outright.
                 const auto nameStorage = std::tuple{detail::reflectedMemberName<Definitions::member>()...};
-                const auto names = std::apply(
-                    [](const auto&... name)
-                    { return std::array<std::string_view, sizeof...(Definitions)>{name.view()...}; }, nameStorage);
+                const auto names = [&]<std::size_t... I>(std::index_sequence<I...>) consteval {
+                    return std::array<std::string_view, sizeof...(Definitions)>{std::get<I>(nameStorage).view()...};
+                }(std::make_index_sequence<sizeof...(Definitions)>{});
                 for (std::size_t left = 0; left < names.size(); ++left)
                     for (std::size_t right = left + 1; right < names.size(); ++right)
                         if (names[left] == names[right] && backends[left] == backends[right])
