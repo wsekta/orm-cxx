@@ -2,6 +2,7 @@ module;
 
 #include <typeinfo>
 
+#include "tests/support/ThrowsWithMessage.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -17,6 +18,7 @@ import :sql;
 import :database;
 
 using namespace orm::query;
+using orm::test::throwsWithMessage;
 
 namespace projection_query_test_models
 {
@@ -196,8 +198,8 @@ template <typename Result>
 auto expectUuidDomainRejection(const auto& projection) -> void
 {
     orm::ProjectionQuery<UuidRecord, Result> query;
-    EXPECT_THAT([&] { query.project(projection); }, ::testing::ThrowsMessage<std::invalid_argument>(
-                                                        "Projection UUID domain type does not match the result field"));
+    EXPECT_TRUE(throwsWithMessage<std::invalid_argument>(
+        [&] { query.project(projection); }, "Projection UUID domain type does not match the result field"));
 }
 
 template <typename Result>
@@ -469,16 +471,17 @@ TEST(ProjectionQueryTest, shouldAllowOneUuidColumnProjectedUnderDifferentAliases
 TEST(ProjectionQueryTest, shouldRejectDuplicateAliasesForTheSameUuidColumn)
 {
     orm::ProjectionQuery<UuidRecord, UserIdDto> query;
-    EXPECT_THAT([&] { query.project(as("id", col<&UuidRecord::id>()), as("id", col<&UuidRecord::id>())); },
-                ::testing::ThrowsMessage<std::invalid_argument>("Duplicate projection alias: id"));
+    EXPECT_TRUE(throwsWithMessage<std::invalid_argument>(
+        [&] { query.project(as("id", col<&UuidRecord::id>()), as("id", col<&UuidRecord::id>())); },
+        "Duplicate projection alias: id"));
 }
 
 TEST(ProjectionQueryTest, shouldCheckTheUuidDomainOfEachProjectedAlias)
 {
     orm::ProjectionQuery<UuidRecord, MixedUuidDto> query;
-    EXPECT_THAT(
+    EXPECT_TRUE(throwsWithMessage<std::invalid_argument>(
         [&] { query.project(as("id", col<&UuidRecord::id>()), as("copy", col<&UuidRecord::id>())); },
-        ::testing::ThrowsMessage<std::invalid_argument>("Projection UUID domain type does not match the result field"));
+        "Projection UUID domain type does not match the result field"));
 }
 
 TEST(ProjectionQueryTest, uuidProjectionReadPropagatesAllocationFailureWithoutReplacingTheField)
@@ -504,9 +507,9 @@ TEST(ProjectionQueryTest, uuidProjectionReadStillWrapsIncompatibleRepresentation
     const auto original = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
     auto field = original;
 
-    EXPECT_THAT([&] { orm::db::binding::ObjectFieldFromProjectionValues<orm::Uuid>::get(&field, alias, values); },
-                ::testing::ThrowsMessage<orm::db::binding::ConversionError>(
-                    "A database value has an incompatible result representation"));
+    EXPECT_TRUE(throwsWithMessage<orm::db::binding::ConversionError>(
+        [&] { orm::db::binding::ObjectFieldFromProjectionValues<orm::Uuid>::get(&field, alias, values); },
+        "A database value has an incompatible result representation"));
     EXPECT_EQ(field, original);
     EXPECT_EQ(values.reads, 1U);
     EXPECT_EQ(values.requestedField, &alias);

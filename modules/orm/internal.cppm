@@ -29,6 +29,8 @@ namespace orm::detail
 {
 // These validators are shared by Database's operations. Keeping them separate
 // also lets tests exercise defensive checks with immutable malformed descriptors.
+[[nodiscard]] auto supportsPhysicalColumn(const db::BackendCapabilities& capabilities, const model::ColumnView& column,
+                                          db::BackendType backend) -> bool;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireToOneTarget(model::ModelView owner, const model::ColumnView& column) -> model::ModelView;
 [[nodiscard]] auto requireRelationTarget(model::ModelView owner,

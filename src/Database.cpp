@@ -43,20 +43,6 @@ namespace
 {
 auto containsCollectionPredicate(const orm::query::detail::PredicateNode& node) -> bool;
 
-auto supportsPhysicalColumn(const orm::db::BackendCapabilities& capabilities, const orm::model::ColumnView& column,
-                            orm::db::BackendType backend) -> bool
-{
-    if (!column.type)
-        return false;
-    if (*column.type == orm::model::ColumnType::Uuid && column.uuidStorage(backend) != orm::model::UuidStorage::Native)
-    {
-        const auto storage = column.uuidStorage(backend);
-        return (backend == orm::db::BackendType::Mysql || backend == orm::db::BackendType::Sqlite) &&
-               (storage == orm::model::UuidStorage::Binary16 || storage == orm::model::UuidStorage::Text36);
-    }
-    return capabilities.supportsColumnType(*column.type);
-}
-
 auto serializedBoundValue(const soci::values& values, const std::string& name,
                           orm::model::ColumnType type) -> orm::db::BoundValue
 {
@@ -246,6 +232,40 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
 
 namespace orm
 {
+// Keep the SOCI template calls in this implementation unit. Analyzing them
+// through an imported module can lose track of the statement's initialized handle.
+auto db::binding::Binary16Buffer::exchangeUse(soci::statement& statement, const std::string& name) -> void
+{
+    statement.exchange(soci::use(blob_, indicator_, name));
+}
+
+auto db::binding::Binary16Buffer::exchangeInto(soci::statement& statement) -> void
+{
+    statement.exchange(soci::into(blob_, indicator_));
+}
+
+auto db::binding::StatementBindings::exchange(soci::statement& statement) -> void
+{
+    statement.exchange(soci::use(values()));
+    for (auto& binary : binaries_)
+        if (binary->runtime.hasStatementParameter(statement, binary->name))
+            binary->buffer.exchangeUse(statement, binary->name);
+}
+
+auto detail::supportsPhysicalColumn(const db::BackendCapabilities& capabilities, const model::ColumnView& column,
+                                    db::BackendType backend) -> bool
+{
+    if (!column.type)
+        return false;
+    if (*column.type == model::ColumnType::Uuid && column.uuidStorage(backend) != model::UuidStorage::Native)
+    {
+        const auto storage = column.uuidStorage(backend);
+        return (backend == db::BackendType::Mysql || backend == db::BackendType::Sqlite) &&
+               (storage == model::UuidStorage::Binary16 || storage == model::UuidStorage::Text36);
+    }
+    return capabilities.supportsColumnType(*column.type);
+}
+
 auto detail::hasOwningJunction(model::ModelView owner) -> bool
 {
     return std::ranges::any_of(owner->relations,
@@ -1027,7 +1047,7 @@ auto Database::ensureRelationTableEndpointsExist(model::ModelView owner) -> void
 
         for (const auto* column : targetPrimaryKey)
         {
-            if (not supportsPhysicalColumn(capabilities, *column, backendType))
+            if (not detail::supportsPhysicalColumn(capabilities, *column, backendType))
             {
                 throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "create relation tables",
                                     "A target primary-key type is not supported by the backend"};
@@ -1117,7 +1137,7 @@ auto Database::ensureModelSupported(model::ModelView descriptor, std::string_vie
             for (const auto primaryKeyIndex : relatedModel->primaryKeyIndices)
             {
                 const auto& relatedColumn = relatedModel->columns[primaryKeyIndex];
-                if (not supportsPhysicalColumn(capabilities, relatedColumn, backendType))
+                if (not detail::supportsPhysicalColumn(capabilities, relatedColumn, backendType))
                 {
                     throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                         "A related primary-key column type is not supported by the backend"};
@@ -1127,7 +1147,7 @@ auto Database::ensureModelSupported(model::ModelView descriptor, std::string_vie
             continue;
         }
 
-        if (not supportsPhysicalColumn(capabilities, column, backendType))
+        if (not detail::supportsPhysicalColumn(capabilities, column, backendType))
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                 "A model column type is not supported by the backend"};
@@ -1216,7 +1236,7 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
         if (source.pathSize == 0)
             return;
         const auto info = db::detail::resolveSqlColumn(source, sourceModel);
-        requireCapability(supportsPhysicalColumn(capabilities, *info.column, backendType), operation,
+        requireCapability(detail::supportsPhysicalColumn(capabilities, *info.column, backendType), operation,
                           "A query column type is not supported by the backend");
     };
     auto checkNode = [&](auto&& self, std::size_t index, model::ModelView sourceModel) -> void
@@ -1229,8 +1249,8 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
             const auto* relation = detail::requireCollectionRelation(sourceModel, node.relation);
             const auto target = detail::requireRelationTarget(sourceModel, *relation);
             for (const auto key : target->primaryKeyIndices)
-                requireCapability(supportsPhysicalColumn(capabilities, target->columns[key], backendType), operation,
-                                  "A collection key type is not supported by the backend");
+                requireCapability(detail::supportsPhysicalColumn(capabilities, target->columns[key], backendType),
+                                  operation, "A collection key type is not supported by the backend");
             self(self, node.left, target);
         }
         else if (node.kind == db::detail::SqlNodeKind::And || node.kind == db::detail::SqlNodeKind::Or ||
@@ -1258,7 +1278,7 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
                 const auto related = detail::requireSupportedRelatedTarget(descriptor, column, backendType, operation);
                 for (const auto& field : related->columns)
                     if (field.type)
-                        requireCapability(supportsPhysicalColumn(capabilities, field, backendType), operation,
+                        requireCapability(detail::supportsPhysicalColumn(capabilities, field, backendType), operation,
                                           "A joined column type is not supported by the backend");
             }
 }

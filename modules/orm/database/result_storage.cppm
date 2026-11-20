@@ -52,15 +52,8 @@ public:
         }
     }
 
-    auto exchangeUse(soci::statement& statement, const std::string& name) -> void
-    {
-        statement.exchange(soci::use(blob_, indicator_, name));
-    }
-
-    auto exchangeInto(soci::statement& statement) -> void
-    {
-        statement.exchange(soci::into(blob_, indicator_));
-    }
+    auto exchangeUse(soci::statement& statement, const std::string& name) -> void;
+    auto exchangeInto(soci::statement& statement) -> void;
 
     [[nodiscard]] auto indicator() const noexcept -> soci::indicator
     {
@@ -159,13 +152,7 @@ public:
         return !binaries_.empty();
     }
 
-    auto exchange(soci::statement& statement) -> void
-    {
-        statement.exchange(soci::use(values()));
-        for (auto& binary : binaries_)
-            if (binary->runtime.hasStatementParameter(statement, binary->name))
-                binary->buffer.exchangeUse(statement, binary->name);
-    }
+    auto exchange(soci::statement& statement) -> void;
 
     auto values() noexcept -> soci::values&
     {

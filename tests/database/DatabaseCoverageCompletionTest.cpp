@@ -1368,6 +1368,16 @@ TEST(DatabaseCoverageCompletionTest, binaryBindingRejectsRuntimeWithoutParameter
     EXPECT_EQ(count, 0);
 }
 
+TEST(DatabaseCoverageCompletionTest, physicalColumnSupportRejectsAnUntypedScalar)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    orm::model::ColumnView column{.fieldName = "id", .name = "id", .kind = orm::model::FieldKind::Scalar};
+    EXPECT_FALSE(orm::detail::supportsPhysicalColumn(backend.capabilities(), column, backend.type()));
+
+    column.type = orm::model::ColumnType::Int;
+    EXPECT_TRUE(orm::detail::supportsPhysicalColumn(backend.capabilities(), column, backend.type()));
+}
+
 TEST(DatabaseCoverageCompletionTest, explicitUuidStorageIsRejectedOnUnsupportedBackendWithoutMutating)
 {
     DatabaseBundle bundle;

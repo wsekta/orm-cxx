@@ -1,5 +1,6 @@
 module;
 
+#include "tests/support/ThrowsWithMessage.hpp"
 #include "tests/UnitTestPrelude.hpp"
 
 module orm;
@@ -17,6 +18,7 @@ import :database;
 namespace
 {
 using namespace orm::query;
+using orm::test::throwsWithMessage;
 using namespace static_plan_models;
 namespace sql = orm::db::detail;
 namespace ast = orm::query::detail;
@@ -187,7 +189,7 @@ TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsAssignmentBindingOutsideDescr
     const auto annotate = [&]
     { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
 
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL binding index is out of range"));
+    EXPECT_TRUE(throwsWithMessage<std::logic_error>(annotate, "SQL binding index is out of range"));
     EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
 
     program.bindings.push_back({orm::model::ColumnType::Uuid, 0, {}});
@@ -210,7 +212,7 @@ TEST(CompiledSqlCoverageTest, uuidAnnotationRequiresTheBindingNameNotItsParamete
     const auto annotate = [&]
     { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
 
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL binding has no matching parameter"));
+    EXPECT_TRUE(throwsWithMessage<std::logic_error>(annotate, "SQL binding has no matching parameter"));
     EXPECT_EQ(parameters[0].uuidStorage, orm::model::UuidStorage::Native);
 
     parameters[0].name = "named_uuid";
@@ -227,15 +229,15 @@ TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsDanglingPredicateHavingAndChi
     { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
 
     program.predicate = 0;
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+    EXPECT_TRUE(throwsWithMessage<std::logic_error>(annotate, "SQL predicate index is out of range"));
     program.predicate = sql::noSqlNode;
     program.having = 0;
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+    EXPECT_TRUE(throwsWithMessage<std::logic_error>(annotate, "SQL predicate index is out of range"));
 
     program.having = sql::noSqlNode;
     program.nodes.push_back({.kind = sql::SqlNodeKind::Not, .left = 1});
     program.predicate = 0;
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::logic_error>("SQL predicate index is out of range"));
+    EXPECT_TRUE(throwsWithMessage<std::logic_error>(annotate, "SQL predicate index is out of range"));
 
     program.predicate = sql::noSqlNode;
     EXPECT_NO_THROW(annotate());
@@ -252,7 +254,7 @@ TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsAnUnknownCollectionRelation)
     { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
     program.nodes[program.predicate].relation = "missing_roles";
 
-    EXPECT_THAT(annotate, ::testing::ThrowsMessage<std::invalid_argument>("Unknown collection relation"));
+    EXPECT_TRUE(throwsWithMessage<std::invalid_argument>(annotate, "Unknown collection relation"));
 
     program.nodes[program.predicate].relation = "roles";
     EXPECT_NO_THROW(annotate());
@@ -276,8 +278,7 @@ TEST(CompiledSqlCoverageTest, uuidAnnotationRejectsACollectionTargetOutsideTheSc
     const auto annotate = [&]
     { sql::applyUuidBindingStorage(program.view(), model, orm::db::BackendType::Sqlite, parameters); };
 
-    EXPECT_THAT(annotate,
-                ::testing::ThrowsMessage<std::invalid_argument>("Collection relation target is not available"));
+    EXPECT_TRUE(throwsWithMessage<std::invalid_argument>(annotate, "Collection relation target is not available"));
 
     relation.targetModelIndex = target;
     EXPECT_NO_THROW(annotate());
