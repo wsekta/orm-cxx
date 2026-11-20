@@ -437,7 +437,9 @@ template <typename Policy>
     if (!target)
         throw std::logic_error{"Collection relation target is not available in the schema"};
     const auto targetKeys = sqlPrimaryKey(target);
-    const auto outer = scope.tableAlias.empty() ? std::string{scope.model->tableName} : scope.tableAlias;
+    // Choose the name as a view before constructing the owning string. MSVC 14.52
+    // Debug can lose track of the temporary string's lifetime in constant evaluation.
+    const std::string outer{scope.tableAlias.empty() ? scope.model->tableName : std::string_view{scope.tableAlias}};
     std::vector<std::string> reserved{outer};
     for (const auto& column : target->columns)
         if (column.kind == model::FieldKind::ToOne)
@@ -451,8 +453,9 @@ template <typename Policy>
     for (const auto& column : target->columns)
         if (column.kind == model::FieldKind::ToOne)
         {
-            const auto alias =
-                hasSqlAlias(assigned, column.name) ? uniqueSqlAlias(column.name, reserved) : std::string{column.name};
+            std::string alias{column.name};
+            if (hasSqlAlias(assigned, column.name))
+                alias = uniqueSqlAlias(column.name, reserved);
             nested.relationAliases.emplace_back(column.name, alias);
             assigned.push_back(alias);
             reserved.push_back(alias);
