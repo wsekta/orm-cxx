@@ -15,3 +15,8 @@ auto uuidPrototypeOtherTranslationUnit(const orm::Uuid& uuid) -> bool
     const auto value = orm::UuidAdapter<uuid_application::UserId>::fromUuid(uuid);
     return value.discriminator == 42 && orm::UuidAdapter<uuid_application::UserId>::toUuid(value) == uuid;
 }
+
+auto uuidPrototypeOtherTypeId() -> orm::model::TypeId
+{
+    return orm::model::typeId<uuid_application::UserId>();
+}

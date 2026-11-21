@@ -521,7 +521,7 @@ namespace orm::db::postgresql
 PostgresqlBackend::PostgresqlBackend()
     : backendCapabilities{postgresqlCapabilities()},
       backendRuntime{std::make_unique<PostgresqlRuntime>()},
-      postgresqlCommandGenerator{postgresqlDialect}
+      postgresqlCommandGenerator{postgresqlDialect, BackendType::Postgres}
 {
 }
 

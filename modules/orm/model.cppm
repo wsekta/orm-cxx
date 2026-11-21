@@ -1,3 +1,8 @@
+module;
+
+// Make comparison types visible to MSVC when it imports std::optional.
+#include <compare>
+
 export module orm:model;
 
 export import :model_mapping;

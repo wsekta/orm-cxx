@@ -431,7 +431,8 @@ TEST_P(TemporalBindingDatabaseTest, unsupportedTypesInRawParametersAndCompiledMo
     {
         const auto uuid = orm::Uuid::parse("00112233-4455-4677-8899-aabbccddeeff");
         orm::Query<temporal_models::IntegerOnly> rawParameter;
-        rawParameter.where(raw<temporal_models::IntegerOnly>("1 = :probe", param("probe", uuid)));
+        rawParameter.where(
+            raw<temporal_models::IntegerOnly>("1 = :probe", param("probe", uuid, orm::model::UuidStorage::Native)));
         expectUnsupported([&] { (void)database.select(rawParameter); });
 
         orm::ProjectionQuery<temporal_models::RelatedUuidSource, temporal_models::IntegerOnly> related;

@@ -17,6 +17,7 @@ import :dynamic_query;
 import :static_plan;
 import :sql;
 import :database;
+import :database_result_storage;
 
 namespace
 {
@@ -86,6 +87,65 @@ TEST(SqliteBackendTest, binary16TransportPrototype)
     const auto config = orm::SqliteConfig{orm::SqliteMemory{}};
     backend.runtime().open(session, orm::db::ConnectionConfigView{config});
     binary16_transport_prototype::run(session, true);
+}
+
+TEST(SqliteBackendTest, binary16BufferPreservesBytesAndChecksStorageClass)
+{
+    const orm::db::sqlite::SqliteBackend backend;
+    soci::session session;
+    const auto config = orm::SqliteConfig{orm::SqliteMemory{}};
+    backend.runtime().open(session, orm::db::ConnectionConfigView{config});
+    session << "CREATE TABLE binary_values (id INTEGER PRIMARY KEY, value BLOB)";
+
+    int id{};
+    orm::db::binding::Binary16Buffer input{session};
+    soci::statement insert{session};
+    insert.alloc();
+    insert.prepare("INSERT INTO binary_values VALUES (:id, :value)");
+    insert.exchange(soci::use(id, "id"));
+    input.exchangeUse(insert, "value");
+    insert.define_and_bind();
+    for (id = 0; id < 16; ++id)
+    {
+        std::array<std::byte, 16> bytes{};
+        for (std::size_t index = 0; index < bytes.size(); ++index)
+            bytes[index] = static_cast<std::byte>(id * 16 + static_cast<int>(index));
+        input.set(orm::Uuid{bytes});
+        insert.execute(true);
+    }
+    id = 16;
+    input.set(std::nullopt);
+    insert.execute(true);
+    session << "INSERT INTO binary_values VALUES (17, 'abcdefghijklmnop'), (18, X'000102')";
+
+    orm::db::binding::Binary16Buffer output{session};
+    std::string storageClass;
+    soci::statement select{session};
+    select.alloc();
+    select.prepare("SELECT value, typeof(value) FROM binary_values WHERE id = :id");
+    output.exchangeInto(select);
+    select.exchange(soci::into(storageClass));
+    select.exchange(soci::use(id, "id"));
+    select.define_and_bind();
+    for (id = 0; id < 16; ++id)
+    {
+        select.execute(true);
+        std::array<std::byte, 16> bytes{};
+        for (std::size_t index = 0; index < bytes.size(); ++index)
+            bytes[index] = static_cast<std::byte>(id * 16 + static_cast<int>(index));
+        EXPECT_EQ(output.read(orm::db::BackendType::Sqlite, storageClass), orm::Uuid{bytes});
+    }
+    // `soci::use(id)` binds by reference, so assigning `id` between executions
+    // is what selects the row for the next `execute`. The analyzer cannot see
+    // that read-through and reports the stores as dead.
+    id = 16; // NOLINT(clang-analyzer-deadcode.DeadStores)
+    select.execute(true);
+    EXPECT_EQ(output.read(orm::db::BackendType::Sqlite, storageClass), std::nullopt);
+    for (id = 17; id <= 18; ++id)
+    {
+        select.execute(true);
+        EXPECT_THROW((void)output.read(orm::db::BackendType::Sqlite, storageClass), orm::db::binding::ConversionError);
+    }
 }
 
 TEST(SqliteBackendTest, runtimeInitializesConnectionAndInspectsSchema)

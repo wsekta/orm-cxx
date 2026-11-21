@@ -184,7 +184,8 @@ export
         }
         template <typename... P>
             requires(Operation == detail::PlanOperation::Select) && isProjection &&
-                    detail::ORM_QUERY_MODEL_PROJECTIONS<Model, P...>
+                    detail::ORM_QUERY_MODEL_PROJECTIONS<Model, P...> &&
+                    detail::ORM_QUERY_UUID_PROJECTION_DOMAINS<Result, P...>
         constexpr auto project(P... projections) const
         {
             static_assert(sizeof...(P) > 0, "ORM_QUERY_PROJECTION: a projection plan requires projected fields");
@@ -357,7 +358,8 @@ export
             StaticPlan<detail::PlanOperation::Select, Model, Model, detail::EmptyPlanState>>(detail::EmptyPlanState{});
     }
     template <typename Source, typename Result, typename... P>
-        requires detail::ORM_QUERY_MODEL_PROJECTIONS<Source, P...>
+        requires detail::ORM_QUERY_MODEL_PROJECTIONS<Source, P...> &&
+                 detail::ORM_QUERY_UUID_PROJECTION_DOMAINS<Result, P...>
     constexpr auto selectAs(P... projections)
     {
         static_assert(sizeof...(P) > 0, "ORM_QUERY_PROJECTION: a projection plan requires projected fields");

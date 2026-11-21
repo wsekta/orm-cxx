@@ -257,6 +257,37 @@ auto sqlType(db::BackendType backend, model::ColumnType type, std::optional<std:
     invalid("The logical column type has no supported physical SQL type", backend);
 }
 
+auto physicalUuidType(const model::ColumnView& column, db::BackendType backend) -> std::optional<std::string>
+{
+    const auto mysql = column.uuidStorage(db::BackendType::Mysql);
+    const auto sqlite = column.uuidStorage(db::BackendType::Sqlite);
+    const auto valid = [](model::UuidStorage storage)
+    {
+        return storage == model::UuidStorage::Native || storage == model::UuidStorage::Binary16 ||
+               storage == model::UuidStorage::Text36;
+    };
+    if (!valid(mysql) || !valid(sqlite) ||
+        (column.type != model::ColumnType::Uuid &&
+         (mysql != model::UuidStorage::Native || sqlite != model::UuidStorage::Native)))
+        invalid("UUID storage must be declared on a UUID column", backend, std::string{column.name});
+    if (column.type != model::ColumnType::Uuid)
+        return std::nullopt;
+    if (backend == db::BackendType::Empty)
+    {
+        if (mysql != model::UuidStorage::Native || sqlite != model::UuidStorage::Native)
+            invalid("UUID storage selection requires an explicit backend");
+        return std::nullopt;
+    }
+    const auto storage = column.uuidStorage(backend);
+    if (storage == model::UuidStorage::Native)
+        return std::nullopt;
+    if (backend == db::BackendType::Sqlite)
+        return storage == model::UuidStorage::Text36 ? "TEXT" : "BLOB";
+    if (backend == db::BackendType::Mysql)
+        return storage == model::UuidStorage::Text36 ? "CHAR(36)" : "BINARY(16)";
+    invalid("Explicit UUID storage is not supported by this backend", backend);
+}
+
 auto keyColumns(model::ModelView model) -> std::vector<const model::ColumnView*>
 {
     std::vector<const model::ColumnView*> result;
@@ -278,7 +309,7 @@ auto scalarColumn(std::string name, const model::ColumnView& column, bool nullab
         invalid("Scalar column has no logical type");
     return PhysicalColumn{.name = std::move(name),
                           .logicalType = *column.type,
-                          .sqlType = resolve(*column.type, column.maxStringLength),
+                          .sqlType = resolve(column),
                           .nullable = nullable,
                           .maxStringLength = column.maxStringLength,
                           .autoIncrement = false};
@@ -653,7 +684,14 @@ auto physicalTable(model::ModelView model, db::BackendType backend) -> PhysicalT
 {
     requireBackend(backend);
     auto table = expandTable(
-        model, [backend](auto type, auto length) { return sqlType(backend, type, length); }, family(backend));
+        model,
+        [backend](const model::ColumnView& column)
+        {
+            if (const auto physical = physicalUuidType(column, backend))
+                return *physical;
+            return sqlType(backend, *column.type, column.maxStringLength);
+        },
+        family(backend));
     table.options = tableOptions(backend);
     if (family(backend))
         foreignKeyIndexes(table);
@@ -664,7 +702,14 @@ auto physicalJunctions(model::ModelView model, db::BackendType backend) -> std::
 {
     requireBackend(backend);
     auto tables = expandJunctions(
-        model, [backend](auto type, auto length) { return sqlType(backend, type, length); }, family(backend));
+        model,
+        [backend](const model::ColumnView& column)
+        {
+            if (const auto physical = physicalUuidType(column, backend))
+                return *physical;
+            return sqlType(backend, *column.type, column.maxStringLength);
+        },
+        family(backend));
     for (auto& table : tables)
     {
         table.options = tableOptions(backend);
@@ -674,21 +719,36 @@ auto physicalJunctions(model::ModelView model, db::BackendType backend) -> std::
     return tables;
 }
 
-auto physicalTable(model::ModelView model, const db::SqlDialect& dialect) -> PhysicalTable
+auto physicalTable(model::ModelView model, const db::SqlDialect& dialect, db::BackendType backend) -> PhysicalTable
 {
     const bool mysql = dialect.renderCreateTableSuffix().find("ENGINE=InnoDB") != std::string::npos;
-    auto table =
-        expandTable(model, [&dialect](auto type, auto length) { return dialect.toSqlType(type, length); }, mysql);
+    auto table = expandTable(
+        model,
+        [&dialect, backend](const model::ColumnView& column)
+        {
+            if (const auto physical = physicalUuidType(column, backend))
+                return *physical;
+            return dialect.toSqlType(*column.type, column.maxStringLength);
+        },
+        mysql);
     if (mysql)
         foreignKeyIndexes(table);
     return table;
 }
 
-auto physicalJunctions(model::ModelView model, const db::SqlDialect& dialect) -> std::vector<PhysicalTable>
+auto physicalJunctions(model::ModelView model, const db::SqlDialect& dialect,
+                       db::BackendType backend) -> std::vector<PhysicalTable>
 {
     const bool mysql = dialect.renderCreateTableSuffix().find("ENGINE=InnoDB") != std::string::npos;
-    auto tables =
-        expandJunctions(model, [&dialect](auto type, auto length) { return dialect.toSqlType(type, length); }, mysql);
+    auto tables = expandJunctions(
+        model,
+        [&dialect, backend](const model::ColumnView& column)
+        {
+            if (const auto physical = physicalUuidType(column, backend))
+                return *physical;
+            return dialect.toSqlType(*column.type, column.maxStringLength);
+        },
+        mysql);
     if (mysql)
         for (auto& table : tables)
             foreignKeyIndexes(table);
@@ -767,13 +827,23 @@ auto validateSnapshot(const SchemaSnapshot& snapshot) -> void
                 if (!columnNames.insert(column.name).second || !validLogicalType(column.logicalType) ||
                     !validSqlType(column.sqlType))
                     invalid("Snapshot column names and types must be valid and unique", backend, path);
-                if (column.logicalType == model::ColumnType::Uuid || column.logicalType == model::ColumnType::Date ||
-                    column.logicalType == model::ColumnType::TimeOfDay ||
-                    column.logicalType == model::ColumnType::LocalDateTime ||
-                    column.logicalType == model::ColumnType::UtcTimestamp)
+                if (column.logicalType == model::ColumnType::Uuid)
+                {
+                    const bool binary16 = (backend == db::BackendType::Sqlite && column.sqlType == "BLOB") ||
+                                          (backend == db::BackendType::Mysql && column.sqlType == "BINARY(16)");
+                    const bool text36 = (backend == db::BackendType::Sqlite && column.sqlType == "TEXT") ||
+                                        (backend == db::BackendType::Mysql && column.sqlType == "CHAR(36)");
+                    if (!binary16 && !text36 &&
+                        column.sqlType != sqlType(backend, column.logicalType, column.maxStringLength))
+                        invalid("UUID columns require their canonical physical SQL type", backend, path);
+                }
+                else if (column.logicalType == model::ColumnType::Date ||
+                         column.logicalType == model::ColumnType::TimeOfDay ||
+                         column.logicalType == model::ColumnType::LocalDateTime ||
+                         column.logicalType == model::ColumnType::UtcTimestamp)
                 {
                     if (column.sqlType != sqlType(backend, column.logicalType, column.maxStringLength))
-                        invalid("Temporal and UUID columns require their canonical native SQL type", backend, path);
+                        invalid("Temporal columns require their canonical native SQL type", backend, path);
                 }
                 if (column.maxStringLength &&
                     (column.logicalType != model::ColumnType::String || *column.maxStringLength == 0 ||

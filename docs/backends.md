@@ -37,6 +37,8 @@ intentional differences before SQL execution.
 | Scalar and nullable fields | Portable contract | Portable contract | Portable contract | Portable contract |
 | Native date/time/local datetime/UTC timestamp | Rejected | Native, `(6)` precision | Native, `(6)` precision | Native, `(6)` precision |
 | Native UUID | Rejected | Supported | Rejected | Supported |
+| UUID `Binary16` opt-in | `BLOB` | Not available | `BINARY(16)` | Not available |
+| UUID `Text36` opt-in | `TEXT` | Not available | `CHAR(36)` | Not available |
 | Manual, composite and generated integer keys | Supported | Supported | Supported | Supported |
 | CRUD and exact affected rows | Supported | Supported | Supported | Supported |
 | Projections and aggregate projections | Supported | Supported | Supported | Supported |
@@ -104,10 +106,12 @@ The ORM uses a conservative SQLite ceiling of 900 bind parameters per statement
 and batches collection loading accordingly. The runtime reports this value
 through `BackendRuntimeLimits`; applications should not hard-code it.
 
-SQLite does not have native UUID, date, or time column types. Those types are not
-emulated: models and parameters using them fail with `UnsupportedFeature` before
-SQL, including optional fields set to `NULL`. The numeric/string contract
-remains available. See [Value types](value-types.md) for other native mappings.
+SQLite does not have native UUID, date, or time column types. Native mappings for
+these types fail with `UnsupportedFeature` before SQL, including optional fields
+set to `NULL`. UUID fields may explicitly select Binary16, stored as a 16-byte
+`BLOB`, or Text36, stored as canonical `TEXT`; reads reject other SQLite storage
+classes, lengths and non-canonical text. The numeric/string
+contract remains available. See [Value types](value-types.md) for the mapping.
 
 ## PostgreSQL
 
@@ -161,7 +165,9 @@ There are deliberate v1 exclusions:
   backend-specific raw order when explicit NULL placement is required;
 - PostgreSQL `LIKE` is case-sensitive, while SQLite's default ASCII `LIKE` is
   case-insensitive; the ORM preserves each backend's native behavior;
-- binary/blob, custom converter, async and connection-pool APIs are not included;
+- general-purpose binary/blob APIs, async operations, and connection pools are
+  not included; opt-in value converters and explicit UUID representations are
+  available;
 - model table names are double-quoted identifiers, not schema-qualified paths;
   choose an application schema through PostgreSQL `search_path`;
 - table, column, relation, and generated alias identifiers must fit PostgreSQL's
@@ -245,6 +251,8 @@ protect these settings.
 | Scalar and nullable fields, CRUD, projections, generated/composite keys | Supported | Supported |
 | Native date/time/local datetime/UTC timestamp | Supported, `(6)` precision | Supported, `(6)` precision |
 | Native UUID | Rejected | Supported |
+| UUID `Binary16` opt-in | `BINARY(16)` | Not available |
+| UUID `Text36` opt-in | `CHAR(36)` | Not available |
 | To-one, one-to-many and many-to-many relations | Supported | Supported |
 | Grouped projections | Strict grouping | Strict grouping |
 | Full-model grouping | Rejected | Rejected |
@@ -279,9 +287,11 @@ to `[0, 24h)`. `UtcTimestamp` uses `TIMESTAMP(6)` in the UTC session, with a
 2038 upper bound for MySQL and MariaDB before 11.5; newer MariaDB uses a 2106
 upper bound negotiated from the actual server version. MySQL's declared
 fractional maxima are conservative `.499999` limits; MariaDB uses `.999999`.
-See [Value types](value-types.md) for exact endpoints. MySQL never falls back
-to binary/text UUID. MariaDB UUID has additional version/variant restrictions
-and no typed SQL ordering contract.
+See [Value types](value-types.md) for exact endpoints. MySQL does not implicitly
+fall back to binary or text UUID: select Binary16 or Text36 explicitly per field.
+`BINARY(16)` pads shorter external writes with zero bytes, so the stored value
+alone cannot reveal the original length. MariaDB UUID has additional
+version/variant restrictions and no typed SQL ordering contract.
 
 The selected Oracle client supports MySQL's default `caching_sha2_password` and
 MariaDB's default `mysql_native_password`. `MysqlConfig` and `MariadbConfig` expose the same optional host, port,

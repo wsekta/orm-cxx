@@ -23,6 +23,70 @@ import :database;
 import :migrations_internal;
 import :value_codec;
 
+namespace
+{
+class ForeignStatementBackend : public soci::details::statement_backend
+{
+public:
+    MOCK_METHOD(void, alloc, (), (override));
+    MOCK_METHOD(void, clean_up, (), (override));
+    MOCK_METHOD(void, prepare, (const std::string&, soci::details::statement_type), (override));
+    MOCK_METHOD(exec_fetch_result, execute, (int), (override));
+    MOCK_METHOD(exec_fetch_result, fetch, (int), (override));
+    MOCK_METHOD(long long, get_affected_rows, (), (override));
+    MOCK_METHOD(int, get_number_of_rows, (), (override));
+    MOCK_METHOD(std::string, get_parameter_name, (int), (const, override));
+    MOCK_METHOD(std::string, rewrite_for_procedure_call, (const std::string&), (override));
+    MOCK_METHOD(int, prepare_for_describe, (), (override));
+    MOCK_METHOD(void, describe_column, (int, soci::db_type&, std::string&), (override));
+    MOCK_METHOD(soci::details::standard_into_type_backend*, make_into_type_backend, (), (override));
+    MOCK_METHOD(soci::details::standard_use_type_backend*, make_use_type_backend, (), (override));
+    MOCK_METHOD(soci::details::vector_into_type_backend*, make_vector_into_type_backend, (), (override));
+    MOCK_METHOD(soci::details::vector_use_type_backend*, make_vector_use_type_backend, (), (override));
+};
+
+class ForeignSessionBackend : public soci::details::session_backend
+{
+public:
+    MOCK_METHOD(bool, is_connected, (), (override));
+    MOCK_METHOD(void, begin, (), (override));
+    MOCK_METHOD(void, commit, (), (override));
+    MOCK_METHOD(void, rollback, (), (override));
+    MOCK_METHOD(std::string, get_dummy_from_table, (), (const, override));
+    MOCK_METHOD(std::string, get_backend_name, (), (const, override));
+    MOCK_METHOD(soci::details::statement_backend*, make_statement_backend, (), (override));
+    MOCK_METHOD(soci::details::rowid_backend*, make_rowid_backend, (), (override));
+    MOCK_METHOD(soci::details::blob_backend*, make_blob_backend, (), (override));
+};
+
+class ForeignBackendFactory : public soci::backend_factory
+{
+public:
+    MOCK_METHOD(soci::details::session_backend*, make_session, (const soci::connection_parameters&), (const, override));
+};
+} // namespace
+
+TEST(MysqlFamilyTest, statementParameterLookupRejectsForeignBackend)
+{
+    // A real SOCI statement with a foreign backend needs no database connection.
+    testing::StrictMock<ForeignBackendFactory> factory;
+    auto* sessionBackend = new testing::StrictMock<ForeignSessionBackend>;
+    auto* statementBackend = new testing::StrictMock<ForeignStatementBackend>;
+    EXPECT_CALL(factory, make_session(testing::_)).WillOnce(testing::Return(sessionBackend));
+    EXPECT_CALL(*sessionBackend, make_statement_backend()).WillOnce(testing::Return(statementBackend));
+    EXPECT_CALL(*statementBackend, clean_up()).Times(1);
+    soci::session session{factory, ""};
+    soci::statement statement{session};
+    ASSERT_NE(statement.get_backend(), nullptr);
+
+    for (const auto type : {orm::db::BackendType::Mysql, orm::db::BackendType::Mariadb})
+    {
+        const auto runtime = orm::db::mysql_family::makeRuntime(type);
+        EXPECT_THAT([&] { (void)runtime->hasStatementParameter(statement, "uuid"); },
+                    testing::ThrowsMessage<std::invalid_argument>("Invalid MySQL-family statement"));
+    }
+}
+
 TEST(MysqlFamilyTest, tokenizerPreservesQuotedIdentifiersStringsAndComments)
 {
     const auto sql =
@@ -448,6 +512,49 @@ TEST_P(MysqlFamilyLinkTest, NativeTemporalTextExchangeKeepsMicrosecondsAndNegoti
 TEST_P(MysqlFamilyLinkTest, binary16TransportPrototype)
 {
     binary16_transport_prototype::run(session(), false);
+}
+
+TEST_P(MysqlFamilyLinkTest, Binary16BindingSkipsUnusedNamesAndDistinguishesPrefixes)
+{
+    using orm::db::BoundValue;
+    using orm::db::binding::StatementBindings;
+    using orm::model::ColumnType;
+    using orm::model::UuidStorage;
+
+    const BoundValue binary{
+        .logicalType = ColumnType::Uuid, .value = orm::Uuid{}, .uuidStorage = UuidStorage::Binary16};
+    StatementBindings firstValues;
+    firstValues.add(session(), runtime(), "keep", BoundValue{.logicalType = ColumnType::Int, .value = 42});
+    firstValues.add(session(), runtime(), "uuid", binary);
+    soci::statement first{session()};
+    first.alloc();
+    first.prepare("SELECT :keep, ':uuid'");
+    EXPECT_TRUE(runtime().hasStatementParameter(first, "keep"));
+    EXPECT_FALSE(runtime().hasStatementParameter(first, "uuid"));
+    int actual{};
+    std::string literal;
+    firstValues.exchange(first);
+    first.exchange(soci::into(actual));
+    first.exchange(soci::into(literal));
+    first.define_and_bind();
+    ASSERT_TRUE(first.execute(true));
+    EXPECT_EQ(actual, 42);
+    EXPECT_EQ(literal, ":uuid");
+
+    StatementBindings secondValues;
+    secondValues.add(session(), runtime(), "uuid", binary);
+    secondValues.add(session(), runtime(), "uuid_long", binary);
+    soci::statement second{session()};
+    second.alloc();
+    second.prepare("SELECT OCTET_LENGTH(:uuid_long)");
+    EXPECT_FALSE(runtime().hasStatementParameter(second, "uuid"));
+    EXPECT_TRUE(runtime().hasStatementParameter(second, "uuid_long"));
+    int length{};
+    secondValues.exchange(second);
+    second.exchange(soci::into(length));
+    second.define_and_bind();
+    ASSERT_TRUE(second.execute(true));
+    EXPECT_EQ(length, 16);
 }
 
 TEST_P(MysqlFamilyLinkTest, TemporalMigrationGuardsRejectChangedTimezoneAndTimestampDefaults)

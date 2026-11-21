@@ -7,6 +7,7 @@ module;
 #include <cstdint>
 #include <exception>
 #include <limits>
+#include <new>
 #include <optional>
 #include <sstream>
 #include <stdexcept>
@@ -50,14 +51,24 @@ struct OptionalValue
     using Type = T;
 };
 
-template <typename T>
-struct OptionalValue<std::optional<T>>
+template <NullableAdaptable T>
+struct OptionalValue<T>
 {
-    using Type = T;
+    using Type = typename NullableAdapter<T>::Value;
 };
 
 template <typename T>
 using optional_value_t = typename OptionalValue<std::remove_cv_t<T>>::Type;
+
+template <typename Wrapper, typename Value>
+auto makeNullableValue(Value value) -> Wrapper
+{
+    using contained_t = typename NullableAdapter<Wrapper>::Value;
+    if constexpr (std::is_move_constructible_v<contained_t>)
+        return NullableAdapter<Wrapper>::make(std::move(value));
+    else
+        return NullableAdapter<Wrapper>::make(value);
+}
 
 template <typename SchemaType, typename ModelField>
 concept SchemaModel = SchemaType::template contains<std::remove_cv_t<optional_value_t<ModelField>>>;
@@ -75,15 +86,36 @@ public:
 };
 
 template <typename T>
-concept SociEncodedValue = IsOneOfTypes<std::remove_cv_t<T>, Date, TimeOfDay, LocalDateTime, UtcTimestamp, Uuid>;
+concept SociEncodedValue = IsOneOfTypes<std::remove_cv_t<T>, Date, TimeOfDay, LocalDateTime, UtcTimestamp, Uuid> ||
+                           UuidAdaptable<std::remove_cv_t<T>>;
+
+template <UuidAdaptable T>
+auto canonicalUuid(const T& value) -> Uuid
+{
+    try
+    {
+        return UuidAdapter<T>::toUuid(value);
+    }
+    catch (const std::invalid_argument&)
+    {
+        throw ConversionError{"A UUID value was rejected by its adapter"};
+    }
+}
 
 template <SociEncodedValue T>
 auto encodeScalarValue(const T& value) -> std::string
 {
     try
     {
-        orm::detail::values::validate(value);
-        return orm::detail::values::format(value);
+        if constexpr (UuidAdaptable<T>)
+        {
+            return orm::detail::values::format(canonicalUuid(value));
+        }
+        else
+        {
+            orm::detail::values::validate(value);
+            return orm::detail::values::format(value);
+        }
     }
     catch (const std::invalid_argument&)
     {
@@ -104,6 +136,8 @@ auto decodeScalarValue(std::string_view text) -> T
             return orm::detail::values::parseLocalDateTime(text);
         else if constexpr (std::is_same_v<T, UtcTimestamp>)
             return orm::detail::values::parseUtcTimestamp(text);
+        else if constexpr (UuidAdaptable<T>)
+            return UuidAdapter<T>::fromUuid(Uuid::parse(text));
         else
             return Uuid::parse(text);
     }
@@ -116,11 +150,12 @@ auto decodeScalarValue(std::string_view text) -> T
 template <SociEncodedValue T>
 auto getEncodedScalarValue(const auto& values, const std::string& name) -> T
 {
+    std::string value;
     try
     {
-        return decodeScalarValue<T>(values.template get<std::string>(name));
+        value = values.template get<std::string>(name);
     }
-    catch (const ConversionError&)
+    catch (const std::bad_alloc&)
     {
         throw;
     }
@@ -128,6 +163,7 @@ auto getEncodedScalarValue(const auto& values, const std::string& name) -> T
     {
         throw ConversionError{"A database value has an incompatible result representation"};
     }
+    return decodeScalarValue<T>(value);
 }
 } // namespace orm::db::binding
 namespace orm::db::binding

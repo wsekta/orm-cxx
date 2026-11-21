@@ -232,6 +232,40 @@ auto validateModelIdentifiers(const orm::db::SqlDialect& dialect, const orm::mod
 
 namespace orm
 {
+// Keep the SOCI template calls in this implementation unit. Analyzing them
+// through an imported module can lose track of the statement's initialized handle.
+auto db::binding::Binary16Buffer::exchangeUse(soci::statement& statement, const std::string& name) -> void
+{
+    statement.exchange(soci::use(blob_, indicator_, name));
+}
+
+auto db::binding::Binary16Buffer::exchangeInto(soci::statement& statement) -> void
+{
+    statement.exchange(soci::into(blob_, indicator_));
+}
+
+auto db::binding::StatementBindings::exchange(soci::statement& statement) -> void
+{
+    statement.exchange(soci::use(values()));
+    for (auto& binary : binaries_)
+        if (binary->runtime.hasStatementParameter(statement, binary->name))
+            binary->buffer.exchangeUse(statement, binary->name);
+}
+
+auto detail::supportsPhysicalColumn(const db::BackendCapabilities& capabilities, const model::ColumnView& column,
+                                    db::BackendType backend) -> bool
+{
+    if (!column.type)
+        return false;
+    if (*column.type == model::ColumnType::Uuid && column.uuidStorage(backend) != model::UuidStorage::Native)
+    {
+        const auto storage = column.uuidStorage(backend);
+        return (backend == db::BackendType::Mysql || backend == db::BackendType::Sqlite) &&
+               (storage == model::UuidStorage::Binary16 || storage == model::UuidStorage::Text36);
+    }
+    return capabilities.supportsColumnType(*column.type);
+}
+
 auto detail::hasOwningJunction(model::ModelView owner) -> bool
 {
     return std::ranges::any_of(owner->relations,
@@ -395,6 +429,41 @@ auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values
     return parameterCount;
 }
 
+auto detail::bindModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
+                                 soci::session& session, db::BackendType backend, const soci::values& serializedModel,
+                                 model::ModelView descriptor, const db::BackendValueLimits& valueLimits,
+                                 const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t
+{
+    std::size_t parameterCount{};
+    const auto bind = [&](std::string name, const model::ColumnView& column)
+    {
+        auto value = serializedBoundValue(serializedModel, name, column.type.value());
+        value.uuidStorage = column.uuidStorage(backend);
+        if (value.uuidStorage != model::UuidStorage::Binary16 &&
+            !db::binding::isWithinValueLimits(value, valueLimits, runtimeLimits))
+            throw db::binding::ConversionError{"A model value exceeds the backend value limits"};
+        targetValues.add(session, runtime, name, value);
+        ++parameterCount;
+    };
+    for (const auto& column : descriptor->columns)
+    {
+        if (column.isAutoIncrement)
+            continue;
+        if (column.kind == model::FieldKind::ToOne)
+        {
+            const auto related = descriptor.resolveTarget(column);
+            if (!related)
+                throw std::invalid_argument{"To-one column has no target model in the schema"};
+            for (const auto& child : related->columns)
+                if (child.isPrimaryKey)
+                    bind(std::format("{}_{}", column.name, child.name), child);
+        }
+        else
+            bind(std::string{column.name}, column);
+    }
+    return parameterCount;
+}
+
 auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
 {
     if (affectedRows < 0)
@@ -408,9 +477,18 @@ auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
 auto db::BackendRuntime::executeInsertIfAbsent(soci::session& session, StatementView statement,
                                                const InsertIfAbsentSpec&) const -> std::size_t
 {
-    soci::values values;
-    orm::detail::bindStatementParameters(*this, values, statement.parameters);
-    soci::statement prepared = (session.prepare << statement.sql, soci::use(values));
+    binding::StatementBindings values;
+    for (const auto& parameter : statement.parameters)
+        values.add(session, *this, parameter);
+    // `values.exchange` also wires the binary buffers, which `soci::use(values)`
+    // alone cannot do, so the prepare-then-exchange order has to stay. The
+    // analyzer's "impl_ uninitialized" report is a false positive on SOCI's
+    // handle, whose constructor always allocates it.
+    soci::statement prepared{session};
+    prepared.alloc();
+    prepared.prepare(std::string{statement.sql});
+    values.exchange(prepared); // NOLINT(clang-analyzer-core.CallAndMessage)
+    prepared.define_and_bind();
     prepared.execute(true);
     return normalizeAffectedRows(prepared.get_affected_rows());
 }
@@ -649,11 +727,12 @@ auto Database::executeMutation(db::StatementView statement, std::string_view ope
     ensureAffectedRowsAvailable(operation);
     for (const auto& parameter : statement.parameters)
         ensureBoundValueSupported(parameter.getBoundValue(), operation);
-    soci::values parameterValues;
+    db::binding::StatementBindings parameterValues;
 
     try
     {
-        detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
+        for (const auto& parameter : statement.parameters)
+            parameterValues.add(sql, getBackend().runtime(), parameter);
 
         auto executeAndGetAffectedRows = [this](soci::statement& preparedStatement) -> std::size_t
         {
@@ -669,7 +748,11 @@ auto Database::executeMutation(db::StatementView statement, std::string_view ope
             return executeAndGetAffectedRows(preparedStatement);
         }
 
-        soci::statement preparedStatement = (sql.prepare << statement.sql, soci::use(parameterValues));
+        soci::statement preparedStatement{sql};
+        preparedStatement.alloc();
+        preparedStatement.prepare(std::string{statement.sql});
+        parameterValues.exchange(preparedStatement); // NOLINT(clang-analyzer-core.CallAndMessage)
+        preparedStatement.define_and_bind();
 
         return executeAndGetAffectedRows(preparedStatement);
     }
@@ -717,8 +800,12 @@ auto Database::executeInsertIfAbsent(const db::Statement& statement, const db::I
         ensureBoundValueSupported(parameter.getBoundValue(), operation);
     try
     {
-        return getBackend().runtime().executeInsertIfAbsent(sql, db::StatementView{statement.sql, statement.parameters},
-                                                            conflict);
+        // The analyzer follows SOCI's prepare-then-exchange into statement.h and
+        // reports impl_ as uninitialized; the handle constructor always allocates
+        // it, and the pattern cannot use soci::use(values) because that drops the
+        // binary buffers Text36 and Binary16 rely on.
+        return getBackend().runtime().executeInsertIfAbsent( // NOLINT(clang-analyzer-core.CallAndMessage)
+            sql, db::StatementView{statement.sql, statement.parameters}, conflict);
     }
     catch (const db::binding::ConversionError&)
     {
@@ -871,21 +958,31 @@ auto Database::relationEndpointExists(model::ModelView model, const db::binding:
         const auto parameterName = std::format("orm_endpoint_{}", i);
         where += std::format("{} = {}", dialect.quoteIdentifier(primaryKeyColumns[i]->name),
                              dialect.bindMarker(parameterName));
-        statement.parameters.push_back(db::StatementParameter{
-            .name = parameterName, .value = db::binding::toQueryValue(key[i]), .nullType = std::nullopt});
+        statement.parameters.push_back(
+            db::StatementParameter{.name = parameterName,
+                                   .value = db::binding::toQueryValue(key[i]),
+                                   .nullType = std::nullopt,
+                                   .uuidStorage = primaryKeyColumns[i]->uuidStorage(backendType)});
     }
 
     statement.sql = std::format("SELECT COUNT(*) FROM {} WHERE {};", dialect.quoteIdentifier(model->tableName), where);
     for (const auto& parameter : statement.parameters)
         ensureBoundValueSupported(parameter.getBoundValue(), "validate relation endpoint");
     ensureStatementWithinBindLimit(statement.parameters.size(), "validate relation endpoint");
-    soci::values parameterValues;
+    db::binding::StatementBindings parameterValues;
     long long count{};
 
     try
     {
-        detail::bindStatementParameters(getBackend().runtime(), parameterValues, statement.parameters);
-        sql << statement.sql, soci::use(parameterValues), soci::into(count);
+        for (const auto& parameter : statement.parameters)
+            parameterValues.add(sql, getBackend().runtime(), parameter);
+        soci::statement prepared{sql};
+        prepared.alloc();
+        prepared.prepare(statement.sql);
+        parameterValues.exchange(prepared); // NOLINT(clang-analyzer-core.CallAndMessage)
+        prepared.exchange(soci::into(count));
+        prepared.define_and_bind();
+        prepared.execute(true);
     }
     catch (const db::binding::ConversionError&)
     {
@@ -950,7 +1047,7 @@ auto Database::ensureRelationTableEndpointsExist(model::ModelView owner) -> void
 
         for (const auto* column : targetPrimaryKey)
         {
-            if (not capabilities.supportsColumnType(column->type.value()))
+            if (not detail::supportsPhysicalColumn(capabilities, *column, backendType))
             {
                 throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, "create relation tables",
                                     "A target primary-key type is not supported by the backend"};
@@ -1040,7 +1137,7 @@ auto Database::ensureModelSupported(model::ModelView descriptor, std::string_vie
             for (const auto primaryKeyIndex : relatedModel->primaryKeyIndices)
             {
                 const auto& relatedColumn = relatedModel->columns[primaryKeyIndex];
-                if (not capabilities.supportsColumnType(relatedColumn.type.value()))
+                if (not detail::supportsPhysicalColumn(capabilities, relatedColumn, backendType))
                 {
                     throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                         "A related primary-key column type is not supported by the backend"};
@@ -1050,7 +1147,7 @@ auto Database::ensureModelSupported(model::ModelView descriptor, std::string_vie
             continue;
         }
 
-        if (not capabilities.supportsColumnType(column.type.value()))
+        if (not detail::supportsPhysicalColumn(capabilities, column, backendType))
         {
             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                                 "A model column type is not supported by the backend"};
@@ -1139,7 +1236,7 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
         if (source.pathSize == 0)
             return;
         const auto info = db::detail::resolveSqlColumn(source, sourceModel);
-        requireCapability(info.column->type && capabilities.supportsColumnType(*info.column->type), operation,
+        requireCapability(detail::supportsPhysicalColumn(capabilities, *info.column, backendType), operation,
                           "A query column type is not supported by the backend");
     };
     auto checkNode = [&](auto&& self, std::size_t index, model::ModelView sourceModel) -> void
@@ -1152,8 +1249,8 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
             const auto* relation = detail::requireCollectionRelation(sourceModel, node.relation);
             const auto target = detail::requireRelationTarget(sourceModel, *relation);
             for (const auto key : target->primaryKeyIndices)
-                requireCapability(capabilities.supportsColumnType(*target->columns[key].type), operation,
-                                  "A collection key type is not supported by the backend");
+                requireCapability(detail::supportsPhysicalColumn(capabilities, target->columns[key], backendType),
+                                  operation, "A collection key type is not supported by the backend");
             self(self, node.left, target);
         }
         else if (node.kind == db::detail::SqlNodeKind::And || node.kind == db::detail::SqlNodeKind::Or ||
@@ -1181,7 +1278,7 @@ auto Database::ensureQueryTypesSupported(model::ModelView descriptor, db::detail
                 const auto related = detail::requireSupportedRelatedTarget(descriptor, column, backendType, operation);
                 for (const auto& field : related->columns)
                     if (field.type)
-                        requireCapability(capabilities.supportsColumnType(*field.type), operation,
+                        requireCapability(detail::supportsPhysicalColumn(capabilities, field, backendType), operation,
                                           "A joined column type is not supported by the backend");
             }
 }
@@ -1311,6 +1408,21 @@ auto Database::ensureAffectedRowsAvailable(std::string_view operation) const -> 
 
 auto Database::ensureBoundValueSupported(const db::BoundValue& value, std::string_view operation) -> void
 {
+    if (value.uuidStorage != model::UuidStorage::Native)
+    {
+        requireCapability(value.logicalType == model::ColumnType::Uuid &&
+                              (backendType == db::BackendType::Mysql || backendType == db::BackendType::Sqlite),
+                          operation, "The selected UUID representation is not supported for this backend");
+        if (value.uuidStorage != model::UuidStorage::Binary16 && value.uuidStorage != model::UuidStorage::Text36)
+            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
+                                "Invalid UUID storage representation"};
+        if (value.value && !query::QueryValue::isCompatibleStorage(value.logicalType, *value.value))
+            throw DatabaseError{DatabaseErrorCode::Conversion, backendType, std::string{operation},
+                                "An explicitly represented UUID has incompatible storage"};
+        return;
+    }
+    requireCapability(value.uuidStorage == model::UuidStorage::Native, operation,
+                      "Invalid UUID storage representation");
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.supportsColumnType(value.logicalType), operation,
                       "A bound value type is not supported by the backend");

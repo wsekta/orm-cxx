@@ -118,9 +118,10 @@ struct DatabaseAccess
 [[nodiscard]] auto renderForeignKey(db::BackendType backend, const PhysicalForeignKey& key) -> std::string;
 [[nodiscard]] auto physicalTable(model::ModelView model, db::BackendType backend) -> PhysicalTable;
 [[nodiscard]] auto physicalJunctions(model::ModelView model, db::BackendType backend) -> std::vector<PhysicalTable>;
-[[nodiscard]] auto physicalTable(model::ModelView model, const db::SqlDialect& dialect) -> PhysicalTable;
-[[nodiscard]] auto physicalJunctions(model::ModelView model,
-                                     const db::SqlDialect& dialect) -> std::vector<PhysicalTable>;
+[[nodiscard]] auto physicalTable(model::ModelView model, const db::SqlDialect& dialect,
+                                 db::BackendType backend = db::BackendType::Empty) -> PhysicalTable;
+[[nodiscard]] auto physicalJunctions(model::ModelView model, const db::SqlDialect& dialect,
+                                     db::BackendType backend = db::BackendType::Empty) -> std::vector<PhysicalTable>;
 [[nodiscard]] auto renderCreateTable(const db::SqlDialect& dialect, const PhysicalTable& table,
                                      bool includeForeignKeys = true, bool ifNotExists = false) -> std::string;
 auto canonicalize(SchemaSnapshot& snapshot) -> void;

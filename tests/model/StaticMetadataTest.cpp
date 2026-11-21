@@ -21,6 +21,18 @@ struct DefaultNames
     int value;
 };
 
+struct UuidRepresentations
+{
+    orm::Uuid id;
+    std::optional<orm::Uuid> optionalId;
+    int unrelated;
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&UuidRepresentations::id, orm::db::BackendType::Mysql, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&UuidRepresentations::id, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Binary16>(),
+        orm::uuidStorage<&UuidRepresentations::optionalId, orm::db::BackendType::Sqlite,
+                         orm::model::UuidStorage::Binary16>());
+};
+
 struct TypedMapping
 {
     int id;
@@ -165,6 +177,23 @@ struct LookupChild
 
 namespace
 {
+using UuidRepresentations = static_metadata_models::UuidRepresentations;
+using UuidSchema = orm::Schema<UuidRepresentations>;
+inline constexpr auto uuidMetadata = orm::modelView<UuidSchema, UuidRepresentations>();
+static_assert(uuidMetadata->columns[0].uuidStorage(orm::db::BackendType::Mysql) == orm::model::UuidStorage::Binary16);
+static_assert(uuidMetadata->columns[0].uuidStorage(orm::db::BackendType::Sqlite) == orm::model::UuidStorage::Binary16);
+static_assert(uuidMetadata->columns[0].uuidStorage(orm::db::BackendType::Postgres) == orm::model::UuidStorage::Native);
+static_assert(uuidMetadata->columns[1].uuidStorage(orm::db::BackendType::Mysql) == orm::model::UuidStorage::Native);
+static_assert(uuidMetadata->columns[1].uuidStorage(orm::db::BackendType::Sqlite) == orm::model::UuidStorage::Binary16);
+static_assert(uuidMetadata->columns[2].uuidStorage(orm::db::BackendType::Sqlite) == orm::model::UuidStorage::Native);
+inline constexpr auto duplicateUuidStorage = orm::uuidStorages(
+    orm::uuidStorage<&UuidRepresentations::id, orm::db::BackendType::Mysql, orm::model::UuidStorage::Binary16>(),
+    orm::uuidStorage<&UuidRepresentations::id, orm::db::BackendType::Mysql, orm::model::UuidStorage::Native>());
+static_assert(not decltype(duplicateUuidStorage)::template isValidFor<UuidRepresentations>());
+inline constexpr auto nonUuidStorage =
+    orm::uuidStorages(orm::uuidStorage<&UuidRepresentations::unrelated, orm::db::BackendType::Mysql,
+                                       orm::model::UuidStorage::Binary16>());
+static_assert(not decltype(nonUuidStorage)::template isValidFor<UuidRepresentations>());
 using static_metadata_models::Author;
 using static_metadata_models::Book;
 using static_metadata_models::Child;
