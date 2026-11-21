@@ -1,25 +1,8 @@
 var searchData=
 [
-  ['schema_0',['Schema',['../structorm_1_1model_1_1Schema.html',1,'orm::model']]],
-  ['schema_3c_20models_2e_2e_2e_20_3e_1',['Schema&lt; Models... &gt;',['../structorm_1_1model_1_1Schema.html',1,'orm::model']]],
-  ['schemacapabilities_2',['SchemaCapabilities',['../structorm_1_1db_1_1SchemaCapabilities.html',1,'orm::db']]],
-  ['schemachange_3',['SchemaChange',['../structorm_1_1migrations_1_1SchemaChange.html',1,'orm::migrations']]],
-  ['schemadiff_4',['SchemaDiff',['../structorm_1_1migrations_1_1SchemaDiff.html',1,'orm::migrations']]],
-  ['schemasnapshot_5',['SchemaSnapshot',['../structorm_1_1migrations_1_1SchemaSnapshot.html',1,'orm::migrations']]],
-  ['schemaview_6',['SchemaView',['../structorm_1_1model_1_1SchemaView.html',1,'orm::model']]],
-  ['sqldialect_7',['SqlDialect',['../classorm_1_1db_1_1SqlDialect.html',1,'orm::db']]],
-  ['sqlitebackend_8',['SqliteBackend',['../classorm_1_1db_1_1sqlite_1_1SqliteBackend.html',1,'orm::db::sqlite']]],
-  ['sqliteconfig_9',['SqliteConfig',['../structorm_1_1SqliteConfig.html',1,'orm']]],
-  ['sqlitedialect_10',['SqliteDialect',['../classorm_1_1db_1_1sqlite_1_1SqliteDialect.html',1,'orm::db::sqlite']]],
-  ['sqlitememory_11',['SqliteMemory',['../structorm_1_1SqliteMemory.html',1,'orm']]],
-  ['sqlitetypetranslator_12',['SqliteTypeTranslator',['../classorm_1_1db_1_1sqlite_1_1SqliteTypeTranslator.html',1,'orm::db::sqlite']]],
-  ['sqlmigration_13',['SqlMigration',['../structorm_1_1migrations_1_1SqlMigration.html',1,'orm::migrations']]],
-  ['statement_14',['Statement',['../structorm_1_1db_1_1Statement.html',1,'orm::db']]],
-  ['statementparameter_15',['StatementParameter',['../structorm_1_1db_1_1StatementParameter.html',1,'orm::db']]],
-  ['statementview_16',['StatementView',['../structorm_1_1db_1_1StatementView.html',1,'orm::db']]],
-  ['staticmodel_17',['StaticModel',['../structorm_1_1model_1_1StaticModel.html',1,'orm::model']]],
-  ['staticplan_18',['StaticPlan',['../classorm_1_1query_1_1StaticPlan.html',1,'orm::query']]],
-  ['status_19',['Status',['../structorm_1_1migrations_1_1Status.html',1,'orm::migrations']]],
-  ['stringlength_20',['StringLength',['../structorm_1_1model_1_1StringLength.html',1,'orm::model']]],
-  ['stringlengths_21',['StringLengths',['../structorm_1_1model_1_1StringLengths.html',1,'orm::model']]]
+  ['rebuildtable_0',['RebuildTable',['../structorm_1_1migrations_1_1RebuildTable.html',1,'orm::migrations']]],
+  ['relationcapabilities_1',['RelationCapabilities',['../structorm_1_1db_1_1RelationCapabilities.html',1,'orm::db']]],
+  ['relationview_2',['RelationView',['../structorm_1_1model_1_1RelationView.html',1,'orm::model']]],
+  ['resultcolumn_3',['ResultColumn',['../structorm_1_1db_1_1binding_1_1ResultColumn.html',1,'orm::db::binding']]],
+  ['runner_4',['Runner',['../classorm_1_1migrations_1_1Runner.html',1,'orm::migrations']]]
 ];

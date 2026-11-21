@@ -3,27 +3,24 @@ var annotated_dup =
     [ "orm", "namespaceorm.html", [
       [ "db", "namespaceorm_1_1db.html", [
         [ "binding", "namespaceorm_1_1db_1_1binding.html", [
+          [ "Binary16Buffer", "classorm_1_1db_1_1binding_1_1Binary16Buffer.html", "classorm_1_1db_1_1binding_1_1Binary16Buffer" ],
           [ "BindingInfo", "structorm_1_1db_1_1binding_1_1BindingInfo.html", "structorm_1_1db_1_1binding_1_1BindingInfo" ],
           [ "BindingPayload", "structorm_1_1db_1_1binding_1_1BindingPayload.html", "structorm_1_1db_1_1binding_1_1BindingPayload" ],
           [ "CollectionPayload", "structorm_1_1db_1_1binding_1_1CollectionPayload.html", "structorm_1_1db_1_1binding_1_1CollectionPayload" ],
           [ "ConversionError", "classorm_1_1db_1_1binding_1_1ConversionError.html", "classorm_1_1db_1_1binding_1_1ConversionError" ],
           [ "IsOptional", "structorm_1_1db_1_1binding_1_1IsOptional.html", null ],
           [ "IsOptional&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-          [ "IsOptionalBoundField", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField.html", null ],
-          [ "IsOptionalBoundField&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4" ],
-          [ "IsOptionalScalarField", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField.html", null ],
-          [ "IsOptionalScalarField&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4" ],
           [ "ObjectFieldFromProjectionValues", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues.html", null ],
           [ "ObjectFieldFromProjectionValues&lt; ResultField &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html", null ],
-          [ "ObjectFieldFromProjectionValues&lt; std::optional&lt; ResultField &gt; &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html", null ],
           [ "ObjectFieldFromProjectionValuesWithCast", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html", null ],
           [ "ObjectFieldFromValues", "structorm_1_1db_1_1binding_1_1ObjectFieldFromValues.html", null ],
           [ "ObjectFieldToValues", "structorm_1_1db_1_1binding_1_1ObjectFieldToValues.html", null ],
           [ "OptionalValue", "structorm_1_1db_1_1binding_1_1OptionalValue.html", "structorm_1_1db_1_1binding_1_1OptionalValue" ],
-          [ "OptionalValue&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4" ],
+          [ "OptionalValue&lt; T &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01T_01_4.html", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01T_01_4" ],
           [ "PrimaryKeyLess", "structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html", "structorm_1_1db_1_1binding_1_1PrimaryKeyLess" ],
           [ "ProjectionPayload", "structorm_1_1db_1_1binding_1_1ProjectionPayload.html", "structorm_1_1db_1_1binding_1_1ProjectionPayload" ],
           [ "ResultColumn", "structorm_1_1db_1_1binding_1_1ResultColumn.html", "structorm_1_1db_1_1binding_1_1ResultColumn" ],
+          [ "StatementBindings", "classorm_1_1db_1_1binding_1_1StatementBindings.html", "classorm_1_1db_1_1binding_1_1StatementBindings" ],
           [ "TypedResultStorage", "classorm_1_1db_1_1binding_1_1TypedResultStorage.html", "classorm_1_1db_1_1binding_1_1TypedResultStorage" ]
         ] ],
         [ "mariadb", "namespaceorm_1_1db_1_1mariadb.html", [
@@ -125,6 +122,7 @@ var annotated_dup =
         [ "LogicalTypeTraits&lt; short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html", null ],
         [ "LogicalTypeTraits&lt; signed char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html", null ],
         [ "LogicalTypeTraits&lt; std::string &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html", null ],
+        [ "LogicalTypeTraits&lt; T &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01T_01_4.html", null ],
         [ "LogicalTypeTraits&lt; TimeOfDay &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01TimeOfDay_01_4.html", null ],
         [ "LogicalTypeTraits&lt; unsigned char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html", null ],
         [ "LogicalTypeTraits&lt; unsigned int &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html", null ],
@@ -142,7 +140,9 @@ var annotated_dup =
         [ "StaticModel", "structorm_1_1model_1_1StaticModel.html", null ],
         [ "StringLength", "structorm_1_1model_1_1StringLength.html", null ],
         [ "StringLengths", "structorm_1_1model_1_1StringLengths.html", "structorm_1_1model_1_1StringLengths" ],
-        [ "TypeId", "structorm_1_1model_1_1TypeId.html", "structorm_1_1model_1_1TypeId" ]
+        [ "TypeId", "structorm_1_1model_1_1TypeId.html", "structorm_1_1model_1_1TypeId" ],
+        [ "UuidStorageDefinition", "structorm_1_1model_1_1UuidStorageDefinition.html", null ],
+        [ "UuidStorages", "structorm_1_1model_1_1UuidStorages.html", "structorm_1_1model_1_1UuidStorages" ]
       ] ],
       [ "query", "namespaceorm_1_1query.html", [
         [ "Expression", "classorm_1_1query_1_1Expression.html", "classorm_1_1query_1_1Expression" ],
@@ -179,11 +179,15 @@ var annotated_dup =
       [ "SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
       [ "TimeOfDay", "classorm_1_1TimeOfDay.html", "classorm_1_1TimeOfDay" ],
       [ "Update", "classorm_1_1Update.html", "classorm_1_1Update" ],
-      [ "Uuid", "classorm_1_1Uuid.html", "classorm_1_1Uuid" ]
+      [ "Uuid", "classorm_1_1Uuid.html", "classorm_1_1Uuid" ],
+      [ "UuidAdapter", "structorm_1_1UuidAdapter.html", null ],
+      [ "ValueConverter", "structorm_1_1ValueConverter.html", null ]
     ] ],
     [ "soci", "namespacesoci.html", [
       [ "type_conversion&lt; BindingPayload&lt; T, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4" ],
       [ "type_conversion&lt; orm::db::binding::CollectionPayload&lt; Owner, Target, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051" ],
       [ "type_conversion&lt; ProjectionPayload&lt; T &gt; &gt;", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4.html", "structsoci_1_1type__conversion_3_01ProjectionPayload_3_01T_01_4_01_4" ]
-    ] ]
+    ] ],
+    [ "NullableAdapter", "structNullableAdapter.html", null ],
+    [ "NullableAdapter&lt; std::optional&lt; T &gt; &gt;", "structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html", "structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4" ]
 ];

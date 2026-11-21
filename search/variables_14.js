@@ -5,5 +5,6 @@ var searchData=
   ['up_2',['up',['../structorm_1_1migrations_1_1SqlMigration.html#aeeee0ed76eea560ed20abb9415c4def7',1,'orm::migrations::SqlMigration']]],
   ['upcontext_3',['upContext',['../structorm_1_1migrations_1_1SqlMigration.html#ad9d11060b9cd481191f534e30a839420',1,'orm::migrations::SqlMigration']]],
   ['update_4',['update',['../structorm_1_1db_1_1MutationCapabilities.html#adca639e32992fb19fb3dfd28c9e715dc',1,'orm::db::MutationCapabilities']]],
-  ['user_5',['user',['../structorm_1_1PostgresConfig.html#ae87ffffc026faefa0e2893dc9a39255d',1,'orm::PostgresConfig::user'],['../structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea',1,'orm::MysqlConfig::user'],['../structorm_1_1MariadbConfig.html#acc3786acce683fabf2efcd7c07d9e3fa',1,'orm::MariadbConfig::user']]]
+  ['user_5',['user',['../structorm_1_1PostgresConfig.html#ae87ffffc026faefa0e2893dc9a39255d',1,'orm::PostgresConfig::user'],['../structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea',1,'orm::MysqlConfig::user'],['../structorm_1_1MariadbConfig.html#acc3786acce683fabf2efcd7c07d9e3fa',1,'orm::MariadbConfig::user']]],
+  ['uuidstorage_6',['uuidStorage',['../structorm_1_1query_1_1QueryParameter.html#a27bf843886b294fc22f61e9ef66a5dcb',1,'orm::query::QueryParameter::uuidStorage'],['../structorm_1_1db_1_1BoundValue.html#ae7c57e78c716b57f5396ff379c8b1006',1,'orm::db::BoundValue::uuidStorage'],['../structorm_1_1db_1_1StatementParameter.html#a7d2f853bea71ce5e1a95b0c64f14306b',1,'orm::db::StatementParameter::uuidStorage']]]
 ];

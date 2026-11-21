@@ -1,5 +1,7 @@
 var result__storage_8cppm =
 [
+    [ "orm::db::binding::Binary16Buffer", "classorm_1_1db_1_1binding_1_1Binary16Buffer.html", "classorm_1_1db_1_1binding_1_1Binary16Buffer" ],
+    [ "orm::db::binding::StatementBindings", "classorm_1_1db_1_1binding_1_1StatementBindings.html", "classorm_1_1db_1_1binding_1_1StatementBindings" ],
     [ "orm::db::binding::ResultColumn", "structorm_1_1db_1_1binding_1_1ResultColumn.html", "structorm_1_1db_1_1binding_1_1ResultColumn" ],
     [ "orm::db::binding::TypedResultStorage", "classorm_1_1db_1_1binding_1_1TypedResultStorage.html", "classorm_1_1db_1_1binding_1_1TypedResultStorage" ],
     [ "orm::db::binding::TypedResultStorage::Properties", "structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties.html", "structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties" ],

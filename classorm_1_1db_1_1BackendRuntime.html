@@ -137,11 +137,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d783a3f43a49075e953a2467fdcc007" id="r_a2d783a3f43a49075e953a2467fdcc007"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a2d783a3f43a49075e953a2467fdcc007">executeInsertIfAbsent</a> (soci::session &amp;session, <a class="el" href="structorm_1_1db_1_1StatementView.html">StatementView</a> statement, const <a class="el" href="structorm_1_1db_1_1InsertIfAbsentSpec.html">InsertIfAbsentSpec</a> &amp;conflict) const -&gt; std::size_t</td></tr>
 <tr class="memitem:ac34c7d24e7f610c69876fa0537f59b75" id="r_ac34c7d24e7f610c69876fa0537f59b75"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#ac34c7d24e7f610c69876fa0537f59b75">statementErrorInvalidatesTransaction</a> (const soci::soci_error &amp;) const noexcept -&gt; bool</td></tr>
 <tr class="memitem:a1b2bc8b6de63163939935dc51f87dfb4" id="r_a1b2bc8b6de63163939935dc51f87dfb4"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a1b2bc8b6de63163939935dc51f87dfb4">bind</a> (soci::values &amp;values, std::string_view name, const <a class="el" href="structorm_1_1db_1_1BoundValue.html">BoundValue</a> &amp;value) const -&gt; void=0</td></tr>
+<tr class="memitem:a05eb5f5e61db2e7ba57dc3be06060cbe" id="r_a05eb5f5e61db2e7ba57dc3be06060cbe"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a05eb5f5e61db2e7ba57dc3be06060cbe">hasStatementParameter</a> (soci::statement &amp;, std::string_view) const -&gt; bool</td></tr>
 <tr class="memitem:a8eb46e3e44c21e37e72d9cb8ee0036a2" id="r_a8eb46e3e44c21e37e72d9cb8ee0036a2"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a8eb46e3e44c21e37e72d9cb8ee0036a2">translateError</a> (const soci::soci_error &amp;error, <a class="el" href="namespaceorm.html#a11a157f026d723aaf6e4135bca472f62">DatabaseErrorCode</a> fallback, std::string_view operation) const -&gt; <a class="el" href="classorm_1_1DatabaseError.html">DatabaseError</a>=0</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00287">287</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00290">290</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a32d982efc863d13ce040cc3a7a492e7d" name="a32d982efc863d13ce040cc3a7a492e7d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a32d982efc863d13ce040cc3a7a492e7d">&#9670;&#160;</a></span>~BackendRuntime()</h2>
@@ -196,7 +197,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00300">300</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00303">303</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -261,7 +262,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00316">316</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00319">319</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -293,7 +294,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Releases session-scoped locks; transaction-scoped locks need no hook. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00327">327</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00330">330</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -359,7 +360,39 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00305">305</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00308">308</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a05eb5f5e61db2e7ba57dc3be06060cbe" name="a05eb5f5e61db2e7ba57dc3be06060cbe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05eb5f5e61db2e7ba57dc3be06060cbe">&#9670;&#160;</a></span>hasStatementParameter()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual auto orm::db::BackendRuntime::hasStatementParameter </td>
+          <td>(</td>
+          <td class="paramtype">soci::statement &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::string_view</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) const -&gt; bool</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Tests the backend's prepared parameter names, without interpreting raw SQL in the ORM. </p>
+
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00347">347</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -415,7 +448,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00311">311</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00314">314</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -447,7 +480,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Nontransactional engines return a qualified durable journal table. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00322">322</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00325">325</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -474,7 +507,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00295">295</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00298">298</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -580,7 +613,7 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00338">338</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00341">341</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>
@@ -671,7 +704,7 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 <p>Migration hooks are opt-in for application-supplied backends. Checks session parsing and binding invariants before history access. </p>
 
-<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00294">294</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="contracts_8cppm_source.html#l00297">297</a> of file <a class="el" href="contracts_8cppm_source.html">contracts.cppm</a>.</p>
 
 </div>
 </div>

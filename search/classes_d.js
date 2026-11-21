@@ -1,7 +1,22 @@
 var searchData=
 [
-  ['query_0',['Query',['../classorm_1_1Query.html',1,'orm']]],
-  ['querycapabilities_1',['QueryCapabilities',['../structorm_1_1db_1_1QueryCapabilities.html',1,'orm::db']]],
-  ['queryparameter_2',['QueryParameter',['../structorm_1_1query_1_1QueryParameter.html',1,'orm::query']]],
-  ['queryvalue_3',['QueryValue',['../classorm_1_1query_1_1QueryValue.html',1,'orm::query']]]
+  ['paginationspec_0',['PaginationSpec',['../structorm_1_1db_1_1PaginationSpec.html',1,'orm::db']]],
+  ['parameter_1',['Parameter',['../classorm_1_1query_1_1Parameter.html',1,'orm::query']]],
+  ['physicalcolumn_2',['PhysicalColumn',['../structorm_1_1migrations_1_1PhysicalColumn.html',1,'orm::migrations']]],
+  ['physicalforeignkey_3',['PhysicalForeignKey',['../structorm_1_1migrations_1_1PhysicalForeignKey.html',1,'orm::migrations']]],
+  ['physicalindex_4',['PhysicalIndex',['../structorm_1_1migrations_1_1PhysicalIndex.html',1,'orm::migrations']]],
+  ['physicalschema_5',['PhysicalSchema',['../structorm_1_1migrations_1_1PhysicalSchema.html',1,'orm::migrations']]],
+  ['physicaltable_6',['PhysicalTable',['../structorm_1_1migrations_1_1PhysicalTable.html',1,'orm::migrations']]],
+  ['plan_7',['Plan',['../structorm_1_1migrations_1_1Plan.html',1,'orm::migrations']]],
+  ['plannedmigration_8',['PlannedMigration',['../structorm_1_1migrations_1_1PlannedMigration.html',1,'orm::migrations']]],
+  ['postgresconfig_9',['PostgresConfig',['../structorm_1_1PostgresConfig.html',1,'orm']]],
+  ['postgresqlbackend_10',['PostgresqlBackend',['../classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html',1,'orm::db::postgresql']]],
+  ['postgresqldialect_11',['PostgresqlDialect',['../classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html',1,'orm::db::postgresql']]],
+  ['postgresqltypetranslator_12',['PostgresqlTypeTranslator',['../classorm_1_1db_1_1postgresql_1_1PostgresqlTypeTranslator.html',1,'orm::db::postgresql']]],
+  ['postgrestls_13',['PostgresTls',['../structorm_1_1PostgresTls.html',1,'orm']]],
+  ['primarykey_14',['PrimaryKey',['../structorm_1_1model_1_1PrimaryKey.html',1,'orm::model']]],
+  ['primarykeyless_15',['PrimaryKeyLess',['../structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html',1,'orm::db::binding']]],
+  ['projectionpayload_16',['ProjectionPayload',['../structorm_1_1db_1_1binding_1_1ProjectionPayload.html',1,'orm::db::binding']]],
+  ['projectionquery_17',['ProjectionQuery',['../classorm_1_1ProjectionQuery.html',1,'orm']]],
+  ['properties_18',['Properties',['../structorm_1_1db_1_1binding_1_1TypedResultStorage_1_1Properties.html',1,'orm::db::binding::TypedResultStorage']]]
 ];

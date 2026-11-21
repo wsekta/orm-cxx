@@ -23,6 +23,8 @@ var classorm_1_1query_1_1QueryValue =
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a80d24fe689fa11e51066af66135ee824", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#aaf5d2b88c0d053e782efd3abdc82b6e7", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a9234c193e601c1bb49623cfc447c6bac", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a7d58ca2a6ecc4ac46a5178fb092069ab", null ],
+    [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a7d58ca2a6ecc4ac46a5178fb092069ab", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a5c65c12b922f443bd15fa9c5f250a671", null ],
     [ "QueryValue", "classorm_1_1query_1_1QueryValue.html#a2c86abce82f92ca92e6ee29946cded9e", null ],
     [ "get", "classorm_1_1query_1_1QueryValue.html#aa9e8f73e99919f6ceec54e740eb99b1a", null ],

@@ -7,6 +7,7 @@ var classorm_1_1db_1_1BackendRuntime =
     [ "endMigration", "classorm_1_1db_1_1BackendRuntime.html#a4b0bddabe48fbaf1b881d1a452ae7ced", null ],
     [ "executeInsertIfAbsent", "classorm_1_1db_1_1BackendRuntime.html#a2d783a3f43a49075e953a2467fdcc007", null ],
     [ "executeMigrationScript", "classorm_1_1db_1_1BackendRuntime.html#a664264e896deb9ee99dd7c49db641cdd", null ],
+    [ "hasStatementParameter", "classorm_1_1db_1_1BackendRuntime.html#a05eb5f5e61db2e7ba57dc3be06060cbe", null ],
     [ "limits", "classorm_1_1db_1_1BackendRuntime.html#a9f852ceea66fa2323da20f5de4b458fb", null ],
     [ "migrationHistoryExists", "classorm_1_1db_1_1BackendRuntime.html#a773e2c782545f2516d56fc4c59689641", null ],
     [ "migrationJournalTable", "classorm_1_1db_1_1BackendRuntime.html#a5a375c53df0c995555b3aa2ffc64a316", null ],

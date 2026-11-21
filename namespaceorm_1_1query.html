@@ -205,6 +205,11 @@ Functions</h2></td></tr>
 <tr class="memitem:a8167d9f1e77575a6593bfa26c10167f8" id="r_a8167d9f1e77575a6593bfa26c10167f8"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a8167d9f1e77575a6593bfa26c10167f8 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a8167d9f1e77575a6593bfa26c10167f8">param</a> (std::string name, T value) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td></tr>
 <tr class="memdesc:a8167d9f1e77575a6593bfa26c10167f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a named parameter for a raw SQL fragment.  <br /></td></tr>
+<tr class="memitem:a9a98134613bd820d2b73729b2955f17e" id="r_a9a98134613bd820d2b73729b2955f17e"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a9a98134613bd820d2b73729b2955f17e template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a9a98134613bd820d2b73729b2955f17e">param</a> (std::string name, T value, <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a> uuidStorage) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td></tr>
+<tr class="memitem:ae5938523b2f8464aef1eb571b1fbd62d" id="r_ae5938523b2f8464aef1eb571b1fbd62d"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ae5938523b2f8464aef1eb571b1fbd62d">param</a> (std::string name, std::nullopt_t, <a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a> logicalType, <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a> uuidStorage) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td></tr>
+<tr class="memitem:a94941a0af99d43b6739bc15617031b06" id="r_a94941a0af99d43b6739bc15617031b06"><td class="memTemplParams" colspan="2">template&lt;<a class="el" href="conceptUuidDomainValue.html">UuidDomainValue</a> T&gt; </td></tr>
+<tr class="memitem:a94941a0af99d43b6739bc15617031b06 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a94941a0af99d43b6739bc15617031b06">param</a> (std::string name, const std::optional&lt; T &gt; &amp;value, <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a> uuidStorage) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td></tr>
 <tr class="memitem:a4345f522c4752c4a97d996489839e84d" id="r_a4345f522c4752c4a97d996489839e84d"><td class="memTemplParams" colspan="2">template&lt;typename Model&gt; </td></tr>
 <tr class="memitem:a4345f522c4752c4a97d996489839e84d template"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a4345f522c4752c4a97d996489839e84d">select</a> ()</td></tr>
 <tr class="memitem:a5f32d4a72ffe926c0d02f0cc8df39f6a" id="r_a5f32d4a72ffe926c0d02f0cc8df39f6a"><td class="memTemplParams" colspan="2">template&lt;typename Source, typename Result, typename... P&gt; </td></tr>
@@ -312,7 +317,7 @@ template&lt;<a class="el" href="structorm_1_1reflection_1_1FixedString.html">ref
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00322">322</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00367">367</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
 
 </div>
 </div>
@@ -345,7 +350,7 @@ template&lt;typename S&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00316">316</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00361">361</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
 
 </div>
 </div>
@@ -374,7 +379,7 @@ template&lt;auto... Members&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00157">157</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00159">159</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
 
 </div>
 </div>
@@ -519,7 +524,7 @@ template&lt;auto... Members&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00164">164</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00166">166</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
 
 </div>
 </div>
@@ -735,7 +740,7 @@ template&lt;typename L, typename R&gt; </div>
 </div>
 </div>
 <a id="a955ecc3da4ec8ae314b66974cd3cc265" name="a955ecc3da4ec8ae314b66974cd3cc265"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a955ecc3da4ec8ae314b66974cd3cc265">&#9670;&#160;</a></span>param() <span class="overload">[1/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a955ecc3da4ec8ae314b66974cd3cc265">&#9670;&#160;</a></span>param() <span class="overload">[1/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -759,12 +764,92 @@ template&lt;typename T, std::size_t Index&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="parameters_8cppm_source.html#l00403">403</a> of file <a class="el" href="parameters_8cppm_source.html">parameters.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="parameters_8cppm_source.html#l00441">441</a> of file <a class="el" href="parameters_8cppm_source.html">parameters.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a94941a0af99d43b6739bc15617031b06" name="a94941a0af99d43b6739bc15617031b06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94941a0af99d43b6739bc15617031b06">&#9670;&#160;</a></span>param() <span class="overload">[2/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;<a class="el" href="conceptUuidDomainValue.html">UuidDomainValue</a> T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::query::param </td>
+          <td>(</td>
+          <td class="paramtype">std::string</td>          <td class="paramname"><span class="paramname"><em>name</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::optional&lt; T &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a></td>          <td class="paramname"><span class="paramname"><em>uuidStorage</em></span>&#160;) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00270">270</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="ae5938523b2f8464aef1eb571b1fbd62d" name="ae5938523b2f8464aef1eb571b1fbd62d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae5938523b2f8464aef1eb571b1fbd62d">&#9670;&#160;</a></span>param() <span class="overload">[3/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::query::param </td>
+          <td>(</td>
+          <td class="paramtype">std::string</td>          <td class="paramname"><span class="paramname"><em>name</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">std::nullopt_t</td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659">model::ColumnType</a></td>          <td class="paramname"><span class="paramname"><em>logicalType</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a></td>          <td class="paramname"><span class="paramname"><em>uuidStorage</em></span>&#160;) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>A raw SQL NULL UUID requires both its logical type and physical representation. </p>
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00260">260</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
 <a id="a8167d9f1e77575a6593bfa26c10167f8" name="a8167d9f1e77575a6593bfa26c10167f8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8167d9f1e77575a6593bfa26c10167f8">&#9670;&#160;</a></span>param() <span class="overload">[2/2]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a8167d9f1e77575a6593bfa26c10167f8">&#9670;&#160;</a></span>param() <span class="overload">[4/5]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -795,7 +880,46 @@ template&lt;typename T&gt; </div>
 <p>Creates a named parameter for a raw SQL fragment. </p>
 <p>The name must not include the leading ':'. </p>
 
-<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00230">230</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00246">246</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a9a98134613bd820d2b73729b2955f17e" name="a9a98134613bd820d2b73729b2955f17e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a98134613bd820d2b73729b2955f17e">&#9670;&#160;</a></span>param() <span class="overload">[5/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::query::param </td>
+          <td>(</td>
+          <td class="paramtype">std::string</td>          <td class="paramname"><span class="paramname"><em>name</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">T</td>          <td class="paramname"><span class="paramname"><em>value</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a></td>          <td class="paramname"><span class="paramname"><em>uuidStorage</em></span>&#160;) -&gt; <a class="el" href="structorm_1_1query_1_1QueryParameter.html">QueryParameter</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Explicit physical representation for a UUID parameter in opaque SQL. </p>
+
+<p class="definition">Definition at line <a class="el" href="value_8cppm_source.html#l00253">253</a> of file <a class="el" href="value_8cppm_source.html">value.cppm</a>.</p>
 
 </div>
 </div>
@@ -857,7 +981,7 @@ template&lt;typename M&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00170">170</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="query_2projection_8cppm_source.html#l00172">172</a> of file <a class="el" href="query_2projection_8cppm_source.html">projection.cppm</a>.</p>
 
 </div>
 </div>
@@ -886,7 +1010,7 @@ template&lt;typename Model&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00374">374</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00376">376</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
 
 </div>
 </div>
@@ -915,7 +1039,7 @@ template&lt;typename Model&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00352">352</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00353">353</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
 
 </div>
 </div>
@@ -944,7 +1068,7 @@ template&lt;typename Source, typename Result, typename... P&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00359">359</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00361">361</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
 
 </div>
 </div>
@@ -1002,7 +1126,7 @@ template&lt;typename Model&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00368">368</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="static__plan_8cppm_source.html#l00370">370</a> of file <a class="el" href="static__plan_8cppm_source.html">static_plan.cppm</a>.</p>
 
 </div>
 </div>

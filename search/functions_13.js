@@ -6,6 +6,8 @@ var searchData=
   ['validateresultindicator_3',['validateResultIndicator',['../namespaceorm_1_1db_1_1binding.html#a42ec66f811057e53130d45de65555c2b',1,'orm::db::binding']]],
   ['validateshape_4',['validateShape',['../classorm_1_1query_1_1StaticPlan.html#a12a4f48b8f23e589de13b8efa479922b',1,'orm::query::StaticPlan']]],
   ['validatestringlength_5',['validateStringLength',['../namespaceorm_1_1db_1_1binding.html#a25131ada876b1f5b153b807961f44475',1,'orm::db::binding']]],
-  ['valuename_6',['valueName',['../namespaceorm_1_1reflection.html#affc763647dcd7ac4a15143ffab19923b',1,'orm::reflection']]],
-  ['view_7',['view',['../structorm_1_1reflection_1_1FixedString.html#af47d7e4c267e7fbcaffb57692056a061',1,'orm::reflection::FixedString::view() const &amp;noexcept -&gt; std::string_view'],['../structorm_1_1reflection_1_1FixedString.html#a8a1b5ed545dfb349e28af3b8120484ba',1,'orm::reflection::FixedString::view() const &amp;&amp;-&gt; std::string_view=delete']]]
+  ['value_6',['value',['../structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303',1,'NullableAdapter&lt; std::optional&lt; T &gt; &gt;']]],
+  ['valuename_7',['valueName',['../namespaceorm_1_1reflection.html#affc763647dcd7ac4a15143ffab19923b',1,'orm::reflection']]],
+  ['values_8',['values',['../classorm_1_1db_1_1binding_1_1StatementBindings.html#a53d46fb50f718e8fd274240eb201ea92',1,'orm::db::binding::StatementBindings']]],
+  ['view_9',['view',['../structorm_1_1reflection_1_1FixedString.html#af47d7e4c267e7fbcaffb57692056a061',1,'orm::reflection::FixedString::view() const &amp;noexcept -&gt; std::string_view'],['../structorm_1_1reflection_1_1FixedString.html#a8a1b5ed545dfb349e28af3b8120484ba',1,'orm::reflection::FixedString::view() const &amp;&amp;-&gt; std::string_view=delete']]]
 ];

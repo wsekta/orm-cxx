@@ -140,7 +140,7 @@ Collaboration diagram for orm::db::DefaultCommandGenerator:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a79fecb0755beaf1d4c0968ecbe1f96a5" id="r_a79fecb0755beaf1d4c0968ecbe1f96a5"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#a79fecb0755beaf1d4c0968ecbe1f96a5">DefaultCommandGenerator</a> (const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;dialect)</td></tr>
+<tr class="memitem:ac8d0b2663970ed6aa073e8149ed228aa" id="r_ac8d0b2663970ed6aa073e8149ed228aa"><td class="memItemLeft">&#160;</td><td class="memItemRight"><a class="el" href="#ac8d0b2663970ed6aa073e8149ed228aa">DefaultCommandGenerator</a> (const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;dialect, <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> backend=<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3ace2c8aed9c2fa0cfbed56cbda4d8bf07">BackendType::Empty</a>)</td></tr>
 <tr class="memitem:a422152e4ba64f2545fb2c3d0a5e5600f" id="r_a422152e4ba64f2545fb2c3d0a5e5600f"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a422152e4ba64f2545fb2c3d0a5e5600f">createTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
 <tr class="memitem:a203c75e6c59546e4f895137580775435" id="r_a203c75e6c59546e4f895137580775435"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a203c75e6c59546e4f895137580775435">dropTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
 <tr class="memitem:a3cb49e0abc603078ea7853fde3dd096d" id="r_a3cb49e0abc603078ea7853fde3dd096d"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3cb49e0abc603078ea7853fde3dd096d">insert</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
@@ -154,8 +154,8 @@ Public Member Functions</h2></td></tr>
 <div class="textblock">
 <p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00032">32</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a79fecb0755beaf1d4c0968ecbe1f96a5" name="a79fecb0755beaf1d4c0968ecbe1f96a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a79fecb0755beaf1d4c0968ecbe1f96a5">&#9670;&#160;</a></span>DefaultCommandGenerator()</h2>
+<a id="ac8d0b2663970ed6aa073e8149ed228aa" name="ac8d0b2663970ed6aa073e8149ed228aa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac8d0b2663970ed6aa073e8149ed228aa">&#9670;&#160;</a></span>DefaultCommandGenerator()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -166,8 +166,12 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">orm::db::DefaultCommandGenerator::DefaultCommandGenerator </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>dialect</em></span></td><td>)</td>
+          <td class="paramtype">const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>dialect</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a></td>          <td class="paramname"><span class="paramname"><em>backend</em></span><span class="paramdefsep"> = </span><span class="paramdefval"><a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3ace2c8aed9c2fa0cfbed56cbda4d8bf07">BackendType::Empty</a></span>&#160;)</td>
         </tr>
       </table>
   </td>

@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('namespaceorm.h
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
+<a href="#concepts">Concepts</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
 <a href="#func-members">Functions</a> &#124;
@@ -158,6 +159,13 @@ Classes</h2></td></tr>
 <tr class="memitem:TimeOfDay" id="r_TimeOfDay"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1TimeOfDay.html">TimeOfDay</a></td></tr>
 <tr class="memitem:Update" id="r_Update"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Update.html">Update</a></td></tr>
 <tr class="memitem:Uuid" id="r_Uuid"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1Uuid.html">Uuid</a></td></tr>
+<tr class="memitem:UuidAdapter" id="r_UuidAdapter"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1UuidAdapter.html">UuidAdapter</a></td></tr>
+<tr class="memitem:ValueConverter" id="r_ValueConverter"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1ValueConverter.html">ValueConverter</a></td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 id="header-concepts" class="groupheader"><a id="concepts" name="concepts"></a>
+Concepts</h2></td></tr>
+<tr class="memitem:UuidAdaptable" id="r_UuidAdaptable"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1UuidAdaptable.html">UuidAdaptable</a></td></tr>
+<tr class="memitem:ValueConvertible" id="r_ValueConvertible"><td class="memItemLeft">concept &#160;</td><td class="memItemRight"><a class="el" href="conceptorm_1_1ValueConvertible.html">ValueConvertible</a></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-typedef-members" class="groupheader"><a id="typedef-members" name="typedef-members"></a>
 Typedefs</h2></td></tr>
@@ -218,6 +226,10 @@ Functions</h2></td></tr>
 <tr class="memitem:a1f694fa43490a1995025087f27d6b5c1 template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><a class="el" href="#a1f694fa43490a1995025087f27d6b5c1">manyToMany</a> () -&gt; <a class="el" href="structorm_1_1ManyToManyDescriptor.html">ManyToManyDescriptor</a>&lt; Member &gt;</td></tr>
 <tr class="memitem:a91a4b72ed794f439b6fd07d602abf07f" id="r_a91a4b72ed794f439b6fd07d602abf07f"><td class="memTemplParams" colspan="2">template&lt;typename... Descriptors&gt; </td></tr>
 <tr class="memitem:a91a4b72ed794f439b6fd07d602abf07f template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><a class="el" href="#a91a4b72ed794f439b6fd07d602abf07f">relations</a> (Descriptors... descriptors)</td></tr>
+<tr class="memitem:ab600ada4a3947328df972231b607eb9d" id="r_ab600ada4a3947328df972231b607eb9d"><td class="memTemplParams" colspan="2">template&lt;auto Member, <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a> Backend, <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a> Storage&gt; </td></tr>
+<tr class="memitem:ab600ada4a3947328df972231b607eb9d template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><a class="el" href="#ab600ada4a3947328df972231b607eb9d">uuidStorage</a> () -&gt; <a class="el" href="structorm_1_1model_1_1UuidStorageDefinition.html">model::UuidStorageDefinition</a>&lt; Member, Backend, Storage &gt;</td></tr>
+<tr class="memitem:aa9827a222ce732b1c622673daa08ec51" id="r_aa9827a222ce732b1c622673daa08ec51"><td class="memTemplParams" colspan="2">template&lt;typename... Definitions&gt; </td></tr>
+<tr class="memitem:aa9827a222ce732b1c622673daa08ec51 template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><a class="el" href="#aa9827a222ce732b1c622673daa08ec51">uuidStorages</a> (Definitions...) -&gt; <a class="el" href="structorm_1_1model_1_1UuidStorages.html">model::UuidStorages</a>&lt; Definitions... &gt;</td></tr>
 <tr class="memitem:a6ff425d4a8346e817e3966c638612fea" id="r_a6ff425d4a8346e817e3966c638612fea"><td class="memTemplParams" colspan="2">template&lt;auto Member, <a class="el" href="structorm_1_1reflection_1_1FixedString.html">reflection::FixedString</a> SqlName&gt; </td></tr>
 <tr class="memitem:a6ff425d4a8346e817e3966c638612fea template"><td class="memItemLeft">consteval auto&#160;</td><td class="memItemRight"><a class="el" href="#a6ff425d4a8346e817e3966c638612fea">columnName</a> ()</td></tr>
 <tr class="memitem:a7627c2c0f9652d7d021e390748d71cd1" id="r_a7627c2c0f9652d7d021e390748d71cd1"><td class="memTemplParams" colspan="2">template&lt;typename... Definitions&gt; </td></tr>
@@ -268,7 +280,7 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 <p>A calendar date. Database operations validate the calendar and backend range. </p>
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00016">16</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00020">20</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>
@@ -293,7 +305,7 @@ Variables</h2></td></tr>
 </div><div class="memdoc">
 <p>A civil date and time without an associated time zone. </p>
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00019">19</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00023">23</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>
@@ -345,7 +357,7 @@ template&lt;typename... Models&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00502">502</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00504">504</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
 
 </div>
 </div>
@@ -370,7 +382,7 @@ template&lt;typename... Models&gt; </div>
 </div><div class="memdoc">
 <p>An instant on the UTC timeline, with microsecond resolution. </p>
 
-<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00022">22</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="values_8cppm_source.html#l00026">26</a> of file <a class="el" href="values_8cppm_source.html">values.cppm</a>.</p>
 
 </div>
 </div>
@@ -529,7 +541,7 @@ template&lt;auto... Members&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00569">569</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00596">596</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -558,7 +570,7 @@ template&lt;auto Member, <a class="el" href="structorm_1_1reflection_1_1FixedStr
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00536">536</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00563">563</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -587,7 +599,7 @@ template&lt;typename... Definitions&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00542">542</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00569">569</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -616,7 +628,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00575">575</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00602">602</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -674,7 +686,7 @@ template&lt;typename SchemaType, typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00505">505</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00507">507</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
 
 </div>
 </div>
@@ -703,7 +715,7 @@ template&lt;typename SchemaType, typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00511">511</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="model_2schema_8cppm_source.html#l00513">513</a> of file <a class="el" href="model_2schema_8cppm_source.html">schema.cppm</a>.</p>
 
 </div>
 </div>
@@ -761,7 +773,7 @@ template&lt;auto... Members&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00549">549</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00576">576</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -819,7 +831,7 @@ template&lt;auto Member, std::size_t Length&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00556">556</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00583">583</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
 
 </div>
 </div>
@@ -848,7 +860,65 @@ template&lt;typename... Definitions&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00562">562</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="mapping_8cppm_source.html#l00589">589</a> of file <a class="el" href="mapping_8cppm_source.html">mapping.cppm</a>.</p>
+
+</div>
+</div>
+<a id="ab600ada4a3947328df972231b607eb9d" name="ab600ada4a3947328df972231b607eb9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab600ada4a3947328df972231b607eb9d">&#9670;&#160;</a></span>uuidStorage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;auto Member, <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a> Backend, <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">model::UuidStorage</a> Storage&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::uuidStorage </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt; <a class="el" href="structorm_1_1model_1_1UuidStorageDefinition.html">model::UuidStorageDefinition</a>&lt; Member, Backend, Storage &gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel consteval">consteval</span><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="model_2columns_8cppm_source.html#l00710">710</a> of file <a class="el" href="model_2columns_8cppm_source.html">columns.cppm</a>.</p>
+
+</div>
+</div>
+<a id="aa9827a222ce732b1c622673daa08ec51" name="aa9827a222ce732b1c622673daa08ec51"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9827a222ce732b1c622673daa08ec51">&#9670;&#160;</a></span>uuidStorages()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename... Definitions&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::uuidStorages </td>
+          <td>(</td>
+          <td class="paramtype">Definitions...</td>          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> -&gt; <a class="el" href="structorm_1_1model_1_1UuidStorages.html">model::UuidStorages</a>&lt; Definitions... &gt;</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel consteval">consteval</span><span class="mlabel export">export</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="model_2columns_8cppm_source.html#l00716">716</a> of file <a class="el" href="model_2columns_8cppm_source.html">columns.cppm</a>.</p>
 
 </div>
 </div>

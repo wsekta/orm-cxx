@@ -1,3 +1,11 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="Node000000" href="$structorm_1_1db_1_1StatementView.html" title=" " alt="" coords="5,5,185,31"/>
+<area shape="rect" id="Node000000" href="$classorm_1_1db_1_1SqlDialect.html" title=" " alt="" coords="5,99,152,125"/>
+<area shape="rect" id="Node000001" href="$classorm_1_1db_1_1mariadb_1_1MariadbDialect.html" title=" " alt="" coords="209,5,404,45"/>
+<area shape="poly" id="edge11_Node000000_Node000001" title=" " alt="" coords="116,91,199,55,234,43,236,48,201,60,119,96"/>
+<area shape="rect" id="Node000002" href="$classorm_1_1db_1_1mysql_1_1MysqlDialect.html" title=" " alt="" coords="200,70,413,95"/>
+<area shape="poly" id="edge12_Node000000_Node000002" title=" " alt="" coords="166,98,208,93,208,98,166,103"/>
+<area shape="rect" id="Node000003" href="$classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html" title=" " alt="" coords="233,120,381,160"/>
+<area shape="poly" id="edge13_Node000000_Node000003" title=" " alt="" coords="166,120,233,128,232,134,166,125"/>
+<area shape="rect" id="Node000004" href="$classorm_1_1db_1_1sqlite_1_1SqliteDialect.html" title=" " alt="" coords="203,185,410,210"/>
+<area shape="poly" id="edge14_Node000000_Node000004" title=" " alt="" coords="115,129,156,150,201,169,243,182,241,187,199,175,153,155,113,134"/>
 </map>

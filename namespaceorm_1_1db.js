@@ -38,12 +38,12 @@ var namespaceorm_1_1db =
     [ "mysql", "namespaceorm_1_1db_1_1mysql.html", "namespaceorm_1_1db_1_1mysql" ],
     [ "postgresql", "namespaceorm_1_1db_1_1postgresql.html", "namespaceorm_1_1db_1_1postgresql" ],
     [ "relations", "namespaceorm_1_1db_1_1relations.html", [
-      [ "collectionSelectStatement", "namespaceorm_1_1db_1_1relations.html#ad2913933d1d5f7259642199c60d86e64", null ],
-      [ "createTableStatements", "namespaceorm_1_1db_1_1relations.html#a06d6396a3ab8c2194f282f7c332ad299", null ],
+      [ "collectionSelectStatement", "namespaceorm_1_1db_1_1relations.html#a83be2885c659cade6d0a8adff649c9d9", null ],
+      [ "createTableStatements", "namespaceorm_1_1db_1_1relations.html#ae3ef094ed3cfcb8a2d15ee67de4905c3", null ],
       [ "dropTableStatements", "namespaceorm_1_1db_1_1relations.html#ac416f5f62bf5da9be5243cbceaf57a5a", null ],
       [ "linkInsertSpec", "namespaceorm_1_1db_1_1relations.html#a2624d888ecedb86edbf14e5cb0a83d86", null ],
-      [ "linkStatement", "namespaceorm_1_1db_1_1relations.html#a460aac629e57acc78515c3154d04528f", null ],
-      [ "unlinkStatement", "namespaceorm_1_1db_1_1relations.html#a9608e62c3c414767c9882df5b73e7c77", null ]
+      [ "linkStatement", "namespaceorm_1_1db_1_1relations.html#a9e69076ef2476e4197605fbe8ba6ccbf", null ],
+      [ "unlinkStatement", "namespaceorm_1_1db_1_1relations.html#a874bddf56040ba4fb424c88ca3150873", null ]
     ] ],
     [ "sqlite", "namespaceorm_1_1db_1_1sqlite.html", "namespaceorm_1_1db_1_1sqlite" ],
     [ "BackendCapabilities", "structorm_1_1db_1_1BackendCapabilities.html", "structorm_1_1db_1_1BackendCapabilities" ],

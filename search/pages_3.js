@@ -49,11 +49,13 @@ var searchData=
   ['contribute_46',['How to contribute',['../CONTRIBUTING-how-to-contribute.html',1,'']]],
   ['contributors_20and_20maintainers_47',['For contributors and maintainers',['../index.html#docs-main-for-contributors-and-maintainers',1,'']]],
   ['conversion_48',['Runtime shapes and explicit conversion',['../docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion',1,'']]],
-  ['coverage_20policy_49',['Coverage policy',['../docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-coverage-policy',1,'']]],
-  ['create_20a_20model_50',['Create a model',['../docs-model-model.html#docs-model-create-a-model',1,'']]],
-  ['create_20and_20delete_20relation_20tables_51',['Create and delete relation tables',['../docs-database-database.html#docs-database-create-and-delete-relation-tables',1,'']]],
-  ['create_20table_52',['Create table',['../docs-database-database.html#docs-database-create-table',1,'']]],
-  ['crud_53',['Quickstart: SQLite CRUD',['../docs-quickstart-quickstart-sqlite-crud.html',1,'']]],
-  ['current_20limitations_54',['Current limitations',['../docs-model-model.html#docs-model-current-limitations',1,'']]],
-  ['current_20state_55',['Current State',['../ROADMAP-orm-c-roadmap.html#ROADMAP-current-state',1,'']]]
+  ['converters_49',['Custom converters',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-custom-converters',1,'']]],
+  ['coverage_20policy_50',['Coverage policy',['../docs-ci-compiler-matrix-ci-compiler-matrix.html#docs-ci-compiler-matrix-coverage-policy',1,'']]],
+  ['create_20a_20model_51',['Create a model',['../docs-model-model.html#docs-model-create-a-model',1,'']]],
+  ['create_20and_20delete_20relation_20tables_52',['Create and delete relation tables',['../docs-database-database.html#docs-database-create-and-delete-relation-tables',1,'']]],
+  ['create_20table_53',['Create table',['../docs-database-database.html#docs-database-create-table',1,'']]],
+  ['crud_54',['Quickstart: SQLite CRUD',['../docs-quickstart-quickstart-sqlite-crud.html',1,'']]],
+  ['current_20limitations_55',['Current limitations',['../docs-model-model.html#docs-model-current-limitations',1,'']]],
+  ['current_20state_56',['Current State',['../ROADMAP-orm-c-roadmap.html#ROADMAP-current-state',1,'']]],
+  ['custom_20converters_57',['Custom converters',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-custom-converters',1,'']]]
 ];

@@ -119,154 +119,279 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('values_8cppm_s
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;array&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;chrono&gt;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &lt;compare&gt;</span></div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;string&gt;</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span> </div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="keyword">export</span> <span class="keyword">module</span> <a class="code" href="module__orm.html">orm:foundation_values</a>;</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">export</span> <span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceorm.html">orm</a></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span>{<span class="comment"></span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">/** A calendar date. Database operations validate the calendar and backend range. */</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno"><a class="line" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">   16</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">Date</a> = std::chrono::year_month_day;</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"></span> </div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">/** A civil date and time without an associated time zone. */</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno"><a class="line" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">   19</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a> = std::chrono::local_time&lt;std::chrono::microseconds&gt;;</div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"></span> </div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment">/** An instant on the UTC timeline, with microsecond resolution. */</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno"><a class="line" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">   22</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a> = std::chrono::sys_time&lt;std::chrono::microseconds&gt;;</div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"></span> </div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment">/** A time of day in the half-open interval [00:00:00, 24:00:00). */</span></div>
-<div class="foldopen" id="foldopen00025" data-start="{" data-end="};">
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html">   25</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>{</div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">   28</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>() noexcept = default;</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span> </div>
-<div class="foldopen" id="foldopen00030" data-start="{" data-end="}">
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a5f891d87793c856067bdcd249f7436b4">   30</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>(std::chrono::microseconds valueInit) : value{valueInit}</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>    {</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>        <span class="keywordflow">if</span> (value &lt; std::chrono::microseconds::zero() || value &gt;= std::chrono::hours{24})</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>        {</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>            <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;Time of day must be between midnight and the end of the day&quot;</span>};</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>        }</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    }</div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="preprocessor">#include &lt;concepts&gt;</span></div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="preprocessor">#include &lt;cstddef&gt;</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="preprocessor">#include &lt;optional&gt;</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="preprocessor">#include &lt;stdexcept&gt;</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="preprocessor">#include &lt;string&gt;</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="preprocessor">#include &lt;string_view&gt;</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="preprocessor">#include &lt;type_traits&gt;</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="preprocessor">#include &lt;utility&gt;</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">export</span> <span class="keyword">module</span> <a class="code" href="module__orm.html">orm:foundation_values</a>;</div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span> </div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="keyword">export</span> <span class="keyword">namespace </span><a class="code hl_namespace" href="namespaceorm.html">orm</a></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>{<span class="comment"></span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment">/** A calendar date. Database operations validate the calendar and backend range. */</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno"><a class="line" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">   20</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">Date</a> = std::chrono::year_month_day;</div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"></span> </div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment">/** A civil date and time without an associated time zone. */</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">   23</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">LocalDateTime</a> = std::chrono::local_time&lt;std::chrono::microseconds&gt;;</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"></span> </div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment">/** An instant on the UTC timeline, with microsecond resolution. */</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno"><a class="line" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">   26</a></span><span class="keyword">using </span><a class="code hl_typedef" href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">UtcTimestamp</a> = std::chrono::sys_time&lt;std::chrono::microseconds&gt;;</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"></span> </div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment">/** A time of day in the half-open interval [00:00:00, 24:00:00). */</span></div>
+<div class="foldopen" id="foldopen00029" data-start="{" data-end="};">
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html">   29</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>{</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">   32</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>() noexcept = default;</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span> </div>
+<div class="foldopen" id="foldopen00034" data-start="{" data-end="}">
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a5f891d87793c856067bdcd249f7436b4">   34</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>(std::chrono::microseconds valueInit) : value{valueInit}</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>        <span class="keywordflow">if</span> (value &lt; std::chrono::microseconds::zero() || value &gt;= std::chrono::hours{24})</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>        {</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>            <span class="keywordflow">throw</span> std::invalid_argument{<span class="stringliteral">&quot;Time of day must be between midnight and the end of the day&quot;</span>};</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>        }</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    }</div>
 </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span> </div>
-<div class="foldopen" id="foldopen00038" data-start="{" data-end="}">
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">   38</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">sinceMidnight</a>() const noexcept -&gt; std::chrono::microseconds</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    {</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>        <span class="keywordflow">return</span> value;</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    }</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="foldopen" id="foldopen00042" data-start="{" data-end="}">
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">   42</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">sinceMidnight</a>() const noexcept -&gt; std::chrono::microseconds</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    {</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>        <span class="keywordflow">return</span> value;</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    }</div>
 </div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="foldopen" id="foldopen00043" data-start="{" data-end="}">
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">   43</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">operator==</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; <span class="keywordtype">bool</span></div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    {</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>        <span class="keywordflow">return</span> value.count() == other.value.count();</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    }</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
+<div class="foldopen" id="foldopen00047" data-start="{" data-end="}">
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">   47</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">operator==</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    {</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>        <span class="keywordflow">return</span> value.count() == other.value.count();</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    }</div>
 </div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
-<div class="foldopen" id="foldopen00048" data-start="{" data-end="}">
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">   48</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    {</div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>        <span class="keywordflow">if</span> (value.count() &lt; other.value.count())</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>        {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>            <span class="keywordflow">return</span> std::strong_ordering::less;</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>        }</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keywordflow">if</span> (value.count() &gt; other.value.count())</div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span> </div>
+<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">   52</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">TimeOfDay</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>        <span class="keywordflow">if</span> (value.count() &lt; other.value.count())</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>        {</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>            <span class="keywordflow">return</span> std::strong_ordering::less;</div>
 <div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>        }</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    }</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>        <span class="keywordflow">if</span> (value.count() &gt; other.value.count())</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>        {</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>            <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>        }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>    }</div>
 </div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span> </div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>    std::chrono::microseconds value{};</div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>};</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>    std::chrono::microseconds value{};</div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>};</div>
 </div>
-<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span><span class="comment"></span> </div>
-<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span><span class="comment">/**</span></div>
-<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span><span class="comment"> * A 128-bit UUID in canonical byte order, independent of a database backend.</span></div>
-<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"> * Default construction produces the nil UUID. Parsing accepts exactly the</span></div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment"> * 8-4-4-4-12 hexadecimal format, with either case; formatting uses lowercase.</span></div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="comment"> * Every 128-bit pattern is representable. Byte ordering in C++ does not promise</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment"> * the same order as a database&#39;s native UUID comparisons.</span></div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment"> */</span></div>
-<div class="foldopen" id="foldopen00073" data-start="{" data-end="};">
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html">   73</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a></div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>{</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="keyword">public</span>:</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">   76</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>() noexcept = default;</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b">   78</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>(std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt; valueInit) noexcept : value{valueInit} {}</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span> </div>
-<div class="foldopen" id="foldopen00080" data-start="{" data-end="}">
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">   80</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">bytes</a>() const noexcept -&gt; const std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt;&amp;</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>    {</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>        <span class="keywordflow">return</span> value;</div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    }</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span><span class="comment"></span> </div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span><span class="comment">/**</span></div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="comment"> * A 128-bit UUID in canonical byte order, independent of a database backend.</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span><span class="comment"> * Default construction produces the nil UUID. Parsing accepts exactly the</span></div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span><span class="comment"> * 8-4-4-4-12 hexadecimal format, with either case; formatting uses lowercase.</span></div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span><span class="comment"> * Every 128-bit pattern is representable. Byte ordering in C++ does not promise</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span><span class="comment"> * the same order as a database&#39;s native UUID comparisons.</span></div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span><span class="comment"> */</span></div>
+<div class="foldopen" id="foldopen00077" data-start="{" data-end="};">
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html">   77</a></span><span class="keyword">class </span><a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a></div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>{</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span><span class="keyword">public</span>:</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">   80</a></span>    <span class="keyword">constexpr</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>() noexcept = default;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span> </div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b">   82</a></span>    explicit constexpr <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>(std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt; valueInit) noexcept : value{valueInit} {}</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
+<div class="foldopen" id="foldopen00084" data-start="{" data-end="}">
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">   84</a></span>    [[nodiscard]] <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">bytes</a>() const noexcept -&gt; const std::array&lt;std::<span class="keywordtype">byte</span>, 16&gt;&amp;</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>    {</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>        <span class="keywordflow">return</span> value;</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>    }</div>
 </div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span><span class="comment"></span> </div>
-<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span><span class="comment">    /** @throws std::invalid_argument if the input is not in the required format. */</span></div>
-<div class="line"><a id="l00086" name="l00086"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">   86</a></span>    [[nodiscard]] <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">parse</a>(std::string_view text) -&gt; <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>;</div>
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span> </div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">   88</a></span>    [[nodiscard]] <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">toString</a>() const -&gt; std::<span class="keywordtype">string</span>;</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span> </div>
-<div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a752917ca3d5100f79961c91d8ef83902">   90</a></span>    constexpr auto operator==(const <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) const noexcept -&gt; <span class="keywordtype">bool</span></div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>    {</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>        {</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>            <span class="keywordflow">if</span> (value[index] != other.value[index])</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>            {</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>            }</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>        }</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>    }</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span><span class="comment"></span> </div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span><span class="comment">    /** @throws std::invalid_argument if the input is not in the required format. */</span></div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">   90</a></span>    [[nodiscard]] <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">parse</a>(std::string_view text) -&gt; <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>;</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span> </div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">   92</a></span>    [[nodiscard]] <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">toString</a>() const -&gt; std::<span class="keywordtype">string</span>;</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span> </div>
+<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#a752917ca3d5100f79961c91d8ef83902">   94</a></span>    constexpr auto operator==(const <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) const noexcept -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>    {</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>        {</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>            <span class="keywordflow">if</span> (value[index] != other.value[index])</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>            {</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>                <span class="keywordflow">return</span> <span class="keyword">false</span>;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>            }</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>        }</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>        <span class="keywordflow">return</span> <span class="keyword">true</span>;</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    }</div>
 </div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span> </div>
-<div class="foldopen" id="foldopen00102" data-start="{" data-end="}">
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">  102</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    {</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>        {</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>            <span class="keywordflow">if</span> (value[index] &lt; other.value[index])</div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>            {</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>                <span class="keywordflow">return</span> std::strong_ordering::less;</div>
-<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>            }</div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            <span class="keywordflow">if</span> (value[index] &gt; other.value[index])</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span> </div>
+<div class="foldopen" id="foldopen00106" data-start="{" data-end="}">
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno"><a class="line" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">  106</a></span>    <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">operator&lt;=&gt;</a>(<span class="keyword">const</span> <a class="code hl_function" href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">Uuid</a>&amp; other) <span class="keyword">const</span> <span class="keyword">noexcept</span> -&gt; std::strong_ordering</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    {</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>        <span class="keywordflow">for</span> (<span class="keyword">auto</span> index = std::size_t{0}; index &lt; value.size(); ++index)</div>
+<div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>        {</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>            <span class="keywordflow">if</span> (value[index] &lt; other.value[index])</div>
 <div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>            {</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>                <span class="keywordflow">return</span> std::strong_ordering::less;</div>
 <div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>            }</div>
-<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>        }</div>
-<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
-<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>    }</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>            <span class="keywordflow">if</span> (value[index] &gt; other.value[index])</div>
+<div class="line"><a id="l00115" name="l00115"></a><span class="lineno">  115</span>            {</div>
+<div class="line"><a id="l00116" name="l00116"></a><span class="lineno">  116</span>                <span class="keywordflow">return</span> std::strong_ordering::greater;</div>
+<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span>            }</div>
+<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span>        }</div>
+<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>        <span class="keywordflow">return</span> std::strong_ordering::equal;</div>
+<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>    }</div>
 </div>
-<div class="line"><a id="l00117" name="l00117"></a><span class="lineno">  117</span> </div>
-<div class="line"><a id="l00118" name="l00118"></a><span class="lineno">  118</span><span class="keyword">private</span>:</div>
-<div class="line"><a id="l00119" name="l00119"></a><span class="lineno">  119</span>    std::array&lt;std::byte, 16&gt; value{};</div>
-<div class="line"><a id="l00120" name="l00120"></a><span class="lineno">  120</span>};</div>
+<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span> </div>
+<div class="line"><a id="l00122" name="l00122"></a><span class="lineno">  122</span><span class="keyword">private</span>:</div>
+<div class="line"><a id="l00123" name="l00123"></a><span class="lineno">  123</span>    std::array&lt;std::byte, 16&gt; value{};</div>
+<div class="line"><a id="l00124" name="l00124"></a><span class="lineno">  124</span>};</div>
 </div>
-<div class="line"><a id="l00121" name="l00121"></a><span class="lineno">  121</span>} <span class="comment">// namespace orm</span></div>
-<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a545fb51fdccc5a26a8037030afc0014f"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">orm::TimeOfDay::operator==</a></div><div class="ttdeci">constexpr auto operator==(const TimeOfDay &amp;other) const noexcept -&gt; bool</div><div class="ttdef"><b>Definition</b> <a href="#l00043">values.cppm:43</a></div></div>
-<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a7eaae7db382d6c8972f80a1af207a2b3"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">orm::TimeOfDay::sinceMidnight</a></div><div class="ttdeci">constexpr auto sinceMidnight() const noexcept -&gt; std::chrono::microseconds</div><div class="ttdef"><b>Definition</b> <a href="#l00038">values.cppm:38</a></div></div>
+<div class="line"><a id="l00125" name="l00125"></a><span class="lineno">  125</span><span class="comment"></span> </div>
+<div class="line"><a id="l00126" name="l00126"></a><span class="lineno">  126</span><span class="comment">/** Specialize for an application UUID type to convert explicitly to and from Uuid. */</span></div>
+<div class="line"><a id="l00127" name="l00127"></a><span class="lineno">  127</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00128" name="l00128"></a><span class="lineno"><a class="line" href="structorm_1_1UuidAdapter.html">  128</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structorm_1_1UuidAdapter.html">UuidAdapter</a>;</div>
+<div class="line"><a id="l00129" name="l00129"></a><span class="lineno">  129</span> </div>
+<div class="line"><a id="l00130" name="l00130"></a><span class="lineno">  130</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00131" data-start="{" data-end="}">
+<div class="line"><a id="l00131" name="l00131"></a><span class="lineno"><a class="line" href="conceptorm_1_1UuidAdaptable.html">  131</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptorm_1_1UuidAdaptable.html">UuidAdaptable</a> = <span class="keyword">requires</span>(<span class="keyword">const</span> T&amp; value, <span class="keyword">const</span> <a class="code hl_class" href="classorm_1_1Uuid.html">Uuid</a>&amp; uuid) {</div>
+<div class="line"><a id="l00132" name="l00132"></a><span class="lineno">  132</span>    { <a class="code hl_struct" href="structorm_1_1UuidAdapter.html">UuidAdapter&lt;T&gt;::toUuid</a>(value) } -&gt; std::same_as&lt;Uuid&gt;;</div>
+<div class="line"><a id="l00133" name="l00133"></a><span class="lineno">  133</span>    { <a class="code hl_struct" href="structorm_1_1UuidAdapter.html">UuidAdapter&lt;T&gt;::fromUuid</a>(uuid) } -&gt; std::same_as&lt;T&gt;;</div>
+<div class="line"><a id="l00134" name="l00134"></a><span class="lineno">  134</span>};</div>
+</div>
+<div class="line"><a id="l00135" name="l00135"></a><span class="lineno">  135</span><span class="comment"></span> </div>
+<div class="line"><a id="l00136" name="l00136"></a><span class="lineno">  136</span><span class="comment">/**</span></div>
+<div class="line"><a id="l00137" name="l00137"></a><span class="lineno">  137</span><span class="comment"> * Specialize to map a third-party value type to a canonical ORM value.</span></div>
+<div class="line"><a id="l00138" name="l00138"></a><span class="lineno">  138</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00139" name="l00139"></a><span class="lineno">  139</span><span class="comment"> * `Value` must be one of the canonical ORM scalar values. The ORM derives the</span></div>
+<div class="line"><a id="l00140" name="l00140"></a><span class="lineno">  140</span><span class="comment"> * logical column type from it, so the converter cannot disagree with the value</span></div>
+<div class="line"><a id="l00141" name="l00141"></a><span class="lineno">  141</span><span class="comment"> * it returns. Converters are opt-in and independent of the built-in scalar</span></div>
+<div class="line"><a id="l00142" name="l00142"></a><span class="lineno">  142</span><span class="comment"> * types and of `UuidAdapter`.</span></div>
+<div class="line"><a id="l00143" name="l00143"></a><span class="lineno">  143</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00144" name="l00144"></a><span class="lineno">  144</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00145" name="l00145"></a><span class="lineno"><a class="line" href="structorm_1_1ValueConverter.html">  145</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structorm_1_1ValueConverter.html">ValueConverter</a>;</div>
+<div class="line"><a id="l00146" name="l00146"></a><span class="lineno">  146</span> </div>
+<div class="line"><a id="l00147" name="l00147"></a><span class="lineno">  147</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00148" data-start="{" data-end="}">
+<div class="line"><a id="l00148" name="l00148"></a><span class="lineno"><a class="line" href="conceptorm_1_1ValueConvertible.html">  148</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptorm_1_1ValueConvertible.html">ValueConvertible</a> = <span class="keyword">requires</span> {</div>
+<div class="line"><a id="l00149" name="l00149"></a><span class="lineno">  149</span>    <span class="keyword">typename</span> <a class="code hl_struct" href="structorm_1_1ValueConverter.html">ValueConverter&lt;T&gt;::Value</a>;</div>
+<div class="line"><a id="l00150" name="l00150"></a><span class="lineno">  150</span><span class="comment">//     requires requires(const T&amp; value, const typename ValueConverter&lt;T&gt;::Value&amp; canonical) {</span></div>
+<div class="line"><a id="l00151" name="l00151"></a><span class="lineno">  151</span><span class="comment">//         { ValueConverter&lt;T&gt;::toValue(value) } -&gt; std::same_as&lt;typename ValueConverter&lt;T&gt;::Value&gt;;</span></div>
+<div class="line"><a id="l00152" name="l00152"></a><span class="lineno">  152</span><span class="comment">//         { ValueConverter&lt;T&gt;::fromValue(canonical) } -&gt; std::same_as&lt;T&gt;;</span></div>
+<div class="line"><a id="l00153" name="l00153"></a><span class="lineno">  153</span>    };</div>
+</div>
+<div class="line"><a id="l00154" name="l00154"></a><span class="lineno">  154</span>};</div>
+<div class="line"><a id="l00155" name="l00155"></a><span class="lineno">  155</span><span class="comment"></span> </div>
+<div class="line"><a id="l00156" name="l00156"></a><span class="lineno">  156</span><span class="comment">/**</span></div>
+<div class="line"><a id="l00157" name="l00157"></a><span class="lineno">  157</span><span class="comment"> * Specialize for an application nullable wrapper such as `boost::optional&lt;T&gt;`.</span></div>
+<div class="line"><a id="l00158" name="l00158"></a><span class="lineno">  158</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00159" name="l00159"></a><span class="lineno">  159</span><span class="comment"> * `Value` is the contained value type. `hasValue`, `value`, `make` and `none`</span></div>
+<div class="line"><a id="l00160" name="l00160"></a><span class="lineno">  160</span><span class="comment"> * let models, DTOs and parameters treat the wrapper like `std::optional&lt;T&gt;`</span></div>
+<div class="line"><a id="l00161" name="l00161"></a><span class="lineno">  161</span><span class="comment"> * without the ORM depending on the wrapper&#39;s library.</span></div>
+<div class="line"><a id="l00162" name="l00162"></a><span class="lineno">  162</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00163" name="l00163"></a><span class="lineno">  163</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00164" name="l00164"></a><span class="lineno"><a class="line" href="structNullableAdapter.html">  164</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structNullableAdapter.html">NullableAdapter</a>;</div>
+<div class="line"><a id="l00165" name="l00165"></a><span class="lineno">  165</span> </div>
+<div class="line"><a id="l00166" name="l00166"></a><span class="lineno">  166</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00167" data-start="{" data-end="}">
+<div class="line"><a id="l00167" name="l00167"></a><span class="lineno"><a class="line" href="conceptNullableAdaptable.html">  167</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptNullableAdaptable.html">NullableAdaptable</a> = <span class="keyword">requires</span> {</div>
+<div class="line"><a id="l00168" name="l00168"></a><span class="lineno">  168</span>    <span class="keyword">typename</span> <a class="code hl_struct" href="structNullableAdapter.html">NullableAdapter&lt;T&gt;::Value</a>;</div>
+<div class="line"><a id="l00169" name="l00169"></a><span class="lineno">  169</span><span class="comment">//     requires requires(const T&amp; value, typename NullableAdapter&lt;T&gt;::Value&amp;&amp; contained) {</span></div>
+<div class="line"><a id="l00170" name="l00170"></a><span class="lineno">  170</span><span class="comment">//         { NullableAdapter&lt;T&gt;::hasValue(value) } -&gt; std::convertible_to&lt;bool&gt;;</span></div>
+<div class="line"><a id="l00171" name="l00171"></a><span class="lineno">  171</span><span class="comment">//         { NullableAdapter&lt;T&gt;::value(value) } -&gt; std::convertible_to&lt;const typename NullableAdapter&lt;T&gt;::Value&amp;&gt;;</span></div>
+<div class="line"><a id="l00172" name="l00172"></a><span class="lineno">  172</span><span class="comment">//         { NullableAdapter&lt;T&gt;::make(std::move(contained)) } -&gt; std::same_as&lt;T&gt;;</span></div>
+<div class="line"><a id="l00173" name="l00173"></a><span class="lineno">  173</span><span class="comment">//         { NullableAdapter&lt;T&gt;::none() } -&gt; std::same_as&lt;T&gt;;</span></div>
+<div class="line"><a id="l00174" name="l00174"></a><span class="lineno">  174</span>    };</div>
+</div>
+<div class="line"><a id="l00175" name="l00175"></a><span class="lineno">  175</span>};</div>
+<div class="line"><a id="l00176" name="l00176"></a><span class="lineno">  176</span><span class="comment"></span> </div>
+<div class="line"><a id="l00177" name="l00177"></a><span class="lineno">  177</span><span class="comment">/** `std::optional` uses the same nullable contract as application wrappers. */</span></div>
+<div class="line"><a id="l00178" name="l00178"></a><span class="lineno">  178</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="foldopen" id="foldopen00179" data-start="{" data-end="};">
+<div class="line"><a id="l00179" name="l00179"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html">  179</a></span><span class="keyword">struct </span><a class="code hl_struct" href="structNullableAdapter.html">NullableAdapter</a>&lt;std::optional&lt;T&gt;&gt;</div>
+<div class="line"><a id="l00180" name="l00180"></a><span class="lineno">  180</span>{</div>
+<div class="line"><a id="l00181" name="l00181"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#acd1e67d3ce5db5ee6aa9989e9baae215">  181</a></span>    <span class="keyword">using </span><a class="code hl_typedef" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#acd1e67d3ce5db5ee6aa9989e9baae215">Value</a> = T;</div>
+<div class="line"><a id="l00182" name="l00182"></a><span class="lineno">  182</span> </div>
+<div class="foldopen" id="foldopen00183" data-start="{" data-end="}">
+<div class="line"><a id="l00183" name="l00183"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#aa52e12d5765af8ca8bbcf0e0148dd0a2">  183</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#aa52e12d5765af8ca8bbcf0e0148dd0a2">hasValue</a>(<span class="keyword">const</span> std::optional&lt;T&gt;&amp; <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303">value</a>) <span class="keyword">noexcept</span> -&gt; <span class="keywordtype">bool</span></div>
+<div class="line"><a id="l00184" name="l00184"></a><span class="lineno">  184</span>    {</div>
+<div class="line"><a id="l00185" name="l00185"></a><span class="lineno">  185</span>        <span class="keywordflow">return</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303">value</a>.has_value();</div>
+<div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>    }</div>
+</div>
+<div class="foldopen" id="foldopen00187" data-start="{" data-end="}">
+<div class="line"><a id="l00187" name="l00187"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303">  187</a></span>    <span class="keyword">static</span> <span class="keyword">constexpr</span> <span class="keyword">auto</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303">value</a>(<span class="keyword">const</span> std::optional&lt;T&gt;&amp; source) -&gt; <span class="keyword">const</span> T&amp;</div>
+<div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    {</div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>        <span class="keywordflow">return</span> *source;</div>
+<div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    }</div>
+</div>
+<div class="foldopen" id="foldopen00191" data-start="{" data-end="}">
+<div class="line"><a id="l00191" name="l00191"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a93fc1dfd2a0e00c6d2d6af055257f8b9">  191</a></span>    <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a93fc1dfd2a0e00c6d2d6af055257f8b9">make</a>(<span class="keyword">const</span> T&amp; contained) -&gt; std::optional&lt;T&gt;</div>
+<div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>    {</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>        <span class="keywordflow">return</span> std::optional&lt;T&gt;{contained};</div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    }</div>
+</div>
+<div class="foldopen" id="foldopen00195" data-start="{" data-end="}">
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a0bf0d09d3127c5195fae5df034226d96">  195</a></span>    <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a0bf0d09d3127c5195fae5df034226d96">make</a>(T&amp;&amp; contained) -&gt; std::optional&lt;T&gt;</div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    {</div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>        <span class="keywordflow">return</span> std::optional&lt;T&gt;{std::move(contained)};</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    }</div>
+</div>
+<div class="foldopen" id="foldopen00199" data-start="{" data-end="}">
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno"><a class="line" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a9cc72650dd1fbf784fc072154e82d735">  199</a></span>    <span class="keyword">static</span> <span class="keyword">auto</span> <a class="code hl_function" href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a9cc72650dd1fbf784fc072154e82d735">none</a>() -&gt; std::optional&lt;T&gt;</div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    {</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>        <span class="keywordflow">return</span> std::nullopt;</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>    }</div>
+</div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>};</div>
+</div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span><span class="comment"></span> </div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span><span class="comment">/** True when `T` converts through the canonical `Uuid` value. */</span></div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno"><a class="line" href="conceptUuidConvertible.html">  207</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptUuidConvertible.html">UuidConvertible</a> = ValueConvertible&lt;T&gt; &amp;&amp; std::same_as&lt;typename ValueConverter&lt;T&gt;::Value, Uuid&gt;;</div>
+<div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span><span class="comment"></span> </div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span><span class="comment">/** True when `T` carries a UUID domain, whether natively or explicitly converted. */</span></div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno"><a class="line" href="conceptUuidDomainValue.html">  211</a></span><span class="keyword">concept </span><a class="code hl_concept" href="conceptUuidDomainValue.html">UuidDomainValue</a> = std::same_as&lt;std::remove_cvref_t&lt;T&gt;, Uuid&gt; || UuidAdaptable&lt;std::remove_cvref_t&lt;T&gt;&gt; ||</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>                          <a class="code hl_concept" href="conceptUuidConvertible.html">UuidConvertible&lt;std::remove_cvref_t&lt;T&gt;</a>&gt;;</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>} <span class="comment">// namespace orm</span></div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a545fb51fdccc5a26a8037030afc0014f"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a545fb51fdccc5a26a8037030afc0014f">orm::TimeOfDay::operator==</a></div><div class="ttdeci">constexpr auto operator==(const TimeOfDay &amp;other) const noexcept -&gt; bool</div><div class="ttdef"><b>Definition</b> <a href="#l00047">values.cppm:47</a></div></div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html_a7eaae7db382d6c8972f80a1af207a2b3"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#a7eaae7db382d6c8972f80a1af207a2b3">orm::TimeOfDay::sinceMidnight</a></div><div class="ttdeci">constexpr auto sinceMidnight() const noexcept -&gt; std::chrono::microseconds</div><div class="ttdef"><b>Definition</b> <a href="#l00042">values.cppm:42</a></div></div>
 <div class="ttc" id="aclassorm_1_1TimeOfDay_html_ac95ebe90e82364159f6fa0e4a895543c"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#ac95ebe90e82364159f6fa0e4a895543c">orm::TimeOfDay::TimeOfDay</a></div><div class="ttdeci">constexpr TimeOfDay() noexcept=default</div></div>
-<div class="ttc" id="aclassorm_1_1TimeOfDay_html_aea148f8bfca2484c3e7bcc62419cba6a"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">orm::TimeOfDay::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const TimeOfDay &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00048">values.cppm:48</a></div></div>
+<div class="ttc" id="aclassorm_1_1TimeOfDay_html_aea148f8bfca2484c3e7bcc62419cba6a"><div class="ttname"><a href="classorm_1_1TimeOfDay.html#aea148f8bfca2484c3e7bcc62419cba6a">orm::TimeOfDay::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const TimeOfDay &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00052">values.cppm:52</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html"><div class="ttname"><a href="classorm_1_1Uuid.html">orm::Uuid</a></div><div class="ttdef"><b>Definition</b> <a href="#l00077">values.cppm:78</a></div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_a384ac51b7b530cd87684e26ca622ace0"><div class="ttname"><a href="classorm_1_1Uuid.html#a384ac51b7b530cd87684e26ca622ace0">orm::Uuid::toString</a></div><div class="ttdeci">auto toString() const -&gt; std::string</div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_a562de0e7fed64877b7169d100ba13eca"><div class="ttname"><a href="classorm_1_1Uuid.html#a562de0e7fed64877b7169d100ba13eca">orm::Uuid::parse</a></div><div class="ttdeci">static auto parse(std::string_view text) -&gt; Uuid</div></div>
-<div class="ttc" id="aclassorm_1_1Uuid_html_ab2118c9f286e927e37b09c6ca4f92178"><div class="ttname"><a href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">orm::Uuid::bytes</a></div><div class="ttdeci">constexpr auto bytes() const noexcept -&gt; const std::array&lt; std::byte, 16 &gt; &amp;</div><div class="ttdef"><b>Definition</b> <a href="#l00080">values.cppm:80</a></div></div>
-<div class="ttc" id="aclassorm_1_1Uuid_html_abd2df9598c1876807c2314321932855d"><div class="ttname"><a href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">orm::Uuid::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const Uuid &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00102">values.cppm:102</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html_ab2118c9f286e927e37b09c6ca4f92178"><div class="ttname"><a href="classorm_1_1Uuid.html#ab2118c9f286e927e37b09c6ca4f92178">orm::Uuid::bytes</a></div><div class="ttdeci">constexpr auto bytes() const noexcept -&gt; const std::array&lt; std::byte, 16 &gt; &amp;</div><div class="ttdef"><b>Definition</b> <a href="#l00084">values.cppm:84</a></div></div>
+<div class="ttc" id="aclassorm_1_1Uuid_html_abd2df9598c1876807c2314321932855d"><div class="ttname"><a href="classorm_1_1Uuid.html#abd2df9598c1876807c2314321932855d">orm::Uuid::operator&lt;=&gt;</a></div><div class="ttdeci">constexpr auto operator&lt;=&gt;(const Uuid &amp;other) const noexcept -&gt; std::strong_ordering</div><div class="ttdef"><b>Definition</b> <a href="#l00106">values.cppm:106</a></div></div>
 <div class="ttc" id="aclassorm_1_1Uuid_html_ae07d59978118d0417e149dba60ccc780"><div class="ttname"><a href="classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780">orm::Uuid::Uuid</a></div><div class="ttdeci">constexpr Uuid() noexcept=default</div></div>
+<div class="ttc" id="aconceptNullableAdaptable_html"><div class="ttname"><a href="conceptNullableAdaptable.html">NullableAdaptable</a></div><div class="ttdef"><b>Definition</b> <a href="#l00167">values.cppm:167</a></div></div>
+<div class="ttc" id="aconceptUuidConvertible_html"><div class="ttname"><a href="conceptUuidConvertible.html">UuidConvertible</a></div><div class="ttdef"><b>Definition</b> <a href="#l00207">values.cppm:207</a></div></div>
+<div class="ttc" id="aconceptUuidDomainValue_html"><div class="ttname"><a href="conceptUuidDomainValue.html">UuidDomainValue</a></div><div class="ttdef"><b>Definition</b> <a href="#l00211">values.cppm:211</a></div></div>
+<div class="ttc" id="aconceptorm_1_1UuidAdaptable_html"><div class="ttname"><a href="conceptorm_1_1UuidAdaptable.html">orm::UuidAdaptable</a></div><div class="ttdef"><b>Definition</b> <a href="#l00131">values.cppm:131</a></div></div>
+<div class="ttc" id="aconceptorm_1_1ValueConvertible_html"><div class="ttname"><a href="conceptorm_1_1ValueConvertible.html">orm::ValueConvertible</a></div><div class="ttdef"><b>Definition</b> <a href="#l00148">values.cppm:148</a></div></div>
 <div class="ttc" id="amodule__orm_html"><div class="ttname"><a href="module__orm.html">orm</a></div></div>
 <div class="ttc" id="anamespaceorm_html"><div class="ttname"><a href="namespaceorm.html">orm</a></div><div class="ttdef"><b>Definition</b> <a href="BackendRelations_8cppm_source.html#l00017">BackendRelations.cppm:18</a></div></div>
-<div class="ttc" id="anamespaceorm_html_a6cffce23ae50752497f414ad28395277"><div class="ttname"><a href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">orm::Date</a></div><div class="ttdeci">std::chrono::year_month_day Date</div><div class="ttdef"><b>Definition</b> <a href="#l00016">values.cppm:16</a></div></div>
-<div class="ttc" id="anamespaceorm_html_a8e19e63826a35572bab9e398b29f349a"><div class="ttname"><a href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">orm::LocalDateTime</a></div><div class="ttdeci">std::chrono::local_time&lt; std::chrono::microseconds &gt; LocalDateTime</div><div class="ttdef"><b>Definition</b> <a href="#l00019">values.cppm:19</a></div></div>
-<div class="ttc" id="anamespaceorm_html_af7177df0bc6e7d9d553605ea4081c913"><div class="ttname"><a href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">orm::UtcTimestamp</a></div><div class="ttdeci">std::chrono::sys_time&lt; std::chrono::microseconds &gt; UtcTimestamp</div><div class="ttdef"><b>Definition</b> <a href="#l00022">values.cppm:22</a></div></div>
+<div class="ttc" id="anamespaceorm_html_a6cffce23ae50752497f414ad28395277"><div class="ttname"><a href="namespaceorm.html#a6cffce23ae50752497f414ad28395277">orm::Date</a></div><div class="ttdeci">std::chrono::year_month_day Date</div><div class="ttdef"><b>Definition</b> <a href="#l00020">values.cppm:20</a></div></div>
+<div class="ttc" id="anamespaceorm_html_a8e19e63826a35572bab9e398b29f349a"><div class="ttname"><a href="namespaceorm.html#a8e19e63826a35572bab9e398b29f349a">orm::LocalDateTime</a></div><div class="ttdeci">std::chrono::local_time&lt; std::chrono::microseconds &gt; LocalDateTime</div><div class="ttdef"><b>Definition</b> <a href="#l00023">values.cppm:23</a></div></div>
+<div class="ttc" id="anamespaceorm_html_af7177df0bc6e7d9d553605ea4081c913"><div class="ttname"><a href="namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913">orm::UtcTimestamp</a></div><div class="ttdeci">std::chrono::sys_time&lt; std::chrono::microseconds &gt; UtcTimestamp</div><div class="ttdef"><b>Definition</b> <a href="#l00026">values.cppm:26</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_a0bf0d09d3127c5195fae5df034226d96"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a0bf0d09d3127c5195fae5df034226d96">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::make</a></div><div class="ttdeci">static auto make(T &amp;&amp;contained) -&gt; std::optional&lt; T &gt;</div><div class="ttdef"><b>Definition</b> <a href="#l00195">values.cppm:195</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_a48ea247296e219f18d6d38e9dd087303"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a48ea247296e219f18d6d38e9dd087303">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::value</a></div><div class="ttdeci">static constexpr auto value(const std::optional&lt; T &gt; &amp;source) -&gt; const T &amp;</div><div class="ttdef"><b>Definition</b> <a href="#l00187">values.cppm:187</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_a93fc1dfd2a0e00c6d2d6af055257f8b9"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a93fc1dfd2a0e00c6d2d6af055257f8b9">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::make</a></div><div class="ttdeci">static auto make(const T &amp;contained) -&gt; std::optional&lt; T &gt;</div><div class="ttdef"><b>Definition</b> <a href="#l00191">values.cppm:191</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_a9cc72650dd1fbf784fc072154e82d735"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#a9cc72650dd1fbf784fc072154e82d735">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::none</a></div><div class="ttdeci">static auto none() -&gt; std::optional&lt; T &gt;</div><div class="ttdef"><b>Definition</b> <a href="#l00199">values.cppm:199</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_aa52e12d5765af8ca8bbcf0e0148dd0a2"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#aa52e12d5765af8ca8bbcf0e0148dd0a2">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::hasValue</a></div><div class="ttdeci">static constexpr auto hasValue(const std::optional&lt; T &gt; &amp;value) noexcept -&gt; bool</div><div class="ttdef"><b>Definition</b> <a href="#l00183">values.cppm:183</a></div></div>
+<div class="ttc" id="astructNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4_html_acd1e67d3ce5db5ee6aa9989e9baae215"><div class="ttname"><a href="structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html#acd1e67d3ce5db5ee6aa9989e9baae215">NullableAdapter&lt; std::optional&lt; T &gt; &gt;::Value</a></div><div class="ttdeci">T Value</div><div class="ttdef"><b>Definition</b> <a href="#l00181">values.cppm:181</a></div></div>
+<div class="ttc" id="astructNullableAdapter_html"><div class="ttname"><a href="structNullableAdapter.html">NullableAdapter</a></div><div class="ttdef"><b>Definition</b> <a href="#l00164">values.cppm:164</a></div></div>
+<div class="ttc" id="astructorm_1_1UuidAdapter_html"><div class="ttname"><a href="structorm_1_1UuidAdapter.html">orm::UuidAdapter</a></div><div class="ttdef"><b>Definition</b> <a href="#l00128">values.cppm:128</a></div></div>
+<div class="ttc" id="astructorm_1_1ValueConverter_html"><div class="ttname"><a href="structorm_1_1ValueConverter.html">orm::ValueConverter</a></div><div class="ttdef"><b>Definition</b> <a href="#l00145">values.cppm:145</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 </div><!-- container -->

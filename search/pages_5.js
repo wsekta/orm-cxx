@@ -8,6 +8,7 @@ var searchData=
   ['execution_5',['C++ API and execution',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-c-api-and-execution',1,'']]],
   ['existing_20schema_6',['Migrating an existing schema',['../docs-relations-collection-relations.html#docs-relations-migrating-an-existing-schema',1,'']]],
   ['explicit_20conversion_7',['Runtime shapes and explicit conversion',['../docs-static-queries-static-query-plans.html#docs-static-queries-runtime-shapes-and-explicit-conversion',1,'']]],
-  ['extension_20contract_8',['Backend extension contract',['../docs-backend-extension-backend-extension-contract.html',1,'']]],
-  ['extension_20points_9',['Concrete extension points',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-concrete-extension-points',1,'']]]
+  ['explicit_20uuid_20representations_8',['UUID adapters and explicit UUID representations',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations',1,'']]],
+  ['extension_20contract_9',['Backend extension contract',['../docs-backend-extension-backend-extension-contract.html',1,'']]],
+  ['extension_20points_10',['Concrete extension points',['../docs-backend-extension-backend-extension-contract.html#docs-backend-extension-concrete-extension-points',1,'']]]
 ];

@@ -18,6 +18,7 @@ var namespaceorm_1_1model =
     [ "LogicalTypeTraits&lt; short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html", null ],
     [ "LogicalTypeTraits&lt; signed char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html", null ],
     [ "LogicalTypeTraits&lt; std::string &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html", null ],
+    [ "LogicalTypeTraits&lt; T &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01T_01_4.html", null ],
     [ "LogicalTypeTraits&lt; TimeOfDay &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01TimeOfDay_01_4.html", null ],
     [ "LogicalTypeTraits&lt; unsigned char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html", null ],
     [ "LogicalTypeTraits&lt; unsigned int &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html", null ],
@@ -36,6 +37,8 @@ var namespaceorm_1_1model =
     [ "StringLength", "structorm_1_1model_1_1StringLength.html", null ],
     [ "StringLengths", "structorm_1_1model_1_1StringLengths.html", "structorm_1_1model_1_1StringLengths" ],
     [ "TypeId", "structorm_1_1model_1_1TypeId.html", "structorm_1_1model_1_1TypeId" ],
+    [ "UuidStorageDefinition", "structorm_1_1model_1_1UuidStorageDefinition.html", null ],
+    [ "UuidStorages", "structorm_1_1model_1_1UuidStorages.html", "structorm_1_1model_1_1UuidStorages" ],
     [ "ColumnType", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659", [
       [ "Bool", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659ac26f15e86e3de4c398a8273272aba034", null ],
       [ "Char", "namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a8e95e84813830072b7516cfaa7dbc1a9", null ],
@@ -63,6 +66,11 @@ var namespaceorm_1_1model =
       [ "ToOne", "namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43a5383860ddcc8860b5ebe890ae4ab5eb3", null ],
       [ "OneToMany", "namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43ae4b0a8c44ada3d422e0028984cc5ee78", null ],
       [ "ManyToMany", "namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43a0775c29f4d904d7aab5be18210502688", null ]
+    ] ],
+    [ "UuidStorage", "namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580", [
+      [ "Native", "namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a925641e0b76c28cc940e8f3ca178d826", null ],
+      [ "Binary16", "namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a00321a6b688f71c20506107afe694a34", null ],
+      [ "Text36", "namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580af95b6f17ae2b5dd3b9d37155585406a8", null ]
     ] ],
     [ "autoIncrement", "namespaceorm_1_1model.html#a245f0dcfe5bb90c9b2f6921e1e177021", null ],
     [ "columnName", "namespaceorm_1_1model.html#a87efab791114d338ed16a3edd8f65dcd", null ],

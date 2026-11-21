@@ -4,7 +4,7 @@ var searchData=
   ['unique_1',['unique',['../structorm_1_1migrations_1_1PhysicalIndex.html#a6fee6439227938b4a00aec8159232c69',1,'orm::migrations::PhysicalIndex']]],
   ['unlink_2',['unlink',['../docs-relations-collection-relations.html#docs-relations-link-and-unlink',1,'Link and unlink'],['../classorm_1_1OrmContext.html#afbe4b1097b37819e4fd143b68a02a636',1,'orm::OrmContext::unlink()']]],
   ['unlink_20relations_3',['Link and unlink relations',['../docs-database-database.html#docs-database-link-and-unlink-relations',1,'']]],
-  ['unlinkstatement_4',['unlinkStatement',['../namespaceorm_1_1db_1_1relations.html#a9608e62c3c414767c9882df5b73e7c77',1,'orm::db::relations']]],
+  ['unlinkstatement_4',['unlinkStatement',['../namespaceorm_1_1db_1_1relations.html#a874bddf56040ba4fb424c88ca3150873',1,'orm::db::relations']]],
   ['unresolved_5',['unresolved',['../structorm_1_1migrations_1_1SchemaChange.html#af6539e5b519eb4580846943ef289f725',1,'orm::migrations::SchemaChange']]],
   ['unsignedchar_6',['UnsignedChar',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659aa93f121640d609f8772397a0f40f40d6',1,'orm::model']]],
   ['unsignedint_7',['UnsignedInt',['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659ac93cff91b6b9a57fa32bbe1863150070',1,'orm::model']]],
@@ -27,6 +27,17 @@ var searchData=
   ['utctimestamp_24',['UtcTimestamp',['../namespaceorm.html#af7177df0bc6e7d9d553605ea4081c913',1,'orm::UtcTimestamp'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a9d3120e0ed6086b9b804e554c8c6cbd2',1,'orm::model::UtcTimestamp']]],
   ['utilities_2ecppm_25',['utilities.cppm',['../utilities_8cppm.html',1,'']]],
   ['uuid_26',['Uuid',['../classorm_1_1Uuid.html',1,'orm::Uuid'],['../classorm_1_1Uuid.html#ae07d59978118d0417e149dba60ccc780',1,'orm::Uuid::Uuid() noexcept=default'],['../classorm_1_1Uuid.html#a2d00df34b9e08bf3bec8f4844776454b',1,'orm::Uuid::Uuid(std::array&lt; std::byte, 16 &gt; valueInit) noexcept'],['../namespaceorm_1_1model.html#a62580828a2846e7e39a0365413f8e659a755bf05a8e6c3925f7d7d779bc5cfddc',1,'orm::model::Uuid']]],
-  ['uuid_20representation_27',['UUID representation',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation',1,'']]],
-  ['uuid_20values_28',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
+  ['uuid_20adapters_20and_20explicit_20uuid_20representations_27',['UUID adapters and explicit UUID representations',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations',1,'']]],
+  ['uuid_20representation_28',['UUID representation',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation',1,'']]],
+  ['uuid_20representations_29',['UUID adapters and explicit UUID representations',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations',1,'']]],
+  ['uuid_20values_30',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]],
+  ['uuidadaptable_31',['UuidAdaptable',['../conceptorm_1_1UuidAdaptable.html',1,'orm']]],
+  ['uuidadapter_32',['UuidAdapter',['../structorm_1_1UuidAdapter.html',1,'orm']]],
+  ['uuidconvertible_33',['UuidConvertible',['../conceptUuidConvertible.html',1,'']]],
+  ['uuiddomainvalue_34',['UuidDomainValue',['../conceptUuidDomainValue.html',1,'']]],
+  ['uuidstorage_35',['UuidStorage',['../namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580',1,'orm::model']]],
+  ['uuidstorage_36',['uuidStorage',['../structorm_1_1query_1_1QueryParameter.html#a27bf843886b294fc22f61e9ef66a5dcb',1,'orm::query::QueryParameter::uuidStorage'],['../structorm_1_1db_1_1BoundValue.html#ae7c57e78c716b57f5396ff379c8b1006',1,'orm::db::BoundValue::uuidStorage'],['../structorm_1_1db_1_1StatementParameter.html#a7d2f853bea71ce5e1a95b0c64f14306b',1,'orm::db::StatementParameter::uuidStorage'],['../structorm_1_1model_1_1ColumnView.html#a88b3cccfdb7814a5cf9114884140faee',1,'orm::model::ColumnView::uuidStorage()'],['../namespaceorm.html#ab600ada4a3947328df972231b607eb9d',1,'orm::uuidStorage()']]],
+  ['uuidstoragedefinition_37',['UuidStorageDefinition',['../structorm_1_1model_1_1UuidStorageDefinition.html',1,'orm::model']]],
+  ['uuidstorages_38',['UuidStorages',['../structorm_1_1model_1_1UuidStorages.html',1,'orm::model']]],
+  ['uuidstorages_39',['uuidStorages',['../namespaceorm.html#aa9827a222ce732b1c622673daa08ec51',1,'orm']]]
 ];

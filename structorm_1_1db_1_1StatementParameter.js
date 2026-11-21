@@ -4,5 +4,6 @@ var structorm_1_1db_1_1StatementParameter =
     [ "getLogicalType", "structorm_1_1db_1_1StatementParameter.html#abe0b0918840ccf70cbfa84256c961b65", null ],
     [ "name", "structorm_1_1db_1_1StatementParameter.html#a799995d2bf7d6e54f6ff357d28606570", null ],
     [ "nullType", "structorm_1_1db_1_1StatementParameter.html#ac661077b38e98355c51e0738da0f9406", null ],
+    [ "uuidStorage", "structorm_1_1db_1_1StatementParameter.html#a7d2f853bea71ce5e1a95b0c64f14306b", null ],
     [ "value", "structorm_1_1db_1_1StatementParameter.html#a2049a1ab09635ea505cc91f2b8b4fca9", null ]
 ];

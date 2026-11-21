@@ -4,6 +4,8 @@ var searchData=
   ['unlink_20relations_1',['Link and unlink relations',['../docs-database-database.html#docs-database-link-and-unlink-relations',1,'']]],
   ['unsupported_20mappings_2',['Validation and unsupported mappings',['../docs-relations-collection-relations.html#docs-relations-validation-and-unsupported-mappings',1,'']]],
   ['update_20objects_3',['Update objects',['../docs-database-database.html#docs-database-update-objects',1,'']]],
-  ['uuid_20representation_4',['UUID representation',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation',1,'']]],
-  ['uuid_20values_5',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
+  ['uuid_20adapters_20and_20explicit_20uuid_20representations_4',['UUID adapters and explicit UUID representations',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations',1,'']]],
+  ['uuid_20representation_5',['UUID representation',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation',1,'']]],
+  ['uuid_20representations_6',['UUID adapters and explicit UUID representations',['../docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations',1,'']]],
+  ['uuid_20values_7',['Date, time and UUID values',['../docs-value-types-date-time-and-uuid-values.html',1,'']]]
 ];

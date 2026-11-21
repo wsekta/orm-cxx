@@ -176,7 +176,9 @@ var NAVTREE =
       [ "Models and values", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-models-and-values", null ],
       [ "Ranges and time zones", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-ranges-and-time-zones", null ],
       [ "Queries and projections", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-queries-and-projections", null ],
-      [ "UUID representation", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation", null ]
+      [ "UUID representation", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-representation", null ],
+      [ "Custom converters", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-custom-converters", null ],
+      [ "UUID adapters and explicit UUID representations", "docs-value-types-date-time-and-uuid-values.html#docs-value-types-uuid-adapters-and-explicit-uuid-representations", null ]
     ] ],
     [ "How to contribute", "CONTRIBUTING-how-to-contribute.html", [
       [ "Getting started", "CONTRIBUTING-how-to-contribute.html#CONTRIBUTING-getting-started", null ],
@@ -231,20 +233,20 @@ var NAVTREEINDEX =
 [
 "BackendRelations_8cppm.html",
 "classorm_1_1Query.html#aae966c137c3e919f57366a85f7478ca0",
-"classorm_1_1db_1_1DefaultCommandGenerator.html#a79fecb0755beaf1d4c0968ecbe1f96a5",
-"classorm_1_1db_1_1postgresql_1_1PostgresqlDialect.html#ab21997633e69e8554971cbdd8c40ad07",
-"classorm_1_1query_1_1QueryValue.html#a4e71a0f6f754358b67d3a3fb61ece924",
-"classorm_1_1query_1_1TypedColumn.html#a62b68f22d96565eb011ed9e3e92f179f",
-"docs-packaging-package-managers-and-releases.html#docs-packaging-consume-from-vcpkg-after-acceptance",
-"module__orm.html#a5f32d4a72ffe926c0d02f0cc8df39f6a",
-"namespaceorm.html#a2753e67871ca8adab07de8977b9e1b80",
-"namespaceorm_1_1query.html#a4abb332659767f86ca79b78817129f15",
-"structorm_1_1PostgresTls.html#a5b1ead6b36686f511fb13ab96fa35fbe",
-"structorm_1_1db_1_1RelationCapabilities.html#aa849f593fc4dcb3989bc2ca08ba3b0a7",
-"structorm_1_1migrations_1_1GenerationDecisions.html#a376e1959e813401c8e2e8902448969b2",
-"structorm_1_1migrations_1_1RebuildTable.html#a918c3ff94eba3eb4dc1bd86f7a5cb553",
-"structorm_1_1model_1_1ModelDataView.html",
-"update_8cppm.html"
+"classorm_1_1db_1_1DefaultCommandGenerator.html#a70c6014aec76971ed987ea9f18663533",
+"classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html#a3d29a90957d1d6065da09104f6babf1b",
+"classorm_1_1query_1_1Parameter.html#a0fab1e60e6771854b2fd75842269b12b",
+"classorm_1_1query_1_1TypedAggregatePredicate.html#a2c956e8b7e1bfe04056bbcebc5f87f7d",
+"docs-backend-portability-backend-portability.html#docs-backend-portability-verification-model",
+"module__orm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e",
+"module__orm_8reflection.html#a3349c0dfbf080bc57142816e3091ff13",
+"namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0",
+"structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea",
+"structorm_1_1db_1_1MutationCapabilities.html#a4e9e344c0ab77bd839ddbe3e8b79fb78",
+"structorm_1_1migrations_1_1AppliedMigration.html#ac3f73bdd13d5a2a2a25b3fb161ff9b69",
+"structorm_1_1migrations_1_1PhysicalSchema.html#af8f1c9f1740288f243107dfa2f935a9b",
+"structorm_1_1model_1_1ColumnView.html#affc6d72879f0907c65b4eeaf419eb3d5",
+"structorm_1_1model_1_1UuidStorages.html#aa13e93919fe4c2c7fc69154e97525064"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

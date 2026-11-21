@@ -12,6 +12,7 @@ var hierarchy =
     [ "orm::db::BackendRuntime", "classorm_1_1db_1_1BackendRuntime.html", null ],
     [ "orm::db::BackendRuntimeLimits", "structorm_1_1db_1_1BackendRuntimeLimits.html", null ],
     [ "orm::db::BackendValueLimits", "structorm_1_1db_1_1BackendValueLimits.html", null ],
+    [ "orm::db::binding::Binary16Buffer", "classorm_1_1db_1_1binding_1_1Binary16Buffer.html", null ],
     [ "orm::db::binding::BindingInfo", "structorm_1_1db_1_1binding_1_1BindingInfo.html", null ],
     [ "orm::db::binding::BindingPayload&lt; T, SchemaType, JoinedValues &gt;", "structorm_1_1db_1_1binding_1_1BindingPayload.html", null ],
     [ "orm::db::BoundValue", "structorm_1_1db_1_1BoundValue.html", null ],
@@ -36,11 +37,7 @@ var hierarchy =
     [ "orm::migrations::Diagnostic", "structorm_1_1migrations_1_1Diagnostic.html", null ],
     [ "std::false_type", null, [
       [ "orm::db::binding::IsOptional< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-      [ "orm::db::binding::IsOptionalBoundField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-      [ "orm::db::binding::IsOptionalScalarField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-      [ "orm::db::binding::IsOptional< T >", "structorm_1_1db_1_1binding_1_1IsOptional.html", null ],
-      [ "orm::db::binding::IsOptionalBoundField< T >", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField.html", null ],
-      [ "orm::db::binding::IsOptionalScalarField< T >", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField.html", null ]
+      [ "orm::db::binding::IsOptional< T >", "structorm_1_1db_1_1binding_1_1IsOptional.html", null ]
     ] ],
     [ "orm::reflection::FieldDescriptor", "structorm_1_1reflection_1_1FieldDescriptor.html", null ],
     [ "orm::reflection::FixedString&lt; N &gt;", "structorm_1_1reflection_1_1FixedString.html", null ],
@@ -63,6 +60,7 @@ var hierarchy =
     [ "orm::model::LogicalTypeTraits&lt; short &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01short_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; signed char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01signed_01char_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; std::string &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01std_1_1string_01_4.html", null ],
+    [ "orm::model::LogicalTypeTraits&lt; T &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01T_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; TimeOfDay &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01TimeOfDay_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; unsigned char &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01char_01_4.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; unsigned int &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01unsigned_01int_01_4.html", null ],
@@ -86,8 +84,9 @@ var hierarchy =
     [ "orm::db::MutationCapabilities", "structorm_1_1db_1_1MutationCapabilities.html", null ],
     [ "orm::MysqlConfig", "structorm_1_1MysqlConfig.html", null ],
     [ "orm::MysqlTls", "structorm_1_1MysqlTls.html", null ],
+    [ "NullableAdapter&lt; T &gt;", "structNullableAdapter.html", null ],
+    [ "NullableAdapter&lt; std::optional&lt; T &gt; &gt;", "structNullableAdapter_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValues&lt; ResultField &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues.html", null ],
-    [ "orm::db::binding::ObjectFieldFromProjectionValues&lt; std::optional&lt; ResultField &gt; &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01std_1_1optional_3_01ResultField_01_4_01_4.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValuesWithCast&lt; ResultField, SociType &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html", null ],
     [ "orm::db::binding::ObjectFieldFromProjectionValuesWithCast&lt; ResultField, double &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValuesWithCast.html", [
       [ "orm::db::binding::ObjectFieldFromProjectionValues< ResultField >", "structorm_1_1db_1_1binding_1_1ObjectFieldFromProjectionValues_3_01ResultField_01_4.html", null ]
@@ -105,7 +104,7 @@ var hierarchy =
     [ "orm::db::binding::ObjectFieldToValues&lt; ModelField &gt;", "structorm_1_1db_1_1binding_1_1ObjectFieldToValues.html", null ],
     [ "orm::OneToManyDescriptor&lt; Member, MappedByMember, MappedByName &gt;", "structorm_1_1OneToManyDescriptor.html", null ],
     [ "orm::db::binding::OptionalValue&lt; T &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue.html", null ],
-    [ "orm::db::binding::OptionalValue&lt; std::optional&lt; T &gt; &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
+    [ "orm::db::binding::OptionalValue&lt; T &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01T_01_4.html", null ],
     [ "orm::OrmContext&lt; SchemaType &gt;", "classorm_1_1OrmContext.html", null ],
     [ "orm::db::PaginationSpec", "structorm_1_1db_1_1PaginationSpec.html", null ],
     [ "orm::query::Parameter&lt; T, Index &gt;", "classorm_1_1query_1_1Parameter.html", null ],
@@ -158,6 +157,7 @@ var hierarchy =
     [ "orm::SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
     [ "orm::migrations::SqlMigration", "structorm_1_1migrations_1_1SqlMigration.html", null ],
     [ "orm::db::Statement", "structorm_1_1db_1_1Statement.html", null ],
+    [ "orm::db::binding::StatementBindings", "classorm_1_1db_1_1binding_1_1StatementBindings.html", null ],
     [ "orm::db::StatementParameter", "structorm_1_1db_1_1StatementParameter.html", null ],
     [ "orm::db::StatementView", "structorm_1_1db_1_1StatementView.html", null ],
     [ "orm::model::StaticModel&lt; T, SchemaType &gt;", "structorm_1_1model_1_1StaticModel.html", null ],
@@ -168,9 +168,7 @@ var hierarchy =
     [ "orm::migrations::TableRename", "structorm_1_1migrations_1_1TableRename.html", null ],
     [ "orm::TimeOfDay", "classorm_1_1TimeOfDay.html", null ],
     [ "std::true_type", null, [
-      [ "orm::db::binding::IsOptional< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-      [ "orm::db::binding::IsOptionalBoundField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalBoundField_3_01std_1_1optional_3_01T_01_4_01_4.html", null ],
-      [ "orm::db::binding::IsOptionalScalarField< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptionalScalarField_3_01std_1_1optional_3_01T_01_4_01_4.html", null ]
+      [ "orm::db::binding::IsOptional< std::optional< T > >", "structorm_1_1db_1_1binding_1_1IsOptional_3_01std_1_1optional_3_01T_01_4_01_4.html", null ]
     ] ],
     [ "soci::type_conversion&lt; BindingPayload&lt; T, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01BindingPayload_3_01T_00_01SchemaType_00_01JoinedValues_01_4_01_4.html", null ],
     [ "soci::type_conversion&lt; orm::db::binding::CollectionPayload&lt; Owner, Target, SchemaType, JoinedValues &gt; &gt;", "structsoci_1_1type__conversion_3_01orm_1_1db_1_1binding_1_1CollectionPayload_3_01Owner_00_01Targffa2c747085deef29bc443f637394051.html", null ],
@@ -190,5 +188,9 @@ var hierarchy =
       [ "orm::db::sqlite::SqliteTypeTranslator", "classorm_1_1db_1_1sqlite_1_1SqliteTypeTranslator.html", null ]
     ] ],
     [ "orm::Update&lt; T &gt;", "classorm_1_1Update.html", null ],
-    [ "orm::Uuid", "classorm_1_1Uuid.html", null ]
+    [ "orm::Uuid", "classorm_1_1Uuid.html", null ],
+    [ "orm::UuidAdapter&lt; T &gt;", "structorm_1_1UuidAdapter.html", null ],
+    [ "orm::model::UuidStorageDefinition&lt; Member, Backend, Storage &gt;", "structorm_1_1model_1_1UuidStorageDefinition.html", null ],
+    [ "orm::model::UuidStorages&lt; Definitions &gt;", "structorm_1_1model_1_1UuidStorages.html", null ],
+    [ "orm::ValueConverter&lt; T &gt;", "structorm_1_1ValueConverter.html", null ]
 ];

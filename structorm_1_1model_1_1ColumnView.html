@@ -121,6 +121,7 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('structorm_1_1m
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-methods" class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
+<tr class="memitem:a88b3cccfdb7814a5cf9114884140faee" id="r_a88b3cccfdb7814a5cf9114884140faee"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a88b3cccfdb7814a5cf9114884140faee">uuidStorage</a> (<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a> backend) const noexcept -&gt; <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a></td></tr>
 <tr class="memitem:a37c766fbaa2b1c11ad14aad04d16b809" id="r_a37c766fbaa2b1c11ad14aad04d16b809"><td class="memItemLeft">constexpr auto&#160;</td><td class="memItemRight"><a class="el" href="#a37c766fbaa2b1c11ad14aad04d16b809">operator==</a> (const <a class="el" href="structorm_1_1model_1_1ColumnView.html">ColumnView</a> &amp;) const noexcept -&gt; bool=default</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-pub-attribs" class="groupheader"><a id="pub-attribs" name="pub-attribs"></a>
@@ -135,10 +136,12 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a5693193da78bfd53c1d1cb8c642884b3" id="r_a5693193da78bfd53c1d1cb8c642884b3"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#a5693193da78bfd53c1d1cb8c642884b3">isAutoIncrement</a> {}</td></tr>
 <tr class="memitem:aba2346c1a6a1c04e67e39fdca99ce1a3" id="r_aba2346c1a6a1c04e67e39fdca99ce1a3"><td class="memItemLeft">bool&#160;</td><td class="memItemRight"><a class="el" href="#aba2346c1a6a1c04e67e39fdca99ce1a3">isNotNull</a> {}</td></tr>
 <tr class="memitem:a03f95fc117d399c59ac4f09f289c662d" id="r_a03f95fc117d399c59ac4f09f289c662d"><td class="memItemLeft">std::optional&lt; std::size_t &gt;&#160;</td><td class="memItemRight"><a class="el" href="#a03f95fc117d399c59ac4f09f289c662d">maxStringLength</a></td></tr>
+<tr class="memitem:aa70347b7f598415c94e38225e7dfa5a3" id="r_aa70347b7f598415c94e38225e7dfa5a3"><td class="memItemLeft"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a>&#160;</td><td class="memItemRight"><a class="el" href="#aa70347b7f598415c94e38225e7dfa5a3">mysqlUuidStorage</a> {<a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a925641e0b76c28cc940e8f3ca178d826">UuidStorage::Native</a>}</td></tr>
+<tr class="memitem:a2a93c7486a7a73f7d111d1eb2615daa2" id="r_a2a93c7486a7a73f7d111d1eb2615daa2"><td class="memItemLeft"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a>&#160;</td><td class="memItemRight"><a class="el" href="#a2a93c7486a7a73f7d111d1eb2615daa2">sqliteUuidStorage</a> {<a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a925641e0b76c28cc940e8f3ca178d826">UuidStorage::Native</a>}</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00048">48</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00056">56</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 </div><a name="doc-func-members" id="doc-func-members"></a><h2 id="header-doc-func-members" class="groupheader">Member Function Documentation</h2>
 <a id="a37c766fbaa2b1c11ad14aad04d16b809" name="a37c766fbaa2b1c11ad14aad04d16b809"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a37c766fbaa2b1c11ad14aad04d16b809">&#9670;&#160;</a></span>operator==()</h2>
@@ -165,6 +168,33 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="a88b3cccfdb7814a5cf9114884140faee" name="a88b3cccfdb7814a5cf9114884140faee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88b3cccfdb7814a5cf9114884140faee">&#9670;&#160;</a></span>uuidStorage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::model::ColumnView::uuidStorage </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">db::BackendType</a></td>          <td class="paramname"><span class="paramname"><em>backend</em></span></td><td>)</td>
+          <td> const -&gt; <a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span><span class="mlabel constexpr">constexpr</span><span class="mlabel noexcept">noexcept</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00077">77</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+
+</div>
+</div>
 <a name="doc-variable-members" id="doc-variable-members"></a><h2 id="header-doc-variable-members" class="groupheader">Member Data Documentation</h2>
 <a id="a1bc6ddf4136b554b26a393b704e04ac8" name="a1bc6ddf4136b554b26a393b704e04ac8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1bc6ddf4136b554b26a393b704e04ac8">&#9670;&#160;</a></span>fieldIndex</h2>
@@ -178,7 +208,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00050">50</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00058">58</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -194,7 +224,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00051">51</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00059">59</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -210,7 +240,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00062">62</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00070">70</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -226,7 +256,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00063">63</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00071">71</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -242,7 +272,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00061">61</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00069">69</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -258,7 +288,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00059">59</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00067">67</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -275,7 +305,23 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Maximum number of UTF-8 characters, inherited by physical foreign keys. </p>
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00065">65</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00073">73</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+
+</div>
+</div>
+<a id="aa70347b7f598415c94e38225e7dfa5a3" name="aa70347b7f598415c94e38225e7dfa5a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa70347b7f598415c94e38225e7dfa5a3">&#9670;&#160;</a></span>mysqlUuidStorage</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a> orm::model::ColumnView::mysqlUuidStorage {<a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a925641e0b76c28cc940e8f3ca178d826">UuidStorage::Native</a>}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00074">74</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -291,7 +337,23 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00052">52</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00060">60</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a2a93c7486a7a73f7d111d1eb2615daa2" name="a2a93c7486a7a73f7d111d1eb2615daa2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a93c7486a7a73f7d111d1eb2615daa2">&#9670;&#160;</a></span>sqliteUuidStorage</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580">UuidStorage</a> orm::model::ColumnView::sqliteUuidStorage {<a class="el" href="namespaceorm_1_1model.html#a67efcca713a3f2f36f24b7f7e1724580a925641e0b76c28cc940e8f3ca178d826">UuidStorage::Native</a>}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00075">75</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -307,7 +369,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00060">60</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00068">68</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>
@@ -324,7 +386,7 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 <p>Scalar logical type. To-one fields intentionally have no single type: their physical foreign-key columns inherit the types of the target model's primary-key columns. </p>
 
-<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00058">58</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="views_8cppm_source.html#l00066">66</a> of file <a class="el" href="views_8cppm_source.html">views.cppm</a>.</p>
 
 </div>
 </div>

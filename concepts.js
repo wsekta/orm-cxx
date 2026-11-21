@@ -13,6 +13,11 @@ var concepts =
           [ "SociEncodedValue", "conceptorm_1_1db_1_1binding_1_1SociEncodedValue.html", null ]
         ] ],
         [ "ConnectionConfiguration", "conceptorm_1_1db_1_1ConnectionConfiguration.html", null ]
-      ] ]
-    ] ]
+      ] ],
+      [ "UuidAdaptable", "conceptorm_1_1UuidAdaptable.html", null ],
+      [ "ValueConvertible", "conceptorm_1_1ValueConvertible.html", null ]
+    ] ],
+    [ "NullableAdaptable", "conceptNullableAdaptable.html", null ],
+    [ "UuidConvertible", "conceptUuidConvertible.html", null ],
+    [ "UuidDomainValue", "conceptUuidDomainValue.html", null ]
 ];
