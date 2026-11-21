@@ -65,6 +65,15 @@ struct UuidOnly
     orm::Uuid value;
     inline static constexpr orm::reflection::FixedString table_name{"migration_temporal_values"};
 };
+struct TextUuidValue
+{
+    int id;
+    orm::Uuid value;
+    inline static constexpr orm::reflection::FixedString table_name{"migration_temporal_values"};
+    inline static constexpr auto uuid_storage = orm::uuidStorages(
+        orm::uuidStorage<&TextUuidValue::value, orm::db::BackendType::Mysql, orm::model::UuidStorage::Text36>(),
+        orm::uuidStorage<&TextUuidValue::value, orm::db::BackendType::Sqlite, orm::model::UuidStorage::Text36>());
+};
 struct UuidTarget
 {
     orm::Uuid id;
@@ -138,6 +147,7 @@ using ValueSchema = orm::Schema<Values>;
 using DateSchema = orm::Schema<DateOnly>;
 using TimeSchema = orm::Schema<TimeOnly>;
 using UuidValueSchema = orm::Schema<UuidOnly>;
+using TextUuidValueSchema = orm::Schema<TextUuidValue>;
 using UuidSchema = orm::Schema<UuidOwner, UuidTarget>;
 using BinaryUuidSchema = orm::Schema<BinaryUuidOwner, BinaryUuidTarget>;
 using CanonicalUuidMappingSchema = orm::Schema<CanonicalUuidMapping>;
@@ -914,6 +924,138 @@ TEST_P(TemporalMigrationLiveTest, MysqlRejectsShortUuidBackfillBeforePadding)
                  "AND table_name='migration_temporal_values' AND column_name='value'",
         soci::into(finalColumns);
     EXPECT_EQ(finalColumns, 0);
+}
+
+TEST_P(TemporalMigrationLiveTest, TextUuidBackfillRoundTripsAndRollsBack)
+{
+    if (GetParam().type != Backend::Sqlite && GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "Text36 UUID columns require SQLite or MySQL";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{GetParam().type});
+    const auto after = capture(temporal_models::TextUuidValueSchema::view, std::array{GetParam().type});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    const auto uuid = orm::Uuid::parse("00112233-4455-6677-8899-aabbccddeeff");
+    GenerationDecisions decisions;
+    decisions.backfills.push_back(
+        {.table = "migration_temporal_values", .column = "value", .constant = GenerationLiteral{uuid}});
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    const auto second = generate(2, "text_uuid_backfill", compare(before, after, decisions), decisions).migration;
+    Runner runner{connection, Catalog{first, second}};
+    ASSERT_NO_THROW(runner.up());
+    std::string stored;
+    session() << "SELECT " + quote("value") + " FROM " + quote("migration_temporal_values"), soci::into(stored);
+    EXPECT_EQ(stored, "00112233-4455-6677-8899-aabbccddeeff");
+    auto context = connection.orm<temporal_models::TextUuidValueSchema>();
+    orm::Query<temporal_models::TextUuidValue> query;
+    query.where(orm::query::col<&temporal_models::TextUuidValue::value>() == uuid);
+    const auto rows = context.select(query);
+    ASSERT_EQ(rows.size(), 1U);
+    EXPECT_EQ(rows.front().value, uuid);
+    ASSERT_NO_THROW(runner.down(1));
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, TextUuidBackfillsRejectUppercaseHexValues)
+{
+    if (GetParam().type != Backend::Sqlite && GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "Text36 UUID columns require SQLite or MySQL";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{GetParam().type});
+    const auto after = capture(temporal_models::TextUuidValueSchema::view, std::array{GetParam().type});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back({.table = "migration_temporal_values",
+                                   .column = "value",
+                                   .expressions = {{GetParam().type, "'00112233-4455-6677-8899-AABBCCDDEEFF'"}}});
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    const auto second = generate(2, "uppercase_text_uuid", compare(before, after, decisions), decisions).migration;
+    Runner runner{connection, Catalog{first, second}};
+    try
+    {
+        runner.up();
+        FAIL() << "A Text36 backfill must use the same canonical representation as typed equality bindings";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema);
+        EXPECT_EQ(error.getVersion(), 2);
+        EXPECT_NE(std::string{error.what()}.find("outside the target model domain"), std::string::npos);
+    }
+    EXPECT_EQ(runner.status().currentVersion, 1);
+}
+
+TEST_P(TemporalMigrationLiveTest, SqliteRejectsNonTextStorageClassInTextUuidBackfills)
+{
+    if (GetParam().type != Backend::Sqlite)
+        GTEST_SKIP() << "SQLite storage classes need explicit validation";
+    const auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Sqlite});
+    const auto after = capture(temporal_models::TextUuidValueSchema::view, std::array{Backend::Sqlite});
+    const auto first = initial(before);
+    session() << "INSERT INTO " + quote("migration_temporal_values") + " VALUES(1)";
+    GenerationDecisions decisions;
+    decisions.backfills.push_back(
+        {.table = "migration_temporal_values",
+         .column = "value",
+         .expressions = {{Backend::Sqlite, "CAST('00112233-4455-6677-8899-aabbccddeeff' AS BLOB)"}}});
+    decisions = temporalApprovals(before, after, std::move(decisions));
+    const auto second =
+        generate(2, "invalid_text_uuid_storage", compare(before, after, decisions), decisions).migration;
+    Runner runner{connection, Catalog{first, second}};
+    try
+    {
+        runner.up();
+        FAIL() << "A non-text storage class must not satisfy the Text36 target column domain";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema);
+        EXPECT_EQ(error.getVersion(), 2);
+        EXPECT_NE(std::string{error.what()}.find("incompatible storage"), std::string::npos);
+    }
+    EXPECT_EQ(runner.status().currentVersion, 1);
+    EXPECT_FALSE(runner.status().incomplete);
+    int valueColumns{};
+    session() << "SELECT COUNT(*) FROM pragma_table_info('migration_temporal_values') WHERE name='value'",
+        soci::into(valueColumns);
+    EXPECT_EQ(valueColumns, 0);
+}
+
+TEST_P(TemporalMigrationLiveTest, MysqlRejectsTextUuidWidthDrift)
+{
+    if (GetParam().type != Backend::Mysql)
+        GTEST_SKIP() << "MySQL owns the fixed-width text UUID representation";
+    auto before = capture(temporal_models::SeedSchema::view, std::array{Backend::Mysql});
+    before.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "value", .logicalType = Type::Uuid, .sqlType = "CHAR(36)", .nullable = true});
+    const auto first = initial(before);
+    auto after = before;
+    after.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "extra", .logicalType = Type::Int, .sqlType = "INT", .nullable = true});
+    const auto second = generate(2, "text_uuid_extra", compare(before, after)).migration;
+    // A follow-up migration accepts the canonical CHAR(36) width of an existing Text36 column.
+    Runner{connection, Catalog{first, second}}.up();
+    auto drifted = after;
+    drifted.backends.at(Backend::Mysql)
+        .tables.front()
+        .columns.push_back({.name = "extra_two", .logicalType = Type::Int, .sqlType = "INT", .nullable = true});
+    const auto third = generate(3, "text_uuid_drift", compare(after, drifted)).migration;
+    session() << "ALTER TABLE " + quote("migration_temporal_values") + " MODIFY COLUMN " + quote("value") +
+                     " CHAR(20) NULL";
+    Runner runner{connection, Catalog{first, second, third}};
+    try
+    {
+        runner.up();
+        FAIL() << "An incorrect text UUID column width must be reported as source drift";
+    }
+    catch (const MigrationError& error)
+    {
+        EXPECT_EQ(error.getCode(), ErrorCode::InvalidSchema) << error.what();
+        EXPECT_EQ(error.getVersion(), 3);
+    }
+    EXPECT_EQ(runner.status().currentVersion, 2);
+    EXPECT_FALSE(runner.status().incomplete);
 }
 
 TEST_P(TemporalMigrationLiveTest, GeneratedUuidPrimaryForeignAndJunctionKeysUseNativeColumns)

@@ -208,6 +208,11 @@ failed check leaves an incomplete migration marker for operator inspection,
 not a successful history entry. SQLite verifies the actual `BLOB` storage
 class and 16-byte length before accepting the migration.
 
+Text36 backfills and conversions must produce canonical lowercase UUID text,
+matching the representation used by ORM equality predicates. SQLite also
+requires the `TEXT` storage class. MySQL drift inspection checks the exact
+`CHAR(36)` width of existing Text36 columns, as it does for `BINARY(16)`.
+
 Temporal snapshots preserve `(6)` precision and with/without-time-zone semantics.
 Native drift inspection compares those properties explicitly; changing `(6)`
 to `(0)` is drift. Changing `LocalDateTime` to `UtcTimestamp` requires an explicit

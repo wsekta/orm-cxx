@@ -305,6 +305,9 @@ auto contextPreflight(soci::session& session, db::BackendType backend, const Mig
                     (backend == db::BackendType::Mysql && expected->logicalType == model::ColumnType::Uuid &&
                      expected->sqlType == "BINARY(16)" &&
                      (row.get_indicator(4) == soci::i_null || row.get<long long>(4) != 16)) ||
+                    (backend == db::BackendType::Mysql && expected->logicalType == model::ColumnType::Uuid &&
+                     expected->sqlType == "CHAR(36)" &&
+                     (row.get_indicator(4) == soci::i_null || row.get<long long>(4) != 36)) ||
                     (expected->maxStringLength &&
                      (row.get_indicator(4) == soci::i_null ||
                       static_cast<std::size_t>(row.get<long long>(4)) != *expected->maxStringLength)))
@@ -658,6 +661,18 @@ auto validateTargetValues(Database& database, soci::session& session, db::Backen
                                                   column.name));
                     continue;
                 }
+                if (backend == db::BackendType::Sqlite)
+                {
+                    // Text36 lives in the TEXT storage class; any other class would
+                    // hydrate differently than the canonical text form.
+                    long long invalid{};
+                    session << std::format("SELECT COUNT(*) FROM {} WHERE {} IS NOT NULL AND typeof({}) <> 'text'",
+                                           detail::quoteIdentifier(backend, table.name), name, name),
+                        soci::into(invalid);
+                    if (invalid != 0)
+                        schemaFailure(std::format("Migrated UUID values have incompatible storage: {}.{}", table.name,
+                                                  column.name));
+                }
                 soci::rowset<std::string> values =
                     (session.prepare << std::format("SELECT {} FROM {} WHERE {} IS NOT NULL", name,
                                                     detail::quoteIdentifier(backend, table.name), name));
@@ -665,26 +680,35 @@ auto validateTargetValues(Database& database, soci::session& session, db::Backen
                 {
                     for (const auto& text : values)
                     {
-                        const auto checkParsed = [&](const auto& stored)
+                        const auto checkParsed = [&](const auto& stored, bool nativeDomain)
                         {
                             const db::BoundValue value{.logicalType = column.logicalType,
                                                        .value = query::QueryValue::Value{stored}};
                             if (!db::binding::isWithinValueLimits(value, database.getBackendCapabilities().valueLimits,
                                                                   limits))
                                 throw std::invalid_argument{"Migrated value exceeds the backend domain"};
-                            orm::detail::values::validateNative(stored, backend);
+                            if (nativeDomain)
+                                orm::detail::values::validateNative(stored, backend);
                         };
                         if (column.logicalType == Date)
-                            checkParsed(orm::detail::values::parseDate(text));
+                            checkParsed(orm::detail::values::parseDate(text), true);
                         else if (column.logicalType == TimeOfDay)
-                            checkParsed(orm::detail::values::parseTimeOfDay(text));
+                            checkParsed(orm::detail::values::parseTimeOfDay(text), true);
                         else if (column.logicalType == LocalDateTime)
-                            checkParsed(orm::detail::values::parseLocalDateTime(text));
+                            checkParsed(orm::detail::values::parseLocalDateTime(text), true);
                         else if (column.logicalType == UtcTimestamp)
                             checkParsed(orm::detail::values::parseUtcTimestamp(
-                                backend == db::BackendType::Postgres ? text : text + "+00:00"));
+                                            backend == db::BackendType::Postgres ? text : text + "+00:00"),
+                                        true);
                         else
-                            checkParsed(orm::Uuid::parse(text));
+                        {
+                            const auto uuid = orm::Uuid::parse(text);
+                            const bool native = column.sqlType == "UUID";
+                            // Text36 compares as text; require the same spelling that the ORM binds.
+                            if (!native && text != uuid.toString())
+                                throw std::invalid_argument{"Migrated Text36 UUID is not canonical"};
+                            checkParsed(uuid, native);
+                        }
                     }
                 }
                 catch (const std::invalid_argument&)
