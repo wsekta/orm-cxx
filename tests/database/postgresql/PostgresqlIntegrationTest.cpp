@@ -385,6 +385,20 @@ TEST_P(PostgresqlIntegrationTest, transactionRollbackRecoversAfterConstraintFail
     EXPECT_EQ(rows[2].field2, "committed");
 }
 
+TEST_P(PostgresqlIntegrationTest, scopedTransactionRemainsActiveAfterCommitIsRejectedBeforeSending)
+{
+    createTable<models::ModelWithId>();
+    database.insert(models::ModelWithId{1, 10, "existing"});
+    auto transaction = connection.scopedTransaction();
+
+    expectPostgresqlError([this]() { database.insert(models::ModelWithId{1, 20, "duplicate"}); },
+                          orm::DatabaseErrorCode::Constraint, "insert", "23505");
+    expectPostgresqlError([&]() { transaction.commit(); }, orm::DatabaseErrorCode::Transaction, "commit transaction",
+                          std::nullopt);
+    EXPECT_NO_THROW(transaction.rollback());
+    EXPECT_NO_THROW(database.insert(models::ModelWithId{2, 20, "recovered"}));
+}
+
 TEST_P(PostgresqlIntegrationTest, nativeSqlStateDistinguishesUniqueAndForeignKeyConstraints)
 {
     createTable<models::ModelWithId>();

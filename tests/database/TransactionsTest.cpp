@@ -126,3 +126,30 @@ TEST_P(TransactionsTest, disconnectWithActiveTransaction_shouldClearTransactionS
 }
 
 INSTANTIATE_TEST_SUITE_P(DatabaseTest, TransactionsTest, backendTestConfigs, backendTestName);
+
+TEST_P(TransactionsTest, scopedTransactionRollsBackDuringExceptionUnwinding)
+{
+    createTable<models::SomeDataModel>();
+    EXPECT_THROW(
+        {
+            auto transaction = connection.scopedTransaction();
+            database.insert(models::SomeDataModel{1, "discard", 1.0});
+            throw std::runtime_error{"application error"};
+        },
+        std::runtime_error);
+    orm::Query<models::SomeDataModel> query;
+    EXPECT_TRUE(database.select(query).empty());
+}
+
+TEST_P(TransactionsTest, scopedTransactionCommitsWritesFromTwoContexts)
+{
+    createTable<models::SomeDataModel>();
+    auto otherContext = connection.orm<models::Schema>();
+    auto transaction = connection.scopedTransaction();
+    database.insert(models::SomeDataModel{1, "one", 1.0});
+    otherContext.insert(models::SomeDataModel{2, "two", 2.0});
+    transaction.commit();
+
+    orm::Query<models::SomeDataModel> query;
+    EXPECT_EQ(database.select(query).size(), 2U);
+}

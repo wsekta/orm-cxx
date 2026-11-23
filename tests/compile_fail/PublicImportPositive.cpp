@@ -34,14 +34,24 @@ using PublicImportSchema = orm::Schema<PublicImportModel>;
 
 static_assert(orm::reflection::fieldName<PublicImportModel, 0>() == "id");
 static_assert(PublicImportSchema::contains<PublicImportModel>);
+static_assert(std::same_as<decltype(std::declval<orm::Database&>().scopedTransaction()), orm::ScopedTransaction>);
+static_assert(std::is_nothrow_destructible_v<orm::ScopedTransaction>);
+
+template <typename T>
+concept CanStartScopedTransaction = requires(T&& database) { std::forward<T>(database).scopedTransaction(); };
+
+static_assert(CanStartScopedTransaction<orm::Database&>);
+static_assert(!CanStartScopedTransaction<orm::Database>);
 static_assert(std::same_as<typename decltype(orm::query::col<&PublicImportModel::id>())::Model, PublicImportModel>);
 
 [[maybe_unused]] auto publicImportsCompile(orm::Database& database) -> void
 {
+    auto transaction = database.scopedTransaction();
     auto context = database.orm<PublicImportSchema>();
     const auto plan = orm::query::select<PublicImportModel>().where(orm::query::col<&PublicImportModel::id>() ==
                                                                     orm::query::param<int, 0>());
     (void)database;
     (void)context;
     (void)plan.toDynamic(1);
+    transaction.rollback();
 }

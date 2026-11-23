@@ -407,6 +407,51 @@ without sending a misleading commit; catch the exception and call
 `rollbackTransaction()` before starting another transaction. The function returns
 `void` on success.
 
+### Scoped transactions
+
+`database.scopedTransaction()` starts one application transaction and returns a
+noncopyable, nonmovable RAII guard. The method is `[[nodiscard]]`, so keep the
+result in a named local variable. The database must outlive the guard.
+
+```cpp
+{
+    auto transaction = database.scopedTransaction();
+    context.insert(User{1, "Ada"});
+    transaction.commit(); // or transaction.rollback()
+}
+```
+
+Leaving the scope without an explicit call attempts to roll back. The guard
+commits or rolls back only its own transaction. Its destructor never throws:
+it attempts rollback when the guard is still the owner and does nothing when
+it is already finished or retired. If rollback fails, the session is closed;
+call `rollback()` explicitly if the caller needs to observe that error.
+Calling `commit()` or `rollback()` on a completed or retired guard throws
+`DatabaseErrorCode::Transaction` before any session check.
+
+The database still permits only one application transaction at a time. Every
+context obtained from that database participates in the scoped transaction.
+There are no savepoints. `beginTransaction()` is rejected while a scoped guard is
+active, and `commitTransaction()` or `rollbackTransaction()` are rejected while
+the guard owns the transaction. A scoped transaction cannot start while a manual
+transaction or a migration is active. `disconnect()` rolls back an active scoped
+transaction, closes the session, reports the first error, and retires the guard;
+the retired guard's destructor is a no-op. After reconnecting, a new scoped
+transaction can start.
+
+A driver error during scoped `BEGIN` closes the session and propagates the
+sanitized translated error. A known failed statement, such as the PostgreSQL
+aborted-transaction state, is rejected by scoped `commit()` with
+`DatabaseErrorCode::Transaction` before the driver commit; the guard stays active
+so it can still be rolled back. If the driver rejects `COMMIT` itself, the error
+code is `DatabaseErrorCode::CommitUncertain`: the commit outcome is unknown, the
+local session is closed, and the guard is retired without retrying the commit.
+A `NotConnected` error while committing or rolling back retires the guard and
+closes local session state; the ORM does not reconnect or retry. Schema
+operations inside a scoped transaction require the backend's transactional DDL
+capability: SQLite and PostgreSQL allow them, while MySQL and MariaDB reject them
+with `UnsupportedFeature`.
+
 Relation-table operations, `link`, `unlink`, and included selects participate
 in the current explicit transaction and never start a private transaction.
 Because an included select uses the parent query plus one or more batched
