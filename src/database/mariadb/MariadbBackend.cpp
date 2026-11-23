@@ -16,7 +16,7 @@ namespace orm::db::mariadb
 MariadbBackend::MariadbBackend()
     : backendCapabilities{mysql_family::capabilities()},
       backendRuntime{mysql_family::makeRuntime(BackendType::Mariadb)},
-      mariadbCommandGenerator{mariadbDialect}
+      mariadbCommandGenerator{mariadbDialect, BackendType::Mariadb}
 {
     backendCapabilities.query.maxOrderedStringLength = 16'383;
     backendCapabilities.supportedColumnTypes.push_back(model::ColumnType::Uuid);

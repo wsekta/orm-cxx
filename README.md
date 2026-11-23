@@ -44,12 +44,16 @@ running database server or central package publication is needed.
 
 import orm;
 
-struct User { int id; std::string name; };
+struct User
+{
+    int id;
+    std::string name;
+};
 
 int main()
 {
     orm::Database database{orm::SqliteConfig{.database = orm::SqliteMemory{}}};
-auto context = database.orm<orm::Schema<User>>();
+    auto context = database.orm<orm::Schema<User>>();
 
     context.createTable<User>();
     context.insert(User{1, "Ada"});

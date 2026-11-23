@@ -3,10 +3,14 @@ module;
 #include <array>
 #include <chrono>
 #include <compare>
+#include <concepts>
 #include <cstddef>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <type_traits>
+#include <utility>
 
 export module orm:foundation_values;
 
@@ -118,4 +122,92 @@ public:
 private:
     std::array<std::byte, 16> value{};
 };
+
+/** Specialize for an application UUID type to convert explicitly to and from Uuid. */
+template <typename T>
+struct UuidAdapter;
+
+template <typename T>
+concept UuidAdaptable = requires(const T& value, const Uuid& uuid) {
+    { UuidAdapter<T>::toUuid(value) } -> std::same_as<Uuid>;
+    { UuidAdapter<T>::fromUuid(uuid) } -> std::same_as<T>;
+};
+
+/**
+ * Specialize to map a third-party value type to a canonical ORM value.
+ *
+ * `Value` must be one of the canonical ORM scalar values. The ORM derives the
+ * logical column type from it, so the converter cannot disagree with the value
+ * it returns. Converters are opt-in and independent of the built-in scalar
+ * types and of `UuidAdapter`.
+ */
+template <typename T>
+struct ValueConverter;
+
+template <typename T>
+concept ValueConvertible = requires {
+    typename ValueConverter<T>::Value;
+    requires requires(const T& value, const typename ValueConverter<T>::Value& canonical) {
+        { ValueConverter<T>::toValue(value) } -> std::same_as<typename ValueConverter<T>::Value>;
+        { ValueConverter<T>::fromValue(canonical) } -> std::same_as<T>;
+    };
+};
+
+/**
+ * Specialize for an application nullable wrapper such as `boost::optional<T>`.
+ *
+ * `Value` is the contained value type. `hasValue`, `value`, `make` and `none`
+ * let models, DTOs and parameters treat the wrapper like `std::optional<T>`
+ * without the ORM depending on the wrapper's library.
+ */
+template <typename T>
+struct NullableAdapter;
+
+template <typename T>
+concept NullableAdaptable = requires {
+    typename NullableAdapter<T>::Value;
+    requires requires(const T& value, typename NullableAdapter<T>::Value&& contained) {
+        { NullableAdapter<T>::hasValue(value) } -> std::convertible_to<bool>;
+        { NullableAdapter<T>::value(value) } -> std::convertible_to<const typename NullableAdapter<T>::Value&>;
+        { NullableAdapter<T>::make(std::move(contained)) } -> std::same_as<T>;
+        { NullableAdapter<T>::none() } -> std::same_as<T>;
+    };
+};
+
+/** `std::optional` uses the same nullable contract as application wrappers. */
+template <typename T>
+struct NullableAdapter<std::optional<T>>
+{
+    using Value = T;
+
+    static constexpr auto hasValue(const std::optional<T>& value) noexcept -> bool
+    {
+        return value.has_value();
+    }
+    static constexpr auto value(const std::optional<T>& source) -> const T&
+    {
+        return *source;
+    }
+    static auto make(const T& contained) -> std::optional<T>
+    {
+        return std::optional<T>{contained};
+    }
+    static auto make(T&& contained) -> std::optional<T>
+    {
+        return std::optional<T>{std::move(contained)};
+    }
+    static auto none() -> std::optional<T>
+    {
+        return std::nullopt;
+    }
+};
+
+/** True when `T` converts through the canonical `Uuid` value. */
+template <typename T>
+concept UuidConvertible = ValueConvertible<T> && std::same_as<typename ValueConverter<T>::Value, Uuid>;
+
+/** True when `T` carries a UUID domain, whether natively or explicitly converted. */
+template <typename T>
+concept UuidDomainValue = std::same_as<std::remove_cvref_t<T>, Uuid> || UuidAdaptable<std::remove_cvref_t<T>> ||
+                          UuidConvertible<std::remove_cvref_t<T>>;
 } // namespace orm

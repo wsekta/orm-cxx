@@ -65,6 +65,16 @@ auto nativeSqliteConnection(Handle* handle, Result (*)(Native*, Args...)) -> Nat
 class SqliteRuntime final : public orm::db::BackendRuntime
 {
 public:
+    [[nodiscard]] auto hasStatementParameter(soci::statement& statement, std::string_view name) const -> bool override
+    {
+        auto* backend = dynamic_cast<soci::sqlite3_statement_backend*>(statement.get_backend());
+        if (backend == nullptr || name.find('\0') != std::string_view::npos)
+            throw std::invalid_argument{"Invalid SQLite statement or parameter name"};
+        auto* handle = nativeSqliteConnection(backend->stmt_, sqlite3_bind_parameter_index);
+        const auto placeholder = std::string{":"} + std::string{name};
+        return sqlite3_bind_parameter_index(handle, placeholder.c_str()) != 0;
+    }
+
     auto migrationTable(soci::session&) const -> std::string override
     {
         return "main.\"_orm_migrations\"";
@@ -422,7 +432,7 @@ namespace orm::db::sqlite
 SqliteBackend::SqliteBackend()
     : backendCapabilities{sqliteCapabilities()},
       backendRuntime{std::make_unique<SqliteRuntime>()},
-      sqliteCommandGenerator{sqliteDialect}
+      sqliteCommandGenerator{sqliteDialect, BackendType::Sqlite}
 {
 }
 

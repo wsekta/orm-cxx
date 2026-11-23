@@ -21,6 +21,7 @@ import orm;
 #include "ConnectionConfig.hpp"
 
 auto compareImportedTemporalQueryValues() -> bool;
+auto uuidPrototypeConsumer() -> bool;
 
 struct PackageModel
 {
@@ -191,6 +192,8 @@ int main()
 {
     try
     {
+        if (!uuidPrototypeConsumer())
+            throw std::runtime_error{"Installed UUID adapter prototype failed"};
         if (!compareImportedTemporalQueryValues())
             throw std::runtime_error{"Installed temporal query value comparison failed"};
         const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};

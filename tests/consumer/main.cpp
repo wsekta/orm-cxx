@@ -27,6 +27,7 @@ import orm_cxx_consumer.models;
 auto consumerModelTypeId() -> orm::model::TypeId;
 auto consumerModelView() -> orm::model::ModelView;
 auto compareImportedTemporalQueryValues() -> bool;
+auto uuidPrototypeConsumer() -> bool;
 
 struct GlobalConsumerModel
 {
@@ -238,6 +239,8 @@ private:
 int main()
 try
 {
+    if (!uuidPrototypeConsumer())
+        throw std::runtime_error{"UUID adapter prototype failed"};
     if (!compareImportedTemporalQueryValues())
         throw std::runtime_error{"Imported temporal query value comparison failed"};
     const orm::Date date{std::chrono::year{2026}, std::chrono::month{10}, std::chrono::day{24}};

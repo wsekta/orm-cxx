@@ -10,6 +10,7 @@ export module orm:database_soci;
 // declarations expose the original global-module entities, retaining SOCI's ABI.
 export namespace soci
 {
+using ::soci::blob;
 using ::soci::dt_double;
 using ::soci::dt_integer;
 using ::soci::dt_long_long;

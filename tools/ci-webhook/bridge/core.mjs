@@ -1,63 +1,13 @@
-import { DatabaseSync } from 'node:sqlite';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { validBranch, noticeBranch } from './journal.mjs';
+
+export { Journal, validBranch } from './journal.mjs';
 
 export class UncertainDelivery extends Error {}
 
-export function validBranch(value) {
-  return typeof value === 'string' && value.length > 0 && value.length <= 1024 && value !== '@' &&
-    !value.startsWith('-') && !value.startsWith('/') && !value.endsWith('/') && !value.endsWith('.') &&
-    !value.includes('..') && !value.includes('//') && !value.includes('@{') &&
-    !/[\x00-\x20\x7f~^:?*\[\\]/.test(value) &&
-    value.split('/').every(part => part.length > 0 && !part.startsWith('.') && !part.endsWith('.lock'));
-}
-
 export function branchNoticePrefix(sha, branch) {
   return `${sha}:branch:${createHash('sha256').update(branch).digest('hex')}:`;
-}
-
-function noticeBranch(notice) { return Object.hasOwn(notice, 'branch') ? notice.branch : 'main'; }
-
-export class Journal {
-  constructor(path) {
-    mkdirSync(dirname(path), { recursive: true });
-    this.db = new DatabaseSync(path);
-    this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA busy_timeout=5000;
-      CREATE TABLE IF NOT EXISTS notices (id TEXT PRIMARY KEY, repository TEXT NOT NULL, sha TEXT NOT NULL, data TEXT NOT NULL, status TEXT NOT NULL);
-      CREATE TABLE IF NOT EXISTS routes (repository TEXT NOT NULL, sha TEXT NOT NULL, thread TEXT NOT NULL, PRIMARY KEY (repository, sha));
-      CREATE TABLE IF NOT EXISTS routes_by_branch (repository TEXT NOT NULL, branch TEXT NOT NULL, sha TEXT NOT NULL, thread TEXT NOT NULL, PRIMARY KEY (repository, branch, sha));
-      CREATE TABLE IF NOT EXISTS bridge_migrations (name TEXT PRIMARY KEY);`);
-    this.db.exec('BEGIN IMMEDIATE');
-    try {
-      if (!this.db.prepare('SELECT name FROM bridge_migrations WHERE name=?').get('routes_by_branch_v1')) {
-        // Existing SHA-only routes were registered while only main was covered.
-        // Never reuse them as feature routes or recopy them after later restarts.
-        this.db.exec("INSERT OR IGNORE INTO routes_by_branch SELECT repository, 'main', sha, thread FROM routes;");
-        this.db.prepare('INSERT INTO bridge_migrations VALUES (?)').run('routes_by_branch_v1');
-      }
-      this.db.exec('COMMIT');
-    } catch (error) {
-      this.db.exec('ROLLBACK');
-      this.db.close();
-      throw error;
-    }
-  }
-  register(repository, branch, sha, thread) {
-    if (!/^[\w.-]+\/[\w.-]+$/.test(repository) || !validBranch(branch) || !/^[a-f0-9]{40}$/.test(sha) || !/^[a-f0-9-]{36}$/.test(thread)) throw new Error('Invalid repository, branch, SHA or thread UUID');
-    this.db.prepare('INSERT OR REPLACE INTO routes_by_branch VALUES (?, ?, ?, ?)').run(repository, branch, sha, thread);
-  }
-  thread(notice, fallback) {
-    return this.db.prepare('SELECT thread FROM routes_by_branch WHERE repository=? AND branch=? AND sha=?').get(notice.repository, noticeBranch(notice), notice.sha)?.thread ?? fallback;
-  }
-  receive(notice) {
-    this.db.prepare('INSERT OR IGNORE INTO notices VALUES (?, ?, ?, ?, ?)').run(notice.id, notice.repository, notice.sha, JSON.stringify(notice), 'received');
-    return this.db.prepare('SELECT status FROM notices WHERE id=?').get(notice.id).status;
-  }
-  mark(id, status) { this.db.prepare('UPDATE notices SET status=? WHERE id=?').run(status, id); }
-  claim(id) { return this.db.prepare("UPDATE notices SET status='dispatching' WHERE id=? AND status='received'").run(id).changes === 1; }
-  close() { this.db.close(); }
 }
 
 export function validateNotice(value, repository) {
@@ -87,15 +37,15 @@ export function formatMessage(notice) {
     'Jeżeli to eventId było już obsłużone w rozmowie, nie powtarzaj powiadomienia.\n' + JSON.stringify(facts);
 }
 
-export async function deliverNotice(notice, journal, fallback, sender) {
+export async function deliverNotice(notice, journal, _fallback, sender) {
   const status = journal.receive(notice);
   if (status === 'accepted') return;
-  if (status !== 'received') throw new UncertainDelivery(`Delivery ${notice.id} is ${status}; inspect before retrying`);
-  const thread = journal.thread(notice, fallback);
+  if (['dispatching', 'uncertain'].includes(status)) throw new UncertainDelivery(`Delivery ${notice.id} is ${status}; inspect before retrying`);
+  const thread = journal.waiting(notice.id)?.destination;
   if (!thread || !/^[a-f0-9-]{36}$/.test(thread)) throw new Error('Missing destination thread');
   // Probe before claiming so an unavailable app-server leaves a safe-to-retry record.
-  await sender.probe();
-  if (!journal.claim(notice.id)) throw new UncertainDelivery('Another bridge claimed this event');
+  await sender.probe(thread);
+  if (!journal.claim(notice.id, thread)) throw new UncertainDelivery('This event is already claimed or blocked by an earlier delivery');
   try {
     await sender.send(thread, formatMessage(notice));
     journal.mark(notice.id, 'accepted');

@@ -33,7 +33,7 @@ class DefaultCommandGenerator : public CommandGenerator
 {
 public:
     /** The dialect must outlive this generator. */
-    explicit DefaultCommandGenerator(const SqlDialect& dialect);
+    explicit DefaultCommandGenerator(const SqlDialect& dialect, BackendType backend = BackendType::Empty);
 
     [[nodiscard]] auto createTable(model::ModelView model) const -> std::string override;
     [[nodiscard]] auto dropTable(model::ModelView model) const -> std::string override;
@@ -44,6 +44,7 @@ public:
 
 private:
     const SqlDialect& dialect;
+    BackendType backend;
 };
 } // namespace orm::db
 
@@ -77,23 +78,24 @@ namespace orm::db::relations
 export
 {
 
-    [[nodiscard]] auto createTableStatements(const SqlDialect& dialect,
-                                             model::ModelView owner) -> std::vector<std::string>;
+    [[nodiscard]] auto createTableStatements(const SqlDialect& dialect, model::ModelView owner,
+                                             BackendType backend = BackendType::Empty) -> std::vector<std::string>;
     [[nodiscard]] auto dropTableStatements(const SqlDialect& dialect,
                                            model::ModelView owner) -> std::vector<std::string>;
 
     [[nodiscard]] auto linkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                                     const binding::PrimaryKey& ownerKey,
-                                     const binding::PrimaryKey& targetKey) -> Statement;
+                                     const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey,
+                                     BackendType backend = BackendType::Empty) -> Statement;
     [[nodiscard]] auto linkInsertSpec(model::ModelView owner, model::RelationView relation,
                                       const binding::PrimaryKey& ownerKey,
                                       const binding::PrimaryKey& targetKey) -> InsertIfAbsentSpec;
     [[nodiscard]] auto unlinkStatement(const SqlDialect& dialect, model::ModelView owner, model::RelationView relation,
-                                       const binding::PrimaryKey& ownerKey,
-                                       const binding::PrimaryKey& targetKey) -> Statement;
+                                       const binding::PrimaryKey& ownerKey, const binding::PrimaryKey& targetKey,
+                                       BackendType backend = BackendType::Empty) -> Statement;
 
-    [[nodiscard]] auto collectionSelectStatement(
-        const SqlDialect& dialect, model::ModelView owner, model::RelationView relation, std::string targetSelectSql,
-        const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues) -> Statement;
+    [[nodiscard]] auto collectionSelectStatement(const SqlDialect& dialect, model::ModelView owner,
+                                                 model::RelationView relation, std::string targetSelectSql,
+                                                 const std::vector<binding::PrimaryKey>& ownerKeys, bool joinedValues,
+                                                 BackendType backend = BackendType::Empty) -> Statement;
 }
 } // namespace orm::db::relations

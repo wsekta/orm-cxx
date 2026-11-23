@@ -55,6 +55,8 @@ struct ProjectionResultField
 {
     std::string name;
     std::optional<model::ColumnType> type;
+    model::TypeId cppType{};
+    bool uuidAdapted = false;
 };
 
 template <typename T>
@@ -64,7 +66,7 @@ consteval auto projectionLogicalType() -> std::optional<model::ColumnType>
     using value_t = std::remove_cv_t<model::detail::static_optional_value_t<field_t>>;
     if constexpr (requires { model::LogicalTypeTraits<value_t>::value; })
     {
-        return model::LogicalTypeTraits<value_t>::value;
+        return model::logicalType<value_t>();
     }
     else
     {
@@ -119,6 +121,17 @@ inline auto validateProjectionAliasNames(const Projections& projections,
             throw std::invalid_argument{"Projection alias does not match a result field: " + alias};
         }
 
+        if constexpr (requires {
+                          projection.sourceType;
+                          projection.sourceUuidAdapted;
+                      })
+        {
+            const auto field = std::ranges::find(fields, alias, &ProjectionResultField::name);
+            if (projection.sourceType && (projection.sourceUuidAdapted || field->uuidAdapted) &&
+                *projection.sourceType != field->cppType)
+                throw std::invalid_argument{"Projection UUID domain type does not match the result field"};
+        }
+
         if (std::find(projectedFields.begin(), projectedFields.end(), alias) != projectedFields.end())
         {
             throw std::invalid_argument{"Duplicate projection alias: " + alias};
@@ -147,8 +160,11 @@ auto validateProjectionAliases(const Projections& projections) -> void
         constexpr auto fields = reflection::fields<Result>();
         auto appendField = [&]<std::size_t Index>()
         {
-            constexpr auto type = projectionLogicalType<reflection::field_type_t<Result, Index>>();
-            resultFields.emplace_back(std::string{fields[Index].name}, type);
+            using field_t = reflection::field_type_t<Result, Index>;
+            using value_t = query::detail::scalar_t<field_t>;
+            constexpr auto type = projectionLogicalType<field_t>();
+            resultFields.emplace_back(std::string{fields[Index].name}, type, model::typeId<value_t>(),
+                                      UuidDomainValue<value_t>);
         };
         (appendField.template operator()<Indices>(), ...);
     }(std::make_index_sequence<reflection::fieldCount<Result>>{});
@@ -173,7 +189,8 @@ export
         ProjectionQuery() = default;
 
         template <typename... Projections>
-            requires query::detail::ORM_QUERY_MODEL_PROJECTIONS<Source, Projections...>
+            requires query::detail::ORM_QUERY_MODEL_PROJECTIONS<Source, Projections...> &&
+                         query::detail::ORM_QUERY_UUID_PROJECTION_DOMAINS<Result, Projections...>
         auto project(Projections... projections) -> ProjectionQuery<Source, Result>&
         {
             data.projections = {query::detail::erase(projections)...};

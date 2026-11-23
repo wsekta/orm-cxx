@@ -15,7 +15,7 @@ namespace orm::db::mysql
 MysqlBackend::MysqlBackend()
     : backendCapabilities{mysql_family::capabilities()},
       backendRuntime{mysql_family::makeRuntime(BackendType::Mysql)},
-      mysqlCommandGenerator{mysqlDialect}
+      mysqlCommandGenerator{mysqlDialect, BackendType::Mysql}
 {
 }
 MysqlBackend::~MysqlBackend() = default;

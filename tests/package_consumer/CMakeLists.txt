@@ -4,7 +4,22 @@ project(orm-cxx-package-consumer LANGUAGES CXX)
 
 find_package(orm-cxx CONFIG REQUIRED)
 
-add_executable(orm-cxx-package-consumer main.cpp ValueTypesImport.cpp)
+add_executable(
+    orm-cxx-package-consumer main.cpp ValueTypesImport.cpp ../prototypes/uuid-adapter/Consumer.cpp
+                             ../prototypes/uuid-adapter/OtherTranslationUnit.cpp
+)
+target_sources(
+    orm-cxx-package-consumer
+    PRIVATE FILE_SET
+            prototype_modules
+            TYPE
+            CXX_MODULES
+            BASE_DIRS
+            "${CMAKE_CURRENT_SOURCE_DIR}/.."
+            FILES
+            ../prototypes/uuid-adapter/Contract.cppm
+            ../prototypes/uuid-adapter/Application.cppm
+)
 set_target_properties(orm-cxx-package-consumer PROPERTIES CXX_SCAN_FOR_MODULES ON)
 target_link_libraries(orm-cxx-package-consumer PRIVATE orm-cxx::orm-cxx)
 if(MSVC)

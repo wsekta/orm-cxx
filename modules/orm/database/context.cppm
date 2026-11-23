@@ -197,6 +197,10 @@ auto bindModelParameters(const db::BackendRuntime& runtime, soci::values& target
                          const soci::values& serializedModel, model::ModelView model,
                          const db::BackendValueLimits& valueLimits = {},
                          const db::BackendRuntimeLimits& runtimeLimits = {}) -> std::size_t;
+auto bindModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
+                         soci::session& session, db::BackendType backend, const soci::values& serializedModel,
+                         model::ModelView model, const db::BackendValueLimits& valueLimits,
+                         const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireCollectionRelation(model::ModelView owner,
@@ -217,6 +221,25 @@ export
 
         explicit OrmContext(Database& database) noexcept : database_{&database} {}
         Database* database_;
+
+        template <typename F>
+        auto withUuidConversion(std::string_view operation, F&& action) -> decltype(auto)
+        {
+            try
+            {
+                return std::forward<F>(action)();
+            }
+            catch (const query::detail::UuidAdapterRejected&)
+            {
+                throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, std::string{operation},
+                                    "A UUID value was rejected by its adapter"};
+            }
+            catch (const db::binding::ConversionError&)
+            {
+                throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, std::string{operation},
+                                    "A value cannot be represented by its logical column type"};
+            }
+        }
 
         template <typename T>
         static consteval auto requireSchemaModel() -> void
@@ -335,7 +358,8 @@ export
                 if constexpr (Plan::isProjection)
                     detail::validateProjectionAliases<typename Plan::Result>(requirements.projections);
                 database_->ensureQuerySupported(descriptor, requirements);
-                const auto parameters = query::detail::collectParameters(plan, values);
+                auto parameters = query::detail::collectParameters(plan, values);
+                db::detail::applyUuidBindingStorage(requirements, descriptor, database_->backendType, parameters);
                 auto resultColumns = [&]
                 {
                     if constexpr (Plan::isProjection)
@@ -369,7 +393,8 @@ export
                                         { return node.kind == db::detail::SqlNodeKind::Collection; }),
                     operation);
                 database_->ensureQueryTypesSupported(descriptor, requirements, operation);
-                const auto parameters = query::detail::collectParameters(plan, values);
+                auto parameters = query::detail::collectParameters(plan, values);
+                db::detail::applyUuidBindingStorage(requirements, descriptor, database_->backendType, parameters);
                 if constexpr (Plan::operation == query::detail::PlanOperation::Update)
                     for (const auto& assignment : requirements.assignments)
                         database_->ensureStringValueSupported(
@@ -411,14 +436,15 @@ export
             std::vector<Result> result;
             try
             {
-                std::optional<db::binding::TypedResultStorage> storage;
-                if (db::binding::hasEncodedResult(resultColumns))
-                    storage.emplace(std::move(resultColumns));
-                soci::values parameterValues;
+                db::binding::StatementBindings parameterValues;
                 for (const auto& parameter : statement.parameters)
+                {
                     database_->ensureBoundValueSupported(parameter.getBoundValue(), operation);
-                detail::bindStatementParameters(database_->getBackend().runtime(), parameterValues,
-                                                statement.parameters);
+                    parameterValues.add(database_->sql, database_->getBackend().runtime(), parameter);
+                }
+                std::optional<db::binding::TypedResultStorage> storage;
+                if (db::binding::hasEncodedResult(resultColumns) || parameterValues.hasBinary())
+                    storage.emplace(std::move(resultColumns));
                 if constexpr (Projection)
                 {
                     if (storage)
@@ -438,7 +464,7 @@ export
                     else
                     {
                         soci::rowset<db::binding::ProjectionPayload<Result>> rows =
-                            (database_->sql.prepare << statement.sql, soci::use(parameterValues));
+                            (database_->sql.prepare << statement.sql, soci::use(parameterValues.values()));
                         for (auto& payload : rows)
                             result.push_back(std::move(payload.value));
                     }
@@ -466,7 +492,7 @@ export
                         else
                         {
                             soci::rowset<db::binding::BindingPayload<Source, SchemaType, Joined>> rows =
-                                (database_->sql.prepare << statement.sql, soci::use(parameterValues));
+                                (database_->sql.prepare << statement.sql, soci::use(parameterValues.values()));
                             for (auto& payload : rows)
                                 result.push_back(std::move(payload.value));
                         }
@@ -532,10 +558,11 @@ export
                 soci::type_conversion<db::binding::BindingPayload<T, SchemaType>>::to_base(payload, serializedModel,
                                                                                            indicator);
 
-                soci::values parameterValues;
+                db::binding::StatementBindings parameterValues;
                 const auto parameterCount = detail::bindModelParameters(
-                    database_->getBackend().runtime(), parameterValues, serializedModel, model,
-                    database_->getBackendCapabilities().valueLimits, database_->getBackendRuntimeLimits());
+                    database_->getBackend().runtime(), parameterValues, database_->sql, database_->backendType,
+                    serializedModel, model, database_->getBackendCapabilities().valueLimits,
+                    database_->getBackendRuntimeLimits());
                 database_->ensureStatementWithinBindLimit(parameterCount, "insert");
 
                 if (parameterCount == 0)
@@ -544,7 +571,12 @@ export
                 }
                 else
                 {
-                    database_->sql << command, soci::use(parameterValues);
+                    soci::statement statement{database_->sql};
+                    statement.alloc();
+                    statement.prepare(command);
+                    parameterValues.exchange(statement);
+                    statement.define_and_bind();
+                    statement.execute(true);
                 }
             }
             catch (const db::binding::ConversionError&)
@@ -660,7 +692,8 @@ export
             database_->ensureSchemaSupported(owner, true, "create relation tables");
             database_->ensureRelationTableEndpointsExist(owner);
 
-            for (const auto& command : db::relations::createTableStatements(database_->getBackend().dialect(), owner))
+            for (const auto& command : db::relations::createTableStatements(database_->getBackend().dialect(), owner,
+                                                                            database_->getBackend().type()))
             {
                 database_->executeSql(command, "create relation table");
             }
@@ -733,7 +766,7 @@ export
             }
 
             const auto statement = db::relations::linkStatement(database_->getBackend().dialect(), ownerDescriptor,
-                                                                *relation, ownerKey, targetKey);
+                                                                *relation, ownerKey, targetKey, database_->backendType);
             if (relation->kind == model::RelationKind::ManyToMany)
                 return database_->executeInsertIfAbsent(
                     statement, db::relations::linkInsertSpec(ownerDescriptor, *relation, ownerKey, targetKey),
@@ -770,7 +803,7 @@ export
             database_->ensureEndpointKeySupported(*targetDescriptor, targetKey, "unlink relation");
             return database_->executeMutation(db::relations::unlinkStatement(database_->getBackend().dialect(),
                                                                              ownerDescriptor, *relation, ownerKey,
-                                                                             targetKey),
+                                                                             targetKey, database_->backendType),
                                               "unlink relation");
         }
 
@@ -780,18 +813,21 @@ export
             std::map<db::binding::PrimaryKey, std::vector<Target>, db::binding::PrimaryKeyLess>& groupedTargets) -> void
         {
             database_->ensureStatementWithinBindLimit(statement.parameters.size(), "include collection");
-            soci::values parameterValues;
+            db::binding::StatementBindings parameterValues;
             for (const auto& parameter : statement.parameters)
+            {
                 database_->ensureBoundValueSupported(parameter.getBoundValue(), "include collection");
-            detail::bindStatementParameters(database_->getBackend().runtime(), parameterValues, statement.parameters);
+                parameterValues.add(database_->sql, database_->getBackend().runtime(), parameter);
+            }
             constexpr auto owner = model::modelView<SchemaType, Owner>();
             std::vector<db::binding::ResultColumn> columns;
             for (const auto* column : db::binding::getPrimaryKeyColumns(owner))
-                columns.push_back({db::binding::relationOwnerAlias(*column), column->type.value()});
+                columns.push_back(
+                    {db::binding::relationOwnerAlias(*column), column->type.value(), std::nullopt, column});
             auto targetColumns = db::binding::modelResultColumns(model::modelView<SchemaType, Target>(), JoinedValues);
             for (auto& column : targetColumns)
                 columns.push_back(std::move(column));
-            if (db::binding::hasEncodedResult(columns))
+            if (db::binding::hasEncodedResult(columns) || parameterValues.hasBinary())
             {
                 db::binding::TypedResultStorage storage{std::move(columns)};
                 storage.read(
@@ -808,7 +844,7 @@ export
                 return;
             }
             soci::rowset<db::binding::CollectionPayload<Owner, Target, SchemaType, JoinedValues>> preparedRowSet =
-                (database_->sql.prepare << statement.sql, soci::use(parameterValues));
+                (database_->sql.prepare << statement.sql, soci::use(parameterValues.values()));
 
             for (auto& payload : preparedRowSet)
             {
@@ -913,7 +949,7 @@ export
 
                 const auto statement = db::relations::collectionSelectStatement(
                     database_->getBackend().dialect(), ownerDescriptor, relation, baseTargetStatement.sql, ownerKeys,
-                    queryData.shouldJoin);
+                    queryData.shouldJoin, database_->backendType);
                 if (queryData.shouldJoin)
                 {
                     appendCollectionRows<Owner, target_t, true>(statement, groupedTargets);
@@ -953,21 +989,24 @@ export
         auto select(const Plan& plan, Args&&... args) -> std::vector<typename Plan::Result>
         {
             requireSchemaModel<typename Plan::Model>();
-            return this->template selectPlanImpl<>(plan, std::forward<Args>(args)...);
+            return withUuidConversion("select", [&]
+                                      { return this->template selectPlanImpl<>(plan, std::forward<Args>(args)...); });
         }
         template <query::detail::StaticPlanType Plan, typename... Args>
             requires(Plan::operation == query::detail::PlanOperation::Update)
         auto update(const Plan& plan, Args&&... args) -> std::size_t
         {
             requireSchemaModel<typename Plan::Model>();
-            return this->template updatePlanImpl<>(plan, std::forward<Args>(args)...);
+            return withUuidConversion("update", [&]
+                                      { return this->template updatePlanImpl<>(plan, std::forward<Args>(args)...); });
         }
         template <query::detail::StaticPlanType Plan, typename... Args>
             requires(Plan::operation == query::detail::PlanOperation::Remove)
         auto remove(const Plan& plan, Args&&... args) -> std::size_t
         {
             requireSchemaModel<typename Plan::Model>();
-            return this->template removePlanImpl<>(plan, std::forward<Args>(args)...);
+            return withUuidConversion("remove", [&]
+                                      { return this->template removePlanImpl<>(plan, std::forward<Args>(args)...); });
         }
 
         template <typename T>
@@ -1016,7 +1055,8 @@ export
         auto remove(const P& predicate) -> std::size_t
         {
             requireSchemaModel<T>();
-            return this->template removeImpl<T>(query::detail::erase(predicate));
+            return withUuidConversion("remove",
+                                      [&] { return this->template removeImpl<T>(query::detail::erase(predicate)); });
         }
 
         template <typename T>
@@ -1057,7 +1097,9 @@ export
         {
             requireSchemaModel<Owner>();
             requireSchemaModel<Target>();
-            return this->template linkImpl<>(owner, query::detail::CollectionTraits<Member>::name(), target);
+            return withUuidConversion(
+                "link relation", [&]
+                { return this->template linkImpl<>(owner, query::detail::CollectionTraits<Member>::name(), target); });
         }
 
         template <auto Member, typename Owner, typename Target>
@@ -1070,7 +1112,11 @@ export
         {
             requireSchemaModel<Owner>();
             requireSchemaModel<Target>();
-            return this->template unlinkImpl<>(owner, query::detail::CollectionTraits<Member>::name(), target);
+            return withUuidConversion("unlink relation",
+                                      [&] {
+                                          return this->template unlinkImpl<>(
+                                              owner, query::detail::CollectionTraits<Member>::name(), target);
+                                      });
         }
     };
 }

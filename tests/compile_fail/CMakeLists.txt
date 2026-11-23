@@ -167,6 +167,9 @@ orm_cxx_expect_compile_failure(
 orm_cxx_expect_compile_failure(
     schema-unsupported-logical-type SchemaUnsupportedLogicalType.cpp "ORM_MODEL_LOGICAL_TYPE"
 )
+orm_cxx_expect_compile_failure(
+    schema-conflicting-uuid-adapter SchemaConflictingUuidAdapter.cpp "ORM_MODEL_UUID_ADAPTER_TYPE"
+)
 
 # Positive controls use the same module graph as the failures.
 orm_cxx_expect_compile_success(typed-query-positive TypedQueryPositive.cpp)

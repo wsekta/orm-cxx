@@ -29,6 +29,8 @@ namespace orm::detail
 {
 // These validators are shared by Database's operations. Keeping them separate
 // also lets tests exercise defensive checks with immutable malformed descriptors.
+[[nodiscard]] auto supportsPhysicalColumn(const db::BackendCapabilities& capabilities, const model::ColumnView& column,
+                                          db::BackendType backend) -> bool;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireToOneTarget(model::ModelView owner, const model::ColumnView& column) -> model::ModelView;
 [[nodiscard]] auto requireRelationTarget(model::ModelView owner,
@@ -68,6 +70,7 @@ struct RenderContext
     std::vector<StatementParameter> parameters = {};
     std::unordered_set<std::string> parameterNames = {};
     std::size_t nextParameterIndex = 0;
+    BackendType backend = BackendType::Empty;
 };
 
 struct WriteColumn
@@ -86,13 +89,16 @@ struct WriteColumn
 [[nodiscard]] auto addAutomaticParameter(RenderContext& context, const query::QueryValue& value) -> std::string;
 [[nodiscard]] auto addNullParameter(RenderContext& context, model::ColumnType type) -> std::string;
 [[nodiscard]] auto renderSelectStatement(model::ModelView model, const query::detail::SelectSpec& spec,
-                                         const SqlDialect& dialect) -> SelectStatement;
+                                         const SqlDialect& dialect,
+                                         BackendType backend = BackendType::Empty) -> SelectStatement;
 auto appendSelectPredicates(detail::SqlProgram& program, RenderContext& context,
                             const query::detail::SelectSpec& spec) -> void;
 [[nodiscard]] auto renderUpdateStatement(model::ModelView model, const query::detail::UpdateSpec& spec,
-                                         const SqlDialect& dialect) -> Statement;
+                                         const SqlDialect& dialect,
+                                         BackendType backend = BackendType::Empty) -> Statement;
 [[nodiscard]] auto renderRemoveStatement(model::ModelView model, const query::detail::Predicate& predicate,
-                                         const SqlDialect& dialect) -> Statement;
+                                         const SqlDialect& dialect,
+                                         BackendType backend = BackendType::Empty) -> Statement;
 } // namespace orm::db::commands
 
 // database/defaults/SqlAliases.hpp

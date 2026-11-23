@@ -743,6 +743,68 @@ TEST_F(DefaultSelectCommandTest, selectWithRawPredicateAndRawOrder)
     EXPECT_EQ(getValue<std::string>(statement.parameters[0]), "wojtek");
 }
 
+TEST_F(DefaultSelectCommandTest, rawUuidParametersRequireAndRetainExplicitRepresentationIncludingNull)
+{
+    using orm::model::ColumnType;
+    using orm::model::UuidStorage;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
+    query.where(raw("field1 = :uuid OR :missing IS NULL", param("uuid", orm::Uuid{}, UuidStorage::Binary16),
+                    param("missing", std::nullopt, ColumnType::Uuid, UuidStorage::Binary16)));
+    const auto statement = select(command, query);
+    ASSERT_EQ(statement.parameters.size(), 2U);
+    EXPECT_EQ(statement.parameters[0].uuidStorage, UuidStorage::Binary16);
+    EXPECT_TRUE(statement.parameters[0].value.has_value());
+    EXPECT_EQ(statement.parameters[1].uuidStorage, UuidStorage::Binary16);
+    EXPECT_FALSE(statement.parameters[1].value.has_value());
+    EXPECT_EQ(statement.parameters[1].nullType, ColumnType::Uuid);
+
+    const std::optional<orm::Uuid> empty;
+    const auto optional = param("optional", empty, UuidStorage::Binary16);
+    EXPECT_EQ(optional.nullType, ColumnType::Uuid);
+    EXPECT_THROW((void)param("wrong", std::nullopt, ColumnType::Int, UuidStorage::Binary16), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, rawUuidRejectsMissingOrConflictingRepresentation)
+{
+    using orm::model::UuidStorage;
+    orm::tests::RuntimeQuery<models::ModelWithFloat> missing;
+    missing.where(raw("field1 = :uuid", param("uuid", orm::Uuid{})));
+    EXPECT_THROW((void)select(command, missing), std::invalid_argument);
+
+    orm::tests::RuntimeQuery<models::ModelWithFloat> conflicting;
+    conflicting.where(raw("field1 = :uuid OR field2 = :uuid", param("uuid", orm::Uuid{}, UuidStorage::Native),
+                          param("uuid", orm::Uuid{}, UuidStorage::Binary16)));
+    EXPECT_THROW((void)select(command, conflicting), std::invalid_argument);
+}
+
+TEST_F(DefaultSelectCommandTest, rawNullUuidRejectsConflictingLogicalType)
+{
+    // QueryParameter is a public aggregate; raw SQL callers can supply inconsistent NULL metadata.
+    const orm::query::QueryParameter parameter{.name = "uuid",
+                                               .value = QueryValue{42},
+                                               .uuidStorage = orm::model::UuidStorage::Binary16,
+                                               .nullType = orm::model::ColumnType::Uuid};
+    orm::tests::RuntimeQuery<models::ModelWithFloat> query;
+    query.where(raw(":uuid IS NULL", parameter));
+
+    EXPECT_THAT([&] { (void)select(command, query); },
+                ::testing::ThrowsMessage<std::invalid_argument>("A raw NULL parameter has a conflicting logical type"));
+}
+
+TEST_F(DefaultSelectCommandTest, rawNonUuidParameterRejectsUuidRepresentation)
+{
+    using orm::model::UuidStorage;
+    for (const auto storage : {UuidStorage::Native, UuidStorage::Binary16, UuidStorage::Text36})
+    {
+        SCOPED_TRACE(static_cast<int>(storage));
+        orm::tests::RuntimeQuery<models::ModelWithFloat> query;
+        query.where(raw("field1 = :value", param("value", 42, storage)));
+
+        EXPECT_THAT([&] { (void)select(command, query); },
+                    ::testing::ThrowsMessage<std::invalid_argument>("A UUID representation requires a UUID parameter"));
+    }
+}
+
 TEST_F(DefaultSelectCommandTest, selectWithMappedFieldName)
 {
     orm::tests::RuntimeQuery<models::ModelWithIdAndNamesMapping> query;
