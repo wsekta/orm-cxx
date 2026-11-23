@@ -290,6 +290,11 @@ private:
     const orm::db::SqlDialect& delegate;
 };
 
+struct UnexpectedTransactionFailure final : std::runtime_error
+{
+    using std::runtime_error::runtime_error;
+};
+
 struct SessionOwnershipProbe
 {
     int alive = 0;
@@ -299,6 +304,8 @@ struct SessionOwnershipProbe
     bool failBegin = false;
     bool failCommit = false;
     bool failRollback = false;
+    bool failBeginUnexpectedly = false;
+    bool failRollbackUnexpectedly = false;
     int commitCalls = 0;
     int rollbackCalls = 0;
 };
@@ -324,6 +331,8 @@ public:
     }
     auto begin() -> void override
     {
+        if (state.failBeginUnexpectedly)
+            throw UnexpectedTransactionFailure{"unexpected begin failure"};
         if (state.failBegin)
             throw soci::soci_error{"private begin failure"};
     }
@@ -336,6 +345,8 @@ public:
     auto rollback() -> void override
     {
         ++state.rollbackCalls;
+        if (state.failRollbackUnexpectedly)
+            throw UnexpectedTransactionFailure{"unexpected rollback failure"};
         if (state.failRollback)
             throw soci::soci_error{"private rollback failure"};
     }
@@ -809,6 +820,36 @@ TEST(DatabaseCoverageCompletionTest, scopedCommitFailureClosesWithoutRetryAndRep
     EXPECT_EQ(state.commitCalls, 1);
     EXPECT_EQ(state.rollbackCalls, 0);
     EXPECT_FALSE(bundle.connection->isConnected());
+}
+
+TEST(DatabaseCoverageCompletionTest, unexpectedScopedBeginExceptionClosesTheSessionAndPropagates)
+{
+    SessionOwnershipProbe state{.healthy = true, .failInitialization = false, .failBeginUnexpectedly = true};
+    DatabaseBundle bundle;
+    bundle.backend->runtimeStrategy.ownershipProbe = &state;
+    bundle.connect();
+
+    EXPECT_THROW((void)bundle.connection->scopedTransaction(), UnexpectedTransactionFailure);
+    EXPECT_FALSE(bundle.connection->isConnected());
+    EXPECT_EQ(state.alive, 0);
+    EXPECT_EQ(state.rollbackCalls, 0);
+}
+
+TEST(DatabaseCoverageCompletionTest, unexpectedScopedRollbackExceptionClosesTheSessionAndRetiresTheGuard)
+{
+    SessionOwnershipProbe state{.healthy = true, .failInitialization = false, .failRollbackUnexpectedly = true};
+    DatabaseBundle bundle;
+    bundle.backend->runtimeStrategy.ownershipProbe = &state;
+    bundle.connect();
+    {
+        auto transaction = bundle.connection->scopedTransaction();
+        EXPECT_THROW(transaction.rollback(), UnexpectedTransactionFailure);
+        EXPECT_FALSE(bundle.connection->isConnected());
+        expectDatabaseError([&]() { transaction.commit(); }, orm::DatabaseErrorCode::Transaction, "commit transaction");
+    }
+    EXPECT_EQ(state.alive, 0);
+    EXPECT_EQ(state.rollbackCalls, 1);
+    EXPECT_EQ(state.commitCalls, 0);
 }
 
 TEST(DatabaseCoverageCompletionTest, scopedExplicitRollbackFailureClosesSessionAndKeepsItsError)
