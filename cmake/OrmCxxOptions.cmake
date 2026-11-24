@@ -10,6 +10,9 @@ function(orm_cxx_define_options)
     option(ORM_CXX_BUILD_TESTS "Build the orm-cxx test suite" "${developer_default}")
     option(ORM_CXX_BUILD_EXAMPLES "Build the orm-cxx examples" "${developer_default}")
     option(ORM_CXX_ENABLE_COVERAGE "Instrument orm-cxx and generate code coverage reports" OFF)
+    option(ORM_CXX_ENABLE_PERF_TEST_SEAM
+           "Export the internal perf-test seam used by the benchmark gate (not for release builds)" OFF
+    )
     option(ORM_CXX_ENABLE_SQLITE_BACKEND "Build and register the SQLite backend" OFF)
     option(ORM_CXX_ENABLE_POSTGRESQL_BACKEND "Build and register the PostgreSQL backend" OFF)
     option(ORM_CXX_ENABLE_MYSQL_BACKEND "Build and register the MySQL backend" OFF)

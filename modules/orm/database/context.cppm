@@ -4,6 +4,8 @@ module;
 #include <cassert>
 #include <compare>
 #include <cstddef>
+#include <exception>
+#include <format>
 #include <limits>
 #include <map>
 #include <memory>
@@ -201,6 +203,10 @@ auto bindModelParameters(const db::BackendRuntime& runtime, db::binding::Stateme
                          soci::session& session, db::BackendType backend, const soci::values& serializedModel,
                          model::ModelView model, const db::BackendValueLimits& valueLimits,
                          const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t;
+auto bindModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
+                         soci::session& session, db::BackendType backend, const soci::values& serializedModel,
+                         model::ModelView model, std::size_t rowIndex, const db::BackendValueLimits& valueLimits,
+                         const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t;
 auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 [[nodiscard]] auto hasOwningJunction(model::ModelView owner) -> bool;
 [[nodiscard]] auto requireCollectionRelation(model::ModelView owner,
@@ -210,7 +216,19 @@ auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 }
 export
 {
-    // namespace detail
+    namespace detail
+    {
+#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
+    namespace perf_seam
+    {
+    /** Test-only entry point defined by orm:perf_test_seam; reachable only in opt-in seam builds. */
+    class TestAccess;
+    } // namespace perf_seam
+#endif
+
+    /** Shared row budget for batched insert planning; also reported by the opt-in perf seam. */
+    inline constexpr std::size_t insertManyDefaultRowBudget = 32;
+    } // namespace detail
 
     /** A borrowed, schema-bound ORM view over an existing Database. */
     template <typename SchemaType>
@@ -220,6 +238,9 @@ export
         friend class Database;
 
         explicit OrmContext(Database& database) noexcept : database_{&database} {}
+#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
+        friend class detail::perf_seam::TestAccess;
+#endif
         Database* database_;
 
         template <typename F>
@@ -587,6 +608,392 @@ export
             catch (const soci::soci_error& error)
             {
                 database_->throwTranslatedError(error, DatabaseErrorCode::Statement, "insert");
+            }
+        }
+
+        static constexpr std::size_t insertManyRowBudget = detail::insertManyDefaultRowBudget;
+        static constexpr std::size_t insertManyMaxSqlBytes = 64 * 1024;
+        static constexpr std::size_t insertManyMaxEncodedBytes = 4 * 1024 * 1024;
+        static constexpr std::size_t insertManyFallbackBindBudget = 900;
+
+        static auto insertManyEncodedBytes(const soci::values& values,
+                                           std::span<const db::detail::InsertColumnBinding> bindings) -> std::size_t
+        {
+            std::size_t bytes{};
+
+            for (const auto& binding : bindings)
+            {
+                bytes += binding.logicalName.size() + 16;
+
+                if (values.get_indicator(binding.logicalName) == soci::i_null)
+                {
+                    continue;
+                }
+
+                switch (binding.column->type.value())
+                {
+                case model::ColumnType::String:
+                    bytes += values.get<std::string>(binding.logicalName).size();
+                    break;
+                case model::ColumnType::Date:
+                    bytes += 10;
+                    break;
+                case model::ColumnType::TimeOfDay:
+                    bytes += 18;
+                    break;
+                case model::ColumnType::LocalDateTime:
+                case model::ColumnType::UtcTimestamp:
+                    bytes += 32;
+                    break;
+                case model::ColumnType::Uuid:
+                    bytes += 36;
+                    break;
+                default:
+                    bytes += 8;
+                    break;
+                }
+            }
+
+            return bytes;
+        }
+
+        static auto insertManySqlRowWidth(const db::SqlDialect& dialect,
+                                          std::span<const db::detail::InsertColumnBinding> bindings,
+                                          std::size_t rowIndex) -> std::size_t
+        {
+            std::size_t width = 2;
+
+            for (std::size_t index = 0; index < bindings.size(); ++index)
+            {
+                if (index != 0)
+                {
+                    width += 2;
+                }
+
+                width += dialect.bindMarker(db::insertManyParameterName(rowIndex, bindings[index].logicalName)).size();
+            }
+
+            return width;
+        }
+
+        static auto insertManySqlHeaderWidth(const db::SqlDialect& dialect, model::ModelView model,
+                                             std::span<const db::detail::InsertColumnBinding> bindings) -> std::size_t
+        {
+            std::size_t width = std::string_view{"INSERT INTO "}.size() +
+                                dialect.quoteIdentifier(model->tableName).size() +
+                                std::string_view{" () VALUES "}.size();
+
+            for (std::size_t index = 0; index < bindings.size(); ++index)
+            {
+                if (index != 0)
+                {
+                    width += 2;
+                }
+
+                width += dialect.quoteIdentifier(bindings[index].logicalName).size();
+            }
+
+            return width;
+        }
+
+        /** Width of the generated chunk SQL: rows separated by ", " and terminated by ";". */
+        static auto insertManySqlChunkWidth(const db::SqlDialect& dialect, std::size_t headerBytes,
+                                            std::span<const db::detail::InsertColumnBinding> bindings,
+                                            std::size_t rowCount) -> std::size_t
+        {
+            return headerBytes + rowCount * insertManySqlRowWidth(dialect, bindings, rowCount - 1) +
+                   2 * (rowCount - 1) + 1;
+        }
+
+        template <typename T>
+        static auto serializeInsertManyRow(const T& object) -> soci::values
+        {
+            db::binding::BindingPayload<T, SchemaType> payload{};
+            payload.value = object;
+
+            soci::values serializedModel;
+            auto indicator = soci::i_ok;
+            soci::type_conversion<db::binding::BindingPayload<T, SchemaType>>::to_base(payload, serializedModel,
+                                                                                       indicator);
+            return serializedModel;
+        }
+
+        auto executeInsertManyChunk(const std::vector<soci::values>& serializedRows, model::ModelView model,
+                                    const std::string& command) -> void
+        {
+            const auto& runtime = database_->getBackend().runtime();
+            const auto& capabilities = database_->getBackendCapabilities();
+            const auto runtimeLimits = database_->getBackendRuntimeLimits();
+            db::binding::StatementBindings parameterValues;
+            std::size_t parameterCount{};
+
+            try
+            {
+                for (std::size_t row = 0; row < serializedRows.size(); ++row)
+                {
+                    parameterCount += detail::bindModelParameters(runtime, parameterValues, database_->sql,
+                                                                  database_->backendType, serializedRows[row], model,
+                                                                  row, capabilities.valueLimits, runtimeLimits);
+                }
+
+                database_->ensureStatementWithinBindLimit(parameterCount, "insert many");
+
+                soci::statement statement{database_->sql};
+                statement.alloc();
+                statement.prepare(command);
+                parameterValues.exchange(statement);
+                statement.define_and_bind();
+                statement.execute(true);
+            }
+            catch (const db::binding::ConversionError&)
+            {
+                throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
+                                    "A model value cannot be represented by the selected backend"};
+            }
+            catch (const soci::soci_error& error)
+            {
+                database_->throwTranslatedError(error, DatabaseErrorCode::Statement, "insert many");
+            }
+        }
+
+        /**
+         * @brief Re-throws the original batch failure, adding cleanup failure context when needed.
+         */
+        [[noreturn]] static auto throwInsertManyFailure(const std::exception_ptr& failure, std::string_view cleanupKind,
+                                                        std::string_view cleanupContext) -> void
+        {
+            try
+            {
+                std::rethrow_exception(failure);
+            }
+            catch (const DatabaseError& original)
+            {
+                throw DatabaseError{original.getCode(), original.getBackendType(), original.getOperation(),
+                                    std::string{original.what()} + "; " + std::string{cleanupKind} + ": " +
+                                        std::string{cleanupContext},
+                                    original.getNativeCode()};
+            }
+            catch (...)
+            {
+                std::rethrow_exception(failure);
+            }
+        }
+
+        /**
+         * @brief Inserts every object atomically in a transaction owned by this operation.
+         *
+         * A forced chunk size is a non-public seam for tests and benchmarks; production callers
+         * always use the planner budgets. Inside a healthy caller transaction the batch runs under
+         * one internal savepoint instead of committing or rolling back the caller's transaction.
+         */
+        template <typename T>
+        auto insertManyImpl(std::span<const T> objects, std::optional<std::size_t> forcedChunkSize) -> void
+        {
+            constexpr auto model = model::modelView<SchemaType, T>();
+            database_->ensureModelSupported(model, "insert many");
+            database_->requireCapability(database_->getBackendCapabilities().mutations.insertMany, "insert many",
+                                         "insert many is not supported");
+
+            const auto bindings = db::detail::insertColumnBindings(model);
+            if (bindings.empty())
+            {
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType, "insert many",
+                                    "Batch inserts do not support models without bound columns"};
+            }
+
+            const auto runtimeLimits = database_->getBackendRuntimeLimits();
+            const auto& dialect = database_->getBackend().dialect();
+            const auto bindBudget = runtimeLimits.maxBindParameters.value_or(insertManyFallbackBindBudget);
+
+            if (bindings.size() > bindBudget)
+            {
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType, "insert many",
+                                    "A single row exceeds the backend bind-parameter budget"};
+            }
+
+            // The single-row bind check above guarantees bindBudget >= bindings.size(), so the quotient is
+            // at least one.
+            const auto bindRows = bindBudget / bindings.size();
+            const auto headerBytes = insertManySqlHeaderWidth(dialect, model, bindings);
+
+            if (insertManySqlChunkWidth(dialect, headerBytes, bindings, 1) > insertManyMaxSqlBytes)
+            {
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType, "insert many",
+                                    "A single row exceeds the generated SQL budget"};
+            }
+
+            // Bind-marker names grow with the row index, so a chunk must be sized by the exact width of its
+            // largest row index, not by row zero. Walk down from the row budget until the chunk fits.
+            auto sqlRows = std::min(bindRows, insertManyRowBudget);
+            while (sqlRows > 1 and
+                   insertManySqlChunkWidth(dialect, headerBytes, bindings, sqlRows) > insertManyMaxSqlBytes)
+            {
+                --sqlRows;
+            }
+
+            const auto chunkLimit = std::min(sqlRows, forcedChunkSize.value_or(sqlRows));
+
+            if (chunkLimit == 0)
+            {
+                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType, "insert many",
+                                    "A batch insert chunk cannot be empty"};
+            }
+
+            const bool callerTransaction = database_->hasActiveTransaction();
+            std::optional<std::string> savepointName;
+
+            if (callerTransaction)
+            {
+                savepointName = database_->beginInsertManySavepoint();
+            }
+            else
+            {
+                database_->beginTransaction();
+            }
+
+            try
+            {
+                std::size_t start = 0;
+
+                while (start < objects.size())
+                {
+                    const auto rowCap = std::min(chunkLimit, objects.size() - start);
+                    std::vector<soci::values> serializedRows;
+                    serializedRows.reserve(rowCap);
+                    std::size_t encodedBytes{};
+
+                    while (serializedRows.size() < rowCap)
+                    {
+                        soci::values serialized;
+                        std::size_t encodedRowBytes{};
+
+                        try
+                        {
+                            serialized = serializeInsertManyRow(objects[start + serializedRows.size()]);
+                            encodedRowBytes = insertManyEncodedBytes(serialized, bindings);
+                        }
+                        catch (const db::binding::ConversionError&)
+                        {
+                            throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
+                                                "A model value cannot be represented by the selected backend"};
+                        }
+                        catch (const soci::soci_error& error)
+                        {
+                            database_->throwTranslatedError(error, DatabaseErrorCode::Statement, "insert many");
+                        }
+                        catch (const std::invalid_argument&)
+                        {
+                            throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
+                                                "A model value cannot be represented by the selected backend"};
+                        }
+
+                        if (encodedRowBytes > insertManyMaxEncodedBytes)
+                        {
+                            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType,
+                                                "insert many", "A single row exceeds the encoded parameter budget"};
+                        }
+
+                        if (not serializedRows.empty() and encodedRowBytes > insertManyMaxEncodedBytes - encodedBytes)
+                        {
+                            break;
+                        }
+
+                        encodedBytes += encodedRowBytes;
+                        serializedRows.push_back(std::move(serialized));
+                    }
+
+                    std::string command = database_->getCommandGenerator().insertMany(
+                        model, db::InsertManySpec{.rowCount = serializedRows.size()});
+
+                    // The planner uses the conservative width of the largest row index; if a generator
+                    // still renders a wider statement, shrink the chunk instead of rejecting a multi-row
+                    // batch.
+                    while (command.size() > insertManyMaxSqlBytes)
+                    {
+                        if (serializedRows.size() == 1)
+                        {
+                            throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType,
+                                                "insert many", "A single row exceeds the generated SQL budget"};
+                        }
+
+                        serializedRows.pop_back();
+                        command = database_->getCommandGenerator().insertMany(
+                            model, db::InsertManySpec{.rowCount = serializedRows.size()});
+                    }
+
+                    executeInsertManyChunk(serializedRows, model, command);
+                    start += serializedRows.size();
+                }
+
+                if (savepointName.has_value())
+                {
+                    database_->releaseInsertManySavepoint(*savepointName);
+                }
+                else
+                {
+                    database_->commitTransaction();
+                }
+            }
+            catch (...)
+            {
+                const auto failure = std::current_exception();
+
+                if (savepointName.has_value())
+                {
+                    std::optional<std::string> cleanupFailure;
+
+                    try
+                    {
+                        database_->rollbackToInsertManySavepoint(*savepointName);
+                        database_->releaseInsertManySavepoint(*savepointName);
+                        database_->restoreHealthyTransactionState();
+                    }
+                    catch (const std::exception& error)
+                    {
+                        database_->markTransactionFailed();
+                        cleanupFailure = error.what();
+                    }
+                    catch (...)
+                    {
+                        database_->markTransactionFailed();
+                        cleanupFailure = "unknown savepoint cleanup failure";
+                    }
+
+                    if (cleanupFailure.has_value())
+                    {
+                        throwInsertManyFailure(failure, "savepoint cleanup failed", *cleanupFailure);
+                    }
+                }
+                else
+                {
+                    std::optional<std::string> cleanupFailure;
+
+                    try
+                    {
+                        if (database_->hasActiveTransaction())
+                        {
+                            database_->rollbackTransaction();
+                        }
+                    }
+                    catch (const std::exception& error)
+                    {
+                        cleanupFailure = error.what();
+                    }
+                    catch (...)
+                    {
+                        cleanupFailure = "unknown transaction rollback failure";
+                    }
+
+                    if (cleanupFailure.has_value())
+                    {
+                        // The rollback did not succeed; Database::rollbackTransaction keeps the
+                        // transaction marked failed so the connection cannot pretend to be healthy.
+                        database_->markTransactionFailed();
+                        throwInsertManyFailure(failure, "transaction rollback failed", *cleanupFailure);
+                    }
+                }
+
+                std::rethrow_exception(failure);
             }
         }
 
@@ -1041,6 +1448,30 @@ export
         {
             requireSchemaModel<T>();
             this->template insertImpl<>(std::move(object));
+        }
+
+        /**
+         * @brief Inserts a borrowed batch atomically in a transaction owned by this operation.
+         *
+         * An empty span performs no backend work. The input must outlive the call.
+         */
+        template <typename T>
+        auto insertMany(std::span<const T> objects) -> void
+        {
+            if (objects.empty())
+            {
+                return;
+            }
+
+            requireSchemaModel<T>();
+            this->template insertManyImpl<T>(objects, std::nullopt);
+        }
+
+        /** Narrow forwarding overload so a plain vector deduces its element type. */
+        template <typename T>
+        auto insertMany(const std::vector<T>& objects) -> void
+        {
+            this->template insertMany<T>(std::span<const T>{objects});
         }
 
         template <typename T>

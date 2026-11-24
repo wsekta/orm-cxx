@@ -22,9 +22,9 @@ The backend boundary is split into focused contracts:
   translation;
 - `SqlDialect` owns identifier quoting, bind markers, pagination, generated-key
   syntax, and relation-specific SQL forms;
-- `CommandGenerator` is the polymorphic interface for the backend's six model
-  and query command operations; `DefaultCommandGenerator` implements them using
-  a `SqlDialect`;
+- `CommandGenerator` is the polymorphic interface for the backend's model and
+  query command operations, including the optional batch insert;
+  `DefaultCommandGenerator` implements them using a `SqlDialect`;
 - `CommandGeneratorFactory` is the registry and deterministic selection point.
 
 `Database` consumes these interfaces and does not branch on individual backend
@@ -79,12 +79,22 @@ projection, and assignment types needed to inspect those inputs. Endpoint keys
 use `orm::db::PrimaryKey`. These names define the backend input contract;
 application queries continue to use the typed `orm::query` builders.
 
-Implement all six operations by deriving from `CommandGenerator`, or derive
-from `DefaultCommandGenerator` and override only the operations that differ.
-Both types are available through `import orm;`, including builds with no
+Implement the required operations by deriving from `CommandGenerator`, or
+derive from `DefaultCommandGenerator` and override only the operations that
+differ. Both types are available through `import orm;`, including builds with no
 built-in backend enabled. The default generator borrows a `const SqlDialect&`;
 the dialect must outlive the generator. A provider storing both should declare
 its dialect before its generator so destruction occurs in the reverse order.
+
+Batching is opt-in. `MutationCapabilities::insertMany` defaults to `false`, and
+`CommandGenerator::insertMany` has a default implementation that rejects the
+operation, so a backend that does not support batches needs no new code. A
+backend opting in must set the capability to `true`, override `insertMany` to
+render a multi-row `INSERT`, and honour the declared maximum bind-parameter
+count when it chooses a chunk. It must reuse the same column qualification,
+generated-key omission, to-one foreign-key binding, and driver-error translation
+as single-row `insert`; a model without bound columns is rejected before SQL.
+The operation returns no generated keys or row count and promises no row order.
 
 For example, a provider can store this generator and return it from
 `commandGenerator()`:
@@ -137,6 +147,9 @@ centrally selected adapter or equivalent contract:
    - support begin, commit, and rollback or reject the backend as incomplete.
 3. **Command generation**
    - render create/drop table, insert, select, update, and remove operations;
+   - opt into `MutationCapabilities::insertMany`, override
+     `CommandGenerator::insertMany`, and honour the bind limit when batching is
+     advertised;
    - render joins, predicates, ordering, grouping, projection, and pagination;
    - render collection-relation DDL, loading, and mutations when that capability
      is advertised.

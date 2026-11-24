@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -213,6 +214,14 @@ int main()
         constexpr auto plan = select<PackageModel>().where(col<&PackageModel::id>() == param<int, 0>());
         (void)plan.toDynamic(1);
         static_assert(requires(orm::Database& database) { database.orm<PackageSchema>(); });
+        // Compile the public batch API for a package with no backends. These are expression checks only:
+        // no non-empty insertMany runs at runtime.
+        static_assert(requires(orm::OrmContext<PackageSchema>& context, std::span<const PackageModel> objects) {
+            context.insertMany(objects);
+        });
+        static_assert(requires(orm::OrmContext<PackageSchema>& context, const std::vector<PackageModel>& objects) {
+            context.insertMany(objects);
+        });
         const auto snapshot = orm::migrations::capture(PackageSchema::view);
         const auto generated = orm::migrations::generate(
             1, "package_initial", orm::migrations::compare(orm::migrations::emptySnapshot(), snapshot));

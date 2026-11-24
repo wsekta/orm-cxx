@@ -106,6 +106,13 @@ private:
     template <typename>
     friend class OrmContext;
 
+    [[nodiscard]] auto hasActiveTransaction() const noexcept -> bool;
+    auto beginInsertManySavepoint() -> std::string;
+    auto rollbackToInsertManySavepoint(std::string_view name) -> void;
+    auto releaseInsertManySavepoint(std::string_view name) -> void;
+    auto executeSavepointCommand(std::string_view command, std::string_view operation) -> void;
+    auto markTransactionFailed() noexcept -> void;
+    auto restoreHealthyTransactionState() noexcept -> void;
     auto executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t;
     auto executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t;
     auto executeInsertIfAbsent(const db::Statement& statement, const db::InsertIfAbsentSpec& conflict,
@@ -144,6 +151,7 @@ private:
     std::unique_ptr<soci::transaction> transaction;
     bool transactionFailed = false;
     bool migrationActive = false;
+    std::size_t insertManySavepointSequence = 0;
     db::BackendType backendType;
     db::CommandGeneratorFactory commandGeneratorFactory;
     const db::BackendProvider* backend = nullptr;

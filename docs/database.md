@@ -6,11 +6,12 @@
 4. [Delete table](#delete-table)
 5. [Create and delete relation tables](#create-and-delete-relation-tables)
 6. [Insert objects](#insert-objects)
-7. [Link and unlink relations](#link-and-unlink-relations)
-8. [Query objects](#query-objects)
-9. [Update objects](#update-objects)
-10. [Remove objects](#remove-objects)
-11. [Transactions](#transactions)
+7. [Insert objects in batches](#insert-objects-in-batches)
+8. [Link and unlink relations](#link-and-unlink-relations)
+9. [Query objects](#query-objects)
+10. [Update objects](#update-objects)
+11. [Remove objects](#remove-objects)
+12. [Transactions](#transactions)
 
 ## Connect
 
@@ -259,6 +260,55 @@ context.insert(User{1, std::nullopt});
 objects must be inserted separately, followed by explicit `link` calls where a
 stored relation is needed. There is no cascade-save.
 
+## Insert objects in batches
+
+`insertMany` inserts a borrowed sequence of objects atomically on backends that
+advertise the capability. The primary overload accepts `std::span<const T>`; a
+narrow forwarding overload accepts `const std::vector<T>&`:
+
+```cpp
+std::vector<ObjectModel> objects{
+    {1, "name", "email", "password", "created_at", "updated_at"},
+    {2, "name2", "email2", "password2", "created_at2", "updated_at2"}
+};
+
+context.insertMany(objects);
+context.insertMany(std::span<const ObjectModel>{objects});
+```
+
+`std::array` and other contiguous ranges participate through an explicit
+`std::span`. The input is borrowed for the duration of the call and is not
+retained. An empty input returns before any backend work, capability check, or
+SQL on every backend.
+
+Batching is PostgreSQL-only in v1. PostgreSQL reports
+`getBackendCapabilities().mutations.insertMany == true`; SQLite, MySQL and
+MariaDB report `false`, and a non-empty call is rejected with
+`DatabaseErrorCode::UnsupportedFeature` before the first write. Empty input is
+still a no-op there.
+
+Each row is mapped like a single `insert`: model and column names follow the
+existing qualification rules, auto-increment primary-key columns are omitted so
+the database generates them, to-one foreign-key columns are bound from the
+related model's primary key, and `std::nullopt` is stored as SQL `NULL`,
+distinct from an empty string. Generated SQL contains only quoted identifiers
+and bind placeholders; values are never formatted into SQL text. The operation
+returns `void` and exposes no generated keys, inserted-row count, physical row
+order, upsert, chunk control, or `RETURNING`.
+
+Without an active caller transaction, `insertMany` owns one transaction and
+sends a single `COMMIT` after the last chunk; any failure rolls the whole batch
+back. Inside a healthy caller transaction it uses one internal savepoint,
+releases it on success, and never commits the caller's transaction. A caller
+transaction that already contains a failed statement rejects the batch before
+the first write instead of being reset. Because deferred constraints may fail
+at commit time, a successful `insertMany` inside a caller transaction does not
+guarantee that the caller's later `COMMIT` succeeds.
+
+The legacy `insert(const std::vector<T>&)` remains unchanged: it executes one
+`INSERT` per element, is not atomic, stops at the first failure, and keeps rows
+written before that failure.
+
 ## Link and unlink relations
 
 Many-to-many mutations add or remove one junction row:
@@ -406,6 +456,18 @@ then throws `orm::DatabaseError` with `getCode() == DatabaseErrorCode::Transacti
 without sending a misleading commit; catch the exception and call
 `rollbackTransaction()` before starting another transaction. The function returns
 `void` on success.
+
+`insertMany` uses the same transaction object. Without a caller transaction it
+starts and commits its own; inside a healthy caller transaction it creates one
+savepoint named `orm_insert_many_<n>` for the whole call and releases it after
+the last chunk. On a chunk failure it issues `ROLLBACK TO SAVEPOINT`, then
+`RELEASE SAVEPOINT`, and restores the healthy state only after both succeed.
+The original `DatabaseError` category, operation and native SQLSTATE are
+preserved. A cleanup failure appends `; savepoint cleanup failed: <cause>` to
+that error and leaves the transaction marked failed, so the caller must roll it
+back rather than reuse it; an unrecovered cleanup leaves the transaction
+unusable. A caller transaction that is already marked failed, or whose session
+state is unknown, is rejected before the first chunk.
 
 Relation-table operations, `link`, `unlink`, and included selects participate
 in the current explicit transaction and never start a private transaction.

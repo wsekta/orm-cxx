@@ -459,6 +459,7 @@ auto postgresqlCapabilities() -> orm::db::BackendCapabilities
         .mutations =
             {
                 .insert = true,
+                .insertMany = true,
                 .update = true,
                 .remove = true,
                 .atomicInsertIfAbsent = true,

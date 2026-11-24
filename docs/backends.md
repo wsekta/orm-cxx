@@ -41,6 +41,7 @@ intentional differences before SQL execution.
 | UUID `Text36` opt-in | `TEXT` | Not available | `CHAR(36)` | Not available |
 | Manual, composite and generated integer keys | Supported | Supported | Supported | Supported |
 | CRUD and exact affected rows | Supported | Supported | Supported | Supported |
+| Atomic batch insert (`insertMany`) | Not supported in v1 | Supported | Not supported in v1 | Not supported in v1 |
 | Projections and aggregate projections | Supported | Supported | Supported | Supported |
 | Full-model grouping | Representative-row semantics | Rejected | Rejected | Rejected |
 | Grouped projections | Supported | Strict grouping | Strict grouping | Strict grouping |
@@ -54,6 +55,11 @@ intentional differences before SQL execution.
 | ORM `LIKE` behavior | ASCII case-insensitive | Case-sensitive | Binary collation | Binary collation |
 | Native NULL order | ASC first; DESC last | ASC last; DESC first | ASC first; DESC last | ASC first; DESC last |
 | Namespace selection | Database connection | Active `search_path` | Selected database | Selected database |
+
+Atomic batch inserts (`insertMany`) are PostgreSQL-only in v1. SQLite, MySQL
+and MariaDB advertise `getBackendCapabilities().mutations.insertMany == false`;
+an empty input remains a no-op, and non-empty input is rejected with
+`DatabaseErrorCode::UnsupportedFeature` before any write.
 
 Raw SQL remains backend-specific. Code that needs portable behavior should use
 the typed API and inspect `getBackendCapabilities()` for optional operations.
@@ -152,6 +158,13 @@ keys, generated integer identity keys, exact affected-row counts, transactions,
 full and projection selects, collection predicates/includes, to-one,
 one-to-many, and many-to-many relations. `INSERT ... ON CONFLICT DO NOTHING`
 provides idempotent relation linking.
+
+`OrmContext::insertMany` is supported on PostgreSQL and advertised as
+`getBackendCapabilities().mutations.insertMany`. The adapter reports the 65,535
+bind-parameter ceiling above, and the operation chunks a batch to stay within
+it. Row-count, generated-SQL-size and encoded-parameter chunk budgets are
+internal implementation limits, not public guarantees, tunable settings, or
+performance promises.
 
 There are deliberate v1 exclusions:
 

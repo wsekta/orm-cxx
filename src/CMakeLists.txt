@@ -201,6 +201,16 @@ target_sources(
            "${ORM_CXX_GENERATED_MODULE_DIR}/orm.config.cppm"
            "${ORM_CXX_GENERATED_MODULE_DIR}/orm.backend_relations.cppm"
 )
+if(ORM_CXX_ENABLE_PERF_TEST_SEAM)
+    # The benchmark build is intentionally not exported as an orm-cxx package.
+    target_sources(
+        orm-cxx
+        PUBLIC FILE_SET perf_seam TYPE CXX_MODULES
+               BASE_DIRS "${PROJECT_SOURCE_DIR}/modules"
+               FILES "${PROJECT_SOURCE_DIR}/modules/orm/database/perf_test_seam.cppm"
+    )
+    target_compile_definitions(orm-cxx PUBLIC "$<BUILD_INTERFACE:ORM_CXX_PERF_SEAM_AVAILABLE=1>")
+endif()
 target_link_libraries(
     orm-cxx
     PUBLIC "$<BUILD_INTERFACE:${ORM_CXX_SOCI_CORE_TARGET}>" "$<INSTALL_INTERFACE:${ORM_CXX_SOCI_CORE_INSTALLED_TARGET}>"
@@ -245,6 +255,9 @@ endif()
 
 include(CMakePackageConfigHelpers)
 foreach(package orm-cxx orm-cxx-reflection)
+    if(ORM_CXX_ENABLE_PERF_TEST_SEAM AND package STREQUAL "orm-cxx")
+        continue()
+    endif()
     get_target_property(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY ${package} MSVC_RUNTIME_LIBRARY)
     if(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY STREQUAL "ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY-NOTFOUND")
         set(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
