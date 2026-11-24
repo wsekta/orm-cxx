@@ -569,11 +569,14 @@ auto Database::disconnect() -> void
     const auto* connectedBackend = backend;
     std::optional<DatabaseError> failure;
 
-    if (transaction != nullptr)
+    if (hasApplicationTransaction())
     {
         try
         {
-            transaction->rollback();
+            if (scopedOwner != nullptr)
+                sql.rollback();
+            else
+                transaction->rollback();
         }
         catch (const soci::soci_error& error)
         {
@@ -582,6 +585,7 @@ auto Database::disconnect() -> void
         }
 
         transaction.reset();
+        scopedOwner = nullptr;
         transactionFailed = false;
     }
 
@@ -627,21 +631,149 @@ auto Database::getBackendCapabilities() const -> const db::BackendCapabilities&
     return getBackend().capabilities();
 }
 
-auto Database::hasActiveTransaction() const noexcept -> bool
+ScopedTransaction::ScopedTransaction(Database& databaseInit) : database{databaseInit}
 {
-    return transaction != nullptr;
+    database.startScopedTransaction(*this);
 }
 
-auto Database::beginTransaction() -> void
+ScopedTransaction::~ScopedTransaction() noexcept
+{
+    if (database.scopedOwner != this)
+        return;
+
+    try
+    {
+        rollback();
+    }
+    catch (...)
+    {
+        // Preserve an exception already being unwound.
+    }
+}
+
+auto ScopedTransaction::commit() -> void
+{
+    database.finishScopedTransaction(*this, true);
+}
+
+auto ScopedTransaction::rollback() -> void
+{
+    database.finishScopedTransaction(*this, false);
+}
+
+auto Database::scopedTransaction() & -> ScopedTransaction
+{
+    return ScopedTransaction{*this};
+}
+
+auto Database::hasApplicationTransaction() const noexcept -> bool
+{
+    return transaction != nullptr || scopedOwner != nullptr;
+}
+
+auto Database::checkTransactionStart() const -> void
 {
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "begin transaction", "transactions are not supported");
 
-    if (transaction != nullptr || migrationActive)
+    if (hasApplicationTransaction() || migrationActive)
     {
         throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "begin transaction",
                             "A transaction is already active"};
     }
+}
+
+auto Database::startScopedTransaction(const ScopedTransaction& owner) -> void
+{
+    checkTransactionStart();
+    const auto* connectedBackend = backend;
+    try
+    {
+        sql.begin();
+    }
+    catch (const soci::soci_error& error)
+    {
+        closeFailedTransactionSession();
+        throw connectedBackend->runtime().translateError(error, DatabaseErrorCode::Transaction, "begin transaction");
+    }
+    catch (...)
+    {
+        closeFailedTransactionSession();
+        throw;
+    }
+
+    scopedOwner = &owner;
+    transactionFailed = false;
+}
+
+auto Database::finishScopedTransaction(const ScopedTransaction& owner, bool commit) -> void
+{
+    const std::string_view operation = commit ? "commit transaction" : "rollback transaction";
+    if (scopedOwner != &owner)
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, std::string{operation},
+                            "This scoped transaction is no longer active"};
+
+    const auto* connectedBackend = backend;
+    const auto connectedType = backendType;
+    try
+    {
+        (void)getBackend();
+    }
+    catch (...)
+    {
+        closeFailedTransactionSession();
+        throw;
+    }
+
+    if (commit && transactionFailed)
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, std::string{operation},
+                            "The transaction contains a failed statement and must be rolled back"};
+
+    try
+    {
+        if (commit)
+            sql.commit();
+        else
+            sql.rollback();
+    }
+    catch (const soci::soci_error& error)
+    {
+        closeFailedTransactionSession();
+        const auto translated =
+            connectedBackend->runtime().translateError(error, DatabaseErrorCode::Transaction, operation);
+        if (commit)
+            throw DatabaseError{DatabaseErrorCode::CommitUncertain, connectedType, std::string{operation},
+                                std::string{"Commit outcome is uncertain: "} + translated.what(),
+                                translated.getNativeCode()};
+        throw translated;
+    }
+    catch (...)
+    {
+        closeFailedTransactionSession();
+        throw;
+    }
+
+    scopedOwner = nullptr;
+    transactionFailed = false;
+}
+
+auto Database::closeFailedTransactionSession() noexcept -> void
+{
+    scopedOwner = nullptr;
+    transactionFailed = false;
+    try
+    {
+        disconnect();
+    }
+    catch (...)
+    {
+        // Disconnect clears local session state before reporting a close error.
+    }
+}
+
+auto Database::beginTransaction() -> void
+{
+    checkTransactionStart();
 
     try
     {
@@ -656,6 +788,9 @@ auto Database::beginTransaction() -> void
 
 auto Database::commitTransaction() -> void
 {
+    if (scopedOwner != nullptr)
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "commit transaction",
+                            "The scoped transaction must be committed through its guard"};
     (void)getBackend();
 
     if (transaction == nullptr)
@@ -686,6 +821,9 @@ auto Database::commitTransaction() -> void
 
 auto Database::rollbackTransaction() -> void
 {
+    if (scopedOwner != nullptr)
+        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "rollback transaction",
+                            "The scoped transaction must be rolled back through its guard"};
     (void)getBackend();
 
     if (transaction == nullptr)
@@ -702,9 +840,8 @@ auto Database::rollbackTransaction() -> void
     }
     catch (const soci::soci_error& error)
     {
-        // A failed rollback leaves the session in an unknown state; keep the transaction object and the
-        // failed flag so the connection cannot silently be reused or committed.
-        transactionFailed = true;
+        transaction.reset();
+        transactionFailed = false;
         throwTranslatedError(error, DatabaseErrorCode::Transaction, "rollback transaction");
     }
 }
@@ -714,12 +851,6 @@ auto Database::beginInsertManySavepoint() -> std::string
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "insert many",
                       "insertMany cannot reuse a caller transaction because transactions are not supported");
-
-    if (transaction == nullptr)
-    {
-        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "insert many",
-                            "insertMany expected an active caller transaction"};
-    }
 
     if (transactionFailed)
     {
@@ -769,10 +900,7 @@ auto Database::markTransactionFailed() noexcept -> void
 
 auto Database::restoreHealthyTransactionState() noexcept -> void
 {
-    if (transaction != nullptr)
-    {
-        transactionFailed = false;
-    }
+    transactionFailed = false;
 }
 
 auto Database::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t
@@ -891,7 +1019,7 @@ auto Database::ensureSessionUsable(std::string_view operation) const -> void
 auto Database::ensureDdlSupported(std::string_view operation) const -> void
 {
     ensureSessionUsable(operation);
-    if (transaction != nullptr && !getBackendCapabilities().schema.transactionalDdl)
+    if (hasApplicationTransaction() && !getBackendCapabilities().schema.transactionalDdl)
     {
         throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, backendType, std::string{operation},
                             "The backend cannot execute schema operations inside an application transaction"};
@@ -1509,7 +1637,7 @@ auto Database::throwTranslatedError(const soci::soci_error& error, DatabaseError
                             "No database backend is available to translate the driver error"};
     }
 
-    if (transaction != nullptr and backend->runtime().statementErrorInvalidatesTransaction(error))
+    if (hasApplicationTransaction() and backend->runtime().statementErrorInvalidatesTransaction(error))
     {
         transactionFailed = true;
     }

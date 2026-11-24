@@ -18,6 +18,4 @@ export import :migrations;
 export import :migrations_schema;
 export import :config;
 
-#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
 export import :perf_test_seam;
-#endif

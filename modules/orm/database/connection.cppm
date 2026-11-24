@@ -23,6 +23,27 @@ struct DatabaseAccess;
 
 export namespace orm
 {
+class Database;
+
+/** Owns an application transaction. The Database must outlive this guard. */
+class ScopedTransaction final
+{
+public:
+    ~ScopedTransaction() noexcept;
+    ScopedTransaction(const ScopedTransaction&) = delete;
+    ScopedTransaction(ScopedTransaction&&) = delete;
+    auto operator=(const ScopedTransaction&) -> ScopedTransaction& = delete;
+    auto operator=(ScopedTransaction&&) -> ScopedTransaction& = delete;
+
+    auto commit() -> void;
+    auto rollback() -> void;
+
+private:
+    friend class Database;
+    explicit ScopedTransaction(Database& database);
+    Database& database;
+};
+
 class Database final
 {
 public:
@@ -84,6 +105,9 @@ public:
      */
     [[nodiscard]] auto getBackendCapabilities() const -> const db::BackendCapabilities&;
 
+    /** Starts a transaction that rolls back on scope exit unless explicitly finished. */
+    [[nodiscard]] auto scopedTransaction() & -> ScopedTransaction;
+
     /**
      * @brief Starts a transaction.
      */
@@ -102,17 +126,23 @@ public:
 private:
     explicit Database(db::CommandGeneratorFactory registry, db::ConnectionConfigView config);
     auto connect(db::ConnectionConfigView config) -> void;
+    friend class ScopedTransaction;
     friend struct migrations::detail::DatabaseAccess;
     template <typename>
     friend class OrmContext;
 
-    [[nodiscard]] auto hasActiveTransaction() const noexcept -> bool;
     auto beginInsertManySavepoint() -> std::string;
     auto rollbackToInsertManySavepoint(std::string_view name) -> void;
     auto releaseInsertManySavepoint(std::string_view name) -> void;
     auto executeSavepointCommand(std::string_view command, std::string_view operation) -> void;
     auto markTransactionFailed() noexcept -> void;
     auto restoreHealthyTransactionState() noexcept -> void;
+    [[nodiscard]] auto hasApplicationTransaction() const noexcept -> bool;
+    auto checkTransactionStart() const -> void;
+    auto startScopedTransaction(const ScopedTransaction& owner) -> void;
+    auto finishScopedTransaction(const ScopedTransaction& owner, bool commit) -> void;
+    auto closeFailedTransactionSession() noexcept -> void;
+
     auto executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t;
     auto executeMutation(db::StatementView statement, std::string_view operation) -> std::size_t;
     auto executeInsertIfAbsent(const db::Statement& statement, const db::InsertIfAbsentSpec& conflict,
@@ -149,6 +179,7 @@ private:
 
     soci::session sql;
     std::unique_ptr<soci::transaction> transaction;
+    const ScopedTransaction* scopedOwner = nullptr;
     bool transactionFailed = false;
     bool migrationActive = false;
     std::size_t insertManySavepointSequence = 0;

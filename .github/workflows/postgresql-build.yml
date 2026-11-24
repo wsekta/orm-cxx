@@ -15,11 +15,12 @@ jobs:
   clang:
     runs-on: ubuntu-24.04
     timeout-minutes: 120
-    name: All backends / Clang ${{ matrix.clang }} / PG ${{ matrix.pg }} / MySQL ${{ matrix.mysql }} / MariaDB ${{ matrix.mariadb }}
+    name: ${{ matrix.consumer_only && format('Consumer subsets / Clang {0} / shard 2', matrix.clang) || format('All backends / Clang {0} / PG {1} / MySQL {2} / MariaDB {3}', matrix.clang, matrix.pg, matrix.mysql, matrix.mariadb) }}
     strategy:
       fail-fast: false
       matrix:
         clang: [18, 19, 20]
+        consumer_only: [false, true]
         include:
           - clang: 18
             pg: '15'
@@ -35,7 +36,7 @@ jobs:
             mariadb: '11.8'
     services:
       postgres:
-        image: postgres:${{ matrix.pg || '18' }}
+        image: ${{ !matrix.consumer_only && format('postgres:{0}', matrix.pg) || '' }}
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_USER: orm_cxx
@@ -45,7 +46,7 @@ jobs:
           --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
           --health-interval 2s --health-timeout 5s --health-retries 40
       mysql:
-        image: mysql:${{ matrix.mysql || '8.4' }}
+        image: ${{ !matrix.consumer_only && format('mysql:{0}', matrix.mysql) || '' }}
         env:
           MYSQL_DATABASE: orm_cxx
           MYSQL_ROOT_PASSWORD: orm_cxx
@@ -55,7 +56,7 @@ jobs:
           --health-cmd "mysqladmin ping --host=localhost --user=root --password=orm_cxx"
           --health-interval 2s --health-timeout 5s --health-retries 60
       mariadb:
-        image: mariadb:${{ matrix.mariadb || '11.8' }}
+        image: ${{ !matrix.consumer_only && format('mariadb:{0}', matrix.mariadb) || '' }}
         env:
           MARIADB_DATABASE: orm_cxx
           MARIADB_ROOT_PASSWORD: orm_cxx
@@ -94,6 +95,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install --no-install-recommends --yes clang-${{ matrix.clang }} clang-tools-${{ matrix.clang }} libclang-rt-${{ matrix.clang }}-dev llvm-${{ matrix.clang }} openssl socat libpq-dev libsqlite3-dev libmysqlclient-dev
       - name: Provision required password, anonymous and verified TLS profiles
+        if: ${{ !matrix.consumer_only }}
         run: |
           python3 scripts/provision_connection_tests.py \
             --postgres-container '${{ job.services.postgres.id }}' \
@@ -106,19 +108,27 @@ jobs:
           if [ '${{ matrix.clang }}' != '18' ]; then preset=linux-clang-${{ matrix.clang }}-all-backends; fi
           cmake --preset "$preset"
           echo "BACKEND_PRESET=$preset" >> "$GITHUB_ENV"
-      - name: Build and run conformance, compile contracts and 16 consumer subsets
+      - name: Run conformance, compile contracts and consumer shard 1
+        if: ${{ !matrix.consumer_only }}
         run: |
           cmake --build --preset "$BACKEND_PRESET" --parallel 2
-          ctest --preset "$BACKEND_PRESET"
+          ctest --preset "$BACKEND_PRESET" --label-exclude '^consumer-shard-2$' --no-tests=error
+      - name: Run consumer shard 2
+        if: matrix.consumer_only
+        run: ctest --preset "$BACKEND_PRESET" --label-regex '^consumer-shard-2$' --no-tests=error
 
   gcc:
     runs-on: ubuntu-24.04
     container: gcc:15-trixie
     timeout-minutes: 120
-    name: All backends / GCC 15
+    name: ${{ matrix.consumer_only && 'Consumer subsets / GCC 15 / shard 2' || 'All backends / GCC 15' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        consumer_only: [false, true]
     services:
       postgres:
-        image: postgres:18
+        image: ${{ !matrix.consumer_only && 'postgres:18' || '' }}
         env:
           POSTGRES_DB: orm_cxx
           POSTGRES_USER: orm_cxx
@@ -128,7 +138,7 @@ jobs:
           --health-cmd "pg_isready -U orm_cxx -d orm_cxx"
           --health-interval 2s --health-timeout 5s --health-retries 40
       mysql:
-        image: mysql:8.4
+        image: ${{ !matrix.consumer_only && 'mysql:8.4' || '' }}
         env:
           MYSQL_DATABASE: orm_cxx
           MYSQL_ROOT_PASSWORD: orm_cxx
@@ -138,7 +148,7 @@ jobs:
           --health-cmd "mysqladmin ping --host=localhost --user=root --password=orm_cxx"
           --health-interval 2s --health-timeout 5s --health-retries 60
       mariadb:
-        image: mariadb:11.8
+        image: ${{ !matrix.consumer_only && 'mariadb:11.8' || '' }}
         env:
           MARIADB_DATABASE: orm_cxx
           MARIADB_ROOT_PASSWORD: orm_cxx
@@ -181,14 +191,23 @@ jobs:
           .ci-tools/bin/pip install cmake==3.31.6 ninja==1.13.0
           printf '%s\n' "$GITHUB_WORKSPACE/.ci-tools/bin" >> "$GITHUB_PATH"
       - name: Provision required password, anonymous and verified TLS profiles
+        if: ${{ !matrix.consumer_only }}
         run: |
           python3 scripts/provision_connection_tests.py \
             --postgres-container '${{ job.services.postgres.id }}' \
             --mysql-container '${{ job.services.mysql.id }}' \
             --mariadb-container '${{ job.services.mariadb.id }}' \
             --output "$RUNNER_TEMP/orm-cxx-connection-tls"
-      - name: Build and run conformance, compile contracts and 16 consumer subsets
-        run: cmake --workflow --preset linux-gcc-15-all-backends
+      - name: Configure all four adapters
+        run: cmake --preset linux-gcc-15-all-backends
+      - name: Run conformance, compile contracts and consumer shard 1
+        if: ${{ !matrix.consumer_only }}
+        run: |
+          cmake --build --preset linux-gcc-15-all-backends
+          ctest --preset linux-gcc-15-all-backends --label-exclude '^consumer-shard-2$' --no-tests=error
+      - name: Run consumer shard 2
+        if: matrix.consumer_only
+        run: ctest --preset linux-gcc-15-all-backends --label-regex '^consumer-shard-2$' --no-tests=error
 
   coverage:
     runs-on: ubuntu-24.04

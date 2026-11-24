@@ -14,7 +14,7 @@ import :database_context;
  * Compiled and exported only when ORM_CXX_ENABLE_PERF_TEST_SEAM=ON. It calls the same
  * production insertManyImpl as the public API and differs only in the chunk policy.
  */
-export namespace orm::detail::perf_seam
+namespace orm::detail::perf_seam
 {
 class TestAccess
 {
@@ -27,12 +27,12 @@ public:
     }
 };
 
-[[nodiscard]] inline auto defaultChunkRowsForTest() noexcept -> std::size_t
+export [[nodiscard]] inline auto defaultChunkRowsForTest() noexcept -> std::size_t
 {
     return insertManyDefaultRowBudget;
 }
 
-template <typename SchemaType, typename T>
+export template <typename SchemaType, typename T>
 auto insertManyWithChunkRowsForTest(OrmContext<SchemaType>& context, std::span<const T> rows,
                                     std::size_t chunkRows) -> void
 {

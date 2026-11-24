@@ -108,6 +108,7 @@ export
         Transaction,
         Conversion,
         AffectedRowsUnavailable,
+        CommitUncertain,
     };
 
     /**

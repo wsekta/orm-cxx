@@ -139,6 +139,37 @@ TEST_P(InsertManySavepointTest, secondInsertManyAfterRecoveredFailureSucceeds)
     EXPECT_EQ(stored[2].id, 102);
 }
 
+TEST_P(InsertManySavepointTest, failedBatchRecoversScopedTransactionAndLeavesCommitToGuard)
+{
+    createTable<models::ModelWithId>();
+    auto transaction = connection.scopedTransaction();
+    database.insert(models::ModelWithId{1, 0, "before batch"});
+
+    auto failing = makeRows(70, 2);
+    failing[40].id = 1;
+    try
+    {
+        database.insertMany(std::span<const models::ModelWithId>{failing});
+        FAIL() << "Expected orm::DatabaseError";
+    }
+    catch (const orm::DatabaseError& error)
+    {
+        EXPECT_EQ(error.getCode(), orm::DatabaseErrorCode::Constraint);
+        EXPECT_EQ(error.getOperation(), "insert many");
+        EXPECT_EQ(error.getNativeCode(), std::optional<std::string>{"23505"});
+    }
+    const auto afterFailure = selectAll(database);
+    ASSERT_EQ(afterFailure.size(), 1);
+    EXPECT_EQ(afterFailure.front().field2, "before batch");
+
+    const auto recovered = makeRows(3, 100);
+    ASSERT_NO_THROW(database.insertMany(std::span<const models::ModelWithId>{recovered}));
+    ASSERT_NO_THROW(transaction.commit());
+    const auto stored = selectAll(database);
+    ASSERT_EQ(stored.size(), 4);
+    EXPECT_EQ(stored.back().id, 102);
+}
+
 TEST_P(InsertManySavepointTest, consecutiveBatchesInsideOneCallerTransactionAllCommit)
 {
     createTable<models::ModelWithId>();

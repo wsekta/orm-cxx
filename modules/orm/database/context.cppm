@@ -214,18 +214,16 @@ auto normalizeAffectedRows(long long affectedRows) -> std::size_t;
 [[nodiscard]] auto requireCollectionTarget(model::ModelView owner, const model::RelationView& relation,
                                            model::TypeId expectedType) -> model::ModelView;
 }
+
+namespace detail::perf_seam
+{
+class TestAccess;
+}
+
 export
 {
     namespace detail
     {
-#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
-    namespace perf_seam
-    {
-    /** Test-only entry point defined by orm:perf_test_seam; reachable only in opt-in seam builds. */
-    class TestAccess;
-    } // namespace perf_seam
-#endif
-
     /** Shared row budget for batched insert planning; also reported by the opt-in perf seam. */
     inline constexpr std::size_t insertManyDefaultRowBudget = 32;
     } // namespace detail
@@ -236,11 +234,9 @@ export
     {
         static_assert(requires { SchemaType::view; }, "OrmContext requires an orm::Schema<...> type");
         friend class Database;
+        friend class detail::perf_seam::TestAccess;
 
         explicit OrmContext(Database& database) noexcept : database_{&database} {}
-#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
-        friend class detail::perf_seam::TestAccess;
-#endif
         Database* database_;
 
         template <typename F>
@@ -839,7 +835,7 @@ export
                                     "A batch insert chunk cannot be empty"};
             }
 
-            const bool callerTransaction = database_->hasActiveTransaction();
+            const bool callerTransaction = database_->hasApplicationTransaction();
             std::optional<std::string> savepointName;
 
             if (callerTransaction)
@@ -970,25 +966,24 @@ export
 
                     try
                     {
-                        if (database_->hasActiveTransaction())
+                        if (database_->hasApplicationTransaction())
                         {
                             database_->rollbackTransaction();
                         }
                     }
                     catch (const std::exception& error)
                     {
+                        database_->closeFailedTransactionSession();
                         cleanupFailure = error.what();
                     }
                     catch (...)
                     {
+                        database_->closeFailedTransactionSession();
                         cleanupFailure = "unknown transaction rollback failure";
                     }
 
                     if (cleanupFailure.has_value())
                     {
-                        // The rollback did not succeed; Database::rollbackTransaction keeps the
-                        // transaction marked failed so the connection cannot pretend to be healthy.
-                        database_->markTransactionFailed();
                         throwInsertManyFailure(failure, "transaction rollback failed", *cleanupFailure);
                     }
                 }

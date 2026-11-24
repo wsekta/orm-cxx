@@ -89,7 +89,7 @@ struct DatabaseAccess
     }
     static auto busy(const Database& database) -> bool
     {
-        return database.transaction != nullptr || database.migrationActive;
+        return database.hasApplicationTransaction() || database.migrationActive;
     }
     static auto setActive(Database& database, bool active) -> void
     {

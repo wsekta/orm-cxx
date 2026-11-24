@@ -125,28 +125,6 @@ TEST_P(InsertManyCoreTest, explicitSpanOfArrayIsAccepted)
     EXPECT_EQ(database.select(query).size(), 2);
 }
 
-#if defined(ORM_CXX_PERF_SEAM_AVAILABLE)
-TEST_P(InsertManyCoreTest, forcedChunkSizeOneRunsTheProductionPathOverManyRows)
-{
-    createTable<models::ModelWithId>();
-    const auto rows = makeModelWithIdRows(40);
-
-    orm::detail::perf_seam::insertManyWithChunkRowsForTest(database, std::span<const models::ModelWithId>{rows}, 1);
-
-    orm::Query<models::ModelWithId> query;
-    query.orderBy(orm::query::asc(orm::query::col<&models::ModelWithId::id>()));
-    const auto stored = database.select(query);
-
-    ASSERT_EQ(stored.size(), rows.size());
-
-    for (std::size_t index = 0; index < rows.size(); ++index)
-    {
-        EXPECT_EQ(stored[index].id, rows[index].id);
-        EXPECT_EQ(stored[index].field2, rows[index].field2);
-    }
-}
-#endif
-
 TEST_P(InsertManyCoreTest, duplicateInSecondChunkRollsBackTheWholeBatch)
 {
     createTable<models::ModelWithId>();

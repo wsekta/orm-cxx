@@ -66,6 +66,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         APPEND
         ORM_CXX_TEST_SOURCES
         database/DatabaseCoverageCompletionTest.cpp
+        database/ScopedTransactionTest.cpp
         database/SqliteConnectErrorTest.cpp
         database/SqliteConnectionTest.cpp
         database/StatementParameterBindingTest.cpp
@@ -165,6 +166,9 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
             database/postgresql/InsertManyParityTest.cpp
             database/postgresql/InsertManyGuardTest.cpp
         )
+        if(ORM_CXX_ENABLE_PERF_TEST_SEAM)
+            list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/InsertManyPerfSeamTest.cpp)
+        endif()
     endif()
 endif()
 
@@ -256,7 +260,7 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
         NAME orm-cxx-postgresql-integration
         COMMAND
             orm-cxx-UT
-            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:Postgresql/InsertManyCoreTest.*/Postgresql:Postgresql/InsertManySavepointTest.*/Postgresql:Postgresql/InsertManyParityTest.*/Postgresql:Postgresql/InsertManyGuardTest.*/Postgresql:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
+            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:Postgresql/InsertManyCoreTest.*/Postgresql:Postgresql/InsertManyPerfSeamTest.*/Postgresql:Postgresql/InsertManySavepointTest.*/Postgresql:Postgresql/InsertManyParityTest.*/Postgresql:Postgresql/InsertManyGuardTest.*/Postgresql:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     set_tests_properties(
@@ -334,7 +338,14 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled 
 
     add_test(NAME "${configure_test}" COMMAND "${CMAKE_COMMAND}" ${configure_arguments})
     add_test(NAME "${build_test}" COMMAND "${CMAKE_COMMAND}" --build "${binary_dir}" --config Debug)
-    set_tests_properties("${configure_test}" "${build_test}" PROPERTIES LABELS "consumer;${profile}")
+    # The conformance job also builds the full test suite and compile contracts, so it takes only the four
+    # core/SQLite/PostgreSQL combinations.
+    set(shard 1)
+    if(mysql_enabled OR mariadb_enabled)
+        set(shard 2)
+    endif()
+    set(labels "consumer;${profile};consumer-shard-${shard}")
+    set_tests_properties("${configure_test}" "${build_test}" PROPERTIES LABELS "${labels}")
     set_tests_properties("${build_test}" PROPERTIES DEPENDS "${configure_test}")
 
     add_test(
@@ -342,7 +353,7 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled 
         COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${binary_dir}" --build-config Debug --output-on-failure
         WORKING_DIRECTORY "${binary_dir}/bin"
     )
-    set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "consumer;${profile}")
+    set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "${labels}")
     if(WIN32
        AND VCPKG_INSTALLED_DIR
        AND VCPKG_TARGET_TRIPLET
