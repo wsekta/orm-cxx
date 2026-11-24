@@ -144,6 +144,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a64d431e5f73bc213b6e16406d6c4516e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns whether a backend session is currently open.  <br /></td></tr>
 <tr class="memitem:a083686788355dbaed24c690ca1be27e9" id="r_a083686788355dbaed24c690ca1be27e9"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a083686788355dbaed24c690ca1be27e9">getBackendCapabilities</a> () const -&gt; const <a class="el" href="structorm_1_1db_1_1BackendCapabilities.html">db::BackendCapabilities</a> &amp;</td></tr>
 <tr class="memdesc:a083686788355dbaed24c690ca1be27e9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the capabilities advertised by the connected backend.  <br /></td></tr>
+<tr class="memitem:a08001649c0d512edb23bd1055a797a0b" id="r_a08001649c0d512edb23bd1055a797a0b"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a08001649c0d512edb23bd1055a797a0b">scopedTransaction</a> () &amp;-&gt; <a class="el" href="#a45007f675715ef7930b3299594bcc8e4">ScopedTransaction</a></td></tr>
 <tr class="memitem:a56318393652ad4c68c2bc71b5474b03c" id="r_a56318393652ad4c68c2bc71b5474b03c"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a56318393652ad4c68c2bc71b5474b03c">beginTransaction</a> () -&gt; void</td></tr>
 <tr class="memdesc:a56318393652ad4c68c2bc71b5474b03c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Starts a transaction.  <br /></td></tr>
 <tr class="memitem:a8e53db9a678a64b874158b175c02ff24" id="r_a8e53db9a678a64b874158b175c02ff24"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a8e53db9a678a64b874158b175c02ff24">commitTransaction</a> () -&gt; void</td></tr>
@@ -153,12 +154,13 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-friends" class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
+<tr class="memitem:a45007f675715ef7930b3299594bcc8e4" id="r_a45007f675715ef7930b3299594bcc8e4"><td class="memItemLeft">class&#160;</td><td class="memItemRight"><a class="el" href="#a45007f675715ef7930b3299594bcc8e4">ScopedTransaction</a></td></tr>
 <tr class="memitem:a84cf047a828198fce930ff24f503c719" id="r_a84cf047a828198fce930ff24f503c719"><td class="memTemplParams" colspan="2">template&lt;typename&gt; </td></tr>
 <tr class="memitem:a84cf047a828198fce930ff24f503c719 template"><td class="memItemLeft">class&#160;</td><td class="memItemRight"><a class="el" href="#a84cf047a828198fce930ff24f503c719">OrmContext</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00026">26</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00047">47</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a401bd5725397130cbfe16d382af02793" name="a401bd5725397130cbfe16d382af02793"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a401bd5725397130cbfe16d382af02793">&#9670;&#160;</a></span>Database() <span class="overload">[1/3]</span></h2>
@@ -191,7 +193,7 @@ template&lt;db::ConnectionConfiguration Config&gt; </div>
 
 <p>Constructs a new Database object. </p>
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00033">33</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00054">54</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>
@@ -342,7 +344,7 @@ template&lt;db::ConnectionConfiguration Config&gt; </div>
   </dd>
 </dl>
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00049">49</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00070">70</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>
@@ -556,7 +558,7 @@ template&lt;typename SchemaType&gt; </div>
 </div><div class="memdoc">
 <p>Creates a borrowed ORM context. This Database must outlive the context. </p>
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00061">61</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00082">82</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>
@@ -576,6 +578,32 @@ template&lt;typename SchemaType&gt; </div>
 </div><div class="memdoc">
 
 <p>Rollbacks a transaction. </p>
+
+</div>
+</div>
+<a id="a08001649c0d512edb23bd1055a797a0b" name="a08001649c0d512edb23bd1055a797a0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a08001649c0d512edb23bd1055a797a0b">&#9670;&#160;</a></span>scopedTransaction()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::Database::scopedTransaction </td>
+          <td>(</td>
+          <td class="paramname"><span class="paramname"><em></em></span></td><td>)</td>
+          <td> &amp; -&gt;  <a class="el" href="#a45007f675715ef7930b3299594bcc8e4">ScopedTransaction</a></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Starts a transaction that rolls back on scope exit unless explicitly finished. </p>
 
 </div>
 </div>
@@ -602,7 +630,31 @@ template&lt;typename&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00107">107</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00132">132</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a45007f675715ef7930b3299594bcc8e4" name="a45007f675715ef7930b3299594bcc8e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a45007f675715ef7930b3299594bcc8e4">&#9670;&#160;</a></span>ScopedTransaction</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class ScopedTransaction</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel friend">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="connection_8cppm_source.html#l00129">129</a> of file <a class="el" href="connection_8cppm_source.html">connection.cppm</a>.</p>
 
 </div>
 </div>

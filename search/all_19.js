@@ -7,7 +7,8 @@ var searchData=
   ['_7emariadbbackend_4',['~MariadbBackend',['../classorm_1_1db_1_1mariadb_1_1MariadbBackend.html#a122cb4d26c83794c4a991aa3cd36b99b',1,'orm::db::mariadb::MariadbBackend']]],
   ['_7emysqlbackend_5',['~MysqlBackend',['../classorm_1_1db_1_1mysql_1_1MysqlBackend.html#acacb54a2fe11ff39f06ee1a592078c62',1,'orm::db::mysql::MysqlBackend']]],
   ['_7epostgresqlbackend_6',['~PostgresqlBackend',['../classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html#a3d29a90957d1d6065da09104f6babf1b',1,'orm::db::postgresql::PostgresqlBackend']]],
-  ['_7esqldialect_7',['~SqlDialect',['../classorm_1_1db_1_1SqlDialect.html#a2617f3ccfdabfb4ee25a67bd54592dce',1,'orm::db::SqlDialect']]],
-  ['_7esqlitebackend_8',['~SqliteBackend',['../classorm_1_1db_1_1sqlite_1_1SqliteBackend.html#a742ec4247189a7a4b5524b5104a7a7d4',1,'orm::db::sqlite::SqliteBackend']]],
-  ['_7etypetranslator_9',['~TypeTranslator',['../classorm_1_1db_1_1TypeTranslator.html#af5532dca6b6d7715908998d40cc90899',1,'orm::db::TypeTranslator']]]
+  ['_7escopedtransaction_7',['~ScopedTransaction',['../classorm_1_1ScopedTransaction.html#a0736ba8b493a7f84f2228d40380ec381',1,'orm::ScopedTransaction']]],
+  ['_7esqldialect_8',['~SqlDialect',['../classorm_1_1db_1_1SqlDialect.html#a2617f3ccfdabfb4ee25a67bd54592dce',1,'orm::db::SqlDialect']]],
+  ['_7esqlitebackend_9',['~SqliteBackend',['../classorm_1_1db_1_1sqlite_1_1SqliteBackend.html#a742ec4247189a7a4b5524b5104a7a7d4',1,'orm::db::sqlite::SqliteBackend']]],
+  ['_7etypetranslator_10',['~TypeTranslator',['../classorm_1_1db_1_1TypeTranslator.html#af5532dca6b6d7715908998d40cc90899',1,'orm::db::TypeTranslator']]]
 ];

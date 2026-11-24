@@ -83,7 +83,9 @@ var NAVTREE =
       [ "Query objects", "docs-database-database.html#docs-database-query-objects", null ],
       [ "Update objects", "docs-database-database.html#docs-database-update-objects", null ],
       [ "Remove objects", "docs-database-database.html#docs-database-remove-objects", null ],
-      [ "Transactions", "docs-database-database.html#docs-database-transactions", null ]
+      [ "Transactions", "docs-database-database.html#docs-database-transactions", [
+        [ "Scoped transactions", "docs-database-database.html#docs-database-scoped-transactions", null ]
+      ] ]
     ] ],
     [ "Model", "docs-model-model.html", [
       [ "Create a model", "docs-model-model.html#docs-model-create-a-model", null ],
@@ -232,21 +234,21 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "BackendRelations_8cppm.html",
-"classorm_1_1Query.html#aae966c137c3e919f57366a85f7478ca0",
-"classorm_1_1db_1_1DefaultCommandGenerator.html#a70c6014aec76971ed987ea9f18663533",
-"classorm_1_1db_1_1postgresql_1_1PostgresqlBackend.html#a3d29a90957d1d6065da09104f6babf1b",
-"classorm_1_1query_1_1Parameter.html#a0fab1e60e6771854b2fd75842269b12b",
-"classorm_1_1query_1_1TypedAggregatePredicate.html#a2c956e8b7e1bfe04056bbcebc5f87f7d",
-"docs-backend-portability-backend-portability.html#docs-backend-portability-verification-model",
-"module__orm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e",
-"module__orm_8reflection.html#a3349c0dfbf080bc57142816e3091ff13",
-"namespaceorm_1_1migrations.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0",
-"structorm_1_1MysqlConfig.html#a4fc946aae7963e63af5352a0aa8f3eea",
-"structorm_1_1db_1_1MutationCapabilities.html#a4e9e344c0ab77bd839ddbe3e8b79fb78",
-"structorm_1_1migrations_1_1AppliedMigration.html#ac3f73bdd13d5a2a2a25b3fb161ff9b69",
-"structorm_1_1migrations_1_1PhysicalSchema.html#af8f1c9f1740288f243107dfa2f935a9b",
-"structorm_1_1model_1_1ColumnView.html#affc6d72879f0907c65b4eeaf419eb3d5",
-"structorm_1_1model_1_1UuidStorages.html#aa13e93919fe4c2c7fc69154e97525064"
+"classorm_1_1Query.html#a9f5552a74c1746497c68a9784ac2b600",
+"classorm_1_1db_1_1CommandGeneratorFactory.html#ad88fb5fd07d0e1f1f22efe51d5d6668d",
+"classorm_1_1db_1_1mysql_1_1MysqlDialect.html#a2a12465e89e5e55544738456e437991d",
+"classorm_1_1query_1_1Expression.html",
+"classorm_1_1query_1_1TypedAggregate.html#a36e8e63313a0bb609ff65266c881ced2",
+"contracts_8cppm.html",
+"mapping_8cppm_source.html",
+"module__orm.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0",
+"namespaceorm_1_1migrations.html",
+"structorm_1_1MariadbConfig.html",
+"structorm_1_1db_1_1InsertIfAbsentSpec.html",
+"structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html#af0fd0cc2f01442f0b30e59f01884daea",
+"structorm_1_1migrations_1_1PhysicalForeignKey.html#abd05e7f0f76c15e0b87ac5cf8ddfe156",
+"structorm_1_1model_1_1ColumnView.html#a1bc6ddf4136b554b26a393b704e04ac8",
+"structorm_1_1model_1_1SchemaView.html#a30b531f89a55306a1eee609322c51663"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

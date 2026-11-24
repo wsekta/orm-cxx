@@ -16,5 +16,7 @@ var classorm_1_1Database =
     [ "orm", "classorm_1_1Database.html#a9bdc892f88433788c814fd4c00d3ec2c", null ],
     [ "orm", "classorm_1_1Database.html#a21c93399fd9432c3ce395297d761034c", null ],
     [ "rollbackTransaction", "classorm_1_1Database.html#ad51f3e557f8d8dce0c78ab8fb56a60cf", null ],
-    [ "OrmContext", "classorm_1_1Database.html#a84cf047a828198fce930ff24f503c719", null ]
+    [ "scopedTransaction", "classorm_1_1Database.html#a08001649c0d512edb23bd1055a797a0b", null ],
+    [ "OrmContext", "classorm_1_1Database.html#a84cf047a828198fce930ff24f503c719", null ],
+    [ "ScopedTransaction", "classorm_1_1Database.html#a45007f675715ef7930b3299594bcc8e4", null ]
 ];

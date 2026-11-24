@@ -47,7 +47,8 @@ var types_8cppm =
       [ "orm::DatabaseErrorCode::Constraint", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a5573c74299e0af37fd558445022c4b15", null ],
       [ "orm::DatabaseErrorCode::Transaction", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a1b0ffaae3973401f71cd000ab9f7856e", null ],
       [ "orm::DatabaseErrorCode::Conversion", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a3bb1503332637805beddb73a2dd1fe1b", null ],
-      [ "orm::DatabaseErrorCode::AffectedRowsUnavailable", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ]
+      [ "orm::DatabaseErrorCode::AffectedRowsUnavailable", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ],
+      [ "orm::DatabaseErrorCode::CommitUncertain", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a6b334cfae24abdb5afea102869b330bd", null ]
     ] ],
     [ "orm::model::RelationKind", "namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43", [
       [ "orm::model::RelationKind::ToOne", "namespaceorm_1_1model.html#a9cb88089d8de2ce12bcad4bd6d597f43a5383860ddcc8860b5ebe890ae4ab5eb3", null ],

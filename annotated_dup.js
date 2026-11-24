@@ -175,6 +175,7 @@ var annotated_dup =
       [ "PostgresTls", "structorm_1_1PostgresTls.html", "structorm_1_1PostgresTls" ],
       [ "ProjectionQuery", "classorm_1_1ProjectionQuery.html", "classorm_1_1ProjectionQuery" ],
       [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ],
+      [ "ScopedTransaction", "classorm_1_1ScopedTransaction.html", "classorm_1_1ScopedTransaction" ],
       [ "SqliteConfig", "structorm_1_1SqliteConfig.html", "structorm_1_1SqliteConfig" ],
       [ "SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
       [ "TimeOfDay", "classorm_1_1TimeOfDay.html", "classorm_1_1TimeOfDay" ],

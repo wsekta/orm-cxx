@@ -71,6 +71,7 @@ var module__orm =
     [ "MysqlBackend", "classorm_1_1db_1_1mysql_1_1MysqlBackend.html", "classorm_1_1db_1_1mysql_1_1MysqlBackend" ],
     [ "MariadbDialect", "classorm_1_1db_1_1mariadb_1_1MariadbDialect.html", "classorm_1_1db_1_1mariadb_1_1MariadbDialect" ],
     [ "MariadbBackend", "classorm_1_1db_1_1mariadb_1_1MariadbBackend.html", "classorm_1_1db_1_1mariadb_1_1MariadbBackend" ],
+    [ "ScopedTransaction", "classorm_1_1ScopedTransaction.html", "classorm_1_1ScopedTransaction" ],
     [ "Database", "classorm_1_1Database.html", "classorm_1_1Database" ],
     [ "OptionalValue", "structorm_1_1db_1_1binding_1_1OptionalValue.html", "structorm_1_1db_1_1binding_1_1OptionalValue" ],
     [ "OptionalValue&lt; T &gt;", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01T_01_4.html", "structorm_1_1db_1_1binding_1_1OptionalValue_3_01T_01_4" ],
@@ -205,7 +206,8 @@ var module__orm =
       [ "orm::DatabaseErrorCode::Constraint", "module__orm.html#a11a157f026d723aaf6e4135bca472f62a5573c74299e0af37fd558445022c4b15", null ],
       [ "orm::DatabaseErrorCode::Transaction", "module__orm.html#a11a157f026d723aaf6e4135bca472f62a1b0ffaae3973401f71cd000ab9f7856e", null ],
       [ "orm::DatabaseErrorCode::Conversion", "module__orm.html#a11a157f026d723aaf6e4135bca472f62a3bb1503332637805beddb73a2dd1fe1b", null ],
-      [ "orm::DatabaseErrorCode::AffectedRowsUnavailable", "module__orm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ]
+      [ "orm::DatabaseErrorCode::AffectedRowsUnavailable", "module__orm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ],
+      [ "orm::DatabaseErrorCode::CommitUncertain", "module__orm.html#a11a157f026d723aaf6e4135bca472f62a6b334cfae24abdb5afea102869b330bd", null ]
     ] ],
     [ "orm::SqliteOpenMode", "module__orm.html#a068b3ccdd65d4f9cc41fc498d8a00a12", [
       [ "orm::SqliteOpenMode::ReadWriteCreate", "module__orm.html#a068b3ccdd65d4f9cc41fc498d8a00a12a35922c9206688344b8c677f130135999", null ],

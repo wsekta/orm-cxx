@@ -45,7 +45,7 @@ var searchData=
   ['transaction_42',['Transaction',['../namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a1b0ffaae3973401f71cd000ab9f7856e',1,'orm']]],
   ['transactionalddl_43',['transactionalDdl',['../structorm_1_1db_1_1SchemaCapabilities.html#abab5a5ec32308d6ecb2b16a305c7a308',1,'orm::db::SchemaCapabilities']]],
   ['transactions_44',['Transactions',['../docs-database-database.html#docs-database-transactions',1,'']]],
-  ['transactions_45',['transactions',['../structorm_1_1db_1_1BackendCapabilities.html#a54b6c6eb419d6f691c743ee55e95ed6b',1,'orm::db::BackendCapabilities']]],
+  ['transactions_45',['transactions',['../docs-database-database.html#docs-database-scoped-transactions',1,'Scoped transactions'],['../structorm_1_1db_1_1BackendCapabilities.html#a54b6c6eb419d6f691c743ee55e95ed6b',1,'orm::db::BackendCapabilities::transactions']]],
   ['transactions_20and_20consistency_46',['Transactions and consistency',['../docs-relations-collection-relations.html#docs-relations-transactions-and-consistency',1,'']]],
   ['transactions_20and_20recovery_47',['History, transactions and recovery',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery',1,'']]],
   ['translateerror_48',['translateError',['../classorm_1_1db_1_1BackendRuntime.html#a8eb46e3e44c21e37e72d9cb8ee0036a2',1,'orm::db::BackendRuntime']]],

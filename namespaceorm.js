@@ -32,6 +32,7 @@ var namespaceorm =
     [ "PostgresTls", "structorm_1_1PostgresTls.html", "structorm_1_1PostgresTls" ],
     [ "ProjectionQuery", "classorm_1_1ProjectionQuery.html", "classorm_1_1ProjectionQuery" ],
     [ "Query", "classorm_1_1Query.html", "classorm_1_1Query" ],
+    [ "ScopedTransaction", "classorm_1_1ScopedTransaction.html", "classorm_1_1ScopedTransaction" ],
     [ "SqliteConfig", "structorm_1_1SqliteConfig.html", "structorm_1_1SqliteConfig" ],
     [ "SqliteMemory", "structorm_1_1SqliteMemory.html", null ],
     [ "TimeOfDay", "classorm_1_1TimeOfDay.html", "classorm_1_1TimeOfDay" ],
@@ -56,7 +57,8 @@ var namespaceorm =
       [ "Constraint", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a5573c74299e0af37fd558445022c4b15", null ],
       [ "Transaction", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a1b0ffaae3973401f71cd000ab9f7856e", null ],
       [ "Conversion", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a3bb1503332637805beddb73a2dd1fe1b", null ],
-      [ "AffectedRowsUnavailable", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ]
+      [ "AffectedRowsUnavailable", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62ac25879d9351c0b3c1562035f40248e8e", null ],
+      [ "CommitUncertain", "namespaceorm.html#a11a157f026d723aaf6e4135bca472f62a6b334cfae24abdb5afea102869b330bd", null ]
     ] ],
     [ "MysqlSslMode", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337", [
       [ "Disabled", "namespaceorm.html#ab96e008ba0aace9ea9ffcf723bcc8337ab9f5c797ebbf55adccdd8539a65a0241", null ],

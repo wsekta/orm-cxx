@@ -17,7 +17,8 @@ var searchData=
   ['to_20many_14',['to many',['../docs-relations-collection-relations.html#docs-relations-many-to-many',1,'Many-to-many'],['../docs-relations-collection-relations.html#docs-relations-one-to-many',1,'One-to-many']]],
   ['to_20one_20relations_15',['One-to-one relations',['../docs-model-model.html#docs-model-one-to-one-relations',1,'']]],
   ['transactions_16',['Transactions',['../docs-database-database.html#docs-database-transactions',1,'']]],
-  ['transactions_20and_20consistency_17',['Transactions and consistency',['../docs-relations-collection-relations.html#docs-relations-transactions-and-consistency',1,'']]],
-  ['transactions_20and_20recovery_18',['History, transactions and recovery',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery',1,'']]],
-  ['types_19',['Supported field types',['../docs-model-model.html#docs-model-supported-field-types',1,'']]]
+  ['transactions_17',['Scoped transactions',['../docs-database-database.html#docs-database-scoped-transactions',1,'']]],
+  ['transactions_20and_20consistency_18',['Transactions and consistency',['../docs-relations-collection-relations.html#docs-relations-transactions-and-consistency',1,'']]],
+  ['transactions_20and_20recovery_19',['History, transactions and recovery',['../docs-schema-migrations-schema-migrations.html#docs-schema-migrations-history-transactions-and-recovery',1,'']]],
+  ['types_20',['Supported field types',['../docs-model-model.html#docs-model-supported-field-types',1,'']]]
 ];

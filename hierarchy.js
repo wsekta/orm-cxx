@@ -147,6 +147,7 @@ var hierarchy =
     [ "orm::migrations::SchemaDiff", "structorm_1_1migrations_1_1SchemaDiff.html", null ],
     [ "orm::migrations::SchemaSnapshot", "structorm_1_1migrations_1_1SchemaSnapshot.html", null ],
     [ "orm::model::SchemaView", "structorm_1_1model_1_1SchemaView.html", null ],
+    [ "orm::ScopedTransaction", "classorm_1_1ScopedTransaction.html", null ],
     [ "orm::db::SqlDialect", "classorm_1_1db_1_1SqlDialect.html", [
       [ "orm::db::mariadb::MariadbDialect", "classorm_1_1db_1_1mariadb_1_1MariadbDialect.html", null ],
       [ "orm::db::mysql::MysqlDialect", "classorm_1_1db_1_1mysql_1_1MysqlDialect.html", null ],
