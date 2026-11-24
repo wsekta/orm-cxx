@@ -205,9 +205,14 @@ if(ORM_CXX_ENABLE_PERF_TEST_SEAM)
     # The benchmark build is intentionally not exported as an orm-cxx package.
     target_sources(
         orm-cxx
-        PUBLIC FILE_SET perf_seam TYPE CXX_MODULES
-               BASE_DIRS "${PROJECT_SOURCE_DIR}/modules"
-               FILES "${PROJECT_SOURCE_DIR}/modules/orm/database/perf_test_seam.cppm"
+        PUBLIC FILE_SET
+               perf_seam
+               TYPE
+               CXX_MODULES
+               BASE_DIRS
+               "${PROJECT_SOURCE_DIR}/modules"
+               FILES
+               "${PROJECT_SOURCE_DIR}/modules/orm/database/perf_test_seam.cppm"
     )
     target_compile_definitions(orm-cxx PUBLIC "$<BUILD_INTERFACE:ORM_CXX_PERF_SEAM_AVAILABLE=1>")
 endif()

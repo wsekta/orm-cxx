@@ -155,10 +155,15 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     )
 
     if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-        list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/PostgresqlIntegrationTest.cpp
-             database/postgresql/PostgresConnectionTest.cpp database/postgresql/InsertManyCoreTest.cpp
-             database/postgresql/InsertManySavepointTest.cpp database/postgresql/InsertManyParityTest.cpp
-             database/postgresql/InsertManyGuardTest.cpp
+        list(
+            APPEND
+            ORM_CXX_TEST_SOURCES
+            database/postgresql/PostgresqlIntegrationTest.cpp
+            database/postgresql/PostgresConnectionTest.cpp
+            database/postgresql/InsertManyCoreTest.cpp
+            database/postgresql/InsertManySavepointTest.cpp
+            database/postgresql/InsertManyParityTest.cpp
+            database/postgresql/InsertManyGuardTest.cpp
         )
     endif()
 endif()
