@@ -328,7 +328,14 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled 
 
     add_test(NAME "${configure_test}" COMMAND "${CMAKE_COMMAND}" ${configure_arguments})
     add_test(NAME "${build_test}" COMMAND "${CMAKE_COMMAND}" --build "${binary_dir}" --config Debug)
-    set_tests_properties("${configure_test}" "${build_test}" PROPERTIES LABELS "consumer;${profile}")
+    # The conformance job also builds the full test suite and compile contracts, so it takes only the four
+    # core/SQLite/PostgreSQL combinations.
+    set(shard 1)
+    if(mysql_enabled OR mariadb_enabled)
+        set(shard 2)
+    endif()
+    set(labels "consumer;${profile};consumer-shard-${shard}")
+    set_tests_properties("${configure_test}" "${build_test}" PROPERTIES LABELS "${labels}")
     set_tests_properties("${build_test}" PROPERTIES DEPENDS "${configure_test}")
 
     add_test(
@@ -336,7 +343,7 @@ function(orm_cxx_add_consumer_profile profile sqlite_enabled postgresql_enabled 
         COMMAND "${CMAKE_CTEST_COMMAND}" --test-dir "${binary_dir}" --build-config Debug --output-on-failure
         WORKING_DIRECTORY "${binary_dir}/bin"
     )
-    set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "consumer;${profile}")
+    set_tests_properties("${run_test}" PROPERTIES DEPENDS "${build_test}" LABELS "${labels}")
     if(WIN32
        AND VCPKG_INSTALLED_DIR
        AND VCPKG_TARGET_TRIPLET
