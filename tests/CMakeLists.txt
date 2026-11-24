@@ -66,6 +66,7 @@ if(ORM_CXX_ENABLE_SQLITE_BACKEND)
         APPEND
         ORM_CXX_TEST_SOURCES
         database/DatabaseCoverageCompletionTest.cpp
+        database/ScopedTransactionTest.cpp
         database/SqliteConnectErrorTest.cpp
         database/SqliteConnectionTest.cpp
         database/StatementParameterBindingTest.cpp
