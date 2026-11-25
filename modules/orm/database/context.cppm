@@ -829,12 +829,6 @@ export
 
             const auto chunkLimit = std::min(sqlRows, forcedChunkSize.value_or(sqlRows));
 
-            if (chunkLimit == 0)
-            {
-                throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType, "insert many",
-                                    "A batch insert chunk cannot be empty"};
-            }
-
             const bool callerTransaction = database_->hasApplicationTransaction();
             std::optional<std::string> savepointName;
 

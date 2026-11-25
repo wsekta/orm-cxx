@@ -848,21 +848,11 @@ auto Database::rollbackTransaction() -> void
 
 auto Database::beginInsertManySavepoint() -> std::string
 {
+    // insertManyImpl has already verified the session and caller-transaction state through
+    // ensureSessionUsable() and ensureModelSupported(), so this only has to open the savepoint.
     const auto& capabilities = getBackendCapabilities();
     requireCapability(capabilities.transactions, "insert many",
                       "insertMany cannot reuse a caller transaction because transactions are not supported");
-
-    if (transactionFailed)
-    {
-        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "insert many",
-                            "insertMany cannot run inside a transaction that already contains a failed statement"};
-    }
-
-    if (migrationActive or not sql.is_connected())
-    {
-        throw DatabaseError{DatabaseErrorCode::Transaction, backendType, "insert many",
-                            "insertMany cannot determine the caller transaction state"};
-    }
 
     auto name = std::format("orm_insert_many_{}", ++insertManySavepointSequence);
     executeSavepointCommand("SAVEPOINT " + getBackend().dialect().quoteIdentifier(name), "insert many");

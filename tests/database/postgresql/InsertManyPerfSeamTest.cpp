@@ -41,5 +41,13 @@ TEST_P(InsertManyPerfSeamTest, forcedChunkSizeOneRunsTheProductionPathOverManyRo
     }
 }
 
+TEST_P(InsertManyPerfSeamTest, rejectsAZeroChunkOverride)
+{
+    const std::array rows{models::ModelWithId{1, 2, "unused"}};
+    EXPECT_THROW(
+        orm::detail::perf_seam::insertManyWithChunkRowsForTest(database, std::span<const models::ModelWithId>{rows}, 0),
+        std::invalid_argument);
+}
+
 INSTANTIATE_TEST_SUITE_P(Postgresql, InsertManyPerfSeamTest, ::testing::Values(postgresqlBackendTestConfig),
                          backendTestName);

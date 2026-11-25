@@ -37,6 +37,49 @@ struct UuidRecord
     inline static constexpr orm::reflection::FixedString table_name{"insert_many_parity_uuid"};
 };
 
+struct TemporalRecord
+{
+    int id;
+    orm::Date date;
+    orm::TimeOfDay time;
+    orm::LocalDateTime local;
+    orm::UtcTimestamp utc;
+
+    inline static constexpr orm::reflection::FixedString table_name{"insert_many_parity_temporal"};
+};
+
+struct ConversionRecord
+{
+    int id;
+    std::string text;
+    unsigned long long number;
+
+    inline static constexpr orm::reflection::FixedString table_name{"insert_many_parity_conversion"};
+    inline static constexpr auto string_lengths = orm::stringLengths(orm::stringLength<&ConversionRecord::text, 3>());
+};
+
+struct NullableNumber
+{
+    enum class Source
+    {
+        Present,
+        Missing,
+        Invalid,
+        DriverError,
+    };
+
+    Source source = Source::Missing;
+    int number{};
+};
+
+struct NullableRecord
+{
+    int id;
+    NullableNumber number;
+
+    inline static constexpr orm::reflection::FixedString table_name{"insert_many_parity_nullable"};
+};
+
 struct TextRecord
 {
     int id;
@@ -61,10 +104,40 @@ struct ForeignModel
 };
 } // namespace insert_many_parity_models
 
+template <>
+struct orm::NullableAdapter<insert_many_parity_models::NullableNumber>
+{
+    using Number = insert_many_parity_models::NullableNumber;
+    using Value = int;
+
+    static auto hasValue(const Number& value) noexcept -> bool
+    {
+        return value.source != Number::Source::Missing;
+    }
+    static auto value(const Number& source) -> int
+    {
+        if (source.source == Number::Source::Invalid)
+            throw std::invalid_argument{"source has no valid value"};
+        if (source.source == Number::Source::DriverError)
+            throw soci::soci_error{"source could not read its value"};
+        return source.number;
+    }
+    static auto make(int value) -> Number
+    {
+        return {Number::Source::Present, value};
+    }
+    static auto none() -> Number
+    {
+        return {};
+    }
+};
+
 using InsertManyParitySchema =
     orm::Schema<models::ModelWithId, models::ModelRelatedToOtherModel, models::ModelWithOptional,
                 insert_many_parity_models::AutoIdRecord, insert_many_parity_models::UuidRecord,
-                insert_many_parity_models::TextRecord, insert_many_parity_models::AutoOnlyRecord>;
+                insert_many_parity_models::TextRecord, insert_many_parity_models::AutoOnlyRecord,
+                insert_many_parity_models::TemporalRecord, insert_many_parity_models::ConversionRecord,
+                insert_many_parity_models::NullableRecord>;
 
 namespace
 {
@@ -365,6 +438,66 @@ TEST_P(InsertManyParityTest, nativeUuidColumnRoundTrips)
     EXPECT_EQ(stored[0].value, first);
     EXPECT_EQ(stored[1].value, second);
     EXPECT_NE(stored[0].value, stored[1].value);
+}
+
+TEST_P(InsertManyParityTest, temporalValuesRoundTripWithMicrosecondPrecision)
+{
+    using Record = insert_many_parity_models::TemporalRecord;
+    using namespace std::chrono;
+    const orm::Date date{year{2024}, month{2}, day{29}};
+    const auto firstTime = hours{12} + minutes{34} + seconds{56} + microseconds{123456};
+    const auto secondTime = firstTime + microseconds{1};
+    createTable<Record>();
+
+    const std::vector<Record> rows{
+        {1, date, orm::TimeOfDay{firstTime}, orm::LocalDateTime{local_days{date} + firstTime},
+         orm::UtcTimestamp{sys_days{date} + firstTime}},
+        {2, date, orm::TimeOfDay{secondTime}, orm::LocalDateTime{local_days{date} + secondTime},
+         orm::UtcTimestamp{sys_days{date} + secondTime}},
+    };
+    database.insertMany(rows);
+    const auto stored = selectAllOrderedById<Record>(database);
+    ASSERT_EQ(stored.size(), rows.size());
+    for (std::size_t index = 0; index < rows.size(); ++index)
+    {
+        EXPECT_EQ(stored[index].id, rows[index].id);
+        EXPECT_EQ(stored[index].date, rows[index].date);
+        EXPECT_EQ(stored[index].time, rows[index].time);
+        EXPECT_EQ(stored[index].local, rows[index].local);
+        EXPECT_EQ(stored[index].utc, rows[index].utc);
+    }
+}
+
+TEST_P(InsertManyParityTest, serializationAndBindingFailuresAreConversionsAndLeaveNoRows)
+{
+    using Record = insert_many_parity_models::ConversionRecord;
+    createTable<Record>();
+    std::vector<Record> rows{{1, "one", 1}, {2, "long", 2}};
+
+    expectInsertManyError([&] { database.insertMany(rows); }, orm::DatabaseErrorCode::Conversion);
+    EXPECT_TRUE(selectAllOrderedById<Record>(database).empty());
+
+    rows[1] = Record{2, "two", std::numeric_limits<unsigned long long>::max()};
+    expectInsertManyError([&] { database.insertMany(rows); }, orm::DatabaseErrorCode::Conversion);
+    EXPECT_TRUE(selectAllOrderedById<Record>(database).empty());
+
+    rows[1].number = 2;
+    database.insertMany(rows);
+    EXPECT_EQ(selectAllOrderedById<Record>(database).size(), 2);
+}
+
+TEST_P(InsertManyParityTest, nullableAdapterFailuresAreTranslatedAndLeaveNoRows)
+{
+    using Record = insert_many_parity_models::NullableRecord;
+    using Source = insert_many_parity_models::NullableNumber::Source;
+    createTable<Record>();
+    std::vector<Record> rows{{1, {Source::Present, 7}}, {2, {Source::Invalid, 0}}};
+    expectInsertManyError([&] { database.insertMany(rows); }, orm::DatabaseErrorCode::Conversion);
+    EXPECT_TRUE(selectAllOrderedById<Record>(database).empty());
+
+    rows[1].number.source = Source::DriverError;
+    expectInsertManyError([&] { database.insertMany(rows); }, orm::DatabaseErrorCode::Statement);
+    EXPECT_TRUE(selectAllOrderedById<Record>(database).empty());
 }
 
 TEST_P(InsertManyParityTest, nullableColumnKeepsNullDistinctFromEmptyString)

@@ -3,6 +3,7 @@ module;
 #include <cstddef>
 #include <optional>
 #include <span>
+#include <stdexcept>
 
 export module orm:perf_test_seam;
 
@@ -36,6 +37,10 @@ export template <typename SchemaType, typename T>
 auto insertManyWithChunkRowsForTest(OrmContext<SchemaType>& context, std::span<const T> rows,
                                     std::size_t chunkRows) -> void
 {
+    if (chunkRows == 0)
+    {
+        throw std::invalid_argument{"A batch insert chunk cannot be empty"};
+    }
     TestAccess::insertManyWithChunkRows(context, rows, chunkRows);
 }
 } // namespace orm::detail::perf_seam
