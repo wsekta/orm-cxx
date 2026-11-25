@@ -702,16 +702,34 @@ export
         }
 
         template <typename T>
-        static auto serializeInsertManyRow(const T& object) -> soci::values
+        auto prepareInsertManyRow(const T& object, std::span<const db::detail::InsertColumnBinding> bindings)
+            -> std::pair<soci::values, std::size_t>
         {
-            db::binding::BindingPayload<T, SchemaType> payload{};
-            payload.value = object;
-
-            soci::values serializedModel;
-            auto indicator = soci::i_ok;
-            soci::type_conversion<db::binding::BindingPayload<T, SchemaType>>::to_base(payload, serializedModel,
-                                                                                       indicator);
-            return serializedModel;
+            try
+            {
+                db::binding::BindingPayload<T, SchemaType> payload{};
+                payload.value = object;
+                soci::values serializedModel;
+                auto indicator = soci::i_ok;
+                soci::type_conversion<db::binding::BindingPayload<T, SchemaType>>::to_base(payload, serializedModel,
+                                                                                           indicator);
+                const auto encodedBytes = insertManyEncodedBytes(serializedModel, bindings);
+                return {std::move(serializedModel), encodedBytes};
+            }
+            catch (const db::binding::ConversionError&)
+            {
+                throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
+                                    "A model value cannot be represented by the selected backend"};
+            }
+            catch (const soci::soci_error& error)
+            {
+                database_->throwTranslatedError(error, DatabaseErrorCode::Statement, "insert many");
+            }
+            catch (const std::invalid_argument&)
+            {
+                throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
+                                    "A model value cannot be represented by the selected backend"};
+            }
         }
 
         auto executeInsertManyChunk(const std::vector<soci::values>& serializedRows, model::ModelView model,
@@ -854,29 +872,8 @@ export
 
                     while (serializedRows.size() < rowCap)
                     {
-                        soci::values serialized;
-                        std::size_t encodedRowBytes{};
-
-                        try
-                        {
-                            serialized = serializeInsertManyRow(objects[start + serializedRows.size()]);
-                            encodedRowBytes = insertManyEncodedBytes(serialized, bindings);
-                        }
-                        catch (const db::binding::ConversionError&)
-                        {
-                            throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
-                                                "A model value cannot be represented by the selected backend"};
-                        }
-                        catch (const soci::soci_error& error)
-                        {
-                            database_->throwTranslatedError(error, DatabaseErrorCode::Statement, "insert many");
-                        }
-                        catch (const std::invalid_argument&)
-                        {
-                            throw DatabaseError{DatabaseErrorCode::Conversion, database_->backendType, "insert many",
-                                                "A model value cannot be represented by the selected backend"};
-                        }
-
+                        auto [serialized, encodedRowBytes] =
+                            prepareInsertManyRow(objects[start + serializedRows.size()], bindings);
                         if (encodedRowBytes > insertManyMaxEncodedBytes)
                         {
                             throw DatabaseError{DatabaseErrorCode::UnsupportedFeature, database_->backendType,
