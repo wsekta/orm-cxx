@@ -62,6 +62,7 @@ var namespaceorm_1_1db =
     [ "ConnectionTraits&lt; SqliteConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01SqliteConfig_01_4.html", null ],
     [ "DefaultCommandGenerator", "classorm_1_1db_1_1DefaultCommandGenerator.html", "classorm_1_1db_1_1DefaultCommandGenerator" ],
     [ "InsertIfAbsentSpec", "structorm_1_1db_1_1InsertIfAbsentSpec.html", "structorm_1_1db_1_1InsertIfAbsentSpec" ],
+    [ "InsertManySpec", "structorm_1_1db_1_1InsertManySpec.html", "structorm_1_1db_1_1InsertManySpec" ],
     [ "MigrationCapabilities", "structorm_1_1db_1_1MigrationCapabilities.html", "structorm_1_1db_1_1MigrationCapabilities" ],
     [ "MutationCapabilities", "structorm_1_1db_1_1MutationCapabilities.html", "structorm_1_1db_1_1MutationCapabilities" ],
     [ "PaginationSpec", "structorm_1_1db_1_1PaginationSpec.html", "structorm_1_1db_1_1PaginationSpec" ],
@@ -103,5 +104,6 @@ var namespaceorm_1_1db =
     [ "MigrationAtomicity", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0", [
       [ "WholeMigration", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0a380c24a36ef13a989c0f3e0f06787d2a", null ],
       [ "NonTransactional", "namespaceorm_1_1db.html#adc074b2196f10358716dae7a2f71ecc0a6f859f30378d75f119c58a75d8806123", null ]
-    ] ]
+    ] ],
+    [ "insertManyParameterName", "namespaceorm_1_1db.html#a97fe8a1881d39c4ad78ed74b127ec913", null ]
 ];

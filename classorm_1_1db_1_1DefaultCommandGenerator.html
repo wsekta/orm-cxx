@@ -144,6 +144,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a422152e4ba64f2545fb2c3d0a5e5600f" id="r_a422152e4ba64f2545fb2c3d0a5e5600f"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a422152e4ba64f2545fb2c3d0a5e5600f">createTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
 <tr class="memitem:a203c75e6c59546e4f895137580775435" id="r_a203c75e6c59546e4f895137580775435"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a203c75e6c59546e4f895137580775435">dropTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
 <tr class="memitem:a3cb49e0abc603078ea7853fde3dd096d" id="r_a3cb49e0abc603078ea7853fde3dd096d"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3cb49e0abc603078ea7853fde3dd096d">insert</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string override</td></tr>
+<tr class="memitem:a52dfaf9587571339a2ed2b52293f7bbc" id="r_a52dfaf9587571339a2ed2b52293f7bbc"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a52dfaf9587571339a2ed2b52293f7bbc">insertMany</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="structorm_1_1db_1_1InsertManySpec.html">InsertManySpec</a> &amp;spec) const -&gt; std::string override</td></tr>
 <tr class="memitem:a70c6014aec76971ed987ea9f18663533" id="r_a70c6014aec76971ed987ea9f18663533"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a70c6014aec76971ed987ea9f18663533">select</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a9c62f5856e8c8a2563a9783b11198074">SelectSpec</a> &amp;spec) const -&gt; <a class="el" href="namespaceorm_1_1db.html#aebe735ab397a66293f823bff9317133d">SelectStatement</a> override</td></tr>
 <tr class="memitem:ae2ebedae9f0d06786c146504a4e7f148" id="r_ae2ebedae9f0d06786c146504a4e7f148"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ae2ebedae9f0d06786c146504a4e7f148">update</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a2c91edaf8b6c8c59bcbcbb09d45a08e3">UpdateSpec</a> &amp;spec) const -&gt; <a class="el" href="structorm_1_1db_1_1Statement.html">Statement</a> override</td></tr>
 <tr class="memitem:a189bfa3a2264e67f7357113412b8916f" id="r_a189bfa3a2264e67f7357113412b8916f"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a189bfa3a2264e67f7357113412b8916f">remove</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a7247d16878b38d91001742c98abc301c">Predicate</a> &amp;predicate) const -&gt; <a class="el" href="structorm_1_1db_1_1Statement.html">Statement</a> override</td></tr>
@@ -152,7 +153,7 @@ Public Member Functions</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00032">32</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00104">104</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ac8d0b2663970ed6aa073e8149ed228aa" name="ac8d0b2663970ed6aa073e8149ed228aa"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac8d0b2663970ed6aa073e8149ed228aa">&#9670;&#160;</a></span>DefaultCommandGenerator()</h2>
@@ -263,6 +264,38 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implements <a class="el" href="classorm_1_1db_1_1CommandGenerator.html#a20c85f803ad70af51cefeef1df8f8d3f">orm::db::CommandGenerator</a>.</p>
+
+</div>
+</div>
+<a id="a52dfaf9587571339a2ed2b52293f7bbc" name="a52dfaf9587571339a2ed2b52293f7bbc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52dfaf9587571339a2ed2b52293f7bbc">&#9670;&#160;</a></span>insertMany()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto orm::db::DefaultCommandGenerator::insertMany </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a></td>          <td class="paramname"><span class="paramname"><em>model</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structorm_1_1db_1_1InsertManySpec.html">InsertManySpec</a> &amp;</td>          <td class="paramname"><span class="paramname"><em>spec</em></span>&#160;) const -&gt; std::string</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel nodiscard">nodiscard</span><span class="mlabel override">override</span><span class="mlabel virtual">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Non-owning batch statement source; custom generators may keep the default rejection. </p>
+
+<p>Reimplemented from <a class="el" href="classorm_1_1db_1_1CommandGenerator.html#a5cb56a83743a705fd3501cce3a202c30">orm::db::CommandGenerator</a>.</p>
 
 </div>
 </div>

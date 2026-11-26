@@ -46,6 +46,7 @@ var hierarchy =
     [ "orm::migrations::GenerationDiagnostic", "structorm_1_1migrations_1_1GenerationDiagnostic.html", null ],
     [ "orm::migrations::IncompleteMigration", "structorm_1_1migrations_1_1IncompleteMigration.html", null ],
     [ "orm::db::InsertIfAbsentSpec", "structorm_1_1db_1_1InsertIfAbsentSpec.html", null ],
+    [ "orm::db::InsertManySpec", "structorm_1_1db_1_1InsertManySpec.html", null ],
     [ "orm::model::JunctionView", "structorm_1_1model_1_1JunctionView.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; T &gt;", "structorm_1_1model_1_1LogicalTypeTraits.html", null ],
     [ "orm::model::LogicalTypeTraits&lt; bool &gt;", "structorm_1_1model_1_1LogicalTypeTraits_3_01bool_01_4.html", null ],

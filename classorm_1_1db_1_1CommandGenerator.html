@@ -134,13 +134,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:abea98aa8ce6e0dbc2ad40b48d881fe24" id="r_abea98aa8ce6e0dbc2ad40b48d881fe24"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#abea98aa8ce6e0dbc2ad40b48d881fe24">createTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string=0</td></tr>
 <tr class="memitem:a6ed239c55e331267a0834161a75dfd7e" id="r_a6ed239c55e331267a0834161a75dfd7e"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a6ed239c55e331267a0834161a75dfd7e">dropTable</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string=0</td></tr>
 <tr class="memitem:a20c85f803ad70af51cefeef1df8f8d3f" id="r_a20c85f803ad70af51cefeef1df8f8d3f"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a20c85f803ad70af51cefeef1df8f8d3f">insert</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model) const -&gt; std::string=0</td></tr>
+<tr class="memitem:a5cb56a83743a705fd3501cce3a202c30" id="r_a5cb56a83743a705fd3501cce3a202c30"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a5cb56a83743a705fd3501cce3a202c30">insertMany</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a>, const <a class="el" href="structorm_1_1db_1_1InsertManySpec.html">InsertManySpec</a> &amp;) const -&gt; std::string</td></tr>
 <tr class="memitem:a28cc132f4fab057d185f29719f8760d9" id="r_a28cc132f4fab057d185f29719f8760d9"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a28cc132f4fab057d185f29719f8760d9">select</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a9c62f5856e8c8a2563a9783b11198074">SelectSpec</a> &amp;spec) const -&gt; <a class="el" href="namespaceorm_1_1db.html#aebe735ab397a66293f823bff9317133d">SelectStatement</a>=0</td></tr>
 <tr class="memitem:a5a914a880b51fb0987aa376d433947c1" id="r_a5a914a880b51fb0987aa376d433947c1"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#a5a914a880b51fb0987aa376d433947c1">update</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a2c91edaf8b6c8c59bcbcbb09d45a08e3">UpdateSpec</a> &amp;spec) const -&gt; <a class="el" href="structorm_1_1db_1_1Statement.html">Statement</a>=0</td></tr>
 <tr class="memitem:aed98ecc3be64196e5a01c7f5490aaacc" id="r_aed98ecc3be64196e5a01c7f5490aaacc"><td class="memItemLeft">virtual auto&#160;</td><td class="memItemRight"><a class="el" href="#aed98ecc3be64196e5a01c7f5490aaacc">remove</a> (<a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> model, const <a class="el" href="namespaceorm_1_1db.html#a7247d16878b38d91001742c98abc301c">Predicate</a> &amp;predicate) const -&gt; <a class="el" href="structorm_1_1db_1_1Statement.html">Statement</a>=0</td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock">
-<p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00019">19</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00084">84</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
 </div><a name="doc-constructors" id="doc-constructors"></a><h2 id="header-doc-constructors" class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a6a5afe9bd4fc5ada0cf55c2ec094c653" name="a6a5afe9bd4fc5ada0cf55c2ec094c653"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a6a5afe9bd4fc5ada0cf55c2ec094c653">&#9670;&#160;</a></span>~CommandGenerator()</h2>
@@ -246,6 +247,40 @@ Public Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Implemented in <a class="el" href="classorm_1_1db_1_1DefaultCommandGenerator.html#a3cb49e0abc603078ea7853fde3dd096d">orm::db::DefaultCommandGenerator</a>.</p>
+
+</div>
+</div>
+<a id="a5cb56a83743a705fd3501cce3a202c30" name="a5cb56a83743a705fd3501cce3a202c30"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5cb56a83743a705fd3501cce3a202c30">&#9670;&#160;</a></span>insertMany()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual auto orm::db::CommandGenerator::insertMany </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a></td>          <td class="paramname"><span class="paramname"><em></em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="structorm_1_1db_1_1InsertManySpec.html">InsertManySpec</a> &amp;</td>          <td class="paramname"><span class="paramname"><em></em></span>&#160;) const -&gt; std::string</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span><span class="mlabel nodiscard">nodiscard</span><span class="mlabel virtual">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Non-owning batch statement source; custom generators may keep the default rejection. </p>
+
+<p>Reimplemented in <a class="el" href="classorm_1_1db_1_1DefaultCommandGenerator.html#a52dfaf9587571339a2ed2b52293f7bbc">orm::db::DefaultCommandGenerator</a>.</p>
+
+<p class="definition">Definition at line <a class="el" href="commands_8cppm_source.html#l00093">93</a> of file <a class="el" href="commands_8cppm_source.html">commands.cppm</a>.</p>
 
 </div>
 </div>

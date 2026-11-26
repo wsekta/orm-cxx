@@ -147,6 +147,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2e86a46472a1f20113079561257569ed template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a2e86a46472a1f20113079561257569ed">insert</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
 <tr class="memitem:a3132cbb15880db18a83bafc6f03e169b" id="r_a3132cbb15880db18a83bafc6f03e169b"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:a3132cbb15880db18a83bafc6f03e169b template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a3132cbb15880db18a83bafc6f03e169b">insert</a> (T object) -&gt; void</td></tr>
+<tr class="memitem:ae776ada128a83f2f79b176a0011e8eea" id="r_ae776ada128a83f2f79b176a0011e8eea"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:ae776ada128a83f2f79b176a0011e8eea template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ae776ada128a83f2f79b176a0011e8eea">insertMany</a> (std::span&lt; const T &gt; objects) -&gt; void</td></tr>
+<tr class="memdesc:ae776ada128a83f2f79b176a0011e8eea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inserts a borrowed batch atomically in a transaction owned by this operation.  <br /></td></tr>
+<tr class="memitem:a88ec059210adfce9bee5ae488af7b801" id="r_a88ec059210adfce9bee5ae488af7b801"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
+<tr class="memitem:a88ec059210adfce9bee5ae488af7b801 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#a88ec059210adfce9bee5ae488af7b801">insertMany</a> (const std::vector&lt; T &gt; &amp;objects) -&gt; void</td></tr>
 <tr class="memitem:ac14756e0e1122efc99149cb0f37ff9d5" id="r_ac14756e0e1122efc99149cb0f37ff9d5"><td class="memTemplParams" colspan="2">template&lt;typename T&gt; </td></tr>
 <tr class="memitem:ac14756e0e1122efc99149cb0f37ff9d5 template"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="#ac14756e0e1122efc99149cb0f37ff9d5">update</a> (const <a class="el" href="classorm_1_1Update.html">Update</a>&lt; T &gt; &amp;update) -&gt; std::size_t</td></tr>
 <tr class="memitem:a10606cbdc4b3aa44d5458541bb33fb39" id="r_a10606cbdc4b3aa44d5458541bb33fb39"><td class="memTemplParams" colspan="2">template&lt;typename T, typename P&gt; </td></tr>
@@ -167,12 +172,13 @@ Public Member Functions</h2></td></tr>
 <tr class="heading"><td colspan="2"><h2 id="header-friends" class="groupheader"><a id="friends" name="friends"></a>
 Friends</h2></td></tr>
 <tr class="memitem:a6efef52d7a939622bbc934ff6b90ffe0" id="r_a6efef52d7a939622bbc934ff6b90ffe0"><td class="memItemLeft">class&#160;</td><td class="memItemRight"><a class="el" href="#a6efef52d7a939622bbc934ff6b90ffe0">Database</a></td></tr>
+<tr class="memitem:a2076fb87649b67a1c9116f9687090033" id="r_a2076fb87649b67a1c9116f9687090033"><td class="memItemLeft">class&#160;</td><td class="memItemRight"><a class="el" href="#a2076fb87649b67a1c9116f9687090033">detail::perf_seam::TestAccess</a></td></tr>
 </table>
 <a name="details" id="details"></a><h2 id="header-details" class="groupheader">Detailed Description</h2>
 <div class="textblock"><div class="compoundTemplParams">template&lt;typename SchemaType&gt;<br />
 class orm::OrmContext&lt; SchemaType &gt;</div><p>A borrowed, schema-bound ORM view over an existing Database. </p>
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00216">216</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00232">232</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 </div><a name="doc-typedef-members" id="doc-typedef-members"></a><h2 id="header-doc-typedef-members" class="groupheader">Member Typedef Documentation</h2>
 <a id="a51addf6d390a1b42c0bb69dd5f7cf00c" name="a51addf6d390a1b42c0bb69dd5f7cf00c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a51addf6d390a1b42c0bb69dd5f7cf00c">&#9670;&#160;</a></span>Payload</h2>
@@ -190,7 +196,7 @@ template&lt;typename T&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01012">1012</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01405">1405</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -210,7 +216,7 @@ template&lt;typename T&gt; </div>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01015">1015</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01408">1408</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -297,7 +303,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01076">1076</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01493">1493</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -328,7 +334,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01062">1062</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01479">1479</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -359,7 +365,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01083">1083</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01500">1500</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -390,7 +396,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01069">1069</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01486">1486</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -421,7 +427,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01032">1032</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01425">1425</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -452,7 +458,73 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01039">1039</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01432">1432</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a88ec059210adfce9bee5ae488af7b801" name="a88ec059210adfce9bee5ae488af7b801"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88ec059210adfce9bee5ae488af7b801">&#9670;&#160;</a></span>insertMany() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SchemaType&gt; </div>
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1OrmContext.html">orm::OrmContext</a>&lt; SchemaType &gt;::insertMany </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; T &gt; &amp;</td>          <td class="paramname"><span class="paramname"><em>objects</em></span></td><td>)</td>
+          <td> -&gt; void</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Narrow forwarding overload so a plain vector deduces its element type. </p>
+
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01457">1457</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+
+</div>
+</div>
+<a id="ae776ada128a83f2f79b176a0011e8eea" name="ae776ada128a83f2f79b176a0011e8eea"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae776ada128a83f2f79b176a0011e8eea">&#9670;&#160;</a></span>insertMany() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SchemaType&gt; </div>
+<div class="memtemplate">
+template&lt;typename T&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">auto <a class="el" href="classorm_1_1OrmContext.html">orm::OrmContext</a>&lt; SchemaType &gt;::insertMany </td>
+          <td>(</td>
+          <td class="paramtype">std::span&lt; const T &gt;</td>          <td class="paramname"><span class="paramname"><em>objects</em></span></td><td>)</td>
+          <td> -&gt; void</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel inline">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Inserts a borrowed batch atomically in a transaction owned by this operation. </p>
+<p>An empty span performs no backend work. The input must outlive the call. </p>
+
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01444">1444</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -487,7 +559,7 @@ template&lt;auto Member, typename Owner, typename Target&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01095">1095</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01512">1512</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -572,7 +644,7 @@ template&lt;typename T, typename P&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01054">1054</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01471">1471</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -607,7 +679,7 @@ template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01004">1004</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01397">1397</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -642,7 +714,7 @@ template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00988">988</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01381">1381</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -673,7 +745,7 @@ template&lt;typename Source, typename Result&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01025">1025</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01418">1418</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -704,7 +776,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01018">1018</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01411">1411</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -739,7 +811,7 @@ template&lt;auto Member, typename Owner, typename Target&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01110">1110</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01527">1527</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -774,7 +846,7 @@ template&lt;query::detail::StaticPlanType Plan, typename... Args&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00996">996</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01389">1389</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -805,7 +877,7 @@ template&lt;typename T&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01046">1046</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l01463">1463</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>
@@ -832,7 +904,33 @@ template&lt;typename SchemaType&gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00219">219</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00235">235</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
+
+</div>
+</div>
+<a id="a2076fb87649b67a1c9116f9687090033" name="a2076fb87649b67a1c9116f9687090033"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2076fb87649b67a1c9116f9687090033">&#9670;&#160;</a></span>detail::perf_seam::TestAccess</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SchemaType&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">friend class detail::perf_seam::TestAccess</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel friend">friend</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p class="definition">Definition at line <a class="el" href="context_8cppm_source.html#l00236">236</a> of file <a class="el" href="context_8cppm_source.html">context.cppm</a>.</p>
 
 </div>
 </div>

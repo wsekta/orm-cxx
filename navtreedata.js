@@ -79,12 +79,14 @@ var NAVTREE =
       [ "Delete table", "docs-database-database.html#docs-database-delete-table", null ],
       [ "Create and delete relation tables", "docs-database-database.html#docs-database-create-and-delete-relation-tables", null ],
       [ "Insert objects", "docs-database-database.html#docs-database-insert-objects", null ],
+      [ "Insert objects in batches", "docs-database-database.html#docs-database-insert-objects-in-batches", null ],
       [ "Link and unlink relations", "docs-database-database.html#docs-database-link-and-unlink-relations", null ],
       [ "Query objects", "docs-database-database.html#docs-database-query-objects", null ],
       [ "Update objects", "docs-database-database.html#docs-database-update-objects", null ],
       [ "Remove objects", "docs-database-database.html#docs-database-remove-objects", null ],
       [ "Transactions", "docs-database-database.html#docs-database-transactions", [
-        [ "Scoped transactions", "docs-database-database.html#docs-database-scoped-transactions", null ]
+        [ "Scoped transactions", "docs-database-database.html#docs-database-scoped-transactions", null ],
+        [ "Batched inserts and transactions", "docs-database-database.html#docs-database-batched-inserts-and-transactions", null ]
       ] ]
     ] ],
     [ "Model", "docs-model-model.html", [
@@ -234,21 +236,21 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "BackendRelations_8cppm.html",
-"classorm_1_1Query.html#a9f5552a74c1746497c68a9784ac2b600",
-"classorm_1_1db_1_1CommandGeneratorFactory.html#ad88fb5fd07d0e1f1f22efe51d5d6668d",
-"classorm_1_1db_1_1mysql_1_1MysqlDialect.html#a2a12465e89e5e55544738456e437991d",
-"classorm_1_1query_1_1Expression.html",
-"classorm_1_1query_1_1TypedAggregate.html#a36e8e63313a0bb609ff65266c881ced2",
-"contracts_8cppm.html",
-"mapping_8cppm_source.html",
-"module__orm.html#ae1b6062b3cc928c1d4d91ffb37622e87a960b44c579bc2f6818d2daaf9e4c16f0",
-"namespaceorm_1_1migrations.html",
-"structorm_1_1MariadbConfig.html",
-"structorm_1_1db_1_1InsertIfAbsentSpec.html",
-"structorm_1_1db_1_1binding_1_1PrimaryKeyLess.html#af0fd0cc2f01442f0b30e59f01884daea",
-"structorm_1_1migrations_1_1PhysicalForeignKey.html#abd05e7f0f76c15e0b87ac5cf8ddfe156",
-"structorm_1_1model_1_1ColumnView.html#a1bc6ddf4136b554b26a393b704e04ac8",
-"structorm_1_1model_1_1SchemaView.html#a30b531f89a55306a1eee609322c51663"
+"classorm_1_1Query.html#a50d327c6dd8f7900418c2495e4d624d0",
+"classorm_1_1db_1_1CommandGeneratorFactory.html#a57e6331a08057a85627b1edd7c4ab555",
+"classorm_1_1db_1_1mysql_1_1MysqlDialect.html",
+"classorm_1_1migrations_1_1Runner.html#a69ff8390ea253ab27c15e4fb02ddd0dc",
+"classorm_1_1query_1_1StaticPlan.html#af562d4bc89820b4e48acc79587177f79",
+"conceptorm_1_1db_1_1binding_1_1SociConvertableToUnsignedLongLong.html",
+"functions_vars_r.html",
+"module__orm.html#aca7c2dca86ff154eebc9e3b290cc4a46",
+"namespaceorm_1_1db_1_1binding.html#ac3c129de33c248c1fc7d39de1d2c823d",
+"structorm_1_1ManyToManyDescriptor.html#a375c494c8644c34d08c520fca30d3d23",
+"structorm_1_1db_1_1BoundValue.html#aeb856f5f0116c99d86e2e65727f29a42",
+"structorm_1_1db_1_1binding_1_1CollectionPayload.html#a28ae1afcb74bc638478c81ec93d29ab9",
+"structorm_1_1migrations_1_1PhysicalColumn.html#a411a4f9b0fb5b21ca4c614bb648b3053",
+"structorm_1_1migrations_1_1Status.html#af3d0f225df68bc6b6e0fb2692593e312",
+"structorm_1_1model_1_1RelationView.html#a006097e70eb2959023ad5156125276d5"
 ];
 
 const SYNCONMSG = 'click to disable panel synchronization';

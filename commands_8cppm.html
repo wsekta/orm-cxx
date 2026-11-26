@@ -119,36 +119,45 @@ document.addEventListener('DOMContentLoaded',() => { initNavTree('commands_8cppm
   <div class="headertitle"><div class="title">commands.cppm File Reference<div class="ingroups">module <a class="el" href="module__orm.html">orm</a></div></div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;memory&gt;</code><br />
+<div class="textblock"><code>#include &lt;cstddef&gt;</code><br />
+<code>#include &lt;format&gt;</code><br />
+<code>#include &lt;memory&gt;</code><br />
+<code>#include &lt;stdexcept&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;string_view&gt;</code><br />
 <code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>import <a class="el" href="orm_8cppm_source.html">orm:model</a>;</code><br />
+<code>import <a class="el" href="orm_8cppm_source.html">orm:sql_contracts</a>;</code><br />
 </div><div class="textblock"><div class="dynheader">
 Include dependency graph for commands.cppm:</div>
 <div class="dyncontent">
 <div class="center"><img src="commands_8cppm__incl.png" border="0" usemap="#amodules_2orm_2sql_2commands_8cppm" loading="lazy" alt=""/></div>
 <map name="amodules_2orm_2sql_2commands_8cppm" id="amodules_2orm_2sql_2commands_8cppm">
-<area shape="rect" title=" " alt="" coords="182,5,429,31"/>
-<area shape="rect" title=" " alt="" coords="5,79,83,104"/>
-<area shape="poly" title=" " alt="" coords="264,33,97,78,95,73,263,28"/>
-<area shape="rect" title=" " alt="" coords="107,79,165,104"/>
-<area shape="poly" title=" " alt="" coords="279,33,177,76,175,71,277,28"/>
-<area shape="rect" title=" " alt="" coords="190,79,287,104"/>
-<area shape="poly" title=" " alt="" coords="296,33,261,70,257,67,292,29"/>
-<area shape="rect" title=" " alt="" coords="311,79,435,104"/>
-<area shape="poly" title=" " alt="" coords="318,29,355,67,351,70,315,33"/>
-<area shape="rect" title=" " alt="" coords="459,79,522,104"/>
-<area shape="poly" title=" " alt="" coords="336,28,449,71,447,76,334,33"/>
-<area shape="rect" href="orm_8cppm.html" title=" " alt="" coords="547,79,640,104"/>
-<area shape="poly" title=" " alt="" coords="352,28,534,73,533,78,351,33"/>
-<area shape="poly" title=" " alt="" coords="627,76,653,77,663,82,667,92,659,103,641,107,639,102,656,99,661,91,659,86,652,82,626,81"/>
-<area shape="rect" title=" " alt="" coords="494,152,573,177"/>
-<area shape="poly" title=" " alt="" coords="585,106,554,143,550,140,581,103"/>
-<area shape="rect" href="orm_8reflection_8cppm.html" title=" " alt="" coords="597,152,710,177"/>
-<area shape="poly" title=" " alt="" coords="605,103,637,140,633,143,601,106"/>
-<area shape="poly" title=" " alt="" coords="691,149,721,151,732,156,737,165,734,172,726,177,705,181,704,176,725,172,730,169,731,165,729,159,720,156,691,155"/>
+<area shape="rect" title=" " alt="" coords="311,5,557,31"/>
+<area shape="rect" title=" " alt="" coords="5,79,76,104"/>
+<area shape="poly" title=" " alt="" coords="360,33,90,81,89,76,360,28"/>
+<area shape="rect" title=" " alt="" coords="101,79,167,104"/>
+<area shape="poly" title=" " alt="" coords="385,33,181,81,180,76,384,28"/>
+<area shape="rect" title=" " alt="" coords="191,79,269,104"/>
+<area shape="poly" title=" " alt="" coords="402,33,277,77,275,72,400,28"/>
+<area shape="rect" title=" " alt="" coords="293,79,380,104"/>
+<area shape="poly" title=" " alt="" coords="420,33,365,72,362,68,417,29"/>
+<area shape="rect" title=" " alt="" coords="405,79,463,104"/>
+<area shape="poly" title=" " alt="" coords="437,31,437,65,431,65,431,31"/>
+<area shape="rect" title=" " alt="" coords="488,79,585,104"/>
+<area shape="poly" title=" " alt="" coords="452,28,510,68,507,73,449,33"/>
+<area shape="rect" title=" " alt="" coords="609,79,733,104"/>
+<area shape="poly" title=" " alt="" coords="473,28,621,72,619,77,471,33"/>
+<area shape="rect" title=" " alt="" coords="757,79,820,104"/>
+<area shape="poly" title=" " alt="" coords="501,28,744,76,743,81,500,33"/>
+<area shape="rect" href="orm_8cppm.html" title=" " alt="" coords="845,79,983,104"/>
+<area shape="poly" title=" " alt="" coords="512,28,831,75,831,80,511,33"/>
+<area shape="poly" title=" " alt="" coords="958,76,993,77,1005,82,1010,91,1006,99,998,104,972,107,971,102,996,99,1003,96,1005,91,1001,86,992,82,958,81"/>
+<area shape="rect" title=" " alt="" coords="815,152,893,177"/>
+<area shape="poly" title=" " alt="" coords="906,106,875,143,870,140,902,103"/>
+<area shape="rect" href="orm_8reflection_8cppm.html" title=" " alt="" coords="917,152,1031,177"/>
+<area shape="poly" title=" " alt="" coords="926,103,958,140,953,143,922,106"/>
+<area shape="poly" title=" " alt="" coords="1012,149,1042,151,1053,156,1057,165,1054,172,1047,177,1026,181,1025,176,1045,172,1050,169,1052,165,1049,159,1041,156,1012,155"/>
 </map>
 </div>
 </div>
@@ -156,6 +165,7 @@ Include dependency graph for commands.cppm:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-nested-classes" class="groupheader"><a id="nested-classes" name="nested-classes"></a>
 Classes</h2></td></tr>
+<tr class="memitem:orm_3A_3Adb_3A_3AInsertManySpec" id="r_orm_3A_3Adb_3A_3AInsertManySpec"><td class="memItemLeft">struct &#160;</td><td class="memItemRight"><a class="el" href="structorm_1_1db_1_1InsertManySpec.html">orm::db::InsertManySpec</a></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3ACommandGenerator" id="r_orm_3A_3Adb_3A_3ACommandGenerator"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1db_1_1CommandGenerator.html">orm::db::CommandGenerator</a></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3ADefaultCommandGenerator" id="r_orm_3A_3Adb_3A_3ADefaultCommandGenerator"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1db_1_1DefaultCommandGenerator.html">orm::db::DefaultCommandGenerator</a></td></tr>
 <tr class="memitem:orm_3A_3Adb_3A_3ACommandGeneratorFactory" id="r_orm_3A_3Adb_3A_3ACommandGeneratorFactory"><td class="memItemLeft">class &#160;</td><td class="memItemRight"><a class="el" href="classorm_1_1db_1_1CommandGeneratorFactory.html">orm::db::CommandGeneratorFactory</a></td></tr>
@@ -172,6 +182,7 @@ Typedefs</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 id="header-func-members" class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:a97fe8a1881d39c4ad78ed74b127ec913" id="r_a97fe8a1881d39c4ad78ed74b127ec913"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db.html#a97fe8a1881d39c4ad78ed74b127ec913">orm::db::insertManyParameterName</a> (std::size_t rowIndex, std::string_view logicalName) -&gt; std::string</td></tr>
 <tr class="memitem:ae3ef094ed3cfcb8a2d15ee67de4905c3" id="r_ae3ef094ed3cfcb8a2d15ee67de4905c3"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1relations.html#ae3ef094ed3cfcb8a2d15ee67de4905c3">orm::db::relations::createTableStatements</a> (const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;dialect, <a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> owner, <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> backend=<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3ace2c8aed9c2fa0cfbed56cbda4d8bf07">BackendType::Empty</a>) -&gt; std::vector&lt; std::string &gt;</td></tr>
 <tr class="memitem:ac416f5f62bf5da9be5243cbceaf57a5a" id="r_ac416f5f62bf5da9be5243cbceaf57a5a"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1relations.html#ac416f5f62bf5da9be5243cbceaf57a5a">orm::db::relations::dropTableStatements</a> (const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;dialect, <a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> owner) -&gt; std::vector&lt; std::string &gt;</td></tr>
 <tr class="memitem:a9e69076ef2476e4197605fbe8ba6ccbf" id="r_a9e69076ef2476e4197605fbe8ba6ccbf"><td class="memItemLeft">auto&#160;</td><td class="memItemRight"><a class="el" href="namespaceorm_1_1db_1_1relations.html#a9e69076ef2476e4197605fbe8ba6ccbf">orm::db::relations::linkStatement</a> (const <a class="el" href="classorm_1_1db_1_1SqlDialect.html">SqlDialect</a> &amp;dialect, <a class="el" href="structorm_1_1model_1_1ModelView.html">model::ModelView</a> owner, <a class="el" href="structorm_1_1model_1_1RelationView.html">model::RelationView</a> relation, const <a class="el" href="namespaceorm_1_1db_1_1binding.html#a76ddc55b2f094d6a14b954388c1999b1">binding::PrimaryKey</a> &amp;ownerKey, const <a class="el" href="namespaceorm_1_1db_1_1binding.html#a76ddc55b2f094d6a14b954388c1999b1">binding::PrimaryKey</a> &amp;targetKey, <a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3">BackendType</a> backend=<a class="el" href="namespaceorm_1_1db.html#a561761874c14fd396fef40b0c0737ea3ace2c8aed9c2fa0cfbed56cbda4d8bf07">BackendType::Empty</a>) -&gt; <a class="el" href="structorm_1_1db_1_1Statement.html">Statement</a></td></tr>

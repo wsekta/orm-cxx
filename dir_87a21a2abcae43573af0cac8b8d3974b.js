@@ -6,6 +6,7 @@ var dir_87a21a2abcae43573af0cac8b8d3974b =
     [ "numeric.cppm", "numeric_8cppm.html", "numeric_8cppm" ],
     [ "object_binding.cppm", "object__binding_8cppm.html", "object__binding_8cppm" ],
     [ "payload.cppm", "payload_8cppm.html", "payload_8cppm" ],
+    [ "perf_test_seam.cppm", "perf__test__seam_8cppm.html", null ],
     [ "result_binding.cppm", "result__binding_8cppm.html", "result__binding_8cppm" ],
     [ "result_storage.cppm", "result__storage_8cppm.html", "result__storage_8cppm" ],
     [ "soci.cppm", "soci_8cppm.html", null ]

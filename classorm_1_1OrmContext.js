@@ -10,6 +10,8 @@ var classorm_1_1OrmContext =
     [ "deleteTable", "classorm_1_1OrmContext.html#a649f4dab21b8e7536010f969c18e05c0", null ],
     [ "insert", "classorm_1_1OrmContext.html#a2e86a46472a1f20113079561257569ed", null ],
     [ "insert", "classorm_1_1OrmContext.html#a3132cbb15880db18a83bafc6f03e169b", null ],
+    [ "insertMany", "classorm_1_1OrmContext.html#a88ec059210adfce9bee5ae488af7b801", null ],
+    [ "insertMany", "classorm_1_1OrmContext.html#ae776ada128a83f2f79b176a0011e8eea", null ],
     [ "link", "classorm_1_1OrmContext.html#a8bc7c590f37c728dfce81c46ef634cec", null ],
     [ "operator=", "classorm_1_1OrmContext.html#ab513d4347564a6f0727915dac2f85689", null ],
     [ "operator=", "classorm_1_1OrmContext.html#a4df30f0b7c0bfcd9cd7a425eaae3abdc", null ],
@@ -21,5 +23,6 @@ var classorm_1_1OrmContext =
     [ "unlink", "classorm_1_1OrmContext.html#afbe4b1097b37819e4fd143b68a02a636", null ],
     [ "update", "classorm_1_1OrmContext.html#ae608e0906cc9a5ae4700f1a07c888754", null ],
     [ "update", "classorm_1_1OrmContext.html#ac14756e0e1122efc99149cb0f37ff9d5", null ],
-    [ "Database", "classorm_1_1OrmContext.html#a6efef52d7a939622bbc934ff6b90ffe0", null ]
+    [ "Database", "classorm_1_1OrmContext.html#a6efef52d7a939622bbc934ff6b90ffe0", null ],
+    [ "detail::perf_seam::TestAccess", "classorm_1_1OrmContext.html#a2076fb87649b67a1c9116f9687090033", null ]
 ];

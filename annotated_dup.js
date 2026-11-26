@@ -59,6 +59,7 @@ var annotated_dup =
         [ "ConnectionTraits&lt; SqliteConfig &gt;", "structorm_1_1db_1_1ConnectionTraits_3_01SqliteConfig_01_4.html", null ],
         [ "DefaultCommandGenerator", "classorm_1_1db_1_1DefaultCommandGenerator.html", "classorm_1_1db_1_1DefaultCommandGenerator" ],
         [ "InsertIfAbsentSpec", "structorm_1_1db_1_1InsertIfAbsentSpec.html", "structorm_1_1db_1_1InsertIfAbsentSpec" ],
+        [ "InsertManySpec", "structorm_1_1db_1_1InsertManySpec.html", "structorm_1_1db_1_1InsertManySpec" ],
         [ "MigrationCapabilities", "structorm_1_1db_1_1MigrationCapabilities.html", "structorm_1_1db_1_1MigrationCapabilities" ],
         [ "MutationCapabilities", "structorm_1_1db_1_1MutationCapabilities.html", "structorm_1_1db_1_1MutationCapabilities" ],
         [ "PaginationSpec", "structorm_1_1db_1_1PaginationSpec.html", "structorm_1_1db_1_1PaginationSpec" ],

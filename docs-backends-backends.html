@@ -162,32 +162,35 @@ Compatibility at a glance</h1>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">CRUD and exact affected rows  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Atomic batch insert (<span class="tt">insertMany</span>)  </td><td class="markdownTableBodyNone">Not supported in v1  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Not supported in v1  </td><td class="markdownTableBodyNone">Not supported in v1  </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Projections and aggregate projections  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Full-model grouping  </td><td class="markdownTableBodyNone">Representative-row semantics  </td><td class="markdownTableBodyNone">Rejected  </td><td class="markdownTableBodyNone">Rejected  </td><td class="markdownTableBodyNone">Rejected  </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Grouped projections  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Strict grouping  </td><td class="markdownTableBodyNone">Strict grouping  </td><td class="markdownTableBodyNone">Strict grouping  </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">To-one and collection relations  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Supported  </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Foreign keys and junction cascade  </td><td class="markdownTableBodyNone">Enabled per ORM session  </td><td class="markdownTableBodyNone">Native enforcement  </td><td class="markdownTableBodyNone">InnoDB enforcement  </td><td class="markdownTableBodyNone">InnoDB enforcement  </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Explicit transactions  </td><td class="markdownTableBodyNone">Supported  </td><td class="markdownTableBodyNone">Statement errors require rollback  </td><td class="markdownTableBodyNone">Fatal transaction errors require rollback  </td><td class="markdownTableBodyNone">Fatal transaction errors require rollback  </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone"><a class="el" href="docs-schema-migrations-schema-migrations.html" title="Schema migrations">Versioned migrations</a>  </td><td class="markdownTableBodyNone">Transactional; <span class="tt">BEGIN IMMEDIATE</span>  </td><td class="markdownTableBodyNone">Transactional; advisory lock  </td><td class="markdownTableBodyNone">Nontransactional; session lock and journal  </td><td class="markdownTableBodyNone">Nontransactional; session lock and journal  </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">String primary/foreign keys  </td><td class="markdownTableBodyNone">Native text  </td><td class="markdownTableBodyNone">Native text  </td><td class="markdownTableBodyNone">Explicit bounded strings  </td><td class="markdownTableBodyNone">Explicit bounded strings  </td></tr>
-<tr class="markdownTableRowOdd">
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">ORM parameter ceiling  </td><td class="markdownTableBodyNone">900  </td><td class="markdownTableBodyNone">65,535  </td><td class="markdownTableBodyNone">Runtime/driver limits  </td><td class="markdownTableBodyNone">Runtime/driver limits  </td></tr>
-<tr class="markdownTableRowEven">
+<tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Identifier ceiling  </td><td class="markdownTableBodyNone">No additional byte limit  </td><td class="markdownTableBodyNone">63 bytes  </td><td class="markdownTableBodyNone">64 characters  </td><td class="markdownTableBodyNone">64 characters  </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">ORM <span class="tt">LIKE</span> behavior  </td><td class="markdownTableBodyNone">ASCII case-insensitive  </td><td class="markdownTableBodyNone">Case-sensitive  </td><td class="markdownTableBodyNone">Binary collation  </td><td class="markdownTableBodyNone">Binary collation  </td></tr>
 <tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Native NULL order  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td><td class="markdownTableBodyNone">ASC last; DESC first  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td></tr>
+<td class="markdownTableBodyNone">ORM <span class="tt">LIKE</span> behavior  </td><td class="markdownTableBodyNone">ASCII case-insensitive  </td><td class="markdownTableBodyNone">Case-sensitive  </td><td class="markdownTableBodyNone">Binary collation  </td><td class="markdownTableBodyNone">Binary collation  </td></tr>
 <tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Native NULL order  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td><td class="markdownTableBodyNone">ASC last; DESC first  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td><td class="markdownTableBodyNone">ASC first; DESC last  </td></tr>
+<tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Namespace selection  </td><td class="markdownTableBodyNone">Database connection  </td><td class="markdownTableBodyNone">Active <span class="tt">search_path</span>  </td><td class="markdownTableBodyNone">Selected database  </td><td class="markdownTableBodyNone">Selected database  </td></tr>
 </table>
+<p>Atomic batch inserts (<span class="tt">insertMany</span>) are PostgreSQL-only in v1. SQLite, MySQL and MariaDB advertise <span class="tt">getBackendCapabilities().mutations.insertMany == false</span>; an empty input remains a no-op, and non-empty input is rejected with <span class="tt">DatabaseErrorCode::UnsupportedFeature</span> before any write.</p>
 <p>Raw SQL remains backend-specific. Code that needs portable behavior should use the typed API and inspect <span class="tt">getBackendCapabilities()</span> for optional operations. For every bundled adapter, a physical non-identity column name used as a SOCI bind name may contain only ASCII letters, digits, and <span class="tt">_</span>. Connection strings and identifiers containing an embedded NUL byte are rejected before they reach a database driver's C API.</p>
 <h1 class="doxsection"><a class="anchor" id="docs-backends-sqlite"></a>
 SQLite</h1>
@@ -229,6 +232,7 @@ PostgreSQL</h1>
 <p>With examples enabled, <span class="tt">backend-connection-example &lt;backend&gt; &lt;database-or-file&gt;</span> reports capabilities and disconnects. Server credentials use native client defaults.</p>
 <p>The server test matrix covers PostgreSQL 15 and 18. MSVC compiles and links the adapter and consumer configurations; live server behavior runs on Linux.</p>
 <p>PostgreSQL supports the current scalar and nullable fields, manual and composite keys, generated integer identity keys, exact affected-row counts, transactions, full and projection selects, collection predicates/includes, to-one, one-to-many, and many-to-many relations. <span class="tt">INSERT ... ON CONFLICT DO NOTHING</span> provides idempotent relation linking.</p>
+<p><span class="tt">OrmContext::insertMany</span> is supported on PostgreSQL and advertised as <span class="tt">getBackendCapabilities().mutations.insertMany</span>. The adapter reports the 65,535 bind-parameter ceiling above, and the operation chunks a batch to stay within it. Row-count, generated-SQL-size and encoded-parameter chunk budgets are internal implementation limits, not public guarantees, tunable settings, or performance promises.</p>
 <p>There are deliberate v1 exclusions:</p>
 <ul>
 <li>full-model <span class="tt">GROUP BY</span> and <span class="tt">HAVING</span> are rejected before execution; grouped <span class="tt">ProjectionQuery</span> results are supported, and every non-aggregate projected or typed <span class="tt">ORDER BY</span> column must also appear in <span class="tt">GROUP BY</span>;</li>
