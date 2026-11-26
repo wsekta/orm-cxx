@@ -110,6 +110,7 @@ export
     struct MutationCapabilities
     {
         bool insert = false;
+        bool insertMany = false;
         bool update = false;
         bool remove = false;
         bool atomicInsertIfAbsent = false;

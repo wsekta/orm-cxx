@@ -392,76 +392,64 @@ auto detail::bindModelParameters(const db::BackendRuntime& runtime, soci::values
         runtime.bind(targetValues, name, value);
     };
 
-    for (const auto& column : descriptor->columns)
+    for (const auto& binding : db::detail::insertColumnBindings(descriptor))
     {
-        if (column.isAutoIncrement)
-        {
-            continue;
-        }
-
-        if (column.kind == model::FieldKind::ToOne)
-        {
-            const auto relatedModel = descriptor.resolveTarget(column);
-            if (relatedModel == nullptr)
-            {
-                throw std::invalid_argument{"To-one column has no target model in the schema"};
-            }
-
-            for (const auto& relatedColumn : relatedModel->columns)
-            {
-                if (not relatedColumn.isPrimaryKey)
-                {
-                    continue;
-                }
-
-                const auto parameterName = std::format("{}_{}", column.name, relatedColumn.name);
-                bind(parameterName, serializedBoundValue(serializedModel, parameterName, relatedColumn.type.value()));
-                ++parameterCount;
-            }
-
-            continue;
-        }
-
-        bind(column.name, serializedBoundValue(serializedModel, std::string{column.name}, column.type.value()));
+        bind(binding.logicalName,
+             serializedBoundValue(serializedModel, binding.logicalName, binding.column->type.value()));
         ++parameterCount;
     }
 
     return parameterCount;
 }
 
+namespace detail
+{
+namespace
+{
+template <typename NameMapper>
+auto bindSerializedModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
+                                   soci::session& session, db::BackendType backend, const soci::values& serializedModel,
+                                   model::ModelView descriptor, const db::BackendValueLimits& valueLimits,
+                                   const db::BackendRuntimeLimits& runtimeLimits, NameMapper&& mapName) -> std::size_t
+{
+    std::size_t parameterCount{};
+
+    for (const auto& binding : db::detail::insertColumnBindings(descriptor))
+    {
+        const auto& column = *binding.column;
+        auto value = serializedBoundValue(serializedModel, binding.logicalName, column.type.value());
+        value.uuidStorage = column.uuidStorage(backend);
+        if (value.uuidStorage != model::UuidStorage::Binary16 &&
+            !db::binding::isWithinValueLimits(value, valueLimits, runtimeLimits))
+            throw db::binding::ConversionError{"A model value exceeds the backend value limits"};
+        targetValues.add(session, runtime, mapName(binding.logicalName), value);
+        ++parameterCount;
+    }
+
+    return parameterCount;
+}
+} // namespace
+} // namespace detail
+
 auto detail::bindModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
                                  soci::session& session, db::BackendType backend, const soci::values& serializedModel,
                                  model::ModelView descriptor, const db::BackendValueLimits& valueLimits,
                                  const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t
 {
-    std::size_t parameterCount{};
-    const auto bind = [&](std::string name, const model::ColumnView& column)
-    {
-        auto value = serializedBoundValue(serializedModel, name, column.type.value());
-        value.uuidStorage = column.uuidStorage(backend);
-        if (value.uuidStorage != model::UuidStorage::Binary16 &&
-            !db::binding::isWithinValueLimits(value, valueLimits, runtimeLimits))
-            throw db::binding::ConversionError{"A model value exceeds the backend value limits"};
-        targetValues.add(session, runtime, name, value);
-        ++parameterCount;
-    };
-    for (const auto& column : descriptor->columns)
-    {
-        if (column.isAutoIncrement)
-            continue;
-        if (column.kind == model::FieldKind::ToOne)
-        {
-            const auto related = descriptor.resolveTarget(column);
-            if (!related)
-                throw std::invalid_argument{"To-one column has no target model in the schema"};
-            for (const auto& child : related->columns)
-                if (child.isPrimaryKey)
-                    bind(std::format("{}_{}", column.name, child.name), child);
-        }
-        else
-            bind(std::string{column.name}, column);
-    }
-    return parameterCount;
+    return bindSerializedModelParameters(runtime, targetValues, session, backend, serializedModel, descriptor,
+                                         valueLimits, runtimeLimits,
+                                         [](std::string_view name) { return std::string{name}; });
+}
+
+auto detail::bindModelParameters(const db::BackendRuntime& runtime, db::binding::StatementBindings& targetValues,
+                                 soci::session& session, db::BackendType backend, const soci::values& serializedModel,
+                                 model::ModelView descriptor, std::size_t rowIndex,
+                                 const db::BackendValueLimits& valueLimits,
+                                 const db::BackendRuntimeLimits& runtimeLimits) -> std::size_t
+{
+    return bindSerializedModelParameters(runtime, targetValues, session, backend, serializedModel, descriptor,
+                                         valueLimits, runtimeLimits, [rowIndex](std::string_view name)
+                                         { return db::insertManyParameterName(rowIndex, name); });
 }
 
 auto detail::normalizeAffectedRows(long long affectedRows) -> std::size_t
@@ -705,12 +693,12 @@ auto Database::startScopedTransaction(const ScopedTransaction& owner) -> void
     }
     catch (const soci::soci_error& error)
     {
-        closeFailedScopedSession();
+        closeFailedTransactionSession();
         throw connectedBackend->runtime().translateError(error, DatabaseErrorCode::Transaction, "begin transaction");
     }
     catch (...)
     {
-        closeFailedScopedSession();
+        closeFailedTransactionSession();
         throw;
     }
 
@@ -733,7 +721,7 @@ auto Database::finishScopedTransaction(const ScopedTransaction& owner, bool comm
     }
     catch (...)
     {
-        closeFailedScopedSession();
+        closeFailedTransactionSession();
         throw;
     }
 
@@ -750,7 +738,7 @@ auto Database::finishScopedTransaction(const ScopedTransaction& owner, bool comm
     }
     catch (const soci::soci_error& error)
     {
-        closeFailedScopedSession();
+        closeFailedTransactionSession();
         const auto translated =
             connectedBackend->runtime().translateError(error, DatabaseErrorCode::Transaction, operation);
         if (commit)
@@ -761,7 +749,7 @@ auto Database::finishScopedTransaction(const ScopedTransaction& owner, bool comm
     }
     catch (...)
     {
-        closeFailedScopedSession();
+        closeFailedTransactionSession();
         throw;
     }
 
@@ -769,7 +757,7 @@ auto Database::finishScopedTransaction(const ScopedTransaction& owner, bool comm
     transactionFailed = false;
 }
 
-auto Database::closeFailedScopedSession() noexcept -> void
+auto Database::closeFailedTransactionSession() noexcept -> void
 {
     scopedOwner = nullptr;
     transactionFailed = false;
@@ -856,6 +844,53 @@ auto Database::rollbackTransaction() -> void
         transactionFailed = false;
         throwTranslatedError(error, DatabaseErrorCode::Transaction, "rollback transaction");
     }
+}
+
+auto Database::beginInsertManySavepoint() -> std::string
+{
+    // insertManyImpl has already verified the session and caller-transaction state through
+    // ensureSessionUsable() and ensureModelSupported(), so this only has to open the savepoint.
+    const auto& capabilities = getBackendCapabilities();
+    requireCapability(capabilities.transactions, "insert many",
+                      "insertMany cannot reuse a caller transaction because transactions are not supported");
+
+    auto name = std::format("orm_insert_many_{}", ++insertManySavepointSequence);
+    executeSavepointCommand("SAVEPOINT " + getBackend().dialect().quoteIdentifier(name), "insert many");
+    return name;
+}
+
+auto Database::rollbackToInsertManySavepoint(std::string_view name) -> void
+{
+    executeSavepointCommand("ROLLBACK TO SAVEPOINT " + getBackend().dialect().quoteIdentifier(name), "insert many");
+}
+
+auto Database::releaseInsertManySavepoint(std::string_view name) -> void
+{
+    executeSavepointCommand("RELEASE SAVEPOINT " + getBackend().dialect().quoteIdentifier(name), "insert many");
+}
+
+auto Database::executeSavepointCommand(std::string_view command, std::string_view operation) -> void
+{
+    // Savepoint recovery must run even when a chunk failure already marked the transaction as failed;
+    // this deliberately skips ensureSessionUsable().
+    try
+    {
+        sql << std::string{command};
+    }
+    catch (const soci::soci_error& error)
+    {
+        throwTranslatedError(error, DatabaseErrorCode::Transaction, operation);
+    }
+}
+
+auto Database::markTransactionFailed() noexcept -> void
+{
+    transactionFailed = true;
+}
+
+auto Database::restoreHealthyTransactionState() noexcept -> void
+{
+    transactionFailed = false;
 }
 
 auto Database::executeMutation(const db::Statement& statement, std::string_view operation) -> std::size_t

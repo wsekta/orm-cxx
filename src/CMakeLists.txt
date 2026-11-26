@@ -76,6 +76,12 @@ configure_file(
     "${PROJECT_SOURCE_DIR}/cmake/BackendRelations.cppm.in" "${ORM_CXX_GENERATED_MODULE_DIR}/orm.backend_relations.cppm"
     @ONLY
 )
+if(ORM_CXX_ENABLE_PERF_TEST_SEAM)
+    set(ORM_CXX_PERF_SEAM_MODULE "${PROJECT_SOURCE_DIR}/modules/orm/database/perf_test_seam.cppm")
+else()
+    set(ORM_CXX_PERF_SEAM_MODULE "${ORM_CXX_GENERATED_MODULE_DIR}/orm.perf_test_seam.cppm")
+    file(CONFIGURE OUTPUT "${ORM_CXX_PERF_SEAM_MODULE}" CONTENT "export module orm:perf_test_seam;\n" @ONLY)
+endif()
 
 add_library(orm-cxx-reflection STATIC)
 add_library(orm-cxx::reflection ALIAS orm-cxx-reflection)
@@ -200,6 +206,7 @@ target_sources(
            "${PROJECT_SOURCE_DIR}/modules/orm/static_plan.cppm"
            "${ORM_CXX_GENERATED_MODULE_DIR}/orm.config.cppm"
            "${ORM_CXX_GENERATED_MODULE_DIR}/orm.backend_relations.cppm"
+           "${ORM_CXX_PERF_SEAM_MODULE}"
 )
 target_link_libraries(
     orm-cxx
@@ -245,6 +252,9 @@ endif()
 
 include(CMakePackageConfigHelpers)
 foreach(package orm-cxx orm-cxx-reflection)
+    if(ORM_CXX_ENABLE_PERF_TEST_SEAM AND package STREQUAL "orm-cxx")
+        continue()
+    endif()
     get_target_property(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY ${package} MSVC_RUNTIME_LIBRARY)
     if(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY STREQUAL "ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY-NOTFOUND")
         set(ORM_CXX_MODULE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")

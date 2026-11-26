@@ -17,3 +17,5 @@ export import :database;
 export import :migrations;
 export import :migrations_schema;
 export import :config;
+
+export import :perf_test_seam;

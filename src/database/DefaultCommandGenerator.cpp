@@ -42,8 +42,6 @@ namespace orm::db
 {
 namespace
 {
-auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
-                             model::ModelView target) -> std::vector<std::string>;
 auto getInsertFields(const SqlDialect& dialect, const std::vector<std::string>& fieldNames) -> std::string
 {
     std::string insertFields;
@@ -76,48 +74,12 @@ auto getFieldsNames(model::ModelView model) -> std::vector<std::string>
 {
     std::vector<std::string> fieldsNames;
 
-    for (const auto& column : model->columns)
+    for (auto& binding : detail::insertColumnBindings(model))
     {
-        if (column.kind == model::FieldKind::ToOne)
-        {
-            const auto target = model.resolveTarget(column);
-            if (target == nullptr)
-            {
-                throw std::logic_error{"To-one relation target is not available in the schema"};
-            }
-
-            const auto foreignModelIdsNames = getForeignModelIdsNames(column.name, *target);
-
-            fieldsNames.insert(fieldsNames.end(), foreignModelIdsNames.begin(), foreignModelIdsNames.end());
-        }
-        else
-        {
-            if (column.isAutoIncrement)
-            {
-                continue;
-            }
-
-            fieldsNames.emplace_back(column.name);
-        }
+        fieldsNames.push_back(std::move(binding.logicalName));
     }
 
     return fieldsNames;
-}
-
-auto getForeignModelIdsNames(std::string_view foreignModelFieldName,
-                             model::ModelView target) -> std::vector<std::string>
-{
-    std::vector<std::string> foreignModelIdsNames;
-
-    for (const auto& column : target->columns)
-    {
-        if (column.isPrimaryKey)
-        {
-            foreignModelIdsNames.push_back(std::format("{}_{}", foreignModelFieldName, column.name));
-        }
-    }
-
-    return foreignModelIdsNames;
 }
 } // namespace
 
@@ -137,6 +99,49 @@ auto DefaultCommandGenerator::insert(model::ModelView model) const -> std::strin
 
     return std::format("INSERT INTO {} ({}) VALUES ({});", dialect.quoteIdentifier(model->tableName),
                        getInsertFields(dialect, fieldsNames), getInsertValues(dialect, fieldsNames));
+}
+
+auto DefaultCommandGenerator::insertMany(model::ModelView model, const InsertManySpec& spec) const -> std::string
+{
+    if (spec.rowCount == 0)
+    {
+        throw std::invalid_argument{"A batch insert requires at least one row"};
+    }
+
+    const auto fieldsNames = getFieldsNames(model);
+
+    if (fieldsNames.empty())
+    {
+        throw std::invalid_argument{"A batch insert requires at least one bound column"};
+    }
+
+    std::string sql = std::format("INSERT INTO {} ({}) VALUES ", dialect.quoteIdentifier(model->tableName),
+                                  getInsertFields(dialect, fieldsNames));
+
+    for (std::size_t row = 0; row < spec.rowCount; ++row)
+    {
+        if (row != 0)
+        {
+            sql += ", ";
+        }
+
+        sql += "(";
+
+        for (std::size_t index = 0; index < fieldsNames.size(); ++index)
+        {
+            if (index != 0)
+            {
+                sql += ", ";
+            }
+
+            sql += dialect.bindMarker(insertManyParameterName(row, fieldsNames[index]));
+        }
+
+        sql += ")";
+    }
+
+    sql += ";";
+    return sql;
 }
 
 auto DefaultCommandGenerator::createTable(model::ModelView model) const -> std::string

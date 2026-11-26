@@ -156,9 +156,19 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND)
     )
 
     if(ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_TESTS)
-        list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/PostgresqlIntegrationTest.cpp
-             database/postgresql/PostgresConnectionTest.cpp
+        list(
+            APPEND
+            ORM_CXX_TEST_SOURCES
+            database/postgresql/PostgresqlIntegrationTest.cpp
+            database/postgresql/PostgresConnectionTest.cpp
+            database/postgresql/InsertManyCoreTest.cpp
+            database/postgresql/InsertManySavepointTest.cpp
+            database/postgresql/InsertManyParityTest.cpp
+            database/postgresql/InsertManyGuardTest.cpp
         )
+        if(ORM_CXX_ENABLE_PERF_TEST_SEAM)
+            list(APPEND ORM_CXX_TEST_SOURCES database/postgresql/InsertManyPerfSeamTest.cpp)
+        endif()
     endif()
 endif()
 
@@ -250,7 +260,7 @@ if(ORM_CXX_ENABLE_POSTGRESQL_BACKEND AND ORM_CXX_ENABLE_POSTGRESQL_INTEGRATION_T
         NAME orm-cxx-postgresql-integration
         COMMAND
             orm-cxx-UT
-            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
+            --gtest_filter=Postgresql/PostgresqlIntegrationTest.*/Postgresql:Postgresql/InsertManyCoreTest.*/Postgresql:Postgresql/InsertManyPerfSeamTest.*/Postgresql:Postgresql/InsertManySavepointTest.*/Postgresql:Postgresql/InsertManyParityTest.*/Postgresql:Postgresql/InsertManyGuardTest.*/Postgresql:PostgresqlTestSchemaTest.*:PostgresConnectionTest.*
         WORKING_DIRECTORY "${orm_cxx_test_working_directory}"
     )
     set_tests_properties(

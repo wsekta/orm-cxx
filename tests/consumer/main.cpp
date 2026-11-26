@@ -7,6 +7,7 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -87,6 +88,20 @@ struct orm::db::ConnectionTraits<ConsumerConfig>
 {
     static constexpr auto backendType = orm::db::BackendType::Oracle;
 };
+
+static_assert(requires(orm::OrmContext<consumer_models::Schema>& context,
+                       std::span<const consumer_models::ConsumerModel> rows) {
+    context.insertMany(rows);
+    context.insertMany(std::vector<consumer_models::ConsumerModel>{});
+});
+
+[[maybe_unused]] auto checkInsertManyApi(orm::Database& database,
+                                         std::span<const consumer_models::ConsumerModel> rows) -> void
+{
+    auto context = database.orm<consumer_models::Schema>();
+    context.insertMany(rows);
+    context.insertMany(std::vector<consumer_models::ConsumerModel>{});
+}
 
 [[maybe_unused]] auto checkBorrowedApi(orm::Database& database) -> void
 {
